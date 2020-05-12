@@ -1,663 +1,657 @@
-/*     */ package javax.swing.plaf.synth;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Component;
-/*     */ import java.awt.Dimension;
-/*     */ import java.awt.Font;
-/*     */ import java.awt.FontMetrics;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Insets;
-/*     */ import java.awt.Rectangle;
-/*     */ import java.util.ArrayList;
-/*     */ import java.util.List;
-/*     */ import javax.swing.ButtonModel;
-/*     */ import javax.swing.Icon;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.JMenuItem;
-/*     */ import javax.swing.SwingUtilities;
-/*     */ import javax.swing.text.View;
-/*     */ import sun.swing.MenuItemLayoutHelper;
-/*     */ import sun.swing.SwingUtilities2;
-/*     */ import sun.swing.plaf.synth.SynthIcon;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class SynthGraphicsUtils
-/*     */ {
-/*  45 */   private Rectangle paintIconR = new Rectangle();
-/*  46 */   private Rectangle paintTextR = new Rectangle();
-/*  47 */   private Rectangle paintViewR = new Rectangle();
-/*  48 */   private Insets paintInsets = new Insets(0, 0, 0, 0);
-/*     */ 
-/*     */ 
-/*     */   
-/*  52 */   private Rectangle iconR = new Rectangle();
-/*  53 */   private Rectangle textR = new Rectangle();
-/*  54 */   private Rectangle viewR = new Rectangle();
-/*  55 */   private Insets viewSizingInsets = new Insets(0, 0, 0, 0);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void drawLine(SynthContext paramSynthContext, Object paramObject, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  77 */     paramGraphics.drawLine(paramInt1, paramInt2, paramInt3, paramInt4);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void drawLine(SynthContext paramSynthContext, Object paramObject1, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4, Object paramObject2) {
-/* 102 */     if ("dashed".equals(paramObject2)) {
-/*     */       
-/* 104 */       if (paramInt1 == paramInt3) {
-/* 105 */         paramInt2 += paramInt2 % 2;
-/*     */         
-/* 107 */         for (int i = paramInt2; i <= paramInt4; i += 2) {
-/* 108 */           paramGraphics.drawLine(paramInt1, i, paramInt3, i);
-/*     */         }
-/*     */       }
-/* 111 */       else if (paramInt2 == paramInt4) {
-/* 112 */         paramInt1 += paramInt1 % 2;
-/*     */         
-/* 114 */         for (int i = paramInt1; i <= paramInt3; i += 2) {
-/* 115 */           paramGraphics.drawLine(i, paramInt2, i, paramInt4);
-/*     */         }
-/*     */       } 
-/*     */     } else {
-/*     */       
-/* 120 */       drawLine(paramSynthContext, paramObject1, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String layoutText(SynthContext paramSynthContext, FontMetrics paramFontMetrics, String paramString, Icon paramIcon, int paramInt1, int paramInt2, int paramInt3, int paramInt4, Rectangle paramRectangle1, Rectangle paramRectangle2, Rectangle paramRectangle3, int paramInt5) {
-/* 146 */     if (paramIcon instanceof SynthIcon) {
-/* 147 */       SynthIconWrapper synthIconWrapper = SynthIconWrapper.get((SynthIcon)paramIcon, paramSynthContext);
-/*     */       
-/* 149 */       String str = SwingUtilities.layoutCompoundLabel(paramSynthContext
-/* 150 */           .getComponent(), paramFontMetrics, paramString, synthIconWrapper, paramInt2, paramInt1, paramInt4, paramInt3, paramRectangle1, paramRectangle2, paramRectangle3, paramInt5);
-/*     */ 
-/*     */       
-/* 153 */       SynthIconWrapper.release(synthIconWrapper);
-/* 154 */       return str;
-/*     */     } 
-/* 156 */     return SwingUtilities.layoutCompoundLabel(paramSynthContext
-/* 157 */         .getComponent(), paramFontMetrics, paramString, paramIcon, paramInt2, paramInt1, paramInt4, paramInt3, paramRectangle1, paramRectangle2, paramRectangle3, paramInt5);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int computeStringWidth(SynthContext paramSynthContext, Font paramFont, FontMetrics paramFontMetrics, String paramString) {
-/* 172 */     return SwingUtilities2.stringWidth(paramSynthContext.getComponent(), paramFontMetrics, paramString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Dimension getMinimumSize(SynthContext paramSynthContext, Font paramFont, String paramString, Icon paramIcon, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5, int paramInt6) {
-/* 194 */     JComponent jComponent = paramSynthContext.getComponent();
-/* 195 */     Dimension dimension = getPreferredSize(paramSynthContext, paramFont, paramString, paramIcon, paramInt1, paramInt2, paramInt3, paramInt4, paramInt5, paramInt6);
-/*     */ 
-/*     */     
-/* 198 */     View view = (View)jComponent.getClientProperty("html");
-/*     */     
-/* 200 */     if (view != null) {
-/* 201 */       dimension
-/* 202 */         .width = (int)(dimension.width - view.getPreferredSpan(0) - view.getMinimumSpan(0));
-/*     */     }
-/* 204 */     return dimension;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Dimension getMaximumSize(SynthContext paramSynthContext, Font paramFont, String paramString, Icon paramIcon, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5, int paramInt6) {
-/* 225 */     JComponent jComponent = paramSynthContext.getComponent();
-/* 226 */     Dimension dimension = getPreferredSize(paramSynthContext, paramFont, paramString, paramIcon, paramInt1, paramInt2, paramInt3, paramInt4, paramInt5, paramInt6);
-/*     */ 
-/*     */     
-/* 229 */     View view = (View)jComponent.getClientProperty("html");
-/*     */     
-/* 231 */     if (view != null) {
-/* 232 */       dimension
-/* 233 */         .width = (int)(dimension.width + view.getMaximumSpan(0) - view.getPreferredSpan(0));
-/*     */     }
-/* 235 */     return dimension;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getMaximumCharHeight(SynthContext paramSynthContext) {
-/* 247 */     FontMetrics fontMetrics = paramSynthContext.getComponent().getFontMetrics(paramSynthContext
-/* 248 */         .getStyle().getFont(paramSynthContext));
-/* 249 */     return fontMetrics.getAscent() + fontMetrics.getDescent();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Dimension getPreferredSize(SynthContext paramSynthContext, Font paramFont, String paramString, Icon paramIcon, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5, int paramInt6) {
-/* 270 */     JComponent jComponent = paramSynthContext.getComponent();
-/* 271 */     Insets insets = jComponent.getInsets(this.viewSizingInsets);
-/* 272 */     int i = insets.left + insets.right;
-/* 273 */     int j = insets.top + insets.bottom;
-/*     */     
-/* 275 */     if (paramIcon == null && (paramString == null || paramFont == null)) {
-/* 276 */       return new Dimension(i, j);
-/*     */     }
-/* 278 */     if (paramString == null || (paramIcon != null && paramFont == null)) {
-/* 279 */       return new Dimension(SynthIcon.getIconWidth(paramIcon, paramSynthContext) + i, 
-/* 280 */           SynthIcon.getIconHeight(paramIcon, paramSynthContext) + j);
-/*     */     }
-/*     */     
-/* 283 */     FontMetrics fontMetrics = jComponent.getFontMetrics(paramFont);
-/*     */     
-/* 285 */     this.iconR.x = this.iconR.y = this.iconR.width = this.iconR.height = 0;
-/* 286 */     this.textR.x = this.textR.y = this.textR.width = this.textR.height = 0;
-/* 287 */     this.viewR.x = i;
-/* 288 */     this.viewR.y = j;
-/* 289 */     this.viewR.width = this.viewR.height = 32767;
-/*     */     
-/* 291 */     layoutText(paramSynthContext, fontMetrics, paramString, paramIcon, paramInt1, paramInt2, paramInt3, paramInt4, this.viewR, this.iconR, this.textR, paramInt5);
-/*     */ 
-/*     */     
-/* 294 */     int k = Math.min(this.iconR.x, this.textR.x);
-/* 295 */     int m = Math.max(this.iconR.x + this.iconR.width, this.textR.x + this.textR.width);
-/* 296 */     int n = Math.min(this.iconR.y, this.textR.y);
-/* 297 */     int i1 = Math.max(this.iconR.y + this.iconR.height, this.textR.y + this.textR.height);
-/* 298 */     Dimension dimension = new Dimension(m - k, i1 - n);
-/*     */     
-/* 300 */     dimension.width += i;
-/* 301 */     dimension.height += j;
-/* 302 */     return dimension;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void paintText(SynthContext paramSynthContext, Graphics paramGraphics, String paramString, Rectangle paramRectangle, int paramInt) {
-/* 319 */     paintText(paramSynthContext, paramGraphics, paramString, paramRectangle.x, paramRectangle.y, paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void paintText(SynthContext paramSynthContext, Graphics paramGraphics, String paramString, int paramInt1, int paramInt2, int paramInt3) {
-/* 336 */     if (paramString != null) {
-/* 337 */       JComponent jComponent = paramSynthContext.getComponent();
-/* 338 */       FontMetrics fontMetrics = SwingUtilities2.getFontMetrics(jComponent, paramGraphics);
-/* 339 */       paramInt2 += fontMetrics.getAscent();
-/* 340 */       SwingUtilities2.drawStringUnderlineCharAt(jComponent, paramGraphics, paramString, paramInt3, paramInt1, paramInt2);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void paintText(SynthContext paramSynthContext, Graphics paramGraphics, String paramString, Icon paramIcon, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5, int paramInt6, int paramInt7) {
-/* 366 */     if (paramIcon == null && paramString == null) {
-/*     */       return;
-/*     */     }
-/* 369 */     JComponent jComponent = paramSynthContext.getComponent();
-/* 370 */     FontMetrics fontMetrics = SwingUtilities2.getFontMetrics(jComponent, paramGraphics);
-/* 371 */     Insets insets = SynthLookAndFeel.getPaintingInsets(paramSynthContext, this.paintInsets);
-/*     */     
-/* 373 */     this.paintViewR.x = insets.left;
-/* 374 */     this.paintViewR.y = insets.top;
-/* 375 */     this.paintViewR.width = jComponent.getWidth() - insets.left + insets.right;
-/* 376 */     this.paintViewR.height = jComponent.getHeight() - insets.top + insets.bottom;
-/*     */     
-/* 378 */     this.paintIconR.x = this.paintIconR.y = this.paintIconR.width = this.paintIconR.height = 0;
-/* 379 */     this.paintTextR.x = this.paintTextR.y = this.paintTextR.width = this.paintTextR.height = 0;
-/*     */ 
-/*     */     
-/* 382 */     String str = layoutText(paramSynthContext, fontMetrics, paramString, paramIcon, paramInt1, paramInt2, paramInt3, paramInt4, this.paintViewR, this.paintIconR, this.paintTextR, paramInt5);
-/*     */ 
-/*     */ 
-/*     */     
-/* 386 */     if (paramIcon != null) {
-/* 387 */       Color color = paramGraphics.getColor();
-/*     */       
-/* 389 */       if (paramSynthContext.getStyle().getBoolean(paramSynthContext, "TableHeader.alignSorterArrow", false) && "TableHeader.renderer"
-/* 390 */         .equals(jComponent.getName())) {
-/* 391 */         this.paintIconR.x = this.paintViewR.width - this.paintIconR.width;
-/*     */       } else {
-/* 393 */         this.paintIconR.x += paramInt7;
-/*     */       } 
-/* 395 */       this.paintIconR.y += paramInt7;
-/* 396 */       SynthIcon.paintIcon(paramIcon, paramSynthContext, paramGraphics, this.paintIconR.x, this.paintIconR.y, this.paintIconR.width, this.paintIconR.height);
-/*     */       
-/* 398 */       paramGraphics.setColor(color);
-/*     */     } 
-/*     */     
-/* 401 */     if (paramString != null) {
-/* 402 */       View view = (View)jComponent.getClientProperty("html");
-/*     */       
-/* 404 */       if (view != null) {
-/* 405 */         view.paint(paramGraphics, this.paintTextR);
-/*     */       } else {
-/* 407 */         this.paintTextR.x += paramInt7;
-/* 408 */         this.paintTextR.y += paramInt7;
-/*     */         
-/* 410 */         paintText(paramSynthContext, paramGraphics, str, this.paintTextR, paramInt6);
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static Dimension getPreferredMenuItemSize(SynthContext paramSynthContext1, SynthContext paramSynthContext2, JComponent paramJComponent, Icon paramIcon1, Icon paramIcon2, int paramInt, String paramString1, boolean paramBoolean, String paramString2) {
-/* 433 */     JMenuItem jMenuItem = (JMenuItem)paramJComponent;
-/*     */ 
-/*     */ 
-/*     */     
-/* 437 */     SynthMenuItemLayoutHelper synthMenuItemLayoutHelper = new SynthMenuItemLayoutHelper(paramSynthContext1, paramSynthContext2, jMenuItem, paramIcon1, paramIcon2, MenuItemLayoutHelper.createMaxRect(), paramInt, paramString1, SynthLookAndFeel.isLeftToRight(jMenuItem), paramBoolean, paramString2);
-/*     */ 
-/*     */     
-/* 440 */     Dimension dimension = new Dimension();
-/*     */ 
-/*     */     
-/* 443 */     int i = synthMenuItemLayoutHelper.getGap();
-/* 444 */     dimension.width = 0;
-/* 445 */     MenuItemLayoutHelper.addMaxWidth(synthMenuItemLayoutHelper.getCheckSize(), i, dimension);
-/* 446 */     MenuItemLayoutHelper.addMaxWidth(synthMenuItemLayoutHelper.getLabelSize(), i, dimension);
-/* 447 */     MenuItemLayoutHelper.addWidth(synthMenuItemLayoutHelper.getMaxAccOrArrowWidth(), 5 * i, dimension);
-/*     */     
-/* 449 */     dimension.width -= i;
-/*     */ 
-/*     */     
-/* 452 */     dimension.height = MenuItemLayoutHelper.max(new int[] { synthMenuItemLayoutHelper.getCheckSize().getHeight(), synthMenuItemLayoutHelper
-/* 453 */           .getLabelSize().getHeight(), synthMenuItemLayoutHelper.getAccSize().getHeight(), synthMenuItemLayoutHelper
-/* 454 */           .getArrowSize().getHeight() });
-/*     */ 
-/*     */     
-/* 457 */     Insets insets = synthMenuItemLayoutHelper.getMenuItem().getInsets();
-/* 458 */     if (insets != null) {
-/* 459 */       dimension.width += insets.left + insets.right;
-/* 460 */       dimension.height += insets.top + insets.bottom;
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 465 */     if (dimension.width % 2 == 0) {
-/* 466 */       dimension.width++;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 471 */     if (dimension.height % 2 == 0) {
-/* 472 */       dimension.height++;
-/*     */     }
-/*     */     
-/* 475 */     return dimension;
-/*     */   }
-/*     */   
-/*     */   static void applyInsets(Rectangle paramRectangle, Insets paramInsets, boolean paramBoolean) {
-/* 479 */     if (paramInsets != null) {
-/* 480 */       paramRectangle.x += paramBoolean ? paramInsets.left : paramInsets.right;
-/* 481 */       paramRectangle.y += paramInsets.top;
-/* 482 */       paramRectangle.width -= (paramBoolean ? paramInsets.right : paramInsets.left) + paramRectangle.x;
-/* 483 */       paramRectangle.height -= paramInsets.bottom + paramRectangle.y;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static void paint(SynthContext paramSynthContext1, SynthContext paramSynthContext2, Graphics paramGraphics, Icon paramIcon1, Icon paramIcon2, String paramString1, int paramInt, String paramString2) {
-/* 490 */     JMenuItem jMenuItem = (JMenuItem)paramSynthContext1.getComponent();
-/* 491 */     SynthStyle synthStyle = paramSynthContext1.getStyle();
-/* 492 */     paramGraphics.setFont(synthStyle.getFont(paramSynthContext1));
-/*     */     
-/* 494 */     Rectangle rectangle = new Rectangle(0, 0, jMenuItem.getWidth(), jMenuItem.getHeight());
-/* 495 */     boolean bool = SynthLookAndFeel.isLeftToRight(jMenuItem);
-/* 496 */     applyInsets(rectangle, jMenuItem.getInsets(), bool);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 501 */     SynthMenuItemLayoutHelper synthMenuItemLayoutHelper = new SynthMenuItemLayoutHelper(paramSynthContext1, paramSynthContext2, jMenuItem, paramIcon1, paramIcon2, rectangle, paramInt, paramString1, bool, MenuItemLayoutHelper.useCheckAndArrow(jMenuItem), paramString2);
-/* 502 */     MenuItemLayoutHelper.LayoutResult layoutResult = synthMenuItemLayoutHelper.layoutMenuItem();
-/*     */     
-/* 504 */     paintMenuItem(paramGraphics, synthMenuItemLayoutHelper, layoutResult);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static void paintMenuItem(Graphics paramGraphics, SynthMenuItemLayoutHelper paramSynthMenuItemLayoutHelper, MenuItemLayoutHelper.LayoutResult paramLayoutResult) {
-/* 510 */     Font font = paramGraphics.getFont();
-/* 511 */     Color color = paramGraphics.getColor();
-/*     */     
-/* 513 */     paintCheckIcon(paramGraphics, paramSynthMenuItemLayoutHelper, paramLayoutResult);
-/* 514 */     paintIcon(paramGraphics, paramSynthMenuItemLayoutHelper, paramLayoutResult);
-/* 515 */     paintText(paramGraphics, paramSynthMenuItemLayoutHelper, paramLayoutResult);
-/* 516 */     paintAccText(paramGraphics, paramSynthMenuItemLayoutHelper, paramLayoutResult);
-/* 517 */     paintArrowIcon(paramGraphics, paramSynthMenuItemLayoutHelper, paramLayoutResult);
-/*     */ 
-/*     */     
-/* 520 */     paramGraphics.setColor(color);
-/* 521 */     paramGraphics.setFont(font);
-/*     */   }
-/*     */   
-/*     */   static void paintBackground(Graphics paramGraphics, SynthMenuItemLayoutHelper paramSynthMenuItemLayoutHelper) {
-/* 525 */     paintBackground(paramSynthMenuItemLayoutHelper.getContext(), paramGraphics, paramSynthMenuItemLayoutHelper.getMenuItem());
-/*     */   }
-/*     */   
-/*     */   static void paintBackground(SynthContext paramSynthContext, Graphics paramGraphics, JComponent paramJComponent) {
-/* 529 */     paramSynthContext.getPainter().paintMenuItemBackground(paramSynthContext, paramGraphics, 0, 0, paramJComponent
-/* 530 */         .getWidth(), paramJComponent.getHeight());
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   static void paintIcon(Graphics paramGraphics, SynthMenuItemLayoutHelper paramSynthMenuItemLayoutHelper, MenuItemLayoutHelper.LayoutResult paramLayoutResult) {
-/* 535 */     if (paramSynthMenuItemLayoutHelper.getIcon() != null) {
-/*     */       Icon icon;
-/* 537 */       JMenuItem jMenuItem = paramSynthMenuItemLayoutHelper.getMenuItem();
-/* 538 */       ButtonModel buttonModel = jMenuItem.getModel();
-/* 539 */       if (!buttonModel.isEnabled()) {
-/* 540 */         icon = jMenuItem.getDisabledIcon();
-/* 541 */       } else if (buttonModel.isPressed() && buttonModel.isArmed()) {
-/* 542 */         icon = jMenuItem.getPressedIcon();
-/* 543 */         if (icon == null)
-/*     */         {
-/* 545 */           icon = jMenuItem.getIcon();
-/*     */         }
-/*     */       } else {
-/* 548 */         icon = jMenuItem.getIcon();
-/*     */       } 
-/*     */       
-/* 551 */       if (icon != null) {
-/* 552 */         Rectangle rectangle = paramLayoutResult.getIconRect();
-/* 553 */         SynthIcon.paintIcon(icon, paramSynthMenuItemLayoutHelper.getContext(), paramGraphics, rectangle.x, rectangle.y, rectangle.width, rectangle.height);
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static void paintCheckIcon(Graphics paramGraphics, SynthMenuItemLayoutHelper paramSynthMenuItemLayoutHelper, MenuItemLayoutHelper.LayoutResult paramLayoutResult) {
-/* 561 */     if (paramSynthMenuItemLayoutHelper.getCheckIcon() != null) {
-/* 562 */       Rectangle rectangle = paramLayoutResult.getCheckRect();
-/* 563 */       SynthIcon.paintIcon(paramSynthMenuItemLayoutHelper.getCheckIcon(), paramSynthMenuItemLayoutHelper.getContext(), paramGraphics, rectangle.x, rectangle.y, rectangle.width, rectangle.height);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static void paintAccText(Graphics paramGraphics, SynthMenuItemLayoutHelper paramSynthMenuItemLayoutHelper, MenuItemLayoutHelper.LayoutResult paramLayoutResult) {
-/* 570 */     String str = paramSynthMenuItemLayoutHelper.getAccText();
-/* 571 */     if (str != null && !str.equals("")) {
-/* 572 */       paramGraphics.setColor(paramSynthMenuItemLayoutHelper.getAccStyle().getColor(paramSynthMenuItemLayoutHelper.getAccContext(), ColorType.TEXT_FOREGROUND));
-/*     */       
-/* 574 */       paramGraphics.setFont(paramSynthMenuItemLayoutHelper.getAccStyle().getFont(paramSynthMenuItemLayoutHelper.getAccContext()));
-/* 575 */       paramSynthMenuItemLayoutHelper.getAccGraphicsUtils().paintText(paramSynthMenuItemLayoutHelper.getAccContext(), paramGraphics, str, 
-/* 576 */           (paramLayoutResult.getAccRect()).x, (paramLayoutResult.getAccRect()).y, -1);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   static void paintText(Graphics paramGraphics, SynthMenuItemLayoutHelper paramSynthMenuItemLayoutHelper, MenuItemLayoutHelper.LayoutResult paramLayoutResult) {
-/* 582 */     if (!paramSynthMenuItemLayoutHelper.getText().equals("")) {
-/* 583 */       if (paramSynthMenuItemLayoutHelper.getHtmlView() != null) {
-/*     */         
-/* 585 */         paramSynthMenuItemLayoutHelper.getHtmlView().paint(paramGraphics, paramLayoutResult.getTextRect());
-/*     */       } else {
-/*     */         
-/* 588 */         paramGraphics.setColor(paramSynthMenuItemLayoutHelper.getStyle().getColor(paramSynthMenuItemLayoutHelper
-/* 589 */               .getContext(), ColorType.TEXT_FOREGROUND));
-/* 590 */         paramGraphics.setFont(paramSynthMenuItemLayoutHelper.getStyle().getFont(paramSynthMenuItemLayoutHelper.getContext()));
-/* 591 */         paramSynthMenuItemLayoutHelper.getGraphicsUtils().paintText(paramSynthMenuItemLayoutHelper.getContext(), paramGraphics, paramSynthMenuItemLayoutHelper.getText(), 
-/* 592 */             (paramLayoutResult.getTextRect()).x, (paramLayoutResult.getTextRect()).y, paramSynthMenuItemLayoutHelper
-/* 593 */             .getMenuItem().getDisplayedMnemonicIndex());
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   static void paintArrowIcon(Graphics paramGraphics, SynthMenuItemLayoutHelper paramSynthMenuItemLayoutHelper, MenuItemLayoutHelper.LayoutResult paramLayoutResult) {
-/* 600 */     if (paramSynthMenuItemLayoutHelper.getArrowIcon() != null) {
-/* 601 */       Rectangle rectangle = paramLayoutResult.getArrowRect();
-/* 602 */       SynthIcon.paintIcon(paramSynthMenuItemLayoutHelper.getArrowIcon(), paramSynthMenuItemLayoutHelper.getContext(), paramGraphics, rectangle.x, rectangle.y, rectangle.width, rectangle.height);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static class SynthIconWrapper
-/*     */     implements Icon
-/*     */   {
-/* 612 */     private static final List<SynthIconWrapper> CACHE = new ArrayList<>(1);
-/*     */     
-/*     */     private SynthIcon synthIcon;
-/*     */     private SynthContext context;
-/*     */     
-/*     */     static SynthIconWrapper get(SynthIcon param1SynthIcon, SynthContext param1SynthContext) {
-/* 618 */       synchronized (CACHE) {
-/* 619 */         int i = CACHE.size();
-/* 620 */         if (i > 0) {
-/* 621 */           SynthIconWrapper synthIconWrapper = CACHE.remove(i - 1);
-/* 622 */           synthIconWrapper.reset(param1SynthIcon, param1SynthContext);
-/* 623 */           return synthIconWrapper;
-/*     */         } 
-/*     */       } 
-/* 626 */       return new SynthIconWrapper(param1SynthIcon, param1SynthContext);
-/*     */     }
-/*     */     
-/*     */     static void release(SynthIconWrapper param1SynthIconWrapper) {
-/* 630 */       param1SynthIconWrapper.reset(null, null);
-/* 631 */       synchronized (CACHE) {
-/* 632 */         CACHE.add(param1SynthIconWrapper);
-/*     */       } 
-/*     */     }
-/*     */     
-/*     */     SynthIconWrapper(SynthIcon param1SynthIcon, SynthContext param1SynthContext) {
-/* 637 */       reset(param1SynthIcon, param1SynthContext);
-/*     */     }
-/*     */     
-/*     */     void reset(SynthIcon param1SynthIcon, SynthContext param1SynthContext) {
-/* 641 */       this.synthIcon = param1SynthIcon;
-/* 642 */       this.context = param1SynthContext;
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public void paintIcon(Component param1Component, Graphics param1Graphics, int param1Int1, int param1Int2) {}
-/*     */ 
-/*     */     
-/*     */     public int getIconWidth() {
-/* 650 */       return this.synthIcon.getIconWidth(this.context);
-/*     */     }
-/*     */     
-/*     */     public int getIconHeight() {
-/* 654 */       return this.synthIcon.getIconHeight(this.context);
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\synth\SynthGraphicsUtils.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.plaf.synth;
+
+import sun.swing.SwingUtilities2;
+import sun.swing.MenuItemLayoutHelper;
+
+import java.awt.*;
+import javax.swing.*;
+import javax.swing.plaf.basic.BasicHTML;
+import javax.swing.text.*;
+import sun.swing.plaf.synth.*;
+
+/**
+ * Wrapper for primitive graphics calls.
+ *
+ * @since 1.5
+ * @author Scott Violet
+ */
+public class SynthGraphicsUtils {
+    // These are used in the text painting code to avoid allocating a bunch of
+    // garbage.
+    private Rectangle paintIconR = new Rectangle();
+    private Rectangle paintTextR = new Rectangle();
+    private Rectangle paintViewR = new Rectangle();
+    private Insets paintInsets = new Insets(0, 0, 0, 0);
+
+    // These Rectangles/Insets are used in the text size calculation to avoid a
+    // a bunch of garbage.
+    private Rectangle iconR = new Rectangle();
+    private Rectangle textR = new Rectangle();
+    private Rectangle viewR = new Rectangle();
+    private Insets viewSizingInsets = new Insets(0, 0, 0, 0);
+
+    /**
+     * Creates a <code>SynthGraphicsUtils</code>.
+     */
+    public SynthGraphicsUtils() {
+    }
+
+    /**
+     * Draws a line between the two end points.
+     *
+     * @param context Identifies hosting region.
+     * @param paintKey Identifies the portion of the component being asked
+     *                 to paint, may be null.
+     * @param g Graphics object to paint to
+     * @param x1 x origin
+     * @param y1 y origin
+     * @param x2 x destination
+     * @param y2 y destination
+     */
+    public void drawLine(SynthContext context, Object paintKey,
+                         Graphics g, int x1, int y1, int x2, int y2) {
+        g.drawLine(x1, y1, x2, y2);
+    }
+
+    /**
+     * Draws a line between the two end points.
+     * <p>This implementation supports only one line style key,
+     * <code>"dashed"</code>. The <code>"dashed"</code> line style is applied
+     * only to vertical and horizontal lines.
+     * <p>Specifying <code>null</code> or any key different from
+     * <code>"dashed"</code> will draw solid lines.
+     *
+     * @param context identifies hosting region
+     * @param paintKey identifies the portion of the component being asked
+     *                 to paint, may be null
+     * @param g Graphics object to paint to
+     * @param x1 x origin
+     * @param y1 y origin
+     * @param x2 x destination
+     * @param y2 y destination
+     * @param styleKey identifies the requested style of the line (e.g. "dashed")
+     * @since 1.6
+     */
+    public void drawLine(SynthContext context, Object paintKey,
+                         Graphics g, int x1, int y1, int x2, int y2,
+                         Object styleKey) {
+        if ("dashed".equals(styleKey)) {
+            // draw vertical line
+            if (x1 == x2) {
+                y1 += (y1 % 2);
+
+                for (int y = y1; y <= y2; y+=2) {
+                    g.drawLine(x1, y, x2, y);
+                }
+            // draw horizontal line
+            } else if (y1 == y2) {
+                x1 += (x1 % 2);
+
+                for (int x = x1; x <= x2; x+=2) {
+                    g.drawLine(x, y1, x, y2);
+                }
+            // oblique lines are not supported
+            }
+        } else {
+            drawLine(context, paintKey, g, x1, y1, x2, y2);
+        }
+    }
+
+    /**
+     * Lays out text and an icon returning, by reference, the location to
+     * place the icon and text.
+     *
+     * @param ss SynthContext
+     * @param fm FontMetrics for the Font to use, this may be ignored
+     * @param text Text to layout
+     * @param icon Icon to layout
+     * @param hAlign horizontal alignment
+     * @param vAlign vertical alignment
+     * @param hTextPosition horizontal text position
+     * @param vTextPosition vertical text position
+     * @param viewR Rectangle to layout text and icon in.
+     * @param iconR Rectangle to place icon bounds in
+     * @param textR Rectangle to place text in
+     * @param iconTextGap gap between icon and text
+     */
+    public String layoutText(SynthContext ss, FontMetrics fm,
+                         String text, Icon icon, int hAlign,
+                         int vAlign, int hTextPosition,
+                         int vTextPosition, Rectangle viewR,
+                         Rectangle iconR, Rectangle textR, int iconTextGap) {
+        if (icon instanceof SynthIcon) {
+            SynthIconWrapper wrapper = SynthIconWrapper.get((SynthIcon)icon,
+                                                            ss);
+            String formattedText = SwingUtilities.layoutCompoundLabel(
+                      ss.getComponent(), fm, text, wrapper, vAlign, hAlign,
+                      vTextPosition, hTextPosition, viewR, iconR, textR,
+                      iconTextGap);
+            SynthIconWrapper.release(wrapper);
+            return formattedText;
+        }
+        return SwingUtilities.layoutCompoundLabel(
+                      ss.getComponent(), fm, text, icon, vAlign, hAlign,
+                      vTextPosition, hTextPosition, viewR, iconR, textR,
+                      iconTextGap);
+    }
+
+    /**
+     * Returns the size of the passed in string.
+     *
+     * @param ss SynthContext
+     * @param font Font to use
+     * @param metrics FontMetrics, may be ignored
+     * @param text Text to get size of.
+     */
+    public int computeStringWidth(SynthContext ss, Font font,
+                                  FontMetrics metrics, String text) {
+        return SwingUtilities2.stringWidth(ss.getComponent(), metrics,
+                                          text);
+    }
+
+    /**
+     * Returns the minimum size needed to properly render an icon and text.
+     *
+     * @param ss SynthContext
+     * @param font Font to use
+     * @param text Text to layout
+     * @param icon Icon to layout
+     * @param hAlign horizontal alignment
+     * @param vAlign vertical alignment
+     * @param hTextPosition horizontal text position
+     * @param vTextPosition vertical text position
+     * @param iconTextGap gap between icon and text
+     * @param mnemonicIndex Index into text to render the mnemonic at, -1
+     *        indicates no mnemonic.
+     */
+    public Dimension getMinimumSize(SynthContext ss, Font font, String text,
+                      Icon icon, int hAlign, int vAlign, int hTextPosition,
+                      int vTextPosition, int iconTextGap, int mnemonicIndex) {
+        JComponent c = ss.getComponent();
+        Dimension size = getPreferredSize(ss, font, text, icon, hAlign,
+                                          vAlign, hTextPosition, vTextPosition,
+                                          iconTextGap, mnemonicIndex);
+        View v = (View) c.getClientProperty(BasicHTML.propertyKey);
+
+        if (v != null) {
+            size.width -= v.getPreferredSpan(View.X_AXIS) -
+                          v.getMinimumSpan(View.X_AXIS);
+        }
+        return size;
+    }
+
+    /**
+     * Returns the maximum size needed to properly render an icon and text.
+     *
+     * @param ss SynthContext
+     * @param font Font to use
+     * @param text Text to layout
+     * @param icon Icon to layout
+     * @param hAlign horizontal alignment
+     * @param vAlign vertical alignment
+     * @param hTextPosition horizontal text position
+     * @param vTextPosition vertical text position
+     * @param iconTextGap gap between icon and text
+     * @param mnemonicIndex Index into text to render the mnemonic at, -1
+     *        indicates no mnemonic.
+     */
+    public Dimension getMaximumSize(SynthContext ss, Font font, String text,
+                      Icon icon, int hAlign, int vAlign, int hTextPosition,
+                      int vTextPosition, int iconTextGap, int mnemonicIndex) {
+        JComponent c = ss.getComponent();
+        Dimension size = getPreferredSize(ss, font, text, icon, hAlign,
+                                          vAlign, hTextPosition, vTextPosition,
+                                          iconTextGap, mnemonicIndex);
+        View v = (View) c.getClientProperty(BasicHTML.propertyKey);
+
+        if (v != null) {
+            size.width += v.getMaximumSpan(View.X_AXIS) -
+                          v.getPreferredSpan(View.X_AXIS);
+        }
+        return size;
+    }
+
+    /**
+     * Returns the maximum height of the the Font from the passed in
+     * SynthContext.
+     *
+     * @param context SynthContext used to determine font.
+     * @return maximum height of the characters for the font from the passed
+     *         in context.
+     */
+    public int getMaximumCharHeight(SynthContext context) {
+        FontMetrics fm = context.getComponent().getFontMetrics(
+            context.getStyle().getFont(context));
+        return (fm.getAscent() + fm.getDescent());
+    }
+
+    /**
+     * Returns the preferred size needed to properly render an icon and text.
+     *
+     * @param ss SynthContext
+     * @param font Font to use
+     * @param text Text to layout
+     * @param icon Icon to layout
+     * @param hAlign horizontal alignment
+     * @param vAlign vertical alignment
+     * @param hTextPosition horizontal text position
+     * @param vTextPosition vertical text position
+     * @param iconTextGap gap between icon and text
+     * @param mnemonicIndex Index into text to render the mnemonic at, -1
+     *        indicates no mnemonic.
+     */
+    public Dimension getPreferredSize(SynthContext ss, Font font, String text,
+                      Icon icon, int hAlign, int vAlign, int hTextPosition,
+                      int vTextPosition, int iconTextGap, int mnemonicIndex) {
+        JComponent c = ss.getComponent();
+        Insets insets = c.getInsets(viewSizingInsets);
+        int dx = insets.left + insets.right;
+        int dy = insets.top + insets.bottom;
+
+        if (icon == null && (text == null || font == null)) {
+            return new Dimension(dx, dy);
+        }
+        else if ((text == null) || ((icon != null) && (font == null))) {
+            return new Dimension(SynthIcon.getIconWidth(icon, ss) + dx,
+                                 SynthIcon.getIconHeight(icon, ss) + dy);
+        }
+        else {
+            FontMetrics fm = c.getFontMetrics(font);
+
+            iconR.x = iconR.y = iconR.width = iconR.height = 0;
+            textR.x = textR.y = textR.width = textR.height = 0;
+            viewR.x = dx;
+            viewR.y = dy;
+            viewR.width = viewR.height = Short.MAX_VALUE;
+
+            layoutText(ss, fm, text, icon, hAlign, vAlign,
+                   hTextPosition, vTextPosition, viewR, iconR, textR,
+                   iconTextGap);
+            int x1 = Math.min(iconR.x, textR.x);
+            int x2 = Math.max(iconR.x + iconR.width, textR.x + textR.width);
+            int y1 = Math.min(iconR.y, textR.y);
+            int y2 = Math.max(iconR.y + iconR.height, textR.y + textR.height);
+            Dimension rv = new Dimension(x2 - x1, y2 - y1);
+
+            rv.width += dx;
+            rv.height += dy;
+            return rv;
+        }
+    }
+
+    /**
+     * Paints text at the specified location. This will not attempt to
+     * render the text as html nor will it offset by the insets of the
+     * component.
+     *
+     * @param ss SynthContext
+     * @param g Graphics used to render string in.
+     * @param text Text to render
+     * @param bounds Bounds of the text to be drawn.
+     * @param mnemonicIndex Index to draw string at.
+     */
+    public void paintText(SynthContext ss, Graphics g, String text,
+                          Rectangle bounds, int mnemonicIndex) {
+        paintText(ss, g, text, bounds.x, bounds.y, mnemonicIndex);
+    }
+
+    /**
+     * Paints text at the specified location. This will not attempt to
+     * render the text as html nor will it offset by the insets of the
+     * component.
+     *
+     * @param ss SynthContext
+     * @param g Graphics used to render string in.
+     * @param text Text to render
+     * @param x X location to draw text at.
+     * @param y Upper left corner to draw text at.
+     * @param mnemonicIndex Index to draw string at.
+     */
+    public void paintText(SynthContext ss, Graphics g, String text,
+                          int x, int y, int mnemonicIndex) {
+        if (text != null) {
+            JComponent c = ss.getComponent();
+            FontMetrics fm = SwingUtilities2.getFontMetrics(c, g);
+            y += fm.getAscent();
+            SwingUtilities2.drawStringUnderlineCharAt(c, g, text,
+                                                      mnemonicIndex, x, y);
+        }
+    }
+
+    /**
+     * Paints an icon and text. This will render the text as html, if
+     * necessary, and offset the location by the insets of the component.
+     *
+     * @param ss SynthContext
+     * @param g Graphics to render string and icon into
+     * @param text Text to layout
+     * @param icon Icon to layout
+     * @param hAlign horizontal alignment
+     * @param vAlign vertical alignment
+     * @param hTextPosition horizontal text position
+     * @param vTextPosition vertical text position
+     * @param iconTextGap gap between icon and text
+     * @param mnemonicIndex Index into text to render the mnemonic at, -1
+     *        indicates no mnemonic.
+     * @param textOffset Amount to offset the text when painting
+     */
+    public void paintText(SynthContext ss, Graphics g, String text,
+                      Icon icon, int hAlign, int vAlign, int hTextPosition,
+                      int vTextPosition, int iconTextGap, int mnemonicIndex,
+                      int textOffset) {
+        if ((icon == null) && (text == null)) {
+            return;
+        }
+        JComponent c = ss.getComponent();
+        FontMetrics fm = SwingUtilities2.getFontMetrics(c, g);
+        Insets insets = SynthLookAndFeel.getPaintingInsets(ss, paintInsets);
+
+        paintViewR.x = insets.left;
+        paintViewR.y = insets.top;
+        paintViewR.width = c.getWidth() - (insets.left + insets.right);
+        paintViewR.height = c.getHeight() - (insets.top + insets.bottom);
+
+        paintIconR.x = paintIconR.y = paintIconR.width = paintIconR.height = 0;
+        paintTextR.x = paintTextR.y = paintTextR.width = paintTextR.height = 0;
+
+        String clippedText =
+            layoutText(ss, fm, text, icon, hAlign, vAlign,
+                   hTextPosition, vTextPosition, paintViewR, paintIconR,
+                   paintTextR, iconTextGap);
+
+        if (icon != null) {
+            Color color = g.getColor();
+
+            if (ss.getStyle().getBoolean(ss, "TableHeader.alignSorterArrow", false) &&
+                "TableHeader.renderer".equals(c.getName())) {
+                paintIconR.x = paintViewR.width - paintIconR.width;
+            } else {
+                paintIconR.x += textOffset;
+            }
+            paintIconR.y += textOffset;
+            SynthIcon.paintIcon(icon, ss, g, paintIconR.x, paintIconR.y,
+                                paintIconR.width, paintIconR.height);
+            g.setColor(color);
+        }
+
+        if (text != null) {
+            View v = (View) c.getClientProperty(BasicHTML.propertyKey);
+
+            if (v != null) {
+                v.paint(g, paintTextR);
+            } else {
+                paintTextR.x += textOffset;
+                paintTextR.y += textOffset;
+
+                paintText(ss, g, clippedText, paintTextR, mnemonicIndex);
+            }
+        }
+    }
+
+
+     /**
+      * A quick note about how preferred sizes are calculated... Generally
+      * speaking, SynthPopupMenuUI will run through the list of its children
+      * (from top to bottom) and ask each for its preferred size.  Each menu
+      * item will add up the max width of each element (icons, text,
+      * accelerator spacing, accelerator text or arrow icon) encountered thus
+      * far, so by the time all menu items have been calculated, we will
+      * know the maximum (preferred) menu item size for that popup menu.
+      * Later when it comes time to paint each menu item, we can use those
+      * same accumulated max element sizes in order to layout the item.
+      */
+    static Dimension getPreferredMenuItemSize(SynthContext context,
+           SynthContext accContext, JComponent c,
+           Icon checkIcon, Icon arrowIcon, int defaultTextIconGap,
+           String acceleratorDelimiter, boolean useCheckAndArrow,
+           String propertyPrefix) {
+
+         JMenuItem mi = (JMenuItem) c;
+         SynthMenuItemLayoutHelper lh = new SynthMenuItemLayoutHelper(
+                 context, accContext, mi, checkIcon, arrowIcon,
+                 MenuItemLayoutHelper.createMaxRect(), defaultTextIconGap,
+                 acceleratorDelimiter, SynthLookAndFeel.isLeftToRight(mi),
+                 useCheckAndArrow, propertyPrefix);
+
+         Dimension result = new Dimension();
+
+         // Calculate the result width
+         int gap = lh.getGap();
+         result.width = 0;
+         MenuItemLayoutHelper.addMaxWidth(lh.getCheckSize(), gap, result);
+         MenuItemLayoutHelper.addMaxWidth(lh.getLabelSize(), gap, result);
+         MenuItemLayoutHelper.addWidth(lh.getMaxAccOrArrowWidth(), 5 * gap, result);
+         // The last gap is unnecessary
+         result.width -= gap;
+
+         // Calculate the result height
+         result.height = MenuItemLayoutHelper.max(lh.getCheckSize().getHeight(),
+                 lh.getLabelSize().getHeight(), lh.getAccSize().getHeight(),
+                 lh.getArrowSize().getHeight());
+
+         // Take into account menu item insets
+         Insets insets = lh.getMenuItem().getInsets();
+         if (insets != null) {
+             result.width += insets.left + insets.right;
+             result.height += insets.top + insets.bottom;
+         }
+
+         // if the width is even, bump it up one. This is critical
+         // for the focus dash lhne to draw properly
+         if (result.width % 2 == 0) {
+             result.width++;
+         }
+
+         // if the height is even, bump it up one. This is critical
+         // for the text to center properly
+         if (result.height % 2 == 0) {
+             result.height++;
+         }
+
+         return result;
+     }
+
+    static void applyInsets(Rectangle rect, Insets insets, boolean leftToRight) {
+        if (insets != null) {
+            rect.x += (leftToRight ? insets.left : insets.right);
+            rect.y += insets.top;
+            rect.width -= (leftToRight ? insets.right : insets.left) + rect.x;
+            rect.height -= (insets.bottom + rect.y);
+        }
+    }
+
+    static void paint(SynthContext context, SynthContext accContext, Graphics g,
+               Icon checkIcon, Icon arrowIcon, String acceleratorDelimiter,
+               int defaultTextIconGap, String propertyPrefix) {
+        JMenuItem mi = (JMenuItem) context.getComponent();
+        SynthStyle style = context.getStyle();
+        g.setFont(style.getFont(context));
+
+        Rectangle viewRect = new Rectangle(0, 0, mi.getWidth(), mi.getHeight());
+        boolean leftToRight = SynthLookAndFeel.isLeftToRight(mi);
+        applyInsets(viewRect, mi.getInsets(), leftToRight);
+
+        SynthMenuItemLayoutHelper lh = new SynthMenuItemLayoutHelper(
+                context, accContext, mi, checkIcon, arrowIcon, viewRect,
+                defaultTextIconGap, acceleratorDelimiter, leftToRight,
+                MenuItemLayoutHelper.useCheckAndArrow(mi), propertyPrefix);
+        MenuItemLayoutHelper.LayoutResult lr = lh.layoutMenuItem();
+
+        paintMenuItem(g, lh, lr);
+    }
+
+    static void paintMenuItem(Graphics g, SynthMenuItemLayoutHelper lh,
+                              MenuItemLayoutHelper.LayoutResult lr) {
+        // Save original graphics font and color
+        Font holdf = g.getFont();
+        Color holdc = g.getColor();
+
+        paintCheckIcon(g, lh, lr);
+        paintIcon(g, lh, lr);
+        paintText(g, lh, lr);
+        paintAccText(g, lh, lr);
+        paintArrowIcon(g, lh, lr);
+
+        // Restore original graphics font and color
+        g.setColor(holdc);
+        g.setFont(holdf);
+    }
+
+    static void paintBackground(Graphics g, SynthMenuItemLayoutHelper lh) {
+        paintBackground(lh.getContext(), g, lh.getMenuItem());
+    }
+
+    static void paintBackground(SynthContext context, Graphics g, JComponent c) {
+        context.getPainter().paintMenuItemBackground(context, g, 0, 0,
+                c.getWidth(), c.getHeight());
+    }
+
+    static void paintIcon(Graphics g, SynthMenuItemLayoutHelper lh,
+                          MenuItemLayoutHelper.LayoutResult lr) {
+        if (lh.getIcon() != null) {
+            Icon icon;
+            JMenuItem mi = lh.getMenuItem();
+            ButtonModel model = mi.getModel();
+            if (!model.isEnabled()) {
+                icon = mi.getDisabledIcon();
+            } else if (model.isPressed() && model.isArmed()) {
+                icon = mi.getPressedIcon();
+                if (icon == null) {
+                    // Use default icon
+                    icon = mi.getIcon();
+                }
+            } else {
+                icon = mi.getIcon();
+            }
+
+            if (icon != null) {
+                Rectangle iconRect = lr.getIconRect();
+                SynthIcon.paintIcon(icon, lh.getContext(), g, iconRect.x,
+                        iconRect.y, iconRect.width, iconRect.height);
+            }
+        }
+    }
+
+    static void paintCheckIcon(Graphics g, SynthMenuItemLayoutHelper lh,
+                               MenuItemLayoutHelper.LayoutResult lr) {
+        if (lh.getCheckIcon() != null) {
+            Rectangle checkRect = lr.getCheckRect();
+            SynthIcon.paintIcon(lh.getCheckIcon(), lh.getContext(), g,
+                    checkRect.x, checkRect.y, checkRect.width, checkRect.height);
+        }
+    }
+
+    static void paintAccText(Graphics g, SynthMenuItemLayoutHelper lh,
+                             MenuItemLayoutHelper.LayoutResult lr) {
+        String accText = lh.getAccText();
+        if (accText != null && !accText.equals("")) {
+            g.setColor(lh.getAccStyle().getColor(lh.getAccContext(),
+                    ColorType.TEXT_FOREGROUND));
+            g.setFont(lh.getAccStyle().getFont(lh.getAccContext()));
+            lh.getAccGraphicsUtils().paintText(lh.getAccContext(), g, accText,
+                    lr.getAccRect().x, lr.getAccRect().y, -1);
+        }
+    }
+
+    static void paintText(Graphics g, SynthMenuItemLayoutHelper lh,
+                          MenuItemLayoutHelper.LayoutResult lr) {
+        if (!lh.getText().equals("")) {
+            if (lh.getHtmlView() != null) {
+                // Text is HTML
+                lh.getHtmlView().paint(g, lr.getTextRect());
+            } else {
+                // Text isn't HTML
+                g.setColor(lh.getStyle().getColor(
+                        lh.getContext(), ColorType.TEXT_FOREGROUND));
+                g.setFont(lh.getStyle().getFont(lh.getContext()));
+                lh.getGraphicsUtils().paintText(lh.getContext(), g, lh.getText(),
+                        lr.getTextRect().x, lr.getTextRect().y,
+                        lh.getMenuItem().getDisplayedMnemonicIndex());
+            }
+        }
+    }
+
+    static void paintArrowIcon(Graphics g, SynthMenuItemLayoutHelper lh,
+                               MenuItemLayoutHelper.LayoutResult lr) {
+        if (lh.getArrowIcon() != null) {
+            Rectangle arrowRect = lr.getArrowRect();
+            SynthIcon.paintIcon(lh.getArrowIcon(), lh.getContext(), g,
+                    arrowRect.x, arrowRect.y, arrowRect.width, arrowRect.height);
+        }
+    }
+
+    /**
+     * Wraps a SynthIcon around the Icon interface, forwarding calls to
+     * the SynthIcon with a given SynthContext.
+     */
+    private static class SynthIconWrapper implements Icon {
+        private static final java.util.List<SynthIconWrapper> CACHE = new java.util.ArrayList<SynthIconWrapper>(1);
+
+        private SynthIcon synthIcon;
+        private SynthContext context;
+
+        static SynthIconWrapper get(SynthIcon icon, SynthContext context) {
+            synchronized(CACHE) {
+                int size = CACHE.size();
+                if (size > 0) {
+                    SynthIconWrapper wrapper = CACHE.remove(size - 1);
+                    wrapper.reset(icon, context);
+                    return wrapper;
+                }
+            }
+            return new SynthIconWrapper(icon, context);
+        }
+
+        static void release(SynthIconWrapper wrapper) {
+            wrapper.reset(null, null);
+            synchronized(CACHE) {
+                CACHE.add(wrapper);
+            }
+        }
+
+        SynthIconWrapper(SynthIcon icon, SynthContext context) {
+            reset(icon, context);
+        }
+
+        void reset(SynthIcon icon, SynthContext context) {
+            synthIcon = icon;
+            this.context = context;
+        }
+
+        public void paintIcon(Component c, Graphics g, int x, int y) {
+            // This is a noop as this should only be for sizing calls.
+        }
+
+        public int getIconWidth() {
+            return synthIcon.getIconWidth(context);
+        }
+
+        public int getIconHeight() {
+            return synthIcon.getIconHeight(context);
+        }
+    }
+}

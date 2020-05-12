@@ -1,15 +1,59 @@
+/*
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
+/*
+ * Copyright (c) 2009 by Oracle Corporation. All Rights Reserved.
+ */
+
 package javax.xml.stream.events;
 
-public interface Namespace extends Attribute {
-  String getPrefix();
-  
-  String getNamespaceURI();
-  
-  boolean isDefaultNamespaceDeclaration();
-}
+import javax.xml.namespace.QName;
 
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\xml\stream\events\Namespace.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * An interface that contains information about a namespace.
+ * Namespaces are accessed from a StartElement.
+ *
+ * @version 1.0
+ * @author Copyright (c) 2009 by Oracle Corporation. All Rights Reserved.
+ * @see StartElement
+ * @since 1.6
  */
+public interface Namespace extends Attribute {
+
+  /**
+   * Gets the prefix, returns "" if this is a default
+   * namespace declaration.
+   */
+  public String getPrefix();
+
+  /**
+   * Gets the uri bound to the prefix of this namespace
+   */
+  public String getNamespaceURI();
+
+  /**
+   * returns true if this attribute declares the default namespace
+   */
+  public boolean isDefaultNamespaceDeclaration();
+}

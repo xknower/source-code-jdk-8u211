@@ -1,335 +1,329 @@
-/*     */ package com.sun.org.apache.bcel.internal.generic;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public interface InstructionConstants
-/*     */ {
-/*  82 */   public static final Instruction NOP = new NOP();
-/*  83 */   public static final Instruction ACONST_NULL = new ACONST_NULL();
-/*  84 */   public static final Instruction ICONST_M1 = new ICONST(-1);
-/*  85 */   public static final Instruction ICONST_0 = new ICONST(0);
-/*  86 */   public static final Instruction ICONST_1 = new ICONST(1);
-/*  87 */   public static final Instruction ICONST_2 = new ICONST(2);
-/*  88 */   public static final Instruction ICONST_3 = new ICONST(3);
-/*  89 */   public static final Instruction ICONST_4 = new ICONST(4);
-/*  90 */   public static final Instruction ICONST_5 = new ICONST(5);
-/*  91 */   public static final Instruction LCONST_0 = new LCONST(0L);
-/*  92 */   public static final Instruction LCONST_1 = new LCONST(1L);
-/*  93 */   public static final Instruction FCONST_0 = new FCONST(0.0F);
-/*  94 */   public static final Instruction FCONST_1 = new FCONST(1.0F);
-/*  95 */   public static final Instruction FCONST_2 = new FCONST(2.0F);
-/*  96 */   public static final Instruction DCONST_0 = new DCONST(0.0D);
-/*  97 */   public static final Instruction DCONST_1 = new DCONST(1.0D);
-/*  98 */   public static final ArrayInstruction IALOAD = new IALOAD();
-/*  99 */   public static final ArrayInstruction LALOAD = new LALOAD();
-/* 100 */   public static final ArrayInstruction FALOAD = new FALOAD();
-/* 101 */   public static final ArrayInstruction DALOAD = new DALOAD();
-/* 102 */   public static final ArrayInstruction AALOAD = new AALOAD();
-/* 103 */   public static final ArrayInstruction BALOAD = new BALOAD();
-/* 104 */   public static final ArrayInstruction CALOAD = new CALOAD();
-/* 105 */   public static final ArrayInstruction SALOAD = new SALOAD();
-/* 106 */   public static final ArrayInstruction IASTORE = new IASTORE();
-/* 107 */   public static final ArrayInstruction LASTORE = new LASTORE();
-/* 108 */   public static final ArrayInstruction FASTORE = new FASTORE();
-/* 109 */   public static final ArrayInstruction DASTORE = new DASTORE();
-/* 110 */   public static final ArrayInstruction AASTORE = new AASTORE();
-/* 111 */   public static final ArrayInstruction BASTORE = new BASTORE();
-/* 112 */   public static final ArrayInstruction CASTORE = new CASTORE();
-/* 113 */   public static final ArrayInstruction SASTORE = new SASTORE();
-/* 114 */   public static final StackInstruction POP = new POP();
-/* 115 */   public static final StackInstruction POP2 = new POP2();
-/* 116 */   public static final StackInstruction DUP = new DUP();
-/* 117 */   public static final StackInstruction DUP_X1 = new DUP_X1();
-/* 118 */   public static final StackInstruction DUP_X2 = new DUP_X2();
-/* 119 */   public static final StackInstruction DUP2 = new DUP2();
-/* 120 */   public static final StackInstruction DUP2_X1 = new DUP2_X1();
-/* 121 */   public static final StackInstruction DUP2_X2 = new DUP2_X2();
-/* 122 */   public static final StackInstruction SWAP = new SWAP();
-/* 123 */   public static final ArithmeticInstruction IADD = new IADD();
-/* 124 */   public static final ArithmeticInstruction LADD = new LADD();
-/* 125 */   public static final ArithmeticInstruction FADD = new FADD();
-/* 126 */   public static final ArithmeticInstruction DADD = new DADD();
-/* 127 */   public static final ArithmeticInstruction ISUB = new ISUB();
-/* 128 */   public static final ArithmeticInstruction LSUB = new LSUB();
-/* 129 */   public static final ArithmeticInstruction FSUB = new FSUB();
-/* 130 */   public static final ArithmeticInstruction DSUB = new DSUB();
-/* 131 */   public static final ArithmeticInstruction IMUL = new IMUL();
-/* 132 */   public static final ArithmeticInstruction LMUL = new LMUL();
-/* 133 */   public static final ArithmeticInstruction FMUL = new FMUL();
-/* 134 */   public static final ArithmeticInstruction DMUL = new DMUL();
-/* 135 */   public static final ArithmeticInstruction IDIV = new IDIV();
-/* 136 */   public static final ArithmeticInstruction LDIV = new LDIV();
-/* 137 */   public static final ArithmeticInstruction FDIV = new FDIV();
-/* 138 */   public static final ArithmeticInstruction DDIV = new DDIV();
-/* 139 */   public static final ArithmeticInstruction IREM = new IREM();
-/* 140 */   public static final ArithmeticInstruction LREM = new LREM();
-/* 141 */   public static final ArithmeticInstruction FREM = new FREM();
-/* 142 */   public static final ArithmeticInstruction DREM = new DREM();
-/* 143 */   public static final ArithmeticInstruction INEG = new INEG();
-/* 144 */   public static final ArithmeticInstruction LNEG = new LNEG();
-/* 145 */   public static final ArithmeticInstruction FNEG = new FNEG();
-/* 146 */   public static final ArithmeticInstruction DNEG = new DNEG();
-/* 147 */   public static final ArithmeticInstruction ISHL = new ISHL();
-/* 148 */   public static final ArithmeticInstruction LSHL = new LSHL();
-/* 149 */   public static final ArithmeticInstruction ISHR = new ISHR();
-/* 150 */   public static final ArithmeticInstruction LSHR = new LSHR();
-/* 151 */   public static final ArithmeticInstruction IUSHR = new IUSHR();
-/* 152 */   public static final ArithmeticInstruction LUSHR = new LUSHR();
-/* 153 */   public static final ArithmeticInstruction IAND = new IAND();
-/* 154 */   public static final ArithmeticInstruction LAND = new LAND();
-/* 155 */   public static final ArithmeticInstruction IOR = new IOR();
-/* 156 */   public static final ArithmeticInstruction LOR = new LOR();
-/* 157 */   public static final ArithmeticInstruction IXOR = new IXOR();
-/* 158 */   public static final ArithmeticInstruction LXOR = new LXOR();
-/* 159 */   public static final ConversionInstruction I2L = new I2L();
-/* 160 */   public static final ConversionInstruction I2F = new I2F();
-/* 161 */   public static final ConversionInstruction I2D = new I2D();
-/* 162 */   public static final ConversionInstruction L2I = new L2I();
-/* 163 */   public static final ConversionInstruction L2F = new L2F();
-/* 164 */   public static final ConversionInstruction L2D = new L2D();
-/* 165 */   public static final ConversionInstruction F2I = new F2I();
-/* 166 */   public static final ConversionInstruction F2L = new F2L();
-/* 167 */   public static final ConversionInstruction F2D = new F2D();
-/* 168 */   public static final ConversionInstruction D2I = new D2I();
-/* 169 */   public static final ConversionInstruction D2L = new D2L();
-/* 170 */   public static final ConversionInstruction D2F = new D2F();
-/* 171 */   public static final ConversionInstruction I2B = new I2B();
-/* 172 */   public static final ConversionInstruction I2C = new I2C();
-/* 173 */   public static final ConversionInstruction I2S = new I2S();
-/* 174 */   public static final Instruction LCMP = new LCMP();
-/* 175 */   public static final Instruction FCMPL = new FCMPL();
-/* 176 */   public static final Instruction FCMPG = new FCMPG();
-/* 177 */   public static final Instruction DCMPL = new DCMPL();
-/* 178 */   public static final Instruction DCMPG = new DCMPG();
-/* 179 */   public static final ReturnInstruction IRETURN = new IRETURN();
-/* 180 */   public static final ReturnInstruction LRETURN = new LRETURN();
-/* 181 */   public static final ReturnInstruction FRETURN = new FRETURN();
-/* 182 */   public static final ReturnInstruction DRETURN = new DRETURN();
-/* 183 */   public static final ReturnInstruction ARETURN = new ARETURN();
-/* 184 */   public static final ReturnInstruction RETURN = new RETURN();
-/* 185 */   public static final Instruction ARRAYLENGTH = new ARRAYLENGTH();
-/* 186 */   public static final Instruction ATHROW = new ATHROW();
-/* 187 */   public static final Instruction MONITORENTER = new MONITORENTER();
-/* 188 */   public static final Instruction MONITOREXIT = new MONITOREXIT();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 193 */   public static final LocalVariableInstruction THIS = new ALOAD(0);
-/* 194 */   public static final LocalVariableInstruction ALOAD_0 = THIS;
-/* 195 */   public static final LocalVariableInstruction ALOAD_1 = new ALOAD(1);
-/* 196 */   public static final LocalVariableInstruction ALOAD_2 = new ALOAD(2);
-/* 197 */   public static final LocalVariableInstruction ILOAD_0 = new ILOAD(0);
-/* 198 */   public static final LocalVariableInstruction ILOAD_1 = new ILOAD(1);
-/* 199 */   public static final LocalVariableInstruction ILOAD_2 = new ILOAD(2);
-/* 200 */   public static final LocalVariableInstruction ASTORE_0 = new ASTORE(0);
-/* 201 */   public static final LocalVariableInstruction ASTORE_1 = new ASTORE(1);
-/* 202 */   public static final LocalVariableInstruction ASTORE_2 = new ASTORE(2);
-/* 203 */   public static final LocalVariableInstruction ISTORE_0 = new ISTORE(0);
-/* 204 */   public static final LocalVariableInstruction ISTORE_1 = new ISTORE(1);
-/* 205 */   public static final LocalVariableInstruction ISTORE_2 = new ISTORE(2);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 211 */   public static final Instruction[] INSTRUCTIONS = new Instruction[256];
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 216 */   public static final Clinit bla = new Clinit();
-/*     */   
-/*     */   public static class Clinit {
-/*     */     Clinit() {
-/* 220 */       InstructionConstants.INSTRUCTIONS[0] = InstructionConstants.NOP;
-/* 221 */       InstructionConstants.INSTRUCTIONS[1] = InstructionConstants.ACONST_NULL;
-/* 222 */       InstructionConstants.INSTRUCTIONS[2] = InstructionConstants.ICONST_M1;
-/* 223 */       InstructionConstants.INSTRUCTIONS[3] = InstructionConstants.ICONST_0;
-/* 224 */       InstructionConstants.INSTRUCTIONS[4] = InstructionConstants.ICONST_1;
-/* 225 */       InstructionConstants.INSTRUCTIONS[5] = InstructionConstants.ICONST_2;
-/* 226 */       InstructionConstants.INSTRUCTIONS[6] = InstructionConstants.ICONST_3;
-/* 227 */       InstructionConstants.INSTRUCTIONS[7] = InstructionConstants.ICONST_4;
-/* 228 */       InstructionConstants.INSTRUCTIONS[8] = InstructionConstants.ICONST_5;
-/* 229 */       InstructionConstants.INSTRUCTIONS[9] = InstructionConstants.LCONST_0;
-/* 230 */       InstructionConstants.INSTRUCTIONS[10] = InstructionConstants.LCONST_1;
-/* 231 */       InstructionConstants.INSTRUCTIONS[11] = InstructionConstants.FCONST_0;
-/* 232 */       InstructionConstants.INSTRUCTIONS[12] = InstructionConstants.FCONST_1;
-/* 233 */       InstructionConstants.INSTRUCTIONS[13] = InstructionConstants.FCONST_2;
-/* 234 */       InstructionConstants.INSTRUCTIONS[14] = InstructionConstants.DCONST_0;
-/* 235 */       InstructionConstants.INSTRUCTIONS[15] = InstructionConstants.DCONST_1;
-/* 236 */       InstructionConstants.INSTRUCTIONS[46] = InstructionConstants.IALOAD;
-/* 237 */       InstructionConstants.INSTRUCTIONS[47] = InstructionConstants.LALOAD;
-/* 238 */       InstructionConstants.INSTRUCTIONS[48] = InstructionConstants.FALOAD;
-/* 239 */       InstructionConstants.INSTRUCTIONS[49] = InstructionConstants.DALOAD;
-/* 240 */       InstructionConstants.INSTRUCTIONS[50] = InstructionConstants.AALOAD;
-/* 241 */       InstructionConstants.INSTRUCTIONS[51] = InstructionConstants.BALOAD;
-/* 242 */       InstructionConstants.INSTRUCTIONS[52] = InstructionConstants.CALOAD;
-/* 243 */       InstructionConstants.INSTRUCTIONS[53] = InstructionConstants.SALOAD;
-/* 244 */       InstructionConstants.INSTRUCTIONS[79] = InstructionConstants.IASTORE;
-/* 245 */       InstructionConstants.INSTRUCTIONS[80] = InstructionConstants.LASTORE;
-/* 246 */       InstructionConstants.INSTRUCTIONS[81] = InstructionConstants.FASTORE;
-/* 247 */       InstructionConstants.INSTRUCTIONS[82] = InstructionConstants.DASTORE;
-/* 248 */       InstructionConstants.INSTRUCTIONS[83] = InstructionConstants.AASTORE;
-/* 249 */       InstructionConstants.INSTRUCTIONS[84] = InstructionConstants.BASTORE;
-/* 250 */       InstructionConstants.INSTRUCTIONS[85] = InstructionConstants.CASTORE;
-/* 251 */       InstructionConstants.INSTRUCTIONS[86] = InstructionConstants.SASTORE;
-/* 252 */       InstructionConstants.INSTRUCTIONS[87] = InstructionConstants.POP;
-/* 253 */       InstructionConstants.INSTRUCTIONS[88] = InstructionConstants.POP2;
-/* 254 */       InstructionConstants.INSTRUCTIONS[89] = InstructionConstants.DUP;
-/* 255 */       InstructionConstants.INSTRUCTIONS[90] = InstructionConstants.DUP_X1;
-/* 256 */       InstructionConstants.INSTRUCTIONS[91] = InstructionConstants.DUP_X2;
-/* 257 */       InstructionConstants.INSTRUCTIONS[92] = InstructionConstants.DUP2;
-/* 258 */       InstructionConstants.INSTRUCTIONS[93] = InstructionConstants.DUP2_X1;
-/* 259 */       InstructionConstants.INSTRUCTIONS[94] = InstructionConstants.DUP2_X2;
-/* 260 */       InstructionConstants.INSTRUCTIONS[95] = InstructionConstants.SWAP;
-/* 261 */       InstructionConstants.INSTRUCTIONS[96] = InstructionConstants.IADD;
-/* 262 */       InstructionConstants.INSTRUCTIONS[97] = InstructionConstants.LADD;
-/* 263 */       InstructionConstants.INSTRUCTIONS[98] = InstructionConstants.FADD;
-/* 264 */       InstructionConstants.INSTRUCTIONS[99] = InstructionConstants.DADD;
-/* 265 */       InstructionConstants.INSTRUCTIONS[100] = InstructionConstants.ISUB;
-/* 266 */       InstructionConstants.INSTRUCTIONS[101] = InstructionConstants.LSUB;
-/* 267 */       InstructionConstants.INSTRUCTIONS[102] = InstructionConstants.FSUB;
-/* 268 */       InstructionConstants.INSTRUCTIONS[103] = InstructionConstants.DSUB;
-/* 269 */       InstructionConstants.INSTRUCTIONS[104] = InstructionConstants.IMUL;
-/* 270 */       InstructionConstants.INSTRUCTIONS[105] = InstructionConstants.LMUL;
-/* 271 */       InstructionConstants.INSTRUCTIONS[106] = InstructionConstants.FMUL;
-/* 272 */       InstructionConstants.INSTRUCTIONS[107] = InstructionConstants.DMUL;
-/* 273 */       InstructionConstants.INSTRUCTIONS[108] = InstructionConstants.IDIV;
-/* 274 */       InstructionConstants.INSTRUCTIONS[109] = InstructionConstants.LDIV;
-/* 275 */       InstructionConstants.INSTRUCTIONS[110] = InstructionConstants.FDIV;
-/* 276 */       InstructionConstants.INSTRUCTIONS[111] = InstructionConstants.DDIV;
-/* 277 */       InstructionConstants.INSTRUCTIONS[112] = InstructionConstants.IREM;
-/* 278 */       InstructionConstants.INSTRUCTIONS[113] = InstructionConstants.LREM;
-/* 279 */       InstructionConstants.INSTRUCTIONS[114] = InstructionConstants.FREM;
-/* 280 */       InstructionConstants.INSTRUCTIONS[115] = InstructionConstants.DREM;
-/* 281 */       InstructionConstants.INSTRUCTIONS[116] = InstructionConstants.INEG;
-/* 282 */       InstructionConstants.INSTRUCTIONS[117] = InstructionConstants.LNEG;
-/* 283 */       InstructionConstants.INSTRUCTIONS[118] = InstructionConstants.FNEG;
-/* 284 */       InstructionConstants.INSTRUCTIONS[119] = InstructionConstants.DNEG;
-/* 285 */       InstructionConstants.INSTRUCTIONS[120] = InstructionConstants.ISHL;
-/* 286 */       InstructionConstants.INSTRUCTIONS[121] = InstructionConstants.LSHL;
-/* 287 */       InstructionConstants.INSTRUCTIONS[122] = InstructionConstants.ISHR;
-/* 288 */       InstructionConstants.INSTRUCTIONS[123] = InstructionConstants.LSHR;
-/* 289 */       InstructionConstants.INSTRUCTIONS[124] = InstructionConstants.IUSHR;
-/* 290 */       InstructionConstants.INSTRUCTIONS[125] = InstructionConstants.LUSHR;
-/* 291 */       InstructionConstants.INSTRUCTIONS[126] = InstructionConstants.IAND;
-/* 292 */       InstructionConstants.INSTRUCTIONS[127] = InstructionConstants.LAND;
-/* 293 */       InstructionConstants.INSTRUCTIONS[128] = InstructionConstants.IOR;
-/* 294 */       InstructionConstants.INSTRUCTIONS[129] = InstructionConstants.LOR;
-/* 295 */       InstructionConstants.INSTRUCTIONS[130] = InstructionConstants.IXOR;
-/* 296 */       InstructionConstants.INSTRUCTIONS[131] = InstructionConstants.LXOR;
-/* 297 */       InstructionConstants.INSTRUCTIONS[133] = InstructionConstants.I2L;
-/* 298 */       InstructionConstants.INSTRUCTIONS[134] = InstructionConstants.I2F;
-/* 299 */       InstructionConstants.INSTRUCTIONS[135] = InstructionConstants.I2D;
-/* 300 */       InstructionConstants.INSTRUCTIONS[136] = InstructionConstants.L2I;
-/* 301 */       InstructionConstants.INSTRUCTIONS[137] = InstructionConstants.L2F;
-/* 302 */       InstructionConstants.INSTRUCTIONS[138] = InstructionConstants.L2D;
-/* 303 */       InstructionConstants.INSTRUCTIONS[139] = InstructionConstants.F2I;
-/* 304 */       InstructionConstants.INSTRUCTIONS[140] = InstructionConstants.F2L;
-/* 305 */       InstructionConstants.INSTRUCTIONS[141] = InstructionConstants.F2D;
-/* 306 */       InstructionConstants.INSTRUCTIONS[142] = InstructionConstants.D2I;
-/* 307 */       InstructionConstants.INSTRUCTIONS[143] = InstructionConstants.D2L;
-/* 308 */       InstructionConstants.INSTRUCTIONS[144] = InstructionConstants.D2F;
-/* 309 */       InstructionConstants.INSTRUCTIONS[145] = InstructionConstants.I2B;
-/* 310 */       InstructionConstants.INSTRUCTIONS[146] = InstructionConstants.I2C;
-/* 311 */       InstructionConstants.INSTRUCTIONS[147] = InstructionConstants.I2S;
-/* 312 */       InstructionConstants.INSTRUCTIONS[148] = InstructionConstants.LCMP;
-/* 313 */       InstructionConstants.INSTRUCTIONS[149] = InstructionConstants.FCMPL;
-/* 314 */       InstructionConstants.INSTRUCTIONS[150] = InstructionConstants.FCMPG;
-/* 315 */       InstructionConstants.INSTRUCTIONS[151] = InstructionConstants.DCMPL;
-/* 316 */       InstructionConstants.INSTRUCTIONS[152] = InstructionConstants.DCMPG;
-/* 317 */       InstructionConstants.INSTRUCTIONS[172] = InstructionConstants.IRETURN;
-/* 318 */       InstructionConstants.INSTRUCTIONS[173] = InstructionConstants.LRETURN;
-/* 319 */       InstructionConstants.INSTRUCTIONS[174] = InstructionConstants.FRETURN;
-/* 320 */       InstructionConstants.INSTRUCTIONS[175] = InstructionConstants.DRETURN;
-/* 321 */       InstructionConstants.INSTRUCTIONS[176] = InstructionConstants.ARETURN;
-/* 322 */       InstructionConstants.INSTRUCTIONS[177] = InstructionConstants.RETURN;
-/* 323 */       InstructionConstants.INSTRUCTIONS[190] = InstructionConstants.ARRAYLENGTH;
-/* 324 */       InstructionConstants.INSTRUCTIONS[191] = InstructionConstants.ATHROW;
-/* 325 */       InstructionConstants.INSTRUCTIONS[194] = InstructionConstants.MONITORENTER;
-/* 326 */       InstructionConstants.INSTRUCTIONS[195] = InstructionConstants.MONITOREXIT;
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\bcel\internal\generic\InstructionConstants.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+package com.sun.org.apache.bcel.internal.generic;
+
+/* ====================================================================
+ * The Apache Software License, Version 1.1
+ *
+ * Copyright (c) 2001 The Apache Software Foundation.  All rights
+ * reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. The end-user documentation included with the redistribution,
+ *    if any, must include the following acknowledgment:
+ *       "This product includes software developed by the
+ *        Apache Software Foundation (http://www.apache.org/)."
+ *    Alternately, this acknowledgment may appear in the software itself,
+ *    if and wherever such third-party acknowledgments normally appear.
+ *
+ * 4. The names "Apache" and "Apache Software Foundation" and
+ *    "Apache BCEL" must not be used to endorse or promote products
+ *    derived from this software without prior written permission. For
+ *    written permission, please contact apache@apache.org.
+ *
+ * 5. Products derived from this software may not be called "Apache",
+ *    "Apache BCEL", nor may "Apache" appear in their name, without
+ *    prior written permission of the Apache Software Foundation.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED.  IN NO EVENT SHALL THE APACHE SOFTWARE FOUNDATION OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+ * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+ * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals on behalf of the Apache Software Foundation.  For more
+ * information on the Apache Software Foundation, please see
+ * <http://www.apache.org/>.
+ */
+
+import com.sun.org.apache.bcel.internal.Constants;
+
+/**
+ * This interface contains shareable instruction objects.
+ *
+ * In order to save memory you can use some instructions multiply,
+ * since they have an immutable state and are directly derived from
+ * Instruction.  I.e. they have no instance fields that could be
+ * changed. Since some of these instructions like ICONST_0 occur
+ * very frequently this can save a lot of time and space. This
+ * feature is an adaptation of the FlyWeight design pattern, we
+ * just use an array instead of a factory.
+ *
+ * The Instructions can also accessed directly under their names, so
+ * it's possible to write il.append(Instruction.ICONST_0);
+ *
+ * @author  <A HREF="mailto:markus.dahm@berlin.de">M. Dahm</A>
+ */
+public interface InstructionConstants {
+  /** Predefined instruction objects
+   */
+  public static final Instruction           NOP          = new NOP();
+  public static final Instruction           ACONST_NULL  = new ACONST_NULL();
+  public static final Instruction           ICONST_M1    = new ICONST(-1);
+  public static final Instruction           ICONST_0     = new ICONST(0);
+  public static final Instruction           ICONST_1     = new ICONST(1);
+  public static final Instruction           ICONST_2     = new ICONST(2);
+  public static final Instruction           ICONST_3     = new ICONST(3);
+  public static final Instruction           ICONST_4     = new ICONST(4);
+  public static final Instruction           ICONST_5     = new ICONST(5);
+  public static final Instruction           LCONST_0     = new LCONST(0);
+  public static final Instruction           LCONST_1     = new LCONST(1);
+  public static final Instruction           FCONST_0     = new FCONST(0);
+  public static final Instruction           FCONST_1     = new FCONST(1);
+  public static final Instruction           FCONST_2     = new FCONST(2);
+  public static final Instruction           DCONST_0     = new DCONST(0);
+  public static final Instruction           DCONST_1     = new DCONST(1);
+  public static final ArrayInstruction      IALOAD       = new IALOAD();
+  public static final ArrayInstruction      LALOAD       = new LALOAD();
+  public static final ArrayInstruction      FALOAD       = new FALOAD();
+  public static final ArrayInstruction      DALOAD       = new DALOAD();
+  public static final ArrayInstruction      AALOAD       = new AALOAD();
+  public static final ArrayInstruction      BALOAD       = new BALOAD();
+  public static final ArrayInstruction      CALOAD       = new CALOAD();
+  public static final ArrayInstruction      SALOAD       = new SALOAD();
+  public static final ArrayInstruction      IASTORE      = new IASTORE();
+  public static final ArrayInstruction      LASTORE      = new LASTORE();
+  public static final ArrayInstruction      FASTORE      = new FASTORE();
+  public static final ArrayInstruction      DASTORE      = new DASTORE();
+  public static final ArrayInstruction      AASTORE      = new AASTORE();
+  public static final ArrayInstruction      BASTORE      = new BASTORE();
+  public static final ArrayInstruction      CASTORE      = new CASTORE();
+  public static final ArrayInstruction      SASTORE      = new SASTORE();
+  public static final StackInstruction      POP          = new POP();
+  public static final StackInstruction      POP2         = new POP2();
+  public static final StackInstruction      DUP          = new DUP();
+  public static final StackInstruction      DUP_X1       = new DUP_X1();
+  public static final StackInstruction      DUP_X2       = new DUP_X2();
+  public static final StackInstruction      DUP2         = new DUP2();
+  public static final StackInstruction      DUP2_X1      = new DUP2_X1();
+  public static final StackInstruction      DUP2_X2      = new DUP2_X2();
+  public static final StackInstruction      SWAP         = new SWAP();
+  public static final ArithmeticInstruction IADD         = new IADD();
+  public static final ArithmeticInstruction LADD         = new LADD();
+  public static final ArithmeticInstruction FADD         = new FADD();
+  public static final ArithmeticInstruction DADD         = new DADD();
+  public static final ArithmeticInstruction ISUB         = new ISUB();
+  public static final ArithmeticInstruction LSUB         = new LSUB();
+  public static final ArithmeticInstruction FSUB         = new FSUB();
+  public static final ArithmeticInstruction DSUB         = new DSUB();
+  public static final ArithmeticInstruction IMUL         = new IMUL();
+  public static final ArithmeticInstruction LMUL         = new LMUL();
+  public static final ArithmeticInstruction FMUL         = new FMUL();
+  public static final ArithmeticInstruction DMUL         = new DMUL();
+  public static final ArithmeticInstruction IDIV         = new IDIV();
+  public static final ArithmeticInstruction LDIV         = new LDIV();
+  public static final ArithmeticInstruction FDIV         = new FDIV();
+  public static final ArithmeticInstruction DDIV         = new DDIV();
+  public static final ArithmeticInstruction IREM         = new IREM();
+  public static final ArithmeticInstruction LREM         = new LREM();
+  public static final ArithmeticInstruction FREM         = new FREM();
+  public static final ArithmeticInstruction DREM         = new DREM();
+  public static final ArithmeticInstruction INEG         = new INEG();
+  public static final ArithmeticInstruction LNEG         = new LNEG();
+  public static final ArithmeticInstruction FNEG         = new FNEG();
+  public static final ArithmeticInstruction DNEG         = new DNEG();
+  public static final ArithmeticInstruction ISHL         = new ISHL();
+  public static final ArithmeticInstruction LSHL         = new LSHL();
+  public static final ArithmeticInstruction ISHR         = new ISHR();
+  public static final ArithmeticInstruction LSHR         = new LSHR();
+  public static final ArithmeticInstruction IUSHR        = new IUSHR();
+  public static final ArithmeticInstruction LUSHR        = new LUSHR();
+  public static final ArithmeticInstruction IAND         = new IAND();
+  public static final ArithmeticInstruction LAND         = new LAND();
+  public static final ArithmeticInstruction IOR          = new IOR();
+  public static final ArithmeticInstruction LOR          = new LOR();
+  public static final ArithmeticInstruction IXOR         = new IXOR();
+  public static final ArithmeticInstruction LXOR         = new LXOR();
+  public static final ConversionInstruction I2L          = new I2L();
+  public static final ConversionInstruction I2F          = new I2F();
+  public static final ConversionInstruction I2D          = new I2D();
+  public static final ConversionInstruction L2I          = new L2I();
+  public static final ConversionInstruction L2F          = new L2F();
+  public static final ConversionInstruction L2D          = new L2D();
+  public static final ConversionInstruction F2I          = new F2I();
+  public static final ConversionInstruction F2L          = new F2L();
+  public static final ConversionInstruction F2D          = new F2D();
+  public static final ConversionInstruction D2I          = new D2I();
+  public static final ConversionInstruction D2L          = new D2L();
+  public static final ConversionInstruction D2F          = new D2F();
+  public static final ConversionInstruction I2B          = new I2B();
+  public static final ConversionInstruction I2C          = new I2C();
+  public static final ConversionInstruction I2S          = new I2S();
+  public static final Instruction           LCMP         = new LCMP();
+  public static final Instruction           FCMPL        = new FCMPL();
+  public static final Instruction           FCMPG        = new FCMPG();
+  public static final Instruction           DCMPL        = new DCMPL();
+  public static final Instruction           DCMPG        = new DCMPG();
+  public static final ReturnInstruction     IRETURN      = new IRETURN();
+  public static final ReturnInstruction     LRETURN      = new LRETURN();
+  public static final ReturnInstruction     FRETURN      = new FRETURN();
+  public static final ReturnInstruction     DRETURN      = new DRETURN();
+  public static final ReturnInstruction     ARETURN      = new ARETURN();
+  public static final ReturnInstruction     RETURN       = new RETURN();
+  public static final Instruction           ARRAYLENGTH  = new ARRAYLENGTH();
+  public static final Instruction           ATHROW       = new ATHROW();
+  public static final Instruction           MONITORENTER = new MONITORENTER();
+  public static final Instruction           MONITOREXIT  = new MONITOREXIT();
+
+  /** You can use these constants in multiple places safely, if you can guarantee
+   * that you will never alter their internal values, e.g. call setIndex().
+   */
+  public static final LocalVariableInstruction THIS    = new ALOAD(0);
+  public static final LocalVariableInstruction ALOAD_0 = THIS;
+  public static final LocalVariableInstruction ALOAD_1 = new ALOAD(1);
+  public static final LocalVariableInstruction ALOAD_2 = new ALOAD(2);
+  public static final LocalVariableInstruction ILOAD_0 = new ILOAD(0);
+  public static final LocalVariableInstruction ILOAD_1 = new ILOAD(1);
+  public static final LocalVariableInstruction ILOAD_2 = new ILOAD(2);
+  public static final LocalVariableInstruction ASTORE_0 = new ASTORE(0);
+  public static final LocalVariableInstruction ASTORE_1 = new ASTORE(1);
+  public static final LocalVariableInstruction ASTORE_2 = new ASTORE(2);
+  public static final LocalVariableInstruction ISTORE_0 = new ISTORE(0);
+  public static final LocalVariableInstruction ISTORE_1 = new ISTORE(1);
+  public static final LocalVariableInstruction ISTORE_2 = new ISTORE(2);
+
+
+  /** Get object via its opcode, for immutable instructions like
+   * branch instructions entries are set to null.
+   */
+  public static final Instruction[] INSTRUCTIONS = new Instruction[256];
+
+  /** Interfaces may have no static initializers, so we simulate this
+   * with an inner class.
+   */
+  static final Clinit bla = new Clinit();
+
+  static class Clinit {
+    Clinit() {
+      INSTRUCTIONS[Constants.NOP] = NOP;
+      INSTRUCTIONS[Constants.ACONST_NULL] = ACONST_NULL;
+      INSTRUCTIONS[Constants.ICONST_M1] = ICONST_M1;
+      INSTRUCTIONS[Constants.ICONST_0] = ICONST_0;
+      INSTRUCTIONS[Constants.ICONST_1] = ICONST_1;
+      INSTRUCTIONS[Constants.ICONST_2] = ICONST_2;
+      INSTRUCTIONS[Constants.ICONST_3] = ICONST_3;
+      INSTRUCTIONS[Constants.ICONST_4] = ICONST_4;
+      INSTRUCTIONS[Constants.ICONST_5] = ICONST_5;
+      INSTRUCTIONS[Constants.LCONST_0] = LCONST_0;
+      INSTRUCTIONS[Constants.LCONST_1] = LCONST_1;
+      INSTRUCTIONS[Constants.FCONST_0] = FCONST_0;
+      INSTRUCTIONS[Constants.FCONST_1] = FCONST_1;
+      INSTRUCTIONS[Constants.FCONST_2] = FCONST_2;
+      INSTRUCTIONS[Constants.DCONST_0] = DCONST_0;
+      INSTRUCTIONS[Constants.DCONST_1] = DCONST_1;
+      INSTRUCTIONS[Constants.IALOAD] = IALOAD;
+      INSTRUCTIONS[Constants.LALOAD] = LALOAD;
+      INSTRUCTIONS[Constants.FALOAD] = FALOAD;
+      INSTRUCTIONS[Constants.DALOAD] = DALOAD;
+      INSTRUCTIONS[Constants.AALOAD] = AALOAD;
+      INSTRUCTIONS[Constants.BALOAD] = BALOAD;
+      INSTRUCTIONS[Constants.CALOAD] = CALOAD;
+      INSTRUCTIONS[Constants.SALOAD] = SALOAD;
+      INSTRUCTIONS[Constants.IASTORE] = IASTORE;
+      INSTRUCTIONS[Constants.LASTORE] = LASTORE;
+      INSTRUCTIONS[Constants.FASTORE] = FASTORE;
+      INSTRUCTIONS[Constants.DASTORE] = DASTORE;
+      INSTRUCTIONS[Constants.AASTORE] = AASTORE;
+      INSTRUCTIONS[Constants.BASTORE] = BASTORE;
+      INSTRUCTIONS[Constants.CASTORE] = CASTORE;
+      INSTRUCTIONS[Constants.SASTORE] = SASTORE;
+      INSTRUCTIONS[Constants.POP] = POP;
+      INSTRUCTIONS[Constants.POP2] = POP2;
+      INSTRUCTIONS[Constants.DUP] = DUP;
+      INSTRUCTIONS[Constants.DUP_X1] = DUP_X1;
+      INSTRUCTIONS[Constants.DUP_X2] = DUP_X2;
+      INSTRUCTIONS[Constants.DUP2] = DUP2;
+      INSTRUCTIONS[Constants.DUP2_X1] = DUP2_X1;
+      INSTRUCTIONS[Constants.DUP2_X2] = DUP2_X2;
+      INSTRUCTIONS[Constants.SWAP] = SWAP;
+      INSTRUCTIONS[Constants.IADD] = IADD;
+      INSTRUCTIONS[Constants.LADD] = LADD;
+      INSTRUCTIONS[Constants.FADD] = FADD;
+      INSTRUCTIONS[Constants.DADD] = DADD;
+      INSTRUCTIONS[Constants.ISUB] = ISUB;
+      INSTRUCTIONS[Constants.LSUB] = LSUB;
+      INSTRUCTIONS[Constants.FSUB] = FSUB;
+      INSTRUCTIONS[Constants.DSUB] = DSUB;
+      INSTRUCTIONS[Constants.IMUL] = IMUL;
+      INSTRUCTIONS[Constants.LMUL] = LMUL;
+      INSTRUCTIONS[Constants.FMUL] = FMUL;
+      INSTRUCTIONS[Constants.DMUL] = DMUL;
+      INSTRUCTIONS[Constants.IDIV] = IDIV;
+      INSTRUCTIONS[Constants.LDIV] = LDIV;
+      INSTRUCTIONS[Constants.FDIV] = FDIV;
+      INSTRUCTIONS[Constants.DDIV] = DDIV;
+      INSTRUCTIONS[Constants.IREM] = IREM;
+      INSTRUCTIONS[Constants.LREM] = LREM;
+      INSTRUCTIONS[Constants.FREM] = FREM;
+      INSTRUCTIONS[Constants.DREM] = DREM;
+      INSTRUCTIONS[Constants.INEG] = INEG;
+      INSTRUCTIONS[Constants.LNEG] = LNEG;
+      INSTRUCTIONS[Constants.FNEG] = FNEG;
+      INSTRUCTIONS[Constants.DNEG] = DNEG;
+      INSTRUCTIONS[Constants.ISHL] = ISHL;
+      INSTRUCTIONS[Constants.LSHL] = LSHL;
+      INSTRUCTIONS[Constants.ISHR] = ISHR;
+      INSTRUCTIONS[Constants.LSHR] = LSHR;
+      INSTRUCTIONS[Constants.IUSHR] = IUSHR;
+      INSTRUCTIONS[Constants.LUSHR] = LUSHR;
+      INSTRUCTIONS[Constants.IAND] = IAND;
+      INSTRUCTIONS[Constants.LAND] = LAND;
+      INSTRUCTIONS[Constants.IOR] = IOR;
+      INSTRUCTIONS[Constants.LOR] = LOR;
+      INSTRUCTIONS[Constants.IXOR] = IXOR;
+      INSTRUCTIONS[Constants.LXOR] = LXOR;
+      INSTRUCTIONS[Constants.I2L] = I2L;
+      INSTRUCTIONS[Constants.I2F] = I2F;
+      INSTRUCTIONS[Constants.I2D] = I2D;
+      INSTRUCTIONS[Constants.L2I] = L2I;
+      INSTRUCTIONS[Constants.L2F] = L2F;
+      INSTRUCTIONS[Constants.L2D] = L2D;
+      INSTRUCTIONS[Constants.F2I] = F2I;
+      INSTRUCTIONS[Constants.F2L] = F2L;
+      INSTRUCTIONS[Constants.F2D] = F2D;
+      INSTRUCTIONS[Constants.D2I] = D2I;
+      INSTRUCTIONS[Constants.D2L] = D2L;
+      INSTRUCTIONS[Constants.D2F] = D2F;
+      INSTRUCTIONS[Constants.I2B] = I2B;
+      INSTRUCTIONS[Constants.I2C] = I2C;
+      INSTRUCTIONS[Constants.I2S] = I2S;
+      INSTRUCTIONS[Constants.LCMP] = LCMP;
+      INSTRUCTIONS[Constants.FCMPL] = FCMPL;
+      INSTRUCTIONS[Constants.FCMPG] = FCMPG;
+      INSTRUCTIONS[Constants.DCMPL] = DCMPL;
+      INSTRUCTIONS[Constants.DCMPG] = DCMPG;
+      INSTRUCTIONS[Constants.IRETURN] = IRETURN;
+      INSTRUCTIONS[Constants.LRETURN] = LRETURN;
+      INSTRUCTIONS[Constants.FRETURN] = FRETURN;
+      INSTRUCTIONS[Constants.DRETURN] = DRETURN;
+      INSTRUCTIONS[Constants.ARETURN] = ARETURN;
+      INSTRUCTIONS[Constants.RETURN] = RETURN;
+      INSTRUCTIONS[Constants.ARRAYLENGTH] = ARRAYLENGTH;
+      INSTRUCTIONS[Constants.ATHROW] = ATHROW;
+      INSTRUCTIONS[Constants.MONITORENTER] = MONITORENTER;
+      INSTRUCTIONS[Constants.MONITOREXIT] = MONITOREXIT;
+    }
+  }
+}

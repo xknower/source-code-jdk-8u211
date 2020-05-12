@@ -1,745 +1,813 @@
-/*     */ package com.sun.org.apache.xml.internal.dtm.ref;
-/*     */ 
-/*     */ import com.sun.org.apache.xml.internal.res.XMLMessages;
-/*     */ import com.sun.org.apache.xml.internal.utils.ThreadControllerWrapper;
-/*     */ import java.io.IOException;
-/*     */ import org.xml.sax.Attributes;
-/*     */ import org.xml.sax.ContentHandler;
-/*     */ import org.xml.sax.DTDHandler;
-/*     */ import org.xml.sax.ErrorHandler;
-/*     */ import org.xml.sax.InputSource;
-/*     */ import org.xml.sax.Locator;
-/*     */ import org.xml.sax.SAXException;
-/*     */ import org.xml.sax.SAXNotRecognizedException;
-/*     */ import org.xml.sax.SAXNotSupportedException;
-/*     */ import org.xml.sax.SAXParseException;
-/*     */ import org.xml.sax.XMLReader;
-/*     */ import org.xml.sax.ext.LexicalHandler;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class IncrementalSAXSource_Filter
-/*     */   implements IncrementalSAXSource, ContentHandler, DTDHandler, LexicalHandler, ErrorHandler, Runnable
-/*     */ {
-/*     */   boolean DEBUG = false;
-/*  81 */   private CoroutineManager fCoroutineManager = null;
-/*  82 */   private int fControllerCoroutineID = -1;
-/*  83 */   private int fSourceCoroutineID = -1;
-/*     */   
-/*  85 */   private ContentHandler clientContentHandler = null;
-/*  86 */   private LexicalHandler clientLexicalHandler = null;
-/*  87 */   private DTDHandler clientDTDHandler = null;
-/*  88 */   private ErrorHandler clientErrorHandler = null;
-/*     */   private int eventcounter;
-/*  90 */   private int frequency = 5;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean fNoMoreEvents = false;
-/*     */ 
-/*     */ 
-/*     */   
-/*  98 */   private XMLReader fXMLReader = null;
-/*  99 */   private InputSource fXMLReaderInputSource = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public IncrementalSAXSource_Filter() {
-/* 106 */     init(new CoroutineManager(), -1, -1);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public IncrementalSAXSource_Filter(CoroutineManager co, int controllerCoroutineID) {
-/* 114 */     init(co, controllerCoroutineID, -1);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static IncrementalSAXSource createIncrementalSAXSource(CoroutineManager co, int controllerCoroutineID) {
-/* 121 */     return new IncrementalSAXSource_Filter(co, controllerCoroutineID);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void init(CoroutineManager co, int controllerCoroutineID, int sourceCoroutineID) {
-/* 131 */     if (co == null)
-/* 132 */       co = new CoroutineManager(); 
-/* 133 */     this.fCoroutineManager = co;
-/* 134 */     this.fControllerCoroutineID = co.co_joinCoroutineSet(controllerCoroutineID);
-/* 135 */     this.fSourceCoroutineID = co.co_joinCoroutineSet(sourceCoroutineID);
-/* 136 */     if (this.fControllerCoroutineID == -1 || this.fSourceCoroutineID == -1) {
-/* 137 */       throw new RuntimeException(XMLMessages.createXMLMessage("ER_COJOINROUTINESET_FAILED", null));
-/*     */     }
-/* 139 */     this.fNoMoreEvents = false;
-/* 140 */     this.eventcounter = this.frequency;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setXMLReader(XMLReader eventsource) {
-/* 150 */     this.fXMLReader = eventsource;
-/* 151 */     eventsource.setContentHandler(this);
-/* 152 */     eventsource.setDTDHandler(this);
-/* 153 */     eventsource.setErrorHandler(this);
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     try {
-/* 158 */       eventsource
-/* 159 */         .setProperty("http://xml.org/sax/properties/lexical-handler", this);
-/*     */     
-/*     */     }
-/* 162 */     catch (SAXNotRecognizedException sAXNotRecognizedException) {
-/*     */ 
-/*     */     
-/*     */     }
-/* 166 */     catch (SAXNotSupportedException sAXNotSupportedException) {}
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setContentHandler(ContentHandler handler) {
-/* 178 */     this.clientContentHandler = handler;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void setDTDHandler(DTDHandler handler) {
-/* 183 */     this.clientDTDHandler = handler;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setLexicalHandler(LexicalHandler handler) {
-/* 191 */     this.clientLexicalHandler = handler;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setErrHandler(ErrorHandler handler) {
-/* 197 */     this.clientErrorHandler = handler;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setReturnFrequency(int events) {
-/* 204 */     if (events < 1) events = 1; 
-/* 205 */     this.frequency = this.eventcounter = events;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void characters(char[] ch, int start, int length) throws SAXException {
-/* 230 */     if (--this.eventcounter <= 0) {
-/*     */       
-/* 232 */       co_yield(true);
-/* 233 */       this.eventcounter = this.frequency;
-/*     */     } 
-/* 235 */     if (this.clientContentHandler != null) {
-/* 236 */       this.clientContentHandler.characters(ch, start, length);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void endDocument() throws SAXException {
-/* 242 */     if (this.clientContentHandler != null) {
-/* 243 */       this.clientContentHandler.endDocument();
-/*     */     }
-/* 245 */     this.eventcounter = 0;
-/* 246 */     co_yield(false);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void endElement(String namespaceURI, String localName, String qName) throws SAXException {
-/* 252 */     if (--this.eventcounter <= 0) {
-/*     */       
-/* 254 */       co_yield(true);
-/* 255 */       this.eventcounter = this.frequency;
-/*     */     } 
-/* 257 */     if (this.clientContentHandler != null) {
-/* 258 */       this.clientContentHandler.endElement(namespaceURI, localName, qName);
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   public void endPrefixMapping(String prefix) throws SAXException {
-/* 263 */     if (--this.eventcounter <= 0) {
-/*     */       
-/* 265 */       co_yield(true);
-/* 266 */       this.eventcounter = this.frequency;
-/*     */     } 
-/* 268 */     if (this.clientContentHandler != null) {
-/* 269 */       this.clientContentHandler.endPrefixMapping(prefix);
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   public void ignorableWhitespace(char[] ch, int start, int length) throws SAXException {
-/* 274 */     if (--this.eventcounter <= 0) {
-/*     */       
-/* 276 */       co_yield(true);
-/* 277 */       this.eventcounter = this.frequency;
-/*     */     } 
-/* 279 */     if (this.clientContentHandler != null) {
-/* 280 */       this.clientContentHandler.ignorableWhitespace(ch, start, length);
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   public void processingInstruction(String target, String data) throws SAXException {
-/* 285 */     if (--this.eventcounter <= 0) {
-/*     */       
-/* 287 */       co_yield(true);
-/* 288 */       this.eventcounter = this.frequency;
-/*     */     } 
-/* 290 */     if (this.clientContentHandler != null)
-/* 291 */       this.clientContentHandler.processingInstruction(target, data); 
-/*     */   }
-/*     */   
-/*     */   public void setDocumentLocator(Locator locator) {
-/* 295 */     if (--this.eventcounter <= 0)
-/*     */     {
-/*     */ 
-/*     */       
-/* 299 */       this.eventcounter = this.frequency;
-/*     */     }
-/* 301 */     if (this.clientContentHandler != null) {
-/* 302 */       this.clientContentHandler.setDocumentLocator(locator);
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   public void skippedEntity(String name) throws SAXException {
-/* 307 */     if (--this.eventcounter <= 0) {
-/*     */       
-/* 309 */       co_yield(true);
-/* 310 */       this.eventcounter = this.frequency;
-/*     */     } 
-/* 312 */     if (this.clientContentHandler != null) {
-/* 313 */       this.clientContentHandler.skippedEntity(name);
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   public void startDocument() throws SAXException {
-/* 318 */     co_entry_pause();
-/*     */ 
-/*     */     
-/* 321 */     if (--this.eventcounter <= 0) {
-/*     */       
-/* 323 */       co_yield(true);
-/* 324 */       this.eventcounter = this.frequency;
-/*     */     } 
-/* 326 */     if (this.clientContentHandler != null) {
-/* 327 */       this.clientContentHandler.startDocument();
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void startElement(String namespaceURI, String localName, String qName, Attributes atts) throws SAXException {
-/* 333 */     if (--this.eventcounter <= 0) {
-/*     */       
-/* 335 */       co_yield(true);
-/* 336 */       this.eventcounter = this.frequency;
-/*     */     } 
-/* 338 */     if (this.clientContentHandler != null) {
-/* 339 */       this.clientContentHandler.startElement(namespaceURI, localName, qName, atts);
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   public void startPrefixMapping(String prefix, String uri) throws SAXException {
-/* 344 */     if (--this.eventcounter <= 0) {
-/*     */       
-/* 346 */       co_yield(true);
-/* 347 */       this.eventcounter = this.frequency;
-/*     */     } 
-/* 349 */     if (this.clientContentHandler != null) {
-/* 350 */       this.clientContentHandler.startPrefixMapping(prefix, uri);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void comment(char[] ch, int start, int length) throws SAXException {
-/* 366 */     if (null != this.clientLexicalHandler) {
-/* 367 */       this.clientLexicalHandler.comment(ch, start, length);
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   public void endCDATA() throws SAXException {
-/* 372 */     if (null != this.clientLexicalHandler) {
-/* 373 */       this.clientLexicalHandler.endCDATA();
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   public void endDTD() throws SAXException {
-/* 378 */     if (null != this.clientLexicalHandler) {
-/* 379 */       this.clientLexicalHandler.endDTD();
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   public void endEntity(String name) throws SAXException {
-/* 384 */     if (null != this.clientLexicalHandler) {
-/* 385 */       this.clientLexicalHandler.endEntity(name);
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   public void startCDATA() throws SAXException {
-/* 390 */     if (null != this.clientLexicalHandler) {
-/* 391 */       this.clientLexicalHandler.startCDATA();
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void startDTD(String name, String publicId, String systemId) throws SAXException {
-/* 397 */     if (null != this.clientLexicalHandler) {
-/* 398 */       this.clientLexicalHandler.startDTD(name, publicId, systemId);
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   public void startEntity(String name) throws SAXException {
-/* 403 */     if (null != this.clientLexicalHandler) {
-/* 404 */       this.clientLexicalHandler.startEntity(name);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void notationDecl(String a, String b, String c) throws SAXException {
-/* 412 */     if (null != this.clientDTDHandler)
-/* 413 */       this.clientDTDHandler.notationDecl(a, b, c); 
-/*     */   }
-/*     */   
-/*     */   public void unparsedEntityDecl(String a, String b, String c, String d) throws SAXException {
-/* 417 */     if (null != this.clientDTDHandler) {
-/* 418 */       this.clientDTDHandler.unparsedEntityDecl(a, b, c, d);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void error(SAXParseException exception) throws SAXException {
-/* 438 */     if (null != this.clientErrorHandler) {
-/* 439 */       this.clientErrorHandler.error(exception);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void fatalError(SAXParseException exception) throws SAXException {
-/* 446 */     if (null != this.clientErrorHandler) {
-/* 447 */       this.clientErrorHandler.error(exception);
-/*     */     }
-/* 449 */     this.eventcounter = 0;
-/* 450 */     co_yield(false);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void warning(SAXParseException exception) throws SAXException {
-/* 456 */     if (null != this.clientErrorHandler) {
-/* 457 */       this.clientErrorHandler.error(exception);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getSourceCoroutineID() {
-/* 466 */     return this.fSourceCoroutineID;
-/*     */   }
-/*     */   public int getControllerCoroutineID() {
-/* 469 */     return this.fControllerCoroutineID;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public CoroutineManager getCoroutineManager() {
-/* 479 */     return this.fCoroutineManager;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void count_and_yield(boolean moreExpected) throws SAXException {
-/* 495 */     if (!moreExpected) this.eventcounter = 0;
-/*     */     
-/* 497 */     if (--this.eventcounter <= 0) {
-/*     */       
-/* 499 */       co_yield(true);
-/* 500 */       this.eventcounter = this.frequency;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void co_entry_pause() throws SAXException {
-/* 513 */     if (this.fCoroutineManager == null)
-/*     */     {
-/*     */       
-/* 516 */       init(null, -1, -1);
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     try {
-/* 521 */       Object arg = this.fCoroutineManager.co_entry_pause(this.fSourceCoroutineID);
-/* 522 */       if (arg == Boolean.FALSE) {
-/* 523 */         co_yield(false);
-/*     */       }
-/* 525 */     } catch (NoSuchMethodException e) {
-/*     */ 
-/*     */ 
-/*     */       
-/* 529 */       if (this.DEBUG) e.printStackTrace(); 
-/* 530 */       throw new SAXException(e);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void co_yield(boolean moreRemains) throws SAXException {
-/* 559 */     if (this.fNoMoreEvents) {
-/*     */       return;
-/*     */     }
-/*     */     
-/*     */     try {
-/* 564 */       Object arg = Boolean.FALSE;
-/* 565 */       if (moreRemains)
-/*     */       {
-/*     */         
-/* 568 */         arg = this.fCoroutineManager.co_resume(Boolean.TRUE, this.fSourceCoroutineID, this.fControllerCoroutineID);
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 574 */       if (arg == Boolean.FALSE)
-/*     */       {
-/* 576 */         this.fNoMoreEvents = true;
-/*     */         
-/* 578 */         if (this.fXMLReader != null) {
-/* 579 */           throw new StopException();
-/*     */         }
-/*     */         
-/* 582 */         this.fCoroutineManager.co_exit_to(Boolean.FALSE, this.fSourceCoroutineID, this.fControllerCoroutineID);
-/*     */       }
-/*     */     
-/*     */     }
-/* 586 */     catch (NoSuchMethodException e) {
-/*     */ 
-/*     */ 
-/*     */       
-/* 590 */       this.fNoMoreEvents = true;
-/* 591 */       this.fCoroutineManager.co_exit(this.fSourceCoroutineID);
-/* 592 */       throw new SAXException(e);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void startParse(InputSource source) throws SAXException {
-/* 611 */     if (this.fNoMoreEvents)
-/* 612 */       throw new SAXException(XMLMessages.createXMLMessage("ER_INCRSAXSRCFILTER_NOT_RESTARTABLE", null)); 
-/* 613 */     if (this.fXMLReader == null) {
-/* 614 */       throw new SAXException(XMLMessages.createXMLMessage("ER_XMLRDR_NOT_BEFORE_STARTPARSE", null));
-/*     */     }
-/* 616 */     this.fXMLReaderInputSource = source;
-/*     */ 
-/*     */ 
-/*     */     
-/* 620 */     ThreadControllerWrapper.runThread(this, -1);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void run() {
-/* 628 */     if (this.fXMLReader == null)
-/*     */       return; 
-/* 630 */     if (this.DEBUG) System.out.println("IncrementalSAXSource_Filter parse thread launched");
-/*     */ 
-/*     */     
-/* 633 */     Object arg = Boolean.FALSE;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     try {
-/* 641 */       this.fXMLReader.parse(this.fXMLReaderInputSource);
-/*     */     }
-/* 643 */     catch (IOException ex) {
-/*     */       
-/* 645 */       arg = ex;
-/*     */     }
-/* 647 */     catch (StopException ex) {
-/*     */ 
-/*     */       
-/* 650 */       if (this.DEBUG) System.out.println("Active IncrementalSAXSource_Filter normal stop exception");
-/*     */     
-/* 652 */     } catch (SAXException ex) {
-/*     */       
-/* 654 */       Exception inner = ex.getException();
-/* 655 */       if (inner instanceof StopException) {
-/*     */         
-/* 657 */         if (this.DEBUG) System.out.println("Active IncrementalSAXSource_Filter normal stop exception");
-/*     */       
-/*     */       }
-/*     */       else {
-/*     */         
-/* 662 */         if (this.DEBUG) {
-/*     */           
-/* 664 */           System.out.println("Active IncrementalSAXSource_Filter UNEXPECTED SAX exception: " + inner);
-/* 665 */           inner.printStackTrace();
-/*     */         } 
-/* 667 */         arg = ex;
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */     
-/* 672 */     this.fXMLReader = null;
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     try {
-/* 677 */       this.fNoMoreEvents = true;
-/* 678 */       this.fCoroutineManager.co_exit_to(arg, this.fSourceCoroutineID, this.fControllerCoroutineID);
-/*     */     
-/*     */     }
-/* 681 */     catch (NoSuchMethodException e) {
-/*     */ 
-/*     */ 
-/*     */       
-/* 685 */       e.printStackTrace(System.err);
-/* 686 */       this.fCoroutineManager.co_exit(this.fSourceCoroutineID);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   class StopException
-/*     */     extends RuntimeException
-/*     */   {
-/*     */     static final long serialVersionUID = -1129245796185754956L;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object deliverMoreNodes(boolean parsemore) {
-/* 717 */     if (this.fNoMoreEvents) {
-/* 718 */       return Boolean.FALSE;
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     try {
-/* 723 */       Object result = this.fCoroutineManager.co_resume(parsemore ? Boolean.TRUE : Boolean.FALSE, this.fControllerCoroutineID, this.fSourceCoroutineID);
-/*     */       
-/* 725 */       if (result == Boolean.FALSE) {
-/* 726 */         this.fCoroutineManager.co_exit(this.fControllerCoroutineID);
-/*     */       }
-/* 728 */       return result;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     }
-/* 734 */     catch (NoSuchMethodException e) {
-/*     */       
-/* 736 */       return e;
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\internal\dtm\ref\IncrementalSAXSource_Filter.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: IncrementalSAXSource_Filter.java,v 1.2.4.1 2005/09/15 08:15:07 suresh_emailid Exp $
+ */
+
+package com.sun.org.apache.xml.internal.dtm.ref;
+
+import java.io.IOException;
+
+import com.sun.org.apache.xml.internal.res.XMLErrorResources;
+import com.sun.org.apache.xml.internal.res.XMLMessages;
+import com.sun.org.apache.xml.internal.utils.ThreadControllerWrapper;
+
+import org.xml.sax.Attributes;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.DTDHandler;
+import org.xml.sax.ErrorHandler;
+import org.xml.sax.InputSource;
+import org.xml.sax.Locator;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXNotRecognizedException;
+import org.xml.sax.SAXNotSupportedException;
+import org.xml.sax.SAXParseException;
+import org.xml.sax.XMLReader;
+import org.xml.sax.ext.LexicalHandler;
+
+/** <p>IncrementalSAXSource_Filter implements IncrementalSAXSource, using a
+ * standard SAX2 event source as its input and parcelling out those
+ * events gradually in reponse to deliverMoreNodes() requests.  Output from the
+ * filter will be passed along to a SAX handler registered as our
+ * listener, but those callbacks will pass through a counting stage
+ * which periodically yields control back to the controller coroutine.
+ * </p>
+ *
+ * <p>%REVIEW%: This filter is not currenly intended to be reusable
+ * for parsing additional streams/documents. We may want to consider
+ * making it resettable at some point in the future. But it's a
+ * small object, so that'd be mostly a convenience issue; the cost
+ * of allocating each time is trivial compared to the cost of processing
+ * any nontrival stream.</p>
+ *
+ * <p>For a brief usage example, see the unit-test main() method.</p>
+ *
+ * <p>This is a simplification of the old CoroutineSAXParser, focusing
+ * specifically on filtering. The resulting controller protocol is _far_
+ * simpler and less error-prone; the only controller operation is deliverMoreNodes(),
+ * and the only requirement is that deliverMoreNodes(false) be called if you want to
+ * discard the rest of the stream and the previous deliverMoreNodes() didn't return
+ * false.
+ *
+ * This class is final and package private for security reasons. Please
+ * see CR 6537912 for further details.
+ *
+ * */
+final class IncrementalSAXSource_Filter
+implements IncrementalSAXSource, ContentHandler, DTDHandler, LexicalHandler, ErrorHandler, Runnable
+{
+  boolean DEBUG=false; //Internal status report
+
+  //
+  // Data
+  //
+  private CoroutineManager fCoroutineManager = null;
+  private int fControllerCoroutineID = -1;
+  private int fSourceCoroutineID = -1;
+
+  private ContentHandler clientContentHandler=null; // %REVIEW% support multiple?
+  private LexicalHandler clientLexicalHandler=null; // %REVIEW% support multiple?
+  private DTDHandler clientDTDHandler=null; // %REVIEW% support multiple?
+  private ErrorHandler clientErrorHandler=null; // %REVIEW% support multiple?
+  private int eventcounter;
+  private int frequency=5;
+
+  // Flag indicating that no more events should be delivered -- either
+  // because input stream ran to completion (endDocument), or because
+  // the user requested an early stop via deliverMoreNodes(false).
+  private boolean fNoMoreEvents=false;
+
+  // Support for startParse()
+  private XMLReader fXMLReader=null;
+  private InputSource fXMLReaderInputSource=null;
+
+  //
+  // Constructors
+  //
+
+  public IncrementalSAXSource_Filter() {
+    this.init( new CoroutineManager(), -1, -1);
+  }
+
+  /** Create a IncrementalSAXSource_Filter which is not yet bound to a specific
+   * SAX event source.
+   * */
+  public IncrementalSAXSource_Filter(CoroutineManager co, int controllerCoroutineID)
+  {
+    this.init( co, controllerCoroutineID, -1 );
+  }
+
+  //
+  // Factories
+  //
+  static public IncrementalSAXSource createIncrementalSAXSource(CoroutineManager co, int controllerCoroutineID) {
+    return new IncrementalSAXSource_Filter(co, controllerCoroutineID);
+  }
+
+  //
+  // Public methods
+  //
+
+  public void init( CoroutineManager co, int controllerCoroutineID,
+                    int sourceCoroutineID)
+  {
+    if(co==null)
+      co = new CoroutineManager();
+    fCoroutineManager = co;
+    fControllerCoroutineID = co.co_joinCoroutineSet(controllerCoroutineID);
+    fSourceCoroutineID = co.co_joinCoroutineSet(sourceCoroutineID);
+    if (fControllerCoroutineID == -1 || fSourceCoroutineID == -1)
+      throw new RuntimeException(XMLMessages.createXMLMessage(XMLErrorResources.ER_COJOINROUTINESET_FAILED, null)); //"co_joinCoroutineSet() failed");
+
+    fNoMoreEvents=false;
+    eventcounter=frequency;
+  }
+
+  /** Bind our input streams to an XMLReader.
+   *
+   * Just a convenience routine; obviously you can explicitly register
+   * this as a listener with the same effect.
+   * */
+  public void setXMLReader(XMLReader eventsource)
+  {
+    fXMLReader=eventsource;
+    eventsource.setContentHandler(this);
+    eventsource.setDTDHandler(this);
+    eventsource.setErrorHandler(this); // to report fatal errors in filtering mode
+
+    // Not supported by all SAX2 filters:
+    try
+    {
+      eventsource.
+        setProperty("http://xml.org/sax/properties/lexical-handler",
+                    this);
+    }
+    catch(SAXNotRecognizedException e)
+    {
+      // Nothing we can do about it
+    }
+    catch(SAXNotSupportedException e)
+    {
+      // Nothing we can do about it
+    }
+
+    // Should we also bind as other varieties of handler?
+    // (DTDHandler and so on)
+  }
+
+  // Register a content handler for us to output to
+  public void setContentHandler(ContentHandler handler)
+  {
+    clientContentHandler=handler;
+  }
+  // Register a DTD handler for us to output to
+  public void setDTDHandler(DTDHandler handler)
+  {
+    clientDTDHandler=handler;
+  }
+  // Register a lexical handler for us to output to
+  // Not all filters support this...
+  // ??? Should we register directly on the filter?
+  // NOTE NAME -- subclassing issue in the Xerces version
+  public void setLexicalHandler(LexicalHandler handler)
+  {
+    clientLexicalHandler=handler;
+  }
+  // Register an error handler for us to output to
+  // NOTE NAME -- subclassing issue in the Xerces version
+  public void setErrHandler(ErrorHandler handler)
+  {
+    clientErrorHandler=handler;
+  }
+
+  // Set the number of events between resumes of our coroutine
+  // Immediately resets number of events before _next_ resume as well.
+  public void setReturnFrequency(int events)
+  {
+    if(events<1) events=1;
+    frequency=eventcounter=events;
+  }
+
+  //
+  // ContentHandler methods
+  // These  pass the data to our client ContentHandler...
+  // but they also count the number of events passing through,
+  // and resume our coroutine each time that counter hits zero and
+  // is reset.
+  //
+  // Note that for everything except endDocument and fatalError, we do the count-and-yield
+  // BEFORE passing the call along. I'm hoping that this will encourage JIT
+  // compilers to realize that these are tail-calls, reducing the expense of
+  // the additional layer of data flow.
+  //
+  // %REVIEW% Glenn suggests that pausing after endElement, endDocument,
+  // and characters may be sufficient. I actually may not want to
+  // stop after characters, since in our application these wind up being
+  // concatenated before they're processed... but that risks huge blocks of
+  // text causing greater than usual readahead. (Unlikely? Consider the
+  // possibility of a large base-64 block in a SOAP stream.)
+  //
+  public void characters(char[] ch, int start, int length)
+       throws org.xml.sax.SAXException
+  {
+    if(--eventcounter<=0)
+      {
+        co_yield(true);
+        eventcounter=frequency;
+      }
+    if(clientContentHandler!=null)
+      clientContentHandler.characters(ch,start,length);
+  }
+  public void endDocument()
+       throws org.xml.sax.SAXException
+  {
+    // EXCEPTION: In this case we need to run the event BEFORE we yield.
+    if(clientContentHandler!=null)
+      clientContentHandler.endDocument();
+
+    eventcounter=0;
+    co_yield(false);
+  }
+  public void endElement(java.lang.String namespaceURI, java.lang.String localName,
+      java.lang.String qName)
+       throws org.xml.sax.SAXException
+  {
+    if(--eventcounter<=0)
+      {
+        co_yield(true);
+        eventcounter=frequency;
+      }
+    if(clientContentHandler!=null)
+      clientContentHandler.endElement(namespaceURI,localName,qName);
+  }
+  public void endPrefixMapping(java.lang.String prefix)
+       throws org.xml.sax.SAXException
+  {
+    if(--eventcounter<=0)
+      {
+        co_yield(true);
+        eventcounter=frequency;
+      }
+    if(clientContentHandler!=null)
+      clientContentHandler.endPrefixMapping(prefix);
+  }
+  public void ignorableWhitespace(char[] ch, int start, int length)
+       throws org.xml.sax.SAXException
+  {
+    if(--eventcounter<=0)
+      {
+        co_yield(true);
+        eventcounter=frequency;
+      }
+    if(clientContentHandler!=null)
+      clientContentHandler.ignorableWhitespace(ch,start,length);
+  }
+  public void processingInstruction(java.lang.String target, java.lang.String data)
+       throws org.xml.sax.SAXException
+  {
+    if(--eventcounter<=0)
+      {
+        co_yield(true);
+        eventcounter=frequency;
+      }
+    if(clientContentHandler!=null)
+      clientContentHandler.processingInstruction(target,data);
+  }
+  public void setDocumentLocator(Locator locator)
+  {
+    if(--eventcounter<=0)
+      {
+        // This can cause a hang.  -sb
+        // co_yield(true);
+        eventcounter=frequency;
+      }
+    if(clientContentHandler!=null)
+      clientContentHandler.setDocumentLocator(locator);
+  }
+  public void skippedEntity(java.lang.String name)
+       throws org.xml.sax.SAXException
+  {
+    if(--eventcounter<=0)
+      {
+        co_yield(true);
+        eventcounter=frequency;
+      }
+    if(clientContentHandler!=null)
+      clientContentHandler.skippedEntity(name);
+  }
+  public void startDocument()
+       throws org.xml.sax.SAXException
+  {
+    co_entry_pause();
+
+    // Otherwise, begin normal event delivery
+    if(--eventcounter<=0)
+      {
+        co_yield(true);
+        eventcounter=frequency;
+      }
+    if(clientContentHandler!=null)
+      clientContentHandler.startDocument();
+  }
+  public void startElement(java.lang.String namespaceURI, java.lang.String localName,
+      java.lang.String qName, Attributes atts)
+       throws org.xml.sax.SAXException
+  {
+    if(--eventcounter<=0)
+      {
+        co_yield(true);
+        eventcounter=frequency;
+      }
+    if(clientContentHandler!=null)
+      clientContentHandler.startElement(namespaceURI, localName, qName, atts);
+  }
+  public void startPrefixMapping(java.lang.String prefix, java.lang.String uri)
+       throws org.xml.sax.SAXException
+  {
+    if(--eventcounter<=0)
+      {
+        co_yield(true);
+        eventcounter=frequency;
+      }
+    if(clientContentHandler!=null)
+      clientContentHandler.startPrefixMapping(prefix,uri);
+  }
+
+  //
+  // LexicalHandler support. Not all SAX2 filters support these events
+  // but we may want to pass them through when they exist...
+  //
+  // %REVIEW% These do NOT currently affect the eventcounter; I'm asserting
+  // that they're rare enough that it makes little or no sense to
+  // pause after them. As such, it may make more sense for folks who
+  // actually want to use them to register directly with the filter.
+  // But I want 'em here for now, to remind us to recheck this assertion!
+  //
+  public void comment(char[] ch, int start, int length)
+       throws org.xml.sax.SAXException
+  {
+    if(null!=clientLexicalHandler)
+      clientLexicalHandler.comment(ch,start,length);
+  }
+  public void endCDATA()
+       throws org.xml.sax.SAXException
+  {
+    if(null!=clientLexicalHandler)
+      clientLexicalHandler.endCDATA();
+  }
+  public void endDTD()
+       throws org.xml.sax.SAXException
+  {
+    if(null!=clientLexicalHandler)
+      clientLexicalHandler.endDTD();
+  }
+  public void endEntity(java.lang.String name)
+       throws org.xml.sax.SAXException
+  {
+    if(null!=clientLexicalHandler)
+      clientLexicalHandler.endEntity(name);
+  }
+  public void startCDATA()
+       throws org.xml.sax.SAXException
+  {
+    if(null!=clientLexicalHandler)
+      clientLexicalHandler.startCDATA();
+  }
+  public void startDTD(java.lang.String name, java.lang.String publicId,
+      java.lang.String systemId)
+       throws org.xml.sax.SAXException
+  {
+    if(null!=clientLexicalHandler)
+      clientLexicalHandler. startDTD(name, publicId, systemId);
+  }
+  public void startEntity(java.lang.String name)
+       throws org.xml.sax.SAXException
+  {
+    if(null!=clientLexicalHandler)
+      clientLexicalHandler.startEntity(name);
+  }
+
+  //
+  // DTDHandler support.
+
+  public void notationDecl(String a, String b, String c) throws SAXException
+  {
+        if(null!=clientDTDHandler)
+                clientDTDHandler.notationDecl(a,b,c);
+  }
+  public void unparsedEntityDecl(String a, String b, String c, String d)  throws SAXException
+  {
+        if(null!=clientDTDHandler)
+                clientDTDHandler.unparsedEntityDecl(a,b,c,d);
+  }
+
+  //
+  // ErrorHandler support.
+  //
+  // PROBLEM: Xerces is apparently _not_ calling the ErrorHandler for
+  // exceptions thrown by the ContentHandler, which prevents us from
+  // handling this properly when running in filtering mode with Xerces
+  // as our event source.  It's unclear whether this is a Xerces bug
+  // or a SAX design flaw.
+  //
+  // %REVIEW% Current solution: In filtering mode, it is REQUIRED that
+  // event source make sure this method is invoked if the event stream
+  // abends before endDocument is delivered. If that means explicitly calling
+  // us in the exception handling code because it won't be delivered as part
+  // of the normal SAX ErrorHandler stream, that's fine; Not Our Problem.
+  //
+  public void error(SAXParseException exception) throws SAXException
+  {
+    if(null!=clientErrorHandler)
+      clientErrorHandler.error(exception);
+  }
+
+  public void fatalError(SAXParseException exception) throws SAXException
+  {
+    // EXCEPTION: In this case we need to run the event BEFORE we yield --
+    // just as with endDocument, this terminates the event stream.
+    if(null!=clientErrorHandler)
+      clientErrorHandler.error(exception);
+
+    eventcounter=0;
+    co_yield(false);
+
+  }
+
+  public void warning(SAXParseException exception) throws SAXException
+  {
+    if(null!=clientErrorHandler)
+      clientErrorHandler.error(exception);
+  }
+
+
+  //
+  // coroutine support
+  //
+
+  public int getSourceCoroutineID() {
+    return fSourceCoroutineID;
+  }
+  public int getControllerCoroutineID() {
+    return fControllerCoroutineID;
+  }
+
+  /** @return the CoroutineManager this CoroutineFilter object is bound to.
+   * If you're using the do...() methods, applications should only
+   * need to talk to the CoroutineManager once, to obtain the
+   * application's Coroutine ID.
+   * */
+  public CoroutineManager getCoroutineManager()
+  {
+    return fCoroutineManager;
+  }
+
+  /** <p>In the SAX delegation code, I've inlined the count-down in
+   * the hope of encouraging compilers to deliver better
+   * performance. However, if we subclass (eg to directly connect the
+   * output to a DTM builder), that would require calling super in
+   * order to run that logic... which seems inelegant.  Hence this
+   * routine for the convenience of subclasses: every [frequency]
+   * invocations, issue a co_yield.</p>
+   *
+   * @param moreExepected Should always be true unless this is being called
+   * at the end of endDocument() handling.
+   * */
+  protected void count_and_yield(boolean moreExpected) throws SAXException
+  {
+    if(!moreExpected) eventcounter=0;
+
+    if(--eventcounter<=0)
+      {
+        co_yield(true);
+        eventcounter=frequency;
+      }
+  }
+
+  /**
+   * co_entry_pause is called in startDocument() before anything else
+   * happens. It causes the filter to wait for a "go ahead" request
+   * from the controller before delivering any events. Note that
+   * the very first thing the controller tells us may be "I don't
+   * need events after all"!
+   */
+  private void co_entry_pause() throws SAXException
+  {
+    if(fCoroutineManager==null)
+    {
+      // Nobody called init()? Do it now...
+      init(null,-1,-1);
+    }
+
+    try
+    {
+      Object arg=fCoroutineManager.co_entry_pause(fSourceCoroutineID);
+      if(arg==Boolean.FALSE)
+        co_yield(false);
+    }
+    catch(NoSuchMethodException e)
+    {
+      // Coroutine system says we haven't registered. That's an
+      // application coding error, and is unrecoverable.
+      if(DEBUG) e.printStackTrace();
+      throw new SAXException(e);
+    }
+  }
+
+  /**
+   * Co_Yield handles coroutine interactions while a parse is in progress.
+   *
+   * When moreRemains==true, we are pausing after delivering events, to
+   * ask if more are needed. We will resume the controller thread with
+   *   co_resume(Boolean.TRUE, ...)
+   * When control is passed back it may indicate
+   *      Boolean.TRUE    indication to continue delivering events
+   *      Boolean.FALSE   indication to discontinue events and shut down.
+   *
+   * When moreRemains==false, we shut down immediately without asking the
+   * controller's permission. Normally this means end of document has been
+   * reached.
+   *
+   * Shutting down a IncrementalSAXSource_Filter requires terminating the incoming
+   * SAX event stream. If we are in control of that stream (if it came
+   * from an XMLReader passed to our startReader() method), we can do so
+   * very quickly by throwing a reserved exception to it. If the stream is
+   * coming from another source, we can't do that because its caller may
+   * not be prepared for this "normal abnormal exit", and instead we put
+   * ourselves in a "spin" mode where events are discarded.
+   */
+  private void co_yield(boolean moreRemains) throws SAXException
+  {
+    // Horrendous kluge to run filter to completion. See below.
+    if(fNoMoreEvents)
+      return;
+
+    try // Coroutine manager might throw no-such.
+    {
+      Object arg=Boolean.FALSE;
+      if(moreRemains)
+      {
+        // Yield control, resume parsing when done
+        arg = fCoroutineManager.co_resume(Boolean.TRUE, fSourceCoroutineID,
+                                          fControllerCoroutineID);
+
+      }
+
+      // If we're at end of document or were told to stop early
+      if(arg==Boolean.FALSE)
+      {
+        fNoMoreEvents=true;
+
+        if(fXMLReader!=null)    // Running under startParseThread()
+          throw new StopException(); // We'll co_exit from there.
+
+        // Yield control. We do NOT expect anyone to ever ask us again.
+        fCoroutineManager.co_exit_to(Boolean.FALSE, fSourceCoroutineID,
+                                     fControllerCoroutineID);
+      }
+    }
+    catch(NoSuchMethodException e)
+    {
+      // Shouldn't happen unless we've miscoded our coroutine logic
+      // "Shut down the garbage smashers on the detention level!"
+      fNoMoreEvents=true;
+      fCoroutineManager.co_exit(fSourceCoroutineID);
+      throw new SAXException(e);
+    }
+  }
+
+  //
+  // Convenience: Run an XMLReader in a thread
+  //
+
+  /** Launch a thread that will run an XMLReader's parse() operation within
+   *  a thread, feeding events to this IncrementalSAXSource_Filter. Mostly a convenience
+   *  routine, but has the advantage that -- since we invoked parse() --
+   *  we can halt parsing quickly via a StopException rather than waiting
+   *  for the SAX stream to end by itself.
+   *
+   * @throws SAXException is parse thread is already in progress
+   * or parsing can not be started.
+   * */
+  public void startParse(InputSource source) throws SAXException
+  {
+    if(fNoMoreEvents)
+      throw new SAXException(XMLMessages.createXMLMessage(XMLErrorResources.ER_INCRSAXSRCFILTER_NOT_RESTARTABLE, null)); //"IncrmentalSAXSource_Filter not currently restartable.");
+    if(fXMLReader==null)
+      throw new SAXException(XMLMessages.createXMLMessage(XMLErrorResources.ER_XMLRDR_NOT_BEFORE_STARTPARSE, null)); //"XMLReader not before startParse request");
+
+    fXMLReaderInputSource=source;
+
+    // Xalan thread pooling...
+    // com.sun.org.apache.xalan.internal.transformer.TransformerImpl.runTransformThread(this);
+    ThreadControllerWrapper.runThread(this, -1);
+  }
+
+  /* Thread logic to support startParseThread()
+   */
+  public void run()
+  {
+    // Guard against direct invocation of start().
+    if(fXMLReader==null) return;
+
+    if(DEBUG)System.out.println("IncrementalSAXSource_Filter parse thread launched");
+
+    // Initially assume we'll run successfully.
+    Object arg=Boolean.FALSE;
+
+    // For the duration of this operation, all coroutine handshaking
+    // will occur in the co_yield method. That's the nice thing about
+    // coroutines; they give us a way to hand off control from the
+    // middle of a synchronous method.
+    try
+    {
+      fXMLReader.parse(fXMLReaderInputSource);
+    }
+    catch(IOException ex)
+    {
+      arg=ex;
+    }
+    catch(StopException ex)
+    {
+      // Expected and harmless
+      if(DEBUG)System.out.println("Active IncrementalSAXSource_Filter normal stop exception");
+    }
+    catch (SAXException ex)
+    {
+      Exception inner=ex.getException();
+      if(inner instanceof StopException){
+        // Expected and harmless
+        if(DEBUG)System.out.println("Active IncrementalSAXSource_Filter normal stop exception");
+      }
+      else
+      {
+        // Unexpected malfunction
+        if(DEBUG)
+        {
+          System.out.println("Active IncrementalSAXSource_Filter UNEXPECTED SAX exception: "+inner);
+          inner.printStackTrace();
+        }
+        arg=ex;
+      }
+    } // end parse
+
+    // Mark as no longer running in thread.
+    fXMLReader=null;
+
+    try
+    {
+      // Mark as done and yield control to the controller coroutine
+      fNoMoreEvents=true;
+      fCoroutineManager.co_exit_to(arg, fSourceCoroutineID,
+                                   fControllerCoroutineID);
+    }
+    catch(java.lang.NoSuchMethodException e)
+    {
+      // Shouldn't happen unless we've miscoded our coroutine logic
+      // "CPO, shut down the garbage smashers on the detention level!"
+      e.printStackTrace(System.err);
+      fCoroutineManager.co_exit(fSourceCoroutineID);
+    }
+  }
+
+  /** Used to quickly terminate parse when running under a
+      startParse() thread. Only its type is important. */
+  class StopException extends RuntimeException
+  {
+          static final long serialVersionUID = -1129245796185754956L;
+  }
+
+  /** deliverMoreNodes() is a simple API which tells the coroutine
+   * parser that we need more nodes.  This is intended to be called
+   * from one of our partner routines, and serves to encapsulate the
+   * details of how incremental parsing has been achieved.
+   *
+   * @param parsemore If true, tells the incremental filter to generate
+   * another chunk of output. If false, tells the filter that we're
+   * satisfied and it can terminate parsing of this document.
+   *
+   * @return Boolean.TRUE if there may be more events available by invoking
+   * deliverMoreNodes() again. Boolean.FALSE if parsing has run to completion (or been
+   * terminated by deliverMoreNodes(false). Or an exception object if something
+   * malfunctioned. %REVIEW% We _could_ actually throw the exception, but
+   * that would require runinng deliverMoreNodes() in a try/catch... and for many
+   * applications, exception will be simply be treated as "not TRUE" in
+   * any case.
+   * */
+  public Object deliverMoreNodes(boolean parsemore)
+  {
+    // If parsing is already done, we can immediately say so
+    if(fNoMoreEvents)
+      return Boolean.FALSE;
+
+    try
+    {
+      Object result =
+        fCoroutineManager.co_resume(parsemore?Boolean.TRUE:Boolean.FALSE,
+                                    fControllerCoroutineID, fSourceCoroutineID);
+      if(result==Boolean.FALSE)
+        fCoroutineManager.co_exit(fControllerCoroutineID);
+
+      return result;
+    }
+
+    // SHOULD NEVER OCCUR, since the coroutine number and coroutine manager
+    // are those previously established for this IncrementalSAXSource_Filter...
+    // So I'm just going to return it as a parsing exception, for now.
+    catch(NoSuchMethodException e)
+      {
+        return e;
+      }
+  }
+
+
+  //================================================================
+  /** Simple unit test. Attempt coroutine parsing of document indicated
+   * by first argument (as a URI), report progress.
+   */
+    /*
+  public static void _main(String args[])
+  {
+    System.out.println("Starting...");
+
+    org.xml.sax.XMLReader theSAXParser=
+      new com.sun.org.apache.xerces.internal.parsers.SAXParser();
+
+
+    for(int arg=0;arg<args.length;++arg)
+    {
+      // The filter is not currently designed to be restartable
+      // after a parse has ended. Generate a new one each time.
+      IncrementalSAXSource_Filter filter=
+        new IncrementalSAXSource_Filter();
+      // Use a serializer as our sample output
+      com.sun.org.apache.xml.internal.serialize.XMLSerializer trace;
+      trace=new com.sun.org.apache.xml.internal.serialize.XMLSerializer(System.out,null);
+      filter.setContentHandler(trace);
+      filter.setLexicalHandler(trace);
+
+      try
+      {
+        InputSource source = new InputSource(args[arg]);
+        Object result=null;
+        boolean more=true;
+
+        // init not issued; we _should_ automagically Do The Right Thing
+
+        // Bind parser, kick off parsing in a thread
+        filter.setXMLReader(theSAXParser);
+        filter.startParse(source);
+
+        for(result = filter.deliverMoreNodes(more);
+            (result instanceof Boolean && ((Boolean)result)==Boolean.TRUE);
+            result = filter.deliverMoreNodes(more))
+        {
+          System.out.println("\nSome parsing successful, trying more.\n");
+
+          // Special test: Terminate parsing early.
+          if(arg+1<args.length && "!".equals(args[arg+1]))
+          {
+            ++arg;
+            more=false;
+          }
+
+        }
+
+        if (result instanceof Boolean && ((Boolean)result)==Boolean.FALSE)
+        {
+          System.out.println("\nFilter ended (EOF or on request).\n");
+        }
+        else if (result == null) {
+          System.out.println("\nUNEXPECTED: Filter says shut down prematurely.\n");
+        }
+        else if (result instanceof Exception) {
+          System.out.println("\nFilter threw exception:");
+          ((Exception)result).printStackTrace();
+        }
+
+      }
+      catch(SAXException e)
+      {
+        e.printStackTrace();
+      }
+    } // end for
+  }
+    */
+} // class IncrementalSAXSource_Filter

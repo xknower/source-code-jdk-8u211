@@ -1,130 +1,124 @@
-/*     */ package java.text;
-/*     */ 
-/*     */ import java.util.ArrayList;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class CharacterIteratorFieldDelegate
-/*     */   implements Format.FieldDelegate
-/*     */ {
-/*  53 */   private ArrayList<AttributedString> attributedStrings = new ArrayList<>();
-/*     */   
-/*     */   private int size;
-/*     */   
-/*     */   public void formatted(Format.Field paramField, Object paramObject, int paramInt1, int paramInt2, StringBuffer paramStringBuffer) {
-/*  58 */     if (paramInt1 != paramInt2) {
-/*  59 */       if (paramInt1 < this.size) {
-/*     */         
-/*  61 */         int i = this.size;
-/*  62 */         int j = this.attributedStrings.size() - 1;
-/*     */         
-/*  64 */         while (paramInt1 < i) {
-/*     */           
-/*  66 */           AttributedString attributedString = this.attributedStrings.get(j--);
-/*  67 */           int k = i - attributedString.length();
-/*  68 */           int m = Math.max(0, paramInt1 - k);
-/*     */           
-/*  70 */           attributedString.addAttribute(paramField, paramObject, m, Math.min(paramInt2 - paramInt1, attributedString
-/*  71 */                 .length() - m) + m);
-/*     */           
-/*  73 */           i = k;
-/*     */         } 
-/*     */       } 
-/*  76 */       if (this.size < paramInt1) {
-/*     */         
-/*  78 */         this.attributedStrings.add(new AttributedString(paramStringBuffer
-/*  79 */               .substring(this.size, paramInt1)));
-/*  80 */         this.size = paramInt1;
-/*     */       } 
-/*  82 */       if (this.size < paramInt2) {
-/*     */         
-/*  84 */         int i = Math.max(paramInt1, this.size);
-/*     */         
-/*  86 */         AttributedString attributedString = new AttributedString(paramStringBuffer.substring(i, paramInt2));
-/*     */         
-/*  88 */         attributedString.addAttribute(paramField, paramObject);
-/*  89 */         this.attributedStrings.add(attributedString);
-/*  90 */         this.size = paramInt2;
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void formatted(int paramInt1, Format.Field paramField, Object paramObject, int paramInt2, int paramInt3, StringBuffer paramStringBuffer) {
-/*  97 */     formatted(paramField, paramObject, paramInt2, paramInt3, paramStringBuffer);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public AttributedCharacterIterator getIterator(String paramString) {
-/* 109 */     if (paramString.length() > this.size) {
-/* 110 */       this.attributedStrings.add(new AttributedString(paramString
-/* 111 */             .substring(this.size)));
-/* 112 */       this.size = paramString.length();
-/*     */     } 
-/* 114 */     int i = this.attributedStrings.size();
-/* 115 */     AttributedCharacterIterator[] arrayOfAttributedCharacterIterator = new AttributedCharacterIterator[i];
-/*     */ 
-/*     */     
-/* 118 */     for (byte b = 0; b < i; b++) {
-/* 119 */       arrayOfAttributedCharacterIterator[b] = ((AttributedString)this.attributedStrings
-/* 120 */         .get(b)).getIterator();
-/*     */     }
-/* 122 */     return (new AttributedString(arrayOfAttributedCharacterIterator)).getIterator();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\text\CharacterIteratorFieldDelegate.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2012, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package java.text;
+
+import java.util.ArrayList;
+
+/**
+ * CharacterIteratorFieldDelegate combines the notifications from a Format
+ * into a resulting <code>AttributedCharacterIterator</code>. The resulting
+ * <code>AttributedCharacterIterator</code> can be retrieved by way of
+ * the <code>getIterator</code> method.
+ *
+ */
+class CharacterIteratorFieldDelegate implements Format.FieldDelegate {
+    /**
+     * Array of AttributeStrings. Whenever <code>formatted</code> is invoked
+     * for a region > size, a new instance of AttributedString is added to
+     * attributedStrings. Subsequent invocations of <code>formatted</code>
+     * for existing regions result in invoking addAttribute on the existing
+     * AttributedStrings.
+     */
+    private ArrayList<AttributedString> attributedStrings;
+    /**
+     * Running count of the number of characters that have
+     * been encountered.
+     */
+    private int size;
+
+
+    CharacterIteratorFieldDelegate() {
+        attributedStrings = new ArrayList<>();
+    }
+
+    public void formatted(Format.Field attr, Object value, int start, int end,
+                          StringBuffer buffer) {
+        if (start != end) {
+            if (start < size) {
+                // Adjust attributes of existing runs
+                int index = size;
+                int asIndex = attributedStrings.size() - 1;
+
+                while (start < index) {
+                    AttributedString as = attributedStrings.
+                                           get(asIndex--);
+                    int newIndex = index - as.length();
+                    int aStart = Math.max(0, start - newIndex);
+
+                    as.addAttribute(attr, value, aStart, Math.min(
+                                    end - start, as.length() - aStart) +
+                                    aStart);
+                    index = newIndex;
+                }
+            }
+            if (size < start) {
+                // Pad attributes
+                attributedStrings.add(new AttributedString(
+                                          buffer.substring(size, start)));
+                size = start;
+            }
+            if (size < end) {
+                // Add new string
+                int aStart = Math.max(start, size);
+                AttributedString string = new AttributedString(
+                                   buffer.substring(aStart, end));
+
+                string.addAttribute(attr, value);
+                attributedStrings.add(string);
+                size = end;
+            }
+        }
+    }
+
+    public void formatted(int fieldID, Format.Field attr, Object value,
+                          int start, int end, StringBuffer buffer) {
+        formatted(attr, value, start, end, buffer);
+    }
+
+    /**
+     * Returns an <code>AttributedCharacterIterator</code> that can be used
+     * to iterate over the resulting formatted String.
+     *
+     * @pararm string Result of formatting.
+     */
+    public AttributedCharacterIterator getIterator(String string) {
+        // Add the last AttributedCharacterIterator if necessary
+        // assert(size <= string.length());
+        if (string.length() > size) {
+            attributedStrings.add(new AttributedString(
+                                  string.substring(size)));
+            size = string.length();
+        }
+        int iCount = attributedStrings.size();
+        AttributedCharacterIterator iterators[] = new
+                                    AttributedCharacterIterator[iCount];
+
+        for (int counter = 0; counter < iCount; counter++) {
+            iterators[counter] = attributedStrings.
+                                  get(counter).getIterator();
+        }
+        return new AttributedString(iterators).getIterator();
+    }
+}

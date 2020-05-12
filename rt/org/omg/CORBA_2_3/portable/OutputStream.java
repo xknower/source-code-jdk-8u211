@@ -1,134 +1,129 @@
-/*     */ package org.omg.CORBA_2_3.portable;
-/*     */ 
-/*     */ import java.io.Serializable;
-/*     */ import java.io.SerializablePermission;
-/*     */ import java.security.AccessController;
-/*     */ import java.security.PrivilegedAction;
-/*     */ import org.omg.CORBA.NO_IMPLEMENT;
-/*     */ import org.omg.CORBA.portable.BoxedValueHelper;
-/*     */ import org.omg.CORBA.portable.OutputStream;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public abstract class OutputStream
-/*     */   extends OutputStream
-/*     */ {
-/*     */   private static final String ALLOW_SUBCLASS_PROP = "jdk.corba.allowOutputStreamSubclass";
-/*     */   
-/*  51 */   private static final boolean allowSubclass = ((Boolean)AccessController.<Boolean>doPrivileged(new PrivilegedAction<Boolean>()
-/*     */       {
-/*     */         public Boolean run()
-/*     */         {
-/*  55 */           String str = System.getProperty("jdk.corba.allowOutputStreamSubclass");
-/*  56 */           return Boolean.valueOf((str == null) ? false : (
-/*  57 */               !str.equalsIgnoreCase("false")));
-/*     */         }
-/*     */       })).booleanValue();
-/*     */   
-/*     */   private static Void checkPermission() {
-/*  62 */     SecurityManager securityManager = System.getSecurityManager();
-/*  63 */     if (securityManager != null && 
-/*  64 */       !allowSubclass) {
-/*  65 */       securityManager.checkPermission(new SerializablePermission("enableSubclassImplementation"));
-/*     */     }
-/*     */     
-/*  68 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private OutputStream(Void paramVoid) {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public OutputStream() {
-/*  81 */     this(checkPermission());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void write_value(Serializable paramSerializable) {
-/*  89 */     throw new NO_IMPLEMENT();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void write_value(Serializable paramSerializable, Class paramClass) {
-/*  98 */     throw new NO_IMPLEMENT();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void write_value(Serializable paramSerializable, String paramString) {
-/* 108 */     throw new NO_IMPLEMENT();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void write_value(Serializable paramSerializable, BoxedValueHelper paramBoxedValueHelper) {
-/* 118 */     throw new NO_IMPLEMENT();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void write_abstract_interface(Object paramObject) {
-/* 126 */     throw new NO_IMPLEMENT();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\org\omg\CORBA_2_3\portable\OutputStream.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+/*
+ * Licensed Materials - Property of IBM
+ * RMI-IIOP v1.0
+ * Copyright IBM Corp. 1998 1999  All Rights Reserved
+ *
+ */
+
+package org.omg.CORBA_2_3.portable;
+
+import java.io.SerializablePermission;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+
+/**
+ * OutputStream provides interface for writing of all of the mapped IDL type
+ * to the stream. It extends org.omg.CORBA.portable.OutputStream, and defines
+ * new methods defined by CORBA 2.3.
+ *
+ * @see org.omg.CORBA.portable.OutputStream
+ * @author  OMG
+ * @since   JDK1.2
+ */
+
+public abstract class OutputStream extends org.omg.CORBA.portable.OutputStream {
+
+    private static final String ALLOW_SUBCLASS_PROP = "jdk.corba.allowOutputStreamSubclass";
+    private static final boolean allowSubclass = AccessController.doPrivileged(
+        new PrivilegedAction<Boolean>() {
+            @Override
+            public Boolean run() {
+            String prop = System.getProperty(ALLOW_SUBCLASS_PROP);
+                return prop == null ? false :
+                           (prop.equalsIgnoreCase("false") ? false : true);
+            }
+        });
+
+    private static Void checkPermission() {
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            if (!allowSubclass)
+                sm.checkPermission(new
+                    SerializablePermission("enableSubclassImplementation"));
+        }
+        return null;
+    }
+    private OutputStream(Void ignore) { }
+
+    /**
+     * Create a new instance of this class.
+     *
+     * throw SecurityException if SecurityManager is installed and
+     * enableSubclassImplementation SerializablePermission
+     * is not granted or jdk.corba.allowOutputStreamSubclass system
+     * property is either not set or is set to 'false'
+     */
+    public OutputStream() {
+        this(checkPermission());
+    }
+
+    /**
+     * Marshals a value type to the output stream.
+     * @param value is the acutal value to write
+     */
+    public void write_value(java.io.Serializable value) {
+        throw new org.omg.CORBA.NO_IMPLEMENT();
+    }
+
+    /**
+     * Marshals a value type to the output stream.
+     * @param value is the acutal value to write
+     * @param clz is the declared type of the value to be marshaled
+     */
+    public void write_value(java.io.Serializable value, java.lang.Class clz) {
+        throw new org.omg.CORBA.NO_IMPLEMENT();
+    }
+
+    /**
+     * Marshals a value type to the output stream.
+     * @param value is the acutal value to write
+     * @param repository_id identifies the type of the value type to
+     * be marshaled
+     */
+    public void write_value(java.io.Serializable value, String repository_id) {
+        throw new org.omg.CORBA.NO_IMPLEMENT();
+    }
+
+    /**
+     * Marshals a value type to the output stream.
+     * @param value is the acutal value to write
+     * @param factory is the instance of the helper to be used for marshaling
+     * the boxed value
+     */
+    public void write_value(java.io.Serializable value, org.omg.CORBA.portable.BoxedValueHelper factory) {
+        throw new org.omg.CORBA.NO_IMPLEMENT();
+    }
+
+    /**
+     * Marshals a value object or a stub object.
+     * @param obj the actual value object to marshal or the stub to be marshalled
+     */
+    public void write_abstract_interface(java.lang.Object obj) {
+        throw new org.omg.CORBA.NO_IMPLEMENT();
+    }
+
+}

@@ -1,107 +1,103 @@
-/*    */ package com.sun.jmx.remote.internal;
-/*    */ 
-/*    */ import java.io.IOException;
-/*    */ import java.io.ObjectInput;
-/*    */ import java.io.ObjectOutput;
-/*    */ import java.lang.reflect.Method;
-/*    */ import java.rmi.Remote;
-/*    */ import java.rmi.RemoteException;
-/*    */ import java.rmi.server.Operation;
-/*    */ import java.rmi.server.RemoteCall;
-/*    */ import java.rmi.server.RemoteObject;
-/*    */ import java.rmi.server.RemoteRef;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class ProxyRef
-/*    */   implements RemoteRef
-/*    */ {
-/*    */   private static final long serialVersionUID = -6503061366316814723L;
-/*    */   protected RemoteRef ref;
-/*    */   
-/*    */   public ProxyRef(RemoteRef paramRemoteRef) {
-/* 43 */     this.ref = paramRemoteRef;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public void readExternal(ObjectInput paramObjectInput) throws IOException, ClassNotFoundException {
-/* 48 */     this.ref.readExternal(paramObjectInput);
-/*    */   }
-/*    */   
-/*    */   public void writeExternal(ObjectOutput paramObjectOutput) throws IOException {
-/* 52 */     this.ref.writeExternal(paramObjectOutput);
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   @Deprecated
-/*    */   public void invoke(RemoteCall paramRemoteCall) throws Exception {
-/* 60 */     this.ref.invoke(paramRemoteCall);
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public Object invoke(Remote paramRemote, Method paramMethod, Object[] paramArrayOfObject, long paramLong) throws Exception {
-/* 65 */     return this.ref.invoke(paramRemote, paramMethod, paramArrayOfObject, paramLong);
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   @Deprecated
-/*    */   public void done(RemoteCall paramRemoteCall) throws RemoteException {
-/* 73 */     this.ref.done(paramRemoteCall);
-/*    */   }
-/*    */   
-/*    */   public String getRefClass(ObjectOutput paramObjectOutput) {
-/* 77 */     return this.ref.getRefClass(paramObjectOutput);
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   @Deprecated
-/*    */   public RemoteCall newCall(RemoteObject paramRemoteObject, Operation[] paramArrayOfOperation, int paramInt, long paramLong) throws RemoteException {
-/* 87 */     return this.ref.newCall(paramRemoteObject, paramArrayOfOperation, paramInt, paramLong);
-/*    */   }
-/*    */   
-/*    */   public boolean remoteEquals(RemoteRef paramRemoteRef) {
-/* 91 */     return this.ref.remoteEquals(paramRemoteRef);
-/*    */   }
-/*    */   
-/*    */   public int remoteHashCode() {
-/* 95 */     return this.ref.remoteHashCode();
-/*    */   }
-/*    */   
-/*    */   public String remoteToString() {
-/* 99 */     return this.ref.remoteToString();
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\jmx\remote\internal\ProxyRef.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, 2008, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.jmx.remote.internal;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.lang.reflect.Method;
+import java.rmi.Remote;
+import java.rmi.RemoteException;
+import java.rmi.server.RemoteObject;
+import java.rmi.server.RemoteRef;
+
+
+@SuppressWarnings("deprecation")
+public class ProxyRef implements RemoteRef {
+    private static final long serialVersionUID = -6503061366316814723L;
+
+    public ProxyRef(RemoteRef ref) {
+        this.ref = ref;
+    }
+
+    public void readExternal(ObjectInput in)
+            throws IOException, ClassNotFoundException {
+        ref.readExternal(in);
+    }
+
+    public void writeExternal(ObjectOutput out) throws IOException {
+        ref.writeExternal(out);
+    }
+
+    /**
+     * @deprecated
+     */
+    @Deprecated
+    public void invoke(java.rmi.server.RemoteCall call) throws Exception {
+        ref.invoke(call);
+    }
+
+    public Object invoke(Remote obj, Method method, Object[] params,
+                         long opnum) throws Exception {
+        return ref.invoke(obj, method, params, opnum);
+    }
+
+    /**
+     * @deprecated
+     */
+    @Deprecated
+    public void done(java.rmi.server.RemoteCall call) throws RemoteException {
+        ref.done(call);
+    }
+
+    public String getRefClass(ObjectOutput out) {
+        return ref.getRefClass(out);
+    }
+
+    /**
+     * @deprecated
+     */
+    @Deprecated
+    public java.rmi.server.RemoteCall newCall(RemoteObject obj,
+            java.rmi.server.Operation[] op, int opnum,
+                              long hash) throws RemoteException {
+        return ref.newCall(obj, op, opnum, hash);
+    }
+
+    public boolean remoteEquals(RemoteRef obj) {
+        return ref.remoteEquals(obj);
+    }
+
+    public int remoteHashCode() {
+        return ref.remoteHashCode();
+    }
+
+    public String remoteToString() {
+        return ref.remoteToString();
+    }
+
+    protected RemoteRef ref;
+}

@@ -1,140 +1,134 @@
-/*     */ package java.rmi.dgc;
-/*     */ 
-/*     */ import java.io.Serializable;
-/*     */ import java.rmi.server.UID;
-/*     */ import java.security.SecureRandom;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class VMID
-/*     */   implements Serializable
-/*     */ {
-/*     */   private static final byte[] randomBytes;
-/*     */   
-/*     */   static {
-/*  58 */     SecureRandom secureRandom = new SecureRandom();
-/*  59 */     byte[] arrayOfByte = new byte[8];
-/*  60 */     secureRandom.nextBytes(arrayOfByte);
-/*  61 */     randomBytes = arrayOfByte;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  73 */   private byte[] addr = randomBytes;
-/*  74 */   private UID uid = new UID();
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static final long serialVersionUID = -538642295484486218L;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   @Deprecated
-/*     */   public static boolean isUnique() {
-/*  85 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int hashCode() {
-/*  92 */     return this.uid.hashCode();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean equals(Object paramObject) {
-/* 100 */     if (paramObject instanceof VMID) {
-/* 101 */       VMID vMID = (VMID)paramObject;
-/* 102 */       if (!this.uid.equals(vMID.uid))
-/* 103 */         return false; 
-/* 104 */       if ((((this.addr == null) ? 1 : 0) ^ ((vMID.addr == null) ? 1 : 0)) != 0)
-/* 105 */         return false; 
-/* 106 */       if (this.addr != null) {
-/* 107 */         if (this.addr.length != vMID.addr.length)
-/* 108 */           return false; 
-/* 109 */         for (byte b = 0; b < this.addr.length; b++) {
-/* 110 */           if (this.addr[b] != vMID.addr[b])
-/* 111 */             return false; 
-/*     */         } 
-/* 113 */       }  return true;
-/*     */     } 
-/* 115 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 123 */     StringBuffer stringBuffer = new StringBuffer();
-/* 124 */     if (this.addr != null)
-/* 125 */       for (byte b = 0; b < this.addr.length; b++) {
-/* 126 */         int i = this.addr[b] & 0xFF;
-/* 127 */         stringBuffer.append(((i < 16) ? "0" : "") + 
-/* 128 */             Integer.toString(i, 16));
-/*     */       }  
-/* 130 */     stringBuffer.append(':');
-/* 131 */     stringBuffer.append(this.uid.toString());
-/* 132 */     return stringBuffer.toString();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\rmi\dgc\VMID.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1996, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.rmi.dgc;
+
+import java.rmi.server.UID;
+import java.security.SecureRandom;
+
+/**
+ * A VMID is a identifier that is unique across all Java virtual
+ * machines.  VMIDs are used by the distributed garbage collector
+ * to identify client VMs.
+ *
+ * @author      Ann Wollrath
+ * @author      Peter Jones
+ */
+public final class VMID implements java.io.Serializable {
+    /** Array of bytes uniquely identifying this host */
+    private static final byte[] randomBytes;
+
+    /**
+     * @serial array of bytes uniquely identifying host created on
+     */
+    private byte[] addr;
+
+    /**
+     * @serial unique identifier with respect to host created on
+     */
+    private UID uid;
+
+    /** indicate compatibility with JDK 1.1.x version of class */
+    private static final long serialVersionUID = -538642295484486218L;
+
+    static {
+        // Generate 8 bytes of random data.
+        SecureRandom secureRandom = new SecureRandom();
+        byte bytes[] = new byte[8];
+        secureRandom.nextBytes(bytes);
+        randomBytes = bytes;
+    }
+
+    /**
+     * Create a new VMID.  Each new VMID returned from this constructor
+     * is unique for all Java virtual machines under the following
+     * conditions: a) the conditions for uniqueness for objects of
+     * the class <code>java.rmi.server.UID</code> are satisfied, and b) an
+     * address can be obtained for this host that is unique and constant
+     * for the lifetime of this object.
+     */
+    public VMID() {
+        addr = randomBytes;
+        uid = new UID();
+    }
+
+    /**
+     * Return true if an accurate address can be determined for this
+     * host.  If false, reliable VMID cannot be generated from this host
+     * @return true if host address can be determined, false otherwise
+     * @deprecated
+     */
+    @Deprecated
+    public static boolean isUnique() {
+        return true;
+    }
+
+    /**
+     * Compute hash code for this VMID.
+     */
+    public int hashCode() {
+        return uid.hashCode();
+    }
+
+    /**
+     * Compare this VMID to another, and return true if they are the
+     * same identifier.
+     */
+    public boolean equals(Object obj) {
+        if (obj instanceof VMID) {
+            VMID vmid = (VMID) obj;
+            if (!uid.equals(vmid.uid))
+                return false;
+            if ((addr == null) ^ (vmid.addr == null))
+                return false;
+            if (addr != null) {
+                if (addr.length != vmid.addr.length)
+                    return false;
+                for (int i = 0; i < addr.length; ++ i)
+                    if (addr[i] != vmid.addr[i])
+                        return false;
+            }
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Return string representation of this VMID.
+     */
+    public String toString() {
+        StringBuffer result = new StringBuffer();
+        if (addr != null)
+            for (int i = 0; i < addr.length; ++ i) {
+                int x = addr[i] & 0xFF;
+                result.append((x < 0x10 ? "0" : "") +
+                              Integer.toString(x, 16));
+            }
+        result.append(':');
+        result.append(uid.toString());
+        return result.toString();
+    }
+}

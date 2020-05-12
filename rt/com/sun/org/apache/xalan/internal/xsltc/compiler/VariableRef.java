@@ -1,103 +1,97 @@
-/*    */ package com.sun.org.apache.xalan.internal.xsltc.compiler;
-/*    */ 
-/*    */ import com.sun.org.apache.bcel.internal.generic.CHECKCAST;
-/*    */ import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
-/*    */ import com.sun.org.apache.bcel.internal.generic.GETFIELD;
-/*    */ import com.sun.org.apache.bcel.internal.generic.INVOKEINTERFACE;
-/*    */ import com.sun.org.apache.bcel.internal.generic.InstructionList;
-/*    */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
-/*    */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ final class VariableRef
-/*    */   extends VariableRefBase
-/*    */ {
-/*    */   public VariableRef(Variable variable) {
-/* 44 */     super(variable);
-/*    */   }
-/*    */   
-/*    */   public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
-/* 48 */     ConstantPoolGen cpg = classGen.getConstantPool();
-/* 49 */     InstructionList il = methodGen.getInstructionList();
-/*    */ 
-/*    */     
-/* 52 */     if (this._type.implementedAsMethod())
-/*    */       return; 
-/* 54 */     String name = this._variable.getEscapedName();
-/* 55 */     String signature = this._type.toSignature();
-/*    */     
-/* 57 */     if (this._variable.isLocal()) {
-/* 58 */       if (classGen.isExternal()) {
-/* 59 */         Closure variableClosure = this._closure;
-/* 60 */         while (variableClosure != null && 
-/* 61 */           !variableClosure.inInnerClass()) {
-/* 62 */           variableClosure = variableClosure.getParentClosure();
-/*    */         }
-/*    */         
-/* 65 */         if (variableClosure != null) {
-/* 66 */           il.append(ALOAD_0);
-/* 67 */           il.append(new GETFIELD(cpg
-/* 68 */                 .addFieldref(variableClosure.getInnerClassName(), name, signature)));
-/*    */         }
-/*    */         else {
-/*    */           
-/* 72 */           il.append(this._variable.loadInstruction());
-/*    */         } 
-/*    */       } else {
-/*    */         
-/* 76 */         il.append(this._variable.loadInstruction());
-/*    */       } 
-/*    */     } else {
-/*    */       
-/* 80 */       String className = classGen.getClassName();
-/* 81 */       il.append(classGen.loadTranslet());
-/* 82 */       if (classGen.isExternal()) {
-/* 83 */         il.append(new CHECKCAST(cpg.addClass(className)));
-/*    */       }
-/* 85 */       il.append(new GETFIELD(cpg.addFieldref(className, name, signature)));
-/*    */     } 
-/*    */     
-/* 88 */     if (this._variable.getType() instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.NodeSetType) {
-/*    */       
-/* 90 */       int clone = cpg.addInterfaceMethodref("com.sun.org.apache.xml.internal.dtm.DTMAxisIterator", "cloneIterator", "()Lcom/sun/org/apache/xml/internal/dtm/DTMAxisIterator;");
-/*    */ 
-/*    */ 
-/*    */       
-/* 94 */       il.append(new INVOKEINTERFACE(clone, 1));
-/*    */     } 
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\compiler\VariableRef.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: VariableRef.java,v 1.2.4.1 2005/09/05 09:33:50 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.compiler;
+
+import com.sun.org.apache.bcel.internal.generic.CHECKCAST;
+import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
+import com.sun.org.apache.bcel.internal.generic.GETFIELD;
+import com.sun.org.apache.bcel.internal.generic.INVOKEINTERFACE;
+import com.sun.org.apache.bcel.internal.generic.InstructionList;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.NodeSetType;
+
+/**
+ * @author Jacek Ambroziak
+ * @author Santiago Pericas-Geertsen
+ * @author Morten Jorgensen
+ * @author Erwin Bolwidt <ejb@klomp.org>
+ */
+final class VariableRef extends VariableRefBase {
+
+    public VariableRef(Variable variable) {
+        super(variable);
+    }
+
+    public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
+        final ConstantPoolGen cpg = classGen.getConstantPool();
+        final InstructionList il = methodGen.getInstructionList();
+
+        // Fall-through for variables that are implemented as methods
+        if (_type.implementedAsMethod()) return;
+
+        final String name = _variable.getEscapedName();
+        final String signature = _type.toSignature();
+
+        if (_variable.isLocal()) {
+            if (classGen.isExternal()) {
+                Closure variableClosure = _closure;
+                while (variableClosure != null) {
+                    if (variableClosure.inInnerClass()) break;
+                    variableClosure = variableClosure.getParentClosure();
+                }
+
+                if (variableClosure != null) {
+                    il.append(ALOAD_0);
+                    il.append(new GETFIELD(
+                        cpg.addFieldref(variableClosure.getInnerClassName(),
+                            name, signature)));
+                }
+                else {
+                    il.append(_variable.loadInstruction());
+                }
+            }
+            else {
+                il.append(_variable.loadInstruction());
+            }
+        }
+        else {
+            final String className = classGen.getClassName();
+            il.append(classGen.loadTranslet());
+            if (classGen.isExternal()) {
+                il.append(new CHECKCAST(cpg.addClass(className)));
+            }
+            il.append(new GETFIELD(cpg.addFieldref(className,name,signature)));
+        }
+
+        if (_variable.getType() instanceof NodeSetType) {
+            // The method cloneIterator() also does resetting
+            final int clone = cpg.addInterfaceMethodref(NODE_ITERATOR,
+                                                       "cloneIterator",
+                                                       "()" +
+                                                        NODE_ITERATOR_SIG);
+            il.append(new INVOKEINTERFACE(clone, 1));
+        }
+    }
+}

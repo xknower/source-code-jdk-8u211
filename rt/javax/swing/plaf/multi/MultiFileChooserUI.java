@@ -1,299 +1,293 @@
-/*     */ package javax.swing.plaf.multi;
-/*     */ 
-/*     */ import java.awt.Dimension;
-/*     */ import java.awt.Graphics;
-/*     */ import java.io.File;
-/*     */ import java.util.Vector;
-/*     */ import javax.accessibility.Accessible;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.JFileChooser;
-/*     */ import javax.swing.filechooser.FileFilter;
-/*     */ import javax.swing.filechooser.FileView;
-/*     */ import javax.swing.plaf.ComponentUI;
-/*     */ import javax.swing.plaf.FileChooserUI;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class MultiFileChooserUI
-/*     */   extends FileChooserUI
-/*     */ {
-/*  55 */   protected Vector uis = new Vector();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ComponentUI[] getUIs() {
-/*  67 */     return MultiLookAndFeel.uisToArray(this.uis);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public FileFilter getAcceptAllFileFilter(JFileChooser paramJFileChooser) {
-/*  82 */     FileFilter fileFilter = ((FileChooserUI)this.uis.elementAt(0)).getAcceptAllFileFilter(paramJFileChooser);
-/*  83 */     for (byte b = 1; b < this.uis.size(); b++) {
-/*  84 */       ((FileChooserUI)this.uis.elementAt(b)).getAcceptAllFileFilter(paramJFileChooser);
-/*     */     }
-/*  86 */     return fileFilter;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public FileView getFileView(JFileChooser paramJFileChooser) {
-/*  97 */     FileView fileView = ((FileChooserUI)this.uis.elementAt(0)).getFileView(paramJFileChooser);
-/*  98 */     for (byte b = 1; b < this.uis.size(); b++) {
-/*  99 */       ((FileChooserUI)this.uis.elementAt(b)).getFileView(paramJFileChooser);
-/*     */     }
-/* 101 */     return fileView;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getApproveButtonText(JFileChooser paramJFileChooser) {
-/* 112 */     String str = ((FileChooserUI)this.uis.elementAt(0)).getApproveButtonText(paramJFileChooser);
-/* 113 */     for (byte b = 1; b < this.uis.size(); b++) {
-/* 114 */       ((FileChooserUI)this.uis.elementAt(b)).getApproveButtonText(paramJFileChooser);
-/*     */     }
-/* 116 */     return str;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getDialogTitle(JFileChooser paramJFileChooser) {
-/* 127 */     String str = ((FileChooserUI)this.uis.elementAt(0)).getDialogTitle(paramJFileChooser);
-/* 128 */     for (byte b = 1; b < this.uis.size(); b++) {
-/* 129 */       ((FileChooserUI)this.uis.elementAt(b)).getDialogTitle(paramJFileChooser);
-/*     */     }
-/* 131 */     return str;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void rescanCurrentDirectory(JFileChooser paramJFileChooser) {
-/* 138 */     for (byte b = 0; b < this.uis.size(); b++) {
-/* 139 */       ((FileChooserUI)this.uis.elementAt(b)).rescanCurrentDirectory(paramJFileChooser);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void ensureFileIsVisible(JFileChooser paramJFileChooser, File paramFile) {
-/* 147 */     for (byte b = 0; b < this.uis.size(); b++) {
-/* 148 */       ((FileChooserUI)this.uis.elementAt(b)).ensureFileIsVisible(paramJFileChooser, paramFile);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean contains(JComponent paramJComponent, int paramInt1, int paramInt2) {
-/* 164 */     boolean bool = ((ComponentUI)this.uis.elementAt(0)).contains(paramJComponent, paramInt1, paramInt2);
-/* 165 */     for (byte b = 1; b < this.uis.size(); b++) {
-/* 166 */       ((ComponentUI)this.uis.elementAt(b)).contains(paramJComponent, paramInt1, paramInt2);
-/*     */     }
-/* 168 */     return bool;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void update(Graphics paramGraphics, JComponent paramJComponent) {
-/* 175 */     for (byte b = 0; b < this.uis.size(); b++) {
-/* 176 */       ((ComponentUI)this.uis.elementAt(b)).update(paramGraphics, paramJComponent);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static ComponentUI createUI(JComponent paramJComponent) {
-/* 186 */     MultiFileChooserUI multiFileChooserUI = new MultiFileChooserUI();
-/* 187 */     return MultiLookAndFeel.createUIs(multiFileChooserUI, multiFileChooserUI.uis, paramJComponent);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void installUI(JComponent paramJComponent) {
-/* 196 */     for (byte b = 0; b < this.uis.size(); b++) {
-/* 197 */       ((ComponentUI)this.uis.elementAt(b)).installUI(paramJComponent);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void uninstallUI(JComponent paramJComponent) {
-/* 205 */     for (byte b = 0; b < this.uis.size(); b++) {
-/* 206 */       ((ComponentUI)this.uis.elementAt(b)).uninstallUI(paramJComponent);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void paint(Graphics paramGraphics, JComponent paramJComponent) {
-/* 214 */     for (byte b = 0; b < this.uis.size(); b++) {
-/* 215 */       ((ComponentUI)this.uis.elementAt(b)).paint(paramGraphics, paramJComponent);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Dimension getPreferredSize(JComponent paramJComponent) {
-/* 227 */     Dimension dimension = ((ComponentUI)this.uis.elementAt(0)).getPreferredSize(paramJComponent);
-/* 228 */     for (byte b = 1; b < this.uis.size(); b++) {
-/* 229 */       ((ComponentUI)this.uis.elementAt(b)).getPreferredSize(paramJComponent);
-/*     */     }
-/* 231 */     return dimension;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Dimension getMinimumSize(JComponent paramJComponent) {
-/* 242 */     Dimension dimension = ((ComponentUI)this.uis.elementAt(0)).getMinimumSize(paramJComponent);
-/* 243 */     for (byte b = 1; b < this.uis.size(); b++) {
-/* 244 */       ((ComponentUI)this.uis.elementAt(b)).getMinimumSize(paramJComponent);
-/*     */     }
-/* 246 */     return dimension;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Dimension getMaximumSize(JComponent paramJComponent) {
-/* 257 */     Dimension dimension = ((ComponentUI)this.uis.elementAt(0)).getMaximumSize(paramJComponent);
-/* 258 */     for (byte b = 1; b < this.uis.size(); b++) {
-/* 259 */       ((ComponentUI)this.uis.elementAt(b)).getMaximumSize(paramJComponent);
-/*     */     }
-/* 261 */     return dimension;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getAccessibleChildrenCount(JComponent paramJComponent) {
-/* 272 */     int i = ((ComponentUI)this.uis.elementAt(0)).getAccessibleChildrenCount(paramJComponent);
-/* 273 */     for (byte b = 1; b < this.uis.size(); b++) {
-/* 274 */       ((ComponentUI)this.uis.elementAt(b)).getAccessibleChildrenCount(paramJComponent);
-/*     */     }
-/* 276 */     return i;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Accessible getAccessibleChild(JComponent paramJComponent, int paramInt) {
-/* 287 */     Accessible accessible = ((ComponentUI)this.uis.elementAt(0)).getAccessibleChild(paramJComponent, paramInt);
-/* 288 */     for (byte b = 1; b < this.uis.size(); b++) {
-/* 289 */       ((ComponentUI)this.uis.elementAt(b)).getAccessibleChild(paramJComponent, paramInt);
-/*     */     }
-/* 291 */     return accessible;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\multi\MultiFileChooserUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2001, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.plaf.multi;
+
+import java.util.Vector;
+import javax.swing.plaf.FileChooserUI;
+import javax.swing.filechooser.FileFilter;
+import javax.swing.JFileChooser;
+import javax.swing.filechooser.FileView;
+import java.lang.String;
+import java.io.File;
+import javax.swing.plaf.ComponentUI;
+import javax.swing.JComponent;
+import java.awt.Graphics;
+import java.awt.Dimension;
+import javax.accessibility.Accessible;
+
+/**
+ * A multiplexing UI used to combine <code>FileChooserUI</code>s.
+ *
+ * <p>This file was automatically generated by AutoMulti.
+ *
+ * @author  Otto Multey
+ */
+public class MultiFileChooserUI extends FileChooserUI {
+
+    /**
+     * The vector containing the real UIs.  This is populated
+     * in the call to <code>createUI</code>, and can be obtained by calling
+     * the <code>getUIs</code> method.  The first element is guaranteed to be the real UI
+     * obtained from the default look and feel.
+     */
+    protected Vector uis = new Vector();
+
+////////////////////
+// Common UI methods
+////////////////////
+
+    /**
+     * Returns the list of UIs associated with this multiplexing UI.  This
+     * allows processing of the UIs by an application aware of multiplexing
+     * UIs on components.
+     */
+    public ComponentUI[] getUIs() {
+        return MultiLookAndFeel.uisToArray(uis);
+    }
+
+////////////////////
+// FileChooserUI methods
+////////////////////
+
+    /**
+     * Invokes the <code>getAcceptAllFileFilter</code> method on each UI handled by this object.
+     *
+     * @return the value obtained from the first UI, which is
+     * the UI obtained from the default <code>LookAndFeel</code>
+     */
+    public FileFilter getAcceptAllFileFilter(JFileChooser a) {
+        FileFilter returnValue =
+            ((FileChooserUI) (uis.elementAt(0))).getAcceptAllFileFilter(a);
+        for (int i = 1; i < uis.size(); i++) {
+            ((FileChooserUI) (uis.elementAt(i))).getAcceptAllFileFilter(a);
+        }
+        return returnValue;
+    }
+
+    /**
+     * Invokes the <code>getFileView</code> method on each UI handled by this object.
+     *
+     * @return the value obtained from the first UI, which is
+     * the UI obtained from the default <code>LookAndFeel</code>
+     */
+    public FileView getFileView(JFileChooser a) {
+        FileView returnValue =
+            ((FileChooserUI) (uis.elementAt(0))).getFileView(a);
+        for (int i = 1; i < uis.size(); i++) {
+            ((FileChooserUI) (uis.elementAt(i))).getFileView(a);
+        }
+        return returnValue;
+    }
+
+    /**
+     * Invokes the <code>getApproveButtonText</code> method on each UI handled by this object.
+     *
+     * @return the value obtained from the first UI, which is
+     * the UI obtained from the default <code>LookAndFeel</code>
+     */
+    public String getApproveButtonText(JFileChooser a) {
+        String returnValue =
+            ((FileChooserUI) (uis.elementAt(0))).getApproveButtonText(a);
+        for (int i = 1; i < uis.size(); i++) {
+            ((FileChooserUI) (uis.elementAt(i))).getApproveButtonText(a);
+        }
+        return returnValue;
+    }
+
+    /**
+     * Invokes the <code>getDialogTitle</code> method on each UI handled by this object.
+     *
+     * @return the value obtained from the first UI, which is
+     * the UI obtained from the default <code>LookAndFeel</code>
+     */
+    public String getDialogTitle(JFileChooser a) {
+        String returnValue =
+            ((FileChooserUI) (uis.elementAt(0))).getDialogTitle(a);
+        for (int i = 1; i < uis.size(); i++) {
+            ((FileChooserUI) (uis.elementAt(i))).getDialogTitle(a);
+        }
+        return returnValue;
+    }
+
+    /**
+     * Invokes the <code>rescanCurrentDirectory</code> method on each UI handled by this object.
+     */
+    public void rescanCurrentDirectory(JFileChooser a) {
+        for (int i = 0; i < uis.size(); i++) {
+            ((FileChooserUI) (uis.elementAt(i))).rescanCurrentDirectory(a);
+        }
+    }
+
+    /**
+     * Invokes the <code>ensureFileIsVisible</code> method on each UI handled by this object.
+     */
+    public void ensureFileIsVisible(JFileChooser a, File b) {
+        for (int i = 0; i < uis.size(); i++) {
+            ((FileChooserUI) (uis.elementAt(i))).ensureFileIsVisible(a,b);
+        }
+    }
+
+////////////////////
+// ComponentUI methods
+////////////////////
+
+    /**
+     * Invokes the <code>contains</code> method on each UI handled by this object.
+     *
+     * @return the value obtained from the first UI, which is
+     * the UI obtained from the default <code>LookAndFeel</code>
+     */
+    public boolean contains(JComponent a, int b, int c) {
+        boolean returnValue =
+            ((ComponentUI) (uis.elementAt(0))).contains(a,b,c);
+        for (int i = 1; i < uis.size(); i++) {
+            ((ComponentUI) (uis.elementAt(i))).contains(a,b,c);
+        }
+        return returnValue;
+    }
+
+    /**
+     * Invokes the <code>update</code> method on each UI handled by this object.
+     */
+    public void update(Graphics a, JComponent b) {
+        for (int i = 0; i < uis.size(); i++) {
+            ((ComponentUI) (uis.elementAt(i))).update(a,b);
+        }
+    }
+
+    /**
+     * Returns a multiplexing UI instance if any of the auxiliary
+     * <code>LookAndFeel</code>s supports this UI.  Otherwise, just returns the
+     * UI object obtained from the default <code>LookAndFeel</code>.
+     */
+    public static ComponentUI createUI(JComponent a) {
+        ComponentUI mui = new MultiFileChooserUI();
+        return MultiLookAndFeel.createUIs(mui,
+                                          ((MultiFileChooserUI) mui).uis,
+                                          a);
+    }
+
+    /**
+     * Invokes the <code>installUI</code> method on each UI handled by this object.
+     */
+    public void installUI(JComponent a) {
+        for (int i = 0; i < uis.size(); i++) {
+            ((ComponentUI) (uis.elementAt(i))).installUI(a);
+        }
+    }
+
+    /**
+     * Invokes the <code>uninstallUI</code> method on each UI handled by this object.
+     */
+    public void uninstallUI(JComponent a) {
+        for (int i = 0; i < uis.size(); i++) {
+            ((ComponentUI) (uis.elementAt(i))).uninstallUI(a);
+        }
+    }
+
+    /**
+     * Invokes the <code>paint</code> method on each UI handled by this object.
+     */
+    public void paint(Graphics a, JComponent b) {
+        for (int i = 0; i < uis.size(); i++) {
+            ((ComponentUI) (uis.elementAt(i))).paint(a,b);
+        }
+    }
+
+    /**
+     * Invokes the <code>getPreferredSize</code> method on each UI handled by this object.
+     *
+     * @return the value obtained from the first UI, which is
+     * the UI obtained from the default <code>LookAndFeel</code>
+     */
+    public Dimension getPreferredSize(JComponent a) {
+        Dimension returnValue =
+            ((ComponentUI) (uis.elementAt(0))).getPreferredSize(a);
+        for (int i = 1; i < uis.size(); i++) {
+            ((ComponentUI) (uis.elementAt(i))).getPreferredSize(a);
+        }
+        return returnValue;
+    }
+
+    /**
+     * Invokes the <code>getMinimumSize</code> method on each UI handled by this object.
+     *
+     * @return the value obtained from the first UI, which is
+     * the UI obtained from the default <code>LookAndFeel</code>
+     */
+    public Dimension getMinimumSize(JComponent a) {
+        Dimension returnValue =
+            ((ComponentUI) (uis.elementAt(0))).getMinimumSize(a);
+        for (int i = 1; i < uis.size(); i++) {
+            ((ComponentUI) (uis.elementAt(i))).getMinimumSize(a);
+        }
+        return returnValue;
+    }
+
+    /**
+     * Invokes the <code>getMaximumSize</code> method on each UI handled by this object.
+     *
+     * @return the value obtained from the first UI, which is
+     * the UI obtained from the default <code>LookAndFeel</code>
+     */
+    public Dimension getMaximumSize(JComponent a) {
+        Dimension returnValue =
+            ((ComponentUI) (uis.elementAt(0))).getMaximumSize(a);
+        for (int i = 1; i < uis.size(); i++) {
+            ((ComponentUI) (uis.elementAt(i))).getMaximumSize(a);
+        }
+        return returnValue;
+    }
+
+    /**
+     * Invokes the <code>getAccessibleChildrenCount</code> method on each UI handled by this object.
+     *
+     * @return the value obtained from the first UI, which is
+     * the UI obtained from the default <code>LookAndFeel</code>
+     */
+    public int getAccessibleChildrenCount(JComponent a) {
+        int returnValue =
+            ((ComponentUI) (uis.elementAt(0))).getAccessibleChildrenCount(a);
+        for (int i = 1; i < uis.size(); i++) {
+            ((ComponentUI) (uis.elementAt(i))).getAccessibleChildrenCount(a);
+        }
+        return returnValue;
+    }
+
+    /**
+     * Invokes the <code>getAccessibleChild</code> method on each UI handled by this object.
+     *
+     * @return the value obtained from the first UI, which is
+     * the UI obtained from the default <code>LookAndFeel</code>
+     */
+    public Accessible getAccessibleChild(JComponent a, int b) {
+        Accessible returnValue =
+            ((ComponentUI) (uis.elementAt(0))).getAccessibleChild(a,b);
+        for (int i = 1; i < uis.size(); i++) {
+            ((ComponentUI) (uis.elementAt(i))).getAccessibleChild(a,b);
+        }
+        return returnValue;
+    }
+}

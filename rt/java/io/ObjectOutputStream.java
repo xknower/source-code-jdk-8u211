@@ -1,2479 +1,2474 @@
-/*      */ package java.io;
-/*      */ 
-/*      */ import java.lang.ref.ReferenceQueue;
-/*      */ import java.security.AccessController;
-/*      */ import java.security.PrivilegedAction;
-/*      */ import java.util.ArrayList;
-/*      */ import java.util.Arrays;
-/*      */ import java.util.List;
-/*      */ import java.util.concurrent.ConcurrentHashMap;
-/*      */ import java.util.concurrent.ConcurrentMap;
-/*      */ import sun.reflect.misc.ReflectUtil;
-/*      */ import sun.security.action.GetBooleanAction;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class ObjectOutputStream
-/*      */   extends OutputStream
-/*      */   implements ObjectOutput, ObjectStreamConstants
-/*      */ {
-/*      */   private final BlockDataOutputStream bout;
-/*      */   private final HandleTable handles;
-/*      */   private final ReplaceTable subs;
-/*      */   
-/*      */   private static class Caches
-/*      */   {
-/*  168 */     static final ConcurrentMap<ObjectStreamClass.WeakClassKey, Boolean> subclassAudits = new ConcurrentHashMap<>();
-/*      */ 
-/*      */ 
-/*      */     
-/*  172 */     static final ReferenceQueue<Class<?>> subclassAuditsQueue = new ReferenceQueue<>();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  183 */   private int protocol = 2;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int depth;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private byte[] primVals;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private final boolean enableOverride;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean enableReplace;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private SerialCallbackContext curContext;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private PutFieldImpl curPut;
-/*      */ 
-/*      */   
-/*      */   private final DebugTraceInfoStack debugInfoStack;
-/*      */ 
-/*      */   
-/*  213 */   private static final boolean extendedDebugInfo = ((Boolean)AccessController.<Boolean>doPrivileged(new GetBooleanAction("sun.io.serialization.extendedDebugInfo")))
-/*      */     
-/*  215 */     .booleanValue();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public ObjectOutputStream(OutputStream paramOutputStream) throws IOException {
-/*  241 */     verifySubclass();
-/*  242 */     this.bout = new BlockDataOutputStream(paramOutputStream);
-/*  243 */     this.handles = new HandleTable(10, 3.0F);
-/*  244 */     this.subs = new ReplaceTable(10, 3.0F);
-/*  245 */     this.enableOverride = false;
-/*  246 */     writeStreamHeader();
-/*  247 */     this.bout.setBlockDataMode(true);
-/*  248 */     if (extendedDebugInfo) {
-/*  249 */       this.debugInfoStack = new DebugTraceInfoStack();
-/*      */     } else {
-/*  251 */       this.debugInfoStack = null;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected ObjectOutputStream() throws IOException, SecurityException {
-/*  273 */     SecurityManager securityManager = System.getSecurityManager();
-/*  274 */     if (securityManager != null) {
-/*  275 */       securityManager.checkPermission(SUBCLASS_IMPLEMENTATION_PERMISSION);
-/*      */     }
-/*  277 */     this.bout = null;
-/*  278 */     this.handles = null;
-/*  279 */     this.subs = null;
-/*  280 */     this.enableOverride = true;
-/*  281 */     this.debugInfoStack = null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void useProtocolVersion(int paramInt) throws IOException {
-/*  305 */     if (this.handles.size() != 0)
-/*      */     {
-/*  307 */       throw new IllegalStateException("stream non-empty");
-/*      */     }
-/*  309 */     switch (paramInt) {
-/*      */       case 1:
-/*      */       case 2:
-/*  312 */         this.protocol = paramInt;
-/*      */         return;
-/*      */     } 
-/*      */     
-/*  316 */     throw new IllegalArgumentException("unknown version: " + paramInt);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final void writeObject(Object paramObject) throws IOException {
-/*  343 */     if (this.enableOverride) {
-/*  344 */       writeObjectOverride(paramObject);
-/*      */       return;
-/*      */     } 
-/*      */     try {
-/*  348 */       writeObject0(paramObject, false);
-/*  349 */     } catch (IOException iOException) {
-/*  350 */       if (this.depth == 0) {
-/*  351 */         writeFatalException(iOException);
-/*      */       }
-/*  353 */       throw iOException;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void writeObjectOverride(Object paramObject) throws IOException {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void writeUnshared(Object paramObject) throws IOException {
-/*      */     try {
-/*  415 */       writeObject0(paramObject, true);
-/*  416 */     } catch (IOException iOException) {
-/*  417 */       if (this.depth == 0) {
-/*  418 */         writeFatalException(iOException);
-/*      */       }
-/*  420 */       throw iOException;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void defaultWriteObject() throws IOException {
-/*  434 */     SerialCallbackContext serialCallbackContext = this.curContext;
-/*  435 */     if (serialCallbackContext == null) {
-/*  436 */       throw new NotActiveException("not in call to writeObject");
-/*      */     }
-/*  438 */     Object object = serialCallbackContext.getObj();
-/*  439 */     ObjectStreamClass objectStreamClass = serialCallbackContext.getDesc();
-/*  440 */     this.bout.setBlockDataMode(false);
-/*  441 */     defaultWriteFields(object, objectStreamClass);
-/*  442 */     this.bout.setBlockDataMode(true);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public PutField putFields() throws IOException {
-/*  456 */     if (this.curPut == null) {
-/*  457 */       SerialCallbackContext serialCallbackContext = this.curContext;
-/*  458 */       if (serialCallbackContext == null) {
-/*  459 */         throw new NotActiveException("not in call to writeObject");
-/*      */       }
-/*  461 */       Object object = serialCallbackContext.getObj();
-/*  462 */       ObjectStreamClass objectStreamClass = serialCallbackContext.getDesc();
-/*  463 */       this.curPut = new PutFieldImpl(objectStreamClass);
-/*      */     } 
-/*  465 */     return this.curPut;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void writeFields() throws IOException {
-/*  478 */     if (this.curPut == null) {
-/*  479 */       throw new NotActiveException("no current PutField object");
-/*      */     }
-/*  481 */     this.bout.setBlockDataMode(false);
-/*  482 */     this.curPut.writeFields();
-/*  483 */     this.bout.setBlockDataMode(true);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void reset() throws IOException {
-/*  497 */     if (this.depth != 0) {
-/*  498 */       throw new IOException("stream active");
-/*      */     }
-/*  500 */     this.bout.setBlockDataMode(false);
-/*  501 */     this.bout.writeByte(121);
-/*  502 */     clear();
-/*  503 */     this.bout.setBlockDataMode(true);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void annotateClass(Class<?> paramClass) throws IOException {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void annotateProxyClass(Class<?> paramClass) throws IOException {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected Object replaceObject(Object paramObject) throws IOException {
-/*  588 */     return paramObject;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected boolean enableReplaceObject(boolean paramBoolean) throws SecurityException {
-/*  614 */     if (paramBoolean == this.enableReplace) {
-/*  615 */       return paramBoolean;
-/*      */     }
-/*  617 */     if (paramBoolean) {
-/*  618 */       SecurityManager securityManager = System.getSecurityManager();
-/*  619 */       if (securityManager != null) {
-/*  620 */         securityManager.checkPermission(SUBSTITUTION_PERMISSION);
-/*      */       }
-/*      */     } 
-/*  623 */     this.enableReplace = paramBoolean;
-/*  624 */     return !this.enableReplace;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void writeStreamHeader() throws IOException {
-/*  636 */     this.bout.writeShort(-21267);
-/*  637 */     this.bout.writeShort(5);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void writeClassDescriptor(ObjectStreamClass paramObjectStreamClass) throws IOException {
-/*  668 */     paramObjectStreamClass.writeNonProxy(this);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void write(int paramInt) throws IOException {
-/*  679 */     this.bout.write(paramInt);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void write(byte[] paramArrayOfbyte) throws IOException {
-/*  690 */     this.bout.write(paramArrayOfbyte, 0, paramArrayOfbyte.length, false);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void write(byte[] paramArrayOfbyte, int paramInt1, int paramInt2) throws IOException {
-/*  702 */     if (paramArrayOfbyte == null) {
-/*  703 */       throw new NullPointerException();
-/*      */     }
-/*  705 */     int i = paramInt1 + paramInt2;
-/*  706 */     if (paramInt1 < 0 || paramInt2 < 0 || i > paramArrayOfbyte.length || i < 0) {
-/*  707 */       throw new IndexOutOfBoundsException();
-/*      */     }
-/*  709 */     this.bout.write(paramArrayOfbyte, paramInt1, paramInt2, false);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void flush() throws IOException {
-/*  719 */     this.bout.flush();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void drain() throws IOException {
-/*  730 */     this.bout.drain();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void close() throws IOException {
-/*  740 */     flush();
-/*  741 */     clear();
-/*  742 */     this.bout.close();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void writeBoolean(boolean paramBoolean) throws IOException {
-/*  753 */     this.bout.writeBoolean(paramBoolean);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void writeByte(int paramInt) throws IOException {
-/*  764 */     this.bout.writeByte(paramInt);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void writeShort(int paramInt) throws IOException {
-/*  775 */     this.bout.writeShort(paramInt);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void writeChar(int paramInt) throws IOException {
-/*  786 */     this.bout.writeChar(paramInt);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void writeInt(int paramInt) throws IOException {
-/*  797 */     this.bout.writeInt(paramInt);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void writeLong(long paramLong) throws IOException {
-/*  808 */     this.bout.writeLong(paramLong);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void writeFloat(float paramFloat) throws IOException {
-/*  819 */     this.bout.writeFloat(paramFloat);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void writeDouble(double paramDouble) throws IOException {
-/*  830 */     this.bout.writeDouble(paramDouble);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void writeBytes(String paramString) throws IOException {
-/*  841 */     this.bout.writeBytes(paramString);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void writeChars(String paramString) throws IOException {
-/*  852 */     this.bout.writeChars(paramString);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void writeUTF(String paramString) throws IOException {
-/*  869 */     this.bout.writeUTF(paramString);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static abstract class PutField
-/*      */   {
-/*      */     public abstract void put(String param1String, boolean param1Boolean);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public abstract void put(String param1String, byte param1Byte);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public abstract void put(String param1String, char param1Char);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public abstract void put(String param1String, short param1Short);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public abstract void put(String param1String, int param1Int);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public abstract void put(String param1String, long param1Long);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public abstract void put(String param1String, float param1Float);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public abstract void put(String param1String, double param1Double);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public abstract void put(String param1String, Object param1Object);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     @Deprecated
-/*      */     public abstract void write(ObjectOutput param1ObjectOutput) throws IOException;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   int getProtocolVersion() {
-/* 1016 */     return this.protocol;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void writeTypeString(String paramString) throws IOException {
-/* 1025 */     if (paramString == null)
-/* 1026 */     { writeNull(); }
-/* 1027 */     else { int i; if ((i = this.handles.lookup(paramString)) != -1) {
-/* 1028 */         writeHandle(i);
-/*      */       } else {
-/* 1030 */         writeString(paramString, false);
-/*      */       }  }
-/*      */   
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void verifySubclass() {
-/* 1041 */     Class<?> clazz = getClass();
-/* 1042 */     if (clazz == ObjectOutputStream.class) {
-/*      */       return;
-/*      */     }
-/* 1045 */     SecurityManager securityManager = System.getSecurityManager();
-/* 1046 */     if (securityManager == null) {
-/*      */       return;
-/*      */     }
-/* 1049 */     ObjectStreamClass.processQueue(Caches.subclassAuditsQueue, (ConcurrentMap)Caches.subclassAudits);
-/* 1050 */     ObjectStreamClass.WeakClassKey weakClassKey = new ObjectStreamClass.WeakClassKey(clazz, Caches.subclassAuditsQueue);
-/* 1051 */     Boolean bool = Caches.subclassAudits.get(weakClassKey);
-/* 1052 */     if (bool == null) {
-/* 1053 */       bool = Boolean.valueOf(auditSubclass(clazz));
-/* 1054 */       Caches.subclassAudits.putIfAbsent(weakClassKey, bool);
-/*      */     } 
-/* 1056 */     if (bool.booleanValue()) {
-/*      */       return;
-/*      */     }
-/* 1059 */     securityManager.checkPermission(SUBCLASS_IMPLEMENTATION_PERMISSION);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static boolean auditSubclass(final Class<?> subcl) {
-/* 1068 */     Boolean bool = AccessController.<Boolean>doPrivileged(new PrivilegedAction<Boolean>()
-/*      */         {
-/*      */           public Boolean run() {
-/* 1071 */             Class<ObjectOutputStream> clazz = subcl;
-/* 1072 */             for (; clazz != ObjectOutputStream.class; 
-/* 1073 */               clazz = (Class)clazz.getSuperclass()) {
-/*      */               
-/*      */               try {
-/* 1076 */                 clazz.getDeclaredMethod("writeUnshared", new Class[] { Object.class });
-/*      */                 
-/* 1078 */                 return Boolean.FALSE;
-/* 1079 */               } catch (NoSuchMethodException noSuchMethodException) {
-/*      */                 
-/*      */                 try {
-/* 1082 */                   clazz.getDeclaredMethod("putFields", (Class[])null);
-/* 1083 */                   return Boolean.FALSE;
-/* 1084 */                 } catch (NoSuchMethodException noSuchMethodException1) {}
-/*      */               } 
-/*      */             } 
-/* 1087 */             return Boolean.TRUE;
-/*      */           }
-/*      */         });
-/*      */     
-/* 1091 */     return bool.booleanValue();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void clear() {
-/* 1098 */     this.subs.clear();
-/* 1099 */     this.handles.clear();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void writeObject0(Object paramObject, boolean paramBoolean) throws IOException {
-/* 1108 */     boolean bool = this.bout.setBlockDataMode(false);
-/* 1109 */     this.depth++;
-/*      */     
-/*      */     try {
-/*      */       ObjectStreamClass objectStreamClass;
-/* 1113 */       if ((paramObject = this.subs.lookup(paramObject)) == null) {
-/* 1114 */         writeNull(); return;
-/*      */       }  int i;
-/* 1116 */       if (!paramBoolean && (i = this.handles.lookup(paramObject)) != -1) {
-/* 1117 */         writeHandle(i); return;
-/*      */       } 
-/* 1119 */       if (paramObject instanceof Class) {
-/* 1120 */         writeClass((Class)paramObject, paramBoolean); return;
-/*      */       } 
-/* 1122 */       if (paramObject instanceof ObjectStreamClass) {
-/* 1123 */         writeClassDesc((ObjectStreamClass)paramObject, paramBoolean);
-/*      */         
-/*      */         return;
-/*      */       } 
-/*      */       
-/* 1128 */       Object object = paramObject;
-/* 1129 */       Class<?> clazz = paramObject.getClass();
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       while (true) {
-/* 1134 */         objectStreamClass = ObjectStreamClass.lookup(clazz, true); Class<?> clazz1;
-/* 1135 */         if (!objectStreamClass.hasWriteReplaceMethod() || (
-/* 1136 */           paramObject = objectStreamClass.invokeWriteReplace(paramObject)) == null || (
-/* 1137 */           clazz1 = paramObject.getClass()) == clazz) {
-/*      */           break;
-/*      */         }
-/*      */         
-/* 1141 */         clazz = clazz1;
-/*      */       } 
-/* 1143 */       if (this.enableReplace) {
-/* 1144 */         Object object1 = replaceObject(paramObject);
-/* 1145 */         if (object1 != paramObject && object1 != null) {
-/* 1146 */           clazz = object1.getClass();
-/* 1147 */           objectStreamClass = ObjectStreamClass.lookup(clazz, true);
-/*      */         } 
-/* 1149 */         paramObject = object1;
-/*      */       } 
-/*      */ 
-/*      */       
-/* 1153 */       if (paramObject != object) {
-/* 1154 */         this.subs.assign(object, paramObject);
-/* 1155 */         if (paramObject == null) {
-/* 1156 */           writeNull(); return;
-/*      */         } 
-/* 1158 */         if (!paramBoolean && (i = this.handles.lookup(paramObject)) != -1) {
-/* 1159 */           writeHandle(i); return;
-/*      */         } 
-/* 1161 */         if (paramObject instanceof Class) {
-/* 1162 */           writeClass((Class)paramObject, paramBoolean); return;
-/*      */         } 
-/* 1164 */         if (paramObject instanceof ObjectStreamClass) {
-/* 1165 */           writeClassDesc((ObjectStreamClass)paramObject, paramBoolean);
-/*      */           
-/*      */           return;
-/*      */         } 
-/*      */       } 
-/*      */       
-/* 1171 */       if (paramObject instanceof String) {
-/* 1172 */         writeString((String)paramObject, paramBoolean);
-/* 1173 */       } else if (clazz.isArray()) {
-/* 1174 */         writeArray(paramObject, objectStreamClass, paramBoolean);
-/* 1175 */       } else if (paramObject instanceof Enum) {
-/* 1176 */         writeEnum((Enum)paramObject, objectStreamClass, paramBoolean);
-/* 1177 */       } else if (paramObject instanceof Serializable) {
-/* 1178 */         writeOrdinaryObject(paramObject, objectStreamClass, paramBoolean);
-/*      */       } else {
-/* 1180 */         if (extendedDebugInfo) {
-/* 1181 */           throw new NotSerializableException(clazz
-/* 1182 */               .getName() + "\n" + this.debugInfoStack.toString());
-/*      */         }
-/* 1184 */         throw new NotSerializableException(clazz.getName());
-/*      */       } 
-/*      */     } finally {
-/*      */       
-/* 1188 */       this.depth--;
-/* 1189 */       this.bout.setBlockDataMode(bool);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void writeNull() throws IOException {
-/* 1197 */     this.bout.writeByte(112);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void writeHandle(int paramInt) throws IOException {
-/* 1204 */     this.bout.writeByte(113);
-/* 1205 */     this.bout.writeInt(8257536 + paramInt);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void writeClass(Class<?> paramClass, boolean paramBoolean) throws IOException {
-/* 1212 */     this.bout.writeByte(118);
-/* 1213 */     writeClassDesc(ObjectStreamClass.lookup(paramClass, true), false);
-/* 1214 */     this.handles.assign(paramBoolean ? null : paramClass);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void writeClassDesc(ObjectStreamClass paramObjectStreamClass, boolean paramBoolean) throws IOException {
-/* 1224 */     if (paramObjectStreamClass == null)
-/* 1225 */     { writeNull(); }
-/* 1226 */     else { int i; if (!paramBoolean && (i = this.handles.lookup(paramObjectStreamClass)) != -1) {
-/* 1227 */         writeHandle(i);
-/* 1228 */       } else if (paramObjectStreamClass.isProxy()) {
-/* 1229 */         writeProxyDesc(paramObjectStreamClass, paramBoolean);
-/*      */       } else {
-/* 1231 */         writeNonProxyDesc(paramObjectStreamClass, paramBoolean);
-/*      */       }  }
-/*      */   
-/*      */   }
-/*      */   
-/*      */   private boolean isCustomSubclass() {
-/* 1237 */     return 
-/* 1238 */       (getClass().getClassLoader() != ObjectOutputStream.class.getClassLoader());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void writeProxyDesc(ObjectStreamClass paramObjectStreamClass, boolean paramBoolean) throws IOException {
-/* 1247 */     this.bout.writeByte(125);
-/* 1248 */     this.handles.assign(paramBoolean ? null : paramObjectStreamClass);
-/*      */     
-/* 1250 */     Class<?> clazz = paramObjectStreamClass.forClass();
-/* 1251 */     Class[] arrayOfClass = clazz.getInterfaces();
-/* 1252 */     this.bout.writeInt(arrayOfClass.length);
-/* 1253 */     for (byte b = 0; b < arrayOfClass.length; b++) {
-/* 1254 */       this.bout.writeUTF(arrayOfClass[b].getName());
-/*      */     }
-/*      */     
-/* 1257 */     this.bout.setBlockDataMode(true);
-/* 1258 */     if (clazz != null && isCustomSubclass()) {
-/* 1259 */       ReflectUtil.checkPackageAccess(clazz);
-/*      */     }
-/* 1261 */     annotateProxyClass(clazz);
-/* 1262 */     this.bout.setBlockDataMode(false);
-/* 1263 */     this.bout.writeByte(120);
-/*      */     
-/* 1265 */     writeClassDesc(paramObjectStreamClass.getSuperDesc(), false);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void writeNonProxyDesc(ObjectStreamClass paramObjectStreamClass, boolean paramBoolean) throws IOException {
-/* 1275 */     this.bout.writeByte(114);
-/* 1276 */     this.handles.assign(paramBoolean ? null : paramObjectStreamClass);
-/*      */     
-/* 1278 */     if (this.protocol == 1) {
-/*      */       
-/* 1280 */       paramObjectStreamClass.writeNonProxy(this);
-/*      */     } else {
-/* 1282 */       writeClassDescriptor(paramObjectStreamClass);
-/*      */     } 
-/*      */     
-/* 1285 */     Class<?> clazz = paramObjectStreamClass.forClass();
-/* 1286 */     this.bout.setBlockDataMode(true);
-/* 1287 */     if (clazz != null && isCustomSubclass()) {
-/* 1288 */       ReflectUtil.checkPackageAccess(clazz);
-/*      */     }
-/* 1290 */     annotateClass(clazz);
-/* 1291 */     this.bout.setBlockDataMode(false);
-/* 1292 */     this.bout.writeByte(120);
-/*      */     
-/* 1294 */     writeClassDesc(paramObjectStreamClass.getSuperDesc(), false);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void writeString(String paramString, boolean paramBoolean) throws IOException {
-/* 1302 */     this.handles.assign(paramBoolean ? null : paramString);
-/* 1303 */     long l = this.bout.getUTFLength(paramString);
-/* 1304 */     if (l <= 65535L) {
-/* 1305 */       this.bout.writeByte(116);
-/* 1306 */       this.bout.writeUTF(paramString, l);
-/*      */     } else {
-/* 1308 */       this.bout.writeByte(124);
-/* 1309 */       this.bout.writeLongUTF(paramString, l);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void writeArray(Object paramObject, ObjectStreamClass paramObjectStreamClass, boolean paramBoolean) throws IOException {
-/* 1321 */     this.bout.writeByte(117);
-/* 1322 */     writeClassDesc(paramObjectStreamClass, false);
-/* 1323 */     this.handles.assign(paramBoolean ? null : paramObject);
-/*      */     
-/* 1325 */     Class<?> clazz = paramObjectStreamClass.forClass().getComponentType();
-/* 1326 */     if (clazz.isPrimitive()) {
-/* 1327 */       if (clazz == int.class) {
-/* 1328 */         int[] arrayOfInt = (int[])paramObject;
-/* 1329 */         this.bout.writeInt(arrayOfInt.length);
-/* 1330 */         this.bout.writeInts(arrayOfInt, 0, arrayOfInt.length);
-/* 1331 */       } else if (clazz == byte.class) {
-/* 1332 */         byte[] arrayOfByte = (byte[])paramObject;
-/* 1333 */         this.bout.writeInt(arrayOfByte.length);
-/* 1334 */         this.bout.write(arrayOfByte, 0, arrayOfByte.length, true);
-/* 1335 */       } else if (clazz == long.class) {
-/* 1336 */         long[] arrayOfLong = (long[])paramObject;
-/* 1337 */         this.bout.writeInt(arrayOfLong.length);
-/* 1338 */         this.bout.writeLongs(arrayOfLong, 0, arrayOfLong.length);
-/* 1339 */       } else if (clazz == float.class) {
-/* 1340 */         float[] arrayOfFloat = (float[])paramObject;
-/* 1341 */         this.bout.writeInt(arrayOfFloat.length);
-/* 1342 */         this.bout.writeFloats(arrayOfFloat, 0, arrayOfFloat.length);
-/* 1343 */       } else if (clazz == double.class) {
-/* 1344 */         double[] arrayOfDouble = (double[])paramObject;
-/* 1345 */         this.bout.writeInt(arrayOfDouble.length);
-/* 1346 */         this.bout.writeDoubles(arrayOfDouble, 0, arrayOfDouble.length);
-/* 1347 */       } else if (clazz == short.class) {
-/* 1348 */         short[] arrayOfShort = (short[])paramObject;
-/* 1349 */         this.bout.writeInt(arrayOfShort.length);
-/* 1350 */         this.bout.writeShorts(arrayOfShort, 0, arrayOfShort.length);
-/* 1351 */       } else if (clazz == char.class) {
-/* 1352 */         char[] arrayOfChar = (char[])paramObject;
-/* 1353 */         this.bout.writeInt(arrayOfChar.length);
-/* 1354 */         this.bout.writeChars(arrayOfChar, 0, arrayOfChar.length);
-/* 1355 */       } else if (clazz == boolean.class) {
-/* 1356 */         boolean[] arrayOfBoolean = (boolean[])paramObject;
-/* 1357 */         this.bout.writeInt(arrayOfBoolean.length);
-/* 1358 */         this.bout.writeBooleans(arrayOfBoolean, 0, arrayOfBoolean.length);
-/*      */       } else {
-/* 1360 */         throw new InternalError();
-/*      */       } 
-/*      */     } else {
-/* 1363 */       Object[] arrayOfObject = (Object[])paramObject;
-/* 1364 */       int i = arrayOfObject.length;
-/* 1365 */       this.bout.writeInt(i);
-/* 1366 */       if (extendedDebugInfo) {
-/* 1367 */         this.debugInfoStack.push("array (class \"" + paramObject
-/* 1368 */             .getClass().getName() + "\", size: " + i + ")");
-/*      */       }
-/*      */       
-/*      */       try {
-/* 1372 */         for (byte b = 0; b < i; b++) {
-/* 1373 */           if (extendedDebugInfo);
-/*      */ 
-/*      */ 
-/*      */         
-/*      */         }
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       }
-/*      */       finally {
-/*      */ 
-/*      */ 
-/*      */         
-/* 1386 */         if (extendedDebugInfo) {
-/* 1387 */           this.debugInfoStack.pop();
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void writeEnum(Enum<?> paramEnum, ObjectStreamClass paramObjectStreamClass, boolean paramBoolean) throws IOException {
-/* 1401 */     this.bout.writeByte(126);
-/* 1402 */     ObjectStreamClass objectStreamClass = paramObjectStreamClass.getSuperDesc();
-/* 1403 */     writeClassDesc((objectStreamClass.forClass() == Enum.class) ? paramObjectStreamClass : objectStreamClass, false);
-/* 1404 */     this.handles.assign(paramBoolean ? null : paramEnum);
-/* 1405 */     writeString(paramEnum.name(), false);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void writeOrdinaryObject(Object paramObject, ObjectStreamClass paramObjectStreamClass, boolean paramBoolean) throws IOException {
-/* 1418 */     if (extendedDebugInfo) {
-/* 1419 */       this.debugInfoStack.push(((this.depth == 1) ? "root " : "") + "object (class \"" + paramObject
-/*      */           
-/* 1421 */           .getClass().getName() + "\", " + paramObject.toString() + ")");
-/*      */     }
-/*      */     try {
-/* 1424 */       paramObjectStreamClass.checkSerialize();
-/*      */       
-/* 1426 */       this.bout.writeByte(115);
-/* 1427 */       writeClassDesc(paramObjectStreamClass, false);
-/* 1428 */       this.handles.assign(paramBoolean ? null : paramObject);
-/* 1429 */       if (paramObjectStreamClass.isExternalizable() && !paramObjectStreamClass.isProxy()) {
-/* 1430 */         writeExternalData((Externalizable)paramObject);
-/*      */       } else {
-/* 1432 */         writeSerialData(paramObject, paramObjectStreamClass);
-/*      */       } 
-/*      */     } finally {
-/* 1435 */       if (extendedDebugInfo) {
-/* 1436 */         this.debugInfoStack.pop();
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void writeExternalData(Externalizable paramExternalizable) throws IOException {
-/* 1446 */     PutFieldImpl putFieldImpl = this.curPut;
-/* 1447 */     this.curPut = null;
-/*      */     
-/* 1449 */     if (extendedDebugInfo) {
-/* 1450 */       this.debugInfoStack.push("writeExternal data");
-/*      */     }
-/* 1452 */     SerialCallbackContext serialCallbackContext = this.curContext;
-/*      */     try {
-/* 1454 */       this.curContext = null;
-/* 1455 */       if (this.protocol == 1) {
-/* 1456 */         paramExternalizable.writeExternal(this);
-/*      */       } else {
-/* 1458 */         this.bout.setBlockDataMode(true);
-/* 1459 */         paramExternalizable.writeExternal(this);
-/* 1460 */         this.bout.setBlockDataMode(false);
-/* 1461 */         this.bout.writeByte(120);
-/*      */       } 
-/*      */     } finally {
-/* 1464 */       this.curContext = serialCallbackContext;
-/* 1465 */       if (extendedDebugInfo) {
-/* 1466 */         this.debugInfoStack.pop();
-/*      */       }
-/*      */     } 
-/*      */     
-/* 1470 */     this.curPut = putFieldImpl;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void writeSerialData(Object paramObject, ObjectStreamClass paramObjectStreamClass) throws IOException {
-/* 1480 */     ObjectStreamClass.ClassDataSlot[] arrayOfClassDataSlot = paramObjectStreamClass.getClassDataLayout();
-/* 1481 */     for (byte b = 0; b < arrayOfClassDataSlot.length; b++) {
-/* 1482 */       ObjectStreamClass objectStreamClass = (arrayOfClassDataSlot[b]).desc;
-/* 1483 */       if (objectStreamClass.hasWriteObjectMethod()) {
-/* 1484 */         PutFieldImpl putFieldImpl = this.curPut;
-/* 1485 */         this.curPut = null;
-/* 1486 */         SerialCallbackContext serialCallbackContext = this.curContext;
-/*      */         
-/* 1488 */         if (extendedDebugInfo) {
-/* 1489 */           this.debugInfoStack.push("custom writeObject data (class \"" + objectStreamClass
-/*      */               
-/* 1491 */               .getName() + "\")");
-/*      */         }
-/*      */         try {
-/* 1494 */           this.curContext = new SerialCallbackContext(paramObject, objectStreamClass);
-/* 1495 */           this.bout.setBlockDataMode(true);
-/* 1496 */           objectStreamClass.invokeWriteObject(paramObject, this);
-/* 1497 */           this.bout.setBlockDataMode(false);
-/* 1498 */           this.bout.writeByte(120);
-/*      */         } finally {
-/* 1500 */           this.curContext.setUsed();
-/* 1501 */           this.curContext = serialCallbackContext;
-/* 1502 */           if (extendedDebugInfo) {
-/* 1503 */             this.debugInfoStack.pop();
-/*      */           }
-/*      */         } 
-/*      */         
-/* 1507 */         this.curPut = putFieldImpl;
-/*      */       } else {
-/* 1509 */         defaultWriteFields(paramObject, objectStreamClass);
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void defaultWriteFields(Object paramObject, ObjectStreamClass paramObjectStreamClass) throws IOException {
-/* 1522 */     Class<?> clazz = paramObjectStreamClass.forClass();
-/* 1523 */     if (clazz != null && paramObject != null && !clazz.isInstance(paramObject)) {
-/* 1524 */       throw new ClassCastException();
-/*      */     }
-/*      */     
-/* 1527 */     paramObjectStreamClass.checkDefaultSerialize();
-/*      */     
-/* 1529 */     int i = paramObjectStreamClass.getPrimDataSize();
-/* 1530 */     if (this.primVals == null || this.primVals.length < i) {
-/* 1531 */       this.primVals = new byte[i];
-/*      */     }
-/* 1533 */     paramObjectStreamClass.getPrimFieldValues(paramObject, this.primVals);
-/* 1534 */     this.bout.write(this.primVals, 0, i, false);
-/*      */     
-/* 1536 */     ObjectStreamField[] arrayOfObjectStreamField = paramObjectStreamClass.getFields(false);
-/* 1537 */     Object[] arrayOfObject = new Object[paramObjectStreamClass.getNumObjFields()];
-/* 1538 */     int j = arrayOfObjectStreamField.length - arrayOfObject.length;
-/* 1539 */     paramObjectStreamClass.getObjFieldValues(paramObject, arrayOfObject);
-/* 1540 */     for (byte b = 0; b < arrayOfObject.length; b++) {
-/* 1541 */       if (extendedDebugInfo);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void writeFatalException(IOException paramIOException) throws IOException {
-/* 1573 */     clear();
-/* 1574 */     boolean bool = this.bout.setBlockDataMode(false);
-/*      */     try {
-/* 1576 */       this.bout.writeByte(123);
-/* 1577 */       writeObject0(paramIOException, false);
-/* 1578 */       clear();
-/*      */     } finally {
-/* 1580 */       this.bout.setBlockDataMode(bool);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static native void floatsToBytes(float[] paramArrayOffloat, int paramInt1, byte[] paramArrayOfbyte, int paramInt2, int paramInt3);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static native void doublesToBytes(double[] paramArrayOfdouble, int paramInt1, byte[] paramArrayOfbyte, int paramInt2, int paramInt3);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private class PutFieldImpl
-/*      */     extends PutField
-/*      */   {
-/*      */     private final ObjectStreamClass desc;
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private final byte[] primVals;
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private final Object[] objVals;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     PutFieldImpl(ObjectStreamClass param1ObjectStreamClass) {
-/* 1617 */       this.desc = param1ObjectStreamClass;
-/* 1618 */       this.primVals = new byte[param1ObjectStreamClass.getPrimDataSize()];
-/* 1619 */       this.objVals = new Object[param1ObjectStreamClass.getNumObjFields()];
-/*      */     }
-/*      */     
-/*      */     public void put(String param1String, boolean param1Boolean) {
-/* 1623 */       Bits.putBoolean(this.primVals, getFieldOffset(param1String, boolean.class), param1Boolean);
-/*      */     }
-/*      */     
-/*      */     public void put(String param1String, byte param1Byte) {
-/* 1627 */       this.primVals[getFieldOffset(param1String, byte.class)] = param1Byte;
-/*      */     }
-/*      */     
-/*      */     public void put(String param1String, char param1Char) {
-/* 1631 */       Bits.putChar(this.primVals, getFieldOffset(param1String, char.class), param1Char);
-/*      */     }
-/*      */     
-/*      */     public void put(String param1String, short param1Short) {
-/* 1635 */       Bits.putShort(this.primVals, getFieldOffset(param1String, short.class), param1Short);
-/*      */     }
-/*      */     
-/*      */     public void put(String param1String, int param1Int) {
-/* 1639 */       Bits.putInt(this.primVals, getFieldOffset(param1String, int.class), param1Int);
-/*      */     }
-/*      */     
-/*      */     public void put(String param1String, float param1Float) {
-/* 1643 */       Bits.putFloat(this.primVals, getFieldOffset(param1String, float.class), param1Float);
-/*      */     }
-/*      */     
-/*      */     public void put(String param1String, long param1Long) {
-/* 1647 */       Bits.putLong(this.primVals, getFieldOffset(param1String, long.class), param1Long);
-/*      */     }
-/*      */     
-/*      */     public void put(String param1String, double param1Double) {
-/* 1651 */       Bits.putDouble(this.primVals, getFieldOffset(param1String, double.class), param1Double);
-/*      */     }
-/*      */     
-/*      */     public void put(String param1String, Object param1Object) {
-/* 1655 */       this.objVals[getFieldOffset(param1String, Object.class)] = param1Object;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void write(ObjectOutput param1ObjectOutput) throws IOException {
-/* 1675 */       if (ObjectOutputStream.this != param1ObjectOutput) {
-/* 1676 */         throw new IllegalArgumentException("wrong stream");
-/*      */       }
-/* 1678 */       param1ObjectOutput.write(this.primVals, 0, this.primVals.length);
-/*      */       
-/* 1680 */       ObjectStreamField[] arrayOfObjectStreamField = this.desc.getFields(false);
-/* 1681 */       int i = arrayOfObjectStreamField.length - this.objVals.length;
-/*      */       
-/* 1683 */       for (byte b = 0; b < this.objVals.length; b++) {
-/* 1684 */         if (arrayOfObjectStreamField[i + b].isUnshared()) {
-/* 1685 */           throw new IOException("cannot write unshared object");
-/*      */         }
-/* 1687 */         param1ObjectOutput.writeObject(this.objVals[b]);
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     void writeFields() throws IOException {
-/* 1695 */       ObjectOutputStream.this.bout.write(this.primVals, 0, this.primVals.length, false);
-/*      */       
-/* 1697 */       ObjectStreamField[] arrayOfObjectStreamField = this.desc.getFields(false);
-/* 1698 */       int i = arrayOfObjectStreamField.length - this.objVals.length;
-/* 1699 */       for (byte b = 0; b < this.objVals.length; b++) {
-/* 1700 */         if (ObjectOutputStream.extendedDebugInfo);
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private int getFieldOffset(String param1String, Class<?> param1Class) {
-/* 1724 */       ObjectStreamField objectStreamField = this.desc.getField(param1String, param1Class);
-/* 1725 */       if (objectStreamField == null) {
-/* 1726 */         throw new IllegalArgumentException("no such field " + param1String + " with type " + param1Class);
-/*      */       }
-/*      */       
-/* 1729 */       return objectStreamField.getOffset();
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static class BlockDataOutputStream
-/*      */     extends OutputStream
-/*      */     implements DataOutput
-/*      */   {
-/*      */     private static final int MAX_BLOCK_SIZE = 1024;
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private static final int MAX_HEADER_SIZE = 5;
-/*      */ 
-/*      */     
-/*      */     private static final int CHAR_BUF_SIZE = 256;
-/*      */ 
-/*      */     
-/* 1750 */     private final byte[] buf = new byte[1024];
-/*      */     
-/* 1752 */     private final byte[] hbuf = new byte[5];
-/*      */     
-/* 1754 */     private final char[] cbuf = new char[256];
-/*      */ 
-/*      */     
-/*      */     private boolean blkmode = false;
-/*      */     
-/* 1759 */     private int pos = 0;
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private final OutputStream out;
-/*      */ 
-/*      */     
-/*      */     private final DataOutputStream dout;
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     BlockDataOutputStream(OutputStream param1OutputStream) {
-/* 1771 */       this.out = param1OutputStream;
-/* 1772 */       this.dout = new DataOutputStream(this);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     boolean setBlockDataMode(boolean param1Boolean) throws IOException {
-/* 1783 */       if (this.blkmode == param1Boolean) {
-/* 1784 */         return this.blkmode;
-/*      */       }
-/* 1786 */       drain();
-/* 1787 */       this.blkmode = param1Boolean;
-/* 1788 */       return !this.blkmode;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     boolean getBlockDataMode() {
-/* 1796 */       return this.blkmode;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void write(int param1Int) throws IOException {
-/* 1807 */       if (this.pos >= 1024) {
-/* 1808 */         drain();
-/*      */       }
-/* 1810 */       this.buf[this.pos++] = (byte)param1Int;
-/*      */     }
-/*      */     
-/*      */     public void write(byte[] param1ArrayOfbyte) throws IOException {
-/* 1814 */       write(param1ArrayOfbyte, 0, param1ArrayOfbyte.length, false);
-/*      */     }
-/*      */     
-/*      */     public void write(byte[] param1ArrayOfbyte, int param1Int1, int param1Int2) throws IOException {
-/* 1818 */       write(param1ArrayOfbyte, param1Int1, param1Int2, false);
-/*      */     }
-/*      */     
-/*      */     public void flush() throws IOException {
-/* 1822 */       drain();
-/* 1823 */       this.out.flush();
-/*      */     }
-/*      */     
-/*      */     public void close() throws IOException {
-/* 1827 */       flush();
-/* 1828 */       this.out.close();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     void write(byte[] param1ArrayOfbyte, int param1Int1, int param1Int2, boolean param1Boolean) throws IOException {
-/* 1840 */       if (!param1Boolean && !this.blkmode) {
-/* 1841 */         drain();
-/* 1842 */         this.out.write(param1ArrayOfbyte, param1Int1, param1Int2);
-/*      */         
-/*      */         return;
-/*      */       } 
-/* 1846 */       while (param1Int2 > 0) {
-/* 1847 */         if (this.pos >= 1024) {
-/* 1848 */           drain();
-/*      */         }
-/* 1850 */         if (param1Int2 >= 1024 && !param1Boolean && this.pos == 0) {
-/*      */           
-/* 1852 */           writeBlockHeader(1024);
-/* 1853 */           this.out.write(param1ArrayOfbyte, param1Int1, 1024);
-/* 1854 */           param1Int1 += 1024;
-/* 1855 */           param1Int2 -= 1024; continue;
-/*      */         } 
-/* 1857 */         int i = Math.min(param1Int2, 1024 - this.pos);
-/* 1858 */         System.arraycopy(param1ArrayOfbyte, param1Int1, this.buf, this.pos, i);
-/* 1859 */         this.pos += i;
-/* 1860 */         param1Int1 += i;
-/* 1861 */         param1Int2 -= i;
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     void drain() throws IOException {
-/* 1871 */       if (this.pos == 0) {
-/*      */         return;
-/*      */       }
-/* 1874 */       if (this.blkmode) {
-/* 1875 */         writeBlockHeader(this.pos);
-/*      */       }
-/* 1877 */       this.out.write(this.buf, 0, this.pos);
-/* 1878 */       this.pos = 0;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private void writeBlockHeader(int param1Int) throws IOException {
-/* 1887 */       if (param1Int <= 255) {
-/* 1888 */         this.hbuf[0] = 119;
-/* 1889 */         this.hbuf[1] = (byte)param1Int;
-/* 1890 */         this.out.write(this.hbuf, 0, 2);
-/*      */       } else {
-/* 1892 */         this.hbuf[0] = 122;
-/* 1893 */         Bits.putInt(this.hbuf, 1, param1Int);
-/* 1894 */         this.out.write(this.hbuf, 0, 5);
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void writeBoolean(boolean param1Boolean) throws IOException {
-/* 1907 */       if (this.pos >= 1024) {
-/* 1908 */         drain();
-/*      */       }
-/* 1910 */       Bits.putBoolean(this.buf, this.pos++, param1Boolean);
-/*      */     }
-/*      */     
-/*      */     public void writeByte(int param1Int) throws IOException {
-/* 1914 */       if (this.pos >= 1024) {
-/* 1915 */         drain();
-/*      */       }
-/* 1917 */       this.buf[this.pos++] = (byte)param1Int;
-/*      */     }
-/*      */     
-/*      */     public void writeChar(int param1Int) throws IOException {
-/* 1921 */       if (this.pos + 2 <= 1024) {
-/* 1922 */         Bits.putChar(this.buf, this.pos, (char)param1Int);
-/* 1923 */         this.pos += 2;
-/*      */       } else {
-/* 1925 */         this.dout.writeChar(param1Int);
-/*      */       } 
-/*      */     }
-/*      */     
-/*      */     public void writeShort(int param1Int) throws IOException {
-/* 1930 */       if (this.pos + 2 <= 1024) {
-/* 1931 */         Bits.putShort(this.buf, this.pos, (short)param1Int);
-/* 1932 */         this.pos += 2;
-/*      */       } else {
-/* 1934 */         this.dout.writeShort(param1Int);
-/*      */       } 
-/*      */     }
-/*      */     
-/*      */     public void writeInt(int param1Int) throws IOException {
-/* 1939 */       if (this.pos + 4 <= 1024) {
-/* 1940 */         Bits.putInt(this.buf, this.pos, param1Int);
-/* 1941 */         this.pos += 4;
-/*      */       } else {
-/* 1943 */         this.dout.writeInt(param1Int);
-/*      */       } 
-/*      */     }
-/*      */     
-/*      */     public void writeFloat(float param1Float) throws IOException {
-/* 1948 */       if (this.pos + 4 <= 1024) {
-/* 1949 */         Bits.putFloat(this.buf, this.pos, param1Float);
-/* 1950 */         this.pos += 4;
-/*      */       } else {
-/* 1952 */         this.dout.writeFloat(param1Float);
-/*      */       } 
-/*      */     }
-/*      */     
-/*      */     public void writeLong(long param1Long) throws IOException {
-/* 1957 */       if (this.pos + 8 <= 1024) {
-/* 1958 */         Bits.putLong(this.buf, this.pos, param1Long);
-/* 1959 */         this.pos += 8;
-/*      */       } else {
-/* 1961 */         this.dout.writeLong(param1Long);
-/*      */       } 
-/*      */     }
-/*      */     
-/*      */     public void writeDouble(double param1Double) throws IOException {
-/* 1966 */       if (this.pos + 8 <= 1024) {
-/* 1967 */         Bits.putDouble(this.buf, this.pos, param1Double);
-/* 1968 */         this.pos += 8;
-/*      */       } else {
-/* 1970 */         this.dout.writeDouble(param1Double);
-/*      */       } 
-/*      */     }
-/*      */     
-/*      */     public void writeBytes(String param1String) throws IOException {
-/* 1975 */       int i = param1String.length();
-/* 1976 */       byte b = 0;
-/* 1977 */       int j = 0; int k;
-/* 1978 */       for (k = 0; k < i; ) {
-/* 1979 */         if (b >= j) {
-/* 1980 */           b = 0;
-/* 1981 */           j = Math.min(i - k, 256);
-/* 1982 */           param1String.getChars(k, k + j, this.cbuf, 0);
-/*      */         } 
-/* 1984 */         if (this.pos >= 1024) {
-/* 1985 */           drain();
-/*      */         }
-/* 1987 */         int m = Math.min(j - b, 1024 - this.pos);
-/* 1988 */         int n = this.pos + m;
-/* 1989 */         while (this.pos < n) {
-/* 1990 */           this.buf[this.pos++] = (byte)this.cbuf[b++];
-/*      */         }
-/* 1992 */         k += m;
-/*      */       } 
-/*      */     }
-/*      */     
-/*      */     public void writeChars(String param1String) throws IOException {
-/* 1997 */       int i = param1String.length();
-/* 1998 */       for (int j = 0; j < i; ) {
-/* 1999 */         int k = Math.min(i - j, 256);
-/* 2000 */         param1String.getChars(j, j + k, this.cbuf, 0);
-/* 2001 */         writeChars(this.cbuf, 0, k);
-/* 2002 */         j += k;
-/*      */       } 
-/*      */     }
-/*      */     
-/*      */     public void writeUTF(String param1String) throws IOException {
-/* 2007 */       writeUTF(param1String, getUTFLength(param1String));
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     void writeBooleans(boolean[] param1ArrayOfboolean, int param1Int1, int param1Int2) throws IOException {
-/* 2020 */       int i = param1Int1 + param1Int2;
-/* 2021 */       while (param1Int1 < i) {
-/* 2022 */         if (this.pos >= 1024) {
-/* 2023 */           drain();
-/*      */         }
-/* 2025 */         int j = Math.min(i, param1Int1 + 1024 - this.pos);
-/* 2026 */         while (param1Int1 < j) {
-/* 2027 */           Bits.putBoolean(this.buf, this.pos++, param1ArrayOfboolean[param1Int1++]);
-/*      */         }
-/*      */       } 
-/*      */     }
-/*      */     
-/*      */     void writeChars(char[] param1ArrayOfchar, int param1Int1, int param1Int2) throws IOException {
-/* 2033 */       char c = 'Ͼ';
-/* 2034 */       int i = param1Int1 + param1Int2;
-/* 2035 */       while (param1Int1 < i) {
-/* 2036 */         if (this.pos <= c) {
-/* 2037 */           int j = 1024 - this.pos >> 1;
-/* 2038 */           int k = Math.min(i, param1Int1 + j);
-/* 2039 */           while (param1Int1 < k) {
-/* 2040 */             Bits.putChar(this.buf, this.pos, param1ArrayOfchar[param1Int1++]);
-/* 2041 */             this.pos += 2;
-/*      */           }  continue;
-/*      */         } 
-/* 2044 */         this.dout.writeChar(param1ArrayOfchar[param1Int1++]);
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     void writeShorts(short[] param1ArrayOfshort, int param1Int1, int param1Int2) throws IOException {
-/* 2050 */       char c = 'Ͼ';
-/* 2051 */       int i = param1Int1 + param1Int2;
-/* 2052 */       while (param1Int1 < i) {
-/* 2053 */         if (this.pos <= c) {
-/* 2054 */           int j = 1024 - this.pos >> 1;
-/* 2055 */           int k = Math.min(i, param1Int1 + j);
-/* 2056 */           while (param1Int1 < k) {
-/* 2057 */             Bits.putShort(this.buf, this.pos, param1ArrayOfshort[param1Int1++]);
-/* 2058 */             this.pos += 2;
-/*      */           }  continue;
-/*      */         } 
-/* 2061 */         this.dout.writeShort(param1ArrayOfshort[param1Int1++]);
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     void writeInts(int[] param1ArrayOfint, int param1Int1, int param1Int2) throws IOException {
-/* 2067 */       char c = 'ϼ';
-/* 2068 */       int i = param1Int1 + param1Int2;
-/* 2069 */       while (param1Int1 < i) {
-/* 2070 */         if (this.pos <= c) {
-/* 2071 */           int j = 1024 - this.pos >> 2;
-/* 2072 */           int k = Math.min(i, param1Int1 + j);
-/* 2073 */           while (param1Int1 < k) {
-/* 2074 */             Bits.putInt(this.buf, this.pos, param1ArrayOfint[param1Int1++]);
-/* 2075 */             this.pos += 4;
-/*      */           }  continue;
-/*      */         } 
-/* 2078 */         this.dout.writeInt(param1ArrayOfint[param1Int1++]);
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     void writeFloats(float[] param1ArrayOffloat, int param1Int1, int param1Int2) throws IOException {
-/* 2084 */       char c = 'ϼ';
-/* 2085 */       int i = param1Int1 + param1Int2;
-/* 2086 */       while (param1Int1 < i) {
-/* 2087 */         if (this.pos <= c) {
-/* 2088 */           int j = 1024 - this.pos >> 2;
-/* 2089 */           int k = Math.min(i - param1Int1, j);
-/* 2090 */           ObjectOutputStream.floatsToBytes(param1ArrayOffloat, param1Int1, this.buf, this.pos, k);
-/* 2091 */           param1Int1 += k;
-/* 2092 */           this.pos += k << 2; continue;
-/*      */         } 
-/* 2094 */         this.dout.writeFloat(param1ArrayOffloat[param1Int1++]);
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     void writeLongs(long[] param1ArrayOflong, int param1Int1, int param1Int2) throws IOException {
-/* 2100 */       char c = 'ϸ';
-/* 2101 */       int i = param1Int1 + param1Int2;
-/* 2102 */       while (param1Int1 < i) {
-/* 2103 */         if (this.pos <= c) {
-/* 2104 */           int j = 1024 - this.pos >> 3;
-/* 2105 */           int k = Math.min(i, param1Int1 + j);
-/* 2106 */           while (param1Int1 < k) {
-/* 2107 */             Bits.putLong(this.buf, this.pos, param1ArrayOflong[param1Int1++]);
-/* 2108 */             this.pos += 8;
-/*      */           }  continue;
-/*      */         } 
-/* 2111 */         this.dout.writeLong(param1ArrayOflong[param1Int1++]);
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     void writeDoubles(double[] param1ArrayOfdouble, int param1Int1, int param1Int2) throws IOException {
-/* 2117 */       char c = 'ϸ';
-/* 2118 */       int i = param1Int1 + param1Int2;
-/* 2119 */       while (param1Int1 < i) {
-/* 2120 */         if (this.pos <= c) {
-/* 2121 */           int j = 1024 - this.pos >> 3;
-/* 2122 */           int k = Math.min(i - param1Int1, j);
-/* 2123 */           ObjectOutputStream.doublesToBytes(param1ArrayOfdouble, param1Int1, this.buf, this.pos, k);
-/* 2124 */           param1Int1 += k;
-/* 2125 */           this.pos += k << 3; continue;
-/*      */         } 
-/* 2127 */         this.dout.writeDouble(param1ArrayOfdouble[param1Int1++]);
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     long getUTFLength(String param1String) {
-/* 2136 */       int i = param1String.length();
-/* 2137 */       long l = 0L; int j;
-/* 2138 */       for (j = 0; j < i; ) {
-/* 2139 */         int k = Math.min(i - j, 256);
-/* 2140 */         param1String.getChars(j, j + k, this.cbuf, 0);
-/* 2141 */         for (byte b = 0; b < k; b++) {
-/* 2142 */           char c = this.cbuf[b];
-/* 2143 */           if (c >= '\001' && c <= '') {
-/* 2144 */             l++;
-/* 2145 */           } else if (c > '߿') {
-/* 2146 */             l += 3L;
-/*      */           } else {
-/* 2148 */             l += 2L;
-/*      */           } 
-/*      */         } 
-/* 2151 */         j += k;
-/*      */       } 
-/* 2153 */       return l;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     void writeUTF(String param1String, long param1Long) throws IOException {
-/* 2163 */       if (param1Long > 65535L) {
-/* 2164 */         throw new UTFDataFormatException();
-/*      */       }
-/* 2166 */       writeShort((int)param1Long);
-/* 2167 */       if (param1Long == param1String.length()) {
-/* 2168 */         writeBytes(param1String);
-/*      */       } else {
-/* 2170 */         writeUTFBody(param1String);
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     void writeLongUTF(String param1String) throws IOException {
-/* 2180 */       writeLongUTF(param1String, getUTFLength(param1String));
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     void writeLongUTF(String param1String, long param1Long) throws IOException {
-/* 2188 */       writeLong(param1Long);
-/* 2189 */       if (param1Long == param1String.length()) {
-/* 2190 */         writeBytes(param1String);
-/*      */       } else {
-/* 2192 */         writeUTFBody(param1String);
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private void writeUTFBody(String param1String) throws IOException {
-/* 2201 */       char c = 'Ͻ';
-/* 2202 */       int i = param1String.length(); int j;
-/* 2203 */       for (j = 0; j < i; ) {
-/* 2204 */         int k = Math.min(i - j, 256);
-/* 2205 */         param1String.getChars(j, j + k, this.cbuf, 0);
-/* 2206 */         for (byte b = 0; b < k; b++) {
-/* 2207 */           char c1 = this.cbuf[b];
-/* 2208 */           if (this.pos <= c) {
-/* 2209 */             if (c1 <= '' && c1 != '\000') {
-/* 2210 */               this.buf[this.pos++] = (byte)c1;
-/* 2211 */             } else if (c1 > '߿') {
-/* 2212 */               this.buf[this.pos + 2] = (byte)(0x80 | c1 >> 0 & 0x3F);
-/* 2213 */               this.buf[this.pos + 1] = (byte)(0x80 | c1 >> 6 & 0x3F);
-/* 2214 */               this.buf[this.pos + 0] = (byte)(0xE0 | c1 >> 12 & 0xF);
-/* 2215 */               this.pos += 3;
-/*      */             } else {
-/* 2217 */               this.buf[this.pos + 1] = (byte)(0x80 | c1 >> 0 & 0x3F);
-/* 2218 */               this.buf[this.pos + 0] = (byte)(0xC0 | c1 >> 6 & 0x1F);
-/* 2219 */               this.pos += 2;
-/*      */             }
-/*      */           
-/* 2222 */           } else if (c1 <= '' && c1 != '\000') {
-/* 2223 */             write(c1);
-/* 2224 */           } else if (c1 > '߿') {
-/* 2225 */             write(0xE0 | c1 >> 12 & 0xF);
-/* 2226 */             write(0x80 | c1 >> 6 & 0x3F);
-/* 2227 */             write(0x80 | c1 >> 0 & 0x3F);
-/*      */           } else {
-/* 2229 */             write(0xC0 | c1 >> 6 & 0x1F);
-/* 2230 */             write(0x80 | c1 >> 0 & 0x3F);
-/*      */           } 
-/*      */         } 
-/*      */         
-/* 2234 */         j += k;
-/*      */       } 
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static class HandleTable
-/*      */   {
-/*      */     private int size;
-/*      */ 
-/*      */     
-/*      */     private int threshold;
-/*      */ 
-/*      */     
-/*      */     private final float loadFactor;
-/*      */ 
-/*      */     
-/*      */     private int[] spine;
-/*      */ 
-/*      */     
-/*      */     private int[] next;
-/*      */ 
-/*      */     
-/*      */     private Object[] objs;
-/*      */ 
-/*      */     
-/*      */     HandleTable(int param1Int, float param1Float) {
-/* 2262 */       this.loadFactor = param1Float;
-/* 2263 */       this.spine = new int[param1Int];
-/* 2264 */       this.next = new int[param1Int];
-/* 2265 */       this.objs = new Object[param1Int];
-/* 2266 */       this.threshold = (int)(param1Int * param1Float);
-/* 2267 */       clear();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     int assign(Object param1Object) {
-/* 2275 */       if (this.size >= this.next.length) {
-/* 2276 */         growEntries();
-/*      */       }
-/* 2278 */       if (this.size >= this.threshold) {
-/* 2279 */         growSpine();
-/*      */       }
-/* 2281 */       insert(param1Object, this.size);
-/* 2282 */       return this.size++;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     int lookup(Object param1Object) {
-/* 2290 */       if (this.size == 0) {
-/* 2291 */         return -1;
-/*      */       }
-/* 2293 */       int i = hash(param1Object) % this.spine.length;
-/* 2294 */       for (int j = this.spine[i]; j >= 0; j = this.next[j]) {
-/* 2295 */         if (this.objs[j] == param1Object) {
-/* 2296 */           return j;
-/*      */         }
-/*      */       } 
-/* 2299 */       return -1;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     void clear() {
-/* 2306 */       Arrays.fill(this.spine, -1);
-/* 2307 */       Arrays.fill(this.objs, 0, this.size, (Object)null);
-/* 2308 */       this.size = 0;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     int size() {
-/* 2315 */       return this.size;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private void insert(Object param1Object, int param1Int) {
-/* 2323 */       int i = hash(param1Object) % this.spine.length;
-/* 2324 */       this.objs[param1Int] = param1Object;
-/* 2325 */       this.next[param1Int] = this.spine[i];
-/* 2326 */       this.spine[i] = param1Int;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private void growSpine() {
-/* 2334 */       this.spine = new int[(this.spine.length << 1) + 1];
-/* 2335 */       this.threshold = (int)(this.spine.length * this.loadFactor);
-/* 2336 */       Arrays.fill(this.spine, -1);
-/* 2337 */       for (byte b = 0; b < this.size; b++) {
-/* 2338 */         insert(this.objs[b], b);
-/*      */       }
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private void growEntries() {
-/* 2346 */       int i = (this.next.length << 1) + 1;
-/* 2347 */       int[] arrayOfInt = new int[i];
-/* 2348 */       System.arraycopy(this.next, 0, arrayOfInt, 0, this.size);
-/* 2349 */       this.next = arrayOfInt;
-/*      */       
-/* 2351 */       Object[] arrayOfObject = new Object[i];
-/* 2352 */       System.arraycopy(this.objs, 0, arrayOfObject, 0, this.size);
-/* 2353 */       this.objs = arrayOfObject;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private int hash(Object param1Object) {
-/* 2360 */       return System.identityHashCode(param1Object) & Integer.MAX_VALUE;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static class ReplaceTable
-/*      */   {
-/*      */     private final ObjectOutputStream.HandleTable htab;
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private Object[] reps;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     ReplaceTable(int param1Int, float param1Float) {
-/* 2379 */       this.htab = new ObjectOutputStream.HandleTable(param1Int, param1Float);
-/* 2380 */       this.reps = new Object[param1Int];
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     void assign(Object param1Object1, Object param1Object2) {
-/* 2387 */       int i = this.htab.assign(param1Object1);
-/* 2388 */       while (i >= this.reps.length) {
-/* 2389 */         grow();
-/*      */       }
-/* 2391 */       this.reps[i] = param1Object2;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     Object lookup(Object param1Object) {
-/* 2399 */       int i = this.htab.lookup(param1Object);
-/* 2400 */       return (i >= 0) ? this.reps[i] : param1Object;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     void clear() {
-/* 2407 */       Arrays.fill(this.reps, 0, this.htab.size(), (Object)null);
-/* 2408 */       this.htab.clear();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     int size() {
-/* 2415 */       return this.htab.size();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private void grow() {
-/* 2422 */       Object[] arrayOfObject = new Object[(this.reps.length << 1) + 1];
-/* 2423 */       System.arraycopy(this.reps, 0, arrayOfObject, 0, this.reps.length);
-/* 2424 */       this.reps = arrayOfObject;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static class DebugTraceInfoStack
-/*      */   {
-/*      */     private final List<String> stack;
-/*      */ 
-/*      */     
-/*      */     DebugTraceInfoStack() {
-/* 2436 */       this.stack = new ArrayList<>();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     void clear() {
-/* 2443 */       this.stack.clear();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     void pop() {
-/* 2450 */       this.stack.remove(this.stack.size() - 1);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     void push(String param1String) {
-/* 2457 */       this.stack.add("\t- " + param1String);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public String toString() {
-/* 2464 */       StringBuilder stringBuilder = new StringBuilder();
-/* 2465 */       if (!this.stack.isEmpty()) {
-/* 2466 */         for (int i = this.stack.size(); i > 0; i--) {
-/* 2467 */           stringBuilder.append((String)this.stack.get(i - 1) + ((i != 1) ? "\n" : ""));
-/*      */         }
-/*      */       }
-/* 2470 */       return stringBuilder.toString();
-/*      */     }
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\io\ObjectOutputStream.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1996, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.io;
+
+import java.io.ObjectStreamClass.WeakClassKey;
+import java.lang.ref.ReferenceQueue;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import static java.io.ObjectStreamClass.processQueue;
+import java.io.SerialCallbackContext;
+import sun.reflect.misc.ReflectUtil;
+
+/**
+ * An ObjectOutputStream writes primitive data types and graphs of Java objects
+ * to an OutputStream.  The objects can be read (reconstituted) using an
+ * ObjectInputStream.  Persistent storage of objects can be accomplished by
+ * using a file for the stream.  If the stream is a network socket stream, the
+ * objects can be reconstituted on another host or in another process.
+ *
+ * <p>Only objects that support the java.io.Serializable interface can be
+ * written to streams.  The class of each serializable object is encoded
+ * including the class name and signature of the class, the values of the
+ * object's fields and arrays, and the closure of any other objects referenced
+ * from the initial objects.
+ *
+ * <p>The method writeObject is used to write an object to the stream.  Any
+ * object, including Strings and arrays, is written with writeObject. Multiple
+ * objects or primitives can be written to the stream.  The objects must be
+ * read back from the corresponding ObjectInputstream with the same types and
+ * in the same order as they were written.
+ *
+ * <p>Primitive data types can also be written to the stream using the
+ * appropriate methods from DataOutput. Strings can also be written using the
+ * writeUTF method.
+ *
+ * <p>The default serialization mechanism for an object writes the class of the
+ * object, the class signature, and the values of all non-transient and
+ * non-static fields.  References to other objects (except in transient or
+ * static fields) cause those objects to be written also. Multiple references
+ * to a single object are encoded using a reference sharing mechanism so that
+ * graphs of objects can be restored to the same shape as when the original was
+ * written.
+ *
+ * <p>For example to write an object that can be read by the example in
+ * ObjectInputStream:
+ * <br>
+ * <pre>
+ *      FileOutputStream fos = new FileOutputStream("t.tmp");
+ *      ObjectOutputStream oos = new ObjectOutputStream(fos);
+ *
+ *      oos.writeInt(12345);
+ *      oos.writeObject("Today");
+ *      oos.writeObject(new Date());
+ *
+ *      oos.close();
+ * </pre>
+ *
+ * <p>Classes that require special handling during the serialization and
+ * deserialization process must implement special methods with these exact
+ * signatures:
+ * <br>
+ * <pre>
+ * private void readObject(java.io.ObjectInputStream stream)
+ *     throws IOException, ClassNotFoundException;
+ * private void writeObject(java.io.ObjectOutputStream stream)
+ *     throws IOException
+ * private void readObjectNoData()
+ *     throws ObjectStreamException;
+ * </pre>
+ *
+ * <p>The writeObject method is responsible for writing the state of the object
+ * for its particular class so that the corresponding readObject method can
+ * restore it.  The method does not need to concern itself with the state
+ * belonging to the object's superclasses or subclasses.  State is saved by
+ * writing the individual fields to the ObjectOutputStream using the
+ * writeObject method or by using the methods for primitive data types
+ * supported by DataOutput.
+ *
+ * <p>Serialization does not write out the fields of any object that does not
+ * implement the java.io.Serializable interface.  Subclasses of Objects that
+ * are not serializable can be serializable. In this case the non-serializable
+ * class must have a no-arg constructor to allow its fields to be initialized.
+ * In this case it is the responsibility of the subclass to save and restore
+ * the state of the non-serializable class. It is frequently the case that the
+ * fields of that class are accessible (public, package, or protected) or that
+ * there are get and set methods that can be used to restore the state.
+ *
+ * <p>Serialization of an object can be prevented by implementing writeObject
+ * and readObject methods that throw the NotSerializableException.  The
+ * exception will be caught by the ObjectOutputStream and abort the
+ * serialization process.
+ *
+ * <p>Implementing the Externalizable interface allows the object to assume
+ * complete control over the contents and format of the object's serialized
+ * form.  The methods of the Externalizable interface, writeExternal and
+ * readExternal, are called to save and restore the objects state.  When
+ * implemented by a class they can write and read their own state using all of
+ * the methods of ObjectOutput and ObjectInput.  It is the responsibility of
+ * the objects to handle any versioning that occurs.
+ *
+ * <p>Enum constants are serialized differently than ordinary serializable or
+ * externalizable objects.  The serialized form of an enum constant consists
+ * solely of its name; field values of the constant are not transmitted.  To
+ * serialize an enum constant, ObjectOutputStream writes the string returned by
+ * the constant's name method.  Like other serializable or externalizable
+ * objects, enum constants can function as the targets of back references
+ * appearing subsequently in the serialization stream.  The process by which
+ * enum constants are serialized cannot be customized; any class-specific
+ * writeObject and writeReplace methods defined by enum types are ignored
+ * during serialization.  Similarly, any serialPersistentFields or
+ * serialVersionUID field declarations are also ignored--all enum types have a
+ * fixed serialVersionUID of 0L.
+ *
+ * <p>Primitive data, excluding serializable fields and externalizable data, is
+ * written to the ObjectOutputStream in block-data records. A block data record
+ * is composed of a header and data. The block data header consists of a marker
+ * and the number of bytes to follow the header.  Consecutive primitive data
+ * writes are merged into one block-data record.  The blocking factor used for
+ * a block-data record will be 1024 bytes.  Each block-data record will be
+ * filled up to 1024 bytes, or be written whenever there is a termination of
+ * block-data mode.  Calls to the ObjectOutputStream methods writeObject,
+ * defaultWriteObject and writeFields initially terminate any existing
+ * block-data record.
+ *
+ * @author      Mike Warres
+ * @author      Roger Riggs
+ * @see java.io.DataOutput
+ * @see java.io.ObjectInputStream
+ * @see java.io.Serializable
+ * @see java.io.Externalizable
+ * @see <a href="../../../platform/serialization/spec/output.html">Object Serialization Specification, Section 2, Object Output Classes</a>
+ * @since       JDK1.1
+ */
+public class ObjectOutputStream
+    extends OutputStream implements ObjectOutput, ObjectStreamConstants
+{
+
+    private static class Caches {
+        /** cache of subclass security audit results */
+        static final ConcurrentMap<WeakClassKey,Boolean> subclassAudits =
+            new ConcurrentHashMap<>();
+
+        /** queue for WeakReferences to audited subclasses */
+        static final ReferenceQueue<Class<?>> subclassAuditsQueue =
+            new ReferenceQueue<>();
+    }
+
+    /** filter stream for handling block data conversion */
+    private final BlockDataOutputStream bout;
+    /** obj -> wire handle map */
+    private final HandleTable handles;
+    /** obj -> replacement obj map */
+    private final ReplaceTable subs;
+    /** stream protocol version */
+    private int protocol = PROTOCOL_VERSION_2;
+    /** recursion depth */
+    private int depth;
+
+    /** buffer for writing primitive field values */
+    private byte[] primVals;
+
+    /** if true, invoke writeObjectOverride() instead of writeObject() */
+    private final boolean enableOverride;
+    /** if true, invoke replaceObject() */
+    private boolean enableReplace;
+
+    // values below valid only during upcalls to writeObject()/writeExternal()
+    /**
+     * Context during upcalls to class-defined writeObject methods; holds
+     * object currently being serialized and descriptor for current class.
+     * Null when not during writeObject upcall.
+     */
+    private SerialCallbackContext curContext;
+    /** current PutField object */
+    private PutFieldImpl curPut;
+
+    /** custom storage for debug trace info */
+    private final DebugTraceInfoStack debugInfoStack;
+
+    /**
+     * value of "sun.io.serialization.extendedDebugInfo" property,
+     * as true or false for extended information about exception's place
+     */
+    private static final boolean extendedDebugInfo =
+        java.security.AccessController.doPrivileged(
+            new sun.security.action.GetBooleanAction(
+                "sun.io.serialization.extendedDebugInfo")).booleanValue();
+
+    /**
+     * Creates an ObjectOutputStream that writes to the specified OutputStream.
+     * This constructor writes the serialization stream header to the
+     * underlying stream; callers may wish to flush the stream immediately to
+     * ensure that constructors for receiving ObjectInputStreams will not block
+     * when reading the header.
+     *
+     * <p>If a security manager is installed, this constructor will check for
+     * the "enableSubclassImplementation" SerializablePermission when invoked
+     * directly or indirectly by the constructor of a subclass which overrides
+     * the ObjectOutputStream.putFields or ObjectOutputStream.writeUnshared
+     * methods.
+     *
+     * @param   out output stream to write to
+     * @throws  IOException if an I/O error occurs while writing stream header
+     * @throws  SecurityException if untrusted subclass illegally overrides
+     *          security-sensitive methods
+     * @throws  NullPointerException if <code>out</code> is <code>null</code>
+     * @since   1.4
+     * @see     ObjectOutputStream#ObjectOutputStream()
+     * @see     ObjectOutputStream#putFields()
+     * @see     ObjectInputStream#ObjectInputStream(InputStream)
+     */
+    public ObjectOutputStream(OutputStream out) throws IOException {
+        verifySubclass();
+        bout = new BlockDataOutputStream(out);
+        handles = new HandleTable(10, (float) 3.00);
+        subs = new ReplaceTable(10, (float) 3.00);
+        enableOverride = false;
+        writeStreamHeader();
+        bout.setBlockDataMode(true);
+        if (extendedDebugInfo) {
+            debugInfoStack = new DebugTraceInfoStack();
+        } else {
+            debugInfoStack = null;
+        }
+    }
+
+    /**
+     * Provide a way for subclasses that are completely reimplementing
+     * ObjectOutputStream to not have to allocate private data just used by
+     * this implementation of ObjectOutputStream.
+     *
+     * <p>If there is a security manager installed, this method first calls the
+     * security manager's <code>checkPermission</code> method with a
+     * <code>SerializablePermission("enableSubclassImplementation")</code>
+     * permission to ensure it's ok to enable subclassing.
+     *
+     * @throws  SecurityException if a security manager exists and its
+     *          <code>checkPermission</code> method denies enabling
+     *          subclassing.
+     * @throws  IOException if an I/O error occurs while creating this stream
+     * @see SecurityManager#checkPermission
+     * @see java.io.SerializablePermission
+     */
+    protected ObjectOutputStream() throws IOException, SecurityException {
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(SUBCLASS_IMPLEMENTATION_PERMISSION);
+        }
+        bout = null;
+        handles = null;
+        subs = null;
+        enableOverride = true;
+        debugInfoStack = null;
+    }
+
+    /**
+     * Specify stream protocol version to use when writing the stream.
+     *
+     * <p>This routine provides a hook to enable the current version of
+     * Serialization to write in a format that is backwards compatible to a
+     * previous version of the stream format.
+     *
+     * <p>Every effort will be made to avoid introducing additional
+     * backwards incompatibilities; however, sometimes there is no
+     * other alternative.
+     *
+     * @param   version use ProtocolVersion from java.io.ObjectStreamConstants.
+     * @throws  IllegalStateException if called after any objects
+     *          have been serialized.
+     * @throws  IllegalArgumentException if invalid version is passed in.
+     * @throws  IOException if I/O errors occur
+     * @see java.io.ObjectStreamConstants#PROTOCOL_VERSION_1
+     * @see java.io.ObjectStreamConstants#PROTOCOL_VERSION_2
+     * @since   1.2
+     */
+    public void useProtocolVersion(int version) throws IOException {
+        if (handles.size() != 0) {
+            // REMIND: implement better check for pristine stream?
+            throw new IllegalStateException("stream non-empty");
+        }
+        switch (version) {
+            case PROTOCOL_VERSION_1:
+            case PROTOCOL_VERSION_2:
+                protocol = version;
+                break;
+
+            default:
+                throw new IllegalArgumentException(
+                    "unknown version: " + version);
+        }
+    }
+
+    /**
+     * Write the specified object to the ObjectOutputStream.  The class of the
+     * object, the signature of the class, and the values of the non-transient
+     * and non-static fields of the class and all of its supertypes are
+     * written.  Default serialization for a class can be overridden using the
+     * writeObject and the readObject methods.  Objects referenced by this
+     * object are written transitively so that a complete equivalent graph of
+     * objects can be reconstructed by an ObjectInputStream.
+     *
+     * <p>Exceptions are thrown for problems with the OutputStream and for
+     * classes that should not be serialized.  All exceptions are fatal to the
+     * OutputStream, which is left in an indeterminate state, and it is up to
+     * the caller to ignore or recover the stream state.
+     *
+     * @throws  InvalidClassException Something is wrong with a class used by
+     *          serialization.
+     * @throws  NotSerializableException Some object to be serialized does not
+     *          implement the java.io.Serializable interface.
+     * @throws  IOException Any exception thrown by the underlying
+     *          OutputStream.
+     */
+    public final void writeObject(Object obj) throws IOException {
+        if (enableOverride) {
+            writeObjectOverride(obj);
+            return;
+        }
+        try {
+            writeObject0(obj, false);
+        } catch (IOException ex) {
+            if (depth == 0) {
+                writeFatalException(ex);
+            }
+            throw ex;
+        }
+    }
+
+    /**
+     * Method used by subclasses to override the default writeObject method.
+     * This method is called by trusted subclasses of ObjectInputStream that
+     * constructed ObjectInputStream using the protected no-arg constructor.
+     * The subclass is expected to provide an override method with the modifier
+     * "final".
+     *
+     * @param   obj object to be written to the underlying stream
+     * @throws  IOException if there are I/O errors while writing to the
+     *          underlying stream
+     * @see #ObjectOutputStream()
+     * @see #writeObject(Object)
+     * @since 1.2
+     */
+    protected void writeObjectOverride(Object obj) throws IOException {
+    }
+
+    /**
+     * Writes an "unshared" object to the ObjectOutputStream.  This method is
+     * identical to writeObject, except that it always writes the given object
+     * as a new, unique object in the stream (as opposed to a back-reference
+     * pointing to a previously serialized instance).  Specifically:
+     * <ul>
+     *   <li>An object written via writeUnshared is always serialized in the
+     *       same manner as a newly appearing object (an object that has not
+     *       been written to the stream yet), regardless of whether or not the
+     *       object has been written previously.
+     *
+     *   <li>If writeObject is used to write an object that has been previously
+     *       written with writeUnshared, the previous writeUnshared operation
+     *       is treated as if it were a write of a separate object.  In other
+     *       words, ObjectOutputStream will never generate back-references to
+     *       object data written by calls to writeUnshared.
+     * </ul>
+     * While writing an object via writeUnshared does not in itself guarantee a
+     * unique reference to the object when it is deserialized, it allows a
+     * single object to be defined multiple times in a stream, so that multiple
+     * calls to readUnshared by the receiver will not conflict.  Note that the
+     * rules described above only apply to the base-level object written with
+     * writeUnshared, and not to any transitively referenced sub-objects in the
+     * object graph to be serialized.
+     *
+     * <p>ObjectOutputStream subclasses which override this method can only be
+     * constructed in security contexts possessing the
+     * "enableSubclassImplementation" SerializablePermission; any attempt to
+     * instantiate such a subclass without this permission will cause a
+     * SecurityException to be thrown.
+     *
+     * @param   obj object to write to stream
+     * @throws  NotSerializableException if an object in the graph to be
+     *          serialized does not implement the Serializable interface
+     * @throws  InvalidClassException if a problem exists with the class of an
+     *          object to be serialized
+     * @throws  IOException if an I/O error occurs during serialization
+     * @since 1.4
+     */
+    public void writeUnshared(Object obj) throws IOException {
+        try {
+            writeObject0(obj, true);
+        } catch (IOException ex) {
+            if (depth == 0) {
+                writeFatalException(ex);
+            }
+            throw ex;
+        }
+    }
+
+    /**
+     * Write the non-static and non-transient fields of the current class to
+     * this stream.  This may only be called from the writeObject method of the
+     * class being serialized. It will throw the NotActiveException if it is
+     * called otherwise.
+     *
+     * @throws  IOException if I/O errors occur while writing to the underlying
+     *          <code>OutputStream</code>
+     */
+    public void defaultWriteObject() throws IOException {
+        SerialCallbackContext ctx = curContext;
+        if (ctx == null) {
+            throw new NotActiveException("not in call to writeObject");
+        }
+        Object curObj = ctx.getObj();
+        ObjectStreamClass curDesc = ctx.getDesc();
+        bout.setBlockDataMode(false);
+        defaultWriteFields(curObj, curDesc);
+        bout.setBlockDataMode(true);
+    }
+
+    /**
+     * Retrieve the object used to buffer persistent fields to be written to
+     * the stream.  The fields will be written to the stream when writeFields
+     * method is called.
+     *
+     * @return  an instance of the class Putfield that holds the serializable
+     *          fields
+     * @throws  IOException if I/O errors occur
+     * @since 1.2
+     */
+    public ObjectOutputStream.PutField putFields() throws IOException {
+        if (curPut == null) {
+            SerialCallbackContext ctx = curContext;
+            if (ctx == null) {
+                throw new NotActiveException("not in call to writeObject");
+            }
+            Object curObj = ctx.getObj();
+            ObjectStreamClass curDesc = ctx.getDesc();
+            curPut = new PutFieldImpl(curDesc);
+        }
+        return curPut;
+    }
+
+    /**
+     * Write the buffered fields to the stream.
+     *
+     * @throws  IOException if I/O errors occur while writing to the underlying
+     *          stream
+     * @throws  NotActiveException Called when a classes writeObject method was
+     *          not called to write the state of the object.
+     * @since 1.2
+     */
+    public void writeFields() throws IOException {
+        if (curPut == null) {
+            throw new NotActiveException("no current PutField object");
+        }
+        bout.setBlockDataMode(false);
+        curPut.writeFields();
+        bout.setBlockDataMode(true);
+    }
+
+    /**
+     * Reset will disregard the state of any objects already written to the
+     * stream.  The state is reset to be the same as a new ObjectOutputStream.
+     * The current point in the stream is marked as reset so the corresponding
+     * ObjectInputStream will be reset at the same point.  Objects previously
+     * written to the stream will not be referred to as already being in the
+     * stream.  They will be written to the stream again.
+     *
+     * @throws  IOException if reset() is invoked while serializing an object.
+     */
+    public void reset() throws IOException {
+        if (depth != 0) {
+            throw new IOException("stream active");
+        }
+        bout.setBlockDataMode(false);
+        bout.writeByte(TC_RESET);
+        clear();
+        bout.setBlockDataMode(true);
+    }
+
+    /**
+     * Subclasses may implement this method to allow class data to be stored in
+     * the stream. By default this method does nothing.  The corresponding
+     * method in ObjectInputStream is resolveClass.  This method is called
+     * exactly once for each unique class in the stream.  The class name and
+     * signature will have already been written to the stream.  This method may
+     * make free use of the ObjectOutputStream to save any representation of
+     * the class it deems suitable (for example, the bytes of the class file).
+     * The resolveClass method in the corresponding subclass of
+     * ObjectInputStream must read and use any data or objects written by
+     * annotateClass.
+     *
+     * @param   cl the class to annotate custom data for
+     * @throws  IOException Any exception thrown by the underlying
+     *          OutputStream.
+     */
+    protected void annotateClass(Class<?> cl) throws IOException {
+    }
+
+    /**
+     * Subclasses may implement this method to store custom data in the stream
+     * along with descriptors for dynamic proxy classes.
+     *
+     * <p>This method is called exactly once for each unique proxy class
+     * descriptor in the stream.  The default implementation of this method in
+     * <code>ObjectOutputStream</code> does nothing.
+     *
+     * <p>The corresponding method in <code>ObjectInputStream</code> is
+     * <code>resolveProxyClass</code>.  For a given subclass of
+     * <code>ObjectOutputStream</code> that overrides this method, the
+     * <code>resolveProxyClass</code> method in the corresponding subclass of
+     * <code>ObjectInputStream</code> must read any data or objects written by
+     * <code>annotateProxyClass</code>.
+     *
+     * @param   cl the proxy class to annotate custom data for
+     * @throws  IOException any exception thrown by the underlying
+     *          <code>OutputStream</code>
+     * @see ObjectInputStream#resolveProxyClass(String[])
+     * @since   1.3
+     */
+    protected void annotateProxyClass(Class<?> cl) throws IOException {
+    }
+
+    /**
+     * This method will allow trusted subclasses of ObjectOutputStream to
+     * substitute one object for another during serialization. Replacing
+     * objects is disabled until enableReplaceObject is called. The
+     * enableReplaceObject method checks that the stream requesting to do
+     * replacement can be trusted.  The first occurrence of each object written
+     * into the serialization stream is passed to replaceObject.  Subsequent
+     * references to the object are replaced by the object returned by the
+     * original call to replaceObject.  To ensure that the private state of
+     * objects is not unintentionally exposed, only trusted streams may use
+     * replaceObject.
+     *
+     * <p>The ObjectOutputStream.writeObject method takes a parameter of type
+     * Object (as opposed to type Serializable) to allow for cases where
+     * non-serializable objects are replaced by serializable ones.
+     *
+     * <p>When a subclass is replacing objects it must insure that either a
+     * complementary substitution must be made during deserialization or that
+     * the substituted object is compatible with every field where the
+     * reference will be stored.  Objects whose type is not a subclass of the
+     * type of the field or array element abort the serialization by raising an
+     * exception and the object is not be stored.
+     *
+     * <p>This method is called only once when each object is first
+     * encountered.  All subsequent references to the object will be redirected
+     * to the new object. This method should return the object to be
+     * substituted or the original object.
+     *
+     * <p>Null can be returned as the object to be substituted, but may cause
+     * NullReferenceException in classes that contain references to the
+     * original object since they may be expecting an object instead of
+     * null.
+     *
+     * @param   obj the object to be replaced
+     * @return  the alternate object that replaced the specified one
+     * @throws  IOException Any exception thrown by the underlying
+     *          OutputStream.
+     */
+    protected Object replaceObject(Object obj) throws IOException {
+        return obj;
+    }
+
+    /**
+     * Enable the stream to do replacement of objects in the stream.  When
+     * enabled, the replaceObject method is called for every object being
+     * serialized.
+     *
+     * <p>If <code>enable</code> is true, and there is a security manager
+     * installed, this method first calls the security manager's
+     * <code>checkPermission</code> method with a
+     * <code>SerializablePermission("enableSubstitution")</code> permission to
+     * ensure it's ok to enable the stream to do replacement of objects in the
+     * stream.
+     *
+     * @param   enable boolean parameter to enable replacement of objects
+     * @return  the previous setting before this method was invoked
+     * @throws  SecurityException if a security manager exists and its
+     *          <code>checkPermission</code> method denies enabling the stream
+     *          to do replacement of objects in the stream.
+     * @see SecurityManager#checkPermission
+     * @see java.io.SerializablePermission
+     */
+    protected boolean enableReplaceObject(boolean enable)
+        throws SecurityException
+    {
+        if (enable == enableReplace) {
+            return enable;
+        }
+        if (enable) {
+            SecurityManager sm = System.getSecurityManager();
+            if (sm != null) {
+                sm.checkPermission(SUBSTITUTION_PERMISSION);
+            }
+        }
+        enableReplace = enable;
+        return !enableReplace;
+    }
+
+    /**
+     * The writeStreamHeader method is provided so subclasses can append or
+     * prepend their own header to the stream.  It writes the magic number and
+     * version to the stream.
+     *
+     * @throws  IOException if I/O errors occur while writing to the underlying
+     *          stream
+     */
+    protected void writeStreamHeader() throws IOException {
+        bout.writeShort(STREAM_MAGIC);
+        bout.writeShort(STREAM_VERSION);
+    }
+
+    /**
+     * Write the specified class descriptor to the ObjectOutputStream.  Class
+     * descriptors are used to identify the classes of objects written to the
+     * stream.  Subclasses of ObjectOutputStream may override this method to
+     * customize the way in which class descriptors are written to the
+     * serialization stream.  The corresponding method in ObjectInputStream,
+     * <code>readClassDescriptor</code>, should then be overridden to
+     * reconstitute the class descriptor from its custom stream representation.
+     * By default, this method writes class descriptors according to the format
+     * defined in the Object Serialization specification.
+     *
+     * <p>Note that this method will only be called if the ObjectOutputStream
+     * is not using the old serialization stream format (set by calling
+     * ObjectOutputStream's <code>useProtocolVersion</code> method).  If this
+     * serialization stream is using the old format
+     * (<code>PROTOCOL_VERSION_1</code>), the class descriptor will be written
+     * internally in a manner that cannot be overridden or customized.
+     *
+     * @param   desc class descriptor to write to the stream
+     * @throws  IOException If an I/O error has occurred.
+     * @see java.io.ObjectInputStream#readClassDescriptor()
+     * @see #useProtocolVersion(int)
+     * @see java.io.ObjectStreamConstants#PROTOCOL_VERSION_1
+     * @since 1.3
+     */
+    protected void writeClassDescriptor(ObjectStreamClass desc)
+        throws IOException
+    {
+        desc.writeNonProxy(this);
+    }
+
+    /**
+     * Writes a byte. This method will block until the byte is actually
+     * written.
+     *
+     * @param   val the byte to be written to the stream
+     * @throws  IOException If an I/O error has occurred.
+     */
+    public void write(int val) throws IOException {
+        bout.write(val);
+    }
+
+    /**
+     * Writes an array of bytes. This method will block until the bytes are
+     * actually written.
+     *
+     * @param   buf the data to be written
+     * @throws  IOException If an I/O error has occurred.
+     */
+    public void write(byte[] buf) throws IOException {
+        bout.write(buf, 0, buf.length, false);
+    }
+
+    /**
+     * Writes a sub array of bytes.
+     *
+     * @param   buf the data to be written
+     * @param   off the start offset in the data
+     * @param   len the number of bytes that are written
+     * @throws  IOException If an I/O error has occurred.
+     */
+    public void write(byte[] buf, int off, int len) throws IOException {
+        if (buf == null) {
+            throw new NullPointerException();
+        }
+        int endoff = off + len;
+        if (off < 0 || len < 0 || endoff > buf.length || endoff < 0) {
+            throw new IndexOutOfBoundsException();
+        }
+        bout.write(buf, off, len, false);
+    }
+
+    /**
+     * Flushes the stream. This will write any buffered output bytes and flush
+     * through to the underlying stream.
+     *
+     * @throws  IOException If an I/O error has occurred.
+     */
+    public void flush() throws IOException {
+        bout.flush();
+    }
+
+    /**
+     * Drain any buffered data in ObjectOutputStream.  Similar to flush but
+     * does not propagate the flush to the underlying stream.
+     *
+     * @throws  IOException if I/O errors occur while writing to the underlying
+     *          stream
+     */
+    protected void drain() throws IOException {
+        bout.drain();
+    }
+
+    /**
+     * Closes the stream. This method must be called to release any resources
+     * associated with the stream.
+     *
+     * @throws  IOException If an I/O error has occurred.
+     */
+    public void close() throws IOException {
+        flush();
+        clear();
+        bout.close();
+    }
+
+    /**
+     * Writes a boolean.
+     *
+     * @param   val the boolean to be written
+     * @throws  IOException if I/O errors occur while writing to the underlying
+     *          stream
+     */
+    public void writeBoolean(boolean val) throws IOException {
+        bout.writeBoolean(val);
+    }
+
+    /**
+     * Writes an 8 bit byte.
+     *
+     * @param   val the byte value to be written
+     * @throws  IOException if I/O errors occur while writing to the underlying
+     *          stream
+     */
+    public void writeByte(int val) throws IOException  {
+        bout.writeByte(val);
+    }
+
+    /**
+     * Writes a 16 bit short.
+     *
+     * @param   val the short value to be written
+     * @throws  IOException if I/O errors occur while writing to the underlying
+     *          stream
+     */
+    public void writeShort(int val)  throws IOException {
+        bout.writeShort(val);
+    }
+
+    /**
+     * Writes a 16 bit char.
+     *
+     * @param   val the char value to be written
+     * @throws  IOException if I/O errors occur while writing to the underlying
+     *          stream
+     */
+    public void writeChar(int val)  throws IOException {
+        bout.writeChar(val);
+    }
+
+    /**
+     * Writes a 32 bit int.
+     *
+     * @param   val the integer value to be written
+     * @throws  IOException if I/O errors occur while writing to the underlying
+     *          stream
+     */
+    public void writeInt(int val)  throws IOException {
+        bout.writeInt(val);
+    }
+
+    /**
+     * Writes a 64 bit long.
+     *
+     * @param   val the long value to be written
+     * @throws  IOException if I/O errors occur while writing to the underlying
+     *          stream
+     */
+    public void writeLong(long val)  throws IOException {
+        bout.writeLong(val);
+    }
+
+    /**
+     * Writes a 32 bit float.
+     *
+     * @param   val the float value to be written
+     * @throws  IOException if I/O errors occur while writing to the underlying
+     *          stream
+     */
+    public void writeFloat(float val) throws IOException {
+        bout.writeFloat(val);
+    }
+
+    /**
+     * Writes a 64 bit double.
+     *
+     * @param   val the double value to be written
+     * @throws  IOException if I/O errors occur while writing to the underlying
+     *          stream
+     */
+    public void writeDouble(double val) throws IOException {
+        bout.writeDouble(val);
+    }
+
+    /**
+     * Writes a String as a sequence of bytes.
+     *
+     * @param   str the String of bytes to be written
+     * @throws  IOException if I/O errors occur while writing to the underlying
+     *          stream
+     */
+    public void writeBytes(String str) throws IOException {
+        bout.writeBytes(str);
+    }
+
+    /**
+     * Writes a String as a sequence of chars.
+     *
+     * @param   str the String of chars to be written
+     * @throws  IOException if I/O errors occur while writing to the underlying
+     *          stream
+     */
+    public void writeChars(String str) throws IOException {
+        bout.writeChars(str);
+    }
+
+    /**
+     * Primitive data write of this String in
+     * <a href="DataInput.html#modified-utf-8">modified UTF-8</a>
+     * format.  Note that there is a
+     * significant difference between writing a String into the stream as
+     * primitive data or as an Object. A String instance written by writeObject
+     * is written into the stream as a String initially. Future writeObject()
+     * calls write references to the string into the stream.
+     *
+     * @param   str the String to be written
+     * @throws  IOException if I/O errors occur while writing to the underlying
+     *          stream
+     */
+    public void writeUTF(String str) throws IOException {
+        bout.writeUTF(str);
+    }
+
+    /**
+     * Provide programmatic access to the persistent fields to be written
+     * to ObjectOutput.
+     *
+     * @since 1.2
+     */
+    public static abstract class PutField {
+
+        /**
+         * Put the value of the named boolean field into the persistent field.
+         *
+         * @param  name the name of the serializable field
+         * @param  val the value to assign to the field
+         * @throws IllegalArgumentException if <code>name</code> does not
+         * match the name of a serializable field for the class whose fields
+         * are being written, or if the type of the named field is not
+         * <code>boolean</code>
+         */
+        public abstract void put(String name, boolean val);
+
+        /**
+         * Put the value of the named byte field into the persistent field.
+         *
+         * @param  name the name of the serializable field
+         * @param  val the value to assign to the field
+         * @throws IllegalArgumentException if <code>name</code> does not
+         * match the name of a serializable field for the class whose fields
+         * are being written, or if the type of the named field is not
+         * <code>byte</code>
+         */
+        public abstract void put(String name, byte val);
+
+        /**
+         * Put the value of the named char field into the persistent field.
+         *
+         * @param  name the name of the serializable field
+         * @param  val the value to assign to the field
+         * @throws IllegalArgumentException if <code>name</code> does not
+         * match the name of a serializable field for the class whose fields
+         * are being written, or if the type of the named field is not
+         * <code>char</code>
+         */
+        public abstract void put(String name, char val);
+
+        /**
+         * Put the value of the named short field into the persistent field.
+         *
+         * @param  name the name of the serializable field
+         * @param  val the value to assign to the field
+         * @throws IllegalArgumentException if <code>name</code> does not
+         * match the name of a serializable field for the class whose fields
+         * are being written, or if the type of the named field is not
+         * <code>short</code>
+         */
+        public abstract void put(String name, short val);
+
+        /**
+         * Put the value of the named int field into the persistent field.
+         *
+         * @param  name the name of the serializable field
+         * @param  val the value to assign to the field
+         * @throws IllegalArgumentException if <code>name</code> does not
+         * match the name of a serializable field for the class whose fields
+         * are being written, or if the type of the named field is not
+         * <code>int</code>
+         */
+        public abstract void put(String name, int val);
+
+        /**
+         * Put the value of the named long field into the persistent field.
+         *
+         * @param  name the name of the serializable field
+         * @param  val the value to assign to the field
+         * @throws IllegalArgumentException if <code>name</code> does not
+         * match the name of a serializable field for the class whose fields
+         * are being written, or if the type of the named field is not
+         * <code>long</code>
+         */
+        public abstract void put(String name, long val);
+
+        /**
+         * Put the value of the named float field into the persistent field.
+         *
+         * @param  name the name of the serializable field
+         * @param  val the value to assign to the field
+         * @throws IllegalArgumentException if <code>name</code> does not
+         * match the name of a serializable field for the class whose fields
+         * are being written, or if the type of the named field is not
+         * <code>float</code>
+         */
+        public abstract void put(String name, float val);
+
+        /**
+         * Put the value of the named double field into the persistent field.
+         *
+         * @param  name the name of the serializable field
+         * @param  val the value to assign to the field
+         * @throws IllegalArgumentException if <code>name</code> does not
+         * match the name of a serializable field for the class whose fields
+         * are being written, or if the type of the named field is not
+         * <code>double</code>
+         */
+        public abstract void put(String name, double val);
+
+        /**
+         * Put the value of the named Object field into the persistent field.
+         *
+         * @param  name the name of the serializable field
+         * @param  val the value to assign to the field
+         *         (which may be <code>null</code>)
+         * @throws IllegalArgumentException if <code>name</code> does not
+         * match the name of a serializable field for the class whose fields
+         * are being written, or if the type of the named field is not a
+         * reference type
+         */
+        public abstract void put(String name, Object val);
+
+        /**
+         * Write the data and fields to the specified ObjectOutput stream,
+         * which must be the same stream that produced this
+         * <code>PutField</code> object.
+         *
+         * @param  out the stream to write the data and fields to
+         * @throws IOException if I/O errors occur while writing to the
+         *         underlying stream
+         * @throws IllegalArgumentException if the specified stream is not
+         *         the same stream that produced this <code>PutField</code>
+         *         object
+         * @deprecated This method does not write the values contained by this
+         *         <code>PutField</code> object in a proper format, and may
+         *         result in corruption of the serialization stream.  The
+         *         correct way to write <code>PutField</code> data is by
+         *         calling the {@link java.io.ObjectOutputStream#writeFields()}
+         *         method.
+         */
+        @Deprecated
+        public abstract void write(ObjectOutput out) throws IOException;
+    }
+
+
+    /**
+     * Returns protocol version in use.
+     */
+    int getProtocolVersion() {
+        return protocol;
+    }
+
+    /**
+     * Writes string without allowing it to be replaced in stream.  Used by
+     * ObjectStreamClass to write class descriptor type strings.
+     */
+    void writeTypeString(String str) throws IOException {
+        int handle;
+        if (str == null) {
+            writeNull();
+        } else if ((handle = handles.lookup(str)) != -1) {
+            writeHandle(handle);
+        } else {
+            writeString(str, false);
+        }
+    }
+
+    /**
+     * Verifies that this (possibly subclass) instance can be constructed
+     * without violating security constraints: the subclass must not override
+     * security-sensitive non-final methods, or else the
+     * "enableSubclassImplementation" SerializablePermission is checked.
+     */
+    private void verifySubclass() {
+        Class<?> cl = getClass();
+        if (cl == ObjectOutputStream.class) {
+            return;
+        }
+        SecurityManager sm = System.getSecurityManager();
+        if (sm == null) {
+            return;
+        }
+        processQueue(Caches.subclassAuditsQueue, Caches.subclassAudits);
+        WeakClassKey key = new WeakClassKey(cl, Caches.subclassAuditsQueue);
+        Boolean result = Caches.subclassAudits.get(key);
+        if (result == null) {
+            result = Boolean.valueOf(auditSubclass(cl));
+            Caches.subclassAudits.putIfAbsent(key, result);
+        }
+        if (result.booleanValue()) {
+            return;
+        }
+        sm.checkPermission(SUBCLASS_IMPLEMENTATION_PERMISSION);
+    }
+
+    /**
+     * Performs reflective checks on given subclass to verify that it doesn't
+     * override security-sensitive non-final methods.  Returns true if subclass
+     * is "safe", false otherwise.
+     */
+    private static boolean auditSubclass(final Class<?> subcl) {
+        Boolean result = AccessController.doPrivileged(
+            new PrivilegedAction<Boolean>() {
+                public Boolean run() {
+                    for (Class<?> cl = subcl;
+                         cl != ObjectOutputStream.class;
+                         cl = cl.getSuperclass())
+                    {
+                        try {
+                            cl.getDeclaredMethod(
+                                "writeUnshared", new Class<?>[] { Object.class });
+                            return Boolean.FALSE;
+                        } catch (NoSuchMethodException ex) {
+                        }
+                        try {
+                            cl.getDeclaredMethod("putFields", (Class<?>[]) null);
+                            return Boolean.FALSE;
+                        } catch (NoSuchMethodException ex) {
+                        }
+                    }
+                    return Boolean.TRUE;
+                }
+            }
+        );
+        return result.booleanValue();
+    }
+
+    /**
+     * Clears internal data structures.
+     */
+    private void clear() {
+        subs.clear();
+        handles.clear();
+    }
+
+    /**
+     * Underlying writeObject/writeUnshared implementation.
+     */
+    private void writeObject0(Object obj, boolean unshared)
+        throws IOException
+    {
+        boolean oldMode = bout.setBlockDataMode(false);
+        depth++;
+        try {
+            // handle previously written and non-replaceable objects
+            int h;
+            if ((obj = subs.lookup(obj)) == null) {
+                writeNull();
+                return;
+            } else if (!unshared && (h = handles.lookup(obj)) != -1) {
+                writeHandle(h);
+                return;
+            } else if (obj instanceof Class) {
+                writeClass((Class) obj, unshared);
+                return;
+            } else if (obj instanceof ObjectStreamClass) {
+                writeClassDesc((ObjectStreamClass) obj, unshared);
+                return;
+            }
+
+            // check for replacement object
+            Object orig = obj;
+            Class<?> cl = obj.getClass();
+            ObjectStreamClass desc;
+            for (;;) {
+                // REMIND: skip this check for strings/arrays?
+                Class<?> repCl;
+                desc = ObjectStreamClass.lookup(cl, true);
+                if (!desc.hasWriteReplaceMethod() ||
+                    (obj = desc.invokeWriteReplace(obj)) == null ||
+                    (repCl = obj.getClass()) == cl)
+                {
+                    break;
+                }
+                cl = repCl;
+            }
+            if (enableReplace) {
+                Object rep = replaceObject(obj);
+                if (rep != obj && rep != null) {
+                    cl = rep.getClass();
+                    desc = ObjectStreamClass.lookup(cl, true);
+                }
+                obj = rep;
+            }
+
+            // if object replaced, run through original checks a second time
+            if (obj != orig) {
+                subs.assign(orig, obj);
+                if (obj == null) {
+                    writeNull();
+                    return;
+                } else if (!unshared && (h = handles.lookup(obj)) != -1) {
+                    writeHandle(h);
+                    return;
+                } else if (obj instanceof Class) {
+                    writeClass((Class) obj, unshared);
+                    return;
+                } else if (obj instanceof ObjectStreamClass) {
+                    writeClassDesc((ObjectStreamClass) obj, unshared);
+                    return;
+                }
+            }
+
+            // remaining cases
+            if (obj instanceof String) {
+                writeString((String) obj, unshared);
+            } else if (cl.isArray()) {
+                writeArray(obj, desc, unshared);
+            } else if (obj instanceof Enum) {
+                writeEnum((Enum<?>) obj, desc, unshared);
+            } else if (obj instanceof Serializable) {
+                writeOrdinaryObject(obj, desc, unshared);
+            } else {
+                if (extendedDebugInfo) {
+                    throw new NotSerializableException(
+                        cl.getName() + "\n" + debugInfoStack.toString());
+                } else {
+                    throw new NotSerializableException(cl.getName());
+                }
+            }
+        } finally {
+            depth--;
+            bout.setBlockDataMode(oldMode);
+        }
+    }
+
+    /**
+     * Writes null code to stream.
+     */
+    private void writeNull() throws IOException {
+        bout.writeByte(TC_NULL);
+    }
+
+    /**
+     * Writes given object handle to stream.
+     */
+    private void writeHandle(int handle) throws IOException {
+        bout.writeByte(TC_REFERENCE);
+        bout.writeInt(baseWireHandle + handle);
+    }
+
+    /**
+     * Writes representation of given class to stream.
+     */
+    private void writeClass(Class<?> cl, boolean unshared) throws IOException {
+        bout.writeByte(TC_CLASS);
+        writeClassDesc(ObjectStreamClass.lookup(cl, true), false);
+        handles.assign(unshared ? null : cl);
+    }
+
+    /**
+     * Writes representation of given class descriptor to stream.
+     */
+    private void writeClassDesc(ObjectStreamClass desc, boolean unshared)
+        throws IOException
+    {
+        int handle;
+        if (desc == null) {
+            writeNull();
+        } else if (!unshared && (handle = handles.lookup(desc)) != -1) {
+            writeHandle(handle);
+        } else if (desc.isProxy()) {
+            writeProxyDesc(desc, unshared);
+        } else {
+            writeNonProxyDesc(desc, unshared);
+        }
+    }
+
+    private boolean isCustomSubclass() {
+        // Return true if this class is a custom subclass of ObjectOutputStream
+        return getClass().getClassLoader()
+                   != ObjectOutputStream.class.getClassLoader();
+    }
+
+    /**
+     * Writes class descriptor representing a dynamic proxy class to stream.
+     */
+    private void writeProxyDesc(ObjectStreamClass desc, boolean unshared)
+        throws IOException
+    {
+        bout.writeByte(TC_PROXYCLASSDESC);
+        handles.assign(unshared ? null : desc);
+
+        Class<?> cl = desc.forClass();
+        Class<?>[] ifaces = cl.getInterfaces();
+        bout.writeInt(ifaces.length);
+        for (int i = 0; i < ifaces.length; i++) {
+            bout.writeUTF(ifaces[i].getName());
+        }
+
+        bout.setBlockDataMode(true);
+        if (cl != null && isCustomSubclass()) {
+            ReflectUtil.checkPackageAccess(cl);
+        }
+        annotateProxyClass(cl);
+        bout.setBlockDataMode(false);
+        bout.writeByte(TC_ENDBLOCKDATA);
+
+        writeClassDesc(desc.getSuperDesc(), false);
+    }
+
+    /**
+     * Writes class descriptor representing a standard (i.e., not a dynamic
+     * proxy) class to stream.
+     */
+    private void writeNonProxyDesc(ObjectStreamClass desc, boolean unshared)
+        throws IOException
+    {
+        bout.writeByte(TC_CLASSDESC);
+        handles.assign(unshared ? null : desc);
+
+        if (protocol == PROTOCOL_VERSION_1) {
+            // do not invoke class descriptor write hook with old protocol
+            desc.writeNonProxy(this);
+        } else {
+            writeClassDescriptor(desc);
+        }
+
+        Class<?> cl = desc.forClass();
+        bout.setBlockDataMode(true);
+        if (cl != null && isCustomSubclass()) {
+            ReflectUtil.checkPackageAccess(cl);
+        }
+        annotateClass(cl);
+        bout.setBlockDataMode(false);
+        bout.writeByte(TC_ENDBLOCKDATA);
+
+        writeClassDesc(desc.getSuperDesc(), false);
+    }
+
+    /**
+     * Writes given string to stream, using standard or long UTF format
+     * depending on string length.
+     */
+    private void writeString(String str, boolean unshared) throws IOException {
+        handles.assign(unshared ? null : str);
+        long utflen = bout.getUTFLength(str);
+        if (utflen <= 0xFFFF) {
+            bout.writeByte(TC_STRING);
+            bout.writeUTF(str, utflen);
+        } else {
+            bout.writeByte(TC_LONGSTRING);
+            bout.writeLongUTF(str, utflen);
+        }
+    }
+
+    /**
+     * Writes given array object to stream.
+     */
+    private void writeArray(Object array,
+                            ObjectStreamClass desc,
+                            boolean unshared)
+        throws IOException
+    {
+        bout.writeByte(TC_ARRAY);
+        writeClassDesc(desc, false);
+        handles.assign(unshared ? null : array);
+
+        Class<?> ccl = desc.forClass().getComponentType();
+        if (ccl.isPrimitive()) {
+            if (ccl == Integer.TYPE) {
+                int[] ia = (int[]) array;
+                bout.writeInt(ia.length);
+                bout.writeInts(ia, 0, ia.length);
+            } else if (ccl == Byte.TYPE) {
+                byte[] ba = (byte[]) array;
+                bout.writeInt(ba.length);
+                bout.write(ba, 0, ba.length, true);
+            } else if (ccl == Long.TYPE) {
+                long[] ja = (long[]) array;
+                bout.writeInt(ja.length);
+                bout.writeLongs(ja, 0, ja.length);
+            } else if (ccl == Float.TYPE) {
+                float[] fa = (float[]) array;
+                bout.writeInt(fa.length);
+                bout.writeFloats(fa, 0, fa.length);
+            } else if (ccl == Double.TYPE) {
+                double[] da = (double[]) array;
+                bout.writeInt(da.length);
+                bout.writeDoubles(da, 0, da.length);
+            } else if (ccl == Short.TYPE) {
+                short[] sa = (short[]) array;
+                bout.writeInt(sa.length);
+                bout.writeShorts(sa, 0, sa.length);
+            } else if (ccl == Character.TYPE) {
+                char[] ca = (char[]) array;
+                bout.writeInt(ca.length);
+                bout.writeChars(ca, 0, ca.length);
+            } else if (ccl == Boolean.TYPE) {
+                boolean[] za = (boolean[]) array;
+                bout.writeInt(za.length);
+                bout.writeBooleans(za, 0, za.length);
+            } else {
+                throw new InternalError();
+            }
+        } else {
+            Object[] objs = (Object[]) array;
+            int len = objs.length;
+            bout.writeInt(len);
+            if (extendedDebugInfo) {
+                debugInfoStack.push(
+                    "array (class \"" + array.getClass().getName() +
+                    "\", size: " + len  + ")");
+            }
+            try {
+                for (int i = 0; i < len; i++) {
+                    if (extendedDebugInfo) {
+                        debugInfoStack.push(
+                            "element of array (index: " + i + ")");
+                    }
+                    try {
+                        writeObject0(objs[i], false);
+                    } finally {
+                        if (extendedDebugInfo) {
+                            debugInfoStack.pop();
+                        }
+                    }
+                }
+            } finally {
+                if (extendedDebugInfo) {
+                    debugInfoStack.pop();
+                }
+            }
+        }
+    }
+
+    /**
+     * Writes given enum constant to stream.
+     */
+    private void writeEnum(Enum<?> en,
+                           ObjectStreamClass desc,
+                           boolean unshared)
+        throws IOException
+    {
+        bout.writeByte(TC_ENUM);
+        ObjectStreamClass sdesc = desc.getSuperDesc();
+        writeClassDesc((sdesc.forClass() == Enum.class) ? desc : sdesc, false);
+        handles.assign(unshared ? null : en);
+        writeString(en.name(), false);
+    }
+
+    /**
+     * Writes representation of a "ordinary" (i.e., not a String, Class,
+     * ObjectStreamClass, array, or enum constant) serializable object to the
+     * stream.
+     */
+    private void writeOrdinaryObject(Object obj,
+                                     ObjectStreamClass desc,
+                                     boolean unshared)
+        throws IOException
+    {
+        if (extendedDebugInfo) {
+            debugInfoStack.push(
+                (depth == 1 ? "root " : "") + "object (class \"" +
+                obj.getClass().getName() + "\", " + obj.toString() + ")");
+        }
+        try {
+            desc.checkSerialize();
+
+            bout.writeByte(TC_OBJECT);
+            writeClassDesc(desc, false);
+            handles.assign(unshared ? null : obj);
+            if (desc.isExternalizable() && !desc.isProxy()) {
+                writeExternalData((Externalizable) obj);
+            } else {
+                writeSerialData(obj, desc);
+            }
+        } finally {
+            if (extendedDebugInfo) {
+                debugInfoStack.pop();
+            }
+        }
+    }
+
+    /**
+     * Writes externalizable data of given object by invoking its
+     * writeExternal() method.
+     */
+    private void writeExternalData(Externalizable obj) throws IOException {
+        PutFieldImpl oldPut = curPut;
+        curPut = null;
+
+        if (extendedDebugInfo) {
+            debugInfoStack.push("writeExternal data");
+        }
+        SerialCallbackContext oldContext = curContext;
+        try {
+            curContext = null;
+            if (protocol == PROTOCOL_VERSION_1) {
+                obj.writeExternal(this);
+            } else {
+                bout.setBlockDataMode(true);
+                obj.writeExternal(this);
+                bout.setBlockDataMode(false);
+                bout.writeByte(TC_ENDBLOCKDATA);
+            }
+        } finally {
+            curContext = oldContext;
+            if (extendedDebugInfo) {
+                debugInfoStack.pop();
+            }
+        }
+
+        curPut = oldPut;
+    }
+
+    /**
+     * Writes instance data for each serializable class of given object, from
+     * superclass to subclass.
+     */
+    private void writeSerialData(Object obj, ObjectStreamClass desc)
+        throws IOException
+    {
+        ObjectStreamClass.ClassDataSlot[] slots = desc.getClassDataLayout();
+        for (int i = 0; i < slots.length; i++) {
+            ObjectStreamClass slotDesc = slots[i].desc;
+            if (slotDesc.hasWriteObjectMethod()) {
+                PutFieldImpl oldPut = curPut;
+                curPut = null;
+                SerialCallbackContext oldContext = curContext;
+
+                if (extendedDebugInfo) {
+                    debugInfoStack.push(
+                        "custom writeObject data (class \"" +
+                        slotDesc.getName() + "\")");
+                }
+                try {
+                    curContext = new SerialCallbackContext(obj, slotDesc);
+                    bout.setBlockDataMode(true);
+                    slotDesc.invokeWriteObject(obj, this);
+                    bout.setBlockDataMode(false);
+                    bout.writeByte(TC_ENDBLOCKDATA);
+                } finally {
+                    curContext.setUsed();
+                    curContext = oldContext;
+                    if (extendedDebugInfo) {
+                        debugInfoStack.pop();
+                    }
+                }
+
+                curPut = oldPut;
+            } else {
+                defaultWriteFields(obj, slotDesc);
+            }
+        }
+    }
+
+    /**
+     * Fetches and writes values of serializable fields of given object to
+     * stream.  The given class descriptor specifies which field values to
+     * write, and in which order they should be written.
+     */
+    private void defaultWriteFields(Object obj, ObjectStreamClass desc)
+        throws IOException
+    {
+        Class<?> cl = desc.forClass();
+        if (cl != null && obj != null && !cl.isInstance(obj)) {
+            throw new ClassCastException();
+        }
+
+        desc.checkDefaultSerialize();
+
+        int primDataSize = desc.getPrimDataSize();
+        if (primVals == null || primVals.length < primDataSize) {
+            primVals = new byte[primDataSize];
+        }
+        desc.getPrimFieldValues(obj, primVals);
+        bout.write(primVals, 0, primDataSize, false);
+
+        ObjectStreamField[] fields = desc.getFields(false);
+        Object[] objVals = new Object[desc.getNumObjFields()];
+        int numPrimFields = fields.length - objVals.length;
+        desc.getObjFieldValues(obj, objVals);
+        for (int i = 0; i < objVals.length; i++) {
+            if (extendedDebugInfo) {
+                debugInfoStack.push(
+                    "field (class \"" + desc.getName() + "\", name: \"" +
+                    fields[numPrimFields + i].getName() + "\", type: \"" +
+                    fields[numPrimFields + i].getType() + "\")");
+            }
+            try {
+                writeObject0(objVals[i],
+                             fields[numPrimFields + i].isUnshared());
+            } finally {
+                if (extendedDebugInfo) {
+                    debugInfoStack.pop();
+                }
+            }
+        }
+    }
+
+    /**
+     * Attempts to write to stream fatal IOException that has caused
+     * serialization to abort.
+     */
+    private void writeFatalException(IOException ex) throws IOException {
+        /*
+         * Note: the serialization specification states that if a second
+         * IOException occurs while attempting to serialize the original fatal
+         * exception to the stream, then a StreamCorruptedException should be
+         * thrown (section 2.1).  However, due to a bug in previous
+         * implementations of serialization, StreamCorruptedExceptions were
+         * rarely (if ever) actually thrown--the "root" exceptions from
+         * underlying streams were thrown instead.  This historical behavior is
+         * followed here for consistency.
+         */
+        clear();
+        boolean oldMode = bout.setBlockDataMode(false);
+        try {
+            bout.writeByte(TC_EXCEPTION);
+            writeObject0(ex, false);
+            clear();
+        } finally {
+            bout.setBlockDataMode(oldMode);
+        }
+    }
+
+    /**
+     * Converts specified span of float values into byte values.
+     */
+    // REMIND: remove once hotspot inlines Float.floatToIntBits
+    private static native void floatsToBytes(float[] src, int srcpos,
+                                             byte[] dst, int dstpos,
+                                             int nfloats);
+
+    /**
+     * Converts specified span of double values into byte values.
+     */
+    // REMIND: remove once hotspot inlines Double.doubleToLongBits
+    private static native void doublesToBytes(double[] src, int srcpos,
+                                              byte[] dst, int dstpos,
+                                              int ndoubles);
+
+    /**
+     * Default PutField implementation.
+     */
+    private class PutFieldImpl extends PutField {
+
+        /** class descriptor describing serializable fields */
+        private final ObjectStreamClass desc;
+        /** primitive field values */
+        private final byte[] primVals;
+        /** object field values */
+        private final Object[] objVals;
+
+        /**
+         * Creates PutFieldImpl object for writing fields defined in given
+         * class descriptor.
+         */
+        PutFieldImpl(ObjectStreamClass desc) {
+            this.desc = desc;
+            primVals = new byte[desc.getPrimDataSize()];
+            objVals = new Object[desc.getNumObjFields()];
+        }
+
+        public void put(String name, boolean val) {
+            Bits.putBoolean(primVals, getFieldOffset(name, Boolean.TYPE), val);
+        }
+
+        public void put(String name, byte val) {
+            primVals[getFieldOffset(name, Byte.TYPE)] = val;
+        }
+
+        public void put(String name, char val) {
+            Bits.putChar(primVals, getFieldOffset(name, Character.TYPE), val);
+        }
+
+        public void put(String name, short val) {
+            Bits.putShort(primVals, getFieldOffset(name, Short.TYPE), val);
+        }
+
+        public void put(String name, int val) {
+            Bits.putInt(primVals, getFieldOffset(name, Integer.TYPE), val);
+        }
+
+        public void put(String name, float val) {
+            Bits.putFloat(primVals, getFieldOffset(name, Float.TYPE), val);
+        }
+
+        public void put(String name, long val) {
+            Bits.putLong(primVals, getFieldOffset(name, Long.TYPE), val);
+        }
+
+        public void put(String name, double val) {
+            Bits.putDouble(primVals, getFieldOffset(name, Double.TYPE), val);
+        }
+
+        public void put(String name, Object val) {
+            objVals[getFieldOffset(name, Object.class)] = val;
+        }
+
+        // deprecated in ObjectOutputStream.PutField
+        public void write(ObjectOutput out) throws IOException {
+            /*
+             * Applications should *not* use this method to write PutField
+             * data, as it will lead to stream corruption if the PutField
+             * object writes any primitive data (since block data mode is not
+             * unset/set properly, as is done in OOS.writeFields()).  This
+             * broken implementation is being retained solely for behavioral
+             * compatibility, in order to support applications which use
+             * OOS.PutField.write() for writing only non-primitive data.
+             *
+             * Serialization of unshared objects is not implemented here since
+             * it is not necessary for backwards compatibility; also, unshared
+             * semantics may not be supported by the given ObjectOutput
+             * instance.  Applications which write unshared objects using the
+             * PutField API must use OOS.writeFields().
+             */
+            if (ObjectOutputStream.this != out) {
+                throw new IllegalArgumentException("wrong stream");
+            }
+            out.write(primVals, 0, primVals.length);
+
+            ObjectStreamField[] fields = desc.getFields(false);
+            int numPrimFields = fields.length - objVals.length;
+            // REMIND: warn if numPrimFields > 0?
+            for (int i = 0; i < objVals.length; i++) {
+                if (fields[numPrimFields + i].isUnshared()) {
+                    throw new IOException("cannot write unshared object");
+                }
+                out.writeObject(objVals[i]);
+            }
+        }
+
+        /**
+         * Writes buffered primitive data and object fields to stream.
+         */
+        void writeFields() throws IOException {
+            bout.write(primVals, 0, primVals.length, false);
+
+            ObjectStreamField[] fields = desc.getFields(false);
+            int numPrimFields = fields.length - objVals.length;
+            for (int i = 0; i < objVals.length; i++) {
+                if (extendedDebugInfo) {
+                    debugInfoStack.push(
+                        "field (class \"" + desc.getName() + "\", name: \"" +
+                        fields[numPrimFields + i].getName() + "\", type: \"" +
+                        fields[numPrimFields + i].getType() + "\")");
+                }
+                try {
+                    writeObject0(objVals[i],
+                                 fields[numPrimFields + i].isUnshared());
+                } finally {
+                    if (extendedDebugInfo) {
+                        debugInfoStack.pop();
+                    }
+                }
+            }
+        }
+
+        /**
+         * Returns offset of field with given name and type.  A specified type
+         * of null matches all types, Object.class matches all non-primitive
+         * types, and any other non-null type matches assignable types only.
+         * Throws IllegalArgumentException if no matching field found.
+         */
+        private int getFieldOffset(String name, Class<?> type) {
+            ObjectStreamField field = desc.getField(name, type);
+            if (field == null) {
+                throw new IllegalArgumentException("no such field " + name +
+                                                   " with type " + type);
+            }
+            return field.getOffset();
+        }
+    }
+
+    /**
+     * Buffered output stream with two modes: in default mode, outputs data in
+     * same format as DataOutputStream; in "block data" mode, outputs data
+     * bracketed by block data markers (see object serialization specification
+     * for details).
+     */
+    private static class BlockDataOutputStream
+        extends OutputStream implements DataOutput
+    {
+        /** maximum data block length */
+        private static final int MAX_BLOCK_SIZE = 1024;
+        /** maximum data block header length */
+        private static final int MAX_HEADER_SIZE = 5;
+        /** (tunable) length of char buffer (for writing strings) */
+        private static final int CHAR_BUF_SIZE = 256;
+
+        /** buffer for writing general/block data */
+        private final byte[] buf = new byte[MAX_BLOCK_SIZE];
+        /** buffer for writing block data headers */
+        private final byte[] hbuf = new byte[MAX_HEADER_SIZE];
+        /** char buffer for fast string writes */
+        private final char[] cbuf = new char[CHAR_BUF_SIZE];
+
+        /** block data mode */
+        private boolean blkmode = false;
+        /** current offset into buf */
+        private int pos = 0;
+
+        /** underlying output stream */
+        private final OutputStream out;
+        /** loopback stream (for data writes that span data blocks) */
+        private final DataOutputStream dout;
+
+        /**
+         * Creates new BlockDataOutputStream on top of given underlying stream.
+         * Block data mode is turned off by default.
+         */
+        BlockDataOutputStream(OutputStream out) {
+            this.out = out;
+            dout = new DataOutputStream(this);
+        }
+
+        /**
+         * Sets block data mode to the given mode (true == on, false == off)
+         * and returns the previous mode value.  If the new mode is the same as
+         * the old mode, no action is taken.  If the new mode differs from the
+         * old mode, any buffered data is flushed before switching to the new
+         * mode.
+         */
+        boolean setBlockDataMode(boolean mode) throws IOException {
+            if (blkmode == mode) {
+                return blkmode;
+            }
+            drain();
+            blkmode = mode;
+            return !blkmode;
+        }
+
+        /**
+         * Returns true if the stream is currently in block data mode, false
+         * otherwise.
+         */
+        boolean getBlockDataMode() {
+            return blkmode;
+        }
+
+        /* ----------------- generic output stream methods ----------------- */
+        /*
+         * The following methods are equivalent to their counterparts in
+         * OutputStream, except that they partition written data into data
+         * blocks when in block data mode.
+         */
+
+        public void write(int b) throws IOException {
+            if (pos >= MAX_BLOCK_SIZE) {
+                drain();
+            }
+            buf[pos++] = (byte) b;
+        }
+
+        public void write(byte[] b) throws IOException {
+            write(b, 0, b.length, false);
+        }
+
+        public void write(byte[] b, int off, int len) throws IOException {
+            write(b, off, len, false);
+        }
+
+        public void flush() throws IOException {
+            drain();
+            out.flush();
+        }
+
+        public void close() throws IOException {
+            flush();
+            out.close();
+        }
+
+        /**
+         * Writes specified span of byte values from given array.  If copy is
+         * true, copies the values to an intermediate buffer before writing
+         * them to underlying stream (to avoid exposing a reference to the
+         * original byte array).
+         */
+        void write(byte[] b, int off, int len, boolean copy)
+            throws IOException
+        {
+            if (!(copy || blkmode)) {           // write directly
+                drain();
+                out.write(b, off, len);
+                return;
+            }
+
+            while (len > 0) {
+                if (pos >= MAX_BLOCK_SIZE) {
+                    drain();
+                }
+                if (len >= MAX_BLOCK_SIZE && !copy && pos == 0) {
+                    // avoid unnecessary copy
+                    writeBlockHeader(MAX_BLOCK_SIZE);
+                    out.write(b, off, MAX_BLOCK_SIZE);
+                    off += MAX_BLOCK_SIZE;
+                    len -= MAX_BLOCK_SIZE;
+                } else {
+                    int wlen = Math.min(len, MAX_BLOCK_SIZE - pos);
+                    System.arraycopy(b, off, buf, pos, wlen);
+                    pos += wlen;
+                    off += wlen;
+                    len -= wlen;
+                }
+            }
+        }
+
+        /**
+         * Writes all buffered data from this stream to the underlying stream,
+         * but does not flush underlying stream.
+         */
+        void drain() throws IOException {
+            if (pos == 0) {
+                return;
+            }
+            if (blkmode) {
+                writeBlockHeader(pos);
+            }
+            out.write(buf, 0, pos);
+            pos = 0;
+        }
+
+        /**
+         * Writes block data header.  Data blocks shorter than 256 bytes are
+         * prefixed with a 2-byte header; all others start with a 5-byte
+         * header.
+         */
+        private void writeBlockHeader(int len) throws IOException {
+            if (len <= 0xFF) {
+                hbuf[0] = TC_BLOCKDATA;
+                hbuf[1] = (byte) len;
+                out.write(hbuf, 0, 2);
+            } else {
+                hbuf[0] = TC_BLOCKDATALONG;
+                Bits.putInt(hbuf, 1, len);
+                out.write(hbuf, 0, 5);
+            }
+        }
+
+
+        /* ----------------- primitive data output methods ----------------- */
+        /*
+         * The following methods are equivalent to their counterparts in
+         * DataOutputStream, except that they partition written data into data
+         * blocks when in block data mode.
+         */
+
+        public void writeBoolean(boolean v) throws IOException {
+            if (pos >= MAX_BLOCK_SIZE) {
+                drain();
+            }
+            Bits.putBoolean(buf, pos++, v);
+        }
+
+        public void writeByte(int v) throws IOException {
+            if (pos >= MAX_BLOCK_SIZE) {
+                drain();
+            }
+            buf[pos++] = (byte) v;
+        }
+
+        public void writeChar(int v) throws IOException {
+            if (pos + 2 <= MAX_BLOCK_SIZE) {
+                Bits.putChar(buf, pos, (char) v);
+                pos += 2;
+            } else {
+                dout.writeChar(v);
+            }
+        }
+
+        public void writeShort(int v) throws IOException {
+            if (pos + 2 <= MAX_BLOCK_SIZE) {
+                Bits.putShort(buf, pos, (short) v);
+                pos += 2;
+            } else {
+                dout.writeShort(v);
+            }
+        }
+
+        public void writeInt(int v) throws IOException {
+            if (pos + 4 <= MAX_BLOCK_SIZE) {
+                Bits.putInt(buf, pos, v);
+                pos += 4;
+            } else {
+                dout.writeInt(v);
+            }
+        }
+
+        public void writeFloat(float v) throws IOException {
+            if (pos + 4 <= MAX_BLOCK_SIZE) {
+                Bits.putFloat(buf, pos, v);
+                pos += 4;
+            } else {
+                dout.writeFloat(v);
+            }
+        }
+
+        public void writeLong(long v) throws IOException {
+            if (pos + 8 <= MAX_BLOCK_SIZE) {
+                Bits.putLong(buf, pos, v);
+                pos += 8;
+            } else {
+                dout.writeLong(v);
+            }
+        }
+
+        public void writeDouble(double v) throws IOException {
+            if (pos + 8 <= MAX_BLOCK_SIZE) {
+                Bits.putDouble(buf, pos, v);
+                pos += 8;
+            } else {
+                dout.writeDouble(v);
+            }
+        }
+
+        public void writeBytes(String s) throws IOException {
+            int endoff = s.length();
+            int cpos = 0;
+            int csize = 0;
+            for (int off = 0; off < endoff; ) {
+                if (cpos >= csize) {
+                    cpos = 0;
+                    csize = Math.min(endoff - off, CHAR_BUF_SIZE);
+                    s.getChars(off, off + csize, cbuf, 0);
+                }
+                if (pos >= MAX_BLOCK_SIZE) {
+                    drain();
+                }
+                int n = Math.min(csize - cpos, MAX_BLOCK_SIZE - pos);
+                int stop = pos + n;
+                while (pos < stop) {
+                    buf[pos++] = (byte) cbuf[cpos++];
+                }
+                off += n;
+            }
+        }
+
+        public void writeChars(String s) throws IOException {
+            int endoff = s.length();
+            for (int off = 0; off < endoff; ) {
+                int csize = Math.min(endoff - off, CHAR_BUF_SIZE);
+                s.getChars(off, off + csize, cbuf, 0);
+                writeChars(cbuf, 0, csize);
+                off += csize;
+            }
+        }
+
+        public void writeUTF(String s) throws IOException {
+            writeUTF(s, getUTFLength(s));
+        }
+
+
+        /* -------------- primitive data array output methods -------------- */
+        /*
+         * The following methods write out spans of primitive data values.
+         * Though equivalent to calling the corresponding primitive write
+         * methods repeatedly, these methods are optimized for writing groups
+         * of primitive data values more efficiently.
+         */
+
+        void writeBooleans(boolean[] v, int off, int len) throws IOException {
+            int endoff = off + len;
+            while (off < endoff) {
+                if (pos >= MAX_BLOCK_SIZE) {
+                    drain();
+                }
+                int stop = Math.min(endoff, off + (MAX_BLOCK_SIZE - pos));
+                while (off < stop) {
+                    Bits.putBoolean(buf, pos++, v[off++]);
+                }
+            }
+        }
+
+        void writeChars(char[] v, int off, int len) throws IOException {
+            int limit = MAX_BLOCK_SIZE - 2;
+            int endoff = off + len;
+            while (off < endoff) {
+                if (pos <= limit) {
+                    int avail = (MAX_BLOCK_SIZE - pos) >> 1;
+                    int stop = Math.min(endoff, off + avail);
+                    while (off < stop) {
+                        Bits.putChar(buf, pos, v[off++]);
+                        pos += 2;
+                    }
+                } else {
+                    dout.writeChar(v[off++]);
+                }
+            }
+        }
+
+        void writeShorts(short[] v, int off, int len) throws IOException {
+            int limit = MAX_BLOCK_SIZE - 2;
+            int endoff = off + len;
+            while (off < endoff) {
+                if (pos <= limit) {
+                    int avail = (MAX_BLOCK_SIZE - pos) >> 1;
+                    int stop = Math.min(endoff, off + avail);
+                    while (off < stop) {
+                        Bits.putShort(buf, pos, v[off++]);
+                        pos += 2;
+                    }
+                } else {
+                    dout.writeShort(v[off++]);
+                }
+            }
+        }
+
+        void writeInts(int[] v, int off, int len) throws IOException {
+            int limit = MAX_BLOCK_SIZE - 4;
+            int endoff = off + len;
+            while (off < endoff) {
+                if (pos <= limit) {
+                    int avail = (MAX_BLOCK_SIZE - pos) >> 2;
+                    int stop = Math.min(endoff, off + avail);
+                    while (off < stop) {
+                        Bits.putInt(buf, pos, v[off++]);
+                        pos += 4;
+                    }
+                } else {
+                    dout.writeInt(v[off++]);
+                }
+            }
+        }
+
+        void writeFloats(float[] v, int off, int len) throws IOException {
+            int limit = MAX_BLOCK_SIZE - 4;
+            int endoff = off + len;
+            while (off < endoff) {
+                if (pos <= limit) {
+                    int avail = (MAX_BLOCK_SIZE - pos) >> 2;
+                    int chunklen = Math.min(endoff - off, avail);
+                    floatsToBytes(v, off, buf, pos, chunklen);
+                    off += chunklen;
+                    pos += chunklen << 2;
+                } else {
+                    dout.writeFloat(v[off++]);
+                }
+            }
+        }
+
+        void writeLongs(long[] v, int off, int len) throws IOException {
+            int limit = MAX_BLOCK_SIZE - 8;
+            int endoff = off + len;
+            while (off < endoff) {
+                if (pos <= limit) {
+                    int avail = (MAX_BLOCK_SIZE - pos) >> 3;
+                    int stop = Math.min(endoff, off + avail);
+                    while (off < stop) {
+                        Bits.putLong(buf, pos, v[off++]);
+                        pos += 8;
+                    }
+                } else {
+                    dout.writeLong(v[off++]);
+                }
+            }
+        }
+
+        void writeDoubles(double[] v, int off, int len) throws IOException {
+            int limit = MAX_BLOCK_SIZE - 8;
+            int endoff = off + len;
+            while (off < endoff) {
+                if (pos <= limit) {
+                    int avail = (MAX_BLOCK_SIZE - pos) >> 3;
+                    int chunklen = Math.min(endoff - off, avail);
+                    doublesToBytes(v, off, buf, pos, chunklen);
+                    off += chunklen;
+                    pos += chunklen << 3;
+                } else {
+                    dout.writeDouble(v[off++]);
+                }
+            }
+        }
+
+        /**
+         * Returns the length in bytes of the UTF encoding of the given string.
+         */
+        long getUTFLength(String s) {
+            int len = s.length();
+            long utflen = 0;
+            for (int off = 0; off < len; ) {
+                int csize = Math.min(len - off, CHAR_BUF_SIZE);
+                s.getChars(off, off + csize, cbuf, 0);
+                for (int cpos = 0; cpos < csize; cpos++) {
+                    char c = cbuf[cpos];
+                    if (c >= 0x0001 && c <= 0x007F) {
+                        utflen++;
+                    } else if (c > 0x07FF) {
+                        utflen += 3;
+                    } else {
+                        utflen += 2;
+                    }
+                }
+                off += csize;
+            }
+            return utflen;
+        }
+
+        /**
+         * Writes the given string in UTF format.  This method is used in
+         * situations where the UTF encoding length of the string is already
+         * known; specifying it explicitly avoids a prescan of the string to
+         * determine its UTF length.
+         */
+        void writeUTF(String s, long utflen) throws IOException {
+            if (utflen > 0xFFFFL) {
+                throw new UTFDataFormatException();
+            }
+            writeShort((int) utflen);
+            if (utflen == (long) s.length()) {
+                writeBytes(s);
+            } else {
+                writeUTFBody(s);
+            }
+        }
+
+        /**
+         * Writes given string in "long" UTF format.  "Long" UTF format is
+         * identical to standard UTF, except that it uses an 8 byte header
+         * (instead of the standard 2 bytes) to convey the UTF encoding length.
+         */
+        void writeLongUTF(String s) throws IOException {
+            writeLongUTF(s, getUTFLength(s));
+        }
+
+        /**
+         * Writes given string in "long" UTF format, where the UTF encoding
+         * length of the string is already known.
+         */
+        void writeLongUTF(String s, long utflen) throws IOException {
+            writeLong(utflen);
+            if (utflen == (long) s.length()) {
+                writeBytes(s);
+            } else {
+                writeUTFBody(s);
+            }
+        }
+
+        /**
+         * Writes the "body" (i.e., the UTF representation minus the 2-byte or
+         * 8-byte length header) of the UTF encoding for the given string.
+         */
+        private void writeUTFBody(String s) throws IOException {
+            int limit = MAX_BLOCK_SIZE - 3;
+            int len = s.length();
+            for (int off = 0; off < len; ) {
+                int csize = Math.min(len - off, CHAR_BUF_SIZE);
+                s.getChars(off, off + csize, cbuf, 0);
+                for (int cpos = 0; cpos < csize; cpos++) {
+                    char c = cbuf[cpos];
+                    if (pos <= limit) {
+                        if (c <= 0x007F && c != 0) {
+                            buf[pos++] = (byte) c;
+                        } else if (c > 0x07FF) {
+                            buf[pos + 2] = (byte) (0x80 | ((c >> 0) & 0x3F));
+                            buf[pos + 1] = (byte) (0x80 | ((c >> 6) & 0x3F));
+                            buf[pos + 0] = (byte) (0xE0 | ((c >> 12) & 0x0F));
+                            pos += 3;
+                        } else {
+                            buf[pos + 1] = (byte) (0x80 | ((c >> 0) & 0x3F));
+                            buf[pos + 0] = (byte) (0xC0 | ((c >> 6) & 0x1F));
+                            pos += 2;
+                        }
+                    } else {    // write one byte at a time to normalize block
+                        if (c <= 0x007F && c != 0) {
+                            write(c);
+                        } else if (c > 0x07FF) {
+                            write(0xE0 | ((c >> 12) & 0x0F));
+                            write(0x80 | ((c >> 6) & 0x3F));
+                            write(0x80 | ((c >> 0) & 0x3F));
+                        } else {
+                            write(0xC0 | ((c >> 6) & 0x1F));
+                            write(0x80 | ((c >> 0) & 0x3F));
+                        }
+                    }
+                }
+                off += csize;
+            }
+        }
+    }
+
+    /**
+     * Lightweight identity hash table which maps objects to integer handles,
+     * assigned in ascending order.
+     */
+    private static class HandleTable {
+
+        /* number of mappings in table/next available handle */
+        private int size;
+        /* size threshold determining when to expand hash spine */
+        private int threshold;
+        /* factor for computing size threshold */
+        private final float loadFactor;
+        /* maps hash value -> candidate handle value */
+        private int[] spine;
+        /* maps handle value -> next candidate handle value */
+        private int[] next;
+        /* maps handle value -> associated object */
+        private Object[] objs;
+
+        /**
+         * Creates new HandleTable with given capacity and load factor.
+         */
+        HandleTable(int initialCapacity, float loadFactor) {
+            this.loadFactor = loadFactor;
+            spine = new int[initialCapacity];
+            next = new int[initialCapacity];
+            objs = new Object[initialCapacity];
+            threshold = (int) (initialCapacity * loadFactor);
+            clear();
+        }
+
+        /**
+         * Assigns next available handle to given object, and returns handle
+         * value.  Handles are assigned in ascending order starting at 0.
+         */
+        int assign(Object obj) {
+            if (size >= next.length) {
+                growEntries();
+            }
+            if (size >= threshold) {
+                growSpine();
+            }
+            insert(obj, size);
+            return size++;
+        }
+
+        /**
+         * Looks up and returns handle associated with given object, or -1 if
+         * no mapping found.
+         */
+        int lookup(Object obj) {
+            if (size == 0) {
+                return -1;
+            }
+            int index = hash(obj) % spine.length;
+            for (int i = spine[index]; i >= 0; i = next[i]) {
+                if (objs[i] == obj) {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        /**
+         * Resets table to its initial (empty) state.
+         */
+        void clear() {
+            Arrays.fill(spine, -1);
+            Arrays.fill(objs, 0, size, null);
+            size = 0;
+        }
+
+        /**
+         * Returns the number of mappings currently in table.
+         */
+        int size() {
+            return size;
+        }
+
+        /**
+         * Inserts mapping object -> handle mapping into table.  Assumes table
+         * is large enough to accommodate new mapping.
+         */
+        private void insert(Object obj, int handle) {
+            int index = hash(obj) % spine.length;
+            objs[handle] = obj;
+            next[handle] = spine[index];
+            spine[index] = handle;
+        }
+
+        /**
+         * Expands the hash "spine" -- equivalent to increasing the number of
+         * buckets in a conventional hash table.
+         */
+        private void growSpine() {
+            spine = new int[(spine.length << 1) + 1];
+            threshold = (int) (spine.length * loadFactor);
+            Arrays.fill(spine, -1);
+            for (int i = 0; i < size; i++) {
+                insert(objs[i], i);
+            }
+        }
+
+        /**
+         * Increases hash table capacity by lengthening entry arrays.
+         */
+        private void growEntries() {
+            int newLength = (next.length << 1) + 1;
+            int[] newNext = new int[newLength];
+            System.arraycopy(next, 0, newNext, 0, size);
+            next = newNext;
+
+            Object[] newObjs = new Object[newLength];
+            System.arraycopy(objs, 0, newObjs, 0, size);
+            objs = newObjs;
+        }
+
+        /**
+         * Returns hash value for given object.
+         */
+        private int hash(Object obj) {
+            return System.identityHashCode(obj) & 0x7FFFFFFF;
+        }
+    }
+
+    /**
+     * Lightweight identity hash table which maps objects to replacement
+     * objects.
+     */
+    private static class ReplaceTable {
+
+        /* maps object -> index */
+        private final HandleTable htab;
+        /* maps index -> replacement object */
+        private Object[] reps;
+
+        /**
+         * Creates new ReplaceTable with given capacity and load factor.
+         */
+        ReplaceTable(int initialCapacity, float loadFactor) {
+            htab = new HandleTable(initialCapacity, loadFactor);
+            reps = new Object[initialCapacity];
+        }
+
+        /**
+         * Enters mapping from object to replacement object.
+         */
+        void assign(Object obj, Object rep) {
+            int index = htab.assign(obj);
+            while (index >= reps.length) {
+                grow();
+            }
+            reps[index] = rep;
+        }
+
+        /**
+         * Looks up and returns replacement for given object.  If no
+         * replacement is found, returns the lookup object itself.
+         */
+        Object lookup(Object obj) {
+            int index = htab.lookup(obj);
+            return (index >= 0) ? reps[index] : obj;
+        }
+
+        /**
+         * Resets table to its initial (empty) state.
+         */
+        void clear() {
+            Arrays.fill(reps, 0, htab.size(), null);
+            htab.clear();
+        }
+
+        /**
+         * Returns the number of mappings currently in table.
+         */
+        int size() {
+            return htab.size();
+        }
+
+        /**
+         * Increases table capacity.
+         */
+        private void grow() {
+            Object[] newReps = new Object[(reps.length << 1) + 1];
+            System.arraycopy(reps, 0, newReps, 0, reps.length);
+            reps = newReps;
+        }
+    }
+
+    /**
+     * Stack to keep debug information about the state of the
+     * serialization process, for embedding in exception messages.
+     */
+    private static class DebugTraceInfoStack {
+        private final List<String> stack;
+
+        DebugTraceInfoStack() {
+            stack = new ArrayList<>();
+        }
+
+        /**
+         * Removes all of the elements from enclosed list.
+         */
+        void clear() {
+            stack.clear();
+        }
+
+        /**
+         * Removes the object at the top of enclosed list.
+         */
+        void pop() {
+            stack.remove(stack.size()-1);
+        }
+
+        /**
+         * Pushes a String onto the top of enclosed list.
+         */
+        void push(String entry) {
+            stack.add("\t- " + entry);
+        }
+
+        /**
+         * Returns a string representation of this object
+         */
+        public String toString() {
+            StringBuilder buffer = new StringBuilder();
+            if (!stack.isEmpty()) {
+                for(int i = stack.size(); i > 0; i-- ) {
+                    buffer.append(stack.get(i-1) + ((i != 1) ? "\n" : ""));
+                }
+            }
+            return buffer.toString();
+        }
+    }
+
+}

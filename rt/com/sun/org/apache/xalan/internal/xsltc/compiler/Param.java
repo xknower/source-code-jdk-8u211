@@ -1,262 +1,258 @@
-/*     */ package com.sun.org.apache.xalan.internal.xsltc.compiler;
-/*     */ 
-/*     */ import com.sun.org.apache.bcel.internal.classfile.Field;
-/*     */ import com.sun.org.apache.bcel.internal.generic.BranchHandle;
-/*     */ import com.sun.org.apache.bcel.internal.generic.CHECKCAST;
-/*     */ import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
-/*     */ import com.sun.org.apache.bcel.internal.generic.IFNONNULL;
-/*     */ import com.sun.org.apache.bcel.internal.generic.INVOKEVIRTUAL;
-/*     */ import com.sun.org.apache.bcel.internal.generic.Instruction;
-/*     */ import com.sun.org.apache.bcel.internal.generic.InstructionList;
-/*     */ import com.sun.org.apache.bcel.internal.generic.PUSH;
-/*     */ import com.sun.org.apache.bcel.internal.generic.PUTFIELD;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.runtime.BasisLibrary;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class Param
-/*     */   extends VariableBase
-/*     */ {
-/*     */   private boolean _isInSimpleNamedTemplate = false;
-/*     */   
-/*     */   public String toString() {
-/*  65 */     return "param(" + this._name + ")";
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Instruction setLoadInstruction(Instruction instruction) {
-/*  73 */     Instruction tmp = this._loadInstruction;
-/*  74 */     this._loadInstruction = instruction;
-/*  75 */     return tmp;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Instruction setStoreInstruction(Instruction instruction) {
-/*  83 */     Instruction tmp = this._storeInstruction;
-/*  84 */     this._storeInstruction = instruction;
-/*  85 */     return tmp;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void display(int indent) {
-/*  92 */     indent(indent);
-/*  93 */     System.out.println("param " + this._name);
-/*  94 */     if (this._select != null) {
-/*  95 */       indent(indent + 4);
-/*  96 */       System.out.println("select " + this._select.toString());
-/*     */     } 
-/*  98 */     displayContents(indent + 4);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void parseContents(Parser parser) {
-/* 108 */     super.parseContents(parser);
-/*     */ 
-/*     */     
-/* 111 */     SyntaxTreeNode parent = getParent();
-/* 112 */     if (parent instanceof Stylesheet) {
-/*     */       
-/* 114 */       this._isLocal = false;
-/*     */       
-/* 116 */       Param param = parser.getSymbolTable().lookupParam(this._name);
-/*     */       
-/* 118 */       if (param != null) {
-/* 119 */         int us = getImportPrecedence();
-/* 120 */         int them = param.getImportPrecedence();
-/*     */         
-/* 122 */         if (us == them) {
-/* 123 */           String name = this._name.toString();
-/* 124 */           reportError(this, parser, "VARIABLE_REDEF_ERR", name);
-/*     */         } else {
-/*     */           
-/* 127 */           if (them > us) {
-/* 128 */             this._ignore = true;
-/* 129 */             copyReferences(param);
-/*     */             
-/*     */             return;
-/*     */           } 
-/* 133 */           param.copyReferences(this);
-/* 134 */           param.disable();
-/*     */         } 
-/*     */       } 
-/*     */       
-/* 138 */       ((Stylesheet)parent).addParam(this);
-/* 139 */       parser.getSymbolTable().addParam(this);
-/*     */     }
-/* 141 */     else if (parent instanceof Template) {
-/* 142 */       Template template = (Template)parent;
-/* 143 */       this._isLocal = true;
-/* 144 */       template.addParameter(this);
-/* 145 */       if (template.isSimpleNamedTemplate()) {
-/* 146 */         this._isInSimpleNamedTemplate = true;
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Type typeCheck(SymbolTable stable) throws TypeCheckError {
-/* 157 */     if (this._select != null) {
-/* 158 */       this._type = this._select.typeCheck(stable);
-/* 159 */       if (!(this._type instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.ReferenceType) && !(this._type instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.ObjectType)) {
-/* 160 */         this._select = new CastExpr(this._select, Type.Reference);
-/*     */       }
-/*     */     }
-/* 163 */     else if (hasContents()) {
-/* 164 */       typeCheckContents(stable);
-/*     */     } 
-/* 166 */     this._type = Type.Reference;
-/*     */ 
-/*     */ 
-/*     */     
-/* 170 */     return Type.Void;
-/*     */   }
-/*     */   
-/*     */   public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
-/* 174 */     ConstantPoolGen cpg = classGen.getConstantPool();
-/* 175 */     InstructionList il = methodGen.getInstructionList();
-/*     */     
-/* 177 */     if (this._ignore)
-/* 178 */       return;  this._ignore = true;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 185 */     String name = BasisLibrary.mapQNameToJavaName(this._name.toString());
-/* 186 */     String signature = this._type.toSignature();
-/* 187 */     String className = this._type.getClassName();
-/*     */     
-/* 189 */     if (isLocal()) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 195 */       if (this._isInSimpleNamedTemplate) {
-/* 196 */         il.append(loadInstruction());
-/* 197 */         BranchHandle ifBlock = il.append(new IFNONNULL(null));
-/* 198 */         translateValue(classGen, methodGen);
-/* 199 */         il.append(storeInstruction());
-/* 200 */         ifBlock.setTarget(il.append(NOP));
-/*     */         
-/*     */         return;
-/*     */       } 
-/* 204 */       il.append(classGen.loadTranslet());
-/* 205 */       il.append(new PUSH(cpg, name));
-/* 206 */       translateValue(classGen, methodGen);
-/* 207 */       il.append(new PUSH(cpg, true));
-/*     */ 
-/*     */       
-/* 210 */       il.append(new INVOKEVIRTUAL(cpg.addMethodref("com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet", "addParameter", "(Ljava/lang/String;Ljava/lang/Object;Z)Ljava/lang/Object;")));
-/*     */ 
-/*     */       
-/* 213 */       if (className != "") {
-/* 214 */         il.append(new CHECKCAST(cpg.addClass(className)));
-/*     */       }
-/*     */       
-/* 217 */       this._type.translateUnBox(classGen, methodGen);
-/*     */       
-/* 219 */       if (this._refs.isEmpty()) {
-/* 220 */         il.append(this._type.POP());
-/* 221 */         this._local = null;
-/*     */       } else {
-/*     */         
-/* 224 */         this._local = methodGen.addLocalVariable2(name, this._type
-/* 225 */             .toJCType(), il
-/* 226 */             .getEnd());
-/*     */         
-/* 228 */         il.append(this._type.STORE(this._local.getIndex()));
-/*     */       }
-/*     */     
-/*     */     }
-/* 232 */     else if (classGen.containsField(name) == null) {
-/* 233 */       classGen.addField(new Field(1, cpg.addUtf8(name), cpg
-/* 234 */             .addUtf8(signature), null, cpg
-/* 235 */             .getConstantPool()));
-/* 236 */       il.append(classGen.loadTranslet());
-/* 237 */       il.append(DUP);
-/* 238 */       il.append(new PUSH(cpg, name));
-/* 239 */       translateValue(classGen, methodGen);
-/* 240 */       il.append(new PUSH(cpg, true));
-/*     */ 
-/*     */       
-/* 243 */       il.append(new INVOKEVIRTUAL(cpg.addMethodref("com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet", "addParameter", "(Ljava/lang/String;Ljava/lang/Object;Z)Ljava/lang/Object;")));
-/*     */ 
-/*     */ 
-/*     */       
-/* 247 */       this._type.translateUnBox(classGen, methodGen);
-/*     */ 
-/*     */       
-/* 250 */       if (className != "") {
-/* 251 */         il.append(new CHECKCAST(cpg.addClass(className)));
-/*     */       }
-/* 253 */       il.append(new PUTFIELD(cpg.addFieldref(classGen.getClassName(), name, signature)));
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\compiler\Param.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: Param.java,v 1.2.4.1 2005/09/02 11:03:42 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.compiler;
+
+import com.sun.org.apache.bcel.internal.classfile.Field;
+import com.sun.org.apache.bcel.internal.generic.BranchHandle;
+import com.sun.org.apache.bcel.internal.generic.CHECKCAST;
+import com.sun.org.apache.bcel.internal.generic.IFNONNULL;
+import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
+import com.sun.org.apache.bcel.internal.generic.INVOKEVIRTUAL;
+import com.sun.org.apache.bcel.internal.generic.Instruction;
+import com.sun.org.apache.bcel.internal.generic.InstructionList;
+import com.sun.org.apache.bcel.internal.generic.PUSH;
+import com.sun.org.apache.bcel.internal.generic.PUTFIELD;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ReferenceType;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ObjectType;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
+import com.sun.org.apache.xalan.internal.xsltc.runtime.BasisLibrary;
+
+/**
+ * @author Jacek Ambroziak
+ * @author Santiago Pericas-Geertsen
+ * @author Morten Jorgensen
+ * @author Erwin Bolwidt <ejb@klomp.org>
+ * @author John Howard <JohnH@schemasoft.com>
+ */
+final class Param extends VariableBase {
+
+    /**
+     * True if this Param is declared in a simple named template.
+     * This is used to optimize codegen for parameter passing
+     * in named templates.
+     */
+    private boolean _isInSimpleNamedTemplate = false;
+
+    /**
+     * Display variable as single string
+     */
+    public String toString() {
+        return "param(" + _name + ")";
+    }
+
+    /**
+     * Set the instruction for loading the value of this variable onto the
+     * JVM stack and returns the old instruction.
+     */
+    public Instruction setLoadInstruction(Instruction instruction) {
+        Instruction tmp = _loadInstruction;
+        _loadInstruction = instruction;
+        return tmp;
+    }
+
+    /**
+     * Set the instruction for storing a value from the stack into this
+     * variable and returns the old instruction.
+     */
+    public Instruction setStoreInstruction(Instruction instruction) {
+        Instruction tmp = _storeInstruction;
+        _storeInstruction = instruction;
+        return tmp;
+    }
+
+    /**
+     * Display variable in a full AST dump
+     */
+    public void display(int indent) {
+        indent(indent);
+        System.out.println("param " + _name);
+        if (_select != null) {
+            indent(indent + IndentIncrement);
+            System.out.println("select " + _select.toString());
+        }
+        displayContents(indent + IndentIncrement);
+    }
+
+    /**
+     * Parse the contents of the <xsl:param> element. This method must read
+     * the 'name' (required) and 'select' (optional) attributes.
+     */
+    public void parseContents(Parser parser) {
+
+        // Parse 'name' and 'select' attributes plus parameter contents
+        super.parseContents(parser);
+
+        // Add a ref to this param to its enclosing construct
+        final SyntaxTreeNode parent = getParent();
+        if (parent instanceof Stylesheet) {
+            // Mark this as a global parameter
+            _isLocal = false;
+            // Check if a global variable with this name already exists...
+            Param param = parser.getSymbolTable().lookupParam(_name);
+            // ...and if it does we need to check import precedence
+            if (param != null) {
+                final int us = this.getImportPrecedence();
+                final int them = param.getImportPrecedence();
+                // It is an error if the two have the same import precedence
+                if (us == them) {
+                    final String name = _name.toString();
+                    reportError(this, parser, ErrorMsg.VARIABLE_REDEF_ERR,name);
+                }
+                // Ignore this if previous definition has higher precedence
+                else if (them > us) {
+                    _ignore = true;
+                    copyReferences(param);
+                    return;
+                }
+                else {
+                    param.copyReferences(this);
+                    param.disable();
+                }
+            }
+            // Add this variable if we have higher precedence
+            ((Stylesheet)parent).addParam(this);
+            parser.getSymbolTable().addParam(this);
+        }
+        else if (parent instanceof Template) {
+            Template template = (Template) parent;
+            _isLocal = true;
+            template.addParameter(this);
+            if (template.isSimpleNamedTemplate()) {
+                _isInSimpleNamedTemplate = true;
+            }
+        }
+    }
+
+    /**
+     * Type-checks the parameter. The parameter type is determined by the
+     * 'select' expression (if present) or is a result tree if the parameter
+     * element has a body and no 'select' expression.
+     */
+    public Type typeCheck(SymbolTable stable) throws TypeCheckError {
+        if (_select != null) {
+            _type = _select.typeCheck(stable);
+            if (_type instanceof ReferenceType == false && !(_type instanceof ObjectType)) {
+                _select = new CastExpr(_select, Type.Reference);
+            }
+        }
+        else if (hasContents()) {
+            typeCheckContents(stable);
+        }
+        _type = Type.Reference;
+
+        // This element has no type (the parameter does, but the parameter
+        // element itself does not).
+        return Type.Void;
+    }
+
+    public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
+        final ConstantPoolGen cpg = classGen.getConstantPool();
+        final InstructionList il = methodGen.getInstructionList();
+
+        if (_ignore) return;
+        _ignore = true;
+
+        /*
+         * To fix bug 24518 related to setting parameters of the form
+         * {namespaceuri}localName which will get mapped to an instance
+         * variable in the class.
+         */
+        final String name = BasisLibrary.mapQNameToJavaName(_name.toString());
+        final String signature = _type.toSignature();
+        final String className = _type.getClassName();
+
+        if (isLocal()) {
+            /*
+              * If simple named template then generate a conditional init of the
+              * param using its default value:
+              *       if (param == null) param = <default-value>
+              */
+            if (_isInSimpleNamedTemplate) {
+                il.append(loadInstruction());
+                BranchHandle ifBlock = il.append(new IFNONNULL(null));
+                translateValue(classGen, methodGen);
+                il.append(storeInstruction());
+                ifBlock.setTarget(il.append(NOP));
+                return;
+            }
+
+            il.append(classGen.loadTranslet());
+            il.append(new PUSH(cpg, name));
+            translateValue(classGen, methodGen);
+            il.append(new PUSH(cpg, true));
+
+            // Call addParameter() from this class
+            il.append(new INVOKEVIRTUAL(cpg.addMethodref(TRANSLET_CLASS,
+                                                         ADD_PARAMETER,
+                                                         ADD_PARAMETER_SIG)));
+            if (className != EMPTYSTRING) {
+                il.append(new CHECKCAST(cpg.addClass(className)));
+            }
+
+            _type.translateUnBox(classGen, methodGen);
+
+            if (_refs.isEmpty()) { // nobody uses the value
+                il.append(_type.POP());
+                _local = null;
+            }
+            else {              // normal case
+                _local = methodGen.addLocalVariable2(name,
+                                                     _type.toJCType(),
+                                                     il.getEnd());
+                // Cache the result of addParameter() in a local variable
+                il.append(_type.STORE(_local.getIndex()));
+            }
+        }
+        else {
+            if (classGen.containsField(name) == null) {
+                classGen.addField(new Field(ACC_PUBLIC, cpg.addUtf8(name),
+                                            cpg.addUtf8(signature),
+                                            null, cpg.getConstantPool()));
+                il.append(classGen.loadTranslet());
+                il.append(DUP);
+                il.append(new PUSH(cpg, name));
+                translateValue(classGen, methodGen);
+                il.append(new PUSH(cpg, true));
+
+                // Call addParameter() from this class
+                il.append(new INVOKEVIRTUAL(cpg.addMethodref(TRANSLET_CLASS,
+                                                     ADD_PARAMETER,
+                                                     ADD_PARAMETER_SIG)));
+
+                _type.translateUnBox(classGen, methodGen);
+
+                // Cache the result of addParameter() in a field
+                if (className != EMPTYSTRING) {
+                    il.append(new CHECKCAST(cpg.addClass(className)));
+                }
+                il.append(new PUTFIELD(cpg.addFieldref(classGen.getClassName(),
+                                                       name, signature)));
+            }
+        }
+    }
+}

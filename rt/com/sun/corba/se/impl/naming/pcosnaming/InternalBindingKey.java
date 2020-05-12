@@ -1,141 +1,135 @@
-/*     */ package com.sun.corba.se.impl.naming.pcosnaming;
-/*     */ 
-/*     */ import java.io.Serializable;
-/*     */ import org.omg.CosNaming.NameComponent;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class InternalBindingKey
-/*     */   implements Serializable
-/*     */ {
-/*     */   private static final long serialVersionUID = -5410796631793704055L;
-/*     */   public String id;
-/*     */   public String kind;
-/*     */   
-/*     */   public InternalBindingKey() {}
-/*     */   
-/*     */   public InternalBindingKey(NameComponent paramNameComponent) {
-/*  55 */     setup(paramNameComponent);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected void setup(NameComponent paramNameComponent) {
-/*  60 */     this.id = paramNameComponent.id;
-/*  61 */     this.kind = paramNameComponent.kind;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public boolean equals(Object paramObject) {
-/*  66 */     if (paramObject == null)
-/*  67 */       return false; 
-/*  68 */     if (paramObject instanceof InternalBindingKey) {
-/*  69 */       InternalBindingKey internalBindingKey = (InternalBindingKey)paramObject;
-/*  70 */       if (this.id != null && internalBindingKey.id != null) {
-/*     */         
-/*  72 */         if (this.id.length() != internalBindingKey.id.length())
-/*     */         {
-/*  74 */           return false;
-/*     */         }
-/*     */         
-/*  77 */         if (this.id.length() > 0 && !this.id.equals(internalBindingKey.id))
-/*     */         {
-/*  79 */           return false;
-/*     */ 
-/*     */         
-/*     */         }
-/*     */ 
-/*     */       
-/*     */       }
-/*  86 */       else if ((this.id == null && internalBindingKey.id != null) || (this.id != null && internalBindingKey.id == null)) {
-/*     */ 
-/*     */         
-/*  89 */         return false;
-/*     */       } 
-/*     */       
-/*  92 */       if (this.kind != null && internalBindingKey.kind != null) {
-/*     */         
-/*  94 */         if (this.kind.length() != internalBindingKey.kind.length())
-/*     */         {
-/*  96 */           return false;
-/*     */         }
-/*     */         
-/*  99 */         if (this.kind.length() > 0 && !this.kind.equals(internalBindingKey.kind))
-/*     */         {
-/* 101 */           return false;
-/*     */ 
-/*     */         
-/*     */         }
-/*     */ 
-/*     */       
-/*     */       }
-/* 108 */       else if ((this.kind == null && internalBindingKey.kind != null) || (this.kind != null && internalBindingKey.kind == null)) {
-/*     */ 
-/*     */         
-/* 111 */         return false;
-/*     */       } 
-/*     */ 
-/*     */       
-/* 115 */       return true;
-/*     */     } 
-/* 117 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int hashCode() {
-/* 124 */     int i = 0;
-/* 125 */     if (this.id.length() > 0)
-/*     */     {
-/* 127 */       i += this.id.hashCode();
-/*     */     }
-/* 129 */     if (this.kind.length() > 0)
-/*     */     {
-/* 131 */       i += this.kind.hashCode();
-/*     */     }
-/* 133 */     return i;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\naming\pcosnaming\InternalBindingKey.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.naming.pcosnaming;
+
+import java.io.Serializable;
+import org.omg.CosNaming.NameComponent;
+
+
+/**
+ * Class InternalBindingKey implements the necessary wrapper code
+ * around the org.omg.CosNaming::NameComponent class to implement the proper
+ * equals() method and the hashCode() method for use in a hash table.
+ * It computes the hashCode once and stores it, and also precomputes
+ * the lengths of the id and kind strings for faster comparison.
+ */
+public class InternalBindingKey
+        implements Serializable
+{
+
+    // computed by serialver tool
+    private static final long serialVersionUID = -5410796631793704055L;
+
+    public String id;
+    public String kind;
+
+    // Default Constructor
+    public InternalBindingKey() {}
+
+    // Normal constructor
+    public InternalBindingKey(NameComponent n)
+    {
+        setup(n);
+    }
+
+    // Setup the object
+    protected void setup(NameComponent n) {
+        this.id = n.id;
+        this.kind = n.kind;
+    }
+
+    // Compare the keys by comparing name's id and kind
+    public boolean equals(java.lang.Object o) {
+        if (o == null)
+            return false;
+        if (o instanceof InternalBindingKey) {
+            InternalBindingKey that = (InternalBindingKey)o;
+            if( this.id != null && that.id != null )
+            {
+                if (this.id.length() != that.id.length() )
+                {
+                        return false;
+                }
+                // If id is set is must be equal
+                if (this.id.length() > 0 && this.id.equals(that.id) == false)
+                {
+                        return false;
+                }
+            }
+            else
+            {
+                // If One is Null and the other is not then it's a mismatch
+                // So, return false
+                if( ( this.id == null && that.id != null )
+                ||  ( this.id !=null && that.id == null ) )
+                {
+                        return false;
+                }
+            }
+            if( this.kind != null && that.kind != null )
+            {
+                if (this.kind.length() != that.kind.length() )
+                {
+                        return false;
+                }
+                // If kind is set it must be equal
+                if (this.kind.length() > 0 && this.kind.equals(that.kind) == false)
+                {
+                        return false;
+                }
+            }
+            else
+            {
+                // If One is Null and the other is not then it's a mismatch
+                // So, return false
+                if( ( this.kind == null && that.kind != null )
+                ||  ( this.kind !=null && that.kind == null ) )
+                {
+                        return false;
+                }
+            }
+            // We have checked all the possibilities, so return true
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+
+    // Return precomputed value
+    public int hashCode() {
+        int hashVal = 0;
+        if (this.id.length() > 0)
+        {
+            hashVal += this.id.hashCode();
+        }
+        if (this.kind.length() > 0)
+        {
+            hashVal += this.kind.hashCode();
+        }
+        return hashVal;
+    }
+}

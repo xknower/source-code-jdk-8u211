@@ -1,154 +1,150 @@
-/*     */ package com.sun.corba.se.impl.transport;
-/*     */ 
-/*     */ import com.sun.corba.se.impl.orbutil.ORBUtility;
-/*     */ import com.sun.corba.se.pept.transport.EventHandler;
-/*     */ import com.sun.corba.se.spi.orb.ORB;
-/*     */ import com.sun.corba.se.spi.orbutil.threadpool.NoSuchThreadPoolException;
-/*     */ import com.sun.corba.se.spi.orbutil.threadpool.NoSuchWorkQueueException;
-/*     */ import com.sun.corba.se.spi.orbutil.threadpool.Work;
-/*     */ import java.nio.channels.SelectionKey;
-/*     */ import org.omg.CORBA.INTERNAL;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public abstract class EventHandlerBase
-/*     */   implements EventHandler
-/*     */ {
-/*     */   protected ORB orb;
-/*     */   protected Work work;
-/*     */   protected boolean useWorkerThreadForEvent;
-/*     */   protected boolean useSelectThreadToWait;
-/*     */   protected SelectionKey selectionKey;
-/*     */   
-/*     */   public void setUseSelectThreadToWait(boolean paramBoolean) {
-/*  60 */     this.useSelectThreadToWait = paramBoolean;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public boolean shouldUseSelectThreadToWait() {
-/*  65 */     return this.useSelectThreadToWait;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void setSelectionKey(SelectionKey paramSelectionKey) {
-/*  70 */     this.selectionKey = paramSelectionKey;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public SelectionKey getSelectionKey() {
-/*  75 */     return this.selectionKey;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void handleEvent() {
-/*  86 */     if (this.orb.transportDebugFlag) {
-/*  87 */       dprint(".handleEvent->: " + this);
-/*     */     }
-/*  89 */     getSelectionKey().interestOps(getSelectionKey().interestOps() & (
-/*  90 */         getInterestOps() ^ 0xFFFFFFFF));
-/*  91 */     if (shouldUseWorkerThreadForEvent()) {
-/*  92 */       NoSuchWorkQueueException noSuchWorkQueueException; NoSuchThreadPoolException noSuchThreadPoolException = null;
-/*     */       try {
-/*  94 */         if (this.orb.transportDebugFlag) {
-/*  95 */           dprint(".handleEvent: addWork to pool: 0");
-/*     */         }
-/*  97 */         this.orb.getThreadPoolManager().getThreadPool(0)
-/*  98 */           .getWorkQueue(0).addWork(getWork());
-/*  99 */       } catch (NoSuchThreadPoolException noSuchThreadPoolException1) {
-/* 100 */         noSuchThreadPoolException = noSuchThreadPoolException1;
-/* 101 */       } catch (NoSuchWorkQueueException noSuchWorkQueueException1) {
-/* 102 */         noSuchWorkQueueException = noSuchWorkQueueException1;
-/*     */       } 
-/*     */       
-/* 105 */       if (noSuchWorkQueueException != null) {
-/* 106 */         if (this.orb.transportDebugFlag) {
-/* 107 */           dprint(".handleEvent: " + noSuchWorkQueueException);
-/*     */         }
-/* 109 */         INTERNAL iNTERNAL = new INTERNAL("NoSuchThreadPoolException");
-/* 110 */         iNTERNAL.initCause(noSuchWorkQueueException);
-/* 111 */         throw iNTERNAL;
-/*     */       } 
-/*     */     } else {
-/* 114 */       if (this.orb.transportDebugFlag) {
-/* 115 */         dprint(".handleEvent: doWork");
-/*     */       }
-/* 117 */       getWork().doWork();
-/*     */     } 
-/* 119 */     if (this.orb.transportDebugFlag) {
-/* 120 */       dprint(".handleEvent<-: " + this);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public boolean shouldUseWorkerThreadForEvent() {
-/* 126 */     return this.useWorkerThreadForEvent;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void setUseWorkerThreadForEvent(boolean paramBoolean) {
-/* 131 */     this.useWorkerThreadForEvent = paramBoolean;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void setWork(Work paramWork) {
-/* 136 */     this.work = paramWork;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public Work getWork() {
-/* 141 */     return this.work;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void dprint(String paramString) {
-/* 146 */     ORBUtility.dprint("EventHandlerBase", paramString);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\transport\EventHandlerBase.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.transport;
+
+import java.nio.channels.SelectionKey;
+
+import org.omg.CORBA.INTERNAL;
+
+import com.sun.corba.se.pept.transport.Acceptor;
+import com.sun.corba.se.pept.transport.Connection;
+import com.sun.corba.se.pept.transport.EventHandler;
+
+import com.sun.corba.se.spi.orb.ORB;
+import com.sun.corba.se.spi.orbutil.threadpool.NoSuchThreadPoolException;
+import com.sun.corba.se.spi.orbutil.threadpool.NoSuchWorkQueueException;
+import com.sun.corba.se.spi.orbutil.threadpool.Work;
+
+import com.sun.corba.se.impl.orbutil.ORBUtility;
+
+public abstract class EventHandlerBase
+    implements
+        EventHandler
+{
+    protected ORB orb;
+    protected Work work;
+    protected boolean useWorkerThreadForEvent;
+    protected boolean useSelectThreadToWait;
+    protected SelectionKey selectionKey;
+
+    ////////////////////////////////////////////////////
+    //
+    // EventHandler methods
+    //
+
+    public void setUseSelectThreadToWait(boolean x)
+    {
+        useSelectThreadToWait = x;
+    }
+
+    public boolean shouldUseSelectThreadToWait()
+    {
+        return useSelectThreadToWait;
+    }
+
+    public void setSelectionKey(SelectionKey selectionKey)
+    {
+        this.selectionKey = selectionKey;
+    }
+
+    public SelectionKey getSelectionKey()
+    {
+        return selectionKey;
+    }
+
+    /*
+     * NOTE:
+     * This is not thread-safe by design.
+     * Only one thread should call it - a reader/listener/select thread.
+     * Not stateless: interest ops, registration.
+     */
+    public void handleEvent()
+    {
+        if (orb.transportDebugFlag) {
+            dprint(".handleEvent->: " + this);
+        }
+        getSelectionKey().interestOps(getSelectionKey().interestOps() &
+                                      (~ getInterestOps()));
+        if (shouldUseWorkerThreadForEvent()) {
+            Throwable throwable = null;
+            try {
+                if (orb.transportDebugFlag) {
+                    dprint(".handleEvent: addWork to pool: " + 0);
+                }
+                orb.getThreadPoolManager().getThreadPool(0)
+                    .getWorkQueue(0).addWork(getWork());
+            } catch (NoSuchThreadPoolException e) {
+                throwable = e;
+            } catch (NoSuchWorkQueueException e) {
+                throwable = e;
+            }
+            // REVISIT: need to close connection.
+            if (throwable != null) {
+                if (orb.transportDebugFlag) {
+                    dprint(".handleEvent: " + throwable);
+                }
+                INTERNAL i = new INTERNAL("NoSuchThreadPoolException");
+                i.initCause(throwable);
+                throw i;
+            }
+        } else {
+            if (orb.transportDebugFlag) {
+                dprint(".handleEvent: doWork");
+            }
+            getWork().doWork();
+        }
+        if (orb.transportDebugFlag) {
+            dprint(".handleEvent<-: " + this);
+        }
+    }
+
+    public boolean shouldUseWorkerThreadForEvent()
+    {
+        return useWorkerThreadForEvent;
+    }
+
+    public void setUseWorkerThreadForEvent(boolean x)
+    {
+        useWorkerThreadForEvent = x;
+    }
+
+    public void setWork(Work work)
+    {
+        this.work = work;
+    }
+
+    public Work getWork()
+    {
+        return work;
+    }
+
+    private void dprint(String msg)
+    {
+        ORBUtility.dprint("EventHandlerBase", msg);
+    }
+}
+
+// End of file.

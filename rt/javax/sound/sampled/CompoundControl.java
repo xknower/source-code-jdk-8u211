@@ -1,145 +1,140 @@
-/*     */ package javax.sound.sampled;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public abstract class CompoundControl
-/*     */   extends Control
-/*     */ {
-/*     */   private Control[] controls;
-/*     */   
-/*     */   protected CompoundControl(Type paramType, Control[] paramArrayOfControl) {
-/*  63 */     super(paramType);
-/*  64 */     this.controls = paramArrayOfControl;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Control[] getMemberControls() {
-/*  78 */     Control[] arrayOfControl = new Control[this.controls.length];
-/*     */     
-/*  80 */     for (byte b = 0; b < this.controls.length; b++) {
-/*  81 */       arrayOfControl[b] = this.controls[b];
-/*     */     }
-/*     */     
-/*  84 */     return arrayOfControl;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/*  97 */     StringBuffer stringBuffer = new StringBuffer();
-/*  98 */     for (byte b = 0; b < this.controls.length; b++) {
-/*  99 */       if (b != 0) {
-/* 100 */         stringBuffer.append(", ");
-/* 101 */         if (b + 1 == this.controls.length) {
-/* 102 */           stringBuffer.append("and ");
-/*     */         }
-/*     */       } 
-/* 105 */       stringBuffer.append(this.controls[b].getType());
-/*     */     } 
-/*     */     
-/* 108 */     return new String(getType() + " Control containing " + stringBuffer + " Controls.");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static class Type
-/*     */     extends Control.Type
-/*     */   {
-/*     */     protected Type(String param1String) {
-/* 136 */       super(param1String);
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\sound\sampled\CompoundControl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.sound.sampled;
+
+/**
+ * A <code>CompoundControl</code>, such as a graphic equalizer, provides control
+ * over two or more related properties, each of which is itself represented as
+ * a <code>Control</code>.
+ *
+ * @author Kara Kytle
+ * @since 1.3
+ */
+public abstract class CompoundControl extends Control {
+
+
+    // TYPE DEFINES
+
+
+    // INSTANCE VARIABLES
+
+
+    /**
+     * The set of member controls.
+     */
+    private Control[] controls;
+
+
+
+    // CONSTRUCTORS
+
+
+    /**
+     * Constructs a new compound control object with the given parameters.
+     *
+     * @param type the type of control represented this compound control object
+     * @param memberControls the set of member controls
+     */
+    protected CompoundControl(Type type, Control[] memberControls) {
+
+        super(type);
+        this.controls = memberControls;
+    }
+
+
+
+    // METHODS
+
+
+    /**
+     * Returns the set of member controls that comprise the compound control.
+     * @return the set of member controls.
+     */
+    public Control[] getMemberControls() {
+
+        Control[] localArray = new Control[controls.length];
+
+        for (int i = 0; i < controls.length; i++) {
+            localArray[i] = controls[i];
+        }
+
+        return localArray;
+    }
+
+
+    // ABSTRACT METHOD IMPLEMENTATIONS: CONTROL
+
+
+    /**
+     * Provides a string representation of the control
+     * @return a string description
+     */
+    public String toString() {
+
+        StringBuffer buf = new StringBuffer();
+        for (int i = 0; i < controls.length; i++) {
+            if (i != 0) {
+                buf.append(", ");
+                if ((i + 1) == controls.length) {
+                    buf.append("and ");
+                }
+            }
+            buf.append(controls[i].getType());
+        }
+
+        return new String(getType() + " Control containing " + buf + " Controls.");
+    }
+
+
+    // INNER CLASSES
+
+
+    /**
+     * An instance of the <code>CompoundControl.Type</code> inner class identifies one kind of
+     * compound control.  Static instances are provided for the
+     * common types.
+     *
+     * @author Kara Kytle
+     * @since 1.3
+     */
+    public static class Type extends Control.Type {
+
+
+        // TYPE DEFINES
+
+        // CONSTRUCTOR
+
+
+        /**
+         * Constructs a new compound control type.
+         * @param name  the name of the new compound control type
+         */
+        protected Type(String name) {
+            super(name);
+        }
+    } // class Type
+
+} // class CompoundControl

@@ -1,158 +1,153 @@
-/*     */ package javax.xml.crypto.dsig;
-/*     */ 
-/*     */ import java.io.PrintStream;
-/*     */ import java.io.PrintWriter;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class XMLSignatureException
-/*     */   extends Exception
-/*     */ {
-/*     */   private static final long serialVersionUID = -3438102491013869995L;
-/*     */   private Throwable cause;
-/*     */   
-/*     */   public XMLSignatureException() {}
-/*     */   
-/*     */   public XMLSignatureException(String paramString) {
-/*  70 */     super(paramString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XMLSignatureException(String paramString, Throwable paramThrowable) {
-/*  85 */     super(paramString);
-/*  86 */     this.cause = paramThrowable;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XMLSignatureException(Throwable paramThrowable) {
-/* 100 */     super((paramThrowable == null) ? null : paramThrowable.toString());
-/* 101 */     this.cause = paramThrowable;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Throwable getCause() {
-/* 114 */     return this.cause;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void printStackTrace() {
-/* 122 */     super.printStackTrace();
-/* 123 */     if (this.cause != null) {
-/* 124 */       this.cause.printStackTrace();
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void printStackTrace(PrintStream paramPrintStream) {
-/* 135 */     super.printStackTrace(paramPrintStream);
-/* 136 */     if (this.cause != null) {
-/* 137 */       this.cause.printStackTrace(paramPrintStream);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void printStackTrace(PrintWriter paramPrintWriter) {
-/* 148 */     super.printStackTrace(paramPrintWriter);
-/* 149 */     if (this.cause != null)
-/* 150 */       this.cause.printStackTrace(paramPrintWriter); 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\xml\crypto\dsig\XMLSignatureException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2005, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+/*
+ * $Id: XMLSignatureException.java,v 1.5 2005/05/10 16:03:48 mullan Exp $
+ */
+package javax.xml.crypto.dsig;
+
+import java.io.PrintStream;
+import java.io.PrintWriter;
+
+/**
+ * Indicates an exceptional condition that occurred during the XML
+ * signature generation or validation process.
+ *
+ * <p>An {@code XMLSignatureException} can contain a cause: another
+ * throwable that caused this {@code XMLSignatureException} to get thrown.
+ *
+ * @since 1.6
+ */
+public class XMLSignatureException extends Exception {
+
+    private static final long serialVersionUID = -3438102491013869995L;
+
+    /**
+     * The throwable that caused this exception to get thrown, or null if this
+     * exception was not caused by another throwable or if the causative
+     * throwable is unknown.
+     *
+     * @serial
+     */
+    private Throwable cause;
+
+    /**
+     * Constructs a new {@code XMLSignatureException} with
+     * {@code null} as its detail message.
+     */
+    public XMLSignatureException() {
+        super();
+    }
+
+    /**
+     * Constructs a new {@code XMLSignatureException} with the specified
+     * detail message.
+     *
+     * @param message the detail message
+     */
+    public XMLSignatureException(String message) {
+        super(message);
+    }
+
+    /**
+     * Constructs a new {@code XMLSignatureException} with the
+     * specified detail message and cause.
+     * <p>Note that the detail message associated with
+     * {@code cause} is <i>not</i> automatically incorporated in
+     * this exception's detail message.
+     *
+     * @param message the detail message
+     * @param cause the cause (A {@code null} value is permitted, and
+     *        indicates that the cause is nonexistent or unknown.)
+     */
+    public XMLSignatureException(String message, Throwable cause) {
+        super(message);
+        this.cause = cause;
+    }
+
+    /**
+     * Constructs a new {@code XMLSignatureException} with the specified
+     * cause and a detail message of
+     * {@code (cause==null ? null : cause.toString())}
+     * (which typically contains the class and detail message of
+     * {@code cause}).
+     *
+     * @param cause the cause (A {@code null} value is permitted, and
+     *        indicates that the cause is nonexistent or unknown.)
+     */
+    public XMLSignatureException(Throwable cause) {
+        super(cause==null ? null : cause.toString());
+        this.cause = cause;
+    }
+
+    /**
+     * Returns the cause of this {@code XMLSignatureException} or
+     * {@code null} if the cause is nonexistent or unknown.  (The
+     * cause is the throwable that caused this
+     * {@code XMLSignatureException} to get thrown.)
+     *
+     * @return the cause of this {@code XMLSignatureException} or
+     *         {@code null} if the cause is nonexistent or unknown.
+     */
+    public Throwable getCause() {
+        return cause;
+    }
+
+    /**
+     * Prints this {@code XMLSignatureException}, its backtrace and
+     * the cause's backtrace to the standard error stream.
+     */
+    public void printStackTrace() {
+        super.printStackTrace();
+        if (cause != null) {
+            cause.printStackTrace();
+        }
+    }
+
+    /**
+     * Prints this {@code XMLSignatureException}, its backtrace and
+     * the cause's backtrace to the specified print stream.
+     *
+     * @param s {@code PrintStream} to use for output
+     */
+    public void printStackTrace(PrintStream s) {
+        super.printStackTrace(s);
+        if (cause != null) {
+            cause.printStackTrace(s);
+        }
+    }
+
+    /**
+     * Prints this {@code XMLSignatureException}, its backtrace and
+     * the cause's backtrace to the specified print writer.
+     *
+     * @param s {@code PrintWriter} to use for output
+     */
+    public void printStackTrace(PrintWriter s) {
+        super.printStackTrace(s);
+        if (cause != null) {
+            cause.printStackTrace(s);
+        }
+    }
+}

@@ -1,11 +1,45 @@
+/*
+ * Copyright (c) 1996, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package java.security.acl;
 
-public class LastOwnerException extends Exception {
-  private static final long serialVersionUID = -5141997548211140359L;
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\security\acl\LastOwnerException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * This is an exception that is thrown whenever an attempt is made to delete
+ * the last owner of an Access Control List.
+ *
+ * @see java.security.acl.Owner#deleteOwner
+ *
+ * @author Satish Dharmaraj
  */
+public class LastOwnerException extends Exception {
+
+    private static final long serialVersionUID = -5141997548211140359L;
+
+    /**
+     * Constructs a LastOwnerException.
+     */
+    public LastOwnerException() {
+    }
+}

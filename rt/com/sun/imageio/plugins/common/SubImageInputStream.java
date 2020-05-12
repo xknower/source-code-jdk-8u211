@@ -1,82 +1,79 @@
-/*    */ package com.sun.imageio.plugins.common;
-/*    */ 
-/*    */ import java.io.IOException;
-/*    */ import javax.imageio.stream.ImageInputStream;
-/*    */ import javax.imageio.stream.ImageInputStreamImpl;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public final class SubImageInputStream
-/*    */   extends ImageInputStreamImpl
-/*    */ {
-/*    */   ImageInputStream stream;
-/*    */   long startingPos;
-/*    */   int startingLength;
-/*    */   int length;
-/*    */   
-/*    */   public SubImageInputStream(ImageInputStream paramImageInputStream, int paramInt) throws IOException {
-/* 41 */     this.stream = paramImageInputStream;
-/* 42 */     this.startingPos = paramImageInputStream.getStreamPosition();
-/* 43 */     this.startingLength = this.length = paramInt;
-/*    */   }
-/*    */   
-/*    */   public int read() throws IOException {
-/* 47 */     if (this.length == 0) {
-/* 48 */       return -1;
-/*    */     }
-/* 50 */     this.length--;
-/* 51 */     return this.stream.read();
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public int read(byte[] paramArrayOfbyte, int paramInt1, int paramInt2) throws IOException {
-/* 56 */     if (this.length == 0) {
-/* 57 */       return -1;
-/*    */     }
-/*    */     
-/* 60 */     paramInt2 = Math.min(paramInt2, this.length);
-/* 61 */     int i = this.stream.read(paramArrayOfbyte, paramInt1, paramInt2);
-/* 62 */     this.length -= i;
-/* 63 */     return i;
-/*    */   }
-/*    */   
-/*    */   public long length() {
-/* 67 */     return this.startingLength;
-/*    */   }
-/*    */   
-/*    */   public void seek(long paramLong) throws IOException {
-/* 71 */     this.stream.seek(paramLong - this.startingPos);
-/* 72 */     this.streamPos = paramLong;
-/*    */   }
-/*    */   
-/*    */   protected void finalize() throws Throwable {}
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\imageio\plugins\common\SubImageInputStream.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2005, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.imageio.plugins.common;
+
+import java.io.IOException;
+import javax.imageio.stream.ImageInputStreamImpl;
+import javax.imageio.stream.ImageInputStream;
+
+public final class SubImageInputStream extends ImageInputStreamImpl {
+
+    ImageInputStream stream;
+    long startingPos;
+    int startingLength;
+    int length;
+
+    public SubImageInputStream(ImageInputStream stream, int length)
+        throws IOException {
+        this.stream = stream;
+        this.startingPos = stream.getStreamPosition();
+        this.startingLength = this.length = length;
+    }
+
+    public int read() throws IOException {
+        if (length == 0) { // Local EOF
+            return -1;
+        } else {
+            --length;
+            return stream.read();
+        }
+    }
+
+    public int read(byte[] b, int off, int len) throws IOException {
+        if (length == 0) { // Local EOF
+            return -1;
+        }
+
+        len = Math.min(len, length);
+        int bytes = stream.read(b, off, len);
+        length -= bytes;
+        return bytes;
+    }
+
+    public long length() {
+        return startingLength;
+    }
+
+    public void seek(long pos) throws IOException {
+        stream.seek(pos - startingPos);
+        streamPos = pos;
+    }
+
+    protected void finalize() throws Throwable {
+        // Empty finalizer (for improved performance; no need to call
+        // super.finalize() in this case)
+    }
+}

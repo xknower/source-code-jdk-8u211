@@ -1,267 +1,261 @@
-/*     */ package javax.imageio.stream;
-/*     */ 
-/*     */ import com.sun.imageio.stream.StreamCloser;
-/*     */ import java.io.File;
-/*     */ import java.io.IOException;
-/*     */ import java.io.OutputStream;
-/*     */ import java.io.RandomAccessFile;
-/*     */ import java.nio.file.Files;
-/*     */ import java.nio.file.attribute.FileAttribute;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class FileCacheImageOutputStream
-/*     */   extends ImageOutputStreamImpl
-/*     */ {
-/*     */   private OutputStream stream;
-/*     */   private File cacheFile;
-/*     */   private RandomAccessFile cache;
-/*  50 */   private long maxStreamPos = 0L;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private final StreamCloser.CloseAction closeAction;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public FileCacheImageOutputStream(OutputStream paramOutputStream, File paramFile) throws IOException {
-/*  80 */     if (paramOutputStream == null) {
-/*  81 */       throw new IllegalArgumentException("stream == null!");
-/*     */     }
-/*  83 */     if (paramFile != null && !paramFile.isDirectory()) {
-/*  84 */       throw new IllegalArgumentException("Not a directory!");
-/*     */     }
-/*  86 */     this.stream = paramOutputStream;
-/*  87 */     if (paramFile == null) {
-/*  88 */       this.cacheFile = Files.createTempFile("imageio", ".tmp", (FileAttribute<?>[])new FileAttribute[0]).toFile();
-/*     */     } else {
-/*  90 */       this
-/*  91 */         .cacheFile = Files.createTempFile(paramFile.toPath(), "imageio", ".tmp", (FileAttribute<?>[])new FileAttribute[0]).toFile();
-/*  92 */     }  this.cache = new RandomAccessFile(this.cacheFile, "rw");
-/*     */     
-/*  94 */     this.closeAction = StreamCloser.createCloseAction(this);
-/*  95 */     StreamCloser.addToQueue(this.closeAction);
-/*     */   }
-/*     */   
-/*     */   public int read() throws IOException {
-/*  99 */     checkClosed();
-/* 100 */     this.bitOffset = 0;
-/* 101 */     int i = this.cache.read();
-/* 102 */     if (i != -1) {
-/* 103 */       this.streamPos++;
-/*     */     }
-/* 105 */     return i;
-/*     */   }
-/*     */   
-/*     */   public int read(byte[] paramArrayOfbyte, int paramInt1, int paramInt2) throws IOException {
-/* 109 */     checkClosed();
-/*     */     
-/* 111 */     if (paramArrayOfbyte == null) {
-/* 112 */       throw new NullPointerException("b == null!");
-/*     */     }
-/* 114 */     if (paramInt1 < 0 || paramInt2 < 0 || paramInt1 + paramInt2 > paramArrayOfbyte.length || paramInt1 + paramInt2 < 0) {
-/* 115 */       throw new IndexOutOfBoundsException("off < 0 || len < 0 || off+len > b.length || off+len < 0!");
-/*     */     }
-/*     */ 
-/*     */     
-/* 119 */     this.bitOffset = 0;
-/*     */     
-/* 121 */     if (paramInt2 == 0) {
-/* 122 */       return 0;
-/*     */     }
-/*     */     
-/* 125 */     int i = this.cache.read(paramArrayOfbyte, paramInt1, paramInt2);
-/* 126 */     if (i != -1) {
-/* 127 */       this.streamPos += i;
-/*     */     }
-/* 129 */     return i;
-/*     */   }
-/*     */   
-/*     */   public void write(int paramInt) throws IOException {
-/* 133 */     flushBits();
-/* 134 */     this.cache.write(paramInt);
-/* 135 */     this.streamPos++;
-/* 136 */     this.maxStreamPos = Math.max(this.maxStreamPos, this.streamPos);
-/*     */   }
-/*     */   
-/*     */   public void write(byte[] paramArrayOfbyte, int paramInt1, int paramInt2) throws IOException {
-/* 140 */     flushBits();
-/* 141 */     this.cache.write(paramArrayOfbyte, paramInt1, paramInt2);
-/* 142 */     this.streamPos += paramInt2;
-/* 143 */     this.maxStreamPos = Math.max(this.maxStreamPos, this.streamPos);
-/*     */   }
-/*     */   
-/*     */   public long length() {
-/*     */     try {
-/* 148 */       checkClosed();
-/* 149 */       return this.cache.length();
-/* 150 */     } catch (IOException iOException) {
-/* 151 */       return -1L;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void seek(long paramLong) throws IOException {
-/* 167 */     checkClosed();
-/*     */     
-/* 169 */     if (paramLong < this.flushedPos) {
-/* 170 */       throw new IndexOutOfBoundsException();
-/*     */     }
-/*     */     
-/* 173 */     this.cache.seek(paramLong);
-/* 174 */     this.streamPos = this.cache.getFilePointer();
-/* 175 */     this.maxStreamPos = Math.max(this.maxStreamPos, this.streamPos);
-/* 176 */     this.bitOffset = 0;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isCached() {
-/* 190 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isCachedFile() {
-/* 203 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isCachedMemory() {
-/* 217 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void close() throws IOException {
-/* 229 */     this.maxStreamPos = this.cache.length();
-/*     */     
-/* 231 */     seek(this.maxStreamPos);
-/* 232 */     flushBefore(this.maxStreamPos);
-/* 233 */     super.close();
-/* 234 */     this.cache.close();
-/* 235 */     this.cache = null;
-/* 236 */     this.cacheFile.delete();
-/* 237 */     this.cacheFile = null;
-/* 238 */     this.stream.flush();
-/* 239 */     this.stream = null;
-/* 240 */     StreamCloser.removeFromQueue(this.closeAction);
-/*     */   }
-/*     */   
-/*     */   public void flushBefore(long paramLong) throws IOException {
-/* 244 */     long l1 = this.flushedPos;
-/* 245 */     super.flushBefore(paramLong);
-/*     */     
-/* 247 */     long l2 = this.flushedPos - l1;
-/* 248 */     if (l2 > 0L) {
-/* 249 */       char c = 'Ȁ';
-/* 250 */       byte[] arrayOfByte = new byte[c];
-/* 251 */       this.cache.seek(l1);
-/* 252 */       while (l2 > 0L) {
-/* 253 */         int i = (int)Math.min(l2, c);
-/* 254 */         this.cache.readFully(arrayOfByte, 0, i);
-/* 255 */         this.stream.write(arrayOfByte, 0, i);
-/* 256 */         l2 -= i;
-/*     */       } 
-/* 258 */       this.stream.flush();
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\imageio\stream\FileCacheImageOutputStream.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2012, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.imageio.stream;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.RandomAccessFile;
+import java.nio.file.Files;
+import com.sun.imageio.stream.StreamCloser;
+
+/**
+ * An implementation of <code>ImageOutputStream</code> that writes its
+ * output to a regular <code>OutputStream</code>.  A file is used to
+ * cache data until it is flushed to the output stream.
+ *
+ */
+public class FileCacheImageOutputStream extends ImageOutputStreamImpl {
+
+    private OutputStream stream;
+
+    private File cacheFile;
+
+    private RandomAccessFile cache;
+
+    // Pos after last (rightmost) byte written
+    private long maxStreamPos = 0L;
+
+    /** The CloseAction that closes the stream in
+     *  the StreamCloser's shutdown hook                     */
+    private final StreamCloser.CloseAction closeAction;
+
+    /**
+     * Constructs a <code>FileCacheImageOutputStream</code> that will write
+     * to a given <code>outputStream</code>.
+     *
+     * <p> A temporary file is used as a cache.  If
+     * <code>cacheDir</code>is non-<code>null</code> and is a
+     * directory, the file will be created there.  If it is
+     * <code>null</code>, the system-dependent default temporary-file
+     * directory will be used (see the documentation for
+     * <code>File.createTempFile</code> for details).
+     *
+     * @param stream an <code>OutputStream</code> to write to.
+     * @param cacheDir a <code>File</code> indicating where the
+     * cache file should be created, or <code>null</code> to use the
+     * system directory.
+     *
+     * @exception IllegalArgumentException if <code>stream</code>
+     * is <code>null</code>.
+     * @exception IllegalArgumentException if <code>cacheDir</code> is
+     * non-<code>null</code> but is not a directory.
+     * @exception IOException if a cache file cannot be created.
+     */
+    public FileCacheImageOutputStream(OutputStream stream, File cacheDir)
+        throws IOException {
+        if (stream == null) {
+            throw new IllegalArgumentException("stream == null!");
+        }
+        if ((cacheDir != null) && !(cacheDir.isDirectory())) {
+            throw new IllegalArgumentException("Not a directory!");
+        }
+        this.stream = stream;
+        if (cacheDir == null)
+            this.cacheFile = Files.createTempFile("imageio", ".tmp").toFile();
+        else
+            this.cacheFile = Files.createTempFile(cacheDir.toPath(), "imageio", ".tmp")
+                                  .toFile();
+        this.cache = new RandomAccessFile(cacheFile, "rw");
+
+        this.closeAction = StreamCloser.createCloseAction(this);
+        StreamCloser.addToQueue(closeAction);
+    }
+
+    public int read() throws IOException {
+        checkClosed();
+        bitOffset = 0;
+        int val =  cache.read();
+        if (val != -1) {
+            ++streamPos;
+        }
+        return val;
+    }
+
+    public int read(byte[] b, int off, int len) throws IOException {
+        checkClosed();
+
+        if (b == null) {
+            throw new NullPointerException("b == null!");
+        }
+        if (off < 0 || len < 0 || off + len > b.length || off + len < 0) {
+            throw new IndexOutOfBoundsException
+                ("off < 0 || len < 0 || off+len > b.length || off+len < 0!");
+        }
+
+        bitOffset = 0;
+
+        if (len == 0) {
+            return 0;
+        }
+
+        int nbytes = cache.read(b, off, len);
+        if (nbytes != -1) {
+            streamPos += nbytes;
+        }
+        return nbytes;
+    }
+
+    public void write(int b) throws IOException {
+        flushBits(); // this will call checkClosed() for us
+        cache.write(b);
+        ++streamPos;
+        maxStreamPos = Math.max(maxStreamPos, streamPos);
+    }
+
+    public void write(byte[] b, int off, int len) throws IOException {
+        flushBits(); // this will call checkClosed() for us
+        cache.write(b, off, len);
+        streamPos += len;
+        maxStreamPos = Math.max(maxStreamPos, streamPos);
+    }
+
+    public long length() {
+        try {
+            checkClosed();
+            return cache.length();
+        } catch (IOException e) {
+            return -1L;
+        }
+    }
+
+    /**
+     * Sets the current stream position and resets the bit offset to
+     * 0.  It is legal to seek past the end of the file; an
+     * <code>EOFException</code> will be thrown only if a read is
+     * performed.  The file length will not be increased until a write
+     * is performed.
+     *
+     * @exception IndexOutOfBoundsException if <code>pos</code> is smaller
+     * than the flushed position.
+     * @exception IOException if any other I/O error occurs.
+     */
+    public void seek(long pos) throws IOException {
+        checkClosed();
+
+        if (pos < flushedPos) {
+            throw new IndexOutOfBoundsException();
+        }
+
+        cache.seek(pos);
+        this.streamPos = cache.getFilePointer();
+        maxStreamPos = Math.max(maxStreamPos, streamPos);
+        this.bitOffset = 0;
+    }
+
+    /**
+     * Returns <code>true</code> since this
+     * <code>ImageOutputStream</code> caches data in order to allow
+     * seeking backwards.
+     *
+     * @return <code>true</code>.
+     *
+     * @see #isCachedMemory
+     * @see #isCachedFile
+     */
+    public boolean isCached() {
+        return true;
+    }
+
+    /**
+     * Returns <code>true</code> since this
+     * <code>ImageOutputStream</code> maintains a file cache.
+     *
+     * @return <code>true</code>.
+     *
+     * @see #isCached
+     * @see #isCachedMemory
+     */
+    public boolean isCachedFile() {
+        return true;
+    }
+
+    /**
+     * Returns <code>false</code> since this
+     * <code>ImageOutputStream</code> does not maintain a main memory
+     * cache.
+     *
+     * @return <code>false</code>.
+     *
+     * @see #isCached
+     * @see #isCachedFile
+     */
+    public boolean isCachedMemory() {
+        return false;
+    }
+
+    /**
+     * Closes this <code>FileCacheImageOutputStream</code>.  All
+     * pending data is flushed to the output, and the cache file
+     * is closed and removed.  The destination <code>OutputStream</code>
+     * is not closed.
+     *
+     * @exception IOException if an error occurs.
+     */
+    public void close() throws IOException {
+        maxStreamPos = cache.length();
+
+        seek(maxStreamPos);
+        flushBefore(maxStreamPos);
+        super.close();
+        cache.close();
+        cache = null;
+        cacheFile.delete();
+        cacheFile = null;
+        stream.flush();
+        stream = null;
+        StreamCloser.removeFromQueue(closeAction);
+    }
+
+    public void flushBefore(long pos) throws IOException {
+        long oFlushedPos = flushedPos;
+        super.flushBefore(pos); // this will call checkClosed() for us
+
+        long flushBytes = flushedPos - oFlushedPos;
+        if (flushBytes > 0) {
+            int bufLen = 512;
+            byte[] buf = new byte[bufLen];
+            cache.seek(oFlushedPos);
+            while (flushBytes > 0) {
+                int len = (int)Math.min(flushBytes, bufLen);
+                cache.readFully(buf, 0, len);
+                stream.write(buf, 0, len);
+                flushBytes -= len;
+            }
+            stream.flush();
+        }
+    }
+}

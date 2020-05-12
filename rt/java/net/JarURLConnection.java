@@ -1,315 +1,309 @@
-/*     */ package java.net;
-/*     */ 
-/*     */ import java.io.IOException;
-/*     */ import java.security.cert.Certificate;
-/*     */ import java.util.jar.Attributes;
-/*     */ import java.util.jar.JarEntry;
-/*     */ import java.util.jar.JarFile;
-/*     */ import java.util.jar.Manifest;
-/*     */ import sun.net.www.ParseUtil;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public abstract class JarURLConnection
-/*     */   extends URLConnection
-/*     */ {
-/*     */   private URL jarFileURL;
-/*     */   private String entryName;
-/*     */   protected URLConnection jarFileURLConnection;
-/*     */   
-/*     */   protected JarURLConnection(URL paramURL) throws MalformedURLException {
-/* 157 */     super(paramURL);
-/* 158 */     parseSpecs(paramURL);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void parseSpecs(URL paramURL) throws MalformedURLException {
-/* 165 */     String str = paramURL.getFile();
-/*     */     
-/* 167 */     int i = str.indexOf("!/");
-/*     */ 
-/*     */ 
-/*     */     
-/* 171 */     if (i == -1) {
-/* 172 */       throw new MalformedURLException("no !/ found in url spec:" + str);
-/*     */     }
-/*     */     
-/* 175 */     this.jarFileURL = new URL(str.substring(0, i++));
-/* 176 */     this.entryName = null;
-/*     */ 
-/*     */     
-/* 179 */     if (++i != str.length()) {
-/* 180 */       this.entryName = str.substring(i, str.length());
-/* 181 */       this.entryName = ParseUtil.decode(this.entryName);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public URL getJarFileURL() {
-/* 191 */     return this.jarFileURL;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getEntryName() {
-/* 202 */     return this.entryName;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public abstract JarFile getJarFile() throws IOException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Manifest getManifest() throws IOException {
-/* 231 */     return getJarFile().getManifest();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public JarEntry getJarEntry() throws IOException {
-/* 249 */     return getJarFile().getJarEntry(this.entryName);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Attributes getAttributes() throws IOException {
-/* 265 */     JarEntry jarEntry = getJarEntry();
-/* 266 */     return (jarEntry != null) ? jarEntry.getAttributes() : null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Attributes getMainAttributes() throws IOException {
-/* 283 */     Manifest manifest = getManifest();
-/* 284 */     return (manifest != null) ? manifest.getMainAttributes() : null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Certificate[] getCertificates() throws IOException {
-/* 306 */     JarEntry jarEntry = getJarEntry();
-/* 307 */     return (jarEntry != null) ? jarEntry.getCertificates() : null;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\net\JarURLConnection.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.net;
+
+import java.io.IOException;
+import java.util.jar.JarFile;
+import java.util.jar.JarEntry;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
+import java.security.Permission;
+import sun.net.www.ParseUtil;
+
+/**
+ * A URL Connection to a Java ARchive (JAR) file or an entry in a JAR
+ * file.
+ *
+ * <p>The syntax of a JAR URL is:
+ *
+ * <pre>
+ * jar:&lt;url&gt;!/{entry}
+ * </pre>
+ *
+ * <p>for example:
+ *
+ * <p>{@code jar:http://www.foo.com/bar/baz.jar!/COM/foo/Quux.class}
+ *
+ * <p>Jar URLs should be used to refer to a JAR file or entries in
+ * a JAR file. The example above is a JAR URL which refers to a JAR
+ * entry. If the entry name is omitted, the URL refers to the whole
+ * JAR file:
+ *
+ * {@code jar:http://www.foo.com/bar/baz.jar!/}
+ *
+ * <p>Users should cast the generic URLConnection to a
+ * JarURLConnection when they know that the URL they created is a JAR
+ * URL, and they need JAR-specific functionality. For example:
+ *
+ * <pre>
+ * URL url = new URL("jar:file:/home/duke/duke.jar!/");
+ * JarURLConnection jarConnection = (JarURLConnection)url.openConnection();
+ * Manifest manifest = jarConnection.getManifest();
+ * </pre>
+ *
+ * <p>JarURLConnection instances can only be used to read from JAR files.
+ * It is not possible to get a {@link java.io.OutputStream} to modify or write
+ * to the underlying JAR file using this class.
+ * <p>Examples:
+ *
+ * <dl>
+ *
+ * <dt>A Jar entry
+ * <dd>{@code jar:http://www.foo.com/bar/baz.jar!/COM/foo/Quux.class}
+ *
+ * <dt>A Jar file
+ * <dd>{@code jar:http://www.foo.com/bar/baz.jar!/}
+ *
+ * <dt>A Jar directory
+ * <dd>{@code jar:http://www.foo.com/bar/baz.jar!/COM/foo/}
+ *
+ * </dl>
+ *
+ * <p>{@code !/} is referred to as the <em>separator</em>.
+ *
+ * <p>When constructing a JAR url via {@code new URL(context, spec)},
+ * the following rules apply:
+ *
+ * <ul>
+ *
+ * <li>if there is no context URL and the specification passed to the
+ * URL constructor doesn't contain a separator, the URL is considered
+ * to refer to a JarFile.
+ *
+ * <li>if there is a context URL, the context URL is assumed to refer
+ * to a JAR file or a Jar directory.
+ *
+ * <li>if the specification begins with a '/', the Jar directory is
+ * ignored, and the spec is considered to be at the root of the Jar
+ * file.
+ *
+ * <p>Examples:
+ *
+ * <dl>
+ *
+ * <dt>context: <b>jar:http://www.foo.com/bar/jar.jar!/</b>,
+ * spec:<b>baz/entry.txt</b>
+ *
+ * <dd>url:<b>jar:http://www.foo.com/bar/jar.jar!/baz/entry.txt</b>
+ *
+ * <dt>context: <b>jar:http://www.foo.com/bar/jar.jar!/baz</b>,
+ * spec:<b>entry.txt</b>
+ *
+ * <dd>url:<b>jar:http://www.foo.com/bar/jar.jar!/baz/entry.txt</b>
+ *
+ * <dt>context: <b>jar:http://www.foo.com/bar/jar.jar!/baz</b>,
+ * spec:<b>/entry.txt</b>
+ *
+ * <dd>url:<b>jar:http://www.foo.com/bar/jar.jar!/entry.txt</b>
+ *
+ * </dl>
+ *
+ * </ul>
+ *
+ * @see java.net.URL
+ * @see java.net.URLConnection
+ *
+ * @see java.util.jar.JarFile
+ * @see java.util.jar.JarInputStream
+ * @see java.util.jar.Manifest
+ * @see java.util.zip.ZipEntry
+ *
+ * @author Benjamin Renaud
+ * @since 1.2
+ */
+public abstract class JarURLConnection extends URLConnection {
+
+    private URL jarFileURL;
+    private String entryName;
+
+    /**
+     * The connection to the JAR file URL, if the connection has been
+     * initiated. This should be set by connect.
+     */
+    protected URLConnection jarFileURLConnection;
+
+    /**
+     * Creates the new JarURLConnection to the specified URL.
+     * @param url the URL
+     * @throws MalformedURLException if no legal protocol
+     * could be found in a specification string or the
+     * string could not be parsed.
+     */
+
+    protected JarURLConnection(URL url) throws MalformedURLException {
+        super(url);
+        parseSpecs(url);
+    }
+
+    /* get the specs for a given url out of the cache, and compute and
+     * cache them if they're not there.
+     */
+    private void parseSpecs(URL url) throws MalformedURLException {
+        String spec = url.getFile();
+
+        int separator = spec.indexOf("!/");
+        /*
+         * REMIND: we don't handle nested JAR URLs
+         */
+        if (separator == -1) {
+            throw new MalformedURLException("no !/ found in url spec:" + spec);
+        }
+
+        jarFileURL = new URL(spec.substring(0, separator++));
+        entryName = null;
+
+        /* if ! is the last letter of the innerURL, entryName is null */
+        if (++separator != spec.length()) {
+            entryName = spec.substring(separator, spec.length());
+            entryName = ParseUtil.decode (entryName);
+        }
+    }
+
+    /**
+     * Returns the URL for the Jar file for this connection.
+     *
+     * @return the URL for the Jar file for this connection.
+     */
+    public URL getJarFileURL() {
+        return jarFileURL;
+    }
+
+    /**
+     * Return the entry name for this connection. This method
+     * returns null if the JAR file URL corresponding to this
+     * connection points to a JAR file and not a JAR file entry.
+     *
+     * @return the entry name for this connection, if any.
+     */
+    public String getEntryName() {
+        return entryName;
+    }
+
+    /**
+     * Return the JAR file for this connection.
+     *
+     * @return the JAR file for this connection. If the connection is
+     * a connection to an entry of a JAR file, the JAR file object is
+     * returned
+     *
+     * @exception IOException if an IOException occurs while trying to
+     * connect to the JAR file for this connection.
+     *
+     * @see #connect
+     */
+    public abstract JarFile getJarFile() throws IOException;
+
+    /**
+     * Returns the Manifest for this connection, or null if none.
+     *
+     * @return the manifest object corresponding to the JAR file object
+     * for this connection.
+     *
+     * @exception IOException if getting the JAR file for this
+     * connection causes an IOException to be thrown.
+     *
+     * @see #getJarFile
+     */
+    public Manifest getManifest() throws IOException {
+        return getJarFile().getManifest();
+    }
+
+    /**
+     * Return the JAR entry object for this connection, if any. This
+     * method returns null if the JAR file URL corresponding to this
+     * connection points to a JAR file and not a JAR file entry.
+     *
+     * @return the JAR entry object for this connection, or null if
+     * the JAR URL for this connection points to a JAR file.
+     *
+     * @exception IOException if getting the JAR file for this
+     * connection causes an IOException to be thrown.
+     *
+     * @see #getJarFile
+     * @see #getJarEntry
+     */
+    public JarEntry getJarEntry() throws IOException {
+        return getJarFile().getJarEntry(entryName);
+    }
+
+    /**
+     * Return the Attributes object for this connection if the URL
+     * for it points to a JAR file entry, null otherwise.
+     *
+     * @return the Attributes object for this connection if the URL
+     * for it points to a JAR file entry, null otherwise.
+     *
+     * @exception IOException if getting the JAR entry causes an
+     * IOException to be thrown.
+     *
+     * @see #getJarEntry
+     */
+    public Attributes getAttributes() throws IOException {
+        JarEntry e = getJarEntry();
+        return e != null ? e.getAttributes() : null;
+    }
+
+    /**
+     * Returns the main Attributes for the JAR file for this
+     * connection.
+     *
+     * @return the main Attributes for the JAR file for this
+     * connection.
+     *
+     * @exception IOException if getting the manifest causes an
+     * IOException to be thrown.
+     *
+     * @see #getJarFile
+     * @see #getManifest
+     */
+    public Attributes getMainAttributes() throws IOException {
+        Manifest man = getManifest();
+        return man != null ? man.getMainAttributes() : null;
+    }
+
+    /**
+     * Return the Certificate object for this connection if the URL
+     * for it points to a JAR file entry, null otherwise. This method
+     * can only be called once
+     * the connection has been completely verified by reading
+     * from the input stream until the end of the stream has been
+     * reached. Otherwise, this method will return {@code null}
+     *
+     * @return the Certificate object for this connection if the URL
+     * for it points to a JAR file entry, null otherwise.
+     *
+     * @exception IOException if getting the JAR entry causes an
+     * IOException to be thrown.
+     *
+     * @see #getJarEntry
+     */
+    public java.security.cert.Certificate[] getCertificates()
+         throws IOException
+    {
+        JarEntry e = getJarEntry();
+        return e != null ? e.getCertificates() : null;
+    }
+}

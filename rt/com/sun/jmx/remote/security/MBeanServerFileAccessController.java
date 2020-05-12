@@ -1,545 +1,544 @@
-/*     */ package com.sun.jmx.remote.security;
-/*     */ 
-/*     */ import java.io.FileInputStream;
-/*     */ import java.io.IOException;
-/*     */ import java.security.AccessControlContext;
-/*     */ import java.security.AccessController;
-/*     */ import java.security.Principal;
-/*     */ import java.security.PrivilegedAction;
-/*     */ import java.util.ArrayList;
-/*     */ import java.util.HashMap;
-/*     */ import java.util.List;
-/*     */ import java.util.Map;
-/*     */ import java.util.Properties;
-/*     */ import java.util.Set;
-/*     */ import java.util.StringTokenizer;
-/*     */ import java.util.regex.Pattern;
-/*     */ import javax.management.MBeanServer;
-/*     */ import javax.management.ObjectName;
-/*     */ import javax.security.auth.Subject;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class MBeanServerFileAccessController
-/*     */   extends MBeanServerAccessController
-/*     */ {
-/*     */   static final String READONLY = "readonly";
-/*     */   static final String READWRITE = "readwrite";
-/*     */   static final String CREATE = "create";
-/*     */   static final String UNREGISTER = "unregister";
-/*     */   private Map<String, Access> accessMap;
-/*     */   private Properties originalProps;
-/*     */   private String accessFileName;
-/*     */   
-/*     */   private enum AccessType
-/*     */   {
-/*  91 */     READ, WRITE, CREATE, UNREGISTER;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static class Access
-/*     */   {
-/*     */     final boolean write;
-/*     */     
-/*     */     final String[] createPatterns;
-/*     */     
-/*     */     private boolean unregister;
-/*     */     
-/*     */     private final String[] NO_STRINGS;
-/*     */ 
-/*     */     
-/*     */     Access(boolean param1Boolean1, boolean param1Boolean2, List<String> param1List) {
-/* 108 */       this.NO_STRINGS = new String[0];
-/*     */       this.write = param1Boolean1;
-/*     */       boolean bool = (param1List == null) ? false : param1List.size();
-/*     */       if (!bool) {
-/*     */         this.createPatterns = this.NO_STRINGS;
-/*     */       } else {
-/*     */         this.createPatterns = param1List.<String>toArray(new String[bool]);
-/*     */       } 
-/*     */       this.unregister = param1Boolean2;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public MBeanServerFileAccessController(String paramString) throws IOException {
-/* 132 */     this.accessFileName = paramString;
-/* 133 */     Properties properties = propertiesFromFile(paramString);
-/* 134 */     parseProperties(properties);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public MBeanServerFileAccessController(String paramString, MBeanServer paramMBeanServer) throws IOException {
-/* 159 */     this(paramString);
-/* 160 */     setMBeanServer(paramMBeanServer);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public MBeanServerFileAccessController(Properties paramProperties) throws IOException {
-/* 188 */     if (paramProperties == null)
-/* 189 */       throw new IllegalArgumentException("Null properties"); 
-/* 190 */     this.originalProps = paramProperties;
-/* 191 */     parseProperties(paramProperties);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public MBeanServerFileAccessController(Properties paramProperties, MBeanServer paramMBeanServer) throws IOException {
-/* 221 */     this(paramProperties);
-/* 222 */     setMBeanServer(paramMBeanServer);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void checkRead() {
-/* 231 */     checkAccess(AccessType.READ, (String)null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void checkWrite() {
-/* 240 */     checkAccess(AccessType.WRITE, (String)null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void checkCreate(String paramString) {
-/* 249 */     checkAccess(AccessType.CREATE, paramString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void checkUnregister(ObjectName paramObjectName) {
-/* 258 */     checkAccess(AccessType.UNREGISTER, (String)null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void refresh() throws IOException {
-/*     */     Properties properties;
-/* 285 */     if (this.accessFileName == null) {
-/* 286 */       properties = this.originalProps;
-/*     */     } else {
-/* 288 */       properties = propertiesFromFile(this.accessFileName);
-/* 289 */     }  parseProperties(properties);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private static Properties propertiesFromFile(String paramString) throws IOException {
-/* 294 */     FileInputStream fileInputStream = new FileInputStream(paramString);
-/*     */     try {
-/* 296 */       Properties properties = new Properties();
-/* 297 */       properties.load(fileInputStream);
-/* 298 */       return properties;
-/*     */     } finally {
-/* 300 */       fileInputStream.close();
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   private synchronized void checkAccess(AccessType paramAccessType, String paramString) {
-/* 305 */     final AccessControlContext acc = AccessController.getContext();
-/*     */     
-/* 307 */     Subject subject = AccessController.<Subject>doPrivileged(new PrivilegedAction<Subject>() {
-/*     */           public Subject run() {
-/* 309 */             return Subject.getSubject(acc);
-/*     */           }
-/*     */         });
-/* 312 */     if (subject == null)
-/* 313 */       return;  Set<Principal> set = subject.getPrincipals();
-/* 314 */     String str = null;
-/* 315 */     for (Principal principal : set) {
-/*     */       
-/* 317 */       Access access = this.accessMap.get(principal.getName());
-/* 318 */       if (access != null) {
-/*     */         boolean bool;
-/* 320 */         switch (paramAccessType) {
-/*     */           case READ:
-/* 322 */             bool = true;
-/*     */             break;
-/*     */           case WRITE:
-/* 325 */             bool = access.write;
-/*     */             break;
-/*     */           case UNREGISTER:
-/* 328 */             bool = access.unregister;
-/* 329 */             if (!bool && access.write)
-/* 330 */               str = "unregister"; 
-/*     */             break;
-/*     */           case CREATE:
-/* 333 */             bool = checkCreateAccess(access, paramString);
-/* 334 */             if (!bool && access.write)
-/* 335 */               str = "create " + paramString; 
-/*     */             break;
-/*     */           default:
-/* 338 */             throw new AssertionError();
-/*     */         } 
-/* 340 */         if (bool)
-/*     */           return; 
-/*     */       } 
-/*     */     } 
-/* 344 */     SecurityException securityException = new SecurityException("Access denied! Invalid access level for requested MBeanServer operation.");
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 351 */     if (str != null) {
-/* 352 */       SecurityException securityException1 = new SecurityException("Access property for this identity should be similar to: readwrite " + str);
-/*     */ 
-/*     */       
-/* 355 */       securityException.initCause(securityException1);
-/*     */     } 
-/* 357 */     throw securityException;
-/*     */   }
-/*     */   
-/*     */   private static boolean checkCreateAccess(Access paramAccess, String paramString) {
-/* 361 */     for (String str : paramAccess.createPatterns) {
-/* 362 */       if (classNameMatch(str, paramString))
-/* 363 */         return true; 
-/*     */     } 
-/* 365 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static boolean classNameMatch(String paramString1, String paramString2) {
-/* 378 */     StringBuilder stringBuilder = new StringBuilder();
-/* 379 */     StringTokenizer stringTokenizer = new StringTokenizer(paramString1, "*", true);
-/* 380 */     while (stringTokenizer.hasMoreTokens()) {
-/* 381 */       String str = stringTokenizer.nextToken();
-/* 382 */       if (str.equals("*")) {
-/* 383 */         stringBuilder.append("[^.]*"); continue;
-/*     */       } 
-/* 385 */       stringBuilder.append(Pattern.quote(str));
-/*     */     } 
-/* 387 */     return paramString2.matches(stringBuilder.toString());
-/*     */   }
-/*     */   
-/*     */   private void parseProperties(Properties paramProperties) {
-/* 391 */     this.accessMap = new HashMap<>();
-/* 392 */     for (Map.Entry<Object, Object> entry : paramProperties.entrySet()) {
-/* 393 */       String str1 = (String)entry.getKey();
-/* 394 */       String str2 = (String)entry.getValue();
-/* 395 */       Access access = Parser.parseAccess(str1, str2);
-/* 396 */       this.accessMap.put(str1, access);
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   private static class Parser { private static final int EOS = -1;
-/*     */     
-/*     */     static {
-/* 403 */       assert !Character.isWhitespace(-1);
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     private final String identity;
-/*     */     
-/*     */     private final String s;
-/*     */     
-/*     */     private final int len;
-/*     */     
-/*     */     private int i;
-/*     */     
-/*     */     private int c;
-/*     */     
-/*     */     private Parser(String param1String1, String param1String2) {
-/* 418 */       this.identity = param1String1;
-/* 419 */       this.s = param1String2;
-/* 420 */       this.len = param1String2.length();
-/* 421 */       this.i = 0;
-/* 422 */       if (this.i < this.len) {
-/* 423 */         this.c = param1String2.codePointAt(this.i);
-/*     */       } else {
-/* 425 */         this.c = -1;
-/*     */       } 
-/*     */     }
-/*     */     static MBeanServerFileAccessController.Access parseAccess(String param1String1, String param1String2) {
-/* 429 */       return (new Parser(param1String1, param1String2)).parseAccess();
-/*     */     }
-/*     */     private MBeanServerFileAccessController.Access parseAccess() {
-/*     */       MBeanServerFileAccessController.Access access;
-/* 433 */       skipSpace();
-/* 434 */       String str = parseWord();
-/*     */       
-/* 436 */       if (str.equals("readonly")) {
-/* 437 */         access = new MBeanServerFileAccessController.Access(false, false, null);
-/* 438 */       } else if (str.equals("readwrite")) {
-/* 439 */         access = parseReadWrite();
-/*     */       } else {
-/* 441 */         throw syntax("Expected readonly or readwrite: " + str);
-/*     */       } 
-/*     */       
-/* 444 */       if (this.c != -1)
-/* 445 */         throw syntax("Extra text at end of line"); 
-/* 446 */       return access;
-/*     */     }
-/*     */     
-/*     */     private MBeanServerFileAccessController.Access parseReadWrite() {
-/* 450 */       ArrayList<String> arrayList = new ArrayList();
-/* 451 */       boolean bool = false;
-/*     */       while (true) {
-/* 453 */         skipSpace();
-/* 454 */         if (this.c == -1)
-/*     */           break; 
-/* 456 */         String str = parseWord();
-/* 457 */         if (str.equals("unregister")) {
-/* 458 */           bool = true; continue;
-/* 459 */         }  if (str.equals("create")) {
-/* 460 */           parseCreate(arrayList); continue;
-/*     */         } 
-/* 462 */         throw syntax("Unrecognized keyword " + str);
-/*     */       } 
-/* 464 */       return new MBeanServerFileAccessController.Access(true, bool, arrayList);
-/*     */     }
-/*     */     
-/*     */     private void parseCreate(List<String> param1List) {
-/*     */       while (true) {
-/* 469 */         skipSpace();
-/* 470 */         param1List.add(parseClassName());
-/* 471 */         skipSpace();
-/* 472 */         if (this.c == 44) {
-/* 473 */           next();
-/*     */           continue;
-/*     */         } 
-/*     */         break;
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     private String parseClassName() {
-/* 488 */       int i = this.i;
-/* 489 */       boolean bool = false;
-/*     */       while (true) {
-/* 491 */         if (this.c == 46) {
-/* 492 */           if (!bool)
-/* 493 */             throw syntax("Bad . in class name"); 
-/* 494 */           bool = false;
-/* 495 */         } else if (this.c == 42 || Character.isJavaIdentifierPart(this.c)) {
-/* 496 */           bool = true;
-/*     */         } else {
-/*     */           break;
-/* 499 */         }  next();
-/*     */       } 
-/* 501 */       String str = this.s.substring(i, this.i);
-/* 502 */       if (!bool)
-/* 503 */         throw syntax("Bad class name " + str); 
-/* 504 */       return str;
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     private void next() {
-/* 509 */       if (this.c != -1) {
-/* 510 */         this.i += Character.charCount(this.c);
-/* 511 */         if (this.i < this.len) {
-/* 512 */           this.c = this.s.codePointAt(this.i);
-/*     */         } else {
-/* 514 */           this.c = -1;
-/*     */         } 
-/*     */       } 
-/*     */     }
-/*     */     private void skipSpace() {
-/* 519 */       while (Character.isWhitespace(this.c))
-/* 520 */         next(); 
-/*     */     }
-/*     */     
-/*     */     private String parseWord() {
-/* 524 */       skipSpace();
-/* 525 */       if (this.c == -1)
-/* 526 */         throw syntax("Expected word at end of line"); 
-/* 527 */       int i = this.i;
-/* 528 */       while (this.c != -1 && !Character.isWhitespace(this.c))
-/* 529 */         next(); 
-/* 530 */       String str = this.s.substring(i, this.i);
-/* 531 */       skipSpace();
-/* 532 */       return str;
-/*     */     }
-/*     */     
-/*     */     private IllegalArgumentException syntax(String param1String) {
-/* 536 */       return new IllegalArgumentException(param1String + " [" + this.identity + " " + this.s + "]");
-/*     */     } }
-/*     */ 
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\jmx\remote\security\MBeanServerFileAccessController.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, 2008, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.jmx.remote.security;
+
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.security.AccessControlContext;
+import java.security.AccessController;
+import java.security.Principal;
+import java.security.PrivilegedAction;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import java.util.StringTokenizer;
+import java.util.regex.Pattern;
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+import javax.security.auth.Subject;
+
+/**
+ * <p>An object of this class implements the MBeanServerAccessController
+ * interface and, for each of its methods, calls an appropriate checking
+ * method and then forwards the request to a wrapped MBeanServer object.
+ * The checking method may throw a SecurityException if the operation is
+ * not allowed; in this case the request is not forwarded to the
+ * wrapped object.</p>
+ *
+ * <p>This class implements the {@link #checkRead()}, {@link #checkWrite()},
+ * {@link #checkCreate(String)}, and {@link #checkUnregister(ObjectName)}
+ * methods based on an access level properties file containing username/access
+ * level pairs. The set of username/access level pairs is passed either as a
+ * filename which denotes a properties file on disk, or directly as an instance
+ * of the {@link Properties} class.  In both cases, the name of each property
+ * represents a username, and the value of the property is the associated access
+ * level.  Thus, any given username either does not exist in the properties or
+ * has exactly one access level. The same access level can be shared by several
+ * usernames.</p>
+ *
+ * <p>The supported access level values are {@code readonly} and
+ * {@code readwrite}.  The {@code readwrite} access level can be
+ * qualified by one or more <i>clauses</i>, where each clause looks
+ * like <code>create <i>classNamePattern</i></code> or {@code
+ * unregister}.  For example:</p>
+ *
+ * <pre>
+ * monitorRole  readonly
+ * controlRole  readwrite \
+ *              create javax.management.timer.*,javax.management.monitor.* \
+ *              unregister
+ * </pre>
+ *
+ * <p>(The continuation lines with {@code \} come from the parser for
+ * Properties files.)</p>
+ */
+public class MBeanServerFileAccessController
+    extends MBeanServerAccessController {
+
+    static final String READONLY = "readonly";
+    static final String READWRITE = "readwrite";
+
+    static final String CREATE = "create";
+    static final String UNREGISTER = "unregister";
+
+    private enum AccessType {READ, WRITE, CREATE, UNREGISTER};
+
+    private static class Access {
+        final boolean write;
+        final String[] createPatterns;
+        private boolean unregister;
+
+        Access(boolean write, boolean unregister, List<String> createPatternList) {
+            this.write = write;
+            int npats = (createPatternList == null) ? 0 : createPatternList.size();
+            if (npats == 0)
+                this.createPatterns = NO_STRINGS;
+            else
+                this.createPatterns = createPatternList.toArray(new String[npats]);
+            this.unregister = unregister;
+        }
+
+        private final String[] NO_STRINGS = new String[0];
+    }
+
+    /**
+     * <p>Create a new MBeanServerAccessController that forwards all the
+     * MBeanServer requests to the MBeanServer set by invoking the {@link
+     * #setMBeanServer} method after doing access checks based on read and
+     * write permissions.</p>
+     *
+     * <p>This instance is initialized from the specified properties file.</p>
+     *
+     * @param accessFileName name of the file which denotes a properties
+     * file on disk containing the username/access level entries.
+     *
+     * @exception IOException if the file does not exist, is a
+     * directory rather than a regular file, or for some other
+     * reason cannot be opened for reading.
+     *
+     * @exception IllegalArgumentException if any of the supplied access
+     * level values differs from "readonly" or "readwrite".
+     */
+    public MBeanServerFileAccessController(String accessFileName)
+        throws IOException {
+        super();
+        this.accessFileName = accessFileName;
+        Properties props = propertiesFromFile(accessFileName);
+        parseProperties(props);
+    }
+
+    /**
+     * <p>Create a new MBeanServerAccessController that forwards all the
+     * MBeanServer requests to <code>mbs</code> after doing access checks
+     * based on read and write permissions.</p>
+     *
+     * <p>This instance is initialized from the specified properties file.</p>
+     *
+     * @param accessFileName name of the file which denotes a properties
+     * file on disk containing the username/access level entries.
+     *
+     * @param mbs the MBeanServer object to which requests will be forwarded.
+     *
+     * @exception IOException if the file does not exist, is a
+     * directory rather than a regular file, or for some other
+     * reason cannot be opened for reading.
+     *
+     * @exception IllegalArgumentException if any of the supplied access
+     * level values differs from "readonly" or "readwrite".
+     */
+    public MBeanServerFileAccessController(String accessFileName,
+                                           MBeanServer mbs)
+        throws IOException {
+        this(accessFileName);
+        setMBeanServer(mbs);
+    }
+
+    /**
+     * <p>Create a new MBeanServerAccessController that forwards all the
+     * MBeanServer requests to the MBeanServer set by invoking the {@link
+     * #setMBeanServer} method after doing access checks based on read and
+     * write permissions.</p>
+     *
+     * <p>This instance is initialized from the specified properties
+     * instance.  This constructor makes a copy of the properties
+     * instance and it is the copy that is consulted to check the
+     * username and access level of an incoming connection. The
+     * original properties object can be modified without affecting
+     * the copy. If the {@link #refresh} method is then called, the
+     * <code>MBeanServerFileAccessController</code> will make a new
+     * copy of the properties object at that time.</p>
+     *
+     * @param accessFileProps properties list containing the username/access
+     * level entries.
+     *
+     * @exception IllegalArgumentException if <code>accessFileProps</code> is
+     * <code>null</code> or if any of the supplied access level values differs
+     * from "readonly" or "readwrite".
+     */
+    public MBeanServerFileAccessController(Properties accessFileProps)
+        throws IOException {
+        super();
+        if (accessFileProps == null)
+            throw new IllegalArgumentException("Null properties");
+        originalProps = accessFileProps;
+        parseProperties(accessFileProps);
+    }
+
+    /**
+     * <p>Create a new MBeanServerAccessController that forwards all the
+     * MBeanServer requests to the MBeanServer set by invoking the {@link
+     * #setMBeanServer} method after doing access checks based on read and
+     * write permissions.</p>
+     *
+     * <p>This instance is initialized from the specified properties
+     * instance.  This constructor makes a copy of the properties
+     * instance and it is the copy that is consulted to check the
+     * username and access level of an incoming connection. The
+     * original properties object can be modified without affecting
+     * the copy. If the {@link #refresh} method is then called, the
+     * <code>MBeanServerFileAccessController</code> will make a new
+     * copy of the properties object at that time.</p>
+     *
+     * @param accessFileProps properties list containing the username/access
+     * level entries.
+     *
+     * @param mbs the MBeanServer object to which requests will be forwarded.
+     *
+     * @exception IllegalArgumentException if <code>accessFileProps</code> is
+     * <code>null</code> or if any of the supplied access level values differs
+     * from "readonly" or "readwrite".
+     */
+    public MBeanServerFileAccessController(Properties accessFileProps,
+                                           MBeanServer mbs)
+        throws IOException {
+        this(accessFileProps);
+        setMBeanServer(mbs);
+    }
+
+    /**
+     * Check if the caller can do read operations. This method does
+     * nothing if so, otherwise throws SecurityException.
+     */
+    @Override
+    public void checkRead() {
+        checkAccess(AccessType.READ, null);
+    }
+
+    /**
+     * Check if the caller can do write operations.  This method does
+     * nothing if so, otherwise throws SecurityException.
+     */
+    @Override
+    public void checkWrite() {
+        checkAccess(AccessType.WRITE, null);
+    }
+
+    /**
+     * Check if the caller can create MBeans or instances of the given class.
+     * This method does nothing if so, otherwise throws SecurityException.
+     */
+    @Override
+    public void checkCreate(String className) {
+        checkAccess(AccessType.CREATE, className);
+    }
+
+    /**
+     * Check if the caller can do unregister operations.  This method does
+     * nothing if so, otherwise throws SecurityException.
+     */
+    @Override
+    public void checkUnregister(ObjectName name) {
+        checkAccess(AccessType.UNREGISTER, null);
+    }
+
+    /**
+     * <p>Refresh the set of username/access level entries.</p>
+     *
+     * <p>If this instance was created using the
+     * {@link #MBeanServerFileAccessController(String)} or
+     * {@link #MBeanServerFileAccessController(String,MBeanServer)}
+     * constructors to specify a file from which the entries are read,
+     * the file is re-read.</p>
+     *
+     * <p>If this instance was created using the
+     * {@link #MBeanServerFileAccessController(Properties)} or
+     * {@link #MBeanServerFileAccessController(Properties,MBeanServer)}
+     * constructors then a new copy of the <code>Properties</code> object
+     * is made.</p>
+     *
+     * @exception IOException if the file does not exist, is a
+     * directory rather than a regular file, or for some other
+     * reason cannot be opened for reading.
+     *
+     * @exception IllegalArgumentException if any of the supplied access
+     * level values differs from "readonly" or "readwrite".
+     */
+    public synchronized void refresh() throws IOException {
+        Properties props;
+        if (accessFileName == null)
+            props = (Properties) originalProps;
+        else
+            props = propertiesFromFile(accessFileName);
+        parseProperties(props);
+    }
+
+    private static Properties propertiesFromFile(String fname)
+        throws IOException {
+        FileInputStream fin = new FileInputStream(fname);
+        try {
+            Properties p = new Properties();
+            p.load(fin);
+            return p;
+        } finally {
+            fin.close();
+        }
+    }
+
+    private synchronized void checkAccess(AccessType requiredAccess, String arg) {
+        final AccessControlContext acc = AccessController.getContext();
+        final Subject s =
+            AccessController.doPrivileged(new PrivilegedAction<Subject>() {
+                    public Subject run() {
+                        return Subject.getSubject(acc);
+                    }
+                });
+        if (s == null) return; /* security has not been enabled */
+        final Set principals = s.getPrincipals();
+        String newPropertyValue = null;
+        for (Iterator i = principals.iterator(); i.hasNext(); ) {
+            final Principal p = (Principal) i.next();
+            Access access = accessMap.get(p.getName());
+            if (access != null) {
+                boolean ok;
+                switch (requiredAccess) {
+                    case READ:
+                        ok = true;  // all access entries imply read
+                        break;
+                    case WRITE:
+                        ok = access.write;
+                        break;
+                    case UNREGISTER:
+                        ok = access.unregister;
+                        if (!ok && access.write)
+                            newPropertyValue = "unregister";
+                        break;
+                    case CREATE:
+                        ok = checkCreateAccess(access, arg);
+                        if (!ok && access.write)
+                            newPropertyValue = "create " + arg;
+                        break;
+                    default:
+                        throw new AssertionError();
+                }
+                if (ok)
+                    return;
+            }
+        }
+        SecurityException se = new SecurityException("Access denied! Invalid " +
+                "access level for requested MBeanServer operation.");
+        // Add some more information to help people with deployments that
+        // worked before we required explicit create clauses. We're not giving
+        // any information to the bad guys, other than that the access control
+        // is based on a file, which they could have worked out from the stack
+        // trace anyway.
+        if (newPropertyValue != null) {
+            SecurityException se2 = new SecurityException("Access property " +
+                    "for this identity should be similar to: " + READWRITE +
+                    " " + newPropertyValue);
+            se.initCause(se2);
+        }
+        throw se;
+    }
+
+    private static boolean checkCreateAccess(Access access, String className) {
+        for (String classNamePattern : access.createPatterns) {
+            if (classNameMatch(classNamePattern, className))
+                return true;
+        }
+        return false;
+    }
+
+    private static boolean classNameMatch(String pattern, String className) {
+        // We studiously avoided regexes when parsing the properties file,
+        // because that is done whenever the VM is started with the
+        // appropriate -Dcom.sun.management options, even if nobody ever
+        // creates an MBean.  We don't want to incur the overhead of loading
+        // all the regex code whenever those options are specified, but if we
+        // get as far as here then the VM is already running and somebody is
+        // doing the very unusual operation of remotely creating an MBean.
+        // Because that operation is so unusual, we don't try to optimize
+        // by hand-matching or by caching compiled Pattern objects.
+        StringBuilder sb = new StringBuilder();
+        StringTokenizer stok = new StringTokenizer(pattern, "*", true);
+        while (stok.hasMoreTokens()) {
+            String tok = stok.nextToken();
+            if (tok.equals("*"))
+                sb.append("[^.]*");
+            else
+                sb.append(Pattern.quote(tok));
+        }
+        return className.matches(sb.toString());
+    }
+
+    private void parseProperties(Properties props) {
+        this.accessMap = new HashMap<String, Access>();
+        for (Map.Entry<Object, Object> entry : props.entrySet()) {
+            String identity = (String) entry.getKey();
+            String accessString = (String) entry.getValue();
+            Access access = Parser.parseAccess(identity, accessString);
+            accessMap.put(identity, access);
+        }
+    }
+
+    private static class Parser {
+        private final static int EOS = -1;  // pseudo-codepoint "end of string"
+        static {
+            assert !Character.isWhitespace(EOS);
+        }
+
+        private final String identity;  // just for better error messages
+        private final String s;  // the string we're parsing
+        private final int len;   // s.length()
+        private int i;
+        private int c;
+        // At any point, either c is s.codePointAt(i), or i == len and
+        // c is EOS.  We use int rather than char because it is conceivable
+        // (if unlikely) that a classname in a create clause might contain
+        // "supplementary characters", the ones that don't fit in the original
+        // 16 bits for Unicode.
+
+        private Parser(String identity, String s) {
+            this.identity = identity;
+            this.s = s;
+            this.len = s.length();
+            this.i = 0;
+            if (i < len)
+                this.c = s.codePointAt(i);
+            else
+                this.c = EOS;
+        }
+
+        static Access parseAccess(String identity, String s) {
+            return new Parser(identity, s).parseAccess();
+        }
+
+        private Access parseAccess() {
+            skipSpace();
+            String type = parseWord();
+            Access access;
+            if (type.equals(READONLY))
+                access = new Access(false, false, null);
+            else if (type.equals(READWRITE))
+                access = parseReadWrite();
+            else {
+                throw syntax("Expected " + READONLY + " or " + READWRITE +
+                        ": " + type);
+            }
+            if (c != EOS)
+                throw syntax("Extra text at end of line");
+            return access;
+        }
+
+        private Access parseReadWrite() {
+            List<String> createClasses = new ArrayList<String>();
+            boolean unregister = false;
+            while (true) {
+                skipSpace();
+                if (c == EOS)
+                    break;
+                String type = parseWord();
+                if (type.equals(UNREGISTER))
+                    unregister = true;
+                else if (type.equals(CREATE))
+                    parseCreate(createClasses);
+                else
+                    throw syntax("Unrecognized keyword " + type);
+            }
+            return new Access(true, unregister, createClasses);
+        }
+
+        private void parseCreate(List<String> createClasses) {
+            while (true) {
+                skipSpace();
+                createClasses.add(parseClassName());
+                skipSpace();
+                if (c == ',')
+                    next();
+                else
+                    break;
+            }
+        }
+
+        private String parseClassName() {
+            // We don't check that classname components begin with suitable
+            // characters (so we accept 1.2.3 for example).  This means that
+            // there are only two states, which we can call dotOK and !dotOK
+            // according as a dot (.) is legal or not.  Initially we're in
+            // !dotOK since a classname can't start with a dot; after a dot
+            // we're in !dotOK again; and after any other characters we're in
+            // dotOK.  The classname is only accepted if we end in dotOK,
+            // so we reject an empty name or a name that ends with a dot.
+            final int start = i;
+            boolean dotOK = false;
+            while (true) {
+                if (c == '.') {
+                    if (!dotOK)
+                        throw syntax("Bad . in class name");
+                    dotOK = false;
+                } else if (c == '*' || Character.isJavaIdentifierPart(c))
+                    dotOK = true;
+                else
+                    break;
+                next();
+            }
+            String className = s.substring(start, i);
+            if (!dotOK)
+                throw syntax("Bad class name " + className);
+            return className;
+        }
+
+        // Advance c and i to the next character, unless already at EOS.
+        private void next() {
+            if (c != EOS) {
+                i += Character.charCount(c);
+                if (i < len)
+                    c = s.codePointAt(i);
+                else
+                    c = EOS;
+            }
+        }
+
+        private void skipSpace() {
+            while (Character.isWhitespace(c))
+                next();
+        }
+
+        private String parseWord() {
+            skipSpace();
+            if (c == EOS)
+                throw syntax("Expected word at end of line");
+            final int start = i;
+            while (c != EOS && !Character.isWhitespace(c))
+                next();
+            String word = s.substring(start, i);
+            skipSpace();
+            return word;
+        }
+
+        private IllegalArgumentException syntax(String msg) {
+            return new IllegalArgumentException(
+                    msg + " [" + identity + " " + s + "]");
+        }
+    }
+
+    private Map<String, Access> accessMap;
+    private Properties originalProps;
+    private String accessFileName;
+}

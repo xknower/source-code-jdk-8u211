@@ -1,174 +1,168 @@
-/*     */ package com.sun.org.apache.xalan.internal.xsltc.compiler;
-/*     */ 
-/*     */ import com.sun.org.apache.bcel.internal.generic.BranchHandle;
-/*     */ import com.sun.org.apache.bcel.internal.generic.GOTO;
-/*     */ import com.sun.org.apache.bcel.internal.generic.IFEQ;
-/*     */ import com.sun.org.apache.bcel.internal.generic.InstructionHandle;
-/*     */ import com.sun.org.apache.bcel.internal.generic.InstructionList;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Util;
-/*     */ import java.util.Enumeration;
-/*     */ import java.util.Iterator;
-/*     */ import java.util.Vector;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class Choose
-/*     */   extends Instruction
-/*     */ {
-/*     */   public void display(int indent) {
-/*  52 */     indent(indent);
-/*  53 */     Util.println("Choose");
-/*  54 */     indent(indent + 4);
-/*  55 */     displayContents(indent + 4);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
-/*  63 */     Vector<SyntaxTreeNode> whenElements = new Vector();
-/*  64 */     Otherwise otherwise = null;
-/*  65 */     Iterator<SyntaxTreeNode> elements = elements();
-/*     */ 
-/*     */     
-/*  68 */     ErrorMsg error = null;
-/*  69 */     int line = getLineNumber();
-/*     */ 
-/*     */     
-/*  72 */     while (elements.hasNext()) {
-/*  73 */       SyntaxTreeNode element = elements.next();
-/*     */       
-/*  75 */       if (element instanceof When) {
-/*  76 */         whenElements.addElement(element);
-/*     */         continue;
-/*     */       } 
-/*  79 */       if (element instanceof Otherwise) {
-/*  80 */         if (otherwise == null) {
-/*  81 */           otherwise = (Otherwise)element;
-/*     */           continue;
-/*     */         } 
-/*  84 */         error = new ErrorMsg("MULTIPLE_OTHERWISE_ERR", this);
-/*  85 */         getParser().reportError(3, error);
-/*     */         continue;
-/*     */       } 
-/*  88 */       if (element instanceof Text) {
-/*  89 */         ((Text)element).ignore();
-/*     */         
-/*     */         continue;
-/*     */       } 
-/*  93 */       error = new ErrorMsg("WHEN_ELEMENT_ERR", this);
-/*  94 */       getParser().reportError(3, error);
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/*  99 */     if (whenElements.size() == 0) {
-/* 100 */       error = new ErrorMsg("MISSING_WHEN_ERR", this);
-/* 101 */       getParser().reportError(3, error);
-/*     */       
-/*     */       return;
-/*     */     } 
-/* 105 */     InstructionList il = methodGen.getInstructionList();
-/*     */ 
-/*     */ 
-/*     */     
-/* 109 */     BranchHandle nextElement = null;
-/* 110 */     Vector<BranchHandle> exitHandles = new Vector();
-/* 111 */     InstructionHandle exit = null;
-/*     */     
-/* 113 */     Enumeration<SyntaxTreeNode> whens = whenElements.elements();
-/* 114 */     while (whens.hasMoreElements()) {
-/* 115 */       When when = (When)whens.nextElement();
-/* 116 */       Expression test = when.getTest();
-/*     */       
-/* 118 */       InstructionHandle truec = il.getEnd();
-/*     */       
-/* 120 */       if (nextElement != null)
-/* 121 */         nextElement.setTarget(il.append(NOP)); 
-/* 122 */       test.translateDesynthesized(classGen, methodGen);
-/*     */       
-/* 124 */       if (test instanceof FunctionCall) {
-/* 125 */         FunctionCall call = (FunctionCall)test;
-/*     */         try {
-/* 127 */           Type type = call.typeCheck(getParser().getSymbolTable());
-/* 128 */           if (type != Type.Boolean) {
-/* 129 */             test._falseList.add(il.append(new IFEQ(null)));
-/*     */           }
-/*     */         }
-/* 132 */         catch (TypeCheckError typeCheckError) {}
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */       
-/* 137 */       truec = il.getEnd();
-/*     */ 
-/*     */ 
-/*     */       
-/* 141 */       if (!when.ignore()) when.translateContents(classGen, methodGen);
-/*     */ 
-/*     */       
-/* 144 */       exitHandles.addElement(il.append(new GOTO(null)));
-/* 145 */       if (whens.hasMoreElements() || otherwise != null) {
-/* 146 */         nextElement = il.append(new GOTO(null));
-/* 147 */         test.backPatchFalseList(nextElement);
-/*     */       } else {
-/*     */         
-/* 150 */         test.backPatchFalseList(exit = il.append(NOP));
-/* 151 */       }  test.backPatchTrueList(truec.getNext());
-/*     */     } 
-/*     */ 
-/*     */     
-/* 155 */     if (otherwise != null) {
-/* 156 */       nextElement.setTarget(il.append(NOP));
-/* 157 */       otherwise.translateContents(classGen, methodGen);
-/* 158 */       exit = il.append(NOP);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 162 */     Enumeration<BranchHandle> exitGotos = exitHandles.elements();
-/* 163 */     while (exitGotos.hasMoreElements()) {
-/* 164 */       BranchHandle gotoExit = exitGotos.nextElement();
-/* 165 */       gotoExit.setTarget(exit);
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\compiler\Choose.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: Choose.java,v 1.2.4.1 2005/09/01 12:00:14 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.compiler;
+
+import com.sun.org.apache.bcel.internal.generic.BranchHandle;
+import com.sun.org.apache.bcel.internal.generic.GOTO;
+import com.sun.org.apache.bcel.internal.generic.IFEQ;
+import com.sun.org.apache.bcel.internal.generic.InstructionHandle;
+import com.sun.org.apache.bcel.internal.generic.InstructionList;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Util;
+import java.util.Enumeration;
+import java.util.Iterator;
+import java.util.Vector;
+
+/**
+ * @author Jacek Ambroziak
+ * @author Santiago Pericas-Geertsen
+ * @author Morten Jorgensen
+ */
+final class Choose extends Instruction {
+
+    /**
+     * Display the element contents (a lot of when's and an otherwise)
+     */
+    public void display(int indent) {
+        indent(indent);
+        Util.println("Choose");
+        indent(indent + IndentIncrement);
+        displayContents(indent + IndentIncrement);
+    }
+
+    /**
+     * Translate this Choose element. Generate a test-chain for the various
+     * <xsl:when> elements and default to the <xsl:otherwise> if present.
+     */
+    public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
+        final Vector whenElements = new Vector();
+        Otherwise otherwise = null;
+        Iterator<SyntaxTreeNode> elements = elements();
+
+        // These two are for reporting errors only
+        ErrorMsg error = null;
+        final int line = getLineNumber();
+
+        // Traverse all child nodes - must be either When or Otherwise
+        while (elements.hasNext()) {
+            SyntaxTreeNode element = elements.next();
+            // Add a When child element
+            if (element instanceof When) {
+                whenElements.addElement(element);
+            }
+            // Add an Otherwise child element
+            else if (element instanceof Otherwise) {
+                if (otherwise == null) {
+                    otherwise = (Otherwise)element;
+                }
+                else {
+                    error = new ErrorMsg(ErrorMsg.MULTIPLE_OTHERWISE_ERR, this);
+                    getParser().reportError(Constants.ERROR, error);
+                }
+            }
+            else if (element instanceof Text) {
+                ((Text)element).ignore();
+            }
+            // It is an error if we find some other element here
+            else {
+                error = new ErrorMsg(ErrorMsg.WHEN_ELEMENT_ERR, this);
+                getParser().reportError(Constants.ERROR, error);
+            }
+        }
+
+        // Make sure that there is at least one <xsl:when> element
+        if (whenElements.size() == 0) {
+            error = new ErrorMsg(ErrorMsg.MISSING_WHEN_ERR, this);
+            getParser().reportError(Constants.ERROR, error);
+            return;
+        }
+
+        InstructionList il = methodGen.getInstructionList();
+
+        // next element will hold a handle to the beginning of next
+        // When/Otherwise if test on current When fails
+        BranchHandle nextElement = null;
+        Vector exitHandles = new Vector();
+        InstructionHandle exit = null;
+
+        Enumeration whens = whenElements.elements();
+        while (whens.hasMoreElements()) {
+            final When when = (When)whens.nextElement();
+            final Expression test = when.getTest();
+
+            InstructionHandle truec = il.getEnd();
+
+            if (nextElement != null)
+                nextElement.setTarget(il.append(NOP));
+            test.translateDesynthesized(classGen, methodGen);
+
+            if (test instanceof FunctionCall) {
+                FunctionCall call = (FunctionCall)test;
+                try {
+                    Type type = call.typeCheck(getParser().getSymbolTable());
+                    if (type != Type.Boolean) {
+                        test._falseList.add(il.append(new IFEQ(null)));
+                    }
+                }
+                catch (TypeCheckError e) {
+                    // handled later!
+                }
+            }
+            // remember end of condition
+            truec = il.getEnd();
+
+            // The When object should be ignored completely in case it tests
+            // for the support of a non-available element
+            if (!when.ignore()) when.translateContents(classGen, methodGen);
+
+            // goto exit after executing the body of when
+            exitHandles.addElement(il.append(new GOTO(null)));
+            if (whens.hasMoreElements() || otherwise != null) {
+                nextElement = il.append(new GOTO(null));
+                test.backPatchFalseList(nextElement);
+            }
+            else
+                test.backPatchFalseList(exit = il.append(NOP));
+            test.backPatchTrueList(truec.getNext());
+        }
+
+        // Translate any <xsl:otherwise> element
+        if (otherwise != null) {
+            nextElement.setTarget(il.append(NOP));
+            otherwise.translateContents(classGen, methodGen);
+            exit = il.append(NOP);
+        }
+
+        // now that end is known set targets of exit gotos
+        Enumeration exitGotos = exitHandles.elements();
+        while (exitGotos.hasMoreElements()) {
+            BranchHandle gotoExit = (BranchHandle)exitGotos.nextElement();
+            gotoExit.setTarget(exit);
+        }
+    }
+}

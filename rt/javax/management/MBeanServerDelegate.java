@@ -1,240 +1,234 @@
-/*     */ package javax.management;
-/*     */ 
-/*     */ import com.sun.jmx.defaults.JmxProperties;
-/*     */ import com.sun.jmx.mbeanserver.Util;
-/*     */ import java.net.InetAddress;
-/*     */ import java.net.UnknownHostException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class MBeanServerDelegate
-/*     */   implements MBeanServerDelegateMBean, NotificationEmitter
-/*     */ {
-/*     */   private String mbeanServerId;
-/*     */   private final NotificationBroadcasterSupport broadcaster;
-/*  49 */   private static long oldStamp = 0L;
-/*     */   private final long stamp;
-/*  51 */   private long sequenceNumber = 1L;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static {
-/*  56 */     String[] arrayOfString = { "JMX.mbean.unregistered", "JMX.mbean.registered" };
-/*     */   }
-/*     */ 
-/*     */   
-/*  60 */   private static final MBeanNotificationInfo[] notifsInfo = new MBeanNotificationInfo[1]; static {
-/*  61 */     notifsInfo[0] = new MBeanNotificationInfo(arrayOfString, "javax.management.MBeanServerNotification", "Notifications sent by the MBeanServerDelegate MBean");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public MBeanServerDelegate() {
-/*  71 */     this.stamp = getStamp();
-/*  72 */     this.broadcaster = new NotificationBroadcasterSupport();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized String getMBeanServerId() {
-/*  82 */     if (this.mbeanServerId == null) {
-/*     */       String str;
-/*     */       try {
-/*  85 */         str = InetAddress.getLocalHost().getHostName();
-/*  86 */       } catch (UnknownHostException unknownHostException) {
-/*  87 */         JmxProperties.MISC_LOGGER.finest("Can't get local host name, using \"localhost\" instead. Cause is: " + unknownHostException);
-/*     */         
-/*  89 */         str = "localhost";
-/*     */       } 
-/*  91 */       this.mbeanServerId = str + "_" + this.stamp;
-/*     */     } 
-/*  93 */     return this.mbeanServerId;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getSpecificationName() {
-/* 103 */     return "Java Management Extensions";
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getSpecificationVersion() {
-/* 113 */     return "1.4";
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getSpecificationVendor() {
-/* 123 */     return "Oracle Corporation";
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getImplementationName() {
-/* 132 */     return "JMX";
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getImplementationVersion() {
-/*     */     try {
-/* 142 */       return System.getProperty("java.runtime.version");
-/* 143 */     } catch (SecurityException securityException) {
-/* 144 */       return "";
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getImplementationVendor() {
-/* 154 */     return "Oracle Corporation";
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public MBeanNotificationInfo[] getNotificationInfo() {
-/* 160 */     int i = notifsInfo.length;
-/* 161 */     MBeanNotificationInfo[] arrayOfMBeanNotificationInfo = new MBeanNotificationInfo[i];
-/*     */     
-/* 163 */     System.arraycopy(notifsInfo, 0, arrayOfMBeanNotificationInfo, 0, i);
-/* 164 */     return arrayOfMBeanNotificationInfo;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void addNotificationListener(NotificationListener paramNotificationListener, NotificationFilter paramNotificationFilter, Object paramObject) throws IllegalArgumentException {
-/* 174 */     this.broadcaster.addNotificationListener(paramNotificationListener, paramNotificationFilter, paramObject);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void removeNotificationListener(NotificationListener paramNotificationListener, NotificationFilter paramNotificationFilter, Object paramObject) throws ListenerNotFoundException {
-/* 184 */     this.broadcaster.removeNotificationListener(paramNotificationListener, paramNotificationFilter, paramObject);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void removeNotificationListener(NotificationListener paramNotificationListener) throws ListenerNotFoundException {
-/* 192 */     this.broadcaster.removeNotificationListener(paramNotificationListener);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void sendNotification(Notification paramNotification) {
-/* 204 */     if (paramNotification.getSequenceNumber() < 1L) {
-/* 205 */       synchronized (this) {
-/* 206 */         paramNotification.setSequenceNumber(this.sequenceNumber++);
-/*     */       } 
-/*     */     }
-/* 209 */     this.broadcaster.sendNotification(paramNotification);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 218 */   public static final ObjectName DELEGATE_NAME = Util.newObjectName("JMImplementation:type=MBeanServerDelegate");
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static synchronized long getStamp() {
-/* 227 */     long l = System.currentTimeMillis();
-/* 228 */     if (oldStamp >= l) {
-/* 229 */       l = oldStamp + 1L;
-/*     */     }
-/* 231 */     oldStamp = l;
-/* 232 */     return l;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\management\MBeanServerDelegate.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2008, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.management;
+
+import com.sun.jmx.defaults.JmxProperties;
+import com.sun.jmx.defaults.ServiceName;
+import com.sun.jmx.mbeanserver.Util;
+
+/**
+ * Represents  the MBean server from the management point of view.
+ * The MBeanServerDelegate MBean emits the MBeanServerNotifications when
+ * an MBean is registered/unregistered in the MBean server.
+ *
+ * @since 1.5
+ */
+public class MBeanServerDelegate implements MBeanServerDelegateMBean,
+                                            NotificationEmitter   {
+
+    /** The MBean server agent identification.*/
+    private String mbeanServerId ;
+
+    /** The NotificationBroadcasterSupport object that sends the
+        notifications */
+    private final NotificationBroadcasterSupport broadcaster;
+
+    private static long oldStamp = 0;
+    private final long stamp;
+    private long sequenceNumber = 1;
+
+    private static final MBeanNotificationInfo[] notifsInfo;
+
+    static {
+        final String[] types  = {
+            MBeanServerNotification.UNREGISTRATION_NOTIFICATION,
+            MBeanServerNotification.REGISTRATION_NOTIFICATION
+        };
+        notifsInfo = new MBeanNotificationInfo[1];
+        notifsInfo[0] =
+            new MBeanNotificationInfo(types,
+                    "javax.management.MBeanServerNotification",
+                    "Notifications sent by the MBeanServerDelegate MBean");
+    }
+
+    /**
+     * Create a MBeanServerDelegate object.
+     */
+    public MBeanServerDelegate () {
+        stamp = getStamp();
+        broadcaster = new NotificationBroadcasterSupport() ;
+    }
+
+
+    /**
+     * Returns the MBean server agent identity.
+     *
+     * @return the identity.
+     */
+    public synchronized String getMBeanServerId() {
+        if (mbeanServerId == null) {
+            String localHost;
+            try {
+                localHost = java.net.InetAddress.getLocalHost().getHostName();
+            } catch (java.net.UnknownHostException e) {
+                JmxProperties.MISC_LOGGER.finest("Can't get local host name, " +
+                        "using \"localhost\" instead. Cause is: "+e);
+                localHost = "localhost";
+            }
+            mbeanServerId = localHost + "_" + stamp;
+        }
+        return mbeanServerId;
+    }
+
+    /**
+     * Returns the full name of the JMX specification implemented
+     * by this product.
+     *
+     * @return the specification name.
+     */
+    public String getSpecificationName() {
+        return ServiceName.JMX_SPEC_NAME;
+    }
+
+    /**
+     * Returns the version of the JMX specification implemented
+     * by this product.
+     *
+     * @return the specification version.
+     */
+    public String getSpecificationVersion() {
+        return ServiceName.JMX_SPEC_VERSION;
+    }
+
+    /**
+     * Returns the vendor of the JMX specification implemented
+     * by this product.
+     *
+     * @return the specification vendor.
+     */
+    public String getSpecificationVendor() {
+        return ServiceName.JMX_SPEC_VENDOR;
+    }
+
+    /**
+     * Returns the JMX implementation name (the name of this product).
+     *
+     * @return the implementation name.
+     */
+    public String getImplementationName() {
+        return ServiceName.JMX_IMPL_NAME;
+    }
+
+    /**
+     * Returns the JMX implementation version (the version of this product).
+     *
+     * @return the implementation version.
+     */
+    public String getImplementationVersion() {
+        try {
+            return System.getProperty("java.runtime.version");
+        } catch (SecurityException e) {
+            return "";
+        }
+    }
+
+    /**
+     * Returns the JMX implementation vendor (the vendor of this product).
+     *
+     * @return the implementation vendor.
+     */
+    public String getImplementationVendor()  {
+        return ServiceName.JMX_IMPL_VENDOR;
+    }
+
+    // From NotificationEmitter extends NotificationBroacaster
+    //
+    public MBeanNotificationInfo[] getNotificationInfo() {
+        final int len = MBeanServerDelegate.notifsInfo.length;
+        final MBeanNotificationInfo[] infos =
+        new MBeanNotificationInfo[len];
+        System.arraycopy(MBeanServerDelegate.notifsInfo,0,infos,0,len);
+        return infos;
+    }
+
+    // From NotificationEmitter extends NotificationBroacaster
+    //
+    public synchronized
+        void addNotificationListener(NotificationListener listener,
+                                     NotificationFilter filter,
+                                     Object handback)
+        throws IllegalArgumentException {
+        broadcaster.addNotificationListener(listener,filter,handback) ;
+    }
+
+    // From NotificationEmitter extends NotificationBroacaster
+    //
+    public synchronized
+        void removeNotificationListener(NotificationListener listener,
+                                        NotificationFilter filter,
+                                        Object handback)
+        throws ListenerNotFoundException {
+        broadcaster.removeNotificationListener(listener,filter,handback) ;
+    }
+
+    // From NotificationEmitter extends NotificationBroacaster
+    //
+    public synchronized
+        void removeNotificationListener(NotificationListener listener)
+        throws ListenerNotFoundException {
+        broadcaster.removeNotificationListener(listener) ;
+    }
+
+    /**
+     * Enables the MBean server to send a notification.
+     * If the passed <var>notification</var> has a sequence number lesser
+     * or equal to 0, then replace it with the delegate's own sequence
+     * number.
+     * @param notification The notification to send.
+     *
+     */
+    public void sendNotification(Notification notification) {
+        if (notification.getSequenceNumber() < 1) {
+            synchronized (this) {
+                notification.setSequenceNumber(this.sequenceNumber++);
+            }
+        }
+        broadcaster.sendNotification(notification);
+    }
+
+    /**
+     * Defines the default ObjectName of the MBeanServerDelegate.
+     *
+     * @since 1.6
+     */
+    public static final ObjectName DELEGATE_NAME =
+            Util.newObjectName("JMImplementation:type=MBeanServerDelegate");
+
+    /* Return a timestamp that is monotonically increasing even if
+       System.currentTimeMillis() isn't (for example, if you call this
+       constructor more than once in the same millisecond, or if the
+       clock always returns the same value).  This means that the ids
+       for a given JVM will always be distinact, though there is no
+       such guarantee for two different JVMs.  */
+    private static synchronized long getStamp() {
+        long s = System.currentTimeMillis();
+        if (oldStamp >= s) {
+            s = oldStamp + 1;
+        }
+        oldStamp = s;
+        return s;
+    }
+}

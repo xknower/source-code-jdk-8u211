@@ -1,575 +1,569 @@
-/*     */ package com.sun.java.swing.plaf.windows;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Component;
-/*     */ import java.awt.Container;
-/*     */ import java.awt.Dimension;
-/*     */ import java.awt.Font;
-/*     */ import java.awt.FontMetrics;
-/*     */ import java.awt.GradientPaint;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Graphics2D;
-/*     */ import java.awt.Insets;
-/*     */ import java.awt.LayoutManager;
-/*     */ import java.awt.Paint;
-/*     */ import java.awt.Point;
-/*     */ import java.awt.Rectangle;
-/*     */ import java.awt.event.MouseAdapter;
-/*     */ import java.awt.event.MouseEvent;
-/*     */ import java.beans.PropertyChangeEvent;
-/*     */ import java.beans.PropertyChangeListener;
-/*     */ import java.beans.PropertyVetoException;
-/*     */ import javax.swing.BorderFactory;
-/*     */ import javax.swing.Icon;
-/*     */ import javax.swing.JButton;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.JInternalFrame;
-/*     */ import javax.swing.JLabel;
-/*     */ import javax.swing.JMenuItem;
-/*     */ import javax.swing.JPopupMenu;
-/*     */ import javax.swing.JSeparator;
-/*     */ import javax.swing.LookAndFeel;
-/*     */ import javax.swing.UIDefaults;
-/*     */ import javax.swing.UIManager;
-/*     */ import javax.swing.border.Border;
-/*     */ import javax.swing.plaf.UIResource;
-/*     */ import javax.swing.plaf.basic.BasicInternalFrameTitlePane;
-/*     */ import sun.swing.SwingUtilities2;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class WindowsInternalFrameTitlePane
-/*     */   extends BasicInternalFrameTitlePane
-/*     */ {
-/*     */   private Color selectedTitleGradientColor;
-/*     */   private Color notSelectedTitleGradientColor;
-/*     */   private JPopupMenu systemPopupMenu;
-/*     */   private JLabel systemLabel;
-/*     */   private Font titleFont;
-/*     */   private int titlePaneHeight;
-/*     */   private int buttonWidth;
-/*     */   private int buttonHeight;
-/*     */   private boolean hotTrackingOn;
-/*     */   
-/*     */   public WindowsInternalFrameTitlePane(JInternalFrame paramJInternalFrame) {
-/*  56 */     super(paramJInternalFrame);
-/*     */   }
-/*     */   
-/*     */   protected void addSubComponents() {
-/*  60 */     add(this.systemLabel);
-/*  61 */     add(this.iconButton);
-/*  62 */     add(this.maxButton);
-/*  63 */     add(this.closeButton);
-/*     */   }
-/*     */   
-/*     */   protected void installDefaults() {
-/*  67 */     super.installDefaults();
-/*     */     
-/*  69 */     this.titlePaneHeight = UIManager.getInt("InternalFrame.titlePaneHeight");
-/*  70 */     this.buttonWidth = UIManager.getInt("InternalFrame.titleButtonWidth") - 4;
-/*  71 */     this.buttonHeight = UIManager.getInt("InternalFrame.titleButtonHeight") - 4;
-/*     */     
-/*  73 */     Object object = UIManager.get("InternalFrame.titleButtonToolTipsOn");
-/*  74 */     this.hotTrackingOn = (object instanceof Boolean) ? ((Boolean)object).booleanValue() : true;
-/*     */ 
-/*     */     
-/*  77 */     if (XPStyle.getXP() != null) {
-/*     */ 
-/*     */ 
-/*     */       
-/*  81 */       this.buttonWidth = this.buttonHeight;
-/*  82 */       Dimension dimension = XPStyle.getPartSize(TMSchema.Part.WP_CLOSEBUTTON, TMSchema.State.NORMAL);
-/*  83 */       if (dimension != null && dimension.width != 0 && dimension.height != 0) {
-/*  84 */         this.buttonWidth = (int)(this.buttonWidth * dimension.width / dimension.height);
-/*     */       }
-/*     */     } else {
-/*  87 */       this.buttonWidth += 2;
-/*     */       
-/*  89 */       Color color = UIManager.getColor("InternalFrame.activeBorderColor");
-/*  90 */       setBorder(BorderFactory.createLineBorder(color, 1));
-/*     */     } 
-/*     */     
-/*  93 */     this
-/*  94 */       .selectedTitleGradientColor = UIManager.getColor("InternalFrame.activeTitleGradient");
-/*  95 */     this
-/*  96 */       .notSelectedTitleGradientColor = UIManager.getColor("InternalFrame.inactiveTitleGradient");
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected void uninstallListeners() {
-/* 101 */     super.uninstallListeners();
-/*     */   }
-/*     */   
-/*     */   protected void createButtons() {
-/* 105 */     super.createButtons();
-/* 106 */     if (XPStyle.getXP() != null) {
-/* 107 */       this.iconButton.setContentAreaFilled(false);
-/* 108 */       this.maxButton.setContentAreaFilled(false);
-/* 109 */       this.closeButton.setContentAreaFilled(false);
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   protected void setButtonIcons() {
-/* 114 */     super.setButtonIcons();
-/*     */     
-/* 116 */     if (!this.hotTrackingOn) {
-/* 117 */       this.iconButton.setToolTipText((String)null);
-/* 118 */       this.maxButton.setToolTipText((String)null);
-/* 119 */       this.closeButton.setToolTipText((String)null);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void paintComponent(Graphics paramGraphics) {
-/* 125 */     XPStyle xPStyle = XPStyle.getXP();
-/*     */     
-/* 127 */     paintTitleBackground(paramGraphics);
-/*     */     
-/* 129 */     String str = this.frame.getTitle();
-/* 130 */     if (str != null) {
-/* 131 */       int j, k; boolean bool = this.frame.isSelected();
-/* 132 */       Font font1 = paramGraphics.getFont();
-/* 133 */       Font font2 = (this.titleFont != null) ? this.titleFont : getFont();
-/* 134 */       paramGraphics.setFont(font2);
-/*     */ 
-/*     */       
-/* 137 */       FontMetrics fontMetrics = SwingUtilities2.getFontMetrics(this.frame, paramGraphics, font2);
-/*     */       
-/* 139 */       int i = (getHeight() + fontMetrics.getAscent() - fontMetrics.getLeading() - fontMetrics.getDescent()) / 2;
-/*     */       
-/* 141 */       Rectangle rectangle = new Rectangle(0, 0, 0, 0);
-/* 142 */       if (this.frame.isIconifiable()) {
-/* 143 */         rectangle = this.iconButton.getBounds();
-/* 144 */       } else if (this.frame.isMaximizable()) {
-/* 145 */         rectangle = this.maxButton.getBounds();
-/* 146 */       } else if (this.frame.isClosable()) {
-/* 147 */         rectangle = this.closeButton.getBounds();
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */       
-/* 152 */       byte b = 2;
-/* 153 */       if (WindowsGraphicsUtils.isLeftToRight(this.frame)) {
-/* 154 */         if (rectangle.x == 0) {
-/* 155 */           rectangle.x = this.frame.getWidth() - (this.frame.getInsets()).right;
-/*     */         }
-/* 157 */         j = this.systemLabel.getX() + this.systemLabel.getWidth() + b;
-/* 158 */         if (xPStyle != null) {
-/* 159 */           j += 2;
-/*     */         }
-/* 161 */         k = rectangle.x - j - b;
-/*     */       } else {
-/* 163 */         if (rectangle.x == 0) {
-/* 164 */           rectangle.x = (this.frame.getInsets()).left;
-/*     */         }
-/* 166 */         k = SwingUtilities2.stringWidth(this.frame, fontMetrics, str);
-/* 167 */         int m = rectangle.x + rectangle.width + b;
-/* 168 */         if (xPStyle != null) {
-/* 169 */           m += 2;
-/*     */         }
-/* 171 */         int n = this.systemLabel.getX() - b - m;
-/* 172 */         if (n > k) {
-/* 173 */           j = this.systemLabel.getX() - b - k;
-/*     */         } else {
-/* 175 */           j = m;
-/* 176 */           k = n;
-/*     */         } 
-/*     */       } 
-/* 179 */       str = getTitle(this.frame.getTitle(), fontMetrics, k);
-/*     */       
-/* 181 */       if (xPStyle != null) {
-/* 182 */         String str1 = null;
-/* 183 */         if (bool) {
-/* 184 */           str1 = xPStyle.getString(this, TMSchema.Part.WP_CAPTION, TMSchema.State.ACTIVE, TMSchema.Prop.TEXTSHADOWTYPE);
-/*     */         }
-/*     */         
-/* 187 */         if ("single".equalsIgnoreCase(str1)) {
-/* 188 */           Point point = xPStyle.getPoint(this, TMSchema.Part.WP_WINDOW, TMSchema.State.ACTIVE, TMSchema.Prop.TEXTSHADOWOFFSET);
-/*     */           
-/* 190 */           Color color = xPStyle.getColor(this, TMSchema.Part.WP_WINDOW, TMSchema.State.ACTIVE, TMSchema.Prop.TEXTSHADOWCOLOR, null);
-/*     */           
-/* 192 */           if (point != null && color != null) {
-/* 193 */             paramGraphics.setColor(color);
-/* 194 */             SwingUtilities2.drawString(this.frame, paramGraphics, str, j + point.x, i + point.y);
-/*     */           } 
-/*     */         } 
-/*     */       } 
-/*     */ 
-/*     */       
-/* 200 */       paramGraphics.setColor(bool ? this.selectedTextColor : this.notSelectedTextColor);
-/* 201 */       SwingUtilities2.drawString(this.frame, paramGraphics, str, j, i);
-/* 202 */       paramGraphics.setFont(font1);
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public Dimension getPreferredSize() {
-/* 207 */     return getMinimumSize();
-/*     */   }
-/*     */   
-/*     */   public Dimension getMinimumSize() {
-/* 211 */     Dimension dimension = new Dimension(super.getMinimumSize());
-/* 212 */     dimension.height = this.titlePaneHeight + 2;
-/*     */     
-/* 214 */     XPStyle xPStyle = XPStyle.getXP();
-/* 215 */     if (xPStyle != null)
-/*     */     {
-/*     */       
-/* 218 */       if (this.frame.isMaximum()) {
-/* 219 */         dimension.height--;
-/*     */       } else {
-/* 221 */         dimension.height += 3;
-/*     */       } 
-/*     */     }
-/* 224 */     return dimension;
-/*     */   }
-/*     */   
-/*     */   protected void paintTitleBackground(Graphics paramGraphics) {
-/* 228 */     XPStyle xPStyle = XPStyle.getXP();
-/* 229 */     if (xPStyle != null) {
-/*     */       
-/* 231 */       TMSchema.Part part = this.frame.isIcon() ? TMSchema.Part.WP_MINCAPTION : (this.frame.isMaximum() ? TMSchema.Part.WP_MAXCAPTION : TMSchema.Part.WP_CAPTION);
-/*     */       
-/* 233 */       TMSchema.State state = this.frame.isSelected() ? TMSchema.State.ACTIVE : TMSchema.State.INACTIVE;
-/* 234 */       XPStyle.Skin skin = xPStyle.getSkin(this, part);
-/* 235 */       skin.paintSkin(paramGraphics, 0, 0, getWidth(), getHeight(), state);
-/*     */     } else {
-/* 237 */       Boolean bool = (Boolean)LookAndFeel.getDesktopPropertyValue("win.frame.captionGradientsOn", 
-/* 238 */           Boolean.valueOf(false));
-/* 239 */       if (bool.booleanValue() && paramGraphics instanceof Graphics2D) {
-/* 240 */         Graphics2D graphics2D = (Graphics2D)paramGraphics;
-/* 241 */         Paint paint = graphics2D.getPaint();
-/*     */         
-/* 243 */         boolean bool1 = this.frame.isSelected();
-/* 244 */         int i = getWidth();
-/*     */         
-/* 246 */         if (bool1) {
-/* 247 */           GradientPaint gradientPaint = new GradientPaint(0.0F, 0.0F, this.selectedTitleColor, (int)(i * 0.75D), 0.0F, this.selectedTitleGradientColor);
-/*     */ 
-/*     */ 
-/*     */           
-/* 251 */           graphics2D.setPaint(gradientPaint);
-/*     */         } else {
-/* 253 */           GradientPaint gradientPaint = new GradientPaint(0.0F, 0.0F, this.notSelectedTitleColor, (int)(i * 0.75D), 0.0F, this.notSelectedTitleGradientColor);
-/*     */ 
-/*     */ 
-/*     */           
-/* 257 */           graphics2D.setPaint(gradientPaint);
-/*     */         } 
-/* 259 */         graphics2D.fillRect(0, 0, getWidth(), getHeight());
-/* 260 */         graphics2D.setPaint(paint);
-/*     */       } else {
-/* 262 */         super.paintTitleBackground(paramGraphics);
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   protected void assembleSystemMenu() {
-/* 268 */     this.systemPopupMenu = new JPopupMenu();
-/* 269 */     addSystemMenuItems(this.systemPopupMenu);
-/* 270 */     enableActions();
-/* 271 */     this.systemLabel = new JLabel(this.frame.getFrameIcon()) {
-/*     */         protected void paintComponent(Graphics param1Graphics) {
-/* 273 */           int i = 0;
-/* 274 */           int j = 0;
-/* 275 */           int k = getWidth();
-/* 276 */           int m = getHeight();
-/* 277 */           param1Graphics = param1Graphics.create();
-/* 278 */           if (isOpaque()) {
-/* 279 */             param1Graphics.setColor(getBackground());
-/* 280 */             param1Graphics.fillRect(0, 0, k, m);
-/*     */           } 
-/* 282 */           Icon icon = getIcon();
-/*     */           
-/*     */           int n, i1;
-/* 285 */           if (icon != null && (
-/* 286 */             n = icon.getIconWidth()) > 0 && (
-/* 287 */             i1 = icon.getIconHeight()) > 0) {
-/*     */             double d;
-/*     */ 
-/*     */             
-/* 291 */             if (n > i1) {
-/*     */               
-/* 293 */               j = (m - k * i1 / n) / 2;
-/* 294 */               d = k / n;
-/*     */             } else {
-/*     */               
-/* 297 */               i = (k - m * n / i1) / 2;
-/* 298 */               d = m / i1;
-/*     */             } 
-/* 300 */             ((Graphics2D)param1Graphics).translate(i, j);
-/* 301 */             ((Graphics2D)param1Graphics).scale(d, d);
-/* 302 */             icon.paintIcon(this, param1Graphics, 0, 0);
-/*     */           } 
-/* 304 */           param1Graphics.dispose();
-/*     */         }
-/*     */       };
-/* 307 */     this.systemLabel.addMouseListener(new MouseAdapter() {
-/*     */           public void mouseClicked(MouseEvent param1MouseEvent) {
-/* 309 */             if (param1MouseEvent.getClickCount() == 2 && WindowsInternalFrameTitlePane.this.frame.isClosable() && 
-/* 310 */               !WindowsInternalFrameTitlePane.this.frame.isIcon()) {
-/* 311 */               WindowsInternalFrameTitlePane.this.systemPopupMenu.setVisible(false);
-/* 312 */               WindowsInternalFrameTitlePane.this.frame.doDefaultCloseAction();
-/*     */             } else {
-/*     */               
-/* 315 */               super.mouseClicked(param1MouseEvent);
-/*     */             } 
-/*     */           }
-/*     */           public void mousePressed(MouseEvent param1MouseEvent) {
-/*     */             try {
-/* 320 */               WindowsInternalFrameTitlePane.this.frame.setSelected(true);
-/* 321 */             } catch (PropertyVetoException propertyVetoException) {}
-/*     */             
-/* 323 */             WindowsInternalFrameTitlePane.this.showSystemPopupMenu(param1MouseEvent.getComponent());
-/*     */           }
-/*     */         });
-/*     */   }
-/*     */   
-/*     */   protected void addSystemMenuItems(JPopupMenu paramJPopupMenu) {
-/* 329 */     JMenuItem jMenuItem = paramJPopupMenu.add(this.restoreAction);
-/* 330 */     jMenuItem.setMnemonic(getButtonMnemonic("restore"));
-/* 331 */     jMenuItem = paramJPopupMenu.add(this.moveAction);
-/* 332 */     jMenuItem.setMnemonic(getButtonMnemonic("move"));
-/* 333 */     jMenuItem = paramJPopupMenu.add(this.sizeAction);
-/* 334 */     jMenuItem.setMnemonic(getButtonMnemonic("size"));
-/* 335 */     jMenuItem = paramJPopupMenu.add(this.iconifyAction);
-/* 336 */     jMenuItem.setMnemonic(getButtonMnemonic("minimize"));
-/* 337 */     jMenuItem = paramJPopupMenu.add(this.maximizeAction);
-/* 338 */     jMenuItem.setMnemonic(getButtonMnemonic("maximize"));
-/* 339 */     paramJPopupMenu.add(new JSeparator());
-/* 340 */     jMenuItem = paramJPopupMenu.add(this.closeAction);
-/* 341 */     jMenuItem.setMnemonic(getButtonMnemonic("close"));
-/*     */   }
-/*     */   
-/*     */   private static int getButtonMnemonic(String paramString) {
-/*     */     try {
-/* 346 */       return Integer.parseInt(UIManager.getString("InternalFrameTitlePane." + paramString + "Button.mnemonic"));
-/*     */     }
-/* 348 */     catch (NumberFormatException numberFormatException) {
-/* 349 */       return -1;
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   protected void showSystemMenu() {
-/* 354 */     showSystemPopupMenu(this.systemLabel);
-/*     */   }
-/*     */   
-/*     */   private void showSystemPopupMenu(Component paramComponent) {
-/* 358 */     Dimension dimension = new Dimension();
-/* 359 */     Border border = this.frame.getBorder();
-/* 360 */     if (border != null) {
-/* 361 */       dimension.width += (border.getBorderInsets(this.frame)).left + 
-/* 362 */         (border.getBorderInsets(this.frame)).right;
-/* 363 */       dimension.height += (border.getBorderInsets(this.frame)).bottom + 
-/* 364 */         (border.getBorderInsets(this.frame)).top;
-/*     */     } 
-/* 366 */     if (!this.frame.isIcon()) {
-/* 367 */       this.systemPopupMenu.show(paramComponent, 
-/* 368 */           getX() - dimension.width, 
-/* 369 */           getY() + getHeight() - dimension.height);
-/*     */     } else {
-/* 371 */       this.systemPopupMenu.show(paramComponent, 
-/* 372 */           getX() - dimension.width, 
-/* 373 */           getY() - (this.systemPopupMenu.getPreferredSize()).height - dimension.height);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected PropertyChangeListener createPropertyChangeListener() {
-/* 379 */     return new WindowsPropertyChangeHandler();
-/*     */   }
-/*     */   
-/*     */   protected LayoutManager createLayout() {
-/* 383 */     return new WindowsTitlePaneLayout();
-/*     */   }
-/*     */   
-/*     */   public class WindowsTitlePaneLayout extends BasicInternalFrameTitlePane.TitlePaneLayout {
-/* 387 */     private Insets captionMargin = null;
-/* 388 */     private Insets contentMargin = null;
-/* 389 */     private XPStyle xp = XPStyle.getXP();
-/*     */     
-/*     */     WindowsTitlePaneLayout() {
-/* 392 */       if (this.xp != null) {
-/* 393 */         WindowsInternalFrameTitlePane windowsInternalFrameTitlePane = WindowsInternalFrameTitlePane.this;
-/* 394 */         this.captionMargin = this.xp.getMargin(windowsInternalFrameTitlePane, TMSchema.Part.WP_CAPTION, null, TMSchema.Prop.CAPTIONMARGINS);
-/* 395 */         this.contentMargin = this.xp.getMargin(windowsInternalFrameTitlePane, TMSchema.Part.WP_CAPTION, null, TMSchema.Prop.CONTENTMARGINS);
-/*     */       } 
-/* 397 */       if (this.captionMargin == null) {
-/* 398 */         this.captionMargin = new Insets(0, 2, 0, 2);
-/*     */       }
-/* 400 */       if (this.contentMargin == null) {
-/* 401 */         this.contentMargin = new Insets(0, 0, 0, 0);
-/*     */       }
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     private int layoutButton(JComponent param1JComponent, TMSchema.Part param1Part, int param1Int1, int param1Int2, int param1Int3, int param1Int4, int param1Int5, boolean param1Boolean) {
-/* 408 */       if (!param1Boolean) {
-/* 409 */         param1Int1 -= param1Int3;
-/*     */       }
-/* 411 */       param1JComponent.setBounds(param1Int1, param1Int2, param1Int3, param1Int4);
-/* 412 */       if (param1Boolean) {
-/* 413 */         param1Int1 += param1Int3 + 2;
-/*     */       } else {
-/* 415 */         param1Int1 -= 2;
-/*     */       } 
-/* 417 */       return param1Int1;
-/*     */     }
-/*     */     public void layoutContainer(Container param1Container) {
-/*     */       int i;
-/* 421 */       boolean bool = WindowsGraphicsUtils.isLeftToRight(WindowsInternalFrameTitlePane.this.frame);
-/*     */       
-/* 423 */       int k = WindowsInternalFrameTitlePane.this.getWidth();
-/* 424 */       int m = WindowsInternalFrameTitlePane.this.getHeight();
-/*     */ 
-/*     */ 
-/*     */       
-/* 428 */       int n = (this.xp != null) ? ((m - 2) * 6 / 10) : (m - 4);
-/* 429 */       if (this.xp != null) {
-/* 430 */         i = bool ? (this.captionMargin.left + 2) : (k - this.captionMargin.right - 2);
-/*     */       } else {
-/* 432 */         i = bool ? this.captionMargin.left : (k - this.captionMargin.right);
-/*     */       } 
-/* 434 */       int j = (m - n) / 2;
-/* 435 */       layoutButton(WindowsInternalFrameTitlePane.this.systemLabel, TMSchema.Part.WP_SYSBUTTON, i, j, n, n, 0, bool);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 440 */       if (this.xp != null) {
-/* 441 */         i = bool ? (k - this.captionMargin.right - 2) : (this.captionMargin.left + 2);
-/* 442 */         j = 1;
-/* 443 */         if (WindowsInternalFrameTitlePane.this.frame.isMaximum()) {
-/* 444 */           j++;
-/*     */         } else {
-/* 446 */           j += 5;
-/*     */         } 
-/*     */       } else {
-/* 449 */         i = bool ? (k - this.captionMargin.right) : this.captionMargin.left;
-/* 450 */         j = (m - WindowsInternalFrameTitlePane.this.buttonHeight) / 2;
-/*     */       } 
-/*     */       
-/* 453 */       if (WindowsInternalFrameTitlePane.this.frame.isClosable()) {
-/* 454 */         i = layoutButton(WindowsInternalFrameTitlePane.this.closeButton, TMSchema.Part.WP_CLOSEBUTTON, i, j, WindowsInternalFrameTitlePane.this
-/* 455 */             .buttonWidth, WindowsInternalFrameTitlePane.this.buttonHeight, 2, !bool);
-/*     */       }
-/*     */ 
-/*     */       
-/* 459 */       if (WindowsInternalFrameTitlePane.this.frame.isMaximizable()) {
-/* 460 */         i = layoutButton(WindowsInternalFrameTitlePane.this.maxButton, TMSchema.Part.WP_MAXBUTTON, i, j, WindowsInternalFrameTitlePane.this
-/* 461 */             .buttonWidth, WindowsInternalFrameTitlePane.this.buttonHeight, (this.xp != null) ? 2 : 0, !bool);
-/*     */       }
-/*     */ 
-/*     */       
-/* 465 */       if (WindowsInternalFrameTitlePane.this.frame.isIconifiable())
-/* 466 */         layoutButton(WindowsInternalFrameTitlePane.this.iconButton, TMSchema.Part.WP_MINBUTTON, i, j, WindowsInternalFrameTitlePane.this
-/* 467 */             .buttonWidth, WindowsInternalFrameTitlePane.this.buttonHeight, 0, !bool); 
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   public class WindowsPropertyChangeHandler
-/*     */     extends BasicInternalFrameTitlePane.PropertyChangeHandler
-/*     */   {
-/*     */     public void propertyChange(PropertyChangeEvent param1PropertyChangeEvent) {
-/* 475 */       String str = param1PropertyChangeEvent.getPropertyName();
-/*     */ 
-/*     */       
-/* 478 */       if ("frameIcon".equals(str) && WindowsInternalFrameTitlePane.this
-/* 479 */         .systemLabel != null) {
-/* 480 */         WindowsInternalFrameTitlePane.this.systemLabel.setIcon(WindowsInternalFrameTitlePane.this.frame.getFrameIcon());
-/*     */       }
-/*     */       
-/* 483 */       super.propertyChange(param1PropertyChangeEvent);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static class ScalableIconUIResource
-/*     */     implements Icon, UIResource
-/*     */   {
-/*     */     private static final int SIZE = 16;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     private Icon[] icons;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public ScalableIconUIResource(Object[] param1ArrayOfObject) {
-/* 508 */       this.icons = new Icon[param1ArrayOfObject.length];
-/*     */       
-/* 510 */       for (byte b = 0; b < param1ArrayOfObject.length; b++) {
-/* 511 */         if (param1ArrayOfObject[b] instanceof UIDefaults.LazyValue) {
-/* 512 */           this.icons[b] = (Icon)((UIDefaults.LazyValue)param1ArrayOfObject[b]).createValue(null);
-/*     */         } else {
-/* 514 */           this.icons[b] = (Icon)param1ArrayOfObject[b];
-/*     */         } 
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     protected Icon getBestIcon(int param1Int) {
-/* 523 */       if (this.icons != null && this.icons.length > 0) {
-/* 524 */         byte b1 = 0;
-/* 525 */         int i = Integer.MAX_VALUE;
-/* 526 */         for (byte b2 = 0; b2 < this.icons.length; b2++) {
-/* 527 */           Icon icon = this.icons[b2];
-/*     */           int j;
-/* 529 */           if (icon != null && (j = icon.getIconWidth()) > 0) {
-/* 530 */             int k = Math.abs(j - param1Int);
-/* 531 */             if (k < i) {
-/* 532 */               i = k;
-/* 533 */               b1 = b2;
-/*     */             } 
-/*     */           } 
-/*     */         } 
-/* 537 */         return this.icons[b1];
-/*     */       } 
-/* 539 */       return null;
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public void paintIcon(Component param1Component, Graphics param1Graphics, int param1Int1, int param1Int2) {
-/* 544 */       Graphics2D graphics2D = (Graphics2D)param1Graphics.create();
-/*     */ 
-/*     */       
-/* 547 */       int i = getIconWidth();
-/* 548 */       double d = graphics2D.getTransform().getScaleX();
-/* 549 */       Icon icon = getBestIcon((int)(i * d));
-/*     */       int j;
-/* 551 */       if (icon != null && (j = icon.getIconWidth()) > 0) {
-/*     */         
-/* 553 */         double d1 = i / j;
-/* 554 */         graphics2D.translate(param1Int1, param1Int2);
-/* 555 */         graphics2D.scale(d1, d1);
-/* 556 */         icon.paintIcon(param1Component, graphics2D, 0, 0);
-/*     */       } 
-/* 558 */       graphics2D.dispose();
-/*     */     }
-/*     */     
-/*     */     public int getIconWidth() {
-/* 562 */       return 16;
-/*     */     }
-/*     */     
-/*     */     public int getIconHeight() {
-/* 566 */       return 16;
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\java\swing\plaf\windows\WindowsInternalFrameTitlePane.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2001, 2014, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.java.swing.plaf.windows;
+
+import sun.swing.SwingUtilities2;
+
+import javax.swing.*;
+import javax.swing.border.*;
+import javax.swing.UIManager;
+import javax.swing.plaf.*;
+import javax.swing.plaf.basic.BasicInternalFrameTitlePane;
+import java.awt.*;
+import java.awt.event.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyVetoException;
+
+import static com.sun.java.swing.plaf.windows.TMSchema.*;
+import static com.sun.java.swing.plaf.windows.XPStyle.Skin;
+
+public class WindowsInternalFrameTitlePane extends BasicInternalFrameTitlePane {
+    private Color selectedTitleGradientColor;
+    private Color notSelectedTitleGradientColor;
+    private JPopupMenu systemPopupMenu;
+    private JLabel systemLabel;
+
+    private Font titleFont;
+    private int titlePaneHeight;
+    private int buttonWidth, buttonHeight;
+    private boolean hotTrackingOn;
+
+    public WindowsInternalFrameTitlePane(JInternalFrame f) {
+        super(f);
+    }
+
+    protected void addSubComponents() {
+        add(systemLabel);
+        add(iconButton);
+        add(maxButton);
+        add(closeButton);
+    }
+
+    protected void installDefaults() {
+        super.installDefaults();
+
+        titlePaneHeight = UIManager.getInt("InternalFrame.titlePaneHeight");
+        buttonWidth     = UIManager.getInt("InternalFrame.titleButtonWidth")  - 4;
+        buttonHeight    = UIManager.getInt("InternalFrame.titleButtonHeight") - 4;
+
+        Object obj      = UIManager.get("InternalFrame.titleButtonToolTipsOn");
+        hotTrackingOn = (obj instanceof Boolean) ? (Boolean)obj : true;
+
+
+        if (XPStyle.getXP() != null) {
+            // Fix for XP bug where sometimes these sizes aren't updated properly
+            // Assume for now that height is correct and derive width using the
+            // ratio from the uxtheme part
+            buttonWidth = buttonHeight;
+            Dimension d = XPStyle.getPartSize(Part.WP_CLOSEBUTTON, State.NORMAL);
+            if (d != null && d.width != 0 && d.height != 0) {
+                buttonWidth = (int) ((float) buttonWidth * d.width / d.height);
+            }
+        } else {
+            buttonWidth += 2;
+            Color activeBorderColor =
+                    UIManager.getColor("InternalFrame.activeBorderColor");
+            setBorder(BorderFactory.createLineBorder(activeBorderColor, 1));
+        }
+        // JDK-8039383: initialize these colors because getXP() may return null when theme is changed
+        selectedTitleGradientColor =
+                UIManager.getColor("InternalFrame.activeTitleGradient");
+        notSelectedTitleGradientColor =
+                UIManager.getColor("InternalFrame.inactiveTitleGradient");
+    }
+
+    protected void uninstallListeners() {
+        // Get around protected method in superclass
+        super.uninstallListeners();
+    }
+
+    protected void createButtons() {
+        super.createButtons();
+        if (XPStyle.getXP() != null) {
+            iconButton.setContentAreaFilled(false);
+            maxButton.setContentAreaFilled(false);
+            closeButton.setContentAreaFilled(false);
+        }
+    }
+
+    protected void setButtonIcons() {
+        super.setButtonIcons();
+
+        if (!hotTrackingOn) {
+            iconButton.setToolTipText(null);
+            maxButton.setToolTipText(null);
+            closeButton.setToolTipText(null);
+        }
+    }
+
+
+    public void paintComponent(Graphics g)  {
+        XPStyle xp = XPStyle.getXP();
+
+        paintTitleBackground(g);
+
+        String title = frame.getTitle();
+        if (title != null) {
+            boolean isSelected = frame.isSelected();
+            Font oldFont = g.getFont();
+            Font newFont = (titleFont != null) ? titleFont : getFont();
+            g.setFont(newFont);
+
+            // Center text vertically.
+            FontMetrics fm = SwingUtilities2.getFontMetrics(frame, g, newFont);
+            int baseline = (getHeight() + fm.getAscent() - fm.getLeading() -
+                    fm.getDescent()) / 2;
+
+            Rectangle lastIconBounds = new Rectangle(0, 0, 0, 0);
+            if (frame.isIconifiable()) {
+                lastIconBounds = iconButton.getBounds();
+            } else if (frame.isMaximizable()) {
+                lastIconBounds = maxButton.getBounds();
+            } else if (frame.isClosable()) {
+                lastIconBounds = closeButton.getBounds();
+            }
+
+            int titleX;
+            int titleW;
+            int gap = 2;
+            if (WindowsGraphicsUtils.isLeftToRight(frame)) {
+                if (lastIconBounds.x == 0) { // There are no icons
+                    lastIconBounds.x = frame.getWidth() - frame.getInsets().right;
+                }
+                titleX = systemLabel.getX() + systemLabel.getWidth() + gap;
+                if (xp != null) {
+                    titleX += 2;
+                }
+                titleW = lastIconBounds.x - titleX - gap;
+            } else {
+                if (lastIconBounds.x == 0) { // There are no icons
+                    lastIconBounds.x = frame.getInsets().left;
+                }
+                titleW = SwingUtilities2.stringWidth(frame, fm, title);
+                int minTitleX = lastIconBounds.x + lastIconBounds.width + gap;
+                if (xp != null) {
+                    minTitleX += 2;
+                }
+                int availableWidth = systemLabel.getX() - gap - minTitleX;
+                if (availableWidth > titleW) {
+                    titleX = systemLabel.getX() - gap - titleW;
+                } else {
+                    titleX = minTitleX;
+                    titleW = availableWidth;
+                }
+            }
+            title = getTitle(frame.getTitle(), fm, titleW);
+
+            if (xp != null) {
+                String shadowType = null;
+                if (isSelected) {
+                    shadowType = xp.getString(this, Part.WP_CAPTION,
+                                              State.ACTIVE, Prop.TEXTSHADOWTYPE);
+                }
+                if ("single".equalsIgnoreCase(shadowType)) {
+                    Point shadowOffset = xp.getPoint(this, Part.WP_WINDOW, State.ACTIVE,
+                                                     Prop.TEXTSHADOWOFFSET);
+                    Color shadowColor  = xp.getColor(this, Part.WP_WINDOW, State.ACTIVE,
+                                                     Prop.TEXTSHADOWCOLOR, null);
+                    if (shadowOffset != null && shadowColor != null) {
+                        g.setColor(shadowColor);
+                        SwingUtilities2.drawString(frame, g, title,
+                                     titleX + shadowOffset.x,
+                                     baseline + shadowOffset.y);
+                    }
+                }
+            }
+            g.setColor(isSelected ? selectedTextColor : notSelectedTextColor);
+            SwingUtilities2.drawString(frame, g, title, titleX, baseline);
+            g.setFont(oldFont);
+        }
+    }
+
+    public Dimension getPreferredSize() {
+        return getMinimumSize();
+    }
+
+    public Dimension getMinimumSize() {
+        Dimension d = new Dimension(super.getMinimumSize());
+        d.height = titlePaneHeight + 2;
+
+        XPStyle xp = XPStyle.getXP();
+        if (xp != null) {
+            // Note: Don't know how to calculate height on XP,
+            // the captionbarheight is 25 but native caption is 30 (maximized 26)
+            if (frame.isMaximum()) {
+                d.height -= 1;
+            } else {
+                d.height += 3;
+            }
+        }
+        return d;
+    }
+
+    protected void paintTitleBackground(Graphics g) {
+        XPStyle xp = XPStyle.getXP();
+        if (xp != null) {
+            Part part = frame.isIcon() ? Part.WP_MINCAPTION
+                                       : (frame.isMaximum() ? Part.WP_MAXCAPTION
+                                                            : Part.WP_CAPTION);
+            State state = frame.isSelected() ? State.ACTIVE : State.INACTIVE;
+            Skin skin = xp.getSkin(this, part);
+            skin.paintSkin(g, 0,  0, getWidth(), getHeight(), state);
+        } else {
+            Boolean gradientsOn = (Boolean)LookAndFeel.getDesktopPropertyValue(
+                "win.frame.captionGradientsOn", Boolean.valueOf(false));
+            if (gradientsOn.booleanValue() && g instanceof Graphics2D) {
+                Graphics2D g2 = (Graphics2D)g;
+                Paint savePaint = g2.getPaint();
+
+                boolean isSelected = frame.isSelected();
+                int w = getWidth();
+
+                if (isSelected) {
+                    GradientPaint titleGradient = new GradientPaint(0,0,
+                            selectedTitleColor,
+                            (int)(w*.75),0,
+                            selectedTitleGradientColor);
+                    g2.setPaint(titleGradient);
+                } else {
+                    GradientPaint titleGradient = new GradientPaint(0,0,
+                            notSelectedTitleColor,
+                            (int)(w*.75),0,
+                            notSelectedTitleGradientColor);
+                    g2.setPaint(titleGradient);
+                }
+                g2.fillRect(0, 0, getWidth(), getHeight());
+                g2.setPaint(savePaint);
+            } else {
+                super.paintTitleBackground(g);
+            }
+        }
+    }
+
+    protected void assembleSystemMenu() {
+        systemPopupMenu = new JPopupMenu();
+        addSystemMenuItems(systemPopupMenu);
+        enableActions();
+        systemLabel = new JLabel(frame.getFrameIcon()) {
+            protected void paintComponent(Graphics g) {
+                int x = 0;
+                int y = 0;
+                int w = getWidth();
+                int h = getHeight();
+                g = g.create();  // Create scratch graphics
+                if (isOpaque()) {
+                    g.setColor(getBackground());
+                    g.fillRect(0, 0, w, h);
+                }
+                Icon icon = getIcon();
+                int iconWidth;
+                int iconHeight;
+                if (icon != null &&
+                    (iconWidth = icon.getIconWidth()) > 0 &&
+                    (iconHeight = icon.getIconHeight()) > 0) {
+
+                    // Set drawing scale to make icon scale to our desired size
+                    double drawScale;
+                    if (iconWidth > iconHeight) {
+                        // Center icon vertically
+                        y = (h - w*iconHeight/iconWidth) / 2;
+                        drawScale = w / (double)iconWidth;
+                    } else {
+                        // Center icon horizontally
+                        x = (w - h*iconWidth/iconHeight) / 2;
+                        drawScale = h / (double)iconHeight;
+                    }
+                    ((Graphics2D)g).translate(x, y);
+                    ((Graphics2D)g).scale(drawScale, drawScale);
+                    icon.paintIcon(this, g, 0, 0);
+                }
+                g.dispose();
+            }
+        };
+        systemLabel.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2 && frame.isClosable() &&
+                    !frame.isIcon()) {
+                    systemPopupMenu.setVisible(false);
+                    frame.doDefaultCloseAction();
+                }
+                else {
+                    super.mouseClicked(e);
+                }
+            }
+            public void mousePressed(MouseEvent e) {
+                try {
+                    frame.setSelected(true);
+                } catch(PropertyVetoException pve) {
+                }
+                showSystemPopupMenu(e.getComponent());
+            }
+        });
+    }
+
+    protected void addSystemMenuItems(JPopupMenu menu) {
+        JMenuItem mi = menu.add(restoreAction);
+        mi.setMnemonic(getButtonMnemonic("restore"));
+        mi = menu.add(moveAction);
+        mi.setMnemonic(getButtonMnemonic("move"));
+        mi = menu.add(sizeAction);
+        mi.setMnemonic(getButtonMnemonic("size"));
+        mi = menu.add(iconifyAction);
+        mi.setMnemonic(getButtonMnemonic("minimize"));
+        mi = menu.add(maximizeAction);
+        mi.setMnemonic(getButtonMnemonic("maximize"));
+        menu.add(new JSeparator());
+        mi = menu.add(closeAction);
+        mi.setMnemonic(getButtonMnemonic("close"));
+    }
+
+    private static int getButtonMnemonic(String button) {
+        try {
+            return Integer.parseInt(UIManager.getString(
+                    "InternalFrameTitlePane." + button + "Button.mnemonic"));
+        } catch (NumberFormatException e) {
+            return -1;
+        }
+    }
+
+    protected void showSystemMenu(){
+        showSystemPopupMenu(systemLabel);
+    }
+
+    private void showSystemPopupMenu(Component invoker){
+        Dimension dim = new Dimension();
+        Border border = frame.getBorder();
+        if (border != null) {
+            dim.width += border.getBorderInsets(frame).left +
+                border.getBorderInsets(frame).right;
+            dim.height += border.getBorderInsets(frame).bottom +
+                border.getBorderInsets(frame).top;
+        }
+        if (!frame.isIcon()) {
+            systemPopupMenu.show(invoker,
+                getX() - dim.width,
+                getY() + getHeight() - dim.height);
+        } else {
+            systemPopupMenu.show(invoker,
+                getX() - dim.width,
+                getY() - systemPopupMenu.getPreferredSize().height -
+                     dim.height);
+        }
+    }
+
+    protected PropertyChangeListener createPropertyChangeListener() {
+        return new WindowsPropertyChangeHandler();
+    }
+
+    protected LayoutManager createLayout() {
+        return new WindowsTitlePaneLayout();
+    }
+
+    public class WindowsTitlePaneLayout extends BasicInternalFrameTitlePane.TitlePaneLayout {
+        private Insets captionMargin = null;
+        private Insets contentMargin = null;
+        private XPStyle xp = XPStyle.getXP();
+
+        WindowsTitlePaneLayout() {
+            if (xp != null) {
+                Component c = WindowsInternalFrameTitlePane.this;
+                captionMargin = xp.getMargin(c, Part.WP_CAPTION, null, Prop.CAPTIONMARGINS);
+                contentMargin = xp.getMargin(c, Part.WP_CAPTION, null, Prop.CONTENTMARGINS);
+            }
+            if (captionMargin == null) {
+                captionMargin = new Insets(0, 2, 0, 2);
+            }
+            if (contentMargin == null) {
+                contentMargin = new Insets(0, 0, 0, 0);
+            }
+        }
+
+        private int layoutButton(JComponent button, Part part,
+                                 int x, int y, int w, int h, int gap,
+                                 boolean leftToRight) {
+            if (!leftToRight) {
+                x -= w;
+            }
+            button.setBounds(x, y, w, h);
+            if (leftToRight) {
+                x += w + 2;
+            } else {
+                x -= 2;
+            }
+            return x;
+        }
+
+        public void layoutContainer(Container c) {
+            boolean leftToRight = WindowsGraphicsUtils.isLeftToRight(frame);
+            int x, y;
+            int w = getWidth();
+            int h = getHeight();
+
+            // System button
+            // Note: this icon is square, but the buttons aren't always.
+            int iconSize = (xp != null) ? (h-2)*6/10 : h-4;
+            if (xp != null) {
+                x = (leftToRight) ? captionMargin.left + 2 : w - captionMargin.right - 2;
+            } else {
+                x = (leftToRight) ? captionMargin.left : w - captionMargin.right;
+            }
+            y = (h - iconSize) / 2;
+            layoutButton(systemLabel, Part.WP_SYSBUTTON,
+                         x, y, iconSize, iconSize, 0,
+                         leftToRight);
+
+            // Right hand buttons
+            if (xp != null) {
+                x = (leftToRight) ? w - captionMargin.right - 2 : captionMargin.left + 2;
+                y = 1;  // XP seems to ignore margins and offset here
+                if (frame.isMaximum()) {
+                    y += 1;
+                } else {
+                    y += 5;
+                }
+            } else {
+                x = (leftToRight) ? w - captionMargin.right : captionMargin.left;
+                y = (h - buttonHeight) / 2;
+            }
+
+            if(frame.isClosable()) {
+                x = layoutButton(closeButton, Part.WP_CLOSEBUTTON,
+                                 x, y, buttonWidth, buttonHeight, 2,
+                                 !leftToRight);
+            }
+
+            if(frame.isMaximizable()) {
+                x = layoutButton(maxButton, Part.WP_MAXBUTTON,
+                                 x, y, buttonWidth, buttonHeight, (xp != null) ? 2 : 0,
+                                 !leftToRight);
+            }
+
+            if(frame.isIconifiable()) {
+                layoutButton(iconButton, Part.WP_MINBUTTON,
+                             x, y, buttonWidth, buttonHeight, 0,
+                             !leftToRight);
+            }
+        }
+    } // end WindowsTitlePaneLayout
+
+    public class WindowsPropertyChangeHandler extends PropertyChangeHandler {
+        public void propertyChange(PropertyChangeEvent evt) {
+            String prop = evt.getPropertyName();
+
+            // Update the internal frame icon for the system menu.
+            if (JInternalFrame.FRAME_ICON_PROPERTY.equals(prop) &&
+                    systemLabel != null) {
+                systemLabel.setIcon(frame.getFrameIcon());
+            }
+
+            super.propertyChange(evt);
+        }
+    }
+
+    /**
+     * A versatile Icon implementation which can take an array of Icon
+     * instances (typically <code>ImageIcon</code>s) and choose one that gives the best
+     * quality for a given Graphics2D scale factor when painting.
+     * <p>
+     * The class is public so it can be instantiated by UIDefaults.ProxyLazyValue.
+     * <p>
+     * Note: We assume here that icons are square.
+     */
+    public static class ScalableIconUIResource implements Icon, UIResource {
+        // We can use an arbitrary size here because we scale to it in paintIcon()
+        private static final int SIZE = 16;
+
+        private Icon[] icons;
+
+        /**
+         * @params objects an array of Icon or UIDefaults.LazyValue
+         * <p>
+         * The constructor is public so it can be called by UIDefaults.ProxyLazyValue.
+         */
+        public ScalableIconUIResource(Object[] objects) {
+            this.icons = new Icon[objects.length];
+
+            for (int i = 0; i < objects.length; i++) {
+                if (objects[i] instanceof UIDefaults.LazyValue) {
+                    icons[i] = (Icon)((UIDefaults.LazyValue)objects[i]).createValue(null);
+                } else {
+                    icons[i] = (Icon)objects[i];
+                }
+            }
+        }
+
+        /**
+         * @return the <code>Icon</code> closest to the requested size
+         */
+        protected Icon getBestIcon(int size) {
+            if (icons != null && icons.length > 0) {
+                int bestIndex = 0;
+                int minDiff = Integer.MAX_VALUE;
+                for (int i=0; i < icons.length; i++) {
+                    Icon icon = icons[i];
+                    int iconSize;
+                    if (icon != null && (iconSize = icon.getIconWidth()) > 0) {
+                        int diff = Math.abs(iconSize - size);
+                        if (diff < minDiff) {
+                            minDiff = diff;
+                            bestIndex = i;
+                        }
+                    }
+                }
+                return icons[bestIndex];
+            } else {
+                return null;
+            }
+        }
+
+        public void paintIcon(Component c, Graphics g, int x, int y) {
+            Graphics2D g2d = (Graphics2D)g.create();
+            // Calculate how big our drawing area is in pixels
+            // Assume we are square
+            int size = getIconWidth();
+            double scale = g2d.getTransform().getScaleX();
+            Icon icon = getBestIcon((int)(size * scale));
+            int iconSize;
+            if (icon != null && (iconSize = icon.getIconWidth()) > 0) {
+                // Set drawing scale to make icon act true to our reported size
+                double drawScale = size / (double)iconSize;
+                g2d.translate(x, y);
+                g2d.scale(drawScale, drawScale);
+                icon.paintIcon(c, g2d, 0, 0);
+            }
+            g2d.dispose();
+        }
+
+        public int getIconWidth() {
+            return SIZE;
+        }
+
+        public int getIconHeight() {
+            return SIZE;
+        }
+    }
+}

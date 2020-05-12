@@ -1,110 +1,104 @@
-/*     */ package com.sun.java.swing.plaf.windows;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Rectangle;
-/*     */ import javax.swing.ButtonModel;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.JMenuItem;
-/*     */ import javax.swing.plaf.ComponentUI;
-/*     */ import javax.swing.plaf.basic.BasicCheckBoxMenuItemUI;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class WindowsCheckBoxMenuItemUI
-/*     */   extends BasicCheckBoxMenuItemUI
-/*     */ {
-/*  49 */   final WindowsMenuItemUIAccessor accessor = new WindowsMenuItemUIAccessor()
-/*     */     {
-/*     */       public JMenuItem getMenuItem()
-/*     */       {
-/*  53 */         return WindowsCheckBoxMenuItemUI.this.menuItem;
-/*     */       }
-/*     */       
-/*     */       public TMSchema.State getState(JMenuItem param1JMenuItem) {
-/*  57 */         return WindowsMenuItemUI.getState(this, param1JMenuItem);
-/*     */       }
-/*     */       
-/*     */       public TMSchema.Part getPart(JMenuItem param1JMenuItem) {
-/*  61 */         return WindowsMenuItemUI.getPart(this, param1JMenuItem);
-/*     */       }
-/*     */     };
-/*     */   public static ComponentUI createUI(JComponent paramJComponent) {
-/*  65 */     return new WindowsCheckBoxMenuItemUI();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void paintBackground(Graphics paramGraphics, JMenuItem paramJMenuItem, Color paramColor) {
-/*  71 */     if (WindowsMenuItemUI.isVistaPainting()) {
-/*  72 */       WindowsMenuItemUI.paintBackground(this.accessor, paramGraphics, paramJMenuItem, paramColor);
-/*     */       return;
-/*     */     } 
-/*  75 */     super.paintBackground(paramGraphics, paramJMenuItem, paramColor);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void paintText(Graphics paramGraphics, JMenuItem paramJMenuItem, Rectangle paramRectangle, String paramString) {
-/*  88 */     if (WindowsMenuItemUI.isVistaPainting()) {
-/*  89 */       WindowsMenuItemUI.paintText(this.accessor, paramGraphics, paramJMenuItem, paramRectangle, paramString);
-/*     */       
-/*     */       return;
-/*     */     } 
-/*  93 */     ButtonModel buttonModel = paramJMenuItem.getModel();
-/*  94 */     Color color = paramGraphics.getColor();
-/*     */     
-/*  96 */     if (buttonModel.isEnabled() && buttonModel.isArmed()) {
-/*  97 */       paramGraphics.setColor(this.selectionForeground);
-/*     */     }
-/*     */     
-/* 100 */     WindowsGraphicsUtils.paintText(paramGraphics, paramJMenuItem, paramRectangle, paramString, 0);
-/*     */     
-/* 102 */     paramGraphics.setColor(color);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\java\swing\plaf\windows\WindowsCheckBoxMenuItemUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2006, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.java.swing.plaf.windows;
+
+import java.awt.*;
+import javax.swing.*;
+import javax.swing.plaf.*;
+import javax.swing.plaf.basic.*;
+
+import com.sun.java.swing.plaf.windows.TMSchema.Part;
+import com.sun.java.swing.plaf.windows.TMSchema.State;
+
+
+/**
+ * Windows check box menu item.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases.  The current serialization support is appropriate
+ * for short term storage or RMI between applications running the same
+ * version of Swing.  A future release of Swing will provide support for
+ * long term persistence.
+ */
+public class WindowsCheckBoxMenuItemUI extends BasicCheckBoxMenuItemUI {
+
+    final WindowsMenuItemUIAccessor accessor =
+        new WindowsMenuItemUIAccessor() {
+
+            public JMenuItem getMenuItem() {
+                return menuItem;
+            }
+
+            public State getState(JMenuItem menuItem) {
+                return WindowsMenuItemUI.getState(this, menuItem);
+            }
+
+            public Part getPart(JMenuItem menuItem) {
+                return WindowsMenuItemUI.getPart(this, menuItem);
+            }
+    };
+    public static ComponentUI createUI(JComponent b) {
+        return new WindowsCheckBoxMenuItemUI();
+    }
+
+    @Override
+    protected  void paintBackground(Graphics g, JMenuItem menuItem,
+            Color bgColor) {
+        if (WindowsMenuItemUI.isVistaPainting()) {
+            WindowsMenuItemUI.paintBackground(accessor, g, menuItem, bgColor);
+            return;
+        }
+        super.paintBackground(g, menuItem, bgColor);
+    }
+    /**
+     * Method which renders the text of the current menu item.
+     * <p>
+     * @param g Graphics context
+     * @param menuItem Current menu item to render
+     * @param textRect Bounding rectangle to render the text.
+     * @param text String to render
+     * @since 1.4
+     */
+    protected void paintText(Graphics g, JMenuItem menuItem,
+                             Rectangle textRect, String text) {
+        if (WindowsMenuItemUI.isVistaPainting()) {
+            WindowsMenuItemUI.paintText(accessor, g, menuItem,
+                                        textRect, text);
+            return;
+        }
+        ButtonModel model = menuItem.getModel();
+        Color oldColor = g.getColor();
+
+        if(model.isEnabled() && model.isArmed()) {
+            g.setColor(selectionForeground); // Uses protected field.
+        }
+
+        WindowsGraphicsUtils.paintText(g, menuItem, textRect, text, 0);
+
+        g.setColor(oldColor);
+    }
+}

@@ -1,223 +1,218 @@
-/*     */ package com.sun.imageio.plugins.common;
-/*     */ 
-/*     */ import java.io.PrintStream;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class LZWStringTable
-/*     */ {
-/*  66 */   byte[] strChr = new byte[4096];
-/*  67 */   short[] strNxt = new short[4096];
-/*  68 */   int[] strLen = new int[4096];
-/*  69 */   short[] strHsh = new short[9973];
-/*     */   
-/*     */   private static final int RES_CODES = 2;
-/*     */   
-/*     */   private static final short HASH_FREE = -1;
-/*     */   private static final short NEXT_FIRST = -1;
-/*     */   private static final int MAXBITS = 12;
-/*     */   private static final int MAXSTR = 4096;
-/*     */   private static final short HASHSIZE = 9973;
-/*     */   private static final short HASHSTEP = 2039;
-/*     */   short numStrings;
-/*     */   
-/*     */   public int addCharString(short paramShort, byte paramByte) {
-/*  82 */     if (this.numStrings >= 4096) {
-/*  83 */       return 65535;
-/*     */     }
-/*     */     
-/*  86 */     int i = hash(paramShort, paramByte);
-/*  87 */     while (this.strHsh[i] != -1) {
-/*  88 */       i = (i + 2039) % 9973;
-/*     */     }
-/*     */     
-/*  91 */     this.strHsh[i] = this.numStrings;
-/*  92 */     this.strChr[this.numStrings] = paramByte;
-/*  93 */     if (paramShort == -1) {
-/*  94 */       this.strNxt[this.numStrings] = -1;
-/*  95 */       this.strLen[this.numStrings] = 1;
-/*     */     } else {
-/*  97 */       this.strNxt[this.numStrings] = paramShort;
-/*  98 */       this.strLen[this.numStrings] = this.strLen[paramShort] + 1;
-/*     */     } 
-/*     */     
-/* 101 */     this.numStrings = (short)(this.numStrings + 1); return this.numStrings;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public short findCharString(short paramShort, byte paramByte) {
-/* 113 */     if (paramShort == -1) {
-/* 114 */       return (short)(paramByte & 0xFF);
-/*     */     }
-/*     */     
-/* 117 */     int i = hash(paramShort, paramByte); short s;
-/* 118 */     while ((s = this.strHsh[i]) != -1) {
-/* 119 */       if (this.strNxt[s] == paramShort && this.strChr[s] == paramByte) {
-/* 120 */         return (short)s;
-/*     */       }
-/* 122 */       i = (i + 2039) % 9973;
-/*     */     } 
-/*     */     
-/* 125 */     return -1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void clearTable(int paramInt) {
-/* 133 */     this.numStrings = 0;
-/*     */     int i;
-/* 135 */     for (i = 0; i < 9973; i++) {
-/* 136 */       this.strHsh[i] = -1;
-/*     */     }
-/*     */     
-/* 139 */     i = (1 << paramInt) + 2;
-/* 140 */     for (byte b = 0; b < i; b++) {
-/* 141 */       addCharString((short)-1, (byte)b);
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   public static int hash(short paramShort, byte paramByte) {
-/* 146 */     return (((short)(paramByte << 8) ^ paramShort) & 0xFFFF) % 9973;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int expandCode(byte[] paramArrayOfbyte, int paramInt1, short paramShort, int paramInt2) {
-/*     */     int i;
-/* 170 */     if (paramInt1 == -2 && 
-/* 171 */       paramInt2 == 1) {
-/* 172 */       paramInt2 = 0;
-/*     */     }
-/*     */     
-/* 175 */     if (paramShort == -1 || paramInt2 == this.strLen[paramShort])
-/*     */     {
-/*     */       
-/* 178 */       return 0;
-/*     */     }
-/*     */ 
-/*     */     
-/* 182 */     int j = this.strLen[paramShort] - paramInt2;
-/* 183 */     int k = paramArrayOfbyte.length - paramInt1;
-/* 184 */     if (k > j) {
-/* 185 */       i = j;
-/*     */     } else {
-/* 187 */       i = k;
-/*     */     } 
-/*     */     
-/* 190 */     int m = j - i;
-/*     */     
-/* 192 */     int n = paramInt1 + i;
-/*     */ 
-/*     */ 
-/*     */     
-/* 196 */     while (n > paramInt1 && paramShort != -1) {
-/* 197 */       if (--m < 0) {
-/* 198 */         paramArrayOfbyte[--n] = this.strChr[paramShort];
-/*     */       }
-/* 200 */       paramShort = this.strNxt[paramShort];
-/*     */     } 
-/*     */     
-/* 203 */     if (j > i) {
-/* 204 */       return -i;
-/*     */     }
-/* 206 */     return i;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void dump(PrintStream paramPrintStream) {
-/* 212 */     for (char c = 'Ă'; c < this.numStrings; c++)
-/* 213 */       paramPrintStream.println(" strNxt[" + c + "] = " + this.strNxt[c] + " strChr " + 
-/* 214 */           Integer.toHexString(this.strChr[c] & 0xFF) + " strLen " + 
-/* 215 */           Integer.toHexString(this.strLen[c])); 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\imageio\plugins\common\LZWStringTable.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2005, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.imageio.plugins.common;
+
+import java.io.PrintStream;
+
+/**
+ * General purpose LZW String Table.
+ * Extracted from GIFEncoder by Adam Doppelt
+ * Comments added by Robin Luiten
+ * <code>expandCode</code> added by Robin Luiten
+ * The strLen table to give quick access to the lenght of an expanded
+ * code for use by the <code>expandCode</code> method added by Robin.
+ **/
+public class LZWStringTable {
+    /** codesize + Reserved Codes */
+    private final static int RES_CODES = 2;
+
+    private final static short HASH_FREE = (short)0xFFFF;
+    private final static short NEXT_FIRST = (short)0xFFFF;
+
+    private final static int MAXBITS = 12;
+    private final static int MAXSTR = (1 << MAXBITS);
+
+    private final static short HASHSIZE = 9973;
+    private final static short HASHSTEP = 2039;
+
+    byte[]  strChr;  // after predecessor character
+    short[] strNxt;  // predecessor string
+    short[] strHsh;  // hash table to find  predecessor + char pairs
+    short numStrings;  // next code if adding new prestring + char
+
+    /*
+     * each entry corresponds to a code and contains the length of data
+     * that the code expands to when decoded.
+     */
+    int[] strLen;
+
+    /*
+     * Constructor allocate memory for string store data
+     */
+    public LZWStringTable() {
+        strChr = new byte[MAXSTR];
+        strNxt = new short[MAXSTR];
+        strLen = new int[MAXSTR];
+        strHsh = new short[HASHSIZE];
+    }
+
+    /*
+     * @param index value of -1 indicates no predecessor [used in initialisation]
+     * @param b the byte [character] to add to the string store which follows
+     * the predecessor string specified the index.
+     * @return 0xFFFF if no space in table left for addition of predecesor
+     * index and byte b. Else return the code allocated for combination index + b.
+     */
+    public int addCharString(short index, byte b) {
+        int hshidx;
+
+        if (numStrings >= MAXSTR) { // if used up all codes
+            return 0xFFFF;
+        }
+
+        hshidx = hash(index, b);
+        while (strHsh[hshidx] != HASH_FREE) {
+            hshidx = (hshidx + HASHSTEP) % HASHSIZE;
+        }
+
+        strHsh[hshidx] = numStrings;
+        strChr[numStrings] = b;
+        if (index == HASH_FREE) {
+            strNxt[numStrings] = NEXT_FIRST;
+            strLen[numStrings] = 1;
+        } else {
+            strNxt[numStrings] = index;
+            strLen[numStrings] = strLen[index] + 1;
+        }
+
+        return numStrings++; // return the code and inc for next code
+    }
+
+    /*
+     * @param index index to prefix string
+     * @param b the character that follws the index prefix
+     * @return b if param index is HASH_FREE. Else return the code
+     * for this prefix and byte successor
+     */
+    public short findCharString(short index, byte b) {
+        int hshidx, nxtidx;
+
+        if (index == HASH_FREE) {
+            return (short)(b & 0xFF);    // Rob fixed used to sign extend
+        }
+
+        hshidx = hash(index, b);
+        while ((nxtidx = strHsh[hshidx]) != HASH_FREE) { // search
+            if (strNxt[nxtidx] == index && strChr[nxtidx] == b) {
+                return (short)nxtidx;
+            }
+            hshidx = (hshidx + HASHSTEP) % HASHSIZE;
+        }
+
+        return (short)0xFFFF;
+    }
+
+    /*
+     * @param codesize the size of code to be preallocated for the
+     * string store.
+     */
+    public void clearTable(int codesize) {
+        numStrings = 0;
+
+        for (int q = 0; q < HASHSIZE; q++) {
+            strHsh[q] = HASH_FREE;
+        }
+
+        int w = (1 << codesize) + RES_CODES;
+        for (int q = 0; q < w; q++) {
+            addCharString((short)0xFFFF, (byte)q); // init with no prefix
+        }
+    }
+
+    static public int hash(short index, byte lastbyte) {
+        return ((int)((short)(lastbyte << 8) ^ index) & 0xFFFF) % HASHSIZE;
+    }
+
+    /*
+     * If expanded data doesn't fit into array only what will fit is written
+     * to buf and the return value indicates how much of the expanded code has
+     * been written to the buf. The next call to expandCode() should be with
+     * the same code and have the skip parameter set the negated value of the
+     * previous return. Succesive negative return values should be negated and
+     * added together for next skip parameter value with same code.
+     *
+     * @param buf buffer to place expanded data into
+     * @param offset offset to place expanded data
+     * @param code the code to expand to the byte array it represents.
+     * PRECONDITION This code must already be in the LZSS
+     * @param skipHead is the number of bytes at the start of the expanded code to
+     * be skipped before data is written to buf. It is possible that skipHead is
+     * equal to codeLen.
+     * @return the length of data expanded into buf. If the expanded code is longer
+     * than space left in buf then the value returned is a negative number which when
+     * negated is equal to the number of bytes that were used of the code being expanded.
+     * This negative value also indicates the buffer is full.
+     */
+    public int expandCode(byte[] buf, int offset, short code, int skipHead) {
+        if (offset == -2) {
+            if (skipHead == 1) {
+                skipHead = 0;
+            }
+        }
+        if (code == (short)0xFFFF ||    // just in case
+            skipHead == strLen[code])  // DONE no more unpacked
+        {
+            return 0;
+        }
+
+        int expandLen;  // how much data we are actually expanding
+        int codeLen = strLen[code] - skipHead; // length of expanded code left
+        int bufSpace = buf.length - offset;  // how much space left
+        if (bufSpace > codeLen) {
+            expandLen = codeLen; // only got this many to unpack
+        } else {
+            expandLen = bufSpace;
+        }
+
+        int skipTail = codeLen - expandLen;  // only > 0 if codeLen > bufSpace [left overs]
+
+        int idx = offset + expandLen;   // initialise to exclusive end address of buffer area
+
+        // NOTE: data unpacks in reverse direction and we are placing the
+        // unpacked data directly into the array in the correct location.
+        while ((idx > offset) && (code != (short)0xFFFF)) {
+            if (--skipTail < 0) { // skip required of expanded data
+                buf[--idx] = strChr[code];
+            }
+            code = strNxt[code];    // to predecessor code
+        }
+
+        if (codeLen > expandLen) {
+            return -expandLen; // indicate what part of codeLen used
+        } else {
+            return expandLen;     // indicate length of dat unpacked
+        }
+    }
+
+    public void dump(PrintStream out) {
+        int i;
+        for (i = 258; i < numStrings; ++i) {
+            out.println(" strNxt[" + i + "] = " + strNxt[i]
+                        + " strChr " + Integer.toHexString(strChr[i] & 0xFF)
+                        + " strLen " + Integer.toHexString(strLen[i]));
+        }
+    }
+}

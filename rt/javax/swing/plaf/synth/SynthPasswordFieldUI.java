@@ -1,112 +1,107 @@
-/*     */ package javax.swing.plaf.synth;
-/*     */ 
-/*     */ import java.awt.Graphics;
-/*     */ import javax.swing.Action;
-/*     */ import javax.swing.ActionMap;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.SwingUtilities;
-/*     */ import javax.swing.plaf.ComponentUI;
-/*     */ import javax.swing.text.Element;
-/*     */ import javax.swing.text.PasswordView;
-/*     */ import javax.swing.text.View;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class SynthPasswordFieldUI
-/*     */   extends SynthTextFieldUI
-/*     */ {
-/*     */   public static ComponentUI createUI(JComponent paramJComponent) {
-/*  49 */     return new SynthPasswordFieldUI();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected String getPropertyPrefix() {
-/*  61 */     return "PasswordField";
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public View create(Element paramElement) {
-/*  72 */     return new PasswordView(paramElement);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void paintBackground(SynthContext paramSynthContext, Graphics paramGraphics, JComponent paramJComponent) {
-/*  80 */     paramSynthContext.getPainter().paintPasswordFieldBackground(paramSynthContext, paramGraphics, 0, 0, paramJComponent
-/*  81 */         .getWidth(), paramJComponent.getHeight());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void paintBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  90 */     paramSynthContext.getPainter().paintPasswordFieldBorder(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void installKeyboardActions() {
-/*  98 */     super.installKeyboardActions();
-/*  99 */     ActionMap actionMap = SwingUtilities.getUIActionMap(getComponent());
-/* 100 */     if (actionMap != null && actionMap.get("select-word") != null) {
-/* 101 */       Action action = actionMap.get("select-line");
-/* 102 */       if (action != null)
-/* 103 */         actionMap.put("select-word", action); 
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\synth\SynthPasswordFieldUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.plaf.synth;
+
+import java.awt.Graphics;
+import javax.swing.*;
+import javax.swing.text.*;
+import javax.swing.plaf.ComponentUI;
+
+/**
+ * Provides the Synth L&amp;F UI delegate for
+ * {@link javax.swing.JPasswordField}.
+ *
+ * @author  Shannon Hickey
+ * @since 1.7
+ */
+public class SynthPasswordFieldUI extends SynthTextFieldUI {
+
+    /**
+     * Creates a UI for a JPasswordField.
+     *
+     * @param c the JPasswordField
+     * @return the UI
+     */
+    public static ComponentUI createUI(JComponent c) {
+        return new SynthPasswordFieldUI();
+    }
+
+    /**
+     * Fetches the name used as a key to look up properties through the
+     * UIManager.  This is used as a prefix to all the standard
+     * text properties.
+     *
+     * @return the name ("PasswordField")
+     */
+    @Override
+    protected String getPropertyPrefix() {
+        return "PasswordField";
+    }
+
+    /**
+     * Creates a view (PasswordView) for an element.
+     *
+     * @param elem the element
+     * @return the view
+     */
+    @Override
+    public View create(Element elem) {
+        return new PasswordView(elem);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    void paintBackground(SynthContext context, Graphics g, JComponent c) {
+        context.getPainter().paintPasswordFieldBackground(context, g, 0, 0,
+                                                c.getWidth(), c.getHeight());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void paintBorder(SynthContext context, Graphics g, int x,
+                            int y, int w, int h) {
+        context.getPainter().paintPasswordFieldBorder(context, g, x, y, w, h);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void installKeyboardActions() {
+        super.installKeyboardActions();
+        ActionMap map = SwingUtilities.getUIActionMap(getComponent());
+        if (map != null && map.get(DefaultEditorKit.selectWordAction) != null) {
+            Action a = map.get(DefaultEditorKit.selectLineAction);
+            if (a != null) {
+                map.put(DefaultEditorKit.selectWordAction, a);
+            }
+        }
+    }
+}

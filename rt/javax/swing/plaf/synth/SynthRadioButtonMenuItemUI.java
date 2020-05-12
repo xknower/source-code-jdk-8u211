@@ -1,80 +1,75 @@
-/*    */ package javax.swing.plaf.synth;
-/*    */ 
-/*    */ import java.awt.Graphics;
-/*    */ import javax.swing.JComponent;
-/*    */ import javax.swing.plaf.ComponentUI;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class SynthRadioButtonMenuItemUI
-/*    */   extends SynthMenuItemUI
-/*    */ {
-/*    */   public static ComponentUI createUI(JComponent paramJComponent) {
-/* 49 */     return new SynthRadioButtonMenuItemUI();
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   protected String getPropertyPrefix() {
-/* 57 */     return "RadioButtonMenuItem";
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   void paintBackground(SynthContext paramSynthContext, Graphics paramGraphics, JComponent paramJComponent) {
-/* 62 */     paramSynthContext.getPainter().paintRadioButtonMenuItemBackground(paramSynthContext, paramGraphics, 0, 0, paramJComponent
-/* 63 */         .getWidth(), paramJComponent.getHeight());
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public void paintBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/* 72 */     paramSynthContext.getPainter().paintRadioButtonMenuItemBorder(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\synth\SynthRadioButtonMenuItemUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.plaf.synth;
+
+import javax.swing.*;
+import java.awt.*;
+import javax.swing.plaf.*;
+
+/**
+ * Provides the Synth L&amp;F UI delegate for
+ * {@link javax.swing.JRadioButtonMenuItem}.
+ *
+ * @author Georges Saab
+ * @author David Karlton
+ * @since 1.7
+ */
+public class SynthRadioButtonMenuItemUI extends SynthMenuItemUI {
+
+    /**
+     * Creates a new UI object for the given component.
+     *
+     * @param b component to create UI object for
+     * @return the UI object
+     */
+    public static ComponentUI createUI(JComponent b) {
+        return new SynthRadioButtonMenuItemUI();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected String getPropertyPrefix() {
+        return "RadioButtonMenuItem";
+    }
+
+    @Override
+    void paintBackground(SynthContext context, Graphics g, JComponent c) {
+        context.getPainter().paintRadioButtonMenuItemBackground(context, g, 0,
+                             0, c.getWidth(), c.getHeight());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void paintBorder(SynthContext context, Graphics g, int x,
+                            int y, int w, int h) {
+        context.getPainter().paintRadioButtonMenuItemBorder(context, g, x,
+                                                            y, w, h);
+    }
+}

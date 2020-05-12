@@ -1,94 +1,88 @@
-/*    */ package com.sun.corba.se.impl.ior.iiop;
-/*    */ 
-/*    */ import com.sun.corba.se.spi.ior.TaggedComponentBase;
-/*    */ import org.omg.CORBA_2_3.portable.OutputStream;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class JavaSerializationComponent
-/*    */   extends TaggedComponentBase
-/*    */ {
-/*    */   private byte version;
-/*    */   private static JavaSerializationComponent singleton;
-/*    */   
-/*    */   public static JavaSerializationComponent singleton() {
-/* 52 */     if (singleton == null) {
-/* 53 */       synchronized (JavaSerializationComponent.class) {
-/* 54 */         singleton = new JavaSerializationComponent((byte)1);
-/*    */       } 
-/*    */     }
-/*    */     
-/* 58 */     return singleton;
-/*    */   }
-/*    */   
-/*    */   public JavaSerializationComponent(byte paramByte) {
-/* 62 */     this.version = paramByte;
-/*    */   }
-/*    */   
-/*    */   public byte javaSerializationVersion() {
-/* 66 */     return this.version;
-/*    */   }
-/*    */   
-/*    */   public void writeContents(OutputStream paramOutputStream) {
-/* 70 */     paramOutputStream.write_octet(this.version);
-/*    */   }
-/*    */   
-/*    */   public int getId() {
-/* 74 */     return 1398099458;
-/*    */   }
-/*    */   
-/*    */   public boolean equals(Object paramObject) {
-/* 78 */     if (!(paramObject instanceof JavaSerializationComponent)) {
-/* 79 */       return false;
-/*    */     }
-/* 81 */     JavaSerializationComponent javaSerializationComponent = (JavaSerializationComponent)paramObject;
-/* 82 */     return (this.version == javaSerializationComponent.version);
-/*    */   }
-/*    */   
-/*    */   public int hashCode() {
-/* 86 */     return this.version;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\ior\iiop\JavaSerializationComponent.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package com.sun.corba.se.impl.ior.iiop;
+
+import org.omg.CORBA_2_3.portable.OutputStream;
+
+import com.sun.corba.se.impl.orbutil.ORBConstants;
+import com.sun.corba.se.impl.orbutil.ORBUtility;
+import com.sun.corba.se.impl.protocol.giopmsgheaders.Message;
+
+import com.sun.corba.se.spi.orb.ORB;
+import com.sun.corba.se.spi.ior.TaggedComponentBase;
+
+/**
+ * Tagged component that contains a value that indicates the Java
+ * serialization version supported by the ORB.
+ *
+ * ORB Java serialization uses IIOP as the transport protocol, but uses
+ * Java serialization mechanism and its accompanying encodings, instead
+ * of IIOP CDR serialization mechanism. Java serialization is generally
+ * observed to be faster than CDR.
+ */
+public class JavaSerializationComponent extends TaggedComponentBase {
+
+    private byte version;
+
+    private static JavaSerializationComponent singleton;
+
+    public static JavaSerializationComponent singleton() {
+        if (singleton == null) {
+            synchronized (JavaSerializationComponent.class) {
+                singleton =
+                    new JavaSerializationComponent(Message.JAVA_ENC_VERSION);
+            }
+        }
+        return singleton;
+    }
+
+    public JavaSerializationComponent(byte version) {
+        this.version = version;
+    }
+
+    public byte javaSerializationVersion() {
+        return this.version;
+    }
+
+    public void writeContents(OutputStream os) {
+        os.write_octet(version);
+    }
+
+    public int getId() {
+        return ORBConstants.TAG_JAVA_SERIALIZATION_ID;
+    }
+
+    public boolean equals(Object obj) {
+        if (!(obj instanceof JavaSerializationComponent)) {
+            return false;
+        }
+        JavaSerializationComponent other = (JavaSerializationComponent) obj;
+        return this.version == other.version;
+    }
+
+    public int hashCode() {
+        return this.version;
+    }
+}

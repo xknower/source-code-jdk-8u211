@@ -1,207 +1,201 @@
-/*     */ package com.sun.org.apache.xml.internal.utils;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class StringToStringTableVector
-/*     */ {
-/*     */   private int m_blocksize;
-/*     */   private StringToStringTable[] m_map;
-/*  40 */   private int m_firstFree = 0;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int m_mapSize;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StringToStringTableVector() {
-/*  52 */     this.m_blocksize = 8;
-/*  53 */     this.m_mapSize = this.m_blocksize;
-/*  54 */     this.m_map = new StringToStringTable[this.m_blocksize];
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StringToStringTableVector(int blocksize) {
-/*  65 */     this.m_blocksize = blocksize;
-/*  66 */     this.m_mapSize = blocksize;
-/*  67 */     this.m_map = new StringToStringTable[blocksize];
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final int getLength() {
-/*  77 */     return this.m_firstFree;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final int size() {
-/*  87 */     return this.m_firstFree;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final void addElement(StringToStringTable value) {
-/*  98 */     if (this.m_firstFree + 1 >= this.m_mapSize) {
-/*     */       
-/* 100 */       this.m_mapSize += this.m_blocksize;
-/*     */       
-/* 102 */       StringToStringTable[] newMap = new StringToStringTable[this.m_mapSize];
-/*     */       
-/* 104 */       System.arraycopy(this.m_map, 0, newMap, 0, this.m_firstFree + 1);
-/*     */       
-/* 106 */       this.m_map = newMap;
-/*     */     } 
-/*     */     
-/* 109 */     this.m_map[this.m_firstFree] = value;
-/*     */     
-/* 111 */     this.m_firstFree++;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final String get(String key) {
-/* 126 */     for (int i = this.m_firstFree - 1; i >= 0; i--) {
-/*     */       
-/* 128 */       String nsuri = this.m_map[i].get(key);
-/*     */       
-/* 130 */       if (nsuri != null) {
-/* 131 */         return nsuri;
-/*     */       }
-/*     */     } 
-/* 134 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final boolean containsKey(String key) {
-/* 148 */     for (int i = this.m_firstFree - 1; i >= 0; i--) {
-/*     */       
-/* 150 */       if (this.m_map[i].get(key) != null) {
-/* 151 */         return true;
-/*     */       }
-/*     */     } 
-/* 154 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final void removeLastElem() {
-/* 163 */     if (this.m_firstFree > 0) {
-/*     */       
-/* 165 */       this.m_map[this.m_firstFree] = null;
-/*     */       
-/* 167 */       this.m_firstFree--;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final StringToStringTable elementAt(int i) {
-/* 180 */     return this.m_map[i];
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final boolean contains(StringToStringTable s) {
-/* 193 */     for (int i = 0; i < this.m_firstFree; i++) {
-/*     */       
-/* 195 */       if (this.m_map[i].equals(s)) {
-/* 196 */         return true;
-/*     */       }
-/*     */     } 
-/* 199 */     return false;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\interna\\utils\StringToStringTableVector.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: StringToStringTableVector.java,v 1.2.4.1 2005/09/15 08:15:56 suresh_emailid Exp $
+ */
+package com.sun.org.apache.xml.internal.utils;
+
+/**
+ * A very simple table that stores a list of StringToStringTables, optimized
+ * for small lists.
+ * @xsl.usage internal
+ */
+public class StringToStringTableVector
+{
+
+  /** Size of blocks to allocate         */
+  private int m_blocksize;
+
+  /** Array of StringToStringTable objects          */
+  private StringToStringTable m_map[];
+
+  /** Number of StringToStringTable objects in this array          */
+  private int m_firstFree = 0;
+
+  /** Size of this array          */
+  private int m_mapSize;
+
+  /**
+   * Default constructor.  Note that the default
+   * block size is very small, for small lists.
+   */
+  public StringToStringTableVector()
+  {
+
+    m_blocksize = 8;
+    m_mapSize = m_blocksize;
+    m_map = new StringToStringTable[m_blocksize];
+  }
+
+  /**
+   * Construct a StringToStringTableVector, using the given block size.
+   *
+   * @param blocksize Size of blocks to allocate
+   */
+  public StringToStringTableVector(int blocksize)
+  {
+
+    m_blocksize = blocksize;
+    m_mapSize = blocksize;
+    m_map = new StringToStringTable[blocksize];
+  }
+
+  /**
+   * Get the length of the list.
+   *
+   * @return Number of StringToStringTable objects in the list
+   */
+  public final int getLength()
+  {
+    return m_firstFree;
+  }
+
+  /**
+   * Get the length of the list.
+   *
+   * @return Number of StringToStringTable objects in the list
+   */
+  public final int size()
+  {
+    return m_firstFree;
+  }
+
+  /**
+   * Append a StringToStringTable object onto the vector.
+   *
+   * @param value StringToStringTable object to add
+   */
+  public final void addElement(StringToStringTable value)
+  {
+
+    if ((m_firstFree + 1) >= m_mapSize)
+    {
+      m_mapSize += m_blocksize;
+
+      StringToStringTable newMap[] = new StringToStringTable[m_mapSize];
+
+      System.arraycopy(m_map, 0, newMap, 0, m_firstFree + 1);
+
+      m_map = newMap;
+    }
+
+    m_map[m_firstFree] = value;
+
+    m_firstFree++;
+  }
+
+  /**
+   * Given a string, find the last added occurance value
+   * that matches the key.
+   *
+   * @param key String to look up
+   *
+   * @return the last added occurance value that matches the key
+   * or null if not found.
+   */
+  public final String get(String key)
+  {
+
+    for (int i = m_firstFree - 1; i >= 0; --i)
+    {
+      String nsuri = m_map[i].get(key);
+
+      if (nsuri != null)
+        return nsuri;
+    }
+
+    return null;
+  }
+
+  /**
+   * Given a string, find out if there is a value in this table
+   * that matches the key.
+   *
+   * @param key String to look for
+   *
+   * @return True if the string was found in table, null if not
+   */
+  public final boolean containsKey(String key)
+  {
+
+    for (int i = m_firstFree - 1; i >= 0; --i)
+    {
+      if (m_map[i].get(key) != null)
+        return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Remove the last element.
+   */
+  public final void removeLastElem()
+  {
+
+    if (m_firstFree > 0)
+    {
+      m_map[m_firstFree] = null;
+
+      m_firstFree--;
+    }
+  }
+
+  /**
+   * Get the nth element.
+   *
+   * @param i Index of element to find
+   *
+   * @return The StringToStringTable object at the given index
+   */
+  public final StringToStringTable elementAt(int i)
+  {
+    return m_map[i];
+  }
+
+  /**
+   * Tell if the table contains the given StringToStringTable.
+   *
+   * @param s The StringToStringTable to find
+   *
+   * @return True if the StringToStringTable is found
+   */
+  public final boolean contains(StringToStringTable s)
+  {
+
+    for (int i = 0; i < m_firstFree; i++)
+    {
+      if (m_map[i].equals(s))
+        return true;
+    }
+
+    return false;
+  }
+}

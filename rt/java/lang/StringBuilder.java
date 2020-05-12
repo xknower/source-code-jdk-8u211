@@ -1,444 +1,439 @@
-/*     */ package java.lang;
-/*     */ 
-/*     */ import java.io.IOException;
-/*     */ import java.io.ObjectInputStream;
-/*     */ import java.io.ObjectOutputStream;
-/*     */ import java.io.Serializable;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class StringBuilder
-/*     */   extends AbstractStringBuilder
-/*     */   implements Serializable, CharSequence
-/*     */ {
-/*     */   static final long serialVersionUID = 4383685877147921099L;
-/*     */   
-/*     */   public StringBuilder() {
-/*  89 */     super(16);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StringBuilder(int paramInt) {
-/* 101 */     super(paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StringBuilder(String paramString) {
-/* 112 */     super(paramString.length() + 16);
-/* 113 */     append(paramString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StringBuilder(CharSequence paramCharSequence) {
-/* 125 */     this(paramCharSequence.length() + 16);
-/* 126 */     append(paramCharSequence);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public StringBuilder append(Object paramObject) {
-/* 131 */     return append(String.valueOf(paramObject));
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public StringBuilder append(String paramString) {
-/* 136 */     super.append(paramString);
-/* 137 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StringBuilder append(StringBuffer paramStringBuffer) {
-/* 160 */     super.append(paramStringBuffer);
-/* 161 */     return this;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public StringBuilder append(CharSequence paramCharSequence) {
-/* 166 */     super.append(paramCharSequence);
-/* 167 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StringBuilder append(CharSequence paramCharSequence, int paramInt1, int paramInt2) {
-/* 175 */     super.append(paramCharSequence, paramInt1, paramInt2);
-/* 176 */     return this;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public StringBuilder append(char[] paramArrayOfchar) {
-/* 181 */     super.append(paramArrayOfchar);
-/* 182 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StringBuilder append(char[] paramArrayOfchar, int paramInt1, int paramInt2) {
-/* 190 */     super.append(paramArrayOfchar, paramInt1, paramInt2);
-/* 191 */     return this;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public StringBuilder append(boolean paramBoolean) {
-/* 196 */     super.append(paramBoolean);
-/* 197 */     return this;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public StringBuilder append(char paramChar) {
-/* 202 */     super.append(paramChar);
-/* 203 */     return this;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public StringBuilder append(int paramInt) {
-/* 208 */     super.append(paramInt);
-/* 209 */     return this;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public StringBuilder append(long paramLong) {
-/* 214 */     super.append(paramLong);
-/* 215 */     return this;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public StringBuilder append(float paramFloat) {
-/* 220 */     super.append(paramFloat);
-/* 221 */     return this;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public StringBuilder append(double paramDouble) {
-/* 226 */     super.append(paramDouble);
-/* 227 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StringBuilder appendCodePoint(int paramInt) {
-/* 235 */     super.appendCodePoint(paramInt);
-/* 236 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StringBuilder delete(int paramInt1, int paramInt2) {
-/* 244 */     super.delete(paramInt1, paramInt2);
-/* 245 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StringBuilder deleteCharAt(int paramInt) {
-/* 253 */     super.deleteCharAt(paramInt);
-/* 254 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StringBuilder replace(int paramInt1, int paramInt2, String paramString) {
-/* 262 */     super.replace(paramInt1, paramInt2, paramString);
-/* 263 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StringBuilder insert(int paramInt1, char[] paramArrayOfchar, int paramInt2, int paramInt3) {
-/* 273 */     super.insert(paramInt1, paramArrayOfchar, paramInt2, paramInt3);
-/* 274 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StringBuilder insert(int paramInt, Object paramObject) {
-/* 282 */     super.insert(paramInt, paramObject);
-/* 283 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StringBuilder insert(int paramInt, String paramString) {
-/* 291 */     super.insert(paramInt, paramString);
-/* 292 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StringBuilder insert(int paramInt, char[] paramArrayOfchar) {
-/* 300 */     super.insert(paramInt, paramArrayOfchar);
-/* 301 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StringBuilder insert(int paramInt, CharSequence paramCharSequence) {
-/* 309 */     super.insert(paramInt, paramCharSequence);
-/* 310 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StringBuilder insert(int paramInt1, CharSequence paramCharSequence, int paramInt2, int paramInt3) {
-/* 320 */     super.insert(paramInt1, paramCharSequence, paramInt2, paramInt3);
-/* 321 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StringBuilder insert(int paramInt, boolean paramBoolean) {
-/* 329 */     super.insert(paramInt, paramBoolean);
-/* 330 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StringBuilder insert(int paramInt, char paramChar) {
-/* 338 */     super.insert(paramInt, paramChar);
-/* 339 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StringBuilder insert(int paramInt1, int paramInt2) {
-/* 347 */     super.insert(paramInt1, paramInt2);
-/* 348 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StringBuilder insert(int paramInt, long paramLong) {
-/* 356 */     super.insert(paramInt, paramLong);
-/* 357 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StringBuilder insert(int paramInt, float paramFloat) {
-/* 365 */     super.insert(paramInt, paramFloat);
-/* 366 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StringBuilder insert(int paramInt, double paramDouble) {
-/* 374 */     super.insert(paramInt, paramDouble);
-/* 375 */     return this;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public int indexOf(String paramString) {
-/* 380 */     return super.indexOf(paramString);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public int indexOf(String paramString, int paramInt) {
-/* 385 */     return super.indexOf(paramString, paramInt);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public int lastIndexOf(String paramString) {
-/* 390 */     return super.lastIndexOf(paramString);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public int lastIndexOf(String paramString, int paramInt) {
-/* 395 */     return super.lastIndexOf(paramString, paramInt);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public StringBuilder reverse() {
-/* 400 */     super.reverse();
-/* 401 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 407 */     return new String(this.value, 0, this.count);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void writeObject(ObjectOutputStream paramObjectOutputStream) throws IOException {
-/* 423 */     paramObjectOutputStream.defaultWriteObject();
-/* 424 */     paramObjectOutputStream.writeInt(this.count);
-/* 425 */     paramObjectOutputStream.writeObject(this.value);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void readObject(ObjectInputStream paramObjectInputStream) throws IOException, ClassNotFoundException {
-/* 434 */     paramObjectInputStream.defaultReadObject();
-/* 435 */     this.count = paramObjectInputStream.readInt();
-/* 436 */     this.value = (char[])paramObjectInputStream.readObject();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\lang\StringBuilder.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.lang;
+
+
+/**
+ * A mutable sequence of characters.  This class provides an API compatible
+ * with {@code StringBuffer}, but with no guarantee of synchronization.
+ * This class is designed for use as a drop-in replacement for
+ * {@code StringBuffer} in places where the string buffer was being
+ * used by a single thread (as is generally the case).   Where possible,
+ * it is recommended that this class be used in preference to
+ * {@code StringBuffer} as it will be faster under most implementations.
+ *
+ * <p>The principal operations on a {@code StringBuilder} are the
+ * {@code append} and {@code insert} methods, which are
+ * overloaded so as to accept data of any type. Each effectively
+ * converts a given datum to a string and then appends or inserts the
+ * characters of that string to the string builder. The
+ * {@code append} method always adds these characters at the end
+ * of the builder; the {@code insert} method adds the characters at
+ * a specified point.
+ * <p>
+ * For example, if {@code z} refers to a string builder object
+ * whose current contents are "{@code start}", then
+ * the method call {@code z.append("le")} would cause the string
+ * builder to contain "{@code startle}", whereas
+ * {@code z.insert(4, "le")} would alter the string builder to
+ * contain "{@code starlet}".
+ * <p>
+ * In general, if sb refers to an instance of a {@code StringBuilder},
+ * then {@code sb.append(x)} has the same effect as
+ * {@code sb.insert(sb.length(), x)}.
+ * <p>
+ * Every string builder has a capacity. As long as the length of the
+ * character sequence contained in the string builder does not exceed
+ * the capacity, it is not necessary to allocate a new internal
+ * buffer. If the internal buffer overflows, it is automatically made larger.
+ *
+ * <p>Instances of {@code StringBuilder} are not safe for
+ * use by multiple threads. If such synchronization is required then it is
+ * recommended that {@link java.lang.StringBuffer} be used.
+ *
+ * <p>Unless otherwise noted, passing a {@code null} argument to a constructor
+ * or method in this class will cause a {@link NullPointerException} to be
+ * thrown.
+ *
+ * @author      Michael McCloskey
+ * @see         java.lang.StringBuffer
+ * @see         java.lang.String
+ * @since       1.5
+ */
+public final class StringBuilder
+    extends AbstractStringBuilder
+    implements java.io.Serializable, CharSequence
+{
+
+    /** use serialVersionUID for interoperability */
+    static final long serialVersionUID = 4383685877147921099L;
+
+    /**
+     * Constructs a string builder with no characters in it and an
+     * initial capacity of 16 characters.
+     */
+    public StringBuilder() {
+        super(16);
+    }
+
+    /**
+     * Constructs a string builder with no characters in it and an
+     * initial capacity specified by the {@code capacity} argument.
+     *
+     * @param      capacity  the initial capacity.
+     * @throws     NegativeArraySizeException  if the {@code capacity}
+     *               argument is less than {@code 0}.
+     */
+    public StringBuilder(int capacity) {
+        super(capacity);
+    }
+
+    /**
+     * Constructs a string builder initialized to the contents of the
+     * specified string. The initial capacity of the string builder is
+     * {@code 16} plus the length of the string argument.
+     *
+     * @param   str   the initial contents of the buffer.
+     */
+    public StringBuilder(String str) {
+        super(str.length() + 16);
+        append(str);
+    }
+
+    /**
+     * Constructs a string builder that contains the same characters
+     * as the specified {@code CharSequence}. The initial capacity of
+     * the string builder is {@code 16} plus the length of the
+     * {@code CharSequence} argument.
+     *
+     * @param      seq   the sequence to copy.
+     */
+    public StringBuilder(CharSequence seq) {
+        this(seq.length() + 16);
+        append(seq);
+    }
+
+    @Override
+    public StringBuilder append(Object obj) {
+        return append(String.valueOf(obj));
+    }
+
+    @Override
+    public StringBuilder append(String str) {
+        super.append(str);
+        return this;
+    }
+
+    /**
+     * Appends the specified {@code StringBuffer} to this sequence.
+     * <p>
+     * The characters of the {@code StringBuffer} argument are appended,
+     * in order, to this sequence, increasing the
+     * length of this sequence by the length of the argument.
+     * If {@code sb} is {@code null}, then the four characters
+     * {@code "null"} are appended to this sequence.
+     * <p>
+     * Let <i>n</i> be the length of this character sequence just prior to
+     * execution of the {@code append} method. Then the character at index
+     * <i>k</i> in the new character sequence is equal to the character at
+     * index <i>k</i> in the old character sequence, if <i>k</i> is less than
+     * <i>n</i>; otherwise, it is equal to the character at index <i>k-n</i>
+     * in the argument {@code sb}.
+     *
+     * @param   sb   the {@code StringBuffer} to append.
+     * @return  a reference to this object.
+     */
+    public StringBuilder append(StringBuffer sb) {
+        super.append(sb);
+        return this;
+    }
+
+    @Override
+    public StringBuilder append(CharSequence s) {
+        super.append(s);
+        return this;
+    }
+
+    /**
+     * @throws     IndexOutOfBoundsException {@inheritDoc}
+     */
+    @Override
+    public StringBuilder append(CharSequence s, int start, int end) {
+        super.append(s, start, end);
+        return this;
+    }
+
+    @Override
+    public StringBuilder append(char[] str) {
+        super.append(str);
+        return this;
+    }
+
+    /**
+     * @throws IndexOutOfBoundsException {@inheritDoc}
+     */
+    @Override
+    public StringBuilder append(char[] str, int offset, int len) {
+        super.append(str, offset, len);
+        return this;
+    }
+
+    @Override
+    public StringBuilder append(boolean b) {
+        super.append(b);
+        return this;
+    }
+
+    @Override
+    public StringBuilder append(char c) {
+        super.append(c);
+        return this;
+    }
+
+    @Override
+    public StringBuilder append(int i) {
+        super.append(i);
+        return this;
+    }
+
+    @Override
+    public StringBuilder append(long lng) {
+        super.append(lng);
+        return this;
+    }
+
+    @Override
+    public StringBuilder append(float f) {
+        super.append(f);
+        return this;
+    }
+
+    @Override
+    public StringBuilder append(double d) {
+        super.append(d);
+        return this;
+    }
+
+    /**
+     * @since 1.5
+     */
+    @Override
+    public StringBuilder appendCodePoint(int codePoint) {
+        super.appendCodePoint(codePoint);
+        return this;
+    }
+
+    /**
+     * @throws StringIndexOutOfBoundsException {@inheritDoc}
+     */
+    @Override
+    public StringBuilder delete(int start, int end) {
+        super.delete(start, end);
+        return this;
+    }
+
+    /**
+     * @throws StringIndexOutOfBoundsException {@inheritDoc}
+     */
+    @Override
+    public StringBuilder deleteCharAt(int index) {
+        super.deleteCharAt(index);
+        return this;
+    }
+
+    /**
+     * @throws StringIndexOutOfBoundsException {@inheritDoc}
+     */
+    @Override
+    public StringBuilder replace(int start, int end, String str) {
+        super.replace(start, end, str);
+        return this;
+    }
+
+    /**
+     * @throws StringIndexOutOfBoundsException {@inheritDoc}
+     */
+    @Override
+    public StringBuilder insert(int index, char[] str, int offset,
+                                int len)
+    {
+        super.insert(index, str, offset, len);
+        return this;
+    }
+
+    /**
+     * @throws StringIndexOutOfBoundsException {@inheritDoc}
+     */
+    @Override
+    public StringBuilder insert(int offset, Object obj) {
+            super.insert(offset, obj);
+            return this;
+    }
+
+    /**
+     * @throws StringIndexOutOfBoundsException {@inheritDoc}
+     */
+    @Override
+    public StringBuilder insert(int offset, String str) {
+        super.insert(offset, str);
+        return this;
+    }
+
+    /**
+     * @throws StringIndexOutOfBoundsException {@inheritDoc}
+     */
+    @Override
+    public StringBuilder insert(int offset, char[] str) {
+        super.insert(offset, str);
+        return this;
+    }
+
+    /**
+     * @throws IndexOutOfBoundsException {@inheritDoc}
+     */
+    @Override
+    public StringBuilder insert(int dstOffset, CharSequence s) {
+            super.insert(dstOffset, s);
+            return this;
+    }
+
+    /**
+     * @throws IndexOutOfBoundsException {@inheritDoc}
+     */
+    @Override
+    public StringBuilder insert(int dstOffset, CharSequence s,
+                                int start, int end)
+    {
+        super.insert(dstOffset, s, start, end);
+        return this;
+    }
+
+    /**
+     * @throws StringIndexOutOfBoundsException {@inheritDoc}
+     */
+    @Override
+    public StringBuilder insert(int offset, boolean b) {
+        super.insert(offset, b);
+        return this;
+    }
+
+    /**
+     * @throws IndexOutOfBoundsException {@inheritDoc}
+     */
+    @Override
+    public StringBuilder insert(int offset, char c) {
+        super.insert(offset, c);
+        return this;
+    }
+
+    /**
+     * @throws StringIndexOutOfBoundsException {@inheritDoc}
+     */
+    @Override
+    public StringBuilder insert(int offset, int i) {
+        super.insert(offset, i);
+        return this;
+    }
+
+    /**
+     * @throws StringIndexOutOfBoundsException {@inheritDoc}
+     */
+    @Override
+    public StringBuilder insert(int offset, long l) {
+        super.insert(offset, l);
+        return this;
+    }
+
+    /**
+     * @throws StringIndexOutOfBoundsException {@inheritDoc}
+     */
+    @Override
+    public StringBuilder insert(int offset, float f) {
+        super.insert(offset, f);
+        return this;
+    }
+
+    /**
+     * @throws StringIndexOutOfBoundsException {@inheritDoc}
+     */
+    @Override
+    public StringBuilder insert(int offset, double d) {
+        super.insert(offset, d);
+        return this;
+    }
+
+    @Override
+    public int indexOf(String str) {
+        return super.indexOf(str);
+    }
+
+    @Override
+    public int indexOf(String str, int fromIndex) {
+        return super.indexOf(str, fromIndex);
+    }
+
+    @Override
+    public int lastIndexOf(String str) {
+        return super.lastIndexOf(str);
+    }
+
+    @Override
+    public int lastIndexOf(String str, int fromIndex) {
+        return super.lastIndexOf(str, fromIndex);
+    }
+
+    @Override
+    public StringBuilder reverse() {
+        super.reverse();
+        return this;
+    }
+
+    @Override
+    public String toString() {
+        // Create a copy, don't share the array
+        return new String(value, 0, count);
+    }
+
+    /**
+     * Save the state of the {@code StringBuilder} instance to a stream
+     * (that is, serialize it).
+     *
+     * @serialData the number of characters currently stored in the string
+     *             builder ({@code int}), followed by the characters in the
+     *             string builder ({@code char[]}).   The length of the
+     *             {@code char} array may be greater than the number of
+     *             characters currently stored in the string builder, in which
+     *             case extra characters are ignored.
+     */
+    private void writeObject(java.io.ObjectOutputStream s)
+        throws java.io.IOException {
+        s.defaultWriteObject();
+        s.writeInt(count);
+        s.writeObject(value);
+    }
+
+    /**
+     * readObject is called to restore the state of the StringBuffer from
+     * a stream.
+     */
+    private void readObject(java.io.ObjectInputStream s)
+        throws java.io.IOException, ClassNotFoundException {
+        s.defaultReadObject();
+        count = s.readInt();
+        value = (char[]) s.readObject();
+    }
+
+}

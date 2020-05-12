@@ -1,144 +1,140 @@
-/*     */ package com.sun.jmx.snmp;
-/*     */ 
-/*     */ import com.sun.jmx.mbeanserver.Util;
-/*     */ import java.util.Vector;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class SnmpOidDatabaseSupport
-/*     */   implements SnmpOidDatabase
-/*     */ {
-/*     */   private Vector<SnmpOidTable> tables;
-/*     */   
-/*     */   public SnmpOidDatabaseSupport() {
-/*  36 */     this.tables = new Vector<>();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SnmpOidDatabaseSupport(SnmpOidTable paramSnmpOidTable) {
-/*  44 */     this.tables = new Vector<>();
-/*  45 */     this.tables.addElement(paramSnmpOidTable);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void add(SnmpOidTable paramSnmpOidTable) {
-/*  53 */     if (!this.tables.contains(paramSnmpOidTable)) {
-/*  54 */       this.tables.addElement(paramSnmpOidTable);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void remove(SnmpOidTable paramSnmpOidTable) throws SnmpStatusException {
-/*  64 */     if (!this.tables.contains(paramSnmpOidTable)) {
-/*  65 */       throw new SnmpStatusException("The specified SnmpOidTable does not exist in this SnmpOidDatabase");
-/*     */     }
-/*  67 */     this.tables.removeElement(paramSnmpOidTable);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SnmpOidRecord resolveVarName(String paramString) throws SnmpStatusException {
-/*  79 */     for (byte b = 0; b < this.tables.size(); b++) {
-/*     */       try {
-/*  81 */         return ((SnmpOidTable)this.tables.elementAt(b)).resolveVarName(paramString);
-/*     */       }
-/*  83 */       catch (SnmpStatusException snmpStatusException) {
-/*  84 */         if (b == this.tables.size() - 1) {
-/*  85 */           throw new SnmpStatusException(snmpStatusException.getMessage());
-/*     */         }
-/*     */       } 
-/*     */     } 
-/*  89 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SnmpOidRecord resolveVarOid(String paramString) throws SnmpStatusException {
-/* 100 */     for (byte b = 0; b < this.tables.size(); b++) {
-/*     */       try {
-/* 102 */         return ((SnmpOidTable)this.tables.elementAt(b)).resolveVarOid(paramString);
-/*     */       }
-/* 104 */       catch (SnmpStatusException snmpStatusException) {
-/* 105 */         if (b == this.tables.size() - 1) {
-/* 106 */           throw new SnmpStatusException(snmpStatusException.getMessage());
-/*     */         }
-/*     */       } 
-/*     */     } 
-/* 110 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Vector<?> getAllEntries() {
-/* 119 */     Vector<?> vector = new Vector();
-/* 120 */     for (byte b = 0; b < this.tables.size(); b++) {
-/* 121 */       Vector vector1 = Util.<Vector>cast(((SnmpOidTable)this.tables.elementAt(b)).getAllEntries());
-/* 122 */       if (vector1 != null) {
-/* 123 */         for (byte b1 = 0; b1 < vector1.size(); b1++) {
-/* 124 */           vector.addElement(vector1.elementAt(b1));
-/*     */         }
-/*     */       }
-/*     */     } 
-/*     */     
-/* 129 */     return vector;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void removeAll() {
-/* 136 */     this.tables.removeAllElements();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\jmx\snmp\SnmpOidDatabaseSupport.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ *
+ * Copyright (c) 2007, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+// Copyright (c) 1995-96 by Cisco Systems, Inc.
+
+package com.sun.jmx.snmp;
+
+// java import
+//
+import java.util.Vector;
+
+// jmx import
+//
+import com.sun.jmx.snmp.SnmpOidTable;
+import com.sun.jmx.snmp.SnmpOidRecord;
+import com.sun.jmx.snmp.SnmpStatusException;
+
+import static com.sun.jmx.mbeanserver.Util.cast;
+
+/**
+ * Defines a set of <CODE>SnmpOidTable</CODE> objects containing metadata definitions for MIB variables.
+ * Each <CODE>SnmpOidTable</CODE> should contain information on variables of one MIB.
+ * It provides resolution of all MIB variables contained in the <CODE>SnmpOidTable</CODE> objects.
+ * <p><b>This API is a Sun Microsystems internal API  and is subject
+ * to change without notice.</b></p>
+ */
+
+public class SnmpOidDatabaseSupport implements SnmpOidDatabase {
+
+    /**
+     * Creates an empty <CODE>SnmpOidDatabaseSupport</CODE>.
+     */
+    public SnmpOidDatabaseSupport(){
+        tables=new Vector<SnmpOidTable>();
+    }
+
+    /**
+     * Creates an <CODE>SnmpOidDatabaseSupport</CODE> containing the specified <CODE>SnmpOidTable</CODE> object.
+     * @param table The <CODE>SnmpOidTable</CODE> object used to initialize this <CODE>SnmpOidDatabaseSupport</CODE>.
+     */
+    public SnmpOidDatabaseSupport(SnmpOidTable table){
+        tables=new Vector<SnmpOidTable>();
+        tables.addElement(table);
+    }
+
+    /**
+     * Adds a <CODE>SnmpOidTable</CODE> object in this <CODE>SnmpOidDatabase</CODE>.
+     * @param table The table to add.
+     */
+    public void add(SnmpOidTable table) {
+        if (!tables.contains(table)) {
+            tables.addElement(table);
+        }
+    }
+
+    /**
+     * Removes a <CODE>SnmpOidTable</CODE> object from this <CODE>SnmpOidDatabase</CODE>.
+     * @param table The table to be removed.
+     * @exception SnmpStatusException The specified <CODE>SnmpOidTable</CODE> does not exist in this <CODE>SnmpOidDatabase</CODE>.
+     */
+    public void remove(SnmpOidTable table) throws SnmpStatusException {
+        if (!tables.contains(table)) {
+            throw new SnmpStatusException("The specified SnmpOidTable does not exist in this SnmpOidDatabase");
+        }
+        tables.removeElement(table);
+    }
+
+    /**
+     * Searches for a MIB variable given its logical name and returns an <CODE>SnmpOidRecord</CODE>
+     * object containing information on the variable.
+     * @param name The name of the MIB variable.
+     * @return The <CODE>SnmpOidRecord</CODE> object containing information on the variable.
+     *
+     * @exception SnmpStatusException The specified name does not exist in this <CODE>SnmpOidDatabase</CODE>
+     */
+    public SnmpOidRecord resolveVarName(String name) throws SnmpStatusException {
+        for (int i=0;i<tables.size();i++) {
+            try {
+                return (tables.elementAt(i).resolveVarName(name));
+            }
+            catch (SnmpStatusException e) {
+                if (i==tables.size()-1) {
+                    throw new SnmpStatusException(e.getMessage());
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Searches for a MIB variable given its OID and returns an <CODE>SnmpOidRecord</CODE> object containing
+     * information on the variable.
+     * @param oid The OID of the MIB variable.
+     * @return The <CODE>SnmpOidRecord</CODE> object containing information on the variable.
+     * @exception SnmpStatusException The specified oid does not exist in this <CODE>SnmpOidDatabase</CODE>.
+     */
+    public SnmpOidRecord resolveVarOid(String oid) throws SnmpStatusException {
+        for (int i=0;i<tables.size();i++) {
+            try {
+                return tables.elementAt(i).resolveVarOid(oid);
+            }
+            catch (SnmpStatusException e) {
+                if (i==tables.size()-1) {
+                    throw new SnmpStatusException(e.getMessage());
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Returns a list that can be used to traverse all the entries of the <CODE>SnmpOidTable</CODE> objects
+     * of this <CODE>SnmpOidDatabase</CODE>.
+     * @return A vector of <CODE>SnmpOidTable</CODE> objects containing all the elements of this <CODE>SnmpOidDatabase</CODE>.
+     */
+    public Vector<?> getAllEntries() {
+        Vector<SnmpOidTable> res = new Vector<SnmpOidTable>();
+        for (int i=0;i<tables.size();i++) {
+            Vector<SnmpOidTable> tmp = cast(tables.elementAt(i).getAllEntries());
+            if (tmp != null) {
+                for(int ii=0; ii<tmp.size(); ii++) {
+                        res.addElement(tmp.elementAt(ii));
+                }
+            }
+        }
+//      res.addAll(((SnmpOidTable)tables.elementAt(i)).getAllEntries());
+        return res;
+    }
+
+    /**
+     * Removes all <CODE>SnmpOidTable</CODE> objects from this <CODE>SnmpOidDatabase</CODE>.
+     */
+    public void removeAll(){
+        tables.removeAllElements() ;
+    }
+
+    private Vector<SnmpOidTable> tables;
+}

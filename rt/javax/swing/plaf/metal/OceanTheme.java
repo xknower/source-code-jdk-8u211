@@ -1,466 +1,460 @@
-/*     */ package javax.swing.plaf.metal;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Component;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Insets;
-/*     */ import java.util.Arrays;
-/*     */ import java.util.List;
-/*     */ import javax.swing.AbstractButton;
-/*     */ import javax.swing.ButtonModel;
-/*     */ import javax.swing.Icon;
-/*     */ import javax.swing.UIDefaults;
-/*     */ import javax.swing.plaf.ColorUIResource;
-/*     */ import javax.swing.plaf.IconUIResource;
-/*     */ import sun.swing.PrintColorUIResource;
-/*     */ import sun.swing.SwingLazyValue;
-/*     */ import sun.swing.SwingUtilities2;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class OceanTheme
-/*     */   extends DefaultMetalTheme
-/*     */ {
-/*  55 */   private static final ColorUIResource PRIMARY1 = new ColorUIResource(6521535);
-/*     */   
-/*  57 */   private static final ColorUIResource PRIMARY2 = new ColorUIResource(10729676);
-/*     */   
-/*  59 */   private static final ColorUIResource PRIMARY3 = new ColorUIResource(12111845);
-/*     */   
-/*  61 */   private static final ColorUIResource SECONDARY1 = new ColorUIResource(8030873);
-/*     */   
-/*  63 */   private static final ColorUIResource SECONDARY2 = new ColorUIResource(12111845);
-/*     */   
-/*  65 */   private static final ColorUIResource SECONDARY3 = new ColorUIResource(15658734);
-/*     */ 
-/*     */   
-/*  68 */   private static final ColorUIResource CONTROL_TEXT_COLOR = new PrintColorUIResource(3355443, Color.BLACK);
-/*     */   
-/*  70 */   private static final ColorUIResource INACTIVE_CONTROL_TEXT_COLOR = new ColorUIResource(10066329);
-/*     */   
-/*  72 */   private static final ColorUIResource MENU_DISABLED_FOREGROUND = new ColorUIResource(10066329);
-/*     */   
-/*  74 */   private static final ColorUIResource OCEAN_BLACK = new PrintColorUIResource(3355443, Color.BLACK);
-/*     */ 
-/*     */   
-/*  77 */   private static final ColorUIResource OCEAN_DROP = new ColorUIResource(13822463);
-/*     */ 
-/*     */   
-/*     */   private static class COIcon
-/*     */     extends IconUIResource
-/*     */   {
-/*     */     private Icon rtl;
-/*     */     
-/*     */     public COIcon(Icon param1Icon1, Icon param1Icon2) {
-/*  86 */       super(param1Icon1);
-/*  87 */       this.rtl = param1Icon2;
-/*     */     }
-/*     */     
-/*     */     public void paintIcon(Component param1Component, Graphics param1Graphics, int param1Int1, int param1Int2) {
-/*  91 */       if (MetalUtils.isLeftToRight(param1Component)) {
-/*  92 */         super.paintIcon(param1Component, param1Graphics, param1Int1, param1Int2);
-/*     */       } else {
-/*  94 */         this.rtl.paintIcon(param1Component, param1Graphics, param1Int1, param1Int2);
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   private static class IFIcon
-/*     */     extends IconUIResource
-/*     */   {
-/*     */     private Icon pressed;
-/*     */     
-/*     */     public IFIcon(Icon param1Icon1, Icon param1Icon2) {
-/* 105 */       super(param1Icon1);
-/* 106 */       this.pressed = param1Icon2;
-/*     */     }
-/*     */     
-/*     */     public void paintIcon(Component param1Component, Graphics param1Graphics, int param1Int1, int param1Int2) {
-/* 110 */       ButtonModel buttonModel = ((AbstractButton)param1Component).getModel();
-/* 111 */       if (buttonModel.isPressed() && buttonModel.isArmed()) {
-/* 112 */         this.pressed.paintIcon(param1Component, param1Graphics, param1Int1, param1Int2);
-/*     */       } else {
-/* 114 */         super.paintIcon(param1Component, param1Graphics, param1Int1, param1Int2);
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addCustomEntriesToTable(UIDefaults paramUIDefaults) {
-/* 134 */     SwingLazyValue swingLazyValue = new SwingLazyValue("javax.swing.plaf.BorderUIResource$LineBorderUIResource", new Object[] { getPrimary1() });
-/*     */     
-/* 136 */     List list1 = Arrays.asList(new Object[] { new Float(0.3F), new Float(0.0F), new ColorUIResource(14543091), 
-/*     */           
-/* 138 */           getWhite(), getSecondary2() });
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 147 */     ColorUIResource colorUIResource1 = new ColorUIResource(13421772);
-/* 148 */     ColorUIResource colorUIResource2 = new ColorUIResource(14342874);
-/* 149 */     ColorUIResource colorUIResource3 = new ColorUIResource(13164018);
-/* 150 */     Object object1 = getIconResource("icons/ocean/directory.gif");
-/* 151 */     Object object2 = getIconResource("icons/ocean/file.gif");
-/* 152 */     List list2 = Arrays.asList(new Object[] { new Float(0.3F), new Float(0.2F), colorUIResource3, 
-/*     */           
-/* 154 */           getWhite(), new ColorUIResource(SECONDARY2) });
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 311 */     Object[] arrayOfObject = { "Button.gradient", list1, "Button.rollover", Boolean.TRUE, "Button.toolBarBorderBackground", INACTIVE_CONTROL_TEXT_COLOR, "Button.disabledToolBarBorderBackground", colorUIResource1, "Button.rolloverIconType", "ocean", "CheckBox.rollover", Boolean.TRUE, "CheckBox.gradient", list1, "CheckBoxMenuItem.gradient", list1, "FileChooser.homeFolderIcon", getIconResource("icons/ocean/homeFolder.gif"), "FileChooser.newFolderIcon", getIconResource("icons/ocean/newFolder.gif"), "FileChooser.upFolderIcon", getIconResource("icons/ocean/upFolder.gif"), "FileView.computerIcon", getIconResource("icons/ocean/computer.gif"), "FileView.directoryIcon", object1, "FileView.hardDriveIcon", getIconResource("icons/ocean/hardDrive.gif"), "FileView.fileIcon", object2, "FileView.floppyDriveIcon", getIconResource("icons/ocean/floppy.gif"), "Label.disabledForeground", getInactiveControlTextColor(), "Menu.opaque", Boolean.FALSE, "MenuBar.gradient", Arrays.asList(new Object[] { new Float(1.0F), new Float(0.0F), getWhite(), colorUIResource2, new ColorUIResource(colorUIResource2) }), "MenuBar.borderColor", colorUIResource1, "InternalFrame.activeTitleGradient", list1, "InternalFrame.closeIcon", new UIDefaults.LazyValue() { public Object createValue(UIDefaults param1UIDefaults) { return new OceanTheme.IFIcon(OceanTheme.this.getHastenedIcon("icons/ocean/close.gif", param1UIDefaults), OceanTheme.this.getHastenedIcon("icons/ocean/close-pressed.gif", param1UIDefaults)); } }, "InternalFrame.iconifyIcon", new UIDefaults.LazyValue() { public Object createValue(UIDefaults param1UIDefaults) { return new OceanTheme.IFIcon(OceanTheme.this.getHastenedIcon("icons/ocean/iconify.gif", param1UIDefaults), OceanTheme.this.getHastenedIcon("icons/ocean/iconify-pressed.gif", param1UIDefaults)); } }, "InternalFrame.minimizeIcon", new UIDefaults.LazyValue() { public Object createValue(UIDefaults param1UIDefaults) { return new OceanTheme.IFIcon(OceanTheme.this.getHastenedIcon("icons/ocean/minimize.gif", param1UIDefaults), OceanTheme.this.getHastenedIcon("icons/ocean/minimize-pressed.gif", param1UIDefaults)); } }, "InternalFrame.icon", getIconResource("icons/ocean/menu.gif"), "InternalFrame.maximizeIcon", new UIDefaults.LazyValue() { public Object createValue(UIDefaults param1UIDefaults) { return new OceanTheme.IFIcon(OceanTheme.this.getHastenedIcon("icons/ocean/maximize.gif", param1UIDefaults), OceanTheme.this.getHastenedIcon("icons/ocean/maximize-pressed.gif", param1UIDefaults)); } }, "InternalFrame.paletteCloseIcon", new UIDefaults.LazyValue() { public Object createValue(UIDefaults param1UIDefaults) { return new OceanTheme.IFIcon(OceanTheme.this.getHastenedIcon("icons/ocean/paletteClose.gif", param1UIDefaults), OceanTheme.this.getHastenedIcon("icons/ocean/paletteClose-pressed.gif", param1UIDefaults)); } }, "List.focusCellHighlightBorder", swingLazyValue, "MenuBarUI", "javax.swing.plaf.metal.MetalMenuBarUI", "OptionPane.errorIcon", getIconResource("icons/ocean/error.png"), "OptionPane.informationIcon", getIconResource("icons/ocean/info.png"), "OptionPane.questionIcon", getIconResource("icons/ocean/question.png"), "OptionPane.warningIcon", getIconResource("icons/ocean/warning.png"), "RadioButton.gradient", list1, "RadioButton.rollover", Boolean.TRUE, "RadioButtonMenuItem.gradient", list1, "ScrollBar.gradient", list1, "Slider.altTrackColor", new ColorUIResource(13820655), "Slider.gradient", list2, "Slider.focusGradient", list2, "SplitPane.oneTouchButtonsOpaque", Boolean.FALSE, "SplitPane.dividerFocusColor", colorUIResource3, "TabbedPane.borderHightlightColor", getPrimary1(), "TabbedPane.contentAreaColor", colorUIResource3, "TabbedPane.contentBorderInsets", new Insets(4, 2, 3, 3), "TabbedPane.selected", colorUIResource3, "TabbedPane.tabAreaBackground", colorUIResource2, "TabbedPane.tabAreaInsets", new Insets(2, 2, 0, 6), "TabbedPane.unselectedBackground", SECONDARY3, "Table.focusCellHighlightBorder", swingLazyValue, "Table.gridColor", SECONDARY1, "TableHeader.focusCellBackground", colorUIResource3, "ToggleButton.gradient", list1, "ToolBar.borderColor", colorUIResource1, "ToolBar.isRollover", Boolean.TRUE, "Tree.closedIcon", object1, "Tree.collapsedIcon", new UIDefaults.LazyValue() { public Object createValue(UIDefaults param1UIDefaults) { return new OceanTheme.COIcon(OceanTheme.this.getHastenedIcon("icons/ocean/collapsed.gif", param1UIDefaults), OceanTheme.this.getHastenedIcon("icons/ocean/collapsed-rtl.gif", param1UIDefaults)); } }, "Tree.expandedIcon", getIconResource("icons/ocean/expanded.gif"), "Tree.leafIcon", object2, "Tree.openIcon", object1, "Tree.selectionBorderColor", getPrimary1(), "Tree.dropLineColor", getPrimary1(), "Table.dropLineColor", getPrimary1(), "Table.dropLineShortColor", OCEAN_BLACK, "Table.dropCellBackground", OCEAN_DROP, "Tree.dropCellBackground", OCEAN_DROP, "List.dropCellBackground", OCEAN_DROP, "List.dropLineColor", getPrimary1() };
-/*     */     
-/* 313 */     paramUIDefaults.putDefaults(arrayOfObject);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   boolean isSystemTheme() {
-/* 320 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getName() {
-/* 329 */     return "Ocean";
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected ColorUIResource getPrimary1() {
-/* 340 */     return PRIMARY1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected ColorUIResource getPrimary2() {
-/* 351 */     return PRIMARY2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected ColorUIResource getPrimary3() {
-/* 362 */     return PRIMARY3;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected ColorUIResource getSecondary1() {
-/* 373 */     return SECONDARY1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected ColorUIResource getSecondary2() {
-/* 384 */     return SECONDARY2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected ColorUIResource getSecondary3() {
-/* 395 */     return SECONDARY3;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected ColorUIResource getBlack() {
-/* 406 */     return OCEAN_BLACK;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ColorUIResource getDesktopColor() {
-/* 417 */     return MetalTheme.white;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ColorUIResource getInactiveControlTextColor() {
-/* 427 */     return INACTIVE_CONTROL_TEXT_COLOR;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ColorUIResource getControlTextColor() {
-/* 437 */     return CONTROL_TEXT_COLOR;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ColorUIResource getMenuDisabledForeground() {
-/* 447 */     return MENU_DISABLED_FOREGROUND;
-/*     */   }
-/*     */   
-/*     */   private Object getIconResource(String paramString) {
-/* 451 */     return SwingUtilities2.makeIcon(getClass(), OceanTheme.class, paramString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private Icon getHastenedIcon(String paramString, UIDefaults paramUIDefaults) {
-/* 457 */     Object object = getIconResource(paramString);
-/* 458 */     return (Icon)((UIDefaults.LazyValue)object).createValue(paramUIDefaults);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\metal\OceanTheme.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, 2006, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.plaf.metal;
+
+import java.awt.*;
+import java.net.URL;
+import java.util.*;
+import javax.swing.*;
+import javax.swing.plaf.*;
+import sun.swing.SwingUtilities2;
+import sun.swing.PrintColorUIResource;
+import sun.swing.SwingLazyValue;
+
+/**
+ * The default theme for the {@code MetalLookAndFeel}.
+ * <p>
+ * The designers
+ * of the Metal Look and Feel strive to keep the default look up to
+ * date, possibly through the use of new themes in the future.
+ * Therefore, developers should only use this class directly when they
+ * wish to customize the "Ocean" look, or force it to be the current
+ * theme, regardless of future updates.
+
+ * <p>
+ * All colors returned by {@code OceanTheme} are completely
+ * opaque.
+ *
+ * @since 1.5
+ * @see MetalLookAndFeel#setCurrentTheme
+ */
+public class OceanTheme extends DefaultMetalTheme {
+    private static final ColorUIResource PRIMARY1 =
+                              new ColorUIResource(0x6382BF);
+    private static final ColorUIResource PRIMARY2 =
+                              new ColorUIResource(0xA3B8CC);
+    private static final ColorUIResource PRIMARY3 =
+                              new ColorUIResource(0xB8CFE5);
+    private static final ColorUIResource SECONDARY1 =
+                              new ColorUIResource(0x7A8A99);
+    private static final ColorUIResource SECONDARY2 =
+                              new ColorUIResource(0xB8CFE5);
+    private static final ColorUIResource SECONDARY3 =
+                              new ColorUIResource(0xEEEEEE);
+
+    private static final ColorUIResource CONTROL_TEXT_COLOR =
+                              new PrintColorUIResource(0x333333, Color.BLACK);
+    private static final ColorUIResource INACTIVE_CONTROL_TEXT_COLOR =
+                              new ColorUIResource(0x999999);
+    private static final ColorUIResource MENU_DISABLED_FOREGROUND =
+                              new ColorUIResource(0x999999);
+    private static final ColorUIResource OCEAN_BLACK =
+                              new PrintColorUIResource(0x333333, Color.BLACK);
+
+    private static final ColorUIResource OCEAN_DROP =
+                              new ColorUIResource(0xD2E9FF);
+
+    // ComponentOrientation Icon
+    // Delegates to different icons based on component orientation
+    private static class COIcon extends IconUIResource {
+        private Icon rtl;
+
+        public COIcon(Icon ltr, Icon rtl) {
+            super(ltr);
+            this.rtl = rtl;
+        }
+
+        public void paintIcon(Component c, Graphics g, int x, int y) {
+            if (MetalUtils.isLeftToRight(c)) {
+                super.paintIcon(c, g, x, y);
+            } else {
+                rtl.paintIcon(c, g, x, y);
+            }
+        }
+    }
+
+    // InternalFrame Icon
+    // Delegates to different icons based on button state
+    private static class IFIcon extends IconUIResource {
+        private Icon pressed;
+
+        public IFIcon(Icon normal, Icon pressed) {
+            super(normal);
+            this.pressed = pressed;
+        }
+
+        public void paintIcon(Component c, Graphics g, int x, int y) {
+            ButtonModel model = ((AbstractButton)c).getModel();
+            if (model.isPressed() && model.isArmed()) {
+                pressed.paintIcon(c, g, x, y);
+            } else {
+                super.paintIcon(c, g, x, y);
+            }
+        }
+    }
+
+    /**
+     * Creates an instance of <code>OceanTheme</code>
+     */
+    public OceanTheme() {
+    }
+
+    /**
+     * Add this theme's custom entries to the defaults table.
+     *
+     * @param table the defaults table, non-null
+     * @throws NullPointerException if {@code table} is {@code null}
+     */
+    public void addCustomEntriesToTable(UIDefaults table) {
+        Object focusBorder = new SwingLazyValue(
+                      "javax.swing.plaf.BorderUIResource$LineBorderUIResource",
+                      new Object[] {getPrimary1()});
+        // .30 0 DDE8F3 white secondary2
+        java.util.List buttonGradient = Arrays.asList(
+                 new Object[] {new Float(.3f), new Float(0f),
+                 new ColorUIResource(0xDDE8F3), getWhite(), getSecondary2() });
+
+        // Other possible properties that aren't defined:
+        //
+        // Used when generating the disabled Icons, provides the region to
+        // constrain grays to.
+        // Button.disabledGrayRange -> Object[] of Integers giving min/max
+        // InternalFrame.inactiveTitleGradient -> Gradient when the
+        //   internal frame is inactive.
+        Color cccccc = new ColorUIResource(0xCCCCCC);
+        Color dadada = new ColorUIResource(0xDADADA);
+        Color c8ddf2 = new ColorUIResource(0xC8DDF2);
+        Object directoryIcon = getIconResource("icons/ocean/directory.gif");
+        Object fileIcon = getIconResource("icons/ocean/file.gif");
+        java.util.List sliderGradient = Arrays.asList(new Object[] {
+            new Float(.3f), new Float(.2f),
+            c8ddf2, getWhite(), new ColorUIResource(SECONDARY2) });
+
+        Object[] defaults = new Object[] {
+            "Button.gradient", buttonGradient,
+            "Button.rollover", Boolean.TRUE,
+            "Button.toolBarBorderBackground", INACTIVE_CONTROL_TEXT_COLOR,
+            "Button.disabledToolBarBorderBackground", cccccc,
+            "Button.rolloverIconType", "ocean",
+
+            "CheckBox.rollover", Boolean.TRUE,
+            "CheckBox.gradient", buttonGradient,
+
+            "CheckBoxMenuItem.gradient", buttonGradient,
+
+            // home2
+            "FileChooser.homeFolderIcon",
+                 getIconResource("icons/ocean/homeFolder.gif"),
+            // directory2
+            "FileChooser.newFolderIcon",
+                 getIconResource("icons/ocean/newFolder.gif"),
+            // updir2
+            "FileChooser.upFolderIcon",
+                 getIconResource("icons/ocean/upFolder.gif"),
+
+            // computer2
+            "FileView.computerIcon",
+                 getIconResource("icons/ocean/computer.gif"),
+            "FileView.directoryIcon", directoryIcon,
+            // disk2
+            "FileView.hardDriveIcon",
+                 getIconResource("icons/ocean/hardDrive.gif"),
+            "FileView.fileIcon", fileIcon,
+            // floppy2
+            "FileView.floppyDriveIcon",
+                 getIconResource("icons/ocean/floppy.gif"),
+
+            "Label.disabledForeground", getInactiveControlTextColor(),
+
+            "Menu.opaque", Boolean.FALSE,
+
+            "MenuBar.gradient", Arrays.asList(new Object[] {
+                     new Float(1f), new Float(0f),
+                     getWhite(), dadada,
+                     new ColorUIResource(dadada) }),
+            "MenuBar.borderColor", cccccc,
+
+            "InternalFrame.activeTitleGradient", buttonGradient,
+            // close2
+            "InternalFrame.closeIcon",
+                     new UIDefaults.LazyValue() {
+                         public Object createValue(UIDefaults table) {
+                             return new IFIcon(getHastenedIcon("icons/ocean/close.gif", table),
+                                               getHastenedIcon("icons/ocean/close-pressed.gif", table));
+                         }
+                     },
+            // minimize
+            "InternalFrame.iconifyIcon",
+                     new UIDefaults.LazyValue() {
+                         public Object createValue(UIDefaults table) {
+                             return new IFIcon(getHastenedIcon("icons/ocean/iconify.gif", table),
+                                               getHastenedIcon("icons/ocean/iconify-pressed.gif", table));
+                         }
+                     },
+            // restore
+            "InternalFrame.minimizeIcon",
+                     new UIDefaults.LazyValue() {
+                         public Object createValue(UIDefaults table) {
+                             return new IFIcon(getHastenedIcon("icons/ocean/minimize.gif", table),
+                                               getHastenedIcon("icons/ocean/minimize-pressed.gif", table));
+                         }
+                     },
+            // menubutton3
+            "InternalFrame.icon",
+                     getIconResource("icons/ocean/menu.gif"),
+            // maximize2
+            "InternalFrame.maximizeIcon",
+                     new UIDefaults.LazyValue() {
+                         public Object createValue(UIDefaults table) {
+                             return new IFIcon(getHastenedIcon("icons/ocean/maximize.gif", table),
+                                               getHastenedIcon("icons/ocean/maximize-pressed.gif", table));
+                         }
+                     },
+            // paletteclose
+            "InternalFrame.paletteCloseIcon",
+                     new UIDefaults.LazyValue() {
+                         public Object createValue(UIDefaults table) {
+                             return new IFIcon(getHastenedIcon("icons/ocean/paletteClose.gif", table),
+                                               getHastenedIcon("icons/ocean/paletteClose-pressed.gif", table));
+                         }
+                     },
+
+            "List.focusCellHighlightBorder", focusBorder,
+
+            "MenuBarUI", "javax.swing.plaf.metal.MetalMenuBarUI",
+
+            "OptionPane.errorIcon",
+                   getIconResource("icons/ocean/error.png"),
+            "OptionPane.informationIcon",
+                   getIconResource("icons/ocean/info.png"),
+            "OptionPane.questionIcon",
+                   getIconResource("icons/ocean/question.png"),
+            "OptionPane.warningIcon",
+                   getIconResource("icons/ocean/warning.png"),
+
+            "RadioButton.gradient", buttonGradient,
+            "RadioButton.rollover", Boolean.TRUE,
+
+            "RadioButtonMenuItem.gradient", buttonGradient,
+
+            "ScrollBar.gradient", buttonGradient,
+
+            "Slider.altTrackColor", new ColorUIResource(0xD2E2EF),
+            "Slider.gradient", sliderGradient,
+            "Slider.focusGradient", sliderGradient,
+
+            "SplitPane.oneTouchButtonsOpaque", Boolean.FALSE,
+            "SplitPane.dividerFocusColor", c8ddf2,
+
+            "TabbedPane.borderHightlightColor", getPrimary1(),
+            "TabbedPane.contentAreaColor", c8ddf2,
+            "TabbedPane.contentBorderInsets", new Insets(4, 2, 3, 3),
+            "TabbedPane.selected", c8ddf2,
+            "TabbedPane.tabAreaBackground", dadada,
+            "TabbedPane.tabAreaInsets", new Insets(2, 2, 0, 6),
+            "TabbedPane.unselectedBackground", SECONDARY3,
+
+            "Table.focusCellHighlightBorder", focusBorder,
+            "Table.gridColor", SECONDARY1,
+            "TableHeader.focusCellBackground", c8ddf2,
+
+            "ToggleButton.gradient", buttonGradient,
+
+            "ToolBar.borderColor", cccccc,
+            "ToolBar.isRollover", Boolean.TRUE,
+
+            "Tree.closedIcon", directoryIcon,
+
+            "Tree.collapsedIcon",
+                  new UIDefaults.LazyValue() {
+                      public Object createValue(UIDefaults table) {
+                          return new COIcon(getHastenedIcon("icons/ocean/collapsed.gif", table),
+                                            getHastenedIcon("icons/ocean/collapsed-rtl.gif", table));
+                      }
+                  },
+
+            "Tree.expandedIcon",
+                  getIconResource("icons/ocean/expanded.gif"),
+            "Tree.leafIcon", fileIcon,
+            "Tree.openIcon", directoryIcon,
+            "Tree.selectionBorderColor", getPrimary1(),
+            "Tree.dropLineColor", getPrimary1(),
+            "Table.dropLineColor", getPrimary1(),
+            "Table.dropLineShortColor", OCEAN_BLACK,
+
+            "Table.dropCellBackground", OCEAN_DROP,
+            "Tree.dropCellBackground", OCEAN_DROP,
+            "List.dropCellBackground", OCEAN_DROP,
+            "List.dropLineColor", getPrimary1()
+        };
+        table.putDefaults(defaults);
+    }
+
+    /**
+     * Overriden to enable picking up the system fonts, if applicable.
+     */
+    boolean isSystemTheme() {
+        return true;
+    }
+
+    /**
+     * Return the name of this theme, "Ocean".
+     *
+     * @return "Ocean"
+     */
+    public String getName() {
+        return "Ocean";
+    }
+
+    /**
+     * Returns the primary 1 color. This returns a color with an rgb hex value
+     * of {@code 0x6382BF}.
+     *
+     * @return the primary 1 color
+     * @see java.awt.Color#decode
+     */
+    protected ColorUIResource getPrimary1() {
+        return PRIMARY1;
+    }
+
+    /**
+     * Returns the primary 2 color. This returns a color with an rgb hex value
+     * of {@code 0xA3B8CC}.
+     *
+     * @return the primary 2 color
+     * @see java.awt.Color#decode
+     */
+    protected ColorUIResource getPrimary2() {
+        return PRIMARY2;
+    }
+
+    /**
+     * Returns the primary 3 color. This returns a color with an rgb hex value
+     * of {@code 0xB8CFE5}.
+     *
+     * @return the primary 3 color
+     * @see java.awt.Color#decode
+     */
+    protected ColorUIResource getPrimary3() {
+        return PRIMARY3;
+    }
+
+    /**
+     * Returns the secondary 1 color. This returns a color with an rgb hex
+     * value of {@code 0x7A8A99}.
+     *
+     * @return the secondary 1 color
+     * @see java.awt.Color#decode
+     */
+    protected ColorUIResource getSecondary1() {
+        return SECONDARY1;
+    }
+
+    /**
+     * Returns the secondary 2 color. This returns a color with an rgb hex
+     * value of {@code 0xB8CFE5}.
+     *
+     * @return the secondary 2 color
+     * @see java.awt.Color#decode
+     */
+    protected ColorUIResource getSecondary2() {
+        return SECONDARY2;
+    }
+
+    /**
+     * Returns the secondary 3 color. This returns a color with an rgb hex
+     * value of {@code 0xEEEEEE}.
+     *
+     * @return the secondary 3 color
+     * @see java.awt.Color#decode
+     */
+    protected ColorUIResource getSecondary3() {
+        return SECONDARY3;
+    }
+
+    /**
+     * Returns the black color. This returns a color with an rgb hex
+     * value of {@code 0x333333}.
+     *
+     * @return the black color
+     * @see java.awt.Color#decode
+     */
+    protected ColorUIResource getBlack() {
+        return OCEAN_BLACK;
+    }
+
+    /**
+     * Returns the desktop color. This returns a color with an rgb hex
+     * value of {@code 0xFFFFFF}.
+     *
+     * @return the desktop color
+     * @see java.awt.Color#decode
+     */
+    public ColorUIResource getDesktopColor() {
+        return MetalTheme.white;
+    }
+
+    /**
+     * Returns the inactive control text color. This returns a color with an
+     * rgb hex value of {@code 0x999999}.
+     *
+     * @return the inactive control text color
+     */
+    public ColorUIResource getInactiveControlTextColor() {
+        return INACTIVE_CONTROL_TEXT_COLOR;
+    }
+
+    /**
+     * Returns the control text color. This returns a color with an
+     * rgb hex value of {@code 0x333333}.
+     *
+     * @return the control text color
+     */
+    public ColorUIResource getControlTextColor() {
+        return CONTROL_TEXT_COLOR;
+    }
+
+    /**
+     * Returns the menu disabled foreground color. This returns a color with an
+     * rgb hex value of {@code 0x999999}.
+     *
+     * @return the menu disabled foreground color
+     */
+    public ColorUIResource getMenuDisabledForeground() {
+        return MENU_DISABLED_FOREGROUND;
+    }
+
+    private Object getIconResource(String iconID) {
+        return SwingUtilities2.makeIcon(getClass(), OceanTheme.class, iconID);
+    }
+
+    // makes use of getIconResource() to fetch an icon and then hastens it
+    // - calls createValue() on it and returns the actual icon
+    private Icon getHastenedIcon(String iconID, UIDefaults table) {
+        Object res = getIconResource(iconID);
+        return (Icon)((UIDefaults.LazyValue)res).createValue(table);
+    }
+}

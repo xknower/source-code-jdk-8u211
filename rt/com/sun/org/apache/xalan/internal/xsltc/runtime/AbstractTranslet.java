@@ -1,804 +1,798 @@
-/*     */ package com.sun.org.apache.xalan.internal.xsltc.runtime;
-/*     */ 
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.DOM;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.DOMCache;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.DOMEnhancedForDTM;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.Translet;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.TransletException;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.dom.DOMAdapter;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.dom.KeyIndex;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.runtime.output.TransletOutputHandlerFactory;
-/*     */ import com.sun.org.apache.xml.internal.dtm.DTMAxisIterator;
-/*     */ import com.sun.org.apache.xml.internal.serializer.SerializationHandler;
-/*     */ import java.io.BufferedOutputStream;
-/*     */ import java.io.File;
-/*     */ import java.io.FileOutputStream;
-/*     */ import java.text.DecimalFormat;
-/*     */ import java.text.DecimalFormatSymbols;
-/*     */ import java.util.ArrayList;
-/*     */ import java.util.HashMap;
-/*     */ import java.util.Map;
-/*     */ import java.util.Vector;
-/*     */ import javax.xml.parsers.DocumentBuilderFactory;
-/*     */ import javax.xml.parsers.ParserConfigurationException;
-/*     */ import javax.xml.transform.Templates;
-/*     */ import jdk.xml.internal.JdkXmlUtils;
-/*     */ import org.w3c.dom.DOMImplementation;
-/*     */ import org.w3c.dom.Document;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public abstract class AbstractTranslet
-/*     */   implements Translet
-/*     */ {
-/*  66 */   public String _version = "1.0";
-/*  67 */   public String _method = null;
-/*  68 */   public String _encoding = "UTF-8";
-/*     */   public boolean _omitHeader = false;
-/*  70 */   public String _standalone = null;
-/*     */   
-/*     */   public boolean _isStandalone = false;
-/*  73 */   public String _doctypePublic = null;
-/*  74 */   public String _doctypeSystem = null;
-/*     */   public boolean _indent = false;
-/*  76 */   public String _mediaType = null;
-/*  77 */   public Vector _cdata = null;
-/*  78 */   public int _indentamount = -1;
-/*     */ 
-/*     */   
-/*     */   public static final int FIRST_TRANSLET_VERSION = 100;
-/*     */ 
-/*     */   
-/*     */   public static final int VER_SPLIT_NAMES_ARRAY = 101;
-/*     */ 
-/*     */   
-/*     */   public static final int CURRENT_TRANSLET_VERSION = 101;
-/*     */   
-/*  89 */   protected int transletVersion = 100;
-/*     */   
-/*     */   protected String[] namesArray;
-/*     */   
-/*     */   protected String[] urisArray;
-/*     */   
-/*     */   protected int[] typesArray;
-/*     */   
-/*     */   protected String[] namespaceArray;
-/*  98 */   protected Templates _templates = null;
-/*     */ 
-/*     */   
-/*     */   protected boolean _hasIdCall = false;
-/*     */ 
-/*     */   
-/* 104 */   protected StringValueHandler stringValueHandler = new StringValueHandler();
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static final String EMPTYSTRING = "";
-/*     */ 
-/*     */   
-/*     */   private static final String ID_INDEX_NAME = "##id";
-/*     */ 
-/*     */   
-/*     */   private boolean _overrideDefaultParser;
-/*     */ 
-/*     */   
-/* 117 */   private String _accessExternalStylesheet = "all";
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void printInternalState() {
-/* 123 */     System.out.println("-------------------------------------");
-/* 124 */     System.out.println("AbstractTranslet this = " + this);
-/* 125 */     System.out.println("pbase = " + this.pbase);
-/* 126 */     System.out.println("vframe = " + this.pframe);
-/* 127 */     System.out.println("paramsStack.size() = " + this.paramsStack.size());
-/* 128 */     System.out.println("namesArray.size = " + this.namesArray.length);
-/* 129 */     System.out.println("namespaceArray.size = " + this.namespaceArray.length);
-/* 130 */     System.out.println("");
-/* 131 */     System.out.println("Total memory = " + Runtime.getRuntime().totalMemory());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final DOMAdapter makeDOMAdapter(DOM dom) throws TransletException {
-/* 141 */     setRootForKeys(dom.getDocument());
-/* 142 */     return new DOMAdapter(dom, this.namesArray, this.urisArray, this.typesArray, this.namespaceArray);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 151 */   protected int pbase = 0; protected int pframe = 0;
-/* 152 */   protected ArrayList paramsStack = new ArrayList();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final void pushParamFrame() {
-/* 158 */     this.paramsStack.add(this.pframe, new Integer(this.pbase));
-/* 159 */     this.pbase = ++this.pframe;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final void popParamFrame() {
-/* 166 */     if (this.pbase > 0) {
-/* 167 */       int oldpbase = ((Integer)this.paramsStack.get(--this.pbase)).intValue();
-/* 168 */       for (int i = this.pframe - 1; i >= this.pbase; i--) {
-/* 169 */         this.paramsStack.remove(i);
-/*     */       }
-/* 171 */       this.pframe = this.pbase; this.pbase = oldpbase;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final Object addParameter(String name, Object value) {
-/* 184 */     name = BasisLibrary.mapQNameToJavaName(name);
-/* 185 */     return addParameter(name, value, false);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final Object addParameter(String name, Object value, boolean isDefault) {
-/* 198 */     for (int i = this.pframe - 1; i >= this.pbase; i--) {
-/* 199 */       Parameter param = this.paramsStack.get(i);
-/*     */       
-/* 201 */       if (param._name.equals(name)) {
-/*     */ 
-/*     */         
-/* 204 */         if (param._isDefault || !isDefault) {
-/* 205 */           param._value = value;
-/* 206 */           param._isDefault = isDefault;
-/* 207 */           return value;
-/*     */         } 
-/* 209 */         return param._value;
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */     
-/* 214 */     this.paramsStack.add(this.pframe++, new Parameter(name, value, isDefault));
-/* 215 */     return value;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void clearParameters() {
-/* 222 */     this.pbase = this.pframe = 0;
-/* 223 */     this.paramsStack.clear();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final Object getParameter(String name) {
-/* 232 */     name = BasisLibrary.mapQNameToJavaName(name);
-/*     */     
-/* 234 */     for (int i = this.pframe - 1; i >= this.pbase; i--) {
-/* 235 */       Parameter param = this.paramsStack.get(i);
-/* 236 */       if (param._name.equals(name)) return param._value; 
-/*     */     } 
-/* 238 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 248 */   private MessageHandler _msgHandler = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final void setMessageHandler(MessageHandler handler) {
-/* 254 */     this._msgHandler = handler;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final void displayMessage(String msg) {
-/* 261 */     if (this._msgHandler == null) {
-/* 262 */       System.err.println(msg);
-/*     */     } else {
-/*     */       
-/* 265 */       this._msgHandler.displayMessage(msg);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 274 */   public Map<String, DecimalFormat> _formatSymbols = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addDecimalFormat(String name, DecimalFormatSymbols symbols) {
-/* 282 */     if (this._formatSymbols == null) this._formatSymbols = new HashMap<>();
-/*     */ 
-/*     */     
-/* 285 */     if (name == null) name = "";
-/*     */ 
-/*     */     
-/* 288 */     DecimalFormat df = new DecimalFormat();
-/* 289 */     if (symbols != null) {
-/* 290 */       df.setDecimalFormatSymbols(symbols);
-/*     */     }
-/* 292 */     this._formatSymbols.put(name, df);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final DecimalFormat getDecimalFormat(String name) {
-/* 300 */     if (this._formatSymbols != null) {
-/*     */       
-/* 302 */       if (name == null) name = "";
-/*     */       
-/* 304 */       DecimalFormat df = this._formatSymbols.get(name);
-/* 305 */       if (df == null) df = this._formatSymbols.get(""); 
-/* 306 */       return df;
-/*     */     } 
-/* 308 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final void prepassDocument(DOM document) {
-/* 318 */     setIndexSize(document.getSize());
-/* 319 */     buildIDIndex(document);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private final void buildIDIndex(DOM document) {
-/* 328 */     setRootForKeys(document.getDocument());
-/*     */     
-/* 330 */     if (document instanceof DOMEnhancedForDTM) {
-/* 331 */       DOMEnhancedForDTM enhancedDOM = (DOMEnhancedForDTM)document;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 336 */       if (enhancedDOM.hasDOMSource()) {
-/* 337 */         buildKeyIndex("##id", document);
-/*     */         
-/*     */         return;
-/*     */       } 
-/* 341 */       Map<String, Integer> elementsByID = enhancedDOM.getElementsWithIDs();
-/*     */       
-/* 343 */       if (elementsByID == null) {
-/*     */         return;
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 350 */       boolean hasIDValues = false;
-/* 351 */       for (Map.Entry<String, Integer> entry : elementsByID.entrySet()) {
-/* 352 */         int element = document.getNodeHandle(((Integer)entry.getValue()).intValue());
-/* 353 */         buildKeyIndex("##id", element, entry.getKey());
-/* 354 */         hasIDValues = true;
-/*     */       } 
-/*     */       
-/* 357 */       if (hasIDValues) {
-/* 358 */         setKeyIndexDom("##id", document);
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final void postInitialization() {
-/* 371 */     if (this.transletVersion < 101) {
-/* 372 */       int arraySize = this.namesArray.length;
-/* 373 */       String[] newURIsArray = new String[arraySize];
-/* 374 */       String[] newNamesArray = new String[arraySize];
-/* 375 */       int[] newTypesArray = new int[arraySize];
-/*     */       
-/* 377 */       for (int i = 0; i < arraySize; i++) {
-/* 378 */         String name = this.namesArray[i];
-/* 379 */         int colonIndex = name.lastIndexOf(':');
-/* 380 */         int lNameStartIdx = colonIndex + 1;
-/*     */         
-/* 382 */         if (colonIndex > -1) {
-/* 383 */           newURIsArray[i] = name.substring(0, colonIndex);
-/*     */         }
-/*     */ 
-/*     */ 
-/*     */         
-/* 388 */         if (name.charAt(lNameStartIdx) == '@') {
-/* 389 */           lNameStartIdx++;
-/* 390 */           newTypesArray[i] = 2;
-/* 391 */         } else if (name.charAt(lNameStartIdx) == '?') {
-/* 392 */           lNameStartIdx++;
-/* 393 */           newTypesArray[i] = 13;
-/*     */         } else {
-/* 395 */           newTypesArray[i] = 1;
-/*     */         } 
-/* 397 */         newNamesArray[i] = (lNameStartIdx == 0) ? name : name
-/*     */           
-/* 399 */           .substring(lNameStartIdx);
-/*     */       } 
-/*     */       
-/* 402 */       this.namesArray = newNamesArray;
-/* 403 */       this.urisArray = newURIsArray;
-/* 404 */       this.typesArray = newTypesArray;
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 410 */     if (this.transletVersion > 101) {
-/* 411 */       BasisLibrary.runTimeError("UNKNOWN_TRANSLET_VERSION_ERR", 
-/* 412 */           getClass().getName());
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 421 */   private Map<String, KeyIndex> _keyIndexes = null;
-/* 422 */   private KeyIndex _emptyKeyIndex = null;
-/* 423 */   private int _indexSize = 0;
-/* 424 */   private int _currentRootForKeys = 0;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setIndexSize(int size) {
-/* 431 */     if (size > this._indexSize) this._indexSize = size;
-/*     */   
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public KeyIndex createKeyIndex() {
-/* 438 */     return new KeyIndex(this._indexSize);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void buildKeyIndex(String name, int node, String value) {
-/* 448 */     KeyIndex index = buildKeyIndexHelper(name);
-/* 449 */     index.add(value, node, this._currentRootForKeys);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void buildKeyIndex(String name, DOM dom) {
-/* 458 */     KeyIndex index = buildKeyIndexHelper(name);
-/* 459 */     index.setDom(dom, dom.getDocument());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private KeyIndex buildKeyIndexHelper(String name) {
-/* 471 */     if (this._keyIndexes == null) this._keyIndexes = new HashMap<>();
-/*     */     
-/* 473 */     KeyIndex index = this._keyIndexes.get(name);
-/* 474 */     if (index == null) {
-/* 475 */       this._keyIndexes.put(name, index = new KeyIndex(this._indexSize));
-/*     */     }
-/* 477 */     return index;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public KeyIndex getKeyIndex(String name) {
-/* 488 */     if (this._keyIndexes == null) {
-/* 489 */       return (this._emptyKeyIndex != null) ? this._emptyKeyIndex : (this._emptyKeyIndex = new KeyIndex(1));
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 495 */     KeyIndex index = this._keyIndexes.get(name);
-/*     */ 
-/*     */     
-/* 498 */     if (index == null) {
-/* 499 */       return (this._emptyKeyIndex != null) ? this._emptyKeyIndex : (this._emptyKeyIndex = new KeyIndex(1));
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 504 */     return index;
-/*     */   }
-/*     */   
-/*     */   private void setRootForKeys(int root) {
-/* 508 */     this._currentRootForKeys = root;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void buildKeys(DOM document, DTMAxisIterator iterator, SerializationHandler handler, int root) throws TransletException {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setKeyIndexDom(String name, DOM document) {
-/* 526 */     getKeyIndex(name).setDom(document, document.getDocument());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 534 */   private DOMCache _domCache = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setDOMCache(DOMCache cache) {
-/* 541 */     this._domCache = cache;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public DOMCache getDOMCache() {
-/* 549 */     return this._domCache;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SerializationHandler openOutputHandler(String filename, boolean append) throws TransletException {
-/*     */     try {
-/* 562 */       TransletOutputHandlerFactory factory = TransletOutputHandlerFactory.newInstance(this._overrideDefaultParser);
-/*     */       
-/* 564 */       String dirStr = (new File(filename)).getParent();
-/* 565 */       if (null != dirStr && dirStr.length() > 0) {
-/* 566 */         File dir = new File(dirStr);
-/* 567 */         dir.mkdirs();
-/*     */       } 
-/*     */       
-/* 570 */       factory.setEncoding(this._encoding);
-/* 571 */       factory.setOutputMethod(this._method);
-/* 572 */       factory.setOutputStream(new BufferedOutputStream(new FileOutputStream(filename, append)));
-/* 573 */       factory.setOutputType(0);
-/*     */ 
-/*     */       
-/* 576 */       SerializationHandler handler = factory.getSerializationHandler();
-/*     */       
-/* 578 */       transferOutputSettings(handler);
-/* 579 */       handler.startDocument();
-/* 580 */       return handler;
-/*     */     }
-/* 582 */     catch (Exception e) {
-/* 583 */       throw new TransletException(e);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SerializationHandler openOutputHandler(String filename) throws TransletException {
-/* 590 */     return openOutputHandler(filename, false);
-/*     */   }
-/*     */   
-/*     */   public void closeOutputHandler(SerializationHandler handler) {
-/*     */     try {
-/* 595 */       handler.endDocument();
-/* 596 */       handler.close();
-/*     */     }
-/* 598 */     catch (Exception exception) {}
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public abstract void transform(DOM paramDOM, DTMAxisIterator paramDTMAxisIterator, SerializationHandler paramSerializationHandler) throws TransletException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final void transform(DOM document, SerializationHandler handler) throws TransletException {
-/*     */     try {
-/* 620 */       transform(document, document.getIterator(), handler);
-/*     */     } finally {
-/* 622 */       this._keyIndexes = null;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final void characters(String string, SerializationHandler handler) throws TransletException {
-/* 633 */     if (string != null) {
-/*     */       
-/*     */       try {
-/* 636 */         handler.characters(string);
-/* 637 */       } catch (Exception e) {
-/* 638 */         throw new TransletException(e);
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addCdataElement(String name) {
-/* 647 */     if (this._cdata == null) {
-/* 648 */       this._cdata = new Vector();
-/*     */     }
-/*     */     
-/* 651 */     int lastColon = name.lastIndexOf(':');
-/*     */     
-/* 653 */     if (lastColon > 0) {
-/* 654 */       String uri = name.substring(0, lastColon);
-/* 655 */       String localName = name.substring(lastColon + 1);
-/* 656 */       this._cdata.addElement(uri);
-/* 657 */       this._cdata.addElement(localName);
-/*     */     } else {
-/* 659 */       this._cdata.addElement(null);
-/* 660 */       this._cdata.addElement(name);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void transferOutputSettings(SerializationHandler handler) {
-/* 668 */     if (this._method != null) {
-/* 669 */       if (this._method.equals("xml")) {
-/* 670 */         if (this._standalone != null) {
-/* 671 */           handler.setStandalone(this._standalone);
-/*     */         }
-/* 673 */         if (this._omitHeader) {
-/* 674 */           handler.setOmitXMLDeclaration(true);
-/*     */         }
-/* 676 */         handler.setCdataSectionElements(this._cdata);
-/* 677 */         if (this._version != null) {
-/* 678 */           handler.setVersion(this._version);
-/*     */         }
-/* 680 */         handler.setIndent(this._indent);
-/* 681 */         handler.setIndentAmount(this._indentamount);
-/* 682 */         if (this._doctypeSystem != null) {
-/* 683 */           handler.setDoctype(this._doctypeSystem, this._doctypePublic);
-/*     */         }
-/* 685 */         handler.setIsStandalone(this._isStandalone);
-/*     */       }
-/* 687 */       else if (this._method.equals("html")) {
-/* 688 */         handler.setIndent(this._indent);
-/* 689 */         handler.setDoctype(this._doctypeSystem, this._doctypePublic);
-/* 690 */         if (this._mediaType != null) {
-/* 691 */           handler.setMediaType(this._mediaType);
-/*     */         }
-/*     */       } 
-/*     */     } else {
-/*     */       
-/* 696 */       handler.setCdataSectionElements(this._cdata);
-/* 697 */       if (this._version != null) {
-/* 698 */         handler.setVersion(this._version);
-/*     */       }
-/* 700 */       if (this._standalone != null) {
-/* 701 */         handler.setStandalone(this._standalone);
-/*     */       }
-/* 703 */       if (this._omitHeader) {
-/* 704 */         handler.setOmitXMLDeclaration(true);
-/*     */       }
-/* 706 */       handler.setIndent(this._indent);
-/* 707 */       handler.setDoctype(this._doctypeSystem, this._doctypePublic);
-/* 708 */       handler.setIsStandalone(this._isStandalone);
-/*     */     } 
-/*     */   }
-/*     */   
-/* 712 */   private Map<String, Class<?>> _auxClasses = null;
-/*     */   
-/*     */   public void addAuxiliaryClass(Class<?> auxClass) {
-/* 715 */     if (this._auxClasses == null) this._auxClasses = new HashMap<>(); 
-/* 716 */     this._auxClasses.put(auxClass.getName(), auxClass);
-/*     */   }
-/*     */   
-/*     */   public void setAuxiliaryClasses(Map<String, Class<?>> auxClasses) {
-/* 720 */     this._auxClasses = auxClasses;
-/*     */   }
-/*     */   
-/*     */   public Class getAuxiliaryClass(String className) {
-/* 724 */     if (this._auxClasses == null) return null; 
-/* 725 */     return this._auxClasses.get(className);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public String[] getNamesArray() {
-/* 730 */     return this.namesArray;
-/*     */   }
-/*     */   
-/*     */   public String[] getUrisArray() {
-/* 734 */     return this.urisArray;
-/*     */   }
-/*     */   
-/*     */   public int[] getTypesArray() {
-/* 738 */     return this.typesArray;
-/*     */   }
-/*     */   
-/*     */   public String[] getNamespaceArray() {
-/* 742 */     return this.namespaceArray;
-/*     */   }
-/*     */   
-/*     */   public boolean hasIdCall() {
-/* 746 */     return this._hasIdCall;
-/*     */   }
-/*     */   
-/*     */   public Templates getTemplates() {
-/* 750 */     return this._templates;
-/*     */   }
-/*     */   
-/*     */   public void setTemplates(Templates templates) {
-/* 754 */     this._templates = templates;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean overrideDefaultParser() {
-/* 760 */     return this._overrideDefaultParser;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setOverrideDefaultParser(boolean flag) {
-/* 767 */     this._overrideDefaultParser = flag;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getAllowedProtocols() {
-/* 774 */     return this._accessExternalStylesheet;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setAllowedProtocols(String protocols) {
-/* 781 */     this._accessExternalStylesheet = protocols;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 787 */   protected DOMImplementation _domImplementation = null;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Document newDocument(String uri, String qname) throws ParserConfigurationException {
-/* 792 */     if (this._domImplementation == null) {
-/* 793 */       DocumentBuilderFactory dbf = JdkXmlUtils.getDOMFactory(this._overrideDefaultParser);
-/* 794 */       this._domImplementation = dbf.newDocumentBuilder().getDOMImplementation();
-/*     */     } 
-/* 796 */     return this._domImplementation.createDocument(uri, qname, null);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\runtime\AbstractTranslet.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+/*
+ * $Id: AbstractTranslet.java,v 1.6 2006/06/19 19:49:03 spericas Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.runtime;
+
+import com.sun.org.apache.xalan.internal.XalanConstants;
+import com.sun.org.apache.xalan.internal.xsltc.DOM;
+import com.sun.org.apache.xalan.internal.xsltc.DOMCache;
+import com.sun.org.apache.xalan.internal.xsltc.DOMEnhancedForDTM;
+import com.sun.org.apache.xalan.internal.xsltc.Translet;
+import com.sun.org.apache.xalan.internal.xsltc.TransletException;
+import com.sun.org.apache.xalan.internal.xsltc.dom.DOMAdapter;
+import com.sun.org.apache.xalan.internal.xsltc.dom.KeyIndex;
+import com.sun.org.apache.xalan.internal.xsltc.runtime.output.TransletOutputHandlerFactory;
+import com.sun.org.apache.xml.internal.dtm.DTM;
+import com.sun.org.apache.xml.internal.dtm.DTMAxisIterator;
+import com.sun.org.apache.xml.internal.serializer.SerializationHandler;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Vector;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.Templates;
+import jdk.xml.internal.JdkXmlUtils;
+import org.w3c.dom.DOMImplementation;
+import org.w3c.dom.Document;
+
+/**
+ * @author Jacek Ambroziak
+ * @author Santiago Pericas-Geertsen
+ * @author Morten Jorgensen
+ * @author G. Todd Miller
+ * @author John Howard, JohnH@schemasoft.com
+ */
+public abstract class AbstractTranslet implements Translet {
+
+    // These attributes are extracted from the xsl:output element. They also
+    // appear as fields (with the same type, only public) in Output.java
+    public String  _version = "1.0";
+    public String  _method = null;
+    public String  _encoding = "UTF-8";
+    public boolean _omitHeader = false;
+    public String  _standalone = null;
+    //see OutputPropertiesFactory.ORACLE_IS_STANDALONE
+    public boolean  _isStandalone = false;
+    public String  _doctypePublic = null;
+    public String  _doctypeSystem = null;
+    public boolean _indent = false;
+    public String  _mediaType = null;
+    public Vector _cdata = null;
+    public int _indentamount = -1;
+
+    public static final int FIRST_TRANSLET_VERSION = 100;
+    public static final int VER_SPLIT_NAMES_ARRAY = 101;
+    public static final int CURRENT_TRANSLET_VERSION = VER_SPLIT_NAMES_ARRAY;
+
+    // Initialize Translet version field to base value.  A class that extends
+    // AbstractTranslet may override this value to a more recent translet
+    // version; if it doesn't override the value (because it was compiled
+    // before the notion of a translet version was introduced, it will get
+    // this default value).
+    protected int transletVersion = FIRST_TRANSLET_VERSION;
+
+    // DOM/translet handshaking - the arrays are set by the compiled translet
+    protected String[] namesArray;
+    protected String[] urisArray;
+    protected int[]    typesArray;
+    protected String[] namespaceArray;
+
+    // The Templates object that is used to create this Translet instance
+    protected Templates _templates = null;
+
+    // Boolean flag to indicate whether this translet has id functions.
+    protected boolean _hasIdCall = false;
+
+    // TODO - these should only be instanciated when needed
+    protected StringValueHandler stringValueHandler = new StringValueHandler();
+
+    // Use one empty string instead of constantly instanciating String("");
+    private final static String EMPTYSTRING = "";
+
+    // This is the name of the index used for ID attributes
+    private final static String ID_INDEX_NAME = "##id";
+
+    private boolean _overrideDefaultParser;
+
+    /**
+     * protocols allowed for external references set by the stylesheet processing instruction, Document() function, Import and Include element.
+     */
+    private String _accessExternalStylesheet = XalanConstants.EXTERNAL_ACCESS_DEFAULT;
+
+    /************************************************************************
+     * Debugging
+     ************************************************************************/
+    public void printInternalState() {
+        System.out.println("-------------------------------------");
+        System.out.println("AbstractTranslet this = " + this);
+        System.out.println("pbase = " + pbase);
+        System.out.println("vframe = " + pframe);
+        System.out.println("paramsStack.size() = " + paramsStack.size());
+        System.out.println("namesArray.size = " + namesArray.length);
+        System.out.println("namespaceArray.size = " + namespaceArray.length);
+        System.out.println("");
+        System.out.println("Total memory = " + Runtime.getRuntime().totalMemory());
+    }
+
+    /**
+     * Wrap the initial input DOM in a dom adapter. This adapter is wrapped in
+     * a DOM multiplexer if the document() function is used (handled by compiled
+     * code in the translet - see compiler/Stylesheet.compileTransform()).
+     */
+    public final DOMAdapter makeDOMAdapter(DOM dom)
+        throws TransletException {
+        setRootForKeys(dom.getDocument());
+        return new DOMAdapter(dom, namesArray, urisArray, typesArray, namespaceArray);
+    }
+
+    /************************************************************************
+     * Parameter handling
+     ************************************************************************/
+
+    // Parameter's stack: <tt>pbase</tt> and <tt>pframe</tt> are used
+    // to denote the current parameter frame.
+    protected int pbase = 0, pframe = 0;
+    protected ArrayList paramsStack = new ArrayList();
+
+    /**
+     * Push a new parameter frame.
+     */
+    public final void pushParamFrame() {
+        paramsStack.add(pframe, new Integer(pbase));
+        pbase = ++pframe;
+    }
+
+    /**
+     * Pop the topmost parameter frame.
+     */
+    public final void popParamFrame() {
+        if (pbase > 0) {
+            final int oldpbase = ((Integer)paramsStack.get(--pbase)).intValue();
+            for (int i = pframe - 1; i >= pbase; i--) {
+                paramsStack.remove(i);
+            }
+            pframe = pbase; pbase = oldpbase;
+        }
+    }
+
+    /**
+     * Add a new global parameter if not already in the current frame.
+     * To setParameters of the form {http://foo.bar}xyz
+     * This needs to get mapped to an instance variable in the class
+     * The mapping  created so that
+     * the global variables in the generated class become
+     * http$colon$$flash$$flash$foo$dot$bar$colon$xyz
+     */
+    public final Object addParameter(String name, Object value) {
+        name = BasisLibrary.mapQNameToJavaName (name);
+        return addParameter(name, value, false);
+    }
+
+    /**
+     * Add a new global or local parameter if not already in the current frame.
+     * The 'isDefault' parameter is set to true if the value passed is the
+     * default value from the <xsl:parameter> element's select attribute or
+     * element body.
+     */
+    public final Object addParameter(String name, Object value,
+        boolean isDefault)
+    {
+        // Local parameters need to be re-evaluated for each iteration
+        for (int i = pframe - 1; i >= pbase; i--) {
+            final Parameter param = (Parameter) paramsStack.get(i);
+
+            if (param._name.equals(name)) {
+                // Only overwrite if current value is the default value and
+                // the new value is _NOT_ the default value.
+                if (param._isDefault || !isDefault) {
+                    param._value = value;
+                    param._isDefault = isDefault;
+                    return value;
+                }
+                return param._value;
+            }
+        }
+
+        // Add new parameter to parameter stack
+        paramsStack.add(pframe++, new Parameter(name, value, isDefault));
+        return value;
+    }
+
+    /**
+     * Clears the parameter stack.
+     */
+    public void clearParameters() {
+        pbase = pframe = 0;
+        paramsStack.clear();
+    }
+
+    /**
+     * Get the value of a parameter from the current frame or
+     * <tt>null</tt> if undefined.
+     */
+    public final Object getParameter(String name) {
+
+        name = BasisLibrary.mapQNameToJavaName (name);
+
+        for (int i = pframe - 1; i >= pbase; i--) {
+            final Parameter param = (Parameter)paramsStack.get(i);
+            if (param._name.equals(name)) return param._value;
+        }
+        return null;
+    }
+
+    /************************************************************************
+     * Message handling - implementation of <xsl:message>
+     ************************************************************************/
+
+    // Holds the translet's message handler - used for <xsl:message>.
+    // The deault message handler dumps a string stdout, but anything can be
+    // used, such as a dialog box for applets, etc.
+    private MessageHandler _msgHandler = null;
+
+    /**
+     * Set the translet's message handler - must implement MessageHandler
+     */
+    public final void setMessageHandler(MessageHandler handler) {
+        _msgHandler = handler;
+    }
+
+    /**
+     * Pass a message to the message handler - used by Message class.
+     */
+    public final void displayMessage(String msg) {
+        if (_msgHandler == null) {
+            System.err.println(msg);
+        }
+        else {
+            _msgHandler.displayMessage(msg);
+        }
+    }
+
+    /************************************************************************
+     * Decimal number format symbol handling
+     ************************************************************************/
+
+    // Contains decimal number formatting symbols used by FormatNumberCall
+    public Map<String, DecimalFormat> _formatSymbols = null;
+
+    /**
+     * Adds a DecimalFormat object to the _formatSymbols map.
+     * The entry is created with the input DecimalFormatSymbols.
+     */
+    public void addDecimalFormat(String name, DecimalFormatSymbols symbols) {
+        // Instanciate map for formatting symbols if needed
+        if (_formatSymbols == null) _formatSymbols = new HashMap<>();
+
+        // The name cannot be null - use empty string instead
+        if (name == null) name = EMPTYSTRING;
+
+        // Construct a DecimalFormat object containing the symbols we got
+        final DecimalFormat df = new DecimalFormat();
+        if (symbols != null) {
+            df.setDecimalFormatSymbols(symbols);
+        }
+        _formatSymbols.put(name, df);
+    }
+
+    /**
+     * Retrieves a named DecimalFormat object from the _formatSymbols map.
+     */
+    public final DecimalFormat getDecimalFormat(String name) {
+
+        if (_formatSymbols != null) {
+            // The name cannot be null - use empty string instead
+            if (name == null) name = EMPTYSTRING;
+
+            DecimalFormat df = _formatSymbols.get(name);
+            if (df == null) df = _formatSymbols.get(EMPTYSTRING);
+            return df;
+        }
+        return(null);
+    }
+
+    /**
+     * Give the translet an opportunity to perform a prepass on the document
+     * to extract any information that it can store in an optimized form.
+     *
+     * Currently, it only extracts information about attributes of type ID.
+     */
+    public final void prepassDocument(DOM document) {
+        setIndexSize(document.getSize());
+        buildIDIndex(document);
+    }
+
+    /**
+     * Leverages the Key Class to implement the XSLT id() function.
+     * buildIdIndex creates the index (##id) that Key Class uses.
+     * The index contains the element node index (int) and Id value (String).
+     */
+    private final void buildIDIndex(DOM document) {
+        setRootForKeys(document.getDocument());
+
+        if (document instanceof DOMEnhancedForDTM) {
+            DOMEnhancedForDTM enhancedDOM = (DOMEnhancedForDTM)document;
+
+            // If the input source is DOMSource, the KeyIndex table is not
+            // built at this time. It will be built later by the lookupId()
+            // and containsId() methods of the KeyIndex class.
+            if (enhancedDOM.hasDOMSource()) {
+                buildKeyIndex(ID_INDEX_NAME, document);
+                return;
+            }
+            else {
+                final Map<String, Integer> elementsByID = enhancedDOM.getElementsWithIDs();
+
+                if (elementsByID == null) {
+                    return;
+                }
+
+                // Given a Map of DTM nodes indexed by ID attribute values,
+                // loop through the table copying information to a KeyIndex
+                // for the mapping from ID attribute value to DTM node
+                boolean hasIDValues = false;
+                for (Map.Entry<String, Integer> entry : elementsByID.entrySet()) {
+                    final int element = document.getNodeHandle(entry.getValue());
+                    buildKeyIndex(ID_INDEX_NAME, element, entry.getKey());
+                    hasIDValues = true;
+                }
+
+                if (hasIDValues) {
+                    setKeyIndexDom(ID_INDEX_NAME, document);
+                }
+            }
+        }
+    }
+
+    /**
+     * After constructing the translet object, this method must be called to
+     * perform any version-specific post-initialization that's required.
+     */
+    public final void postInitialization() {
+        // If the version of the translet had just one namesArray, split
+        // it into multiple fields.
+        if (transletVersion < VER_SPLIT_NAMES_ARRAY) {
+            int arraySize = namesArray.length;
+            String[] newURIsArray = new String[arraySize];
+            String[] newNamesArray = new String[arraySize];
+            int[] newTypesArray = new int[arraySize];
+
+            for (int i = 0; i < arraySize; i++) {
+                String name = namesArray[i];
+                int colonIndex = name.lastIndexOf(':');
+                int lNameStartIdx = colonIndex+1;
+
+                if (colonIndex > -1) {
+                    newURIsArray[i] = name.substring(0, colonIndex);
+                }
+
+               // Distinguish attribute and element names.  Attribute has
+               // @ before local part of name.
+               if (name.charAt(lNameStartIdx) == '@') {
+                   lNameStartIdx++;
+                   newTypesArray[i] = DTM.ATTRIBUTE_NODE;
+               } else if (name.charAt(lNameStartIdx) == '?') {
+                   lNameStartIdx++;
+                   newTypesArray[i] = DTM.NAMESPACE_NODE;
+               } else {
+                   newTypesArray[i] = DTM.ELEMENT_NODE;
+               }
+               newNamesArray[i] =
+                          (lNameStartIdx == 0) ? name
+                                               : name.substring(lNameStartIdx);
+            }
+
+            namesArray = newNamesArray;
+            urisArray  = newURIsArray;
+            typesArray = newTypesArray;
+        }
+
+        // Was translet compiled using a more recent version of the XSLTC
+        // compiler than is known by the AbstractTranslet class?  If, so
+        // and we've made it this far (which is doubtful), we should give up.
+        if (transletVersion > CURRENT_TRANSLET_VERSION) {
+            BasisLibrary.runTimeError(BasisLibrary.UNKNOWN_TRANSLET_VERSION_ERR,
+                                      this.getClass().getName());
+        }
+    }
+
+    /************************************************************************
+     * Index(es) for <xsl:key> / key() / id()
+     ************************************************************************/
+
+    // Container for all indexes for xsl:key elements
+    private Map<String, KeyIndex> _keyIndexes = null;
+    private KeyIndex  _emptyKeyIndex = null;
+    private int       _indexSize = 0;
+    private int       _currentRootForKeys = 0;
+
+    /**
+     * This method is used to pass the largest DOM size to the translet.
+     * Needed to make sure that the translet can index the whole DOM.
+     */
+    public void setIndexSize(int size) {
+        if (size > _indexSize) _indexSize = size;
+    }
+
+    /**
+     * Creates a KeyIndex object of the desired size - don't want to resize!!!
+     */
+    public KeyIndex createKeyIndex() {
+        return(new KeyIndex(_indexSize));
+    }
+
+    /**
+     * Adds a value to a key/id index
+     *   @param name is the name of the index (the key or ##id)
+     *   @param node is the node handle of the node to insert
+     *   @param value is the value that will look up the node in the given index
+     */
+    public void buildKeyIndex(String name, int node, String value) {
+        KeyIndex index = buildKeyIndexHelper(name);
+        index.add(value, node, _currentRootForKeys);
+    }
+
+    /**
+     * Create an empty KeyIndex in the DOM case
+     *   @param name is the name of the index (the key or ##id)
+     *   @param dom is the DOM
+     */
+    public void buildKeyIndex(String name, DOM dom) {
+        KeyIndex index = buildKeyIndexHelper(name);
+        index.setDom(dom, dom.getDocument());
+    }
+
+    /**
+     * Return KeyIndex for the buildKeyIndex methods. Note the difference from the
+     * public getKeyIndex method, this method creates a new Map if keyIndexes does
+     * not exist.
+     *
+     * @param name the name of the index (the key or ##id)
+     * @return a KeyIndex.
+     */
+    private KeyIndex buildKeyIndexHelper(String name) {
+        if (_keyIndexes == null) _keyIndexes = new HashMap<>();
+
+        KeyIndex index = _keyIndexes.get(name);
+        if (index == null) {
+            _keyIndexes.put(name, index = new KeyIndex(_indexSize));
+        }
+        return index;
+    }
+
+    /**
+     * Returns the index for a given key (or id).
+     * The index implements our internal iterator interface
+     * @param name the name of the index (the key or ##id)
+     * @return a KeyIndex.
+     */
+    public KeyIndex getKeyIndex(String name) {
+        // Return an empty key index iterator if none are defined
+        if (_keyIndexes == null) {
+            return (_emptyKeyIndex != null)
+                ? _emptyKeyIndex
+                : (_emptyKeyIndex = new KeyIndex(1));
+        }
+
+        // Look up the requested key index
+        final KeyIndex index = _keyIndexes.get(name);
+
+        // Return an empty key index iterator if the requested index not found
+        if (index == null) {
+            return (_emptyKeyIndex != null)
+                ? _emptyKeyIndex
+                : (_emptyKeyIndex = new KeyIndex(1));
+        }
+
+        return(index);
+    }
+
+    private void setRootForKeys(int root) {
+        _currentRootForKeys = root;
+    }
+
+    /**
+     * This method builds key indexes - it is overridden in the compiled
+     * translet in cases where the <xsl:key> element is used
+     */
+    public void buildKeys(DOM document, DTMAxisIterator iterator,
+                          SerializationHandler handler,
+                          int root) throws TransletException {
+
+    }
+
+    /**
+     * This method builds key indexes - it is overridden in the compiled
+     * translet in cases where the <xsl:key> element is used
+     */
+    public void setKeyIndexDom(String name, DOM document) {
+        getKeyIndex(name).setDom(document, document.getDocument());
+    }
+
+    /************************************************************************
+     * DOM cache handling
+     ************************************************************************/
+
+    // Hold the DOM cache (if any) used with this translet
+    private DOMCache _domCache = null;
+
+    /**
+     * Sets the DOM cache used for additional documents loaded using the
+     * document() function.
+     */
+    public void setDOMCache(DOMCache cache) {
+        _domCache = cache;
+    }
+
+    /**
+     * Returns the DOM cache used for this translet. Used by the LoadDocument
+     * class (if present) when the document() function is used.
+     */
+    public DOMCache getDOMCache() {
+        return(_domCache);
+    }
+
+    /************************************************************************
+     * Multiple output document extension.
+     * See compiler/TransletOutput for actual implementation.
+     ************************************************************************/
+
+    public SerializationHandler openOutputHandler(String filename, boolean append)
+        throws TransletException
+    {
+        try {
+            final TransletOutputHandlerFactory factory
+                = TransletOutputHandlerFactory.newInstance(_overrideDefaultParser);
+
+            String dirStr = new File(filename).getParent();
+            if ((null != dirStr) && (dirStr.length() > 0)) {
+               File dir = new File(dirStr);
+               dir.mkdirs();
+            }
+
+            factory.setEncoding(_encoding);
+            factory.setOutputMethod(_method);
+            factory.setOutputStream(new BufferedOutputStream(new FileOutputStream(filename, append)));
+            factory.setOutputType(TransletOutputHandlerFactory.STREAM);
+
+            final SerializationHandler handler
+                = factory.getSerializationHandler();
+
+            transferOutputSettings(handler);
+            handler.startDocument();
+            return handler;
+        }
+        catch (Exception e) {
+            throw new TransletException(e);
+        }
+    }
+
+    public SerializationHandler openOutputHandler(String filename)
+       throws TransletException
+    {
+       return openOutputHandler(filename, false);
+    }
+
+    public void closeOutputHandler(SerializationHandler handler) {
+        try {
+            handler.endDocument();
+            handler.close();
+        }
+        catch (Exception e) {
+            // what can you do?
+        }
+    }
+
+    /************************************************************************
+     * Native API transformation methods - _NOT_ JAXP/TrAX
+     ************************************************************************/
+
+    /**
+     * Main transform() method - this is overridden by the compiled translet
+     */
+    public abstract void transform(DOM document, DTMAxisIterator iterator,
+                                   SerializationHandler handler)
+        throws TransletException;
+
+    /**
+     * Calls transform() with a given output handler
+     */
+    public final void transform(DOM document, SerializationHandler handler)
+        throws TransletException {
+        try {
+            transform(document, document.getIterator(), handler);
+        } finally {
+            _keyIndexes = null;
+        }
+    }
+
+    /**
+     * Used by some compiled code as a shortcut for passing strings to the
+     * output handler
+     */
+    public final void characters(final String string,
+                                 SerializationHandler handler)
+        throws TransletException {
+        if (string != null) {
+           //final int length = string.length();
+           try {
+               handler.characters(string);
+           } catch (Exception e) {
+               throw new TransletException(e);
+           }
+        }
+    }
+
+    /**
+     * Add's a name of an element whose text contents should be output as CDATA
+     */
+    public void addCdataElement(String name) {
+        if (_cdata == null) {
+            _cdata = new Vector();
+        }
+
+        int lastColon = name.lastIndexOf(':');
+
+        if (lastColon > 0) {
+            String uri = name.substring(0, lastColon);
+            String localName = name.substring(lastColon+1);
+            _cdata.addElement(uri);
+            _cdata.addElement(localName);
+        } else {
+            _cdata.addElement(null);
+            _cdata.addElement(name);
+        }
+    }
+
+    /**
+     * Transfer the output settings to the output post-processor
+     */
+    protected void transferOutputSettings(SerializationHandler handler) {
+        if (_method != null) {
+            if (_method.equals("xml")) {
+                if (_standalone != null) {
+                    handler.setStandalone(_standalone);
+                }
+                if (_omitHeader) {
+                    handler.setOmitXMLDeclaration(true);
+                }
+                handler.setCdataSectionElements(_cdata);
+                if (_version != null) {
+                    handler.setVersion(_version);
+                }
+                handler.setIndent(_indent);
+                handler.setIndentAmount(_indentamount);
+                if (_doctypeSystem != null) {
+                    handler.setDoctype(_doctypeSystem, _doctypePublic);
+                }
+                handler.setIsStandalone(_isStandalone);
+            }
+            else if (_method.equals("html")) {
+                handler.setIndent(_indent);
+                handler.setDoctype(_doctypeSystem, _doctypePublic);
+                if (_mediaType != null) {
+                    handler.setMediaType(_mediaType);
+                }
+            }
+        }
+        else {
+            handler.setCdataSectionElements(_cdata);
+            if (_version != null) {
+                handler.setVersion(_version);
+            }
+            if (_standalone != null) {
+                handler.setStandalone(_standalone);
+            }
+            if (_omitHeader) {
+                handler.setOmitXMLDeclaration(true);
+            }
+            handler.setIndent(_indent);
+            handler.setDoctype(_doctypeSystem, _doctypePublic);
+            handler.setIsStandalone(_isStandalone);
+        }
+    }
+
+    private Map<String, Class<?>> _auxClasses = null;
+
+    public void addAuxiliaryClass(Class auxClass) {
+        if (_auxClasses == null) _auxClasses = new HashMap<>();
+        _auxClasses.put(auxClass.getName(), auxClass);
+    }
+
+    public void setAuxiliaryClasses(Map<String, Class<?>> auxClasses) {
+        _auxClasses = auxClasses;
+    }
+
+    public Class getAuxiliaryClass(String className) {
+        if (_auxClasses == null) return null;
+        return((Class)_auxClasses.get(className));
+    }
+
+    // GTM added (see pg 110)
+    public String[] getNamesArray() {
+        return namesArray;
+    }
+
+    public String[] getUrisArray() {
+        return urisArray;
+    }
+
+    public int[] getTypesArray() {
+        return typesArray;
+    }
+
+    public String[] getNamespaceArray() {
+        return namespaceArray;
+    }
+
+    public boolean hasIdCall() {
+        return _hasIdCall;
+    }
+
+    public Templates getTemplates() {
+        return _templates;
+    }
+
+    public void setTemplates(Templates templates) {
+        _templates = templates;
+    }
+    /**
+     * Return the state of the services mechanism feature.
+     */
+    public boolean overrideDefaultParser() {
+        return _overrideDefaultParser;
+    }
+
+    /**
+     * Set the state of the services mechanism feature.
+     */
+    public void setOverrideDefaultParser(boolean flag) {
+        _overrideDefaultParser = flag;
+    }
+
+    /**
+     * Return allowed protocols for accessing external stylesheet.
+     */
+    public String getAllowedProtocols() {
+        return _accessExternalStylesheet;
+    }
+
+    /**
+     * Set allowed protocols for accessing external stylesheet.
+     */
+    public void setAllowedProtocols(String protocols) {
+        _accessExternalStylesheet = protocols;
+    }
+
+    /************************************************************************
+     * DOMImplementation caching for basis library
+     ************************************************************************/
+    protected DOMImplementation _domImplementation = null;
+
+    public Document newDocument(String uri, String qname)
+        throws ParserConfigurationException
+    {
+        if (_domImplementation == null) {
+            DocumentBuilderFactory dbf = JdkXmlUtils.getDOMFactory(_overrideDefaultParser);
+            _domImplementation = dbf.newDocumentBuilder().getDOMImplementation();
+        }
+        return _domImplementation.createDocument(uri, qname, null);
+    }
+}

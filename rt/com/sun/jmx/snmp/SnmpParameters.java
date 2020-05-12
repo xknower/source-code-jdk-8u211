@@ -1,223 +1,232 @@
-/*     */ package com.sun.jmx.snmp;
-/*     */ 
-/*     */ import java.io.Serializable;
-/*     */ import java.io.UnsupportedEncodingException;
-/*     */ import java.util.Objects;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class SnmpParameters
-/*     */   extends SnmpParams
-/*     */   implements Cloneable, Serializable
-/*     */ {
-/*     */   private static final long serialVersionUID = -1822462497931733790L;
-/*     */   static final String defaultRdCommunity = "public";
-/*     */   
-/*     */   public SnmpParameters() {
-/*  44 */     this._readCommunity = "public";
-/*  45 */     this._informCommunity = "public";
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SnmpParameters(String paramString1, String paramString2) {
-/*  57 */     this._readCommunity = paramString1;
-/*  58 */     this._writeCommunity = paramString2;
-/*  59 */     this._informCommunity = "public";
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SnmpParameters(String paramString1, String paramString2, String paramString3) {
-/*  71 */     this._readCommunity = paramString1;
-/*  72 */     this._writeCommunity = paramString2;
-/*  73 */     this._informCommunity = paramString3;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getRdCommunity() {
-/*  81 */     return this._readCommunity;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void setRdCommunity(String paramString) {
-/*  89 */     if (paramString == null) {
-/*  90 */       this._readCommunity = "public";
-/*     */     } else {
-/*  92 */       this._readCommunity = paramString;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getWrCommunity() {
-/* 100 */     return this._writeCommunity;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setWrCommunity(String paramString) {
-/* 108 */     this._writeCommunity = paramString;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getInformCommunity() {
-/* 116 */     return this._informCommunity;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setInformCommunity(String paramString) {
-/* 124 */     if (paramString == null) {
-/* 125 */       this._informCommunity = "public";
-/*     */     } else {
-/* 127 */       this._informCommunity = paramString;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean allowSnmpSets() {
-/* 135 */     return (this._writeCommunity != null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized boolean equals(Object paramObject) {
-/* 147 */     if (!(paramObject instanceof SnmpParameters)) {
-/* 148 */       return false;
-/*     */     }
-/* 150 */     if (this == paramObject)
-/* 151 */       return true; 
-/* 152 */     SnmpParameters snmpParameters = (SnmpParameters)paramObject;
-/* 153 */     if (this._protocolVersion == snmpParameters._protocolVersion && 
-/* 154 */       this._readCommunity.equals(snmpParameters._readCommunity))
-/* 155 */       return true; 
-/* 156 */     return false;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public synchronized int hashCode() {
-/* 161 */     return this._protocolVersion * 31 ^ Objects.hashCode(this._readCommunity);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized Object clone() {
-/* 169 */     SnmpParameters snmpParameters = null;
-/*     */     try {
-/* 171 */       snmpParameters = (SnmpParameters)super.clone();
-/*     */       
-/* 173 */       snmpParameters._readCommunity = this._readCommunity;
-/* 174 */       snmpParameters._writeCommunity = this._writeCommunity;
-/* 175 */       snmpParameters._informCommunity = this._informCommunity;
-/* 176 */     } catch (CloneNotSupportedException cloneNotSupportedException) {
-/* 177 */       throw new InternalError();
-/*     */     } 
-/* 179 */     return snmpParameters;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public byte[] encodeAuthentication(int paramInt) throws SnmpStatusException {
-/*     */     try {
-/* 191 */       if (paramInt == 163)
-/* 192 */         return this._writeCommunity.getBytes("8859_1"); 
-/* 193 */       if (paramInt == 166) {
-/* 194 */         return this._informCommunity.getBytes("8859_1");
-/*     */       }
-/* 196 */       return this._readCommunity.getBytes("8859_1");
-/* 197 */     } catch (UnsupportedEncodingException unsupportedEncodingException) {
-/* 198 */       throw new SnmpStatusException(unsupportedEncodingException.getMessage());
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 213 */   private int _protocolVersion = 0;
-/*     */   private String _readCommunity;
-/*     */   private String _writeCommunity;
-/*     */   private String _informCommunity;
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\jmx\snmp\SnmpParameters.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ *
+ * Copyright (c) 2007, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+// Copyright (c) 1995-96 by Cisco Systems, Inc.
+
+package com.sun.jmx.snmp;
+
+import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
+import java.util.Objects;
+
+import com.sun.jmx.snmp.SnmpDefinitions;
+import com.sun.jmx.snmp.SnmpStatusException;
+
+
+/**
+ * Contains a set of resources that are used by while sending or receiving
+ * packets to and from an <CODE>SnmpPeer</CODE>. An <CODE>SnmpPeer</CODE> can
+ * be configured explicitly to use a specific <CODE>SnmpParameter</CODE>.
+ * A number of <CODE>SnmpPeer</CODE> objects can share a single parameter
+ * object.
+ * <P>
+ * <B>Note</B>: Changing values for an <CODE>SnmpParameter</CODE> object
+ * affects all <CODE>SnmpPeer</CODE> objects that share the parameter object.
+ *
+ * @see com.sun.jmx.snmp.SnmpPeer
+ *
+ * <p><b>This API is a Sun Microsystems internal API  and is subject
+ * to change without notice.</b></p>
+ */
+
+
+public class SnmpParameters extends SnmpParams implements Cloneable, Serializable {
+    private static final long serialVersionUID = -1822462497931733790L;
+
+    /**
+     * Creates an <CODE>SnmpParameters</CODE> object with defaults set up.
+     * By default, <CODE>set</CODE> operations are not allowed, the read community and
+     * the inform community strings to use is "public" and the SNMP version is V1.
+     */
+    public SnmpParameters() {
+        _readCommunity = defaultRdCommunity ;
+        _informCommunity = defaultRdCommunity ;
+    }
+
+    /**
+     * Creates an <CODE>SnmpParameters</CODE> object.
+     * This constructor allows the specification of the read/write community strings.
+     * The inform community string to use is "public".
+     *
+     * @param rdc community string to use for <CODE>get</CODE> operations.
+     * @param wrc community string to use for <CODE>set</CODE> operations.
+     */
+    public SnmpParameters(String rdc, String wrc) {
+        _readCommunity = rdc ;
+        _writeCommunity = wrc ;
+        _informCommunity = defaultRdCommunity ;
+    }
+
+    /**
+     * Creates an <CODE>SnmpParameters</CODE> object.
+     * This constructor allows the specification of the read/write/inform community strings.
+     *
+     * @param rdc community string to use for <CODE>get</CODE> operations.
+     * @param wrc community string to use for <CODE>set</CODE> operations.
+     * @param inform community string to use for <CODE>inform</CODE> requests.
+     */
+    public SnmpParameters(String rdc, String wrc, String inform) {
+        _readCommunity = rdc ;
+        _writeCommunity = wrc ;
+        _informCommunity = inform ;
+    }
+
+    /**
+     * Gets the community to be used when issuing <CODE>get</CODE> operations.
+     * @return The community string.
+     */
+    public String getRdCommunity() {
+        return _readCommunity ;
+    }
+
+    /**
+     * Sets the community string to use when performing <CODE>get</CODE> operations.
+     * @param read The community string.
+     */
+    public synchronized void setRdCommunity(String read) {
+        if (read == null)
+            _readCommunity = defaultRdCommunity ;
+        else
+            _readCommunity = read ;
+    }
+
+    /**
+     * Gets the community to be used when issuing <CODE>set</CODE> operations.
+     * @return The community string.
+     */
+    public String getWrCommunity() {
+        return _writeCommunity ;
+    }
+
+    /**
+     * Sets the community to be used when issuing <CODE>set</CODE> operations.
+     * @param write The community string.
+     */
+    public void setWrCommunity(String write) {
+        _writeCommunity = write;
+    }
+
+    /**
+     * Gets the community to be used when issuing <CODE>inform</CODE> requests.
+     * @return The community string.
+     */
+    public String getInformCommunity() {
+        return _informCommunity ;
+    }
+
+    /**
+     * Sets the community string to use when performing <CODE>inform</CODE> requests.
+     * @param inform The community string.
+     */
+    public void setInformCommunity(String inform) {
+        if (inform == null)
+            _informCommunity = defaultRdCommunity ;
+        else
+            _informCommunity = inform ;
+    }
+
+    /**
+     * Checks whether parameters are in place for an SNMP <CODE>set</CODE> operation.
+     * @return <CODE>true</CODE> if parameters are in place, <CODE>false</CODE> otherwise.
+     */
+    public boolean allowSnmpSets() {
+        return _writeCommunity != null ;
+    }
+
+    /**
+     * Compares two objects.
+     * Two <CODE>SnmpParameters</CODE> are equal if they correspond to the same protocol version,
+     * read community and write community.
+     * @param obj The object to compare <CODE>this</CODE> with.
+     * @return <CODE>true</CODE> if <CODE>this</CODE> and the specified object are equal, <CODE>false</CODE> otherwise.
+     */
+    @Override
+    public synchronized boolean equals(Object obj) {
+        if (!( obj instanceof SnmpParameters))
+            return false;
+
+        if (this == obj)
+            return true ;
+        SnmpParameters param = (SnmpParameters) obj ;
+        if (_protocolVersion == param._protocolVersion)
+            if (_readCommunity.equals(param._readCommunity))
+                return true ;
+        return false ;
+    }
+
+    @Override
+    public synchronized int hashCode() {
+        return (_protocolVersion * 31) ^ Objects.hashCode(_readCommunity);
+    }
+
+    /**
+     * Clones the object and its content.
+     * @return The object clone.
+     */
+    public synchronized Object clone() {
+        SnmpParameters par = null ;
+        try {
+            par = (SnmpParameters) super.clone() ;
+            //par._retryPolicy = _retryPolicy ;
+            par._readCommunity = _readCommunity ;
+            par._writeCommunity = _writeCommunity ;
+            par._informCommunity = _informCommunity ;
+        } catch (CloneNotSupportedException e) {
+            throw new InternalError() ; // VM bug.
+        }
+        return par ;
+    }
+
+    /**
+     * For SNMP Runtime internal use only.
+     */
+    public byte[] encodeAuthentication(int snmpCmd)
+        throws SnmpStatusException {
+        //
+        // Returns the community string associated to the specified command.
+        //
+        try {
+            if (snmpCmd == pduSetRequestPdu)
+                return _writeCommunity.getBytes("8859_1");
+            else if (snmpCmd == pduInformRequestPdu)
+                return _informCommunity.getBytes("8859_1") ;
+            else
+                return _readCommunity.getBytes("8859_1") ;
+        }catch(UnsupportedEncodingException e) {
+            throw new SnmpStatusException(e.getMessage());
+        }
+    }
+
+    /**
+     * Specify the default community string to use for <CODE>get</CODE> operations.
+     * By default, the value is "public".
+     */
+    final static String defaultRdCommunity = "public" ;
+
+    /**
+     * The protocol version.
+     * By default, the value is SNMP version 1.
+     * @serial
+     */
+    private int         _protocolVersion = snmpVersionOne ;
+    /**
+     * The community to be used when issuing <CODE>get</CODE> operations.
+     * @serial
+     */
+    private String      _readCommunity ;
+    /**
+     * The community to be used when issuing <CODE>set</CODE> operations.
+     * @serial
+     */
+    private String      _writeCommunity ;
+    /**
+     * The community to be used when issuing <CODE>inform</CODE> requests.
+     * @serial
+     */
+    private String      _informCommunity ;
+    /**
+     */
+    //private int               _retryPolicy ;  // not implemented as yet.
+}

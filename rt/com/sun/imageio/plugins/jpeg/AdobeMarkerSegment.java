@@ -1,142 +1,136 @@
-/*     */ package com.sun.imageio.plugins.jpeg;
-/*     */ 
-/*     */ import java.io.IOException;
-/*     */ import javax.imageio.metadata.IIOInvalidTreeException;
-/*     */ import javax.imageio.metadata.IIOMetadataNode;
-/*     */ import javax.imageio.stream.ImageOutputStream;
-/*     */ import org.w3c.dom.NamedNodeMap;
-/*     */ import org.w3c.dom.Node;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class AdobeMarkerSegment
-/*     */   extends MarkerSegment
-/*     */ {
-/*     */   int version;
-/*     */   int flags0;
-/*     */   int flags1;
-/*     */   int transform;
-/*     */   private static final int ID_SIZE = 5;
-/*     */   
-/*     */   AdobeMarkerSegment(int paramInt) {
-/*  49 */     super(238);
-/*  50 */     this.version = 101;
-/*  51 */     this.flags0 = 0;
-/*  52 */     this.flags1 = 0;
-/*  53 */     this.transform = paramInt;
-/*     */   }
-/*     */   
-/*     */   AdobeMarkerSegment(JPEGBuffer paramJPEGBuffer) throws IOException {
-/*  57 */     super(paramJPEGBuffer);
-/*  58 */     paramJPEGBuffer.bufPtr += 5;
-/*  59 */     this.version = (paramJPEGBuffer.buf[paramJPEGBuffer.bufPtr++] & 0xFF) << 8;
-/*  60 */     this.version |= paramJPEGBuffer.buf[paramJPEGBuffer.bufPtr++] & 0xFF;
-/*  61 */     this.flags0 = (paramJPEGBuffer.buf[paramJPEGBuffer.bufPtr++] & 0xFF) << 8;
-/*  62 */     this.flags0 |= paramJPEGBuffer.buf[paramJPEGBuffer.bufPtr++] & 0xFF;
-/*  63 */     this.flags1 = (paramJPEGBuffer.buf[paramJPEGBuffer.bufPtr++] & 0xFF) << 8;
-/*  64 */     this.flags1 |= paramJPEGBuffer.buf[paramJPEGBuffer.bufPtr++] & 0xFF;
-/*  65 */     this.transform = paramJPEGBuffer.buf[paramJPEGBuffer.bufPtr++] & 0xFF;
-/*  66 */     paramJPEGBuffer.bufAvail -= this.length;
-/*     */   }
-/*     */   
-/*     */   AdobeMarkerSegment(Node paramNode) throws IIOInvalidTreeException {
-/*  70 */     this(0);
-/*  71 */     updateFromNativeNode(paramNode, true);
-/*     */   }
-/*     */   
-/*     */   IIOMetadataNode getNativeNode() {
-/*  75 */     IIOMetadataNode iIOMetadataNode = new IIOMetadataNode("app14Adobe");
-/*  76 */     iIOMetadataNode.setAttribute("version", Integer.toString(this.version));
-/*  77 */     iIOMetadataNode.setAttribute("flags0", Integer.toString(this.flags0));
-/*  78 */     iIOMetadataNode.setAttribute("flags1", Integer.toString(this.flags1));
-/*  79 */     iIOMetadataNode.setAttribute("transform", Integer.toString(this.transform));
-/*     */     
-/*  81 */     return iIOMetadataNode;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void updateFromNativeNode(Node paramNode, boolean paramBoolean) throws IIOInvalidTreeException {
-/*  87 */     NamedNodeMap namedNodeMap = paramNode.getAttributes();
-/*  88 */     this.transform = getAttributeValue(paramNode, namedNodeMap, "transform", 0, 2, true);
-/*  89 */     int i = namedNodeMap.getLength();
-/*  90 */     if (i > 4) {
-/*  91 */       throw new IIOInvalidTreeException("Adobe APP14 node cannot have > 4 attributes", paramNode);
-/*     */     }
-/*     */     
-/*  94 */     if (i > 1) {
-/*  95 */       int j = getAttributeValue(paramNode, namedNodeMap, "version", 100, 255, false);
-/*     */       
-/*  97 */       this.version = (j != -1) ? j : this.version;
-/*  98 */       j = getAttributeValue(paramNode, namedNodeMap, "flags0", 0, 65535, false);
-/*  99 */       this.flags0 = (j != -1) ? j : this.flags0;
-/* 100 */       j = getAttributeValue(paramNode, namedNodeMap, "flags1", 0, 65535, false);
-/* 101 */       this.flags1 = (j != -1) ? j : this.flags1;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void write(ImageOutputStream paramImageOutputStream) throws IOException {
-/* 110 */     this.length = 14;
-/* 111 */     writeTag(paramImageOutputStream);
-/* 112 */     byte[] arrayOfByte = { 65, 100, 111, 98, 101 };
-/* 113 */     paramImageOutputStream.write(arrayOfByte);
-/* 114 */     write2bytes(paramImageOutputStream, this.version);
-/* 115 */     write2bytes(paramImageOutputStream, this.flags0);
-/* 116 */     write2bytes(paramImageOutputStream, this.flags1);
-/* 117 */     paramImageOutputStream.write(this.transform);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   static void writeAdobeSegment(ImageOutputStream paramImageOutputStream, int paramInt) throws IOException {
-/* 122 */     (new AdobeMarkerSegment(paramInt)).write(paramImageOutputStream);
-/*     */   }
-/*     */   
-/*     */   void print() {
-/* 126 */     printTag("Adobe APP14");
-/* 127 */     System.out.print("Version: ");
-/* 128 */     System.out.println(this.version);
-/* 129 */     System.out.print("Flags0: 0x");
-/* 130 */     System.out.println(Integer.toHexString(this.flags0));
-/* 131 */     System.out.print("Flags1: 0x");
-/* 132 */     System.out.println(Integer.toHexString(this.flags1));
-/* 133 */     System.out.print("Transform: ");
-/* 134 */     System.out.println(this.transform);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\imageio\plugins\jpeg\AdobeMarkerSegment.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2001, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.imageio.plugins.jpeg;
+
+import javax.imageio.IIOException;
+import javax.imageio.metadata.IIOInvalidTreeException;
+import javax.imageio.metadata.IIOMetadataNode;
+import javax.imageio.stream.ImageOutputStream;
+
+import java.io.IOException;
+
+import org.w3c.dom.Node;
+import org.w3c.dom.NamedNodeMap;
+
+/**
+ * An Adobe APP14 (Application-Specific) marker segment.
+ */
+class AdobeMarkerSegment extends MarkerSegment {
+    int version;
+    int flags0;
+    int flags1;
+    int transform;
+    private static final int ID_SIZE = 5;
+
+    AdobeMarkerSegment(int transform) {
+        super(JPEG.APP14);
+        version = 101;
+        flags0 = 0;
+        flags1 = 0;
+        this.transform = transform;
+    }
+
+    AdobeMarkerSegment(JPEGBuffer buffer) throws IOException {
+        super(buffer);
+        buffer.bufPtr += ID_SIZE; // Skip the id
+        version = (buffer.buf[buffer.bufPtr++] & 0xff) << 8;
+        version |= buffer.buf[buffer.bufPtr++] & 0xff;
+        flags0 = (buffer.buf[buffer.bufPtr++] & 0xff) << 8;
+        flags0 |= buffer.buf[buffer.bufPtr++] & 0xff;
+        flags1 = (buffer.buf[buffer.bufPtr++] & 0xff) << 8;
+        flags1 |= buffer.buf[buffer.bufPtr++] & 0xff;
+        transform = buffer.buf[buffer.bufPtr++] & 0xff;
+        buffer.bufAvail -= length;
+    }
+
+    AdobeMarkerSegment(Node node) throws IIOInvalidTreeException {
+        this(0); // default transform will be changed
+        updateFromNativeNode(node, true);
+    }
+
+    IIOMetadataNode getNativeNode() {
+        IIOMetadataNode node = new IIOMetadataNode("app14Adobe");
+        node.setAttribute("version", Integer.toString(version));
+        node.setAttribute("flags0", Integer.toString(flags0));
+        node.setAttribute("flags1", Integer.toString(flags1));
+        node.setAttribute("transform", Integer.toString(transform));
+
+        return node;
+    }
+
+    void updateFromNativeNode(Node node, boolean fromScratch)
+        throws IIOInvalidTreeException {
+        // Only the transform is required
+        NamedNodeMap attrs = node.getAttributes();
+        transform = getAttributeValue(node, attrs, "transform", 0, 2, true);
+        int count = attrs.getLength();
+        if (count > 4) {
+            throw new IIOInvalidTreeException
+                ("Adobe APP14 node cannot have > 4 attributes", node);
+        }
+        if (count > 1) {
+            int value = getAttributeValue(node, attrs, "version",
+                                          100, 255, false);
+            version = (value != -1) ? value : version;
+            value = getAttributeValue(node, attrs, "flags0", 0, 65535, false);
+            flags0 = (value != -1) ? value : flags0;
+            value = getAttributeValue(node, attrs, "flags1", 0, 65535, false);
+            flags1 = (value != -1) ? value : flags1;
+        }
+    }
+
+    /**
+     * Writes the data for this segment to the stream in
+     * valid JPEG format.
+     */
+    void write(ImageOutputStream ios) throws IOException {
+        length = 14;
+        writeTag(ios);
+        byte [] id = {0x41, 0x64, 0x6F, 0x62, 0x65};
+        ios.write(id);
+        write2bytes(ios, version);
+        write2bytes(ios, flags0);
+        write2bytes(ios, flags1);
+        ios.write(transform);
+    }
+
+    static void writeAdobeSegment(ImageOutputStream ios, int transform)
+        throws IOException {
+        (new AdobeMarkerSegment(transform)).write(ios);
+    }
+
+    void print () {
+        printTag("Adobe APP14");
+        System.out.print("Version: ");
+        System.out.println(version);
+        System.out.print("Flags0: 0x");
+        System.out.println(Integer.toHexString(flags0));
+        System.out.print("Flags1: 0x");
+        System.out.println(Integer.toHexString(flags1));
+        System.out.print("Transform: ");
+        System.out.println(transform);
+    }
+}

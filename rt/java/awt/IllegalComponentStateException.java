@@ -1,63 +1,57 @@
-/*    */ package java.awt;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class IllegalComponentStateException
-/*    */   extends IllegalStateException
-/*    */ {
-/*    */   private static final long serialVersionUID = -1889339587208144238L;
-/*    */   
-/*    */   public IllegalComponentStateException() {}
-/*    */   
-/*    */   public IllegalComponentStateException(String paramString) {
-/* 55 */     super(paramString);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\awt\IllegalComponentStateException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1996, 1997, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.awt;
+
+/**
+ * Signals that an AWT component is not in an appropriate state for
+ * the requested operation.
+ *
+ * @author      Jonni Kanerva
+ */
+public class IllegalComponentStateException extends IllegalStateException {
+    /*
+     * JDK 1.1 serialVersionUID
+     */
+     private static final long serialVersionUID = -1889339587208144238L;
+
+    /**
+     * Constructs an IllegalComponentStateException with no detail message.
+     * A detail message is a String that describes this particular exception.
+     */
+    public IllegalComponentStateException() {
+        super();
+    }
+
+    /**
+     * Constructs an IllegalComponentStateException with the specified detail
+     * message.  A detail message is a String that describes this particular
+     * exception.
+     * @param s the String that contains a detailed message
+     */
+    public IllegalComponentStateException(String s) {
+        super(s);
+    }
+}

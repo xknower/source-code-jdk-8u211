@@ -1,209 +1,203 @@
-/*     */ package javax.swing.plaf.synth;
-/*     */ 
-/*     */ import java.awt.Graphics;
-/*     */ import java.beans.PropertyChangeEvent;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.plaf.ComponentUI;
-/*     */ import javax.swing.plaf.basic.BasicEditorPaneUI;
-/*     */ import javax.swing.text.JTextComponent;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class SynthEditorPaneUI
-/*     */   extends BasicEditorPaneUI
-/*     */   implements SynthUI
-/*     */ {
-/*     */   private SynthStyle style;
-/*  48 */   private Boolean localTrue = Boolean.TRUE;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static ComponentUI createUI(JComponent paramJComponent) {
-/*  57 */     return new SynthEditorPaneUI();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void installDefaults() {
-/*  66 */     super.installDefaults();
-/*  67 */     JTextComponent jTextComponent = getComponent();
-/*     */     
-/*  69 */     Object object = jTextComponent.getClientProperty("JEditorPane.honorDisplayProperties");
-/*  70 */     if (object == null) {
-/*  71 */       jTextComponent.putClientProperty("JEditorPane.honorDisplayProperties", this.localTrue);
-/*     */     }
-/*  73 */     updateStyle(getComponent());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void uninstallDefaults() {
-/*  81 */     SynthContext synthContext = getContext(getComponent(), 1);
-/*  82 */     JTextComponent jTextComponent = getComponent();
-/*  83 */     jTextComponent.putClientProperty("caretAspectRatio", null);
-/*     */     
-/*  85 */     this.style.uninstallDefaults(synthContext);
-/*  86 */     synthContext.dispose();
-/*  87 */     this.style = null;
-/*     */ 
-/*     */     
-/*  90 */     Object object = jTextComponent.getClientProperty("JEditorPane.honorDisplayProperties");
-/*  91 */     if (object == this.localTrue) {
-/*  92 */       jTextComponent.putClientProperty("JEditorPane.honorDisplayProperties", Boolean.FALSE);
-/*     */     }
-/*     */     
-/*  95 */     super.uninstallDefaults();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void propertyChange(PropertyChangeEvent paramPropertyChangeEvent) {
-/* 110 */     if (SynthLookAndFeel.shouldUpdateStyle(paramPropertyChangeEvent)) {
-/* 111 */       updateStyle((JTextComponent)paramPropertyChangeEvent.getSource());
-/*     */     }
-/* 113 */     super.propertyChange(paramPropertyChangeEvent);
-/*     */   }
-/*     */   
-/*     */   private void updateStyle(JTextComponent paramJTextComponent) {
-/* 117 */     SynthContext synthContext = getContext(paramJTextComponent, 1);
-/* 118 */     SynthStyle synthStyle = this.style;
-/*     */     
-/* 120 */     this.style = SynthLookAndFeel.updateStyle(synthContext, this);
-/*     */     
-/* 122 */     if (this.style != synthStyle) {
-/* 123 */       SynthTextFieldUI.updateStyle(paramJTextComponent, synthContext, getPropertyPrefix());
-/*     */       
-/* 125 */       if (synthStyle != null) {
-/* 126 */         uninstallKeyboardActions();
-/* 127 */         installKeyboardActions();
-/*     */       } 
-/*     */     } 
-/* 130 */     synthContext.dispose();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SynthContext getContext(JComponent paramJComponent) {
-/* 138 */     return getContext(paramJComponent, getComponentState(paramJComponent));
-/*     */   }
-/*     */   
-/*     */   private SynthContext getContext(JComponent paramJComponent, int paramInt) {
-/* 142 */     return SynthContext.getContext(paramJComponent, this.style, paramInt);
-/*     */   }
-/*     */   
-/*     */   private int getComponentState(JComponent paramJComponent) {
-/* 146 */     return SynthLookAndFeel.getComponentState(paramJComponent);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void update(Graphics paramGraphics, JComponent paramJComponent) {
-/* 163 */     SynthContext synthContext = getContext(paramJComponent);
-/*     */     
-/* 165 */     SynthLookAndFeel.update(synthContext, paramGraphics);
-/* 166 */     paintBackground(synthContext, paramGraphics, paramJComponent);
-/* 167 */     paint(synthContext, paramGraphics);
-/* 168 */     synthContext.dispose();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void paint(SynthContext paramSynthContext, Graphics paramGraphics) {
-/* 179 */     paint(paramGraphics, getComponent());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void paintBackground(Graphics paramGraphics) {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void paintBackground(SynthContext paramSynthContext, Graphics paramGraphics, JComponent paramJComponent) {
-/* 191 */     paramSynthContext.getPainter().paintEditorPaneBackground(paramSynthContext, paramGraphics, 0, 0, paramJComponent
-/* 192 */         .getWidth(), paramJComponent.getHeight());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void paintBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/* 201 */     paramSynthContext.getPainter().paintEditorPaneBorder(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\synth\SynthEditorPaneUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.plaf.synth;
+
+import java.awt.*;
+import javax.swing.*;
+import javax.swing.text.*;
+import javax.swing.plaf.*;
+import javax.swing.plaf.basic.BasicEditorPaneUI;
+import java.beans.PropertyChangeEvent;
+
+/**
+ * Provides the Synth L&amp;F UI delegate for
+ * {@link javax.swing.JEditorPane}.
+ *
+ * @author  Shannon Hickey
+ * @since 1.7
+ */
+public class SynthEditorPaneUI extends BasicEditorPaneUI implements SynthUI {
+    private SynthStyle style;
+    /*
+     * I would prefer to use UIResource instad of this.
+     * Unfortunately Boolean is a final class
+     */
+    private Boolean localTrue = Boolean.TRUE;
+
+    /**
+     * Creates a new UI object for the given component.
+     *
+     * @param c component to create UI object for
+     * @return the UI object
+     */
+    public static ComponentUI createUI(JComponent c) {
+        return new SynthEditorPaneUI();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void installDefaults() {
+        // Installs the text cursor on the component
+        super.installDefaults();
+        JComponent c = getComponent();
+        Object clientProperty =
+            c.getClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES);
+        if (clientProperty == null) {
+            c.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, localTrue);
+        }
+        updateStyle(getComponent());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void uninstallDefaults() {
+        SynthContext context = getContext(getComponent(), ENABLED);
+        JComponent c = getComponent();
+        c.putClientProperty("caretAspectRatio", null);
+
+        style.uninstallDefaults(context);
+        context.dispose();
+        style = null;
+
+        Object clientProperty =
+            c.getClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES);
+        if (clientProperty == localTrue) {
+            c.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES,
+                                             Boolean.FALSE);
+        }
+        super.uninstallDefaults();
+    }
+
+    /**
+     * This method gets called when a bound property is changed
+     * on the associated JTextComponent.  This is a hook
+     * which UI implementations may change to reflect how the
+     * UI displays bound properties of JTextComponent subclasses.
+     * This is implemented to rebuild the ActionMap based upon an
+     * EditorKit change.
+     *
+     * @param evt the property change event
+     */
+    @Override
+    protected void propertyChange(PropertyChangeEvent evt) {
+        if (SynthLookAndFeel.shouldUpdateStyle(evt)) {
+            updateStyle((JTextComponent)evt.getSource());
+        }
+        super.propertyChange(evt);
+    }
+
+    private void updateStyle(JTextComponent comp) {
+        SynthContext context = getContext(comp, ENABLED);
+        SynthStyle oldStyle = style;
+
+        style = SynthLookAndFeel.updateStyle(context, this);
+
+        if (style != oldStyle) {
+            SynthTextFieldUI.updateStyle(comp, context, getPropertyPrefix());
+
+            if (oldStyle != null) {
+                uninstallKeyboardActions();
+                installKeyboardActions();
+            }
+        }
+        context.dispose();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public SynthContext getContext(JComponent c) {
+        return getContext(c, getComponentState(c));
+    }
+
+    private SynthContext getContext(JComponent c, int state) {
+        return SynthContext.getContext(c, style, state);
+    }
+
+    private int getComponentState(JComponent c) {
+        return SynthLookAndFeel.getComponentState(c);
+    }
+
+    /**
+     * Notifies this UI delegate to repaint the specified component.
+     * This method paints the component background, then calls
+     * the {@link #paint(SynthContext,Graphics)} method.
+     *
+     * <p>In general, this method does not need to be overridden by subclasses.
+     * All Look and Feel rendering code should reside in the {@code paint} method.
+     *
+     * @param g the {@code Graphics} object used for painting
+     * @param c the component being painted
+     * @see #paint(SynthContext,Graphics)
+     */
+    @Override
+    public void update(Graphics g, JComponent c) {
+        SynthContext context = getContext(c);
+
+        SynthLookAndFeel.update(context, g);
+        paintBackground(context, g, c);
+        paint(context, g);
+        context.dispose();
+    }
+
+    /**
+     * Paints the specified component.
+     *
+     * @param context context for the component being painted
+     * @param g the {@code Graphics} object used for painting
+     * @see #update(Graphics,JComponent)
+     */
+    protected void paint(SynthContext context, Graphics g) {
+        super.paint(g, getComponent());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void paintBackground(Graphics g) {
+        // Overriden to do nothing, all our painting is done from update/paint.
+    }
+
+    void paintBackground(SynthContext context, Graphics g, JComponent c) {
+        context.getPainter().paintEditorPaneBackground(context, g, 0, 0,
+                                                  c.getWidth(), c.getHeight());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void paintBorder(SynthContext context, Graphics g, int x,
+                            int y, int w, int h) {
+        context.getPainter().paintEditorPaneBorder(context, g, x, y, w, h);
+    }
+}

@@ -1,201 +1,195 @@
-/*     */ package javax.swing.plaf.synth;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Font;
-/*     */ import java.awt.Graphics;
-/*     */ import java.beans.PropertyChangeEvent;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.plaf.ComponentUI;
-/*     */ import javax.swing.text.JTextComponent;
-/*     */ import javax.swing.text.Style;
-/*     */ import javax.swing.text.StyleConstants;
-/*     */ import javax.swing.text.StyledDocument;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class SynthTextPaneUI
-/*     */   extends SynthEditorPaneUI
-/*     */ {
-/*     */   public static ComponentUI createUI(JComponent paramJComponent) {
-/*  59 */     return new SynthTextPaneUI();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected String getPropertyPrefix() {
-/*  71 */     return "TextPane";
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void installUI(JComponent paramJComponent) {
-/* 100 */     super.installUI(paramJComponent);
-/* 101 */     updateForeground(paramJComponent.getForeground());
-/* 102 */     updateFont(paramJComponent.getFont());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void propertyChange(PropertyChangeEvent paramPropertyChangeEvent) {
-/* 118 */     super.propertyChange(paramPropertyChangeEvent);
-/*     */     
-/* 120 */     String str = paramPropertyChangeEvent.getPropertyName();
-/*     */     
-/* 122 */     if (str.equals("foreground")) {
-/* 123 */       updateForeground((Color)paramPropertyChangeEvent.getNewValue());
-/* 124 */     } else if (str.equals("font")) {
-/* 125 */       updateFont((Font)paramPropertyChangeEvent.getNewValue());
-/* 126 */     } else if (str.equals("document")) {
-/* 127 */       JTextComponent jTextComponent = getComponent();
-/* 128 */       updateForeground(jTextComponent.getForeground());
-/* 129 */       updateFont(jTextComponent.getFont());
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void updateForeground(Color paramColor) {
-/* 140 */     StyledDocument styledDocument = (StyledDocument)getComponent().getDocument();
-/* 141 */     Style style = styledDocument.getStyle("default");
-/*     */     
-/* 143 */     if (style == null) {
-/*     */       return;
-/*     */     }
-/*     */     
-/* 147 */     if (paramColor == null) {
-/* 148 */       style.removeAttribute(StyleConstants.Foreground);
-/*     */     } else {
-/* 150 */       StyleConstants.setForeground(style, paramColor);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void updateFont(Font paramFont) {
-/* 161 */     StyledDocument styledDocument = (StyledDocument)getComponent().getDocument();
-/* 162 */     Style style = styledDocument.getStyle("default");
-/*     */     
-/* 164 */     if (style == null) {
-/*     */       return;
-/*     */     }
-/*     */     
-/* 168 */     if (paramFont == null) {
-/* 169 */       style.removeAttribute(StyleConstants.FontFamily);
-/* 170 */       style.removeAttribute(StyleConstants.FontSize);
-/* 171 */       style.removeAttribute(StyleConstants.Bold);
-/* 172 */       style.removeAttribute(StyleConstants.Italic);
-/*     */     } else {
-/* 174 */       StyleConstants.setFontFamily(style, paramFont.getName());
-/* 175 */       StyleConstants.setFontSize(style, paramFont.getSize());
-/* 176 */       StyleConstants.setBold(style, paramFont.isBold());
-/* 177 */       StyleConstants.setItalic(style, paramFont.isItalic());
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   void paintBackground(SynthContext paramSynthContext, Graphics paramGraphics, JComponent paramJComponent) {
-/* 183 */     paramSynthContext.getPainter().paintTextPaneBackground(paramSynthContext, paramGraphics, 0, 0, paramJComponent
-/* 184 */         .getWidth(), paramJComponent.getHeight());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void paintBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/* 193 */     paramSynthContext.getPainter().paintTextPaneBorder(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\synth\SynthTextPaneUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.plaf.synth;
+
+import javax.swing.*;
+import javax.swing.text.*;
+import javax.swing.plaf.*;
+import java.beans.PropertyChangeEvent;
+import java.awt.*;
+
+/**
+ * Provides the look and feel for a styled text editor in the
+ * Synth look and feel.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @author  Shannon Hickey
+ * @since 1.7
+ */
+public class SynthTextPaneUI extends SynthEditorPaneUI {
+
+    /**
+     * Creates a UI for the JTextPane.
+     *
+     * @param c the JTextPane object
+     * @return the UI object
+     */
+    public static ComponentUI createUI(JComponent c) {
+        return new SynthTextPaneUI();
+    }
+
+    /**
+     * Fetches the name used as a key to lookup properties through the
+     * UIManager.  This is used as a prefix to all the standard
+     * text properties.
+     *
+     * @return the name ("TextPane")
+     */
+    @Override
+    protected String getPropertyPrefix() {
+        return "TextPane";
+    }
+
+    /**
+     * Installs the UI for a component.  This does the following
+     * things.
+     * <ol>
+     * <li>
+     * Sets opaqueness of the associated component according to its style,
+     * if the opaque property has not already been set by the client program.
+     * <li>
+     * Installs the default caret and highlighter into the
+     * associated component. These properties are only set if their
+     * current value is either {@code null} or an instance of
+     * {@link UIResource}.
+     * <li>
+     * Attaches to the editor and model.  If there is no
+     * model, a default one is created.
+     * <li>
+     * Creates the view factory and the view hierarchy used
+     * to represent the model.
+     * </ol>
+     *
+     * @param c the editor component
+     * @see javax.swing.plaf.basic.BasicTextUI#installUI
+     * @see ComponentUI#installUI
+     */
+    @Override
+    public void installUI(JComponent c) {
+        super.installUI(c);
+        updateForeground(c.getForeground());
+        updateFont(c.getFont());
+    }
+
+    /**
+     * This method gets called when a bound property is changed
+     * on the associated JTextComponent.  This is a hook
+     * which UI implementations may change to reflect how the
+     * UI displays bound properties of JTextComponent subclasses.
+     * If the font, foreground or document has changed, the
+     * the appropriate property is set in the default style of
+     * the document.
+     *
+     * @param evt the property change event
+     */
+    @Override
+    protected void propertyChange(PropertyChangeEvent evt) {
+        super.propertyChange(evt);
+
+        String name = evt.getPropertyName();
+
+        if (name.equals("foreground")) {
+            updateForeground((Color)evt.getNewValue());
+        } else if (name.equals("font")) {
+            updateFont((Font)evt.getNewValue());
+        } else if (name.equals("document")) {
+            JComponent comp = getComponent();
+            updateForeground(comp.getForeground());
+            updateFont(comp.getFont());
+        }
+    }
+
+    /**
+     * Update the color in the default style of the document.
+     *
+     * @param color the new color to use or null to remove the color attribute
+     *              from the document's style
+     */
+    private void updateForeground(Color color) {
+        StyledDocument doc = (StyledDocument)getComponent().getDocument();
+        Style style = doc.getStyle(StyleContext.DEFAULT_STYLE);
+
+        if (style == null) {
+            return;
+        }
+
+        if (color == null) {
+            style.removeAttribute(StyleConstants.Foreground);
+        } else {
+            StyleConstants.setForeground(style, color);
+        }
+    }
+
+    /**
+     * Update the font in the default style of the document.
+     *
+     * @param font the new font to use or null to remove the font attribute
+     *             from the document's style
+     */
+    private void updateFont(Font font) {
+        StyledDocument doc = (StyledDocument)getComponent().getDocument();
+        Style style = doc.getStyle(StyleContext.DEFAULT_STYLE);
+
+        if (style == null) {
+            return;
+        }
+
+        if (font == null) {
+            style.removeAttribute(StyleConstants.FontFamily);
+            style.removeAttribute(StyleConstants.FontSize);
+            style.removeAttribute(StyleConstants.Bold);
+            style.removeAttribute(StyleConstants.Italic);
+        } else {
+            StyleConstants.setFontFamily(style, font.getName());
+            StyleConstants.setFontSize(style, font.getSize());
+            StyleConstants.setBold(style, font.isBold());
+            StyleConstants.setItalic(style, font.isItalic());
+        }
+    }
+
+    @Override
+    void paintBackground(SynthContext context, Graphics g, JComponent c) {
+        context.getPainter().paintTextPaneBackground(context, g, 0, 0,
+                                                  c.getWidth(), c.getHeight());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void paintBorder(SynthContext context, Graphics g, int x,
+                            int y, int w, int h) {
+        context.getPainter().paintTextPaneBorder(context, g, x, y, w, h);
+    }
+}

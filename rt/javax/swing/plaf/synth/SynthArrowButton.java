@@ -1,151 +1,145 @@
-/*     */ package javax.swing.plaf.synth;
-/*     */ 
-/*     */ import java.awt.Container;
-/*     */ import java.awt.Dimension;
-/*     */ import java.awt.Graphics;
-/*     */ import javax.swing.AbstractButton;
-/*     */ import javax.swing.JButton;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.SwingConstants;
-/*     */ import javax.swing.plaf.UIResource;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class SynthArrowButton
-/*     */   extends JButton
-/*     */   implements SwingConstants, UIResource
-/*     */ {
-/*     */   private int direction;
-/*     */   
-/*     */   public SynthArrowButton(int paramInt) {
-/*  41 */     super.setFocusable(false);
-/*  42 */     setDirection(paramInt);
-/*  43 */     setDefaultCapable(false);
-/*     */   }
-/*     */   
-/*     */   public String getUIClassID() {
-/*  47 */     return "ArrowButtonUI";
-/*     */   }
-/*     */   
-/*     */   public void updateUI() {
-/*  51 */     setUI(new SynthArrowButtonUI());
-/*     */   }
-/*     */   
-/*     */   public void setDirection(int paramInt) {
-/*  55 */     this.direction = paramInt;
-/*  56 */     putClientProperty("__arrow_direction__", Integer.valueOf(paramInt));
-/*  57 */     repaint();
-/*     */   }
-/*     */   
-/*     */   public int getDirection() {
-/*  61 */     return this.direction;
-/*     */   }
-/*     */   
-/*     */   public void setFocusable(boolean paramBoolean) {}
-/*     */   
-/*     */   private static class SynthArrowButtonUI extends SynthButtonUI {
-/*     */     protected void installDefaults(AbstractButton param1AbstractButton) {
-/*  68 */       super.installDefaults(param1AbstractButton);
-/*  69 */       updateStyle(param1AbstractButton);
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     protected void paint(SynthContext param1SynthContext, Graphics param1Graphics) {
-/*  74 */       SynthArrowButton synthArrowButton = (SynthArrowButton)param1SynthContext.getComponent();
-/*  75 */       param1SynthContext.getPainter().paintArrowButtonForeground(param1SynthContext, param1Graphics, 0, 0, synthArrowButton
-/*  76 */           .getWidth(), synthArrowButton.getHeight(), synthArrowButton
-/*  77 */           .getDirection());
-/*     */     }
-/*     */     private SynthArrowButtonUI() {}
-/*     */     void paintBackground(SynthContext param1SynthContext, Graphics param1Graphics, JComponent param1JComponent) {
-/*  81 */       param1SynthContext.getPainter().paintArrowButtonBackground(param1SynthContext, param1Graphics, 0, 0, param1JComponent
-/*  82 */           .getWidth(), param1JComponent.getHeight());
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public void paintBorder(SynthContext param1SynthContext, Graphics param1Graphics, int param1Int1, int param1Int2, int param1Int3, int param1Int4) {
-/*  87 */       param1SynthContext.getPainter().paintArrowButtonBorder(param1SynthContext, param1Graphics, param1Int1, param1Int2, param1Int3, param1Int4);
-/*     */     }
-/*     */     
-/*     */     public Dimension getMinimumSize() {
-/*  91 */       return new Dimension(5, 5);
-/*     */     }
-/*     */     
-/*     */     public Dimension getMaximumSize() {
-/*  95 */       return new Dimension(2147483647, 2147483647);
-/*     */     }
-/*     */     
-/*     */     public Dimension getPreferredSize(JComponent param1JComponent) {
-/*  99 */       SynthContext synthContext = getContext(param1JComponent);
-/* 100 */       Dimension dimension = null;
-/* 101 */       if (synthContext.getComponent().getName() == "ScrollBar.button")
-/*     */       {
-/*     */ 
-/*     */ 
-/*     */         
-/* 106 */         dimension = (Dimension)synthContext.getStyle().get(synthContext, "ScrollBar.buttonSize");
-/*     */       }
-/* 108 */       if (dimension == null) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 113 */         int i = synthContext.getStyle().getInt(synthContext, "ArrowButton.size", 16);
-/* 114 */         dimension = new Dimension(i, i);
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 120 */       Container container = synthContext.getComponent().getParent();
-/* 121 */       if (container instanceof JComponent && !(container instanceof javax.swing.JComboBox)) {
-/*     */         
-/* 123 */         Object object = ((JComponent)container).getClientProperty("JComponent.sizeVariant");
-/* 124 */         if (object != null) {
-/* 125 */           if ("large".equals(object)) {
-/* 126 */             dimension = new Dimension((int)(dimension.width * 1.15D), (int)(dimension.height * 1.15D));
-/*     */           
-/*     */           }
-/* 129 */           else if ("small".equals(object)) {
-/* 130 */             dimension = new Dimension((int)(dimension.width * 0.857D), (int)(dimension.height * 0.857D));
-/*     */           
-/*     */           }
-/* 133 */           else if ("mini".equals(object)) {
-/* 134 */             dimension = new Dimension((int)(dimension.width * 0.714D), (int)(dimension.height * 0.714D));
-/*     */           } 
-/*     */         }
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */       
-/* 141 */       synthContext.dispose();
-/* 142 */       return dimension;
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\synth\SynthArrowButton.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2008, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.plaf.synth;
+
+import java.awt.*;
+import javax.swing.*;
+import javax.swing.plaf.UIResource;
+
+/**
+ * JButton object that draws a scaled Arrow in one of the cardinal directions.
+ *
+ * @author Scott Violet
+ */
+class SynthArrowButton extends JButton implements SwingConstants, UIResource {
+    private int direction;
+
+    public SynthArrowButton(int direction) {
+        super();
+        super.setFocusable(false);
+        setDirection(direction);
+        setDefaultCapable(false);
+    }
+
+    public String getUIClassID() {
+        return "ArrowButtonUI";
+    }
+
+    public void updateUI() {
+        setUI(new SynthArrowButtonUI());
+    }
+
+    public void setDirection(int dir) {
+        direction = dir;
+        putClientProperty("__arrow_direction__", Integer.valueOf(dir));
+        repaint();
+    }
+
+    public int getDirection() {
+        return direction;
+    }
+
+    public void setFocusable(boolean focusable) {}
+
+    private static class SynthArrowButtonUI extends SynthButtonUI {
+        protected void installDefaults(AbstractButton b) {
+            super.installDefaults(b);
+            updateStyle(b);
+        }
+
+        protected void paint(SynthContext context, Graphics g) {
+            SynthArrowButton button = (SynthArrowButton)context.
+                                      getComponent();
+            context.getPainter().paintArrowButtonForeground(
+                context, g, 0, 0, button.getWidth(), button.getHeight(),
+                button.getDirection());
+        }
+
+        void paintBackground(SynthContext context, Graphics g, JComponent c) {
+            context.getPainter().paintArrowButtonBackground(context, g, 0, 0,
+                                                c.getWidth(), c.getHeight());
+        }
+
+        public void paintBorder(SynthContext context, Graphics g, int x,
+                                int y, int w, int h) {
+            context.getPainter().paintArrowButtonBorder(context, g, x, y, w,h);
+        }
+
+        public Dimension getMinimumSize() {
+            return new Dimension(5, 5);
+        }
+
+        public Dimension getMaximumSize() {
+            return new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE);
+        }
+
+        public Dimension getPreferredSize(JComponent c) {
+            SynthContext context = getContext(c);
+            Dimension dim = null;
+            if (context.getComponent().getName() == "ScrollBar.button") {
+                // ScrollBar arrow buttons can be non-square when
+                // the ScrollBar.squareButtons property is set to FALSE
+                // and the ScrollBar.buttonSize property is non-null
+                dim = (Dimension)
+                    context.getStyle().get(context, "ScrollBar.buttonSize");
+            }
+            if (dim == null) {
+                // For all other cases (including Spinner, ComboBox), we will
+                // fall back on the single ArrowButton.size value to create
+                // a square return value
+                int size =
+                    context.getStyle().getInt(context, "ArrowButton.size", 16);
+                dim = new Dimension(size, size);
+            }
+
+            // handle scaling for sizeVarients for special case components. The
+            // key "JComponent.sizeVariant" scales for large/small/mini
+            // components are based on Apples LAF
+            Container parent = context.getComponent().getParent();
+            if (parent instanceof JComponent && !(parent instanceof JComboBox)) {
+                Object scaleKey = ((JComponent)parent).
+                                    getClientProperty("JComponent.sizeVariant");
+                if (scaleKey != null){
+                    if ("large".equals(scaleKey)){
+                        dim = new Dimension(
+                                (int)(dim.width * 1.15),
+                                (int)(dim.height * 1.15));
+                    } else if ("small".equals(scaleKey)){
+                        dim = new Dimension(
+                                (int)(dim.width * 0.857),
+                                (int)(dim.height * 0.857));
+                    } else if ("mini".equals(scaleKey)){
+                        dim = new Dimension(
+                                (int)(dim.width * 0.714),
+                                (int)(dim.height * 0.714));
+                    }
+                }
+            }
+
+            context.dispose();
+            return dim;
+        }
+    }
+}

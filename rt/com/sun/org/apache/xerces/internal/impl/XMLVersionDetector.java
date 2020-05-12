@@ -1,243 +1,238 @@
-/*     */ package com.sun.org.apache.xerces.internal.impl;
-/*     */ 
-/*     */ import com.sun.org.apache.xerces.internal.util.SymbolTable;
-/*     */ import com.sun.org.apache.xerces.internal.xni.XMLString;
-/*     */ import com.sun.org.apache.xerces.internal.xni.parser.XMLComponentManager;
-/*     */ import com.sun.org.apache.xerces.internal.xni.parser.XMLConfigurationException;
-/*     */ import com.sun.org.apache.xerces.internal.xni.parser.XMLInputSource;
-/*     */ import com.sun.xml.internal.stream.Entity;
-/*     */ import java.io.EOFException;
-/*     */ import java.io.IOException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class XMLVersionDetector
-/*     */ {
-/*  50 */   private static final char[] XML11_VERSION = new char[] { '1', '.', '1' };
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected static final String SYMBOL_TABLE = "http://apache.org/xml/properties/internal/symbol-table";
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected static final String ERROR_REPORTER = "http://apache.org/xml/properties/internal/error-reporter";
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected static final String ENTITY_MANAGER = "http://apache.org/xml/properties/internal/entity-manager";
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  72 */   protected static final String fVersionSymbol = "version".intern();
-/*     */ 
-/*     */   
-/*  75 */   protected static final String fXMLSymbol = "[xml]".intern();
-/*     */ 
-/*     */   
-/*     */   protected SymbolTable fSymbolTable;
-/*     */ 
-/*     */   
-/*     */   protected XMLErrorReporter fErrorReporter;
-/*     */ 
-/*     */   
-/*     */   protected XMLEntityManager fEntityManager;
-/*     */   
-/*  86 */   protected String fEncoding = null;
-/*     */   
-/*  88 */   private XMLString fVersionNum = new XMLString();
-/*     */   
-/*  90 */   private final char[] fExpectedVersionString = new char[] { '<', '?', 'x', 'm', 'l', ' ', 'v', 'e', 'r', 's', 'i', 'o', 'n', '=', ' ', ' ', ' ', ' ', ' ' };
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void reset(XMLComponentManager componentManager) throws XMLConfigurationException {
-/* 105 */     this.fSymbolTable = (SymbolTable)componentManager.getProperty("http://apache.org/xml/properties/internal/symbol-table");
-/* 106 */     this.fErrorReporter = (XMLErrorReporter)componentManager.getProperty("http://apache.org/xml/properties/internal/error-reporter");
-/* 107 */     this.fEntityManager = (XMLEntityManager)componentManager.getProperty("http://apache.org/xml/properties/internal/entity-manager");
-/* 108 */     for (int i = 14; i < this.fExpectedVersionString.length; i++) {
-/* 109 */       this.fExpectedVersionString[i] = ' ';
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void startDocumentParsing(XMLEntityHandler scanner, short version) {
-/* 120 */     if (version == 1) {
-/* 121 */       this.fEntityManager.setScannerVersion((short)1);
-/*     */     } else {
-/*     */       
-/* 124 */       this.fEntityManager.setScannerVersion((short)2);
-/*     */     } 
-/*     */     
-/* 127 */     this.fErrorReporter.setDocumentLocator(this.fEntityManager.getEntityScanner());
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 132 */     this.fEntityManager.setEntityHandler(scanner);
-/*     */     
-/* 134 */     scanner.startEntity(fXMLSymbol, this.fEntityManager.getCurrentResourceIdentifier(), this.fEncoding, null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public short determineDocVersion(XMLInputSource inputSource) throws IOException {
-/* 148 */     this.fEncoding = this.fEntityManager.setupCurrentEntity(false, fXMLSymbol, inputSource, false, true);
-/*     */ 
-/*     */ 
-/*     */     
-/* 152 */     this.fEntityManager.setScannerVersion((short)1);
-/* 153 */     XMLEntityScanner scanner = this.fEntityManager.getEntityScanner();
-/* 154 */     scanner.detectingVersion = true;
-/*     */     try {
-/* 156 */       if (!scanner.skipString("<?xml")) {
-/*     */         
-/* 158 */         scanner.detectingVersion = false;
-/* 159 */         return 1;
-/*     */       } 
-/* 161 */       if (!scanner.skipDeclSpaces()) {
-/* 162 */         fixupCurrentEntity(this.fEntityManager, this.fExpectedVersionString, 5);
-/* 163 */         scanner.detectingVersion = false;
-/* 164 */         return 1;
-/*     */       } 
-/* 166 */       if (!scanner.skipString("version")) {
-/* 167 */         fixupCurrentEntity(this.fEntityManager, this.fExpectedVersionString, 6);
-/* 168 */         scanner.detectingVersion = false;
-/* 169 */         return 1;
-/*     */       } 
-/* 171 */       scanner.skipDeclSpaces();
-/*     */       
-/* 173 */       if (scanner.peekChar() != 61) {
-/* 174 */         fixupCurrentEntity(this.fEntityManager, this.fExpectedVersionString, 13);
-/* 175 */         scanner.detectingVersion = false;
-/* 176 */         return 1;
-/*     */       } 
-/* 178 */       scanner.scanChar(null);
-/* 179 */       scanner.skipDeclSpaces();
-/* 180 */       int quoteChar = scanner.scanChar(null);
-/* 181 */       this.fExpectedVersionString[14] = (char)quoteChar;
-/* 182 */       for (int versionPos = 0; versionPos < XML11_VERSION.length; versionPos++) {
-/* 183 */         this.fExpectedVersionString[15 + versionPos] = (char)scanner.scanChar(null);
-/*     */       }
-/*     */       
-/* 186 */       this.fExpectedVersionString[18] = (char)scanner.scanChar(null);
-/* 187 */       fixupCurrentEntity(this.fEntityManager, this.fExpectedVersionString, 19);
-/* 188 */       int matched = 0;
-/* 189 */       for (; matched < XML11_VERSION.length && 
-/* 190 */         this.fExpectedVersionString[15 + matched] == XML11_VERSION[matched]; matched++);
-/*     */ 
-/*     */       
-/* 193 */       scanner.detectingVersion = false;
-/* 194 */       if (matched == XML11_VERSION.length)
-/* 195 */         return 2; 
-/* 196 */       return 1;
-/*     */     
-/*     */     }
-/* 199 */     catch (EOFException e) {
-/* 200 */       this.fErrorReporter.reportError("http://www.w3.org/TR/1998/REC-xml-19980210", "PrematureEOF", null, (short)2);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 205 */       scanner.detectingVersion = false;
-/* 206 */       return 1;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void fixupCurrentEntity(XMLEntityManager manager, char[] scannedChars, int length) {
-/* 214 */     Entity.ScannedEntity currentEntity = manager.getCurrentEntity();
-/* 215 */     if (currentEntity.count - currentEntity.position + length > currentEntity.ch.length) {
-/*     */       
-/* 217 */       char[] tempCh = currentEntity.ch;
-/* 218 */       currentEntity.ch = new char[length + currentEntity.count - currentEntity.position + 1];
-/* 219 */       System.arraycopy(tempCh, 0, currentEntity.ch, 0, tempCh.length);
-/*     */     } 
-/* 221 */     if (currentEntity.position < length) {
-/*     */       
-/* 223 */       System.arraycopy(currentEntity.ch, currentEntity.position, currentEntity.ch, length, currentEntity.count - currentEntity.position);
-/* 224 */       currentEntity.count += length - currentEntity.position;
-/*     */     } else {
-/*     */       
-/* 227 */       for (int i = length; i < currentEntity.position; i++) {
-/* 228 */         currentEntity.ch[i] = ' ';
-/*     */       }
-/*     */     } 
-/* 231 */     System.arraycopy(scannedChars, 0, currentEntity.ch, 0, length);
-/* 232 */     currentEntity.position = 0;
-/* 233 */     currentEntity.baseCharOffset = 0;
-/* 234 */     currentEntity.startPosition = 0;
-/* 235 */     currentEntity.columnNumber = currentEntity.lineNumber = 1;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\impl\XMLVersionDetector.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.impl;
+
+import java.io.EOFException;
+import java.io.IOException;
+
+import com.sun.org.apache.xerces.internal.impl.msg.XMLMessageFormatter;
+import com.sun.org.apache.xerces.internal.util.SymbolTable;
+import com.sun.org.apache.xerces.internal.xni.XMLString;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLComponentManager;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLConfigurationException;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLInputSource;
+import com.sun.xml.internal.stream.Entity.ScannedEntity;
+
+/**
+ * This class scans the version of the document to determine
+ * which scanner to use: XML 1.1 or XML 1.0.
+ * The version is scanned using XML 1.1. scanner.
+ *
+ * @xerces.internal
+ *
+ * @author Neil Graham, IBM
+ * @author Elena Litani, IBM
+ */
+public class XMLVersionDetector {
+
+    //
+    // Constants
+    //
+
+    private final static char[] XML11_VERSION = new char[]{'1', '.', '1'};
+
+
+    // property identifiers
+
+    /** Property identifier: symbol table. */
+    protected static final String SYMBOL_TABLE =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.SYMBOL_TABLE_PROPERTY;
+
+    /** Property identifier: error reporter. */
+    protected static final String ERROR_REPORTER =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.ERROR_REPORTER_PROPERTY;
+
+    /** Property identifier: entity manager. */
+    protected static final String ENTITY_MANAGER =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.ENTITY_MANAGER_PROPERTY;
+
+    //
+    // Data
+    //
+
+    /** Symbol: "version". */
+    protected final static String fVersionSymbol = "version".intern();
+
+    // symbol:  [xml]:
+    protected static final String fXMLSymbol = "[xml]".intern();
+
+    /** Symbol table. */
+    protected SymbolTable fSymbolTable;
+
+    /** Error reporter. */
+    protected XMLErrorReporter fErrorReporter;
+
+    /** Entity manager. */
+    protected XMLEntityManager fEntityManager;
+
+    protected String fEncoding = null;
+
+    private XMLString fVersionNum = new XMLString();
+
+    private final char [] fExpectedVersionString = {'<', '?', 'x', 'm', 'l', ' ', 'v', 'e', 'r', 's',
+                    'i', 'o', 'n', '=', ' ', ' ', ' ', ' ', ' '};
+
+    /**
+     *
+     *
+     * @param componentManager The component manager.
+     *
+     * @throws SAXException Throws exception if required features and
+     *                      properties cannot be found.
+     */
+    public void reset(XMLComponentManager componentManager)
+        throws XMLConfigurationException {
+
+        // Xerces properties
+        fSymbolTable = (SymbolTable)componentManager.getProperty(SYMBOL_TABLE);
+        fErrorReporter = (XMLErrorReporter)componentManager.getProperty(ERROR_REPORTER);
+        fEntityManager = (XMLEntityManager)componentManager.getProperty(ENTITY_MANAGER);
+        for(int i=14; i<fExpectedVersionString.length; i++ )
+            fExpectedVersionString[i] = ' ';
+    } // reset(XMLComponentManager)
+
+    /**
+     * Reset the reference to the appropriate scanner given the version of the
+     * document and start document scanning.
+     * @param scanner - the scanner to use
+     * @param version - the version of the document (XML 1.1 or XML 1.0).
+     */
+    public void startDocumentParsing(XMLEntityHandler scanner, short version){
+
+        if (version == Constants.XML_VERSION_1_0){
+            fEntityManager.setScannerVersion(Constants.XML_VERSION_1_0);
+        }
+        else {
+            fEntityManager.setScannerVersion(Constants.XML_VERSION_1_1);
+        }
+        // Make sure the locator used by the error reporter is the current entity scanner.
+        fErrorReporter.setDocumentLocator(fEntityManager.getEntityScanner());
+
+        // Note: above we reset fEntityScanner in the entity manager, thus in startEntity
+        // in each scanner fEntityScanner field must be reset to reflect the change.
+        //
+        fEntityManager.setEntityHandler(scanner);
+
+        scanner.startEntity(fXMLSymbol, fEntityManager.getCurrentResourceIdentifier(), fEncoding, null);
+    }
+
+
+    /**
+     * This methods scans the XML declaration to find out the version
+     * (and provisional encoding)  of the document.
+     * The scanning is doing using XML 1.1 scanner.
+     * @param inputSource
+     * @return short - Constants.XML_VERSION_1_1 if document version 1.1,
+     *                  otherwise Constants.XML_VERSION_1_0
+     * @throws IOException
+     */
+    public short determineDocVersion(XMLInputSource inputSource) throws IOException {
+        fEncoding = fEntityManager.setupCurrentEntity(false, fXMLSymbol, inputSource, false, true);
+
+        // Must use XML 1.0 scanner to handle whitespace correctly
+        // in the XML declaration.
+        fEntityManager.setScannerVersion(Constants.XML_VERSION_1_0);
+        XMLEntityScanner scanner = fEntityManager.getEntityScanner();
+        scanner.detectingVersion = true;
+        try {
+            if (!scanner.skipString("<?xml")) {
+                // definitely not a well-formed 1.1 doc!
+                scanner.detectingVersion = false;
+                return Constants.XML_VERSION_1_0;
+            }
+            if (!scanner.skipDeclSpaces()) {
+                fixupCurrentEntity(fEntityManager, fExpectedVersionString, 5);
+                scanner.detectingVersion = false;
+                return Constants.XML_VERSION_1_0;
+            }
+            if (!scanner.skipString("version")) {
+                fixupCurrentEntity(fEntityManager, fExpectedVersionString, 6);
+                scanner.detectingVersion = false;
+                return Constants.XML_VERSION_1_0;
+            }
+            scanner.skipDeclSpaces();
+            // Check if the next character is '='. If it is then consume it.
+            if (scanner.peekChar() != '=') {
+                fixupCurrentEntity(fEntityManager, fExpectedVersionString, 13);
+                scanner.detectingVersion = false;
+                return Constants.XML_VERSION_1_0;
+            }
+            scanner.scanChar(null);
+            scanner.skipDeclSpaces();
+            int quoteChar = scanner.scanChar(null);
+            fExpectedVersionString[14] = (char) quoteChar;
+            for (int versionPos = 0; versionPos < XML11_VERSION.length; versionPos++) {
+                fExpectedVersionString[15 + versionPos] = (char) scanner.scanChar(null);
+            }
+            // REVISIT:  should we check whether this equals quoteChar?
+            fExpectedVersionString[18] = (char) scanner.scanChar(null);
+            fixupCurrentEntity(fEntityManager, fExpectedVersionString, 19);
+            int matched = 0;
+            for (; matched < XML11_VERSION.length; matched++) {
+                if (fExpectedVersionString[15 + matched] != XML11_VERSION[matched])
+                    break;
+            }
+            scanner.detectingVersion = false;
+            if (matched == XML11_VERSION.length)
+                return Constants.XML_VERSION_1_1;
+            return Constants.XML_VERSION_1_0;
+            // premature end of file
+        }
+        catch (EOFException e) {
+            fErrorReporter.reportError(
+                XMLMessageFormatter.XML_DOMAIN,
+                "PrematureEOF",
+                null,
+                XMLErrorReporter.SEVERITY_FATAL_ERROR);
+            scanner.detectingVersion = false;
+            return Constants.XML_VERSION_1_0;
+        }
+    }
+
+    // This method prepends "length" chars from the char array,
+    // from offset 0, to the manager's fCurrentEntity.ch.
+    private void fixupCurrentEntity(XMLEntityManager manager,
+                char [] scannedChars, int length) {
+        ScannedEntity currentEntity = manager.getCurrentEntity();
+        if(currentEntity.count-currentEntity.position+length > currentEntity.ch.length) {
+            //resize array; this case is hard to imagine...
+            char[] tempCh = currentEntity.ch;
+            currentEntity.ch = new char[length+currentEntity.count-currentEntity.position+1];
+            System.arraycopy(tempCh, 0, currentEntity.ch, 0, tempCh.length);
+        }
+        if(currentEntity.position < length) {
+            // have to move sensitive stuff out of the way...
+            System.arraycopy(currentEntity.ch, currentEntity.position, currentEntity.ch, length, currentEntity.count-currentEntity.position);
+            currentEntity.count += length-currentEntity.position;
+        } else {
+            // have to reintroduce some whitespace so this parses:
+            for(int i=length; i<currentEntity.position; i++)
+                currentEntity.ch[i]=' ';
+        }
+        // prepend contents...
+        System.arraycopy(scannedChars, 0, currentEntity.ch, 0, length);
+        currentEntity.position = 0;
+        currentEntity.baseCharOffset = 0;
+        currentEntity.startPosition = 0;
+        currentEntity.columnNumber = currentEntity.lineNumber = 1;
+    }
+
+} // class XMLVersionDetector

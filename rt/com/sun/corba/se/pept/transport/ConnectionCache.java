@@ -1,23 +1,52 @@
+/*
+ * Copyright (c) 2001, 2010, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package com.sun.corba.se.pept.transport;
 
-public interface ConnectionCache {
-  String getCacheType();
-  
-  void stampTime(Connection paramConnection);
-  
-  long numberOfConnections();
-  
-  long numberOfIdleConnections();
-  
-  long numberOfBusyConnections();
-  
-  boolean reclaim();
-  
-  void close();
+/**
+ * @author Harold Carr
+ */
+public interface ConnectionCache
+{
+    public String getCacheType();
+
+    public void stampTime(Connection connection);
+
+    public long numberOfConnections();
+
+    public long numberOfIdleConnections();
+
+    public long numberOfBusyConnections();
+
+    public boolean reclaim();
+
+    /** Close all connections in the connection cache.
+     * This is used as a final cleanup, and will result
+     * in abrupt termination of any pending communications.
+     */
+    public void close();
 }
 
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\pept\transport\ConnectionCache.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
- */
+// End of file.

@@ -1,67 +1,61 @@
-/*    */ package com.sun.java.swing.plaf.motif;
-/*    */ 
-/*    */ import javax.swing.JComponent;
-/*    */ import javax.swing.plaf.ComponentUI;
-/*    */ import javax.swing.plaf.basic.BasicLabelUI;
-/*    */ import sun.awt.AppContext;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class MotifLabelUI
-/*    */   extends BasicLabelUI
-/*    */ {
-/* 49 */   private static final Object MOTIF_LABEL_UI_KEY = new Object();
-/*    */   
-/*    */   public static ComponentUI createUI(JComponent paramJComponent) {
-/* 52 */     AppContext appContext = AppContext.getAppContext();
-/*    */     
-/* 54 */     MotifLabelUI motifLabelUI = (MotifLabelUI)appContext.get(MOTIF_LABEL_UI_KEY);
-/* 55 */     if (motifLabelUI == null) {
-/* 56 */       motifLabelUI = new MotifLabelUI();
-/* 57 */       appContext.put(MOTIF_LABEL_UI_KEY, motifLabelUI);
-/*    */     } 
-/* 59 */     return motifLabelUI;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\java\swing\plaf\motif\MotifLabelUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 1998, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.java.swing.plaf.motif;
+
+import sun.awt.AppContext;
+
+import javax.swing.*;
+import javax.swing.plaf.basic.BasicLabelUI;
+import javax.swing.plaf.ComponentUI;
+
+/**
+ * A Motif L&F implementation of LabelUI.
+ * This merely sets up new default values in MotifLookAndFeel.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases.  The current serialization support is appropriate
+ * for short term storage or RMI between applications running the same
+ * version of Swing.  A future release of Swing will provide support for
+ * long term persistence.
+ *
+ * @author Amy Fowler
+ */
+public class MotifLabelUI extends BasicLabelUI
+{
+    private static final Object MOTIF_LABEL_UI_KEY = new Object();
+
+    public static ComponentUI createUI(JComponent c) {
+        AppContext appContext = AppContext.getAppContext();
+        MotifLabelUI motifLabelUI =
+                (MotifLabelUI) appContext.get(MOTIF_LABEL_UI_KEY);
+        if (motifLabelUI == null) {
+            motifLabelUI = new MotifLabelUI();
+            appContext.put(MOTIF_LABEL_UI_KEY, motifLabelUI);
+        }
+        return motifLabelUI;
+    }
+}

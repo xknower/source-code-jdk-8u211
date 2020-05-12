@@ -1,140 +1,134 @@
-/*     */ package com.sun.org.apache.xerces.internal.impl.xs.traversers;
-/*     */ 
-/*     */ import com.sun.org.apache.xerces.internal.impl.xs.SchemaGrammar;
-/*     */ import com.sun.org.apache.xerces.internal.impl.xs.SchemaSymbols;
-/*     */ import com.sun.org.apache.xerces.internal.impl.xs.XSAnnotationImpl;
-/*     */ import com.sun.org.apache.xerces.internal.impl.xs.XSNotationDecl;
-/*     */ import com.sun.org.apache.xerces.internal.impl.xs.util.XSObjectListImpl;
-/*     */ import com.sun.org.apache.xerces.internal.util.DOMUtil;
-/*     */ import com.sun.org.apache.xerces.internal.xs.XSObjectList;
-/*     */ import org.w3c.dom.Element;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class XSDNotationTraverser
-/*     */   extends XSDAbstractTraverser
-/*     */ {
-/*     */   XSDNotationTraverser(XSDHandler handler, XSAttributeChecker gAttrCheck) {
-/*  54 */     super(handler, gAttrCheck);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   XSNotationDecl traverse(Element elmNode, XSDocumentInfo schemaDoc, SchemaGrammar grammar) {
-/*     */     XSObjectList annotations;
-/*  62 */     Object[] attrValues = this.fAttrChecker.checkAttributes(elmNode, true, schemaDoc);
-/*     */     
-/*  64 */     String nameAttr = (String)attrValues[XSAttributeChecker.ATTIDX_NAME];
-/*     */     
-/*  66 */     String publicAttr = (String)attrValues[XSAttributeChecker.ATTIDX_PUBLIC];
-/*  67 */     String systemAttr = (String)attrValues[XSAttributeChecker.ATTIDX_SYSTEM];
-/*  68 */     if (nameAttr == null) {
-/*  69 */       reportSchemaError("s4s-att-must-appear", new Object[] { SchemaSymbols.ELT_NOTATION, SchemaSymbols.ATT_NAME }, elmNode);
-/*  70 */       this.fAttrChecker.returnAttrArray(attrValues, schemaDoc);
-/*  71 */       return null;
-/*     */     } 
-/*     */     
-/*  74 */     if (systemAttr == null && publicAttr == null) {
-/*  75 */       reportSchemaError("PublicSystemOnNotation", null, elmNode);
-/*  76 */       publicAttr = "missing";
-/*     */     } 
-/*     */     
-/*  79 */     XSNotationDecl notation = new XSNotationDecl();
-/*  80 */     notation.fName = nameAttr;
-/*  81 */     notation.fTargetNamespace = schemaDoc.fTargetNamespace;
-/*  82 */     notation.fPublicId = publicAttr;
-/*  83 */     notation.fSystemId = systemAttr;
-/*     */ 
-/*     */     
-/*  86 */     Element content = DOMUtil.getFirstChildElement(elmNode);
-/*  87 */     XSAnnotationImpl annotation = null;
-/*     */     
-/*  89 */     if (content != null && DOMUtil.getLocalName(content).equals(SchemaSymbols.ELT_ANNOTATION)) {
-/*  90 */       annotation = traverseAnnotationDecl(content, attrValues, false, schemaDoc);
-/*  91 */       content = DOMUtil.getNextSiblingElement(content);
-/*     */     } else {
-/*     */       
-/*  94 */       String text = DOMUtil.getSyntheticAnnotation(elmNode);
-/*  95 */       if (text != null) {
-/*  96 */         annotation = traverseSyntheticAnnotation(elmNode, text, attrValues, false, schemaDoc);
-/*     */       }
-/*     */     } 
-/*     */     
-/* 100 */     if (annotation != null) {
-/* 101 */       annotations = new XSObjectListImpl();
-/* 102 */       ((XSObjectListImpl)annotations).addXSObject(annotation);
-/*     */     } else {
-/* 104 */       annotations = XSObjectListImpl.EMPTY_LIST;
-/*     */     } 
-/* 106 */     notation.fAnnotations = annotations;
-/* 107 */     if (content != null) {
-/* 108 */       Object[] args = { SchemaSymbols.ELT_NOTATION, "(annotation?)", DOMUtil.getLocalName(content) };
-/* 109 */       reportSchemaError("s4s-elt-must-match.1", args, content);
-/*     */     } 
-/*     */     
-/* 112 */     if (grammar.getGlobalNotationDecl(notation.fName) == null) {
-/* 113 */       grammar.addGlobalNotationDecl(notation);
-/*     */     }
-/*     */ 
-/*     */     
-/* 117 */     String loc = this.fSchemaHandler.schemaDocument2SystemId(schemaDoc);
-/* 118 */     XSNotationDecl notation2 = grammar.getGlobalNotationDecl(notation.fName, loc);
-/* 119 */     if (notation2 == null) {
-/* 120 */       grammar.addGlobalNotationDecl(notation, loc);
-/*     */     }
-/*     */ 
-/*     */     
-/* 124 */     if (this.fSchemaHandler.fTolerateDuplicates) {
-/* 125 */       if (notation2 != null) {
-/* 126 */         notation = notation2;
-/*     */       }
-/* 128 */       this.fSchemaHandler.addGlobalNotationDecl(notation);
-/*     */     } 
-/* 130 */     this.fAttrChecker.returnAttrArray(attrValues, schemaDoc);
-/*     */     
-/* 132 */     return notation;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\impl\xs\traversers\XSDNotationTraverser.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.impl.xs.traversers;
+
+import com.sun.org.apache.xerces.internal.impl.xs.SchemaGrammar;
+import com.sun.org.apache.xerces.internal.impl.xs.SchemaSymbols;
+import com.sun.org.apache.xerces.internal.impl.xs.XSAnnotationImpl;
+import com.sun.org.apache.xerces.internal.impl.xs.XSNotationDecl;
+import com.sun.org.apache.xerces.internal.impl.xs.util.XSObjectListImpl;
+import com.sun.org.apache.xerces.internal.util.DOMUtil;
+import com.sun.org.apache.xerces.internal.xs.XSObjectList;
+import org.w3c.dom.Element;
+
+/**
+ * The notation declaration schema component traverser.
+ *
+ * <notation
+ *   id = ID
+ *   name = NCName
+ *   public = anyURI
+ *   system = anyURI
+ *   {any attributes with non-schema namespace . . .}>
+ *   Content: (annotation?)
+ * </notation>
+ *
+ * @xerces.internal
+ *
+ * @author Rahul Srivastava, Sun Microsystems Inc.
+ * @author Elena Litani, IBM
+ * @version $Id: XSDNotationTraverser.java,v 1.7 2010-11-01 04:40:02 joehw Exp $
+ */
+class  XSDNotationTraverser extends XSDAbstractTraverser {
+
+    XSDNotationTraverser (XSDHandler handler,
+            XSAttributeChecker gAttrCheck) {
+        super(handler, gAttrCheck);
+    }
+
+    XSNotationDecl traverse(Element elmNode,
+            XSDocumentInfo schemaDoc,
+            SchemaGrammar grammar) {
+
+        // General Attribute Checking for elmNode
+        Object[] attrValues = fAttrChecker.checkAttributes(elmNode, true, schemaDoc);
+        //get attributes
+        String  nameAttr   = (String) attrValues[XSAttributeChecker.ATTIDX_NAME];
+
+        String  publicAttr = (String) attrValues[XSAttributeChecker.ATTIDX_PUBLIC];
+        String  systemAttr = (String) attrValues[XSAttributeChecker.ATTIDX_SYSTEM];
+        if (nameAttr == null) {
+            reportSchemaError("s4s-att-must-appear", new Object[]{SchemaSymbols.ELT_NOTATION, SchemaSymbols.ATT_NAME}, elmNode);
+            fAttrChecker.returnAttrArray(attrValues, schemaDoc);
+            return null;
+        }
+
+        if (systemAttr == null && publicAttr == null) {
+            reportSchemaError("PublicSystemOnNotation", null, elmNode);
+            publicAttr = "missing";
+        }
+
+        XSNotationDecl notation = new XSNotationDecl();
+        notation.fName = nameAttr;
+        notation.fTargetNamespace = schemaDoc.fTargetNamespace;
+        notation.fPublicId = publicAttr;
+        notation.fSystemId = systemAttr;
+
+        //check content
+        Element content = DOMUtil.getFirstChildElement(elmNode);
+        XSAnnotationImpl annotation = null;
+
+        if (content != null && DOMUtil.getLocalName(content).equals(SchemaSymbols.ELT_ANNOTATION)) {
+            annotation = traverseAnnotationDecl(content, attrValues, false, schemaDoc);
+            content = DOMUtil.getNextSiblingElement(content);
+        }
+        else {
+            String text = DOMUtil.getSyntheticAnnotation(elmNode);
+            if (text != null) {
+                annotation = traverseSyntheticAnnotation(elmNode, text, attrValues, false, schemaDoc);
+            }
+        }
+        XSObjectList annotations;
+        if (annotation != null) {
+            annotations = new XSObjectListImpl();
+            ((XSObjectListImpl) annotations).addXSObject(annotation);
+        } else {
+            annotations = XSObjectListImpl.EMPTY_LIST;
+        }
+        notation.fAnnotations = annotations;
+        if (content!=null){
+            Object[] args = new Object [] {SchemaSymbols.ELT_NOTATION, "(annotation?)", DOMUtil.getLocalName(content)};
+            reportSchemaError("s4s-elt-must-match.1", args, content);
+
+        }
+        if (grammar.getGlobalNotationDecl(notation.fName) == null) {
+            grammar.addGlobalNotationDecl(notation);
+        }
+
+        // also add it to extended map
+        final String loc = fSchemaHandler.schemaDocument2SystemId(schemaDoc);
+        final XSNotationDecl notation2 = grammar.getGlobalNotationDecl(notation.fName, loc);
+        if (notation2 == null) {
+            grammar.addGlobalNotationDecl(notation, loc);
+        }
+
+        // handle duplicates
+        if (fSchemaHandler.fTolerateDuplicates) {
+            if (notation2 != null) {
+                notation = notation2;
+            }
+            fSchemaHandler.addGlobalNotationDecl(notation);
+        }
+        fAttrChecker.returnAttrArray(attrValues, schemaDoc);
+
+        return notation;
+    }
+}

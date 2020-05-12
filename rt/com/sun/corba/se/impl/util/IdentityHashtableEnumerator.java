@@ -1,84 +1,78 @@
-/*    */ package com.sun.corba.se.impl.util;
-/*    */ 
-/*    */ import java.util.Enumeration;
-/*    */ import java.util.NoSuchElementException;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ class IdentityHashtableEnumerator
-/*    */   implements Enumeration
-/*    */ {
-/*    */   boolean keys;
-/*    */   int index;
-/*    */   IdentityHashtableEntry[] table;
-/*    */   IdentityHashtableEntry entry;
-/*    */   
-/*    */   IdentityHashtableEnumerator(IdentityHashtableEntry[] paramArrayOfIdentityHashtableEntry, boolean paramBoolean) {
-/* 50 */     this.table = paramArrayOfIdentityHashtableEntry;
-/* 51 */     this.keys = paramBoolean;
-/* 52 */     this.index = paramArrayOfIdentityHashtableEntry.length;
-/*    */   }
-/*    */   
-/*    */   public boolean hasMoreElements() {
-/* 56 */     if (this.entry != null) {
-/* 57 */       return true;
-/*    */     }
-/* 59 */     while (this.index-- > 0) {
-/* 60 */       if ((this.entry = this.table[this.index]) != null) {
-/* 61 */         return true;
-/*    */       }
-/*    */     } 
-/* 64 */     return false;
-/*    */   }
-/*    */   
-/*    */   public Object nextElement() {
-/* 68 */     if (this.entry == null) {
-/* 69 */       while (this.index-- > 0 && (this.entry = this.table[this.index]) == null);
-/*    */     }
-/* 71 */     if (this.entry != null) {
-/* 72 */       IdentityHashtableEntry identityHashtableEntry = this.entry;
-/* 73 */       this.entry = identityHashtableEntry.next;
-/* 74 */       return this.keys ? identityHashtableEntry.key : identityHashtableEntry.value;
-/*    */     } 
-/* 76 */     throw new NoSuchElementException("IdentityHashtableEnumerator");
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\imp\\util\IdentityHashtableEnumerator.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+/*
+ * Licensed Materials - Property of IBM
+ * RMI-IIOP v1.0
+ * Copyright IBM Corp. 1998 1999  All Rights Reserved
+ *
+ */
+
+package com.sun.corba.se.impl.util;
+
+import java.util.Dictionary;
+import java.util.Enumeration;
+import java.util.NoSuchElementException;
+
+/**
+ * A hashtable enumerator class.  This class should remain opaque
+ * to the client. It will use the Enumeration interface.
+ */
+class IdentityHashtableEnumerator implements Enumeration {
+    boolean keys;
+    int index;
+    IdentityHashtableEntry table[];
+    IdentityHashtableEntry entry;
+
+    IdentityHashtableEnumerator(IdentityHashtableEntry table[], boolean keys) {
+        this.table = table;
+        this.keys = keys;
+        this.index = table.length;
+    }
+
+    public boolean hasMoreElements() {
+        if (entry != null) {
+            return true;
+        }
+        while (index-- > 0) {
+            if ((entry = table[index]) != null) {
+                return true;
+            }
+        }
+        return false;
+}
+
+public Object nextElement() {
+    if (entry == null) {
+        while ((index-- > 0) && ((entry = table[index]) == null));
+    }
+    if (entry != null) {
+            IdentityHashtableEntry e = entry;
+        entry = e.next;
+        return keys ? e.key : e.value;
+    }
+        throw new NoSuchElementException("IdentityHashtableEnumerator");
+    }
+}

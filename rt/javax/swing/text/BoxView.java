@@ -1,1166 +1,1188 @@
-/*      */ package javax.swing.text;
-/*      */ 
-/*      */ import java.awt.Container;
-/*      */ import java.awt.Graphics;
-/*      */ import java.awt.Rectangle;
-/*      */ import java.awt.Shape;
-/*      */ import javax.swing.SizeRequirements;
-/*      */ import javax.swing.event.DocumentEvent;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class BoxView
-/*      */   extends CompositeView
-/*      */ {
-/*      */   int majorAxis;
-/*      */   int majorSpan;
-/*      */   int minorSpan;
-/*      */   boolean majorReqValid;
-/*      */   boolean minorReqValid;
-/*      */   SizeRequirements majorRequest;
-/*      */   SizeRequirements minorRequest;
-/*      */   boolean majorAllocValid;
-/*      */   int[] majorOffsets;
-/*      */   int[] majorSpans;
-/*      */   boolean minorAllocValid;
-/*      */   int[] minorOffsets;
-/*      */   int[] minorSpans;
-/*      */   Rectangle tempRect;
-/*      */   
-/*      */   public BoxView(Element paramElement, int paramInt) {
-/*   70 */     super(paramElement);
-/*   71 */     this.tempRect = new Rectangle();
-/*   72 */     this.majorAxis = paramInt;
-/*      */     
-/*   74 */     this.majorOffsets = new int[0];
-/*   75 */     this.majorSpans = new int[0];
-/*   76 */     this.majorReqValid = false;
-/*   77 */     this.majorAllocValid = false;
-/*   78 */     this.minorOffsets = new int[0];
-/*   79 */     this.minorSpans = new int[0];
-/*   80 */     this.minorReqValid = false;
-/*   81 */     this.minorAllocValid = false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getAxis() {
-/*   94 */     return this.majorAxis;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setAxis(int paramInt) {
-/*  106 */     boolean bool = (paramInt != this.majorAxis) ? true : false;
-/*  107 */     this.majorAxis = paramInt;
-/*  108 */     if (bool) {
-/*  109 */       preferenceChanged((View)null, true, true);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void layoutChanged(int paramInt) {
-/*  128 */     if (paramInt == this.majorAxis) {
-/*  129 */       this.majorAllocValid = false;
-/*      */     } else {
-/*  131 */       this.minorAllocValid = false;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected boolean isLayoutValid(int paramInt) {
-/*  143 */     if (paramInt == this.majorAxis) {
-/*  144 */       return this.majorAllocValid;
-/*      */     }
-/*  146 */     return this.minorAllocValid;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void paintChild(Graphics paramGraphics, Rectangle paramRectangle, int paramInt) {
-/*  160 */     View view = getView(paramInt);
-/*  161 */     view.paint(paramGraphics, paramRectangle);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void replace(int paramInt1, int paramInt2, View[] paramArrayOfView) {
-/*  181 */     super.replace(paramInt1, paramInt2, paramArrayOfView);
-/*      */ 
-/*      */     
-/*  184 */     boolean bool = (paramArrayOfView != null) ? paramArrayOfView.length : false;
-/*  185 */     this.majorOffsets = updateLayoutArray(this.majorOffsets, paramInt1, bool);
-/*  186 */     this.majorSpans = updateLayoutArray(this.majorSpans, paramInt1, bool);
-/*  187 */     this.majorReqValid = false;
-/*  188 */     this.majorAllocValid = false;
-/*  189 */     this.minorOffsets = updateLayoutArray(this.minorOffsets, paramInt1, bool);
-/*  190 */     this.minorSpans = updateLayoutArray(this.minorSpans, paramInt1, bool);
-/*  191 */     this.minorReqValid = false;
-/*  192 */     this.minorAllocValid = false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   int[] updateLayoutArray(int[] paramArrayOfint, int paramInt1, int paramInt2) {
-/*  210 */     int i = getViewCount();
-/*  211 */     int[] arrayOfInt = new int[i];
-/*      */     
-/*  213 */     System.arraycopy(paramArrayOfint, 0, arrayOfInt, 0, paramInt1);
-/*  214 */     System.arraycopy(paramArrayOfint, paramInt1, arrayOfInt, paramInt1 + paramInt2, i - paramInt2 - paramInt1);
-/*      */     
-/*  216 */     return arrayOfInt;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void forwardUpdate(DocumentEvent.ElementChange paramElementChange, DocumentEvent paramDocumentEvent, Shape paramShape, ViewFactory paramViewFactory) {
-/*  239 */     boolean bool = isLayoutValid(this.majorAxis);
-/*  240 */     super.forwardUpdate(paramElementChange, paramDocumentEvent, paramShape, paramViewFactory);
-/*      */ 
-/*      */     
-/*  243 */     if (bool && !isLayoutValid(this.majorAxis)) {
-/*      */ 
-/*      */ 
-/*      */       
-/*  247 */       Container container = getContainer();
-/*  248 */       if (paramShape != null && container != null) {
-/*  249 */         int i = paramDocumentEvent.getOffset();
-/*  250 */         int j = getViewIndexAtPosition(i);
-/*  251 */         Rectangle rectangle = getInsideAllocation(paramShape);
-/*  252 */         if (this.majorAxis == 0) {
-/*  253 */           rectangle.x += this.majorOffsets[j];
-/*  254 */           rectangle.width -= this.majorOffsets[j];
-/*      */         } else {
-/*  256 */           rectangle.y += this.minorOffsets[j];
-/*  257 */           rectangle.height -= this.minorOffsets[j];
-/*      */         } 
-/*  259 */         container.repaint(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void preferenceChanged(View paramView, boolean paramBoolean1, boolean paramBoolean2) {
-/*  276 */     boolean bool1 = (this.majorAxis == 0) ? paramBoolean1 : paramBoolean2;
-/*  277 */     boolean bool2 = (this.majorAxis == 0) ? paramBoolean2 : paramBoolean1;
-/*  278 */     if (bool1) {
-/*  279 */       this.majorReqValid = false;
-/*  280 */       this.majorAllocValid = false;
-/*      */     } 
-/*  282 */     if (bool2) {
-/*  283 */       this.minorReqValid = false;
-/*  284 */       this.minorAllocValid = false;
-/*      */     } 
-/*  286 */     super.preferenceChanged(paramView, paramBoolean1, paramBoolean2);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getResizeWeight(int paramInt) {
-/*  298 */     checkRequests(paramInt);
-/*  299 */     if (paramInt == this.majorAxis) {
-/*  300 */       if (this.majorRequest.preferred != this.majorRequest.minimum || this.majorRequest.preferred != this.majorRequest.maximum)
-/*      */       {
-/*  302 */         return 1;
-/*      */       }
-/*      */     }
-/*  305 */     else if (this.minorRequest.preferred != this.minorRequest.minimum || this.minorRequest.preferred != this.minorRequest.maximum) {
-/*      */       
-/*  307 */       return 1;
-/*      */     } 
-/*      */     
-/*  310 */     return 0;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void setSpanOnAxis(int paramInt, float paramFloat) {
-/*  322 */     if (paramInt == this.majorAxis) {
-/*  323 */       if (this.majorSpan != (int)paramFloat) {
-/*  324 */         this.majorAllocValid = false;
-/*      */       }
-/*  326 */       if (!this.majorAllocValid) {
-/*      */         
-/*  328 */         this.majorSpan = (int)paramFloat;
-/*  329 */         checkRequests(this.majorAxis);
-/*  330 */         layoutMajorAxis(this.majorSpan, paramInt, this.majorOffsets, this.majorSpans);
-/*  331 */         this.majorAllocValid = true;
-/*      */ 
-/*      */         
-/*  334 */         updateChildSizes();
-/*      */       } 
-/*      */     } else {
-/*  337 */       if ((int)paramFloat != this.minorSpan) {
-/*  338 */         this.minorAllocValid = false;
-/*      */       }
-/*  340 */       if (!this.minorAllocValid) {
-/*      */         
-/*  342 */         this.minorSpan = (int)paramFloat;
-/*  343 */         checkRequests(paramInt);
-/*  344 */         layoutMinorAxis(this.minorSpan, paramInt, this.minorOffsets, this.minorSpans);
-/*  345 */         this.minorAllocValid = true;
-/*      */ 
-/*      */         
-/*  348 */         updateChildSizes();
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void updateChildSizes() {
-/*  357 */     int i = getViewCount();
-/*  358 */     if (this.majorAxis == 0) {
-/*  359 */       for (byte b = 0; b < i; b++) {
-/*  360 */         View view = getView(b);
-/*  361 */         view.setSize(this.majorSpans[b], this.minorSpans[b]);
-/*      */       } 
-/*      */     } else {
-/*  364 */       for (byte b = 0; b < i; b++) {
-/*  365 */         View view = getView(b);
-/*  366 */         view.setSize(this.minorSpans[b], this.majorSpans[b]);
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   float getSpanOnAxis(int paramInt) {
-/*  380 */     if (paramInt == this.majorAxis) {
-/*  381 */       return this.majorSpan;
-/*      */     }
-/*  383 */     return this.minorSpan;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setSize(float paramFloat1, float paramFloat2) {
-/*  397 */     layout(Math.max(0, (int)(paramFloat1 - getLeftInset() - getRightInset())), 
-/*  398 */         Math.max(0, (int)(paramFloat2 - getTopInset() - getBottomInset())));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paint(Graphics paramGraphics, Shape paramShape) {
-/*  414 */     Rectangle rectangle1 = (paramShape instanceof Rectangle) ? (Rectangle)paramShape : paramShape.getBounds();
-/*  415 */     int i = getViewCount();
-/*  416 */     int j = rectangle1.x + getLeftInset();
-/*  417 */     int k = rectangle1.y + getTopInset();
-/*  418 */     Rectangle rectangle2 = paramGraphics.getClipBounds();
-/*  419 */     for (byte b = 0; b < i; b++) {
-/*  420 */       this.tempRect.x = j + getOffset(0, b);
-/*  421 */       this.tempRect.y = k + getOffset(1, b);
-/*  422 */       this.tempRect.width = getSpan(0, b);
-/*  423 */       this.tempRect.height = getSpan(1, b);
-/*  424 */       int m = this.tempRect.x, n = m + this.tempRect.width;
-/*  425 */       int i1 = this.tempRect.y, i2 = i1 + this.tempRect.height;
-/*  426 */       int i3 = rectangle2.x, i4 = i3 + rectangle2.width;
-/*  427 */       int i5 = rectangle2.y, i6 = i5 + rectangle2.height;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  432 */       if (n >= i3 && i2 >= i5 && i4 >= m && i6 >= i1) {
-/*  433 */         paintChild(paramGraphics, this.tempRect, b);
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Shape getChildAllocation(int paramInt, Shape paramShape) {
-/*  452 */     if (paramShape != null) {
-/*  453 */       Shape shape = super.getChildAllocation(paramInt, paramShape);
-/*  454 */       if (shape != null && !isAllocationValid()) {
-/*      */ 
-/*      */         
-/*  457 */         Rectangle rectangle = (shape instanceof Rectangle) ? (Rectangle)shape : shape.getBounds();
-/*  458 */         if (rectangle.width == 0 && rectangle.height == 0) {
-/*  459 */           return null;
-/*      */         }
-/*      */       } 
-/*  462 */       return shape;
-/*      */     } 
-/*  464 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Shape modelToView(int paramInt, Shape paramShape, Position.Bias paramBias) throws BadLocationException {
-/*  480 */     if (!isAllocationValid()) {
-/*  481 */       Rectangle rectangle = paramShape.getBounds();
-/*  482 */       setSize(rectangle.width, rectangle.height);
-/*      */     } 
-/*  484 */     return super.modelToView(paramInt, paramShape, paramBias);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int viewToModel(float paramFloat1, float paramFloat2, Shape paramShape, Position.Bias[] paramArrayOfBias) {
-/*  499 */     if (!isAllocationValid()) {
-/*  500 */       Rectangle rectangle = paramShape.getBounds();
-/*  501 */       setSize(rectangle.width, rectangle.height);
-/*      */     } 
-/*  503 */     return super.viewToModel(paramFloat1, paramFloat2, paramShape, paramArrayOfBias);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public float getAlignment(int paramInt) {
-/*  524 */     checkRequests(paramInt);
-/*  525 */     if (paramInt == this.majorAxis) {
-/*  526 */       return this.majorRequest.alignment;
-/*      */     }
-/*  528 */     return this.minorRequest.alignment;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public float getPreferredSpan(int paramInt) {
-/*  545 */     checkRequests(paramInt);
-/*      */     
-/*  547 */     float f = (paramInt == 0) ? (getLeftInset() + getRightInset()) : (getTopInset() + getBottomInset());
-/*  548 */     if (paramInt == this.majorAxis) {
-/*  549 */       return this.majorRequest.preferred + f;
-/*      */     }
-/*  551 */     return this.minorRequest.preferred + f;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public float getMinimumSpan(int paramInt) {
-/*  568 */     checkRequests(paramInt);
-/*      */     
-/*  570 */     float f = (paramInt == 0) ? (getLeftInset() + getRightInset()) : (getTopInset() + getBottomInset());
-/*  571 */     if (paramInt == this.majorAxis) {
-/*  572 */       return this.majorRequest.minimum + f;
-/*      */     }
-/*  574 */     return this.minorRequest.minimum + f;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public float getMaximumSpan(int paramInt) {
-/*  591 */     checkRequests(paramInt);
-/*      */     
-/*  593 */     float f = (paramInt == 0) ? (getLeftInset() + getRightInset()) : (getTopInset() + getBottomInset());
-/*  594 */     if (paramInt == this.majorAxis) {
-/*  595 */       return this.majorRequest.maximum + f;
-/*      */     }
-/*  597 */     return this.minorRequest.maximum + f;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected boolean isAllocationValid() {
-/*  610 */     return (this.majorAllocValid && this.minorAllocValid);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected boolean isBefore(int paramInt1, int paramInt2, Rectangle paramRectangle) {
-/*  623 */     if (this.majorAxis == 0) {
-/*  624 */       return (paramInt1 < paramRectangle.x);
-/*      */     }
-/*  626 */     return (paramInt2 < paramRectangle.y);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected boolean isAfter(int paramInt1, int paramInt2, Rectangle paramRectangle) {
-/*  640 */     if (this.majorAxis == 0) {
-/*  641 */       return (paramInt1 > paramRectangle.width + paramRectangle.x);
-/*      */     }
-/*  643 */     return (paramInt2 > paramRectangle.height + paramRectangle.y);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected View getViewAtPoint(int paramInt1, int paramInt2, Rectangle paramRectangle) {
-/*  657 */     int i = getViewCount();
-/*  658 */     if (this.majorAxis == 0) {
-/*  659 */       if (paramInt1 < paramRectangle.x + this.majorOffsets[0]) {
-/*  660 */         childAllocation(0, paramRectangle);
-/*  661 */         return getView(0);
-/*      */       } 
-/*  663 */       for (byte b1 = 0; b1 < i; b1++) {
-/*  664 */         if (paramInt1 < paramRectangle.x + this.majorOffsets[b1]) {
-/*  665 */           childAllocation(b1 - 1, paramRectangle);
-/*  666 */           return getView(b1 - 1);
-/*      */         } 
-/*      */       } 
-/*  669 */       childAllocation(i - 1, paramRectangle);
-/*  670 */       return getView(i - 1);
-/*      */     } 
-/*  672 */     if (paramInt2 < paramRectangle.y + this.majorOffsets[0]) {
-/*  673 */       childAllocation(0, paramRectangle);
-/*  674 */       return getView(0);
-/*      */     } 
-/*  676 */     for (byte b = 0; b < i; b++) {
-/*  677 */       if (paramInt2 < paramRectangle.y + this.majorOffsets[b]) {
-/*  678 */         childAllocation(b - 1, paramRectangle);
-/*  679 */         return getView(b - 1);
-/*      */       } 
-/*      */     } 
-/*  682 */     childAllocation(i - 1, paramRectangle);
-/*  683 */     return getView(i - 1);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void childAllocation(int paramInt, Rectangle paramRectangle) {
-/*  695 */     paramRectangle.x += getOffset(0, paramInt);
-/*  696 */     paramRectangle.y += getOffset(1, paramInt);
-/*  697 */     paramRectangle.width = getSpan(0, paramInt);
-/*  698 */     paramRectangle.height = getSpan(1, paramInt);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void layout(int paramInt1, int paramInt2) {
-/*  708 */     setSpanOnAxis(0, paramInt1);
-/*  709 */     setSpanOnAxis(1, paramInt2);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getWidth() {
-/*      */     int i;
-/*  719 */     if (this.majorAxis == 0) {
-/*  720 */       i = this.majorSpan;
-/*      */     } else {
-/*  722 */       i = this.minorSpan;
-/*      */     } 
-/*  724 */     i += getLeftInset() - getRightInset();
-/*  725 */     return i;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getHeight() {
-/*      */     int i;
-/*  735 */     if (this.majorAxis == 1) {
-/*  736 */       i = this.majorSpan;
-/*      */     } else {
-/*  738 */       i = this.minorSpan;
-/*      */     } 
-/*  740 */     i += getTopInset() - getBottomInset();
-/*  741 */     return i;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void layoutMajorAxis(int paramInt1, int paramInt2, int[] paramArrayOfint1, int[] paramArrayOfint2) {
-/*  765 */     long l1 = 0L;
-/*  766 */     int i = getViewCount();
-/*  767 */     for (byte b1 = 0; b1 < i; b1++) {
-/*  768 */       View view = getView(b1);
-/*  769 */       paramArrayOfint2[b1] = (int)view.getPreferredSpan(paramInt2);
-/*  770 */       l1 += paramArrayOfint2[b1];
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  779 */     long l2 = paramInt1 - l1;
-/*  780 */     float f = 0.0F;
-/*  781 */     int[] arrayOfInt = null;
-/*      */     
-/*  783 */     if (l2 != 0L) {
-/*  784 */       long l = 0L;
-/*  785 */       arrayOfInt = new int[i];
-/*  786 */       for (byte b = 0; b < i; b++) {
-/*  787 */         int k; View view = getView(b);
-/*      */         
-/*  789 */         if (l2 < 0L) {
-/*  790 */           k = (int)view.getMinimumSpan(paramInt2);
-/*  791 */           arrayOfInt[b] = paramArrayOfint2[b] - k;
-/*      */         } else {
-/*  793 */           k = (int)view.getMaximumSpan(paramInt2);
-/*  794 */           arrayOfInt[b] = k - paramArrayOfint2[b];
-/*      */         } 
-/*  796 */         l += k;
-/*      */       } 
-/*      */       
-/*  799 */       float f1 = (float)Math.abs(l - l1);
-/*  800 */       f = (float)l2 / f1;
-/*  801 */       f = Math.min(f, 1.0F);
-/*  802 */       f = Math.max(f, -1.0F);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  806 */     int j = 0;
-/*  807 */     for (byte b2 = 0; b2 < i; b2++) {
-/*  808 */       paramArrayOfint1[b2] = j;
-/*  809 */       if (l2 != 0L) {
-/*  810 */         float f1 = f * arrayOfInt[b2];
-/*  811 */         paramArrayOfint2[b2] = paramArrayOfint2[b2] + Math.round(f1);
-/*      */       } 
-/*  813 */       j = (int)Math.min(j + paramArrayOfint2[b2], 2147483647L);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void layoutMinorAxis(int paramInt1, int paramInt2, int[] paramArrayOfint1, int[] paramArrayOfint2) {
-/*  834 */     int i = getViewCount();
-/*  835 */     for (byte b = 0; b < i; b++) {
-/*  836 */       View view = getView(b);
-/*  837 */       int j = (int)view.getMaximumSpan(paramInt2);
-/*  838 */       if (j < paramInt1) {
-/*      */         
-/*  840 */         float f = view.getAlignment(paramInt2);
-/*  841 */         paramArrayOfint1[b] = (int)((paramInt1 - j) * f);
-/*  842 */         paramArrayOfint2[b] = j;
-/*      */       } else {
-/*      */         
-/*  845 */         int k = (int)view.getMinimumSpan(paramInt2);
-/*  846 */         paramArrayOfint1[b] = 0;
-/*  847 */         paramArrayOfint2[b] = Math.max(k, paramInt1);
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected SizeRequirements calculateMajorAxisRequirements(int paramInt, SizeRequirements paramSizeRequirements) {
-/*  864 */     float f1 = 0.0F;
-/*  865 */     float f2 = 0.0F;
-/*  866 */     float f3 = 0.0F;
-/*      */     
-/*  868 */     int i = getViewCount();
-/*  869 */     for (byte b = 0; b < i; b++) {
-/*  870 */       View view = getView(b);
-/*  871 */       f1 += view.getMinimumSpan(paramInt);
-/*  872 */       f2 += view.getPreferredSpan(paramInt);
-/*  873 */       f3 += view.getMaximumSpan(paramInt);
-/*      */     } 
-/*      */     
-/*  876 */     if (paramSizeRequirements == null) {
-/*  877 */       paramSizeRequirements = new SizeRequirements();
-/*      */     }
-/*  879 */     paramSizeRequirements.alignment = 0.5F;
-/*  880 */     paramSizeRequirements.minimum = (int)f1;
-/*  881 */     paramSizeRequirements.preferred = (int)f2;
-/*  882 */     paramSizeRequirements.maximum = (int)f3;
-/*  883 */     return paramSizeRequirements;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected SizeRequirements calculateMinorAxisRequirements(int paramInt, SizeRequirements paramSizeRequirements) {
-/*  897 */     int i = 0;
-/*  898 */     long l = 0L;
-/*  899 */     int j = Integer.MAX_VALUE;
-/*  900 */     int k = getViewCount();
-/*  901 */     for (byte b = 0; b < k; b++) {
-/*  902 */       View view = getView(b);
-/*  903 */       i = Math.max((int)view.getMinimumSpan(paramInt), i);
-/*  904 */       l = Math.max((int)view.getPreferredSpan(paramInt), l);
-/*  905 */       j = Math.max((int)view.getMaximumSpan(paramInt), j);
-/*      */     } 
-/*      */     
-/*  908 */     if (paramSizeRequirements == null) {
-/*  909 */       paramSizeRequirements = new SizeRequirements();
-/*  910 */       paramSizeRequirements.alignment = 0.5F;
-/*      */     } 
-/*  912 */     paramSizeRequirements.preferred = (int)l;
-/*  913 */     paramSizeRequirements.minimum = i;
-/*  914 */     paramSizeRequirements.maximum = j;
-/*  915 */     return paramSizeRequirements;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void checkRequests(int paramInt) {
-/*  925 */     if (paramInt != 0 && paramInt != 1) {
-/*  926 */       throw new IllegalArgumentException("Invalid axis: " + paramInt);
-/*      */     }
-/*  928 */     if (paramInt == this.majorAxis) {
-/*  929 */       if (!this.majorReqValid) {
-/*  930 */         this.majorRequest = calculateMajorAxisRequirements(paramInt, this.majorRequest);
-/*      */         
-/*  932 */         this.majorReqValid = true;
-/*      */       } 
-/*  934 */     } else if (!this.minorReqValid) {
-/*  935 */       this.minorRequest = calculateMinorAxisRequirements(paramInt, this.minorRequest);
-/*  936 */       this.minorReqValid = true;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void baselineLayout(int paramInt1, int paramInt2, int[] paramArrayOfint1, int[] paramArrayOfint2) {
-/*  956 */     int i = (int)(paramInt1 * getAlignment(paramInt2));
-/*  957 */     int j = paramInt1 - i;
-/*      */     
-/*  959 */     int k = getViewCount();
-/*      */     
-/*  961 */     for (byte b = 0; b < k; b++) {
-/*  962 */       float f2; View view = getView(b);
-/*  963 */       float f1 = view.getAlignment(paramInt2);
-/*      */ 
-/*      */       
-/*  966 */       if (view.getResizeWeight(paramInt2) > 0) {
-/*      */ 
-/*      */ 
-/*      */         
-/*  970 */         float f3 = view.getMinimumSpan(paramInt2);
-/*      */         
-/*  972 */         float f4 = view.getMaximumSpan(paramInt2);
-/*      */         
-/*  974 */         if (f1 == 0.0F) {
-/*      */           
-/*  976 */           f2 = Math.max(Math.min(f4, j), f3);
-/*  977 */         } else if (f1 == 1.0F) {
-/*      */           
-/*  979 */           f2 = Math.max(Math.min(f4, i), f3);
-/*      */         } else {
-/*      */           
-/*  982 */           float f = Math.min(i / f1, j / (1.0F - f1));
-/*      */ 
-/*      */           
-/*  985 */           f2 = Math.max(Math.min(f4, f), f3);
-/*      */         } 
-/*      */       } else {
-/*      */         
-/*  989 */         f2 = view.getPreferredSpan(paramInt2);
-/*      */       } 
-/*      */       
-/*  992 */       paramArrayOfint1[b] = i - (int)(f2 * f1);
-/*  993 */       paramArrayOfint2[b] = (int)f2;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected SizeRequirements baselineRequirements(int paramInt, SizeRequirements paramSizeRequirements) {
-/* 1007 */     SizeRequirements sizeRequirements1 = new SizeRequirements();
-/* 1008 */     SizeRequirements sizeRequirements2 = new SizeRequirements();
-/*      */     
-/* 1010 */     if (paramSizeRequirements == null) {
-/* 1011 */       paramSizeRequirements = new SizeRequirements();
-/*      */     }
-/*      */     
-/* 1014 */     paramSizeRequirements.alignment = 0.5F;
-/*      */     
-/* 1016 */     int i = getViewCount();
-/*      */ 
-/*      */ 
-/*      */     
-/* 1020 */     for (byte b = 0; b < i; b++) {
-/* 1021 */       View view = getView(b);
-/* 1022 */       float f1 = view.getAlignment(paramInt);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1028 */       float f2 = view.getPreferredSpan(paramInt);
-/* 1029 */       int j = (int)(f1 * f2);
-/* 1030 */       int k = (int)(f2 - j);
-/* 1031 */       sizeRequirements1.preferred = Math.max(j, sizeRequirements1.preferred);
-/* 1032 */       sizeRequirements2.preferred = Math.max(k, sizeRequirements2.preferred);
-/*      */       
-/* 1034 */       if (view.getResizeWeight(paramInt) > 0) {
-/*      */ 
-/*      */         
-/* 1037 */         f2 = view.getMinimumSpan(paramInt);
-/* 1038 */         j = (int)(f1 * f2);
-/* 1039 */         k = (int)(f2 - j);
-/* 1040 */         sizeRequirements1.minimum = Math.max(j, sizeRequirements1.minimum);
-/* 1041 */         sizeRequirements2.minimum = Math.max(k, sizeRequirements2.minimum);
-/*      */         
-/* 1043 */         f2 = view.getMaximumSpan(paramInt);
-/* 1044 */         j = (int)(f1 * f2);
-/* 1045 */         k = (int)(f2 - j);
-/* 1046 */         sizeRequirements1.maximum = Math.max(j, sizeRequirements1.maximum);
-/* 1047 */         sizeRequirements2.maximum = Math.max(k, sizeRequirements2.maximum);
-/*      */       } else {
-/*      */         
-/* 1050 */         sizeRequirements1.minimum = Math.max(j, sizeRequirements1.minimum);
-/* 1051 */         sizeRequirements2.minimum = Math.max(k, sizeRequirements2.minimum);
-/* 1052 */         sizeRequirements1.maximum = Math.max(j, sizeRequirements1.maximum);
-/* 1053 */         sizeRequirements2.maximum = Math.max(k, sizeRequirements2.maximum);
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1060 */     paramSizeRequirements.preferred = (int)Math.min(sizeRequirements1.preferred + sizeRequirements2.preferred, 2147483647L);
-/*      */ 
-/*      */ 
-/*      */     
-/* 1064 */     if (paramSizeRequirements.preferred > 0) {
-/* 1065 */       paramSizeRequirements.alignment = sizeRequirements1.preferred / paramSizeRequirements.preferred;
-/*      */     }
-/*      */ 
-/*      */     
-/* 1069 */     if (paramSizeRequirements.alignment == 0.0F) {
-/*      */ 
-/*      */       
-/* 1072 */       paramSizeRequirements.minimum = sizeRequirements2.minimum;
-/* 1073 */       paramSizeRequirements.maximum = sizeRequirements2.maximum;
-/* 1074 */     } else if (paramSizeRequirements.alignment == 1.0F) {
-/*      */ 
-/*      */       
-/* 1077 */       paramSizeRequirements.minimum = sizeRequirements1.minimum;
-/* 1078 */       paramSizeRequirements.maximum = sizeRequirements1.maximum;
-/*      */     
-/*      */     }
-/*      */     else {
-/*      */       
-/* 1083 */       paramSizeRequirements.minimum = Math.round(Math.max(sizeRequirements1.minimum / paramSizeRequirements.alignment, sizeRequirements2.minimum / (1.0F - paramSizeRequirements.alignment)));
-/*      */ 
-/*      */       
-/* 1086 */       paramSizeRequirements.maximum = Math.round(Math.min(sizeRequirements1.maximum / paramSizeRequirements.alignment, sizeRequirements2.maximum / (1.0F - paramSizeRequirements.alignment)));
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1090 */     return paramSizeRequirements;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected int getOffset(int paramInt1, int paramInt2) {
-/* 1100 */     int[] arrayOfInt = (paramInt1 == this.majorAxis) ? this.majorOffsets : this.minorOffsets;
-/* 1101 */     return arrayOfInt[paramInt2];
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected int getSpan(int paramInt1, int paramInt2) {
-/* 1111 */     int[] arrayOfInt = (paramInt1 == this.majorAxis) ? this.majorSpans : this.minorSpans;
-/* 1112 */     return arrayOfInt[paramInt2];
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected boolean flipEastAndWestAtEnds(int paramInt, Position.Bias paramBias) {
-/* 1146 */     if (this.majorAxis == 1) {
-/*      */       
-/* 1148 */       int i = (paramBias == Position.Bias.Backward) ? Math.max(0, paramInt - 1) : paramInt;
-/* 1149 */       int j = getViewIndexAtPosition(i);
-/* 1150 */       if (j != -1) {
-/* 1151 */         View view = getView(j);
-/* 1152 */         if (view != null && view instanceof CompositeView) {
-/* 1153 */           return ((CompositeView)view).flipEastAndWestAtEnds(paramInt, paramBias);
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*      */     
-/* 1158 */     return false;
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\text\BoxView.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.text;
+
+import java.io.PrintStream;
+import java.util.Vector;
+import java.awt.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.SizeRequirements;
+
+/**
+ * A view that arranges its children into a box shape by tiling
+ * its children along an axis.  The box is somewhat like that
+ * found in TeX where there is alignment of the
+ * children, flexibility of the children is considered, etc.
+ * This is a building block that might be useful to represent
+ * things like a collection of lines, paragraphs,
+ * lists, columns, pages, etc.  The axis along which the children are tiled is
+ * considered the major axis.  The orthogonal axis is the minor axis.
+ * <p>
+ * Layout for each axis is handled separately by the methods
+ * <code>layoutMajorAxis</code> and <code>layoutMinorAxis</code>.
+ * Subclasses can change the layout algorithm by
+ * reimplementing these methods.    These methods will be called
+ * as necessary depending upon whether or not there is cached
+ * layout information and the cache is considered
+ * valid.  These methods are typically called if the given size
+ * along the axis changes, or if <code>layoutChanged</code> is
+ * called to force an updated layout.  The <code>layoutChanged</code>
+ * method invalidates cached layout information, if there is any.
+ * The requirements published to the parent view are calculated by
+ * the methods <code>calculateMajorAxisRequirements</code>
+ * and  <code>calculateMinorAxisRequirements</code>.
+ * If the layout algorithm is changed, these methods will
+ * likely need to be reimplemented.
+ *
+ * @author  Timothy Prinzing
+ */
+public class BoxView extends CompositeView {
+
+    /**
+     * Constructs a <code>BoxView</code>.
+     *
+     * @param elem the element this view is responsible for
+     * @param axis either <code>View.X_AXIS</code> or <code>View.Y_AXIS</code>
+     */
+    public BoxView(Element elem, int axis) {
+        super(elem);
+        tempRect = new Rectangle();
+        this.majorAxis = axis;
+
+        majorOffsets = new int[0];
+        majorSpans = new int[0];
+        majorReqValid = false;
+        majorAllocValid = false;
+        minorOffsets = new int[0];
+        minorSpans = new int[0];
+        minorReqValid = false;
+        minorAllocValid = false;
+    }
+
+    /**
+     * Fetches the tile axis property.  This is the axis along which
+     * the child views are tiled.
+     *
+     * @return the major axis of the box, either
+     *  <code>View.X_AXIS</code> or <code>View.Y_AXIS</code>
+     *
+     * @since 1.3
+     */
+    public int getAxis() {
+        return majorAxis;
+    }
+
+    /**
+     * Sets the tile axis property.  This is the axis along which
+     * the child views are tiled.
+     *
+     * @param axis either <code>View.X_AXIS</code> or <code>View.Y_AXIS</code>
+     *
+     * @since 1.3
+     */
+    public void setAxis(int axis) {
+        boolean axisChanged = (axis != majorAxis);
+        majorAxis = axis;
+        if (axisChanged) {
+            preferenceChanged(null, true, true);
+        }
+    }
+
+    /**
+     * Invalidates the layout along an axis.  This happens
+     * automatically if the preferences have changed for
+     * any of the child views.  In some cases the layout
+     * may need to be recalculated when the preferences
+     * have not changed.  The layout can be marked as
+     * invalid by calling this method.  The layout will
+     * be updated the next time the <code>setSize</code> method
+     * is called on this view (typically in paint).
+     *
+     * @param axis either <code>View.X_AXIS</code> or <code>View.Y_AXIS</code>
+     *
+     * @since 1.3
+     */
+    public void layoutChanged(int axis) {
+        if (axis == majorAxis) {
+            majorAllocValid = false;
+        } else {
+            minorAllocValid = false;
+        }
+    }
+
+    /**
+     * Determines if the layout is valid along the given axis.
+     *
+     * @param axis either <code>View.X_AXIS</code> or <code>View.Y_AXIS</code>
+     *
+     * @since 1.4
+     */
+    protected boolean isLayoutValid(int axis) {
+        if (axis == majorAxis) {
+            return majorAllocValid;
+        } else {
+            return minorAllocValid;
+        }
+    }
+
+    /**
+     * Paints a child.  By default
+     * that is all it does, but a subclass can use this to paint
+     * things relative to the child.
+     *
+     * @param g the graphics context
+     * @param alloc the allocated region to paint into
+     * @param index the child index, &gt;= 0 &amp;&amp; &lt; getViewCount()
+     */
+    protected void paintChild(Graphics g, Rectangle alloc, int index) {
+        View child = getView(index);
+        child.paint(g, alloc);
+    }
+
+    // --- View methods ---------------------------------------------
+
+    /**
+     * Invalidates the layout and resizes the cache of
+     * requests/allocations.  The child allocations can still
+     * be accessed for the old layout, but the new children
+     * will have an offset and span of 0.
+     *
+     * @param index the starting index into the child views to insert
+     *   the new views; this should be a value &gt;= 0 and &lt;= getViewCount
+     * @param length the number of existing child views to remove;
+     *   This should be a value &gt;= 0 and &lt;= (getViewCount() - offset)
+     * @param elems the child views to add; this value can be
+     *   <code>null</code>to indicate no children are being added
+     *   (useful to remove)
+     */
+    public void replace(int index, int length, View[] elems) {
+        super.replace(index, length, elems);
+
+        // invalidate cache
+        int nInserted = (elems != null) ? elems.length : 0;
+        majorOffsets = updateLayoutArray(majorOffsets, index, nInserted);
+        majorSpans = updateLayoutArray(majorSpans, index, nInserted);
+        majorReqValid = false;
+        majorAllocValid = false;
+        minorOffsets = updateLayoutArray(minorOffsets, index, nInserted);
+        minorSpans = updateLayoutArray(minorSpans, index, nInserted);
+        minorReqValid = false;
+        minorAllocValid = false;
+    }
+
+    /**
+     * Resizes the given layout array to match the new number of
+     * child views.  The current number of child views are used to
+     * produce the new array.  The contents of the old array are
+     * inserted into the new array at the appropriate places so that
+     * the old layout information is transferred to the new array.
+     *
+     * @param oldArray the original layout array
+     * @param offset location where new views will be inserted
+     * @param nInserted the number of child views being inserted;
+     *          therefore the number of blank spaces to leave in the
+     *          new array at location <code>offset</code>
+     * @return the new layout array
+     */
+    int[] updateLayoutArray(int[] oldArray, int offset, int nInserted) {
+        int n = getViewCount();
+        int[] newArray = new int[n];
+
+        System.arraycopy(oldArray, 0, newArray, 0, offset);
+        System.arraycopy(oldArray, offset,
+                         newArray, offset + nInserted, n - nInserted - offset);
+        return newArray;
+    }
+
+    /**
+     * Forwards the given <code>DocumentEvent</code> to the child views
+     * that need to be notified of the change to the model.
+     * If a child changed its requirements and the allocation
+     * was valid prior to forwarding the portion of the box
+     * from the starting child to the end of the box will
+     * be repainted.
+     *
+     * @param ec changes to the element this view is responsible
+     *  for (may be <code>null</code> if there were no changes)
+     * @param e the change information from the associated document
+     * @param a the current allocation of the view
+     * @param f the factory to use to rebuild if the view has children
+     * @see #insertUpdate
+     * @see #removeUpdate
+     * @see #changedUpdate
+     * @since 1.3
+     */
+    protected void forwardUpdate(DocumentEvent.ElementChange ec,
+                                 DocumentEvent e, Shape a, ViewFactory f) {
+        boolean wasValid = isLayoutValid(majorAxis);
+        super.forwardUpdate(ec, e, a, f);
+
+        // determine if a repaint is needed
+        if (wasValid && (! isLayoutValid(majorAxis))) {
+            // Repaint is needed because one of the tiled children
+            // have changed their span along the major axis.  If there
+            // is a hosting component and an allocated shape we repaint.
+            Component c = getContainer();
+            if ((a != null) && (c != null)) {
+                int pos = e.getOffset();
+                int index = getViewIndexAtPosition(pos);
+                Rectangle alloc = getInsideAllocation(a);
+                if (majorAxis == X_AXIS) {
+                    alloc.x += majorOffsets[index];
+                    alloc.width -= majorOffsets[index];
+                } else {
+                    alloc.y += minorOffsets[index];
+                    alloc.height -= minorOffsets[index];
+                }
+                c.repaint(alloc.x, alloc.y, alloc.width, alloc.height);
+            }
+        }
+    }
+
+    /**
+     * This is called by a child to indicate its
+     * preferred span has changed.  This is implemented to
+     * throw away cached layout information so that new
+     * calculations will be done the next time the children
+     * need an allocation.
+     *
+     * @param child the child view
+     * @param width true if the width preference should change
+     * @param height true if the height preference should change
+     */
+    public void preferenceChanged(View child, boolean width, boolean height) {
+        boolean majorChanged = (majorAxis == X_AXIS) ? width : height;
+        boolean minorChanged = (majorAxis == X_AXIS) ? height : width;
+        if (majorChanged) {
+            majorReqValid = false;
+            majorAllocValid = false;
+        }
+        if (minorChanged) {
+            minorReqValid = false;
+            minorAllocValid = false;
+        }
+        super.preferenceChanged(child, width, height);
+    }
+
+    /**
+     * Gets the resize weight.  A value of 0 or less is not resizable.
+     *
+     * @param axis may be either <code>View.X_AXIS</code> or
+     *          <code>View.Y_AXIS</code>
+     * @return the weight
+     * @exception IllegalArgumentException for an invalid axis
+     */
+    public int getResizeWeight(int axis) {
+        checkRequests(axis);
+        if (axis == majorAxis) {
+            if ((majorRequest.preferred != majorRequest.minimum) ||
+                (majorRequest.preferred != majorRequest.maximum)) {
+                return 1;
+            }
+        } else {
+            if ((minorRequest.preferred != minorRequest.minimum) ||
+                (minorRequest.preferred != minorRequest.maximum)) {
+                return 1;
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Sets the size of the view along an axis.  This should cause
+     * layout of the view along the given axis.
+     *
+     * @param axis may be either <code>View.X_AXIS</code> or
+     *          <code>View.Y_AXIS</code>
+     * @param span the span to layout to >= 0
+     */
+    void setSpanOnAxis(int axis, float span) {
+        if (axis == majorAxis) {
+            if (majorSpan != (int) span) {
+                majorAllocValid = false;
+            }
+            if (! majorAllocValid) {
+                // layout the major axis
+                majorSpan = (int) span;
+                checkRequests(majorAxis);
+                layoutMajorAxis(majorSpan, axis, majorOffsets, majorSpans);
+                majorAllocValid = true;
+
+                // flush changes to the children
+                updateChildSizes();
+            }
+        } else {
+            if (((int) span) != minorSpan) {
+                minorAllocValid = false;
+            }
+            if (! minorAllocValid) {
+                // layout the minor axis
+                minorSpan = (int) span;
+                checkRequests(axis);
+                layoutMinorAxis(minorSpan, axis, minorOffsets, minorSpans);
+                minorAllocValid = true;
+
+                // flush changes to the children
+                updateChildSizes();
+            }
+        }
+    }
+
+    /**
+     * Propagates the current allocations to the child views.
+     */
+    void updateChildSizes() {
+        int n = getViewCount();
+        if (majorAxis == X_AXIS) {
+            for (int i = 0; i < n; i++) {
+                View v = getView(i);
+                v.setSize((float) majorSpans[i], (float) minorSpans[i]);
+            }
+        } else {
+            for (int i = 0; i < n; i++) {
+                View v = getView(i);
+                v.setSize((float) minorSpans[i], (float) majorSpans[i]);
+            }
+        }
+    }
+
+    /**
+     * Returns the size of the view along an axis.  This is implemented
+     * to return zero.
+     *
+     * @param axis may be either <code>View.X_AXIS</code> or
+     *          <code>View.Y_AXIS</code>
+     * @return the current span of the view along the given axis, >= 0
+     */
+    float getSpanOnAxis(int axis) {
+        if (axis == majorAxis) {
+            return majorSpan;
+        } else {
+            return minorSpan;
+        }
+    }
+
+    /**
+     * Sets the size of the view.  This should cause
+     * layout of the view if the view caches any layout
+     * information.  This is implemented to call the
+     * layout method with the sizes inside of the insets.
+     *
+     * @param width the width &gt;= 0
+     * @param height the height &gt;= 0
+     */
+    public void setSize(float width, float height) {
+        layout(Math.max(0, (int)(width - getLeftInset() - getRightInset())),
+               Math.max(0, (int)(height - getTopInset() - getBottomInset())));
+    }
+
+    /**
+     * Renders the <code>BoxView</code> using the given
+     * rendering surface and area
+     * on that surface.  Only the children that intersect
+     * the clip bounds of the given <code>Graphics</code>
+     * will be rendered.
+     *
+     * @param g the rendering surface to use
+     * @param allocation the allocated region to render into
+     * @see View#paint
+     */
+    public void paint(Graphics g, Shape allocation) {
+        Rectangle alloc = (allocation instanceof Rectangle) ?
+                           (Rectangle)allocation : allocation.getBounds();
+        int n = getViewCount();
+        int x = alloc.x + getLeftInset();
+        int y = alloc.y + getTopInset();
+        Rectangle clip = g.getClipBounds();
+        for (int i = 0; i < n; i++) {
+            tempRect.x = x + getOffset(X_AXIS, i);
+            tempRect.y = y + getOffset(Y_AXIS, i);
+            tempRect.width = getSpan(X_AXIS, i);
+            tempRect.height = getSpan(Y_AXIS, i);
+            int trx0 = tempRect.x, trx1 = trx0 + tempRect.width;
+            int try0 = tempRect.y, try1 = try0 + tempRect.height;
+            int crx0 = clip.x, crx1 = crx0 + clip.width;
+            int cry0 = clip.y, cry1 = cry0 + clip.height;
+            // We should paint views that intersect with clipping region
+            // even if the intersection has no inside points (is a line).
+            // This is needed for supporting views that have zero width, like
+            // views that contain only combining marks.
+            if ((trx1 >= crx0) && (try1 >= cry0) && (crx1 >= trx0) && (cry1 >= try0)) {
+                paintChild(g, tempRect, i);
+            }
+        }
+    }
+
+    /**
+     * Fetches the allocation for the given child view.
+     * This enables finding out where various views
+     * are located.  This is implemented to return
+     * <code>null</code> if the layout is invalid,
+     * otherwise the superclass behavior is executed.
+     *
+     * @param index the index of the child, &gt;= 0 &amp;&amp; &gt; getViewCount()
+     * @param a  the allocation to this view
+     * @return the allocation to the child; or <code>null</code>
+     *          if <code>a</code> is <code>null</code>;
+     *          or <code>null</code> if the layout is invalid
+     */
+    public Shape getChildAllocation(int index, Shape a) {
+        if (a != null) {
+            Shape ca = super.getChildAllocation(index, a);
+            if ((ca != null) && (! isAllocationValid())) {
+                // The child allocation may not have been set yet.
+                Rectangle r = (ca instanceof Rectangle) ?
+                    (Rectangle) ca : ca.getBounds();
+                if ((r.width == 0) && (r.height == 0)) {
+                    return null;
+                }
+            }
+            return ca;
+        }
+        return null;
+    }
+
+    /**
+     * Provides a mapping from the document model coordinate space
+     * to the coordinate space of the view mapped to it.  This makes
+     * sure the allocation is valid before calling the superclass.
+     *
+     * @param pos the position to convert &gt;= 0
+     * @param a the allocated region to render into
+     * @return the bounding box of the given position
+     * @exception BadLocationException  if the given position does
+     *  not represent a valid location in the associated document
+     * @see View#modelToView
+     */
+    public Shape modelToView(int pos, Shape a, Position.Bias b) throws BadLocationException {
+        if (! isAllocationValid()) {
+            Rectangle alloc = a.getBounds();
+            setSize(alloc.width, alloc.height);
+        }
+        return super.modelToView(pos, a, b);
+    }
+
+    /**
+     * Provides a mapping from the view coordinate space to the logical
+     * coordinate space of the model.
+     *
+     * @param x   x coordinate of the view location to convert &gt;= 0
+     * @param y   y coordinate of the view location to convert &gt;= 0
+     * @param a the allocated region to render into
+     * @return the location within the model that best represents the
+     *  given point in the view &gt;= 0
+     * @see View#viewToModel
+     */
+    public int viewToModel(float x, float y, Shape a, Position.Bias[] bias) {
+        if (! isAllocationValid()) {
+            Rectangle alloc = a.getBounds();
+            setSize(alloc.width, alloc.height);
+        }
+        return super.viewToModel(x, y, a, bias);
+    }
+
+    /**
+     * Determines the desired alignment for this view along an
+     * axis.  This is implemented to give the total alignment
+     * needed to position the children with the alignment points
+     * lined up along the axis orthogonal to the axis that is
+     * being tiled.  The axis being tiled will request to be
+     * centered (i.e. 0.5f).
+     *
+     * @param axis may be either <code>View.X_AXIS</code>
+     *   or <code>View.Y_AXIS</code>
+     * @return the desired alignment &gt;= 0.0f &amp;&amp; &lt;= 1.0f; this should
+     *   be a value between 0.0 and 1.0 where 0 indicates alignment at the
+     *   origin and 1.0 indicates alignment to the full span
+     *   away from the origin; an alignment of 0.5 would be the
+     *   center of the view
+     * @exception IllegalArgumentException for an invalid axis
+     */
+    public float getAlignment(int axis) {
+        checkRequests(axis);
+        if (axis == majorAxis) {
+            return majorRequest.alignment;
+        } else {
+            return minorRequest.alignment;
+        }
+    }
+
+    /**
+     * Determines the preferred span for this view along an
+     * axis.
+     *
+     * @param axis may be either <code>View.X_AXIS</code>
+     *           or <code>View.Y_AXIS</code>
+     * @return   the span the view would like to be rendered into &gt;= 0;
+     *           typically the view is told to render into the span
+     *           that is returned, although there is no guarantee;
+     *           the parent may choose to resize or break the view
+     * @exception IllegalArgumentException for an invalid axis type
+     */
+    public float getPreferredSpan(int axis) {
+        checkRequests(axis);
+        float marginSpan = (axis == X_AXIS) ? getLeftInset() + getRightInset() :
+            getTopInset() + getBottomInset();
+        if (axis == majorAxis) {
+            return ((float)majorRequest.preferred) + marginSpan;
+        } else {
+            return ((float)minorRequest.preferred) + marginSpan;
+        }
+    }
+
+    /**
+     * Determines the minimum span for this view along an
+     * axis.
+     *
+     * @param axis may be either <code>View.X_AXIS</code>
+     *           or <code>View.Y_AXIS</code>
+     * @return  the span the view would like to be rendered into &gt;= 0;
+     *           typically the view is told to render into the span
+     *           that is returned, although there is no guarantee;
+     *           the parent may choose to resize or break the view
+     * @exception IllegalArgumentException for an invalid axis type
+     */
+    public float getMinimumSpan(int axis) {
+        checkRequests(axis);
+        float marginSpan = (axis == X_AXIS) ? getLeftInset() + getRightInset() :
+            getTopInset() + getBottomInset();
+        if (axis == majorAxis) {
+            return ((float)majorRequest.minimum) + marginSpan;
+        } else {
+            return ((float)minorRequest.minimum) + marginSpan;
+        }
+    }
+
+    /**
+     * Determines the maximum span for this view along an
+     * axis.
+     *
+     * @param axis may be either <code>View.X_AXIS</code>
+     *           or <code>View.Y_AXIS</code>
+     * @return   the span the view would like to be rendered into &gt;= 0;
+     *           typically the view is told to render into the span
+     *           that is returned, although there is no guarantee;
+     *           the parent may choose to resize or break the view
+     * @exception IllegalArgumentException for an invalid axis type
+     */
+    public float getMaximumSpan(int axis) {
+        checkRequests(axis);
+        float marginSpan = (axis == X_AXIS) ? getLeftInset() + getRightInset() :
+            getTopInset() + getBottomInset();
+        if (axis == majorAxis) {
+            return ((float)majorRequest.maximum) + marginSpan;
+        } else {
+            return ((float)minorRequest.maximum) + marginSpan;
+        }
+    }
+
+    // --- local methods ----------------------------------------------------
+
+    /**
+     * Are the allocations for the children still
+     * valid?
+     *
+     * @return true if allocations still valid
+     */
+    protected boolean isAllocationValid() {
+        return (majorAllocValid && minorAllocValid);
+    }
+
+    /**
+     * Determines if a point falls before an allocated region.
+     *
+     * @param x the X coordinate &gt;= 0
+     * @param y the Y coordinate &gt;= 0
+     * @param innerAlloc the allocated region; this is the area
+     *   inside of the insets
+     * @return true if the point lies before the region else false
+     */
+    protected boolean isBefore(int x, int y, Rectangle innerAlloc) {
+        if (majorAxis == View.X_AXIS) {
+            return (x < innerAlloc.x);
+        } else {
+            return (y < innerAlloc.y);
+        }
+    }
+
+    /**
+     * Determines if a point falls after an allocated region.
+     *
+     * @param x the X coordinate &gt;= 0
+     * @param y the Y coordinate &gt;= 0
+     * @param innerAlloc the allocated region; this is the area
+     *   inside of the insets
+     * @return true if the point lies after the region else false
+     */
+    protected boolean isAfter(int x, int y, Rectangle innerAlloc) {
+        if (majorAxis == View.X_AXIS) {
+            return (x > (innerAlloc.width + innerAlloc.x));
+        } else {
+            return (y > (innerAlloc.height + innerAlloc.y));
+        }
+    }
+
+    /**
+     * Fetches the child view at the given coordinates.
+     *
+     * @param x the X coordinate &gt;= 0
+     * @param y the Y coordinate &gt;= 0
+     * @param alloc the parents inner allocation on entry, which should
+     *   be changed to the child's allocation on exit
+     * @return the view
+     */
+    protected View getViewAtPoint(int x, int y, Rectangle alloc) {
+        int n = getViewCount();
+        if (majorAxis == View.X_AXIS) {
+            if (x < (alloc.x + majorOffsets[0])) {
+                childAllocation(0, alloc);
+                return getView(0);
+            }
+            for (int i = 0; i < n; i++) {
+                if (x < (alloc.x + majorOffsets[i])) {
+                    childAllocation(i - 1, alloc);
+                    return getView(i - 1);
+                }
+            }
+            childAllocation(n - 1, alloc);
+            return getView(n - 1);
+        } else {
+            if (y < (alloc.y + majorOffsets[0])) {
+                childAllocation(0, alloc);
+                return getView(0);
+            }
+            for (int i = 0; i < n; i++) {
+                if (y < (alloc.y + majorOffsets[i])) {
+                    childAllocation(i - 1, alloc);
+                    return getView(i - 1);
+                }
+            }
+            childAllocation(n - 1, alloc);
+            return getView(n - 1);
+        }
+    }
+
+    /**
+     * Allocates a region for a child view.
+     *
+     * @param index the index of the child view to
+     *   allocate, &gt;= 0 &amp;&amp; &lt; getViewCount()
+     * @param alloc the allocated region
+     */
+    protected void childAllocation(int index, Rectangle alloc) {
+        alloc.x += getOffset(X_AXIS, index);
+        alloc.y += getOffset(Y_AXIS, index);
+        alloc.width = getSpan(X_AXIS, index);
+        alloc.height = getSpan(Y_AXIS, index);
+    }
+
+    /**
+     * Perform layout on the box
+     *
+     * @param width the width (inside of the insets) &gt;= 0
+     * @param height the height (inside of the insets) &gt;= 0
+     */
+    protected void layout(int width, int height) {
+        setSpanOnAxis(X_AXIS, width);
+        setSpanOnAxis(Y_AXIS, height);
+    }
+
+    /**
+     * Returns the current width of the box.  This is the width that
+     * it was last allocated.
+     * @return the current width of the box
+     */
+    public int getWidth() {
+        int span;
+        if (majorAxis == X_AXIS) {
+            span = majorSpan;
+        } else {
+            span = minorSpan;
+        }
+        span += getLeftInset() - getRightInset();
+        return span;
+    }
+
+    /**
+     * Returns the current height of the box.  This is the height that
+     * it was last allocated.
+     * @return the current height of the box
+     */
+    public int getHeight() {
+        int span;
+        if (majorAxis == Y_AXIS) {
+            span = majorSpan;
+        } else {
+            span = minorSpan;
+        }
+        span += getTopInset() - getBottomInset();
+        return span;
+    }
+
+    /**
+     * Performs layout for the major axis of the box (i.e. the
+     * axis that it represents). The results of the layout (the
+     * offset and span for each children) are placed in the given
+     * arrays which represent the allocations to the children
+     * along the major axis.
+     *
+     * @param targetSpan the total span given to the view, which
+     *  would be used to layout the children
+     * @param axis the axis being layed out
+     * @param offsets the offsets from the origin of the view for
+     *  each of the child views; this is a return value and is
+     *  filled in by the implementation of this method
+     * @param spans the span of each child view; this is a return
+     *  value and is filled in by the implementation of this method
+     */
+    protected void layoutMajorAxis(int targetSpan, int axis, int[] offsets, int[] spans) {
+        /*
+         * first pass, calculate the preferred sizes
+         * and the flexibility to adjust the sizes.
+         */
+        long preferred = 0;
+        int n = getViewCount();
+        for (int i = 0; i < n; i++) {
+            View v = getView(i);
+            spans[i] = (int) v.getPreferredSpan(axis);
+            preferred += spans[i];
+        }
+
+        /*
+         * Second pass, expand or contract by as much as possible to reach
+         * the target span.
+         */
+
+        // determine the adjustment to be made
+        long desiredAdjustment = targetSpan - preferred;
+        float adjustmentFactor = 0.0f;
+        int[] diffs = null;
+
+        if (desiredAdjustment != 0) {
+            long totalSpan = 0;
+            diffs = new int[n];
+            for (int i = 0; i < n; i++) {
+                View v = getView(i);
+                int tmp;
+                if (desiredAdjustment < 0) {
+                    tmp = (int)v.getMinimumSpan(axis);
+                    diffs[i] = spans[i] - tmp;
+                } else {
+                    tmp = (int)v.getMaximumSpan(axis);
+                    diffs[i] = tmp - spans[i];
+                }
+                totalSpan += tmp;
+            }
+
+            float maximumAdjustment = Math.abs(totalSpan - preferred);
+                adjustmentFactor = desiredAdjustment / maximumAdjustment;
+                adjustmentFactor = Math.min(adjustmentFactor, 1.0f);
+                adjustmentFactor = Math.max(adjustmentFactor, -1.0f);
+            }
+
+        // make the adjustments
+        int totalOffset = 0;
+        for (int i = 0; i < n; i++) {
+            offsets[i] = totalOffset;
+            if (desiredAdjustment != 0) {
+                float adjF = adjustmentFactor * diffs[i];
+                spans[i] += Math.round(adjF);
+            }
+            totalOffset = (int) Math.min((long) totalOffset + (long) spans[i], Integer.MAX_VALUE);
+        }
+    }
+
+    /**
+     * Performs layout for the minor axis of the box (i.e. the
+     * axis orthogonal to the axis that it represents). The results
+     * of the layout (the offset and span for each children) are
+     * placed in the given arrays which represent the allocations to
+     * the children along the minor axis.
+     *
+     * @param targetSpan the total span given to the view, which
+     *  would be used to layout the children
+     * @param axis the axis being layed out
+     * @param offsets the offsets from the origin of the view for
+     *  each of the child views; this is a return value and is
+     *  filled in by the implementation of this method
+     * @param spans the span of each child view; this is a return
+     *  value and is filled in by the implementation of this method
+     */
+    protected void layoutMinorAxis(int targetSpan, int axis, int[] offsets, int[] spans) {
+        int n = getViewCount();
+        for (int i = 0; i < n; i++) {
+            View v = getView(i);
+            int max = (int) v.getMaximumSpan(axis);
+            if (max < targetSpan) {
+                // can't make the child this wide, align it
+                float align = v.getAlignment(axis);
+                offsets[i] = (int) ((targetSpan - max) * align);
+                spans[i] = max;
+            } else {
+                // make it the target width, or as small as it can get.
+                int min = (int)v.getMinimumSpan(axis);
+                offsets[i] = 0;
+                spans[i] = Math.max(min, targetSpan);
+            }
+        }
+    }
+
+    /**
+     * Calculates the size requirements for the major axis
+     * <code>axis</code>.
+     *
+     * @param axis the axis being studied
+     * @param r the <code>SizeRequirements</code> object;
+     *          if <code>null</code> one will be created
+     * @return the newly initialized <code>SizeRequirements</code> object
+     * @see javax.swing.SizeRequirements
+     */
+    protected SizeRequirements calculateMajorAxisRequirements(int axis, SizeRequirements r) {
+        // calculate tiled request
+        float min = 0;
+        float pref = 0;
+        float max = 0;
+
+        int n = getViewCount();
+        for (int i = 0; i < n; i++) {
+            View v = getView(i);
+            min += v.getMinimumSpan(axis);
+            pref += v.getPreferredSpan(axis);
+            max += v.getMaximumSpan(axis);
+        }
+
+        if (r == null) {
+            r = new SizeRequirements();
+        }
+        r.alignment = 0.5f;
+        r.minimum = (int) min;
+        r.preferred = (int) pref;
+        r.maximum = (int) max;
+        return r;
+    }
+
+    /**
+     * Calculates the size requirements for the minor axis
+     * <code>axis</code>.
+     *
+     * @param axis the axis being studied
+     * @param r the <code>SizeRequirements</code> object;
+     *          if <code>null</code> one will be created
+     * @return the newly initialized <code>SizeRequirements</code> object
+     * @see javax.swing.SizeRequirements
+     */
+    protected SizeRequirements calculateMinorAxisRequirements(int axis, SizeRequirements r) {
+        int min = 0;
+        long pref = 0;
+        int max = Integer.MAX_VALUE;
+        int n = getViewCount();
+        for (int i = 0; i < n; i++) {
+            View v = getView(i);
+            min = Math.max((int) v.getMinimumSpan(axis), min);
+            pref = Math.max((int) v.getPreferredSpan(axis), pref);
+            max = Math.max((int) v.getMaximumSpan(axis), max);
+        }
+
+        if (r == null) {
+            r = new SizeRequirements();
+            r.alignment = 0.5f;
+        }
+        r.preferred = (int) pref;
+        r.minimum = min;
+        r.maximum = max;
+        return r;
+    }
+
+    /**
+     * Checks the request cache and update if needed.
+     * @param axis the axis being studied
+     * @exception IllegalArgumentException if <code>axis</code> is
+     *  neither <code>View.X_AXIS</code> nor <code>View.Y_AXIS</code>
+     */
+    void checkRequests(int axis) {
+        if ((axis != X_AXIS) && (axis != Y_AXIS)) {
+            throw new IllegalArgumentException("Invalid axis: " + axis);
+        }
+        if (axis == majorAxis) {
+            if (!majorReqValid) {
+                majorRequest = calculateMajorAxisRequirements(axis,
+                                                              majorRequest);
+                majorReqValid = true;
+            }
+        } else if (! minorReqValid) {
+            minorRequest = calculateMinorAxisRequirements(axis, minorRequest);
+            minorReqValid = true;
+        }
+    }
+
+    /**
+     * Computes the location and extent of each child view
+     * in this <code>BoxView</code> given the <code>targetSpan</code>,
+     * which is the width (or height) of the region we have to
+     * work with.
+     *
+     * @param targetSpan the total span given to the view, which
+     *  would be used to layout the children
+     * @param axis the axis being studied, either
+     *          <code>View.X_AXIS</code> or <code>View.Y_AXIS</code>
+     * @param offsets an empty array filled by this method with
+     *          values specifying the location  of each child view
+     * @param spans  an empty array filled by this method with
+     *          values specifying the extent of each child view
+     */
+    protected void baselineLayout(int targetSpan, int axis, int[] offsets, int[] spans) {
+        int totalAscent = (int)(targetSpan * getAlignment(axis));
+        int totalDescent = targetSpan - totalAscent;
+
+        int n = getViewCount();
+
+        for (int i = 0; i < n; i++) {
+            View v = getView(i);
+            float align = v.getAlignment(axis);
+            float viewSpan;
+
+            if (v.getResizeWeight(axis) > 0) {
+                // if resizable then resize to the best fit
+
+                // the smallest span possible
+                float minSpan = v.getMinimumSpan(axis);
+                // the largest span possible
+                float maxSpan = v.getMaximumSpan(axis);
+
+                if (align == 0.0f) {
+                    // if the alignment is 0 then we need to fit into the descent
+                    viewSpan = Math.max(Math.min(maxSpan, totalDescent), minSpan);
+                } else if (align == 1.0f) {
+                    // if the alignment is 1 then we need to fit into the ascent
+                    viewSpan = Math.max(Math.min(maxSpan, totalAscent), minSpan);
+                } else {
+                    // figure out the span that we must fit into
+                    float fitSpan = Math.min(totalAscent / align,
+                                             totalDescent / (1.0f - align));
+                    // fit into the calculated span
+                    viewSpan = Math.max(Math.min(maxSpan, fitSpan), minSpan);
+                }
+            } else {
+                // otherwise use the preferred spans
+                viewSpan = v.getPreferredSpan(axis);
+            }
+
+            offsets[i] = totalAscent - (int)(viewSpan * align);
+            spans[i] = (int)viewSpan;
+        }
+    }
+
+    /**
+     * Calculates the size requirements for this <code>BoxView</code>
+     * by examining the size of each child view.
+     *
+     * @param axis the axis being studied
+     * @param r the <code>SizeRequirements</code> object;
+     *          if <code>null</code> one will be created
+     * @return the newly initialized <code>SizeRequirements</code> object
+     */
+    protected SizeRequirements baselineRequirements(int axis, SizeRequirements r) {
+        SizeRequirements totalAscent = new SizeRequirements();
+        SizeRequirements totalDescent = new SizeRequirements();
+
+        if (r == null) {
+            r = new SizeRequirements();
+        }
+
+        r.alignment = 0.5f;
+
+        int n = getViewCount();
+
+        // loop through all children calculating the max of all their ascents and
+        // descents at minimum, preferred, and maximum sizes
+        for (int i = 0; i < n; i++) {
+            View v = getView(i);
+            float align = v.getAlignment(axis);
+            float span;
+            int ascent;
+            int descent;
+
+            // find the maximum of the preferred ascents and descents
+            span = v.getPreferredSpan(axis);
+            ascent = (int)(align * span);
+            descent = (int)(span - ascent);
+            totalAscent.preferred = Math.max(ascent, totalAscent.preferred);
+            totalDescent.preferred = Math.max(descent, totalDescent.preferred);
+
+            if (v.getResizeWeight(axis) > 0) {
+                // if the view is resizable then do the same for the minimum and
+                // maximum ascents and descents
+                span = v.getMinimumSpan(axis);
+                ascent = (int)(align * span);
+                descent = (int)(span - ascent);
+                totalAscent.minimum = Math.max(ascent, totalAscent.minimum);
+                totalDescent.minimum = Math.max(descent, totalDescent.minimum);
+
+                span = v.getMaximumSpan(axis);
+                ascent = (int)(align * span);
+                descent = (int)(span - ascent);
+                totalAscent.maximum = Math.max(ascent, totalAscent.maximum);
+                totalDescent.maximum = Math.max(descent, totalDescent.maximum);
+            } else {
+                // otherwise use the preferred
+                totalAscent.minimum = Math.max(ascent, totalAscent.minimum);
+                totalDescent.minimum = Math.max(descent, totalDescent.minimum);
+                totalAscent.maximum = Math.max(ascent, totalAscent.maximum);
+                totalDescent.maximum = Math.max(descent, totalDescent.maximum);
+            }
+        }
+
+        // we now have an overall preferred, minimum, and maximum ascent and descent
+
+        // calculate the preferred span as the sum of the preferred ascent and preferred descent
+        r.preferred = (int)Math.min((long)totalAscent.preferred + (long)totalDescent.preferred,
+                                    Integer.MAX_VALUE);
+
+        // calculate the preferred alignment as the preferred ascent divided by the preferred span
+        if (r.preferred > 0) {
+            r.alignment = (float)totalAscent.preferred / r.preferred;
+        }
+
+
+        if (r.alignment == 0.0f) {
+            // if the preferred alignment is 0 then the minimum and maximum spans are simply
+            // the minimum and maximum descents since there's nothing above the baseline
+            r.minimum = totalDescent.minimum;
+            r.maximum = totalDescent.maximum;
+        } else if (r.alignment == 1.0f) {
+            // if the preferred alignment is 1 then the minimum and maximum spans are simply
+            // the minimum and maximum ascents since there's nothing below the baseline
+            r.minimum = totalAscent.minimum;
+            r.maximum = totalAscent.maximum;
+        } else {
+            // we want to honor the preferred alignment so we calculate two possible minimum
+            // span values using 1) the minimum ascent and the alignment, and 2) the minimum
+            // descent and the alignment. We'll choose the larger of these two numbers.
+            r.minimum = Math.round(Math.max(totalAscent.minimum / r.alignment,
+                                          totalDescent.minimum / (1.0f - r.alignment)));
+            // a similar calculation is made for the maximum but we choose the smaller number.
+            r.maximum = Math.round(Math.min(totalAscent.maximum / r.alignment,
+                                          totalDescent.maximum / (1.0f - r.alignment)));
+        }
+
+        return r;
+    }
+
+    /**
+     * Fetches the offset of a particular child's current layout.
+     * @param axis the axis being studied
+     * @param childIndex the index of the requested child
+     * @return the offset (location) for the specified child
+     */
+    protected int getOffset(int axis, int childIndex) {
+        int[] offsets = (axis == majorAxis) ? majorOffsets : minorOffsets;
+        return offsets[childIndex];
+    }
+
+    /**
+     * Fetches the span of a particular child's current layout.
+     * @param axis the axis being studied
+     * @param childIndex the index of the requested child
+     * @return the span (width or height) of the specified child
+     */
+    protected int getSpan(int axis, int childIndex) {
+        int[] spans = (axis == majorAxis) ? majorSpans : minorSpans;
+        return spans[childIndex];
+    }
+
+    /**
+     * Determines in which direction the next view lays.
+     * Consider the View at index n. Typically the <code>View</code>s
+     * are layed out from left to right, so that the <code>View</code>
+     * to the EAST will be at index n + 1, and the <code>View</code>
+     * to the WEST will be at index n - 1. In certain situations,
+     * such as with bidirectional text, it is possible
+     * that the <code>View</code> to EAST is not at index n + 1,
+     * but rather at index n - 1, or that the <code>View</code>
+     * to the WEST is not at index n - 1, but index n + 1.
+     * In this case this method would return true,
+     * indicating the <code>View</code>s are layed out in
+     * descending order. Otherwise the method would return false
+     * indicating the <code>View</code>s are layed out in ascending order.
+     * <p>
+     * If the receiver is laying its <code>View</code>s along the
+     * <code>Y_AXIS</code>, this will will return the value from
+     * invoking the same method on the <code>View</code>
+     * responsible for rendering <code>position</code> and
+     * <code>bias</code>. Otherwise this will return false.
+     *
+     * @param position position into the model
+     * @param bias either <code>Position.Bias.Forward</code> or
+     *          <code>Position.Bias.Backward</code>
+     * @return true if the <code>View</code>s surrounding the
+     *          <code>View</code> responding for rendering
+     *          <code>position</code> and <code>bias</code>
+     *          are layed out in descending order; otherwise false
+     */
+    protected boolean flipEastAndWestAtEnds(int position,
+                                            Position.Bias bias) {
+        if(majorAxis == Y_AXIS) {
+            int testPos = (bias == Position.Bias.Backward) ?
+                          Math.max(0, position - 1) : position;
+            int index = getViewIndexAtPosition(testPos);
+            if(index != -1) {
+                View v = getView(index);
+                if(v != null && v instanceof CompositeView) {
+                    return ((CompositeView)v).flipEastAndWestAtEnds(position,
+                                                                    bias);
+                }
+            }
+        }
+        return false;
+    }
+
+    // --- variables ------------------------------------------------
+
+    int majorAxis;
+
+    int majorSpan;
+    int minorSpan;
+
+    /*
+     * Request cache
+     */
+    boolean majorReqValid;
+    boolean minorReqValid;
+    SizeRequirements majorRequest;
+    SizeRequirements minorRequest;
+
+    /*
+     * Allocation cache
+     */
+    boolean majorAllocValid;
+    int[] majorOffsets;
+    int[] majorSpans;
+    boolean minorAllocValid;
+    int[] minorOffsets;
+    int[] minorSpans;
+
+    /** used in paint. */
+    Rectangle tempRect;
+}

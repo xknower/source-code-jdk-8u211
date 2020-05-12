@@ -1,1487 +1,1481 @@
-/*      */ package java.util.concurrent;
-/*      */ 
-/*      */ import java.io.IOException;
-/*      */ import java.io.ObjectInputStream;
-/*      */ import java.io.ObjectOutputStream;
-/*      */ import java.io.Serializable;
-/*      */ import java.util.AbstractQueue;
-/*      */ import java.util.Collection;
-/*      */ import java.util.Iterator;
-/*      */ import java.util.NoSuchElementException;
-/*      */ import java.util.Spliterator;
-/*      */ import java.util.Spliterators;
-/*      */ import java.util.concurrent.locks.LockSupport;
-/*      */ import java.util.function.Consumer;
-/*      */ import sun.misc.Unsafe;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class LinkedTransferQueue<E>
-/*      */   extends AbstractQueue<E>
-/*      */   implements TransferQueue<E>, Serializable
-/*      */ {
-/*      */   private static final long serialVersionUID = -3223113410248163686L;
-/*  415 */   private static final boolean MP = (Runtime.getRuntime().availableProcessors() > 1);
-/*      */   
-/*      */   private static final int FRONT_SPINS = 128;
-/*      */   
-/*      */   private static final int CHAINED_SPINS = 64;
-/*      */   
-/*      */   static final int SWEEP_THRESHOLD = 32;
-/*      */   
-/*      */   volatile transient Node head;
-/*      */   
-/*      */   private volatile transient Node tail;
-/*      */   
-/*      */   private volatile transient int sweepVotes;
-/*      */   
-/*      */   private static final int NOW = 0;
-/*      */   
-/*      */   private static final int ASYNC = 1;
-/*      */   
-/*      */   private static final int SYNC = 2;
-/*      */   
-/*      */   private static final int TIMED = 3;
-/*      */   
-/*      */   private static final Unsafe UNSAFE;
-/*      */   
-/*      */   private static final long headOffset;
-/*      */   
-/*      */   private static final long tailOffset;
-/*      */   
-/*      */   private static final long sweepVotesOffset;
-/*      */ 
-/*      */   
-/*      */   static final class Node
-/*      */   {
-/*      */     final boolean isData;
-/*      */     volatile Object item;
-/*      */     volatile Node next;
-/*      */     volatile Thread waiter;
-/*      */     private static final long serialVersionUID = -3375979862319811754L;
-/*      */     private static final Unsafe UNSAFE;
-/*      */     private static final long itemOffset;
-/*      */     private static final long nextOffset;
-/*      */     private static final long waiterOffset;
-/*      */     
-/*      */     final boolean casNext(Node param1Node1, Node param1Node2) {
-/*  459 */       return UNSAFE.compareAndSwapObject(this, nextOffset, param1Node1, param1Node2);
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     final boolean casItem(Object param1Object1, Object param1Object2) {
-/*  464 */       return UNSAFE.compareAndSwapObject(this, itemOffset, param1Object1, param1Object2);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     Node(Object param1Object, boolean param1Boolean) {
-/*  472 */       UNSAFE.putObject(this, itemOffset, param1Object);
-/*  473 */       this.isData = param1Boolean;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     final void forgetNext() {
-/*  481 */       UNSAFE.putObject(this, nextOffset, this);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     final void forgetContents() {
-/*  494 */       UNSAFE.putObject(this, itemOffset, this);
-/*  495 */       UNSAFE.putObject(this, waiterOffset, (Object)null);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     final boolean isMatched() {
-/*  503 */       Object object = this.item;
-/*  504 */       return (object == this || ((object == null)) == this.isData);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     final boolean isUnmatchedRequest() {
-/*  511 */       return (!this.isData && this.item == null);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     final boolean cannotPrecede(boolean param1Boolean) {
-/*  520 */       boolean bool = this.isData;
-/*      */       Object object;
-/*  522 */       return (bool != param1Boolean && (object = this.item) != this && ((object != null)) == bool);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     final boolean tryMatchData() {
-/*  530 */       Object object = this.item;
-/*  531 */       if (object != null && object != this && casItem(object, null)) {
-/*  532 */         LockSupport.unpark(this.waiter);
-/*  533 */         return true;
-/*      */       } 
-/*  535 */       return false;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     static {
-/*      */       try {
-/*  547 */         UNSAFE = Unsafe.getUnsafe();
-/*  548 */         Class<Node> clazz = Node.class;
-/*      */         
-/*  550 */         itemOffset = UNSAFE.objectFieldOffset(clazz.getDeclaredField("item"));
-/*      */         
-/*  552 */         nextOffset = UNSAFE.objectFieldOffset(clazz.getDeclaredField("next"));
-/*      */         
-/*  554 */         waiterOffset = UNSAFE.objectFieldOffset(clazz.getDeclaredField("waiter"));
-/*  555 */       } catch (Exception exception) {
-/*  556 */         throw new Error(exception);
-/*      */       } 
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean casTail(Node paramNode1, Node paramNode2) {
-/*  572 */     return UNSAFE.compareAndSwapObject(this, tailOffset, paramNode1, paramNode2);
-/*      */   }
-/*      */   
-/*      */   private boolean casHead(Node paramNode1, Node paramNode2) {
-/*  576 */     return UNSAFE.compareAndSwapObject(this, headOffset, paramNode1, paramNode2);
-/*      */   }
-/*      */   
-/*      */   private boolean casSweepVotes(int paramInt1, int paramInt2) {
-/*  580 */     return UNSAFE.compareAndSwapInt(this, sweepVotesOffset, paramInt1, paramInt2);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static <E> E cast(Object paramObject) {
-/*  594 */     return (E)paramObject;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private E xfer(E paramE, boolean paramBoolean, int paramInt, long paramLong) {
-/*  608 */     if (paramBoolean && paramE == null)
-/*  609 */       throw new NullPointerException(); 
-/*  610 */     Node node = null;
-/*      */     
-/*      */     while (true) {
-/*      */       Node node1;
-/*      */       
-/*  615 */       for (Node node2 = node1 = this.head; node2 != null; ) {
-/*  616 */         boolean bool = node2.isData;
-/*  617 */         Object object = node2.item;
-/*  618 */         if (object != node2 && ((object != null)) == bool) {
-/*  619 */           if (bool == paramBoolean)
-/*      */             break; 
-/*  621 */           if (node2.casItem(object, paramE)) {
-/*  622 */             for (Node node4 = node2; node4 != node1; ) {
-/*  623 */               Node node5 = node4.next;
-/*  624 */               if (this.head == node1 && casHead(node1, (node5 == null) ? node4 : node5)) {
-/*  625 */                 node1.forgetNext();
-/*      */                 break;
-/*      */               } 
-/*  628 */               if ((node1 = this.head) == null || (node4 = node1.next) == null || 
-/*  629 */                 !node4.isMatched())
-/*      */                 break; 
-/*      */             } 
-/*  632 */             LockSupport.unpark(node2.waiter);
-/*  633 */             return cast(object);
-/*      */           } 
-/*      */         } 
-/*  636 */         Node node3 = node2.next;
-/*  637 */         node2 = (node2 != node3) ? node3 : (node1 = this.head);
-/*      */       } 
-/*      */       
-/*  640 */       if (paramInt != 0) {
-/*  641 */         if (node == null)
-/*  642 */           node = new Node(paramE, paramBoolean); 
-/*  643 */         node1 = tryAppend(node, paramBoolean);
-/*  644 */         if (node1 == null)
-/*      */           continue; 
-/*  646 */         if (paramInt != 1)
-/*  647 */           return awaitMatch(node, node1, paramE, (paramInt == 3), paramLong); 
-/*      */       }  break;
-/*  649 */     }  return paramE;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Node tryAppend(Node paramNode, boolean paramBoolean) {
-/*  663 */     Node node1 = this.tail, node2 = node1;
-/*      */     while (true) {
-/*  665 */       if (node2 == null && (node2 = this.head) == null) {
-/*  666 */         if (casHead(null, paramNode))
-/*  667 */           return paramNode;  continue;
-/*      */       } 
-/*  669 */       if (node2.cannotPrecede(paramBoolean))
-/*  670 */         return null;  Node node;
-/*  671 */       if ((node = node2.next) != null) {
-/*  672 */         Node node3; node2 = (node2 != node1 && node1 != (node3 = this.tail)) ? (node1 = node3) : ((node2 != node) ? node : null); continue;
-/*      */       } 
-/*  674 */       if (!node2.casNext(null, paramNode)) {
-/*  675 */         node2 = node2.next; continue;
-/*      */       }  break;
-/*  677 */     }  if (node2 != node1) {
-/*  678 */       while ((this.tail != node1 || !casTail(node1, paramNode)) && (node1 = this.tail) != null && (paramNode = node1.next) != null && (paramNode = paramNode.next) != null && paramNode != node1);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*  683 */     return node2;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private E awaitMatch(Node paramNode1, Node paramNode2, E paramE, boolean paramBoolean, long paramLong) {
-/*  701 */     long l = paramBoolean ? (System.nanoTime() + paramLong) : 0L;
-/*  702 */     Thread thread = Thread.currentThread();
-/*  703 */     int i = -1;
-/*  704 */     ThreadLocalRandom threadLocalRandom = null;
-/*      */     
-/*      */     while (true) {
-/*  707 */       Object object = paramNode1.item;
-/*  708 */       if (object != paramE) {
-/*      */         
-/*  710 */         paramNode1.forgetContents();
-/*  711 */         return cast(object);
-/*      */       } 
-/*  713 */       if ((thread.isInterrupted() || (paramBoolean && paramLong <= 0L)) && paramNode1
-/*  714 */         .casItem(paramE, paramNode1)) {
-/*  715 */         unsplice(paramNode2, paramNode1);
-/*  716 */         return paramE;
-/*      */       } 
-/*      */       
-/*  719 */       if (i < 0) {
-/*  720 */         if ((i = spinsFor(paramNode2, paramNode1.isData)) > 0)
-/*  721 */           threadLocalRandom = ThreadLocalRandom.current();  continue;
-/*      */       } 
-/*  723 */       if (i > 0) {
-/*  724 */         i--;
-/*  725 */         if (threadLocalRandom.nextInt(64) == 0)
-/*  726 */           Thread.yield();  continue;
-/*      */       } 
-/*  728 */       if (paramNode1.waiter == null) {
-/*  729 */         paramNode1.waiter = thread; continue;
-/*      */       } 
-/*  731 */       if (paramBoolean) {
-/*  732 */         paramLong = l - System.nanoTime();
-/*  733 */         if (paramLong > 0L)
-/*  734 */           LockSupport.parkNanos(this, paramLong); 
-/*      */         continue;
-/*      */       } 
-/*  737 */       LockSupport.park(this);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static int spinsFor(Node paramNode, boolean paramBoolean) {
-/*  747 */     if (MP && paramNode != null) {
-/*  748 */       if (paramNode.isData != paramBoolean)
-/*  749 */         return 192; 
-/*  750 */       if (paramNode.isMatched())
-/*  751 */         return 128; 
-/*  752 */       if (paramNode.waiter == null)
-/*  753 */         return 64; 
-/*      */     } 
-/*  755 */     return 0;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   final Node succ(Node paramNode) {
-/*  766 */     Node node = paramNode.next;
-/*  767 */     return (paramNode == node) ? this.head : node;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Node firstOfMode(boolean paramBoolean) {
-/*  775 */     for (Node node = this.head; node != null; node = succ(node)) {
-/*  776 */       if (!node.isMatched())
-/*  777 */         return (node.isData == paramBoolean) ? node : null; 
-/*      */     } 
-/*  779 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   final Node firstDataNode() {
-/*  788 */     for (Node node = this.head; node != null; ) {
-/*  789 */       Object object = node.item;
-/*  790 */       if (node.isData) {
-/*  791 */         if (object != null && object != node) {
-/*  792 */           return node;
-/*      */         }
-/*  794 */       } else if (object == null) {
-/*      */         break;
-/*  796 */       }  if (node == (node = node.next))
-/*  797 */         node = this.head; 
-/*      */     } 
-/*  799 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private E firstDataItem() {
-/*  807 */     for (Node node = this.head; node != null; node = succ(node)) {
-/*  808 */       Object object = node.item;
-/*  809 */       if (node.isData) {
-/*  810 */         if (object != null && object != node) {
-/*  811 */           return cast(object);
-/*      */         }
-/*  813 */       } else if (object == null) {
-/*  814 */         return null;
-/*      */       } 
-/*  816 */     }  return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int countOfMode(boolean paramBoolean) {
-/*  824 */     byte b = 0;
-/*  825 */     for (Node node = this.head; node != null; ) {
-/*  826 */       if (!node.isMatched()) {
-/*  827 */         if (node.isData != paramBoolean)
-/*  828 */           return 0; 
-/*  829 */         if (++b == Integer.MAX_VALUE)
-/*      */           break; 
-/*      */       } 
-/*  832 */       Node node1 = node.next;
-/*  833 */       if (node1 != node) {
-/*  834 */         node = node1; continue;
-/*      */       } 
-/*  836 */       b = 0;
-/*  837 */       node = this.head;
-/*      */     } 
-/*      */     
-/*  840 */     return b;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   final class Itr
-/*      */     implements Iterator<E>
-/*      */   {
-/*      */     private LinkedTransferQueue.Node nextNode;
-/*      */ 
-/*      */     
-/*      */     private E nextItem;
-/*      */ 
-/*      */     
-/*      */     private LinkedTransferQueue.Node lastRet;
-/*      */ 
-/*      */     
-/*      */     private LinkedTransferQueue.Node lastPred;
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private void advance(LinkedTransferQueue.Node param1Node) {
-/*      */       LinkedTransferQueue.Node node1;
-/*  864 */       if ((node1 = this.lastRet) != null && !node1.isMatched())
-/*  865 */       { this.lastPred = node1; }
-/*  866 */       else { LinkedTransferQueue.Node node; if ((node = this.lastPred) == null || node.isMatched()) {
-/*  867 */           this.lastPred = null;
-/*      */         } else {
-/*      */           LinkedTransferQueue.Node node3; LinkedTransferQueue.Node node4;
-/*  870 */           while ((node3 = node.next) != null && node3 != node && node3
-/*  871 */             .isMatched() && (node4 = node3.next) != null && node4 != node3)
-/*      */           {
-/*  873 */             node.casNext(node3, node4); } 
-/*      */         }  }
-/*      */       
-/*  876 */       this.lastRet = param1Node;
-/*      */       
-/*  878 */       LinkedTransferQueue.Node node2 = param1Node; while (true) {
-/*  879 */         LinkedTransferQueue.Node node3 = (node2 == null) ? LinkedTransferQueue.this.head : node2.next;
-/*  880 */         if (node3 == null)
-/*      */           break; 
-/*  882 */         if (node3 == node2) {
-/*  883 */           node2 = null;
-/*      */           continue;
-/*      */         } 
-/*  886 */         Object object = node3.item;
-/*  887 */         if (node3.isData) {
-/*  888 */           if (object != null && object != node3) {
-/*  889 */             this.nextItem = LinkedTransferQueue.cast(object);
-/*  890 */             this.nextNode = node3;
-/*      */             
-/*      */             return;
-/*      */           } 
-/*  894 */         } else if (object == null) {
-/*      */           break;
-/*      */         } 
-/*  897 */         if (node2 == null) {
-/*  898 */           node2 = node3; continue;
-/*  899 */         }  LinkedTransferQueue.Node node4; if ((node4 = node3.next) == null)
-/*      */           break; 
-/*  901 */         if (node3 == node4) {
-/*  902 */           node2 = null; continue;
-/*      */         } 
-/*  904 */         node2.casNext(node3, node4);
-/*      */       } 
-/*  906 */       this.nextNode = null;
-/*  907 */       this.nextItem = null;
-/*      */     }
-/*      */     
-/*      */     Itr() {
-/*  911 */       advance(null);
-/*      */     }
-/*      */     
-/*      */     public final boolean hasNext() {
-/*  915 */       return (this.nextNode != null);
-/*      */     }
-/*      */     
-/*      */     public final E next() {
-/*  919 */       LinkedTransferQueue.Node node = this.nextNode;
-/*  920 */       if (node == null) throw new NoSuchElementException(); 
-/*  921 */       E e = this.nextItem;
-/*  922 */       advance(node);
-/*  923 */       return e;
-/*      */     }
-/*      */     
-/*      */     public final void remove() {
-/*  927 */       LinkedTransferQueue.Node node = this.lastRet;
-/*  928 */       if (node == null)
-/*  929 */         throw new IllegalStateException(); 
-/*  930 */       this.lastRet = null;
-/*  931 */       if (node.tryMatchData())
-/*  932 */         LinkedTransferQueue.this.unsplice(this.lastPred, node); 
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   static final class LTQSpliterator<E> implements Spliterator<E> {
-/*      */     static final int MAX_BATCH = 33554432;
-/*      */     final LinkedTransferQueue<E> queue;
-/*      */     LinkedTransferQueue.Node current;
-/*      */     int batch;
-/*      */     boolean exhausted;
-/*      */     
-/*      */     LTQSpliterator(LinkedTransferQueue<E> param1LinkedTransferQueue) {
-/*  944 */       this.queue = param1LinkedTransferQueue;
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public Spliterator<E> trySplit() {
-/*  949 */       LinkedTransferQueue<E> linkedTransferQueue = this.queue;
-/*  950 */       int i = this.batch;
-/*  951 */       byte b = (i <= 0) ? 1 : ((i >= 33554432) ? 33554432 : (i + 1)); LinkedTransferQueue.Node node;
-/*  952 */       if (!this.exhausted && ((node = this.current) != null || (
-/*  953 */         node = linkedTransferQueue.firstDataNode()) != null) && node.next != null) {
-/*      */         
-/*  955 */         Object[] arrayOfObject = new Object[b];
-/*  956 */         byte b1 = 0;
-/*      */         do {
-/*  958 */           Object object = node.item;
-/*  959 */           arrayOfObject[b1] = object; if (object != node && object != null)
-/*  960 */             b1++; 
-/*  961 */           if (node != (node = node.next))
-/*  962 */             continue;  node = linkedTransferQueue.firstDataNode();
-/*  963 */         } while (node != null && b1 < b && node.isData);
-/*  964 */         if ((this.current = node) == null)
-/*  965 */           this.exhausted = true; 
-/*  966 */         if (b1 > 0) {
-/*  967 */           this.batch = b1;
-/*  968 */           return 
-/*  969 */             Spliterators.spliterator(arrayOfObject, 0, b1, 4368);
-/*      */         } 
-/*      */       } 
-/*      */       
-/*  973 */       return null;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void forEachRemaining(Consumer<? super E> param1Consumer) {
-/*  979 */       if (param1Consumer == null) throw new NullPointerException(); 
-/*  980 */       LinkedTransferQueue<E> linkedTransferQueue = this.queue; LinkedTransferQueue.Node node;
-/*  981 */       if (!this.exhausted && ((node = this.current) != null || (
-/*  982 */         node = linkedTransferQueue.firstDataNode()) != null)) {
-/*  983 */         this.exhausted = true;
-/*      */         do {
-/*  985 */           Object object = node.item;
-/*  986 */           if (object != null && object != node)
-/*  987 */             param1Consumer.accept((E)object); 
-/*  988 */           if (node != (node = node.next))
-/*  989 */             continue;  node = linkedTransferQueue.firstDataNode();
-/*  990 */         } while (node != null && node.isData);
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public boolean tryAdvance(Consumer<? super E> param1Consumer) {
-/*  997 */       if (param1Consumer == null) throw new NullPointerException(); 
-/*  998 */       LinkedTransferQueue<E> linkedTransferQueue = this.queue; LinkedTransferQueue.Node node;
-/*  999 */       if (!this.exhausted && ((node = this.current) != null || (
-/* 1000 */         node = linkedTransferQueue.firstDataNode()) != null)) {
-/*      */         Object object;
-/*      */         do {
-/* 1003 */           if ((object = node.item) == node)
-/* 1004 */             object = null; 
-/* 1005 */           if (node != (node = node.next))
-/* 1006 */             continue;  node = linkedTransferQueue.firstDataNode();
-/* 1007 */         } while (object == null && node != null && node.isData);
-/* 1008 */         if ((this.current = node) == null)
-/* 1009 */           this.exhausted = true; 
-/* 1010 */         if (object != null) {
-/* 1011 */           param1Consumer.accept((E)object);
-/* 1012 */           return true;
-/*      */         } 
-/*      */       } 
-/* 1015 */       return false;
-/*      */     }
-/*      */     public long estimateSize() {
-/* 1018 */       return Long.MAX_VALUE;
-/*      */     }
-/*      */     public int characteristics() {
-/* 1021 */       return 4368;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Spliterator<E> spliterator() {
-/* 1043 */     return new LTQSpliterator<>(this);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   final void unsplice(Node paramNode1, Node paramNode2) {
-/* 1057 */     paramNode2.forgetContents();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1065 */     if (paramNode1 != null && paramNode1 != paramNode2 && paramNode1.next == paramNode2) {
-/* 1066 */       Node node = paramNode2.next;
-/* 1067 */       if (node == null || (node != paramNode2 && paramNode1
-/* 1068 */         .casNext(paramNode2, node) && paramNode1.isMatched())) {
-/*      */         while (true) {
-/* 1070 */           Node node1 = this.head;
-/* 1071 */           if (node1 == paramNode1 || node1 == paramNode2 || node1 == null)
-/*      */             return; 
-/* 1073 */           if (!node1.isMatched())
-/*      */             break; 
-/* 1075 */           Node node2 = node1.next;
-/* 1076 */           if (node2 == null)
-/*      */             return; 
-/* 1078 */           if (node2 != node1 && casHead(node1, node2))
-/* 1079 */             node1.forgetNext(); 
-/*      */         } 
-/* 1081 */         if (paramNode1.next != paramNode1 && paramNode2.next != paramNode2) {
-/*      */           while (true) {
-/* 1083 */             int i = this.sweepVotes;
-/* 1084 */             if (i < 32) {
-/* 1085 */               if (casSweepVotes(i, i + 1))
-/*      */                 break;  continue;
-/*      */             } 
-/* 1088 */             if (casSweepVotes(i, 0)) {
-/* 1089 */               sweep();
-/*      */               break;
-/*      */             } 
-/*      */           } 
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void sweep() {
-/*      */     Node node2;
-/* 1103 */     for (Node node1 = this.head; node1 != null && (node2 = node1.next) != null; ) {
-/* 1104 */       if (!node2.isMatched()) {
-/*      */         
-/* 1106 */         node1 = node2; continue;
-/* 1107 */       }  Node node; if ((node = node2.next) == null)
-/*      */         break; 
-/* 1109 */       if (node2 == node) {
-/*      */         
-/* 1111 */         node1 = this.head; continue;
-/*      */       } 
-/* 1113 */       node1.casNext(node2, node);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean findAndRemove(Object paramObject) {
-/* 1121 */     if (paramObject != null) {
-/* 1122 */       for (Node node1 = null, node2 = this.head; node2 != null; ) {
-/* 1123 */         Object object = node2.item;
-/* 1124 */         if (node2.isData) {
-/* 1125 */           if (object != null && object != node2 && paramObject.equals(object) && node2
-/* 1126 */             .tryMatchData()) {
-/* 1127 */             unsplice(node1, node2);
-/* 1128 */             return true;
-/*      */           }
-/*      */         
-/* 1131 */         } else if (object == null) {
-/*      */           break;
-/* 1133 */         }  node1 = node2;
-/* 1134 */         if ((node2 = node2.next) == node1) {
-/* 1135 */           node1 = null;
-/* 1136 */           node2 = this.head;
-/*      */         } 
-/*      */       } 
-/*      */     }
-/* 1140 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public LinkedTransferQueue() {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public LinkedTransferQueue(Collection<? extends E> paramCollection) {
-/* 1159 */     this();
-/* 1160 */     addAll(paramCollection);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void put(E paramE) {
-/* 1170 */     xfer(paramE, true, 1, 0L);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean offer(E paramE, long paramLong, TimeUnit paramTimeUnit) {
-/* 1184 */     xfer(paramE, true, 1, 0L);
-/* 1185 */     return true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean offer(E paramE) {
-/* 1196 */     xfer(paramE, true, 1, 0L);
-/* 1197 */     return true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean add(E paramE) {
-/* 1209 */     xfer(paramE, true, 1, 0L);
-/* 1210 */     return true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean tryTransfer(E paramE) {
-/* 1224 */     return (xfer(paramE, true, 0, 0L) == null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void transfer(E paramE) throws InterruptedException {
-/* 1239 */     if (xfer(paramE, true, 2, 0L) != null) {
-/* 1240 */       Thread.interrupted();
-/* 1241 */       throw new InterruptedException();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean tryTransfer(E paramE, long paramLong, TimeUnit paramTimeUnit) throws InterruptedException {
-/* 1261 */     if (xfer(paramE, true, 3, paramTimeUnit.toNanos(paramLong)) == null)
-/* 1262 */       return true; 
-/* 1263 */     if (!Thread.interrupted())
-/* 1264 */       return false; 
-/* 1265 */     throw new InterruptedException();
-/*      */   }
-/*      */   
-/*      */   public E take() throws InterruptedException {
-/* 1269 */     E e = xfer((E)null, false, 2, 0L);
-/* 1270 */     if (e != null)
-/* 1271 */       return e; 
-/* 1272 */     Thread.interrupted();
-/* 1273 */     throw new InterruptedException();
-/*      */   }
-/*      */   
-/*      */   public E poll(long paramLong, TimeUnit paramTimeUnit) throws InterruptedException {
-/* 1277 */     E e = xfer((E)null, false, 3, paramTimeUnit.toNanos(paramLong));
-/* 1278 */     if (e != null || !Thread.interrupted())
-/* 1279 */       return e; 
-/* 1280 */     throw new InterruptedException();
-/*      */   }
-/*      */   
-/*      */   public E poll() {
-/* 1284 */     return xfer((E)null, false, 0, 0L);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int drainTo(Collection<? super E> paramCollection) {
-/* 1292 */     if (paramCollection == null)
-/* 1293 */       throw new NullPointerException(); 
-/* 1294 */     if (paramCollection == this)
-/* 1295 */       throw new IllegalArgumentException(); 
-/* 1296 */     byte b = 0; E e;
-/* 1297 */     while ((e = poll()) != null) {
-/* 1298 */       paramCollection.add(e);
-/* 1299 */       b++;
-/*      */     } 
-/* 1301 */     return b;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int drainTo(Collection<? super E> paramCollection, int paramInt) {
-/* 1309 */     if (paramCollection == null)
-/* 1310 */       throw new NullPointerException(); 
-/* 1311 */     if (paramCollection == this)
-/* 1312 */       throw new IllegalArgumentException(); 
-/* 1313 */     byte b = 0; E e;
-/* 1314 */     while (b < paramInt && (e = poll()) != null) {
-/* 1315 */       paramCollection.add(e);
-/* 1316 */       b++;
-/*      */     } 
-/* 1318 */     return b;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Iterator<E> iterator() {
-/* 1331 */     return new Itr();
-/*      */   }
-/*      */   
-/*      */   public E peek() {
-/* 1335 */     return firstDataItem();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isEmpty() {
-/* 1344 */     for (Node node = this.head; node != null; node = succ(node)) {
-/* 1345 */       if (!node.isMatched())
-/* 1346 */         return !node.isData; 
-/*      */     } 
-/* 1348 */     return true;
-/*      */   }
-/*      */   
-/*      */   public boolean hasWaitingConsumer() {
-/* 1352 */     return (firstOfMode(false) != null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int size() {
-/* 1368 */     return countOfMode(true);
-/*      */   }
-/*      */   
-/*      */   public int getWaitingConsumerCount() {
-/* 1372 */     return countOfMode(false);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean remove(Object paramObject) {
-/* 1387 */     return findAndRemove(paramObject);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean contains(Object paramObject) {
-/* 1399 */     if (paramObject == null) return false; 
-/* 1400 */     for (Node node = this.head; node != null; node = succ(node)) {
-/* 1401 */       Object object = node.item;
-/* 1402 */       if (node.isData) {
-/* 1403 */         if (object != null && object != node && paramObject.equals(object)) {
-/* 1404 */           return true;
-/*      */         }
-/* 1406 */       } else if (object == null) {
-/*      */         break;
-/*      */       } 
-/* 1409 */     }  return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int remainingCapacity() {
-/* 1421 */     return Integer.MAX_VALUE;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void writeObject(ObjectOutputStream paramObjectOutputStream) throws IOException {
-/* 1434 */     paramObjectOutputStream.defaultWriteObject();
-/* 1435 */     for (E e : this) {
-/* 1436 */       paramObjectOutputStream.writeObject(e);
-/*      */     }
-/* 1438 */     paramObjectOutputStream.writeObject(null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void readObject(ObjectInputStream paramObjectInputStream) throws IOException, ClassNotFoundException {
-/* 1450 */     paramObjectInputStream.defaultReadObject();
-/*      */     
-/*      */     while (true) {
-/* 1453 */       Object object = paramObjectInputStream.readObject();
-/* 1454 */       if (object == null) {
-/*      */         break;
-/*      */       }
-/* 1457 */       offer((E)object);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static {
-/*      */     try {
-/* 1469 */       UNSAFE = Unsafe.getUnsafe();
-/* 1470 */       Class<LinkedTransferQueue> clazz = LinkedTransferQueue.class;
-/*      */       
-/* 1472 */       headOffset = UNSAFE.objectFieldOffset(clazz.getDeclaredField("head"));
-/*      */       
-/* 1474 */       tailOffset = UNSAFE.objectFieldOffset(clazz.getDeclaredField("tail"));
-/*      */       
-/* 1476 */       sweepVotesOffset = UNSAFE.objectFieldOffset(clazz.getDeclaredField("sweepVotes"));
-/* 1477 */     } catch (Exception exception) {
-/* 1478 */       throw new Error(exception);
-/*      */     } 
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\concurrent\LinkedTransferQueue.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+/*
+ *
+ *
+ *
+ *
+ *
+ * Written by Doug Lea with assistance from members of JCP JSR-166
+ * Expert Group and released to the public domain, as explained at
+ * http://creativecommons.org/publicdomain/zero/1.0/
+ */
+
+package java.util.concurrent;
+
+import java.util.AbstractQueue;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+import java.util.Queue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.function.Consumer;
+
+/**
+ * An unbounded {@link TransferQueue} based on linked nodes.
+ * This queue orders elements FIFO (first-in-first-out) with respect
+ * to any given producer.  The <em>head</em> of the queue is that
+ * element that has been on the queue the longest time for some
+ * producer.  The <em>tail</em> of the queue is that element that has
+ * been on the queue the shortest time for some producer.
+ *
+ * <p>Beware that, unlike in most collections, the {@code size} method
+ * is <em>NOT</em> a constant-time operation. Because of the
+ * asynchronous nature of these queues, determining the current number
+ * of elements requires a traversal of the elements, and so may report
+ * inaccurate results if this collection is modified during traversal.
+ * Additionally, the bulk operations {@code addAll},
+ * {@code removeAll}, {@code retainAll}, {@code containsAll},
+ * {@code equals}, and {@code toArray} are <em>not</em> guaranteed
+ * to be performed atomically. For example, an iterator operating
+ * concurrently with an {@code addAll} operation might view only some
+ * of the added elements.
+ *
+ * <p>This class and its iterator implement all of the
+ * <em>optional</em> methods of the {@link Collection} and {@link
+ * Iterator} interfaces.
+ *
+ * <p>Memory consistency effects: As with other concurrent
+ * collections, actions in a thread prior to placing an object into a
+ * {@code LinkedTransferQueue}
+ * <a href="package-summary.html#MemoryVisibility"><i>happen-before</i></a>
+ * actions subsequent to the access or removal of that element from
+ * the {@code LinkedTransferQueue} in another thread.
+ *
+ * <p>This class is a member of the
+ * <a href="{@docRoot}/../technotes/guides/collections/index.html">
+ * Java Collections Framework</a>.
+ *
+ * @since 1.7
+ * @author Doug Lea
+ * @param <E> the type of elements held in this collection
+ */
+public class LinkedTransferQueue<E> extends AbstractQueue<E>
+    implements TransferQueue<E>, java.io.Serializable {
+    private static final long serialVersionUID = -3223113410248163686L;
+
+    /*
+     * *** Overview of Dual Queues with Slack ***
+     *
+     * Dual Queues, introduced by Scherer and Scott
+     * (http://www.cs.rice.edu/~wns1/papers/2004-DISC-DDS.pdf) are
+     * (linked) queues in which nodes may represent either data or
+     * requests.  When a thread tries to enqueue a data node, but
+     * encounters a request node, it instead "matches" and removes it;
+     * and vice versa for enqueuing requests. Blocking Dual Queues
+     * arrange that threads enqueuing unmatched requests block until
+     * other threads provide the match. Dual Synchronous Queues (see
+     * Scherer, Lea, & Scott
+     * http://www.cs.rochester.edu/u/scott/papers/2009_Scherer_CACM_SSQ.pdf)
+     * additionally arrange that threads enqueuing unmatched data also
+     * block.  Dual Transfer Queues support all of these modes, as
+     * dictated by callers.
+     *
+     * A FIFO dual queue may be implemented using a variation of the
+     * Michael & Scott (M&S) lock-free queue algorithm
+     * (http://www.cs.rochester.edu/u/scott/papers/1996_PODC_queues.pdf).
+     * It maintains two pointer fields, "head", pointing to a
+     * (matched) node that in turn points to the first actual
+     * (unmatched) queue node (or null if empty); and "tail" that
+     * points to the last node on the queue (or again null if
+     * empty). For example, here is a possible queue with four data
+     * elements:
+     *
+     *  head                tail
+     *    |                   |
+     *    v                   v
+     *    M -> U -> U -> U -> U
+     *
+     * The M&S queue algorithm is known to be prone to scalability and
+     * overhead limitations when maintaining (via CAS) these head and
+     * tail pointers. This has led to the development of
+     * contention-reducing variants such as elimination arrays (see
+     * Moir et al http://portal.acm.org/citation.cfm?id=1074013) and
+     * optimistic back pointers (see Ladan-Mozes & Shavit
+     * http://people.csail.mit.edu/edya/publications/OptimisticFIFOQueue-journal.pdf).
+     * However, the nature of dual queues enables a simpler tactic for
+     * improving M&S-style implementations when dual-ness is needed.
+     *
+     * In a dual queue, each node must atomically maintain its match
+     * status. While there are other possible variants, we implement
+     * this here as: for a data-mode node, matching entails CASing an
+     * "item" field from a non-null data value to null upon match, and
+     * vice-versa for request nodes, CASing from null to a data
+     * value. (Note that the linearization properties of this style of
+     * queue are easy to verify -- elements are made available by
+     * linking, and unavailable by matching.) Compared to plain M&S
+     * queues, this property of dual queues requires one additional
+     * successful atomic operation per enq/deq pair. But it also
+     * enables lower cost variants of queue maintenance mechanics. (A
+     * variation of this idea applies even for non-dual queues that
+     * support deletion of interior elements, such as
+     * j.u.c.ConcurrentLinkedQueue.)
+     *
+     * Once a node is matched, its match status can never again
+     * change.  We may thus arrange that the linked list of them
+     * contain a prefix of zero or more matched nodes, followed by a
+     * suffix of zero or more unmatched nodes. (Note that we allow
+     * both the prefix and suffix to be zero length, which in turn
+     * means that we do not use a dummy header.)  If we were not
+     * concerned with either time or space efficiency, we could
+     * correctly perform enqueue and dequeue operations by traversing
+     * from a pointer to the initial node; CASing the item of the
+     * first unmatched node on match and CASing the next field of the
+     * trailing node on appends. (Plus some special-casing when
+     * initially empty).  While this would be a terrible idea in
+     * itself, it does have the benefit of not requiring ANY atomic
+     * updates on head/tail fields.
+     *
+     * We introduce here an approach that lies between the extremes of
+     * never versus always updating queue (head and tail) pointers.
+     * This offers a tradeoff between sometimes requiring extra
+     * traversal steps to locate the first and/or last unmatched
+     * nodes, versus the reduced overhead and contention of fewer
+     * updates to queue pointers. For example, a possible snapshot of
+     * a queue is:
+     *
+     *  head           tail
+     *    |              |
+     *    v              v
+     *    M -> M -> U -> U -> U -> U
+     *
+     * The best value for this "slack" (the targeted maximum distance
+     * between the value of "head" and the first unmatched node, and
+     * similarly for "tail") is an empirical matter. We have found
+     * that using very small constants in the range of 1-3 work best
+     * over a range of platforms. Larger values introduce increasing
+     * costs of cache misses and risks of long traversal chains, while
+     * smaller values increase CAS contention and overhead.
+     *
+     * Dual queues with slack differ from plain M&S dual queues by
+     * virtue of only sometimes updating head or tail pointers when
+     * matching, appending, or even traversing nodes; in order to
+     * maintain a targeted slack.  The idea of "sometimes" may be
+     * operationalized in several ways. The simplest is to use a
+     * per-operation counter incremented on each traversal step, and
+     * to try (via CAS) to update the associated queue pointer
+     * whenever the count exceeds a threshold. Another, that requires
+     * more overhead, is to use random number generators to update
+     * with a given probability per traversal step.
+     *
+     * In any strategy along these lines, because CASes updating
+     * fields may fail, the actual slack may exceed targeted
+     * slack. However, they may be retried at any time to maintain
+     * targets.  Even when using very small slack values, this
+     * approach works well for dual queues because it allows all
+     * operations up to the point of matching or appending an item
+     * (hence potentially allowing progress by another thread) to be
+     * read-only, thus not introducing any further contention. As
+     * described below, we implement this by performing slack
+     * maintenance retries only after these points.
+     *
+     * As an accompaniment to such techniques, traversal overhead can
+     * be further reduced without increasing contention of head
+     * pointer updates: Threads may sometimes shortcut the "next" link
+     * path from the current "head" node to be closer to the currently
+     * known first unmatched node, and similarly for tail. Again, this
+     * may be triggered with using thresholds or randomization.
+     *
+     * These ideas must be further extended to avoid unbounded amounts
+     * of costly-to-reclaim garbage caused by the sequential "next"
+     * links of nodes starting at old forgotten head nodes: As first
+     * described in detail by Boehm
+     * (http://portal.acm.org/citation.cfm?doid=503272.503282) if a GC
+     * delays noticing that any arbitrarily old node has become
+     * garbage, all newer dead nodes will also be unreclaimed.
+     * (Similar issues arise in non-GC environments.)  To cope with
+     * this in our implementation, upon CASing to advance the head
+     * pointer, we set the "next" link of the previous head to point
+     * only to itself; thus limiting the length of connected dead lists.
+     * (We also take similar care to wipe out possibly garbage
+     * retaining values held in other Node fields.)  However, doing so
+     * adds some further complexity to traversal: If any "next"
+     * pointer links to itself, it indicates that the current thread
+     * has lagged behind a head-update, and so the traversal must
+     * continue from the "head".  Traversals trying to find the
+     * current tail starting from "tail" may also encounter
+     * self-links, in which case they also continue at "head".
+     *
+     * It is tempting in slack-based scheme to not even use CAS for
+     * updates (similarly to Ladan-Mozes & Shavit). However, this
+     * cannot be done for head updates under the above link-forgetting
+     * mechanics because an update may leave head at a detached node.
+     * And while direct writes are possible for tail updates, they
+     * increase the risk of long retraversals, and hence long garbage
+     * chains, which can be much more costly than is worthwhile
+     * considering that the cost difference of performing a CAS vs
+     * write is smaller when they are not triggered on each operation
+     * (especially considering that writes and CASes equally require
+     * additional GC bookkeeping ("write barriers") that are sometimes
+     * more costly than the writes themselves because of contention).
+     *
+     * *** Overview of implementation ***
+     *
+     * We use a threshold-based approach to updates, with a slack
+     * threshold of two -- that is, we update head/tail when the
+     * current pointer appears to be two or more steps away from the
+     * first/last node. The slack value is hard-wired: a path greater
+     * than one is naturally implemented by checking equality of
+     * traversal pointers except when the list has only one element,
+     * in which case we keep slack threshold at one. Avoiding tracking
+     * explicit counts across method calls slightly simplifies an
+     * already-messy implementation. Using randomization would
+     * probably work better if there were a low-quality dirt-cheap
+     * per-thread one available, but even ThreadLocalRandom is too
+     * heavy for these purposes.
+     *
+     * With such a small slack threshold value, it is not worthwhile
+     * to augment this with path short-circuiting (i.e., unsplicing
+     * interior nodes) except in the case of cancellation/removal (see
+     * below).
+     *
+     * We allow both the head and tail fields to be null before any
+     * nodes are enqueued; initializing upon first append.  This
+     * simplifies some other logic, as well as providing more
+     * efficient explicit control paths instead of letting JVMs insert
+     * implicit NullPointerExceptions when they are null.  While not
+     * currently fully implemented, we also leave open the possibility
+     * of re-nulling these fields when empty (which is complicated to
+     * arrange, for little benefit.)
+     *
+     * All enqueue/dequeue operations are handled by the single method
+     * "xfer" with parameters indicating whether to act as some form
+     * of offer, put, poll, take, or transfer (each possibly with
+     * timeout). The relative complexity of using one monolithic
+     * method outweighs the code bulk and maintenance problems of
+     * using separate methods for each case.
+     *
+     * Operation consists of up to three phases. The first is
+     * implemented within method xfer, the second in tryAppend, and
+     * the third in method awaitMatch.
+     *
+     * 1. Try to match an existing node
+     *
+     *    Starting at head, skip already-matched nodes until finding
+     *    an unmatched node of opposite mode, if one exists, in which
+     *    case matching it and returning, also if necessary updating
+     *    head to one past the matched node (or the node itself if the
+     *    list has no other unmatched nodes). If the CAS misses, then
+     *    a loop retries advancing head by two steps until either
+     *    success or the slack is at most two. By requiring that each
+     *    attempt advances head by two (if applicable), we ensure that
+     *    the slack does not grow without bound. Traversals also check
+     *    if the initial head is now off-list, in which case they
+     *    start at the new head.
+     *
+     *    If no candidates are found and the call was untimed
+     *    poll/offer, (argument "how" is NOW) return.
+     *
+     * 2. Try to append a new node (method tryAppend)
+     *
+     *    Starting at current tail pointer, find the actual last node
+     *    and try to append a new node (or if head was null, establish
+     *    the first node). Nodes can be appended only if their
+     *    predecessors are either already matched or are of the same
+     *    mode. If we detect otherwise, then a new node with opposite
+     *    mode must have been appended during traversal, so we must
+     *    restart at phase 1. The traversal and update steps are
+     *    otherwise similar to phase 1: Retrying upon CAS misses and
+     *    checking for staleness.  In particular, if a self-link is
+     *    encountered, then we can safely jump to a node on the list
+     *    by continuing the traversal at current head.
+     *
+     *    On successful append, if the call was ASYNC, return.
+     *
+     * 3. Await match or cancellation (method awaitMatch)
+     *
+     *    Wait for another thread to match node; instead cancelling if
+     *    the current thread was interrupted or the wait timed out. On
+     *    multiprocessors, we use front-of-queue spinning: If a node
+     *    appears to be the first unmatched node in the queue, it
+     *    spins a bit before blocking. In either case, before blocking
+     *    it tries to unsplice any nodes between the current "head"
+     *    and the first unmatched node.
+     *
+     *    Front-of-queue spinning vastly improves performance of
+     *    heavily contended queues. And so long as it is relatively
+     *    brief and "quiet", spinning does not much impact performance
+     *    of less-contended queues.  During spins threads check their
+     *    interrupt status and generate a thread-local random number
+     *    to decide to occasionally perform a Thread.yield. While
+     *    yield has underdefined specs, we assume that it might help,
+     *    and will not hurt, in limiting impact of spinning on busy
+     *    systems.  We also use smaller (1/2) spins for nodes that are
+     *    not known to be front but whose predecessors have not
+     *    blocked -- these "chained" spins avoid artifacts of
+     *    front-of-queue rules which otherwise lead to alternating
+     *    nodes spinning vs blocking. Further, front threads that
+     *    represent phase changes (from data to request node or vice
+     *    versa) compared to their predecessors receive additional
+     *    chained spins, reflecting longer paths typically required to
+     *    unblock threads during phase changes.
+     *
+     *
+     * ** Unlinking removed interior nodes **
+     *
+     * In addition to minimizing garbage retention via self-linking
+     * described above, we also unlink removed interior nodes. These
+     * may arise due to timed out or interrupted waits, or calls to
+     * remove(x) or Iterator.remove.  Normally, given a node that was
+     * at one time known to be the predecessor of some node s that is
+     * to be removed, we can unsplice s by CASing the next field of
+     * its predecessor if it still points to s (otherwise s must
+     * already have been removed or is now offlist). But there are two
+     * situations in which we cannot guarantee to make node s
+     * unreachable in this way: (1) If s is the trailing node of list
+     * (i.e., with null next), then it is pinned as the target node
+     * for appends, so can only be removed later after other nodes are
+     * appended. (2) We cannot necessarily unlink s given a
+     * predecessor node that is matched (including the case of being
+     * cancelled): the predecessor may already be unspliced, in which
+     * case some previous reachable node may still point to s.
+     * (For further explanation see Herlihy & Shavit "The Art of
+     * Multiprocessor Programming" chapter 9).  Although, in both
+     * cases, we can rule out the need for further action if either s
+     * or its predecessor are (or can be made to be) at, or fall off
+     * from, the head of list.
+     *
+     * Without taking these into account, it would be possible for an
+     * unbounded number of supposedly removed nodes to remain
+     * reachable.  Situations leading to such buildup are uncommon but
+     * can occur in practice; for example when a series of short timed
+     * calls to poll repeatedly time out but never otherwise fall off
+     * the list because of an untimed call to take at the front of the
+     * queue.
+     *
+     * When these cases arise, rather than always retraversing the
+     * entire list to find an actual predecessor to unlink (which
+     * won't help for case (1) anyway), we record a conservative
+     * estimate of possible unsplice failures (in "sweepVotes").
+     * We trigger a full sweep when the estimate exceeds a threshold
+     * ("SWEEP_THRESHOLD") indicating the maximum number of estimated
+     * removal failures to tolerate before sweeping through, unlinking
+     * cancelled nodes that were not unlinked upon initial removal.
+     * We perform sweeps by the thread hitting threshold (rather than
+     * background threads or by spreading work to other threads)
+     * because in the main contexts in which removal occurs, the
+     * caller is already timed-out, cancelled, or performing a
+     * potentially O(n) operation (e.g. remove(x)), none of which are
+     * time-critical enough to warrant the overhead that alternatives
+     * would impose on other threads.
+     *
+     * Because the sweepVotes estimate is conservative, and because
+     * nodes become unlinked "naturally" as they fall off the head of
+     * the queue, and because we allow votes to accumulate even while
+     * sweeps are in progress, there are typically significantly fewer
+     * such nodes than estimated.  Choice of a threshold value
+     * balances the likelihood of wasted effort and contention, versus
+     * providing a worst-case bound on retention of interior nodes in
+     * quiescent queues. The value defined below was chosen
+     * empirically to balance these under various timeout scenarios.
+     *
+     * Note that we cannot self-link unlinked interior nodes during
+     * sweeps. However, the associated garbage chains terminate when
+     * some successor ultimately falls off the head of the list and is
+     * self-linked.
+     */
+
+    /** True if on multiprocessor */
+    private static final boolean MP =
+        Runtime.getRuntime().availableProcessors() > 1;
+
+    /**
+     * The number of times to spin (with randomly interspersed calls
+     * to Thread.yield) on multiprocessor before blocking when a node
+     * is apparently the first waiter in the queue.  See above for
+     * explanation. Must be a power of two. The value is empirically
+     * derived -- it works pretty well across a variety of processors,
+     * numbers of CPUs, and OSes.
+     */
+    private static final int FRONT_SPINS   = 1 << 7;
+
+    /**
+     * The number of times to spin before blocking when a node is
+     * preceded by another node that is apparently spinning.  Also
+     * serves as an increment to FRONT_SPINS on phase changes, and as
+     * base average frequency for yielding during spins. Must be a
+     * power of two.
+     */
+    private static final int CHAINED_SPINS = FRONT_SPINS >>> 1;
+
+    /**
+     * The maximum number of estimated removal failures (sweepVotes)
+     * to tolerate before sweeping through the queue unlinking
+     * cancelled nodes that were not unlinked upon initial
+     * removal. See above for explanation. The value must be at least
+     * two to avoid useless sweeps when removing trailing nodes.
+     */
+    static final int SWEEP_THRESHOLD = 32;
+
+    /**
+     * Queue nodes. Uses Object, not E, for items to allow forgetting
+     * them after use.  Relies heavily on Unsafe mechanics to minimize
+     * unnecessary ordering constraints: Writes that are intrinsically
+     * ordered wrt other accesses or CASes use simple relaxed forms.
+     */
+    static final class Node {
+        final boolean isData;   // false if this is a request node
+        volatile Object item;   // initially non-null if isData; CASed to match
+        volatile Node next;
+        volatile Thread waiter; // null until waiting
+
+        // CAS methods for fields
+        final boolean casNext(Node cmp, Node val) {
+            return UNSAFE.compareAndSwapObject(this, nextOffset, cmp, val);
+        }
+
+        final boolean casItem(Object cmp, Object val) {
+            // assert cmp == null || cmp.getClass() != Node.class;
+            return UNSAFE.compareAndSwapObject(this, itemOffset, cmp, val);
+        }
+
+        /**
+         * Constructs a new node.  Uses relaxed write because item can
+         * only be seen after publication via casNext.
+         */
+        Node(Object item, boolean isData) {
+            UNSAFE.putObject(this, itemOffset, item); // relaxed write
+            this.isData = isData;
+        }
+
+        /**
+         * Links node to itself to avoid garbage retention.  Called
+         * only after CASing head field, so uses relaxed write.
+         */
+        final void forgetNext() {
+            UNSAFE.putObject(this, nextOffset, this);
+        }
+
+        /**
+         * Sets item to self and waiter to null, to avoid garbage
+         * retention after matching or cancelling. Uses relaxed writes
+         * because order is already constrained in the only calling
+         * contexts: item is forgotten only after volatile/atomic
+         * mechanics that extract items.  Similarly, clearing waiter
+         * follows either CAS or return from park (if ever parked;
+         * else we don't care).
+         */
+        final void forgetContents() {
+            UNSAFE.putObject(this, itemOffset, this);
+            UNSAFE.putObject(this, waiterOffset, null);
+        }
+
+        /**
+         * Returns true if this node has been matched, including the
+         * case of artificial matches due to cancellation.
+         */
+        final boolean isMatched() {
+            Object x = item;
+            return (x == this) || ((x == null) == isData);
+        }
+
+        /**
+         * Returns true if this is an unmatched request node.
+         */
+        final boolean isUnmatchedRequest() {
+            return !isData && item == null;
+        }
+
+        /**
+         * Returns true if a node with the given mode cannot be
+         * appended to this node because this node is unmatched and
+         * has opposite data mode.
+         */
+        final boolean cannotPrecede(boolean haveData) {
+            boolean d = isData;
+            Object x;
+            return d != haveData && (x = item) != this && (x != null) == d;
+        }
+
+        /**
+         * Tries to artificially match a data node -- used by remove.
+         */
+        final boolean tryMatchData() {
+            // assert isData;
+            Object x = item;
+            if (x != null && x != this && casItem(x, null)) {
+                LockSupport.unpark(waiter);
+                return true;
+            }
+            return false;
+        }
+
+        private static final long serialVersionUID = -3375979862319811754L;
+
+        // Unsafe mechanics
+        private static final sun.misc.Unsafe UNSAFE;
+        private static final long itemOffset;
+        private static final long nextOffset;
+        private static final long waiterOffset;
+        static {
+            try {
+                UNSAFE = sun.misc.Unsafe.getUnsafe();
+                Class<?> k = Node.class;
+                itemOffset = UNSAFE.objectFieldOffset
+                    (k.getDeclaredField("item"));
+                nextOffset = UNSAFE.objectFieldOffset
+                    (k.getDeclaredField("next"));
+                waiterOffset = UNSAFE.objectFieldOffset
+                    (k.getDeclaredField("waiter"));
+            } catch (Exception e) {
+                throw new Error(e);
+            }
+        }
+    }
+
+    /** head of the queue; null until first enqueue */
+    transient volatile Node head;
+
+    /** tail of the queue; null until first append */
+    private transient volatile Node tail;
+
+    /** The number of apparent failures to unsplice removed nodes */
+    private transient volatile int sweepVotes;
+
+    // CAS methods for fields
+    private boolean casTail(Node cmp, Node val) {
+        return UNSAFE.compareAndSwapObject(this, tailOffset, cmp, val);
+    }
+
+    private boolean casHead(Node cmp, Node val) {
+        return UNSAFE.compareAndSwapObject(this, headOffset, cmp, val);
+    }
+
+    private boolean casSweepVotes(int cmp, int val) {
+        return UNSAFE.compareAndSwapInt(this, sweepVotesOffset, cmp, val);
+    }
+
+    /*
+     * Possible values for "how" argument in xfer method.
+     */
+    private static final int NOW   = 0; // for untimed poll, tryTransfer
+    private static final int ASYNC = 1; // for offer, put, add
+    private static final int SYNC  = 2; // for transfer, take
+    private static final int TIMED = 3; // for timed poll, tryTransfer
+
+    @SuppressWarnings("unchecked")
+    static <E> E cast(Object item) {
+        // assert item == null || item.getClass() != Node.class;
+        return (E) item;
+    }
+
+    /**
+     * Implements all queuing methods. See above for explanation.
+     *
+     * @param e the item or null for take
+     * @param haveData true if this is a put, else a take
+     * @param how NOW, ASYNC, SYNC, or TIMED
+     * @param nanos timeout in nanosecs, used only if mode is TIMED
+     * @return an item if matched, else e
+     * @throws NullPointerException if haveData mode but e is null
+     */
+    private E xfer(E e, boolean haveData, int how, long nanos) {
+        if (haveData && (e == null))
+            throw new NullPointerException();
+        Node s = null;                        // the node to append, if needed
+
+        retry:
+        for (;;) {                            // restart on append race
+
+            for (Node h = head, p = h; p != null;) { // find & match first node
+                boolean isData = p.isData;
+                Object item = p.item;
+                if (item != p && (item != null) == isData) { // unmatched
+                    if (isData == haveData)   // can't match
+                        break;
+                    if (p.casItem(item, e)) { // match
+                        for (Node q = p; q != h;) {
+                            Node n = q.next;  // update by 2 unless singleton
+                            if (head == h && casHead(h, n == null ? q : n)) {
+                                h.forgetNext();
+                                break;
+                            }                 // advance and retry
+                            if ((h = head)   == null ||
+                                (q = h.next) == null || !q.isMatched())
+                                break;        // unless slack < 2
+                        }
+                        LockSupport.unpark(p.waiter);
+                        return LinkedTransferQueue.<E>cast(item);
+                    }
+                }
+                Node n = p.next;
+                p = (p != n) ? n : (h = head); // Use head if p offlist
+            }
+
+            if (how != NOW) {                 // No matches available
+                if (s == null)
+                    s = new Node(e, haveData);
+                Node pred = tryAppend(s, haveData);
+                if (pred == null)
+                    continue retry;           // lost race vs opposite mode
+                if (how != ASYNC)
+                    return awaitMatch(s, pred, e, (how == TIMED), nanos);
+            }
+            return e; // not waiting
+        }
+    }
+
+    /**
+     * Tries to append node s as tail.
+     *
+     * @param s the node to append
+     * @param haveData true if appending in data mode
+     * @return null on failure due to losing race with append in
+     * different mode, else s's predecessor, or s itself if no
+     * predecessor
+     */
+    private Node tryAppend(Node s, boolean haveData) {
+        for (Node t = tail, p = t;;) {        // move p to last node and append
+            Node n, u;                        // temps for reads of next & tail
+            if (p == null && (p = head) == null) {
+                if (casHead(null, s))
+                    return s;                 // initialize
+            }
+            else if (p.cannotPrecede(haveData))
+                return null;                  // lost race vs opposite mode
+            else if ((n = p.next) != null)    // not last; keep traversing
+                p = p != t && t != (u = tail) ? (t = u) : // stale tail
+                    (p != n) ? n : null;      // restart if off list
+            else if (!p.casNext(null, s))
+                p = p.next;                   // re-read on CAS failure
+            else {
+                if (p != t) {                 // update if slack now >= 2
+                    while ((tail != t || !casTail(t, s)) &&
+                           (t = tail)   != null &&
+                           (s = t.next) != null && // advance and retry
+                           (s = s.next) != null && s != t);
+                }
+                return p;
+            }
+        }
+    }
+
+    /**
+     * Spins/yields/blocks until node s is matched or caller gives up.
+     *
+     * @param s the waiting node
+     * @param pred the predecessor of s, or s itself if it has no
+     * predecessor, or null if unknown (the null case does not occur
+     * in any current calls but may in possible future extensions)
+     * @param e the comparison value for checking match
+     * @param timed if true, wait only until timeout elapses
+     * @param nanos timeout in nanosecs, used only if timed is true
+     * @return matched item, or e if unmatched on interrupt or timeout
+     */
+    private E awaitMatch(Node s, Node pred, E e, boolean timed, long nanos) {
+        final long deadline = timed ? System.nanoTime() + nanos : 0L;
+        Thread w = Thread.currentThread();
+        int spins = -1; // initialized after first item and cancel checks
+        ThreadLocalRandom randomYields = null; // bound if needed
+
+        for (;;) {
+            Object item = s.item;
+            if (item != e) {                  // matched
+                // assert item != s;
+                s.forgetContents();           // avoid garbage
+                return LinkedTransferQueue.<E>cast(item);
+            }
+            if ((w.isInterrupted() || (timed && nanos <= 0)) &&
+                    s.casItem(e, s)) {        // cancel
+                unsplice(pred, s);
+                return e;
+            }
+
+            if (spins < 0) {                  // establish spins at/near front
+                if ((spins = spinsFor(pred, s.isData)) > 0)
+                    randomYields = ThreadLocalRandom.current();
+            }
+            else if (spins > 0) {             // spin
+                --spins;
+                if (randomYields.nextInt(CHAINED_SPINS) == 0)
+                    Thread.yield();           // occasionally yield
+            }
+            else if (s.waiter == null) {
+                s.waiter = w;                 // request unpark then recheck
+            }
+            else if (timed) {
+                nanos = deadline - System.nanoTime();
+                if (nanos > 0L)
+                    LockSupport.parkNanos(this, nanos);
+            }
+            else {
+                LockSupport.park(this);
+            }
+        }
+    }
+
+    /**
+     * Returns spin/yield value for a node with given predecessor and
+     * data mode. See above for explanation.
+     */
+    private static int spinsFor(Node pred, boolean haveData) {
+        if (MP && pred != null) {
+            if (pred.isData != haveData)      // phase change
+                return FRONT_SPINS + CHAINED_SPINS;
+            if (pred.isMatched())             // probably at front
+                return FRONT_SPINS;
+            if (pred.waiter == null)          // pred apparently spinning
+                return CHAINED_SPINS;
+        }
+        return 0;
+    }
+
+    /* -------------- Traversal methods -------------- */
+
+    /**
+     * Returns the successor of p, or the head node if p.next has been
+     * linked to self, which will only be true if traversing with a
+     * stale pointer that is now off the list.
+     */
+    final Node succ(Node p) {
+        Node next = p.next;
+        return (p == next) ? head : next;
+    }
+
+    /**
+     * Returns the first unmatched node of the given mode, or null if
+     * none.  Used by methods isEmpty, hasWaitingConsumer.
+     */
+    private Node firstOfMode(boolean isData) {
+        for (Node p = head; p != null; p = succ(p)) {
+            if (!p.isMatched())
+                return (p.isData == isData) ? p : null;
+        }
+        return null;
+    }
+
+    /**
+     * Version of firstOfMode used by Spliterator. Callers must
+     * recheck if the returned node's item field is null or
+     * self-linked before using.
+     */
+    final Node firstDataNode() {
+        for (Node p = head; p != null;) {
+            Object item = p.item;
+            if (p.isData) {
+                if (item != null && item != p)
+                    return p;
+            }
+            else if (item == null)
+                break;
+            if (p == (p = p.next))
+                p = head;
+        }
+        return null;
+    }
+
+    /**
+     * Returns the item in the first unmatched node with isData; or
+     * null if none.  Used by peek.
+     */
+    private E firstDataItem() {
+        for (Node p = head; p != null; p = succ(p)) {
+            Object item = p.item;
+            if (p.isData) {
+                if (item != null && item != p)
+                    return LinkedTransferQueue.<E>cast(item);
+            }
+            else if (item == null)
+                return null;
+        }
+        return null;
+    }
+
+    /**
+     * Traverses and counts unmatched nodes of the given mode.
+     * Used by methods size and getWaitingConsumerCount.
+     */
+    private int countOfMode(boolean data) {
+        int count = 0;
+        for (Node p = head; p != null; ) {
+            if (!p.isMatched()) {
+                if (p.isData != data)
+                    return 0;
+                if (++count == Integer.MAX_VALUE) // saturated
+                    break;
+            }
+            Node n = p.next;
+            if (n != p)
+                p = n;
+            else {
+                count = 0;
+                p = head;
+            }
+        }
+        return count;
+    }
+
+    final class Itr implements Iterator<E> {
+        private Node nextNode;   // next node to return item for
+        private E nextItem;      // the corresponding item
+        private Node lastRet;    // last returned node, to support remove
+        private Node lastPred;   // predecessor to unlink lastRet
+
+        /**
+         * Moves to next node after prev, or first node if prev null.
+         */
+        private void advance(Node prev) {
+            /*
+             * To track and avoid buildup of deleted nodes in the face
+             * of calls to both Queue.remove and Itr.remove, we must
+             * include variants of unsplice and sweep upon each
+             * advance: Upon Itr.remove, we may need to catch up links
+             * from lastPred, and upon other removes, we might need to
+             * skip ahead from stale nodes and unsplice deleted ones
+             * found while advancing.
+             */
+
+            Node r, b; // reset lastPred upon possible deletion of lastRet
+            if ((r = lastRet) != null && !r.isMatched())
+                lastPred = r;    // next lastPred is old lastRet
+            else if ((b = lastPred) == null || b.isMatched())
+                lastPred = null; // at start of list
+            else {
+                Node s, n;       // help with removal of lastPred.next
+                while ((s = b.next) != null &&
+                       s != b && s.isMatched() &&
+                       (n = s.next) != null && n != s)
+                    b.casNext(s, n);
+            }
+
+            this.lastRet = prev;
+
+            for (Node p = prev, s, n;;) {
+                s = (p == null) ? head : p.next;
+                if (s == null)
+                    break;
+                else if (s == p) {
+                    p = null;
+                    continue;
+                }
+                Object item = s.item;
+                if (s.isData) {
+                    if (item != null && item != s) {
+                        nextItem = LinkedTransferQueue.<E>cast(item);
+                        nextNode = s;
+                        return;
+                    }
+                }
+                else if (item == null)
+                    break;
+                // assert s.isMatched();
+                if (p == null)
+                    p = s;
+                else if ((n = s.next) == null)
+                    break;
+                else if (s == n)
+                    p = null;
+                else
+                    p.casNext(s, n);
+            }
+            nextNode = null;
+            nextItem = null;
+        }
+
+        Itr() {
+            advance(null);
+        }
+
+        public final boolean hasNext() {
+            return nextNode != null;
+        }
+
+        public final E next() {
+            Node p = nextNode;
+            if (p == null) throw new NoSuchElementException();
+            E e = nextItem;
+            advance(p);
+            return e;
+        }
+
+        public final void remove() {
+            final Node lastRet = this.lastRet;
+            if (lastRet == null)
+                throw new IllegalStateException();
+            this.lastRet = null;
+            if (lastRet.tryMatchData())
+                unsplice(lastPred, lastRet);
+        }
+    }
+
+    /** A customized variant of Spliterators.IteratorSpliterator */
+    static final class LTQSpliterator<E> implements Spliterator<E> {
+        static final int MAX_BATCH = 1 << 25;  // max batch array size;
+        final LinkedTransferQueue<E> queue;
+        Node current;    // current node; null until initialized
+        int batch;          // batch size for splits
+        boolean exhausted;  // true when no more nodes
+        LTQSpliterator(LinkedTransferQueue<E> queue) {
+            this.queue = queue;
+        }
+
+        public Spliterator<E> trySplit() {
+            Node p;
+            final LinkedTransferQueue<E> q = this.queue;
+            int b = batch;
+            int n = (b <= 0) ? 1 : (b >= MAX_BATCH) ? MAX_BATCH : b + 1;
+            if (!exhausted &&
+                ((p = current) != null || (p = q.firstDataNode()) != null) &&
+                p.next != null) {
+                Object[] a = new Object[n];
+                int i = 0;
+                do {
+                    Object e = p.item;
+                    if (e != p && (a[i] = e) != null)
+                        ++i;
+                    if (p == (p = p.next))
+                        p = q.firstDataNode();
+                } while (p != null && i < n && p.isData);
+                if ((current = p) == null)
+                    exhausted = true;
+                if (i > 0) {
+                    batch = i;
+                    return Spliterators.spliterator
+                        (a, 0, i, Spliterator.ORDERED | Spliterator.NONNULL |
+                         Spliterator.CONCURRENT);
+                }
+            }
+            return null;
+        }
+
+        @SuppressWarnings("unchecked")
+        public void forEachRemaining(Consumer<? super E> action) {
+            Node p;
+            if (action == null) throw new NullPointerException();
+            final LinkedTransferQueue<E> q = this.queue;
+            if (!exhausted &&
+                ((p = current) != null || (p = q.firstDataNode()) != null)) {
+                exhausted = true;
+                do {
+                    Object e = p.item;
+                    if (e != null && e != p)
+                        action.accept((E)e);
+                    if (p == (p = p.next))
+                        p = q.firstDataNode();
+                } while (p != null && p.isData);
+            }
+        }
+
+        @SuppressWarnings("unchecked")
+        public boolean tryAdvance(Consumer<? super E> action) {
+            Node p;
+            if (action == null) throw new NullPointerException();
+            final LinkedTransferQueue<E> q = this.queue;
+            if (!exhausted &&
+                ((p = current) != null || (p = q.firstDataNode()) != null)) {
+                Object e;
+                do {
+                    if ((e = p.item) == p)
+                        e = null;
+                    if (p == (p = p.next))
+                        p = q.firstDataNode();
+                } while (e == null && p != null && p.isData);
+                if ((current = p) == null)
+                    exhausted = true;
+                if (e != null) {
+                    action.accept((E)e);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public long estimateSize() { return Long.MAX_VALUE; }
+
+        public int characteristics() {
+            return Spliterator.ORDERED | Spliterator.NONNULL |
+                Spliterator.CONCURRENT;
+        }
+    }
+
+    /**
+     * Returns a {@link Spliterator} over the elements in this queue.
+     *
+     * <p>The returned spliterator is
+     * <a href="package-summary.html#Weakly"><i>weakly consistent</i></a>.
+     *
+     * <p>The {@code Spliterator} reports {@link Spliterator#CONCURRENT},
+     * {@link Spliterator#ORDERED}, and {@link Spliterator#NONNULL}.
+     *
+     * @implNote
+     * The {@code Spliterator} implements {@code trySplit} to permit limited
+     * parallelism.
+     *
+     * @return a {@code Spliterator} over the elements in this queue
+     * @since 1.8
+     */
+    public Spliterator<E> spliterator() {
+        return new LTQSpliterator<E>(this);
+    }
+
+    /* -------------- Removal methods -------------- */
+
+    /**
+     * Unsplices (now or later) the given deleted/cancelled node with
+     * the given predecessor.
+     *
+     * @param pred a node that was at one time known to be the
+     * predecessor of s, or null or s itself if s is/was at head
+     * @param s the node to be unspliced
+     */
+    final void unsplice(Node pred, Node s) {
+        s.forgetContents(); // forget unneeded fields
+        /*
+         * See above for rationale. Briefly: if pred still points to
+         * s, try to unlink s.  If s cannot be unlinked, because it is
+         * trailing node or pred might be unlinked, and neither pred
+         * nor s are head or offlist, add to sweepVotes, and if enough
+         * votes have accumulated, sweep.
+         */
+        if (pred != null && pred != s && pred.next == s) {
+            Node n = s.next;
+            if (n == null ||
+                (n != s && pred.casNext(s, n) && pred.isMatched())) {
+                for (;;) {               // check if at, or could be, head
+                    Node h = head;
+                    if (h == pred || h == s || h == null)
+                        return;          // at head or list empty
+                    if (!h.isMatched())
+                        break;
+                    Node hn = h.next;
+                    if (hn == null)
+                        return;          // now empty
+                    if (hn != h && casHead(h, hn))
+                        h.forgetNext();  // advance head
+                }
+                if (pred.next != pred && s.next != s) { // recheck if offlist
+                    for (;;) {           // sweep now if enough votes
+                        int v = sweepVotes;
+                        if (v < SWEEP_THRESHOLD) {
+                            if (casSweepVotes(v, v + 1))
+                                break;
+                        }
+                        else if (casSweepVotes(v, 0)) {
+                            sweep();
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Unlinks matched (typically cancelled) nodes encountered in a
+     * traversal from head.
+     */
+    private void sweep() {
+        for (Node p = head, s, n; p != null && (s = p.next) != null; ) {
+            if (!s.isMatched())
+                // Unmatched nodes are never self-linked
+                p = s;
+            else if ((n = s.next) == null) // trailing node is pinned
+                break;
+            else if (s == n)    // stale
+                // No need to also check for p == s, since that implies s == n
+                p = head;
+            else
+                p.casNext(s, n);
+        }
+    }
+
+    /**
+     * Main implementation of remove(Object)
+     */
+    private boolean findAndRemove(Object e) {
+        if (e != null) {
+            for (Node pred = null, p = head; p != null; ) {
+                Object item = p.item;
+                if (p.isData) {
+                    if (item != null && item != p && e.equals(item) &&
+                        p.tryMatchData()) {
+                        unsplice(pred, p);
+                        return true;
+                    }
+                }
+                else if (item == null)
+                    break;
+                pred = p;
+                if ((p = p.next) == pred) { // stale
+                    pred = null;
+                    p = head;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Creates an initially empty {@code LinkedTransferQueue}.
+     */
+    public LinkedTransferQueue() {
+    }
+
+    /**
+     * Creates a {@code LinkedTransferQueue}
+     * initially containing the elements of the given collection,
+     * added in traversal order of the collection's iterator.
+     *
+     * @param c the collection of elements to initially contain
+     * @throws NullPointerException if the specified collection or any
+     *         of its elements are null
+     */
+    public LinkedTransferQueue(Collection<? extends E> c) {
+        this();
+        addAll(c);
+    }
+
+    /**
+     * Inserts the specified element at the tail of this queue.
+     * As the queue is unbounded, this method will never block.
+     *
+     * @throws NullPointerException if the specified element is null
+     */
+    public void put(E e) {
+        xfer(e, true, ASYNC, 0);
+    }
+
+    /**
+     * Inserts the specified element at the tail of this queue.
+     * As the queue is unbounded, this method will never block or
+     * return {@code false}.
+     *
+     * @return {@code true} (as specified by
+     *  {@link java.util.concurrent.BlockingQueue#offer(Object,long,TimeUnit)
+     *  BlockingQueue.offer})
+     * @throws NullPointerException if the specified element is null
+     */
+    public boolean offer(E e, long timeout, TimeUnit unit) {
+        xfer(e, true, ASYNC, 0);
+        return true;
+    }
+
+    /**
+     * Inserts the specified element at the tail of this queue.
+     * As the queue is unbounded, this method will never return {@code false}.
+     *
+     * @return {@code true} (as specified by {@link Queue#offer})
+     * @throws NullPointerException if the specified element is null
+     */
+    public boolean offer(E e) {
+        xfer(e, true, ASYNC, 0);
+        return true;
+    }
+
+    /**
+     * Inserts the specified element at the tail of this queue.
+     * As the queue is unbounded, this method will never throw
+     * {@link IllegalStateException} or return {@code false}.
+     *
+     * @return {@code true} (as specified by {@link Collection#add})
+     * @throws NullPointerException if the specified element is null
+     */
+    public boolean add(E e) {
+        xfer(e, true, ASYNC, 0);
+        return true;
+    }
+
+    /**
+     * Transfers the element to a waiting consumer immediately, if possible.
+     *
+     * <p>More precisely, transfers the specified element immediately
+     * if there exists a consumer already waiting to receive it (in
+     * {@link #take} or timed {@link #poll(long,TimeUnit) poll}),
+     * otherwise returning {@code false} without enqueuing the element.
+     *
+     * @throws NullPointerException if the specified element is null
+     */
+    public boolean tryTransfer(E e) {
+        return xfer(e, true, NOW, 0) == null;
+    }
+
+    /**
+     * Transfers the element to a consumer, waiting if necessary to do so.
+     *
+     * <p>More precisely, transfers the specified element immediately
+     * if there exists a consumer already waiting to receive it (in
+     * {@link #take} or timed {@link #poll(long,TimeUnit) poll}),
+     * else inserts the specified element at the tail of this queue
+     * and waits until the element is received by a consumer.
+     *
+     * @throws NullPointerException if the specified element is null
+     */
+    public void transfer(E e) throws InterruptedException {
+        if (xfer(e, true, SYNC, 0) != null) {
+            Thread.interrupted(); // failure possible only due to interrupt
+            throw new InterruptedException();
+        }
+    }
+
+    /**
+     * Transfers the element to a consumer if it is possible to do so
+     * before the timeout elapses.
+     *
+     * <p>More precisely, transfers the specified element immediately
+     * if there exists a consumer already waiting to receive it (in
+     * {@link #take} or timed {@link #poll(long,TimeUnit) poll}),
+     * else inserts the specified element at the tail of this queue
+     * and waits until the element is received by a consumer,
+     * returning {@code false} if the specified wait time elapses
+     * before the element can be transferred.
+     *
+     * @throws NullPointerException if the specified element is null
+     */
+    public boolean tryTransfer(E e, long timeout, TimeUnit unit)
+        throws InterruptedException {
+        if (xfer(e, true, TIMED, unit.toNanos(timeout)) == null)
+            return true;
+        if (!Thread.interrupted())
+            return false;
+        throw new InterruptedException();
+    }
+
+    public E take() throws InterruptedException {
+        E e = xfer(null, false, SYNC, 0);
+        if (e != null)
+            return e;
+        Thread.interrupted();
+        throw new InterruptedException();
+    }
+
+    public E poll(long timeout, TimeUnit unit) throws InterruptedException {
+        E e = xfer(null, false, TIMED, unit.toNanos(timeout));
+        if (e != null || !Thread.interrupted())
+            return e;
+        throw new InterruptedException();
+    }
+
+    public E poll() {
+        return xfer(null, false, NOW, 0);
+    }
+
+    /**
+     * @throws NullPointerException     {@inheritDoc}
+     * @throws IllegalArgumentException {@inheritDoc}
+     */
+    public int drainTo(Collection<? super E> c) {
+        if (c == null)
+            throw new NullPointerException();
+        if (c == this)
+            throw new IllegalArgumentException();
+        int n = 0;
+        for (E e; (e = poll()) != null;) {
+            c.add(e);
+            ++n;
+        }
+        return n;
+    }
+
+    /**
+     * @throws NullPointerException     {@inheritDoc}
+     * @throws IllegalArgumentException {@inheritDoc}
+     */
+    public int drainTo(Collection<? super E> c, int maxElements) {
+        if (c == null)
+            throw new NullPointerException();
+        if (c == this)
+            throw new IllegalArgumentException();
+        int n = 0;
+        for (E e; n < maxElements && (e = poll()) != null;) {
+            c.add(e);
+            ++n;
+        }
+        return n;
+    }
+
+    /**
+     * Returns an iterator over the elements in this queue in proper sequence.
+     * The elements will be returned in order from first (head) to last (tail).
+     *
+     * <p>The returned iterator is
+     * <a href="package-summary.html#Weakly"><i>weakly consistent</i></a>.
+     *
+     * @return an iterator over the elements in this queue in proper sequence
+     */
+    public Iterator<E> iterator() {
+        return new Itr();
+    }
+
+    public E peek() {
+        return firstDataItem();
+    }
+
+    /**
+     * Returns {@code true} if this queue contains no elements.
+     *
+     * @return {@code true} if this queue contains no elements
+     */
+    public boolean isEmpty() {
+        for (Node p = head; p != null; p = succ(p)) {
+            if (!p.isMatched())
+                return !p.isData;
+        }
+        return true;
+    }
+
+    public boolean hasWaitingConsumer() {
+        return firstOfMode(false) != null;
+    }
+
+    /**
+     * Returns the number of elements in this queue.  If this queue
+     * contains more than {@code Integer.MAX_VALUE} elements, returns
+     * {@code Integer.MAX_VALUE}.
+     *
+     * <p>Beware that, unlike in most collections, this method is
+     * <em>NOT</em> a constant-time operation. Because of the
+     * asynchronous nature of these queues, determining the current
+     * number of elements requires an O(n) traversal.
+     *
+     * @return the number of elements in this queue
+     */
+    public int size() {
+        return countOfMode(true);
+    }
+
+    public int getWaitingConsumerCount() {
+        return countOfMode(false);
+    }
+
+    /**
+     * Removes a single instance of the specified element from this queue,
+     * if it is present.  More formally, removes an element {@code e} such
+     * that {@code o.equals(e)}, if this queue contains one or more such
+     * elements.
+     * Returns {@code true} if this queue contained the specified element
+     * (or equivalently, if this queue changed as a result of the call).
+     *
+     * @param o element to be removed from this queue, if present
+     * @return {@code true} if this queue changed as a result of the call
+     */
+    public boolean remove(Object o) {
+        return findAndRemove(o);
+    }
+
+    /**
+     * Returns {@code true} if this queue contains the specified element.
+     * More formally, returns {@code true} if and only if this queue contains
+     * at least one element {@code e} such that {@code o.equals(e)}.
+     *
+     * @param o object to be checked for containment in this queue
+     * @return {@code true} if this queue contains the specified element
+     */
+    public boolean contains(Object o) {
+        if (o == null) return false;
+        for (Node p = head; p != null; p = succ(p)) {
+            Object item = p.item;
+            if (p.isData) {
+                if (item != null && item != p && o.equals(item))
+                    return true;
+            }
+            else if (item == null)
+                break;
+        }
+        return false;
+    }
+
+    /**
+     * Always returns {@code Integer.MAX_VALUE} because a
+     * {@code LinkedTransferQueue} is not capacity constrained.
+     *
+     * @return {@code Integer.MAX_VALUE} (as specified by
+     *         {@link java.util.concurrent.BlockingQueue#remainingCapacity()
+     *         BlockingQueue.remainingCapacity})
+     */
+    public int remainingCapacity() {
+        return Integer.MAX_VALUE;
+    }
+
+    /**
+     * Saves this queue to a stream (that is, serializes it).
+     *
+     * @param s the stream
+     * @throws java.io.IOException if an I/O error occurs
+     * @serialData All of the elements (each an {@code E}) in
+     * the proper order, followed by a null
+     */
+    private void writeObject(java.io.ObjectOutputStream s)
+        throws java.io.IOException {
+        s.defaultWriteObject();
+        for (E e : this)
+            s.writeObject(e);
+        // Use trailing null as sentinel
+        s.writeObject(null);
+    }
+
+    /**
+     * Reconstitutes this queue from a stream (that is, deserializes it).
+     * @param s the stream
+     * @throws ClassNotFoundException if the class of a serialized object
+     *         could not be found
+     * @throws java.io.IOException if an I/O error occurs
+     */
+    private void readObject(java.io.ObjectInputStream s)
+        throws java.io.IOException, ClassNotFoundException {
+        s.defaultReadObject();
+        for (;;) {
+            @SuppressWarnings("unchecked")
+            E item = (E) s.readObject();
+            if (item == null)
+                break;
+            else
+                offer(item);
+        }
+    }
+
+    // Unsafe mechanics
+
+    private static final sun.misc.Unsafe UNSAFE;
+    private static final long headOffset;
+    private static final long tailOffset;
+    private static final long sweepVotesOffset;
+    static {
+        try {
+            UNSAFE = sun.misc.Unsafe.getUnsafe();
+            Class<?> k = LinkedTransferQueue.class;
+            headOffset = UNSAFE.objectFieldOffset
+                (k.getDeclaredField("head"));
+            tailOffset = UNSAFE.objectFieldOffset
+                (k.getDeclaredField("tail"));
+            sweepVotesOffset = UNSAFE.objectFieldOffset
+                (k.getDeclaredField("sweepVotes"));
+        } catch (Exception e) {
+            throw new Error(e);
+        }
+    }
+}

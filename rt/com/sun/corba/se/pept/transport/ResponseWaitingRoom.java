@@ -1,22 +1,48 @@
+/*
+ * Copyright (c) 2001, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package com.sun.corba.se.pept.transport;
 
-import com.sun.corba.se.pept.encoding.InputObject;
 import com.sun.corba.se.pept.protocol.MessageMediator;
+import com.sun.corba.se.pept.encoding.InputObject;
 
-public interface ResponseWaitingRoom {
-  void registerWaiter(MessageMediator paramMessageMediator);
-  
-  InputObject waitForResponse(MessageMediator paramMessageMediator);
-  
-  void responseReceived(InputObject paramInputObject);
-  
-  void unregisterWaiter(MessageMediator paramMessageMediator);
-  
-  int numberRegistered();
+/**
+ * @author Harold Carr
+ */
+public interface ResponseWaitingRoom
+{
+    public void registerWaiter(MessageMediator messageMediator);
+
+    // REVISIT: maybe return void (or MessageMediator).
+    public InputObject waitForResponse(MessageMediator messageMediator);
+
+    public void responseReceived(InputObject inputObject);
+
+    public void unregisterWaiter(MessageMediator messageMediator);
+
+    public int numberRegistered();
 }
 
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\pept\transport\ResponseWaitingRoom.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
- */
+// End of file.

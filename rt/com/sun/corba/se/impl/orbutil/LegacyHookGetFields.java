@@ -1,163 +1,157 @@
-/*     */ package com.sun.corba.se.impl.orbutil;
-/*     */ 
-/*     */ import java.io.IOException;
-/*     */ import java.io.ObjectInputStream;
-/*     */ import java.io.ObjectStreamClass;
-/*     */ import java.util.Hashtable;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class LegacyHookGetFields
-/*     */   extends ObjectInputStream.GetField
-/*     */ {
-/*  34 */   private Hashtable fields = null;
-/*     */   
-/*     */   LegacyHookGetFields(Hashtable paramHashtable) {
-/*  37 */     this.fields = paramHashtable;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ObjectStreamClass getObjectStreamClass() {
-/*  44 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean defaulted(String paramString) throws IOException, IllegalArgumentException {
-/*  53 */     return !this.fields.containsKey(paramString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean get(String paramString, boolean paramBoolean) throws IOException, IllegalArgumentException {
-/*  61 */     if (defaulted(paramString))
-/*  62 */       return paramBoolean; 
-/*  63 */     return ((Boolean)this.fields.get(paramString)).booleanValue();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public char get(String paramString, char paramChar) throws IOException, IllegalArgumentException {
-/*  71 */     if (defaulted(paramString))
-/*  72 */       return paramChar; 
-/*  73 */     return ((Character)this.fields.get(paramString)).charValue();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public byte get(String paramString, byte paramByte) throws IOException, IllegalArgumentException {
-/*  82 */     if (defaulted(paramString))
-/*  83 */       return paramByte; 
-/*  84 */     return ((Byte)this.fields.get(paramString)).byteValue();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public short get(String paramString, short paramShort) throws IOException, IllegalArgumentException {
-/*  93 */     if (defaulted(paramString))
-/*  94 */       return paramShort; 
-/*  95 */     return ((Short)this.fields.get(paramString)).shortValue();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int get(String paramString, int paramInt) throws IOException, IllegalArgumentException {
-/* 104 */     if (defaulted(paramString))
-/* 105 */       return paramInt; 
-/* 106 */     return ((Integer)this.fields.get(paramString)).intValue();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public long get(String paramString, long paramLong) throws IOException, IllegalArgumentException {
-/* 115 */     if (defaulted(paramString))
-/* 116 */       return paramLong; 
-/* 117 */     return ((Long)this.fields.get(paramString)).longValue();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public float get(String paramString, float paramFloat) throws IOException, IllegalArgumentException {
-/* 126 */     if (defaulted(paramString))
-/* 127 */       return paramFloat; 
-/* 128 */     return ((Float)this.fields.get(paramString)).floatValue();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public double get(String paramString, double paramDouble) throws IOException, IllegalArgumentException {
-/* 137 */     if (defaulted(paramString))
-/* 138 */       return paramDouble; 
-/* 139 */     return ((Double)this.fields.get(paramString)).doubleValue();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object get(String paramString, Object paramObject) throws IOException, IllegalArgumentException {
-/* 148 */     if (defaulted(paramString))
-/* 149 */       return paramObject; 
-/* 150 */     return this.fields.get(paramString);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 155 */     return this.fields.toString();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\orbutil\LegacyHookGetFields.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2001, 2002, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+/*
+ */
+package com.sun.corba.se.impl.orbutil;
+
+import java.io.*;
+import java.util.Hashtable;
+
+class LegacyHookGetFields extends ObjectInputStream.GetField {
+    private Hashtable fields = null;
+
+    LegacyHookGetFields(Hashtable fields){
+        this.fields = fields;
+    }
+
+    /**
+     * Get the ObjectStreamClass that describes the fields in the stream.
+     */
+    public java.io.ObjectStreamClass getObjectStreamClass() {
+        return null;
+    }
+
+    /**
+     * Return true if the named field is defaulted and has no value
+     * in this stream.
+     */
+    public boolean defaulted(String name)
+        throws IOException, IllegalArgumentException  {
+        return (!fields.containsKey(name));
+    }
+
+    /**
+     * Get the value of the named boolean field from the persistent field.
+     */
+    public boolean get(String name, boolean defvalue)
+        throws IOException, IllegalArgumentException {
+        if (defaulted(name))
+            return defvalue;
+        else return ((Boolean)fields.get(name)).booleanValue();
+    }
+
+    /**
+     * Get the value of the named char field from the persistent fields.
+     */
+    public char get(String name, char defvalue)
+        throws IOException, IllegalArgumentException {
+        if (defaulted(name))
+            return defvalue;
+        else return ((Character)fields.get(name)).charValue();
+
+    }
+
+    /**
+     * Get the value of the named byte field from the persistent fields.
+     */
+    public byte get(String name, byte defvalue)
+        throws IOException, IllegalArgumentException {
+        if (defaulted(name))
+            return defvalue;
+        else return ((Byte)fields.get(name)).byteValue();
+
+    }
+
+    /**
+     * Get the value of the named short field from the persistent fields.
+     */
+    public short get(String name, short defvalue)
+        throws IOException, IllegalArgumentException {
+        if (defaulted(name))
+            return defvalue;
+        else return ((Short)fields.get(name)).shortValue();
+
+    }
+
+    /**
+     * Get the value of the named int field from the persistent fields.
+     */
+    public int get(String name, int defvalue)
+        throws IOException, IllegalArgumentException {
+        if (defaulted(name))
+            return defvalue;
+        else return ((Integer)fields.get(name)).intValue();
+
+    }
+
+    /**
+     * Get the value of the named long field from the persistent fields.
+     */
+    public long get(String name, long defvalue)
+        throws IOException, IllegalArgumentException {
+        if (defaulted(name))
+            return defvalue;
+        else return ((Long)fields.get(name)).longValue();
+
+    }
+
+    /**
+     * Get the value of the named float field from the persistent fields.
+     */
+    public float get(String name, float defvalue)
+        throws IOException, IllegalArgumentException {
+        if (defaulted(name))
+            return defvalue;
+        else return ((Float)fields.get(name)).floatValue();
+
+    }
+
+    /**
+     * Get the value of the named double field from the persistent field.
+     */
+    public double get(String name, double defvalue)
+        throws IOException, IllegalArgumentException  {
+        if (defaulted(name))
+            return defvalue;
+        else return ((Double)fields.get(name)).doubleValue();
+
+    }
+
+    /**
+     * Get the value of the named Object field from the persistent field.
+     */
+    public Object get(String name, Object defvalue)
+        throws IOException, IllegalArgumentException {
+        if (defaulted(name))
+            return defvalue;
+        else return fields.get(name);
+
+    }
+
+    public String toString(){
+        return fields.toString();
+    }
+}

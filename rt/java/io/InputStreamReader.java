@@ -1,207 +1,201 @@
-/*     */ package java.io;
-/*     */ 
-/*     */ import java.nio.charset.Charset;
-/*     */ import java.nio.charset.CharsetDecoder;
-/*     */ import sun.nio.cs.StreamDecoder;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class InputStreamReader
-/*     */   extends Reader
-/*     */ {
-/*     */   private final StreamDecoder sd;
-/*     */   
-/*     */   public InputStreamReader(InputStream paramInputStream) {
-/*  72 */     super(paramInputStream);
-/*     */     try {
-/*  74 */       this.sd = StreamDecoder.forInputStreamReader(paramInputStream, this, (String)null);
-/*  75 */     } catch (UnsupportedEncodingException unsupportedEncodingException) {
-/*     */       
-/*  77 */       throw new Error(unsupportedEncodingException);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public InputStreamReader(InputStream paramInputStream, String paramString) throws UnsupportedEncodingException {
-/*  97 */     super(paramInputStream);
-/*  98 */     if (paramString == null)
-/*  99 */       throw new NullPointerException("charsetName"); 
-/* 100 */     this.sd = StreamDecoder.forInputStreamReader(paramInputStream, this, paramString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public InputStreamReader(InputStream paramInputStream, Charset paramCharset) {
-/* 113 */     super(paramInputStream);
-/* 114 */     if (paramCharset == null)
-/* 115 */       throw new NullPointerException("charset"); 
-/* 116 */     this.sd = StreamDecoder.forInputStreamReader(paramInputStream, this, paramCharset);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public InputStreamReader(InputStream paramInputStream, CharsetDecoder paramCharsetDecoder) {
-/* 129 */     super(paramInputStream);
-/* 130 */     if (paramCharsetDecoder == null)
-/* 131 */       throw new NullPointerException("charset decoder"); 
-/* 132 */     this.sd = StreamDecoder.forInputStreamReader(paramInputStream, this, paramCharsetDecoder);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getEncoding() {
-/* 156 */     return this.sd.getEncoding();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int read() throws IOException {
-/* 168 */     return this.sd.read();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int read(char[] paramArrayOfchar, int paramInt1, int paramInt2) throws IOException {
-/* 184 */     return this.sd.read(paramArrayOfchar, paramInt1, paramInt2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean ready() throws IOException {
-/* 195 */     return this.sd.ready();
-/*     */   }
-/*     */   
-/*     */   public void close() throws IOException {
-/* 199 */     this.sd.close();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\io\InputStreamReader.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1996, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.io;
+
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import sun.nio.cs.StreamDecoder;
+
+
+/**
+ * An InputStreamReader is a bridge from byte streams to character streams: It
+ * reads bytes and decodes them into characters using a specified {@link
+ * java.nio.charset.Charset charset}.  The charset that it uses
+ * may be specified by name or may be given explicitly, or the platform's
+ * default charset may be accepted.
+ *
+ * <p> Each invocation of one of an InputStreamReader's read() methods may
+ * cause one or more bytes to be read from the underlying byte-input stream.
+ * To enable the efficient conversion of bytes to characters, more bytes may
+ * be read ahead from the underlying stream than are necessary to satisfy the
+ * current read operation.
+ *
+ * <p> For top efficiency, consider wrapping an InputStreamReader within a
+ * BufferedReader.  For example:
+ *
+ * <pre>
+ * BufferedReader in
+ *   = new BufferedReader(new InputStreamReader(System.in));
+ * </pre>
+ *
+ * @see BufferedReader
+ * @see InputStream
+ * @see java.nio.charset.Charset
+ *
+ * @author      Mark Reinhold
+ * @since       JDK1.1
+ */
+
+public class InputStreamReader extends Reader {
+
+    private final StreamDecoder sd;
+
+    /**
+     * Creates an InputStreamReader that uses the default charset.
+     *
+     * @param  in   An InputStream
+     */
+    public InputStreamReader(InputStream in) {
+        super(in);
+        try {
+            sd = StreamDecoder.forInputStreamReader(in, this, (String)null); // ## check lock object
+        } catch (UnsupportedEncodingException e) {
+            // The default encoding should always be available
+            throw new Error(e);
+        }
+    }
+
+    /**
+     * Creates an InputStreamReader that uses the named charset.
+     *
+     * @param  in
+     *         An InputStream
+     *
+     * @param  charsetName
+     *         The name of a supported
+     *         {@link java.nio.charset.Charset charset}
+     *
+     * @exception  UnsupportedEncodingException
+     *             If the named charset is not supported
+     */
+    public InputStreamReader(InputStream in, String charsetName)
+        throws UnsupportedEncodingException
+    {
+        super(in);
+        if (charsetName == null)
+            throw new NullPointerException("charsetName");
+        sd = StreamDecoder.forInputStreamReader(in, this, charsetName);
+    }
+
+    /**
+     * Creates an InputStreamReader that uses the given charset.
+     *
+     * @param  in       An InputStream
+     * @param  cs       A charset
+     *
+     * @since 1.4
+     * @spec JSR-51
+     */
+    public InputStreamReader(InputStream in, Charset cs) {
+        super(in);
+        if (cs == null)
+            throw new NullPointerException("charset");
+        sd = StreamDecoder.forInputStreamReader(in, this, cs);
+    }
+
+    /**
+     * Creates an InputStreamReader that uses the given charset decoder.
+     *
+     * @param  in       An InputStream
+     * @param  dec      A charset decoder
+     *
+     * @since 1.4
+     * @spec JSR-51
+     */
+    public InputStreamReader(InputStream in, CharsetDecoder dec) {
+        super(in);
+        if (dec == null)
+            throw new NullPointerException("charset decoder");
+        sd = StreamDecoder.forInputStreamReader(in, this, dec);
+    }
+
+    /**
+     * Returns the name of the character encoding being used by this stream.
+     *
+     * <p> If the encoding has an historical name then that name is returned;
+     * otherwise the encoding's canonical name is returned.
+     *
+     * <p> If this instance was created with the {@link
+     * #InputStreamReader(InputStream, String)} constructor then the returned
+     * name, being unique for the encoding, may differ from the name passed to
+     * the constructor. This method will return <code>null</code> if the
+     * stream has been closed.
+     * </p>
+     * @return The historical name of this encoding, or
+     *         <code>null</code> if the stream has been closed
+     *
+     * @see java.nio.charset.Charset
+     *
+     * @revised 1.4
+     * @spec JSR-51
+     */
+    public String getEncoding() {
+        return sd.getEncoding();
+    }
+
+    /**
+     * Reads a single character.
+     *
+     * @return The character read, or -1 if the end of the stream has been
+     *         reached
+     *
+     * @exception  IOException  If an I/O error occurs
+     */
+    public int read() throws IOException {
+        return sd.read();
+    }
+
+    /**
+     * Reads characters into a portion of an array.
+     *
+     * @param      cbuf     Destination buffer
+     * @param      offset   Offset at which to start storing characters
+     * @param      length   Maximum number of characters to read
+     *
+     * @return     The number of characters read, or -1 if the end of the
+     *             stream has been reached
+     *
+     * @exception  IOException  If an I/O error occurs
+     */
+    public int read(char cbuf[], int offset, int length) throws IOException {
+        return sd.read(cbuf, offset, length);
+    }
+
+    /**
+     * Tells whether this stream is ready to be read.  An InputStreamReader is
+     * ready if its input buffer is not empty, or if bytes are available to be
+     * read from the underlying byte stream.
+     *
+     * @exception  IOException  If an I/O error occurs
+     */
+    public boolean ready() throws IOException {
+        return sd.ready();
+    }
+
+    public void close() throws IOException {
+        sd.close();
+    }
+}

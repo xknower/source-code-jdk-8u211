@@ -1,446 +1,444 @@
-/*     */ package java.util;
-/*     */ 
-/*     */ import java.io.Serializable;
-/*     */ import java.security.MessageDigest;
-/*     */ import java.security.NoSuchAlgorithmException;
-/*     */ import java.security.SecureRandom;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class UUID
-/*     */   implements Serializable, Comparable<UUID>
-/*     */ {
-/*     */   private static final long serialVersionUID = -4856846361193249489L;
-/*     */   private final long mostSigBits;
-/*     */   private final long leastSigBits;
-/*     */   
-/*     */   private static class Holder
-/*     */   {
-/*  96 */     static final SecureRandom numberGenerator = new SecureRandom();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private UUID(byte[] paramArrayOfbyte) {
-/* 105 */     long l1 = 0L;
-/* 106 */     long l2 = 0L;
-/* 107 */     assert paramArrayOfbyte.length == 16 : "data must be 16 bytes in length"; byte b;
-/* 108 */     for (b = 0; b < 8; b++)
-/* 109 */       l1 = l1 << 8L | (paramArrayOfbyte[b] & 0xFF); 
-/* 110 */     for (b = 8; b < 16; b++)
-/* 111 */       l2 = l2 << 8L | (paramArrayOfbyte[b] & 0xFF); 
-/* 112 */     this.mostSigBits = l1;
-/* 113 */     this.leastSigBits = l2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public UUID(long paramLong1, long paramLong2) {
-/* 129 */     this.mostSigBits = paramLong1;
-/* 130 */     this.leastSigBits = paramLong2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static UUID randomUUID() {
-/* 142 */     SecureRandom secureRandom = Holder.numberGenerator;
-/*     */     
-/* 144 */     byte[] arrayOfByte = new byte[16];
-/* 145 */     secureRandom.nextBytes(arrayOfByte);
-/* 146 */     arrayOfByte[6] = (byte)(arrayOfByte[6] & 0xF);
-/* 147 */     arrayOfByte[6] = (byte)(arrayOfByte[6] | 0x40);
-/* 148 */     arrayOfByte[8] = (byte)(arrayOfByte[8] & 0x3F);
-/* 149 */     arrayOfByte[8] = (byte)(arrayOfByte[8] | 0x80);
-/* 150 */     return new UUID(arrayOfByte);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static UUID nameUUIDFromBytes(byte[] paramArrayOfbyte) {
-/*     */     MessageDigest messageDigest;
-/*     */     try {
-/* 165 */       messageDigest = MessageDigest.getInstance("MD5");
-/* 166 */     } catch (NoSuchAlgorithmException noSuchAlgorithmException) {
-/* 167 */       throw new InternalError("MD5 not supported", noSuchAlgorithmException);
-/*     */     } 
-/* 169 */     byte[] arrayOfByte = messageDigest.digest(paramArrayOfbyte);
-/* 170 */     arrayOfByte[6] = (byte)(arrayOfByte[6] & 0xF);
-/* 171 */     arrayOfByte[6] = (byte)(arrayOfByte[6] | 0x30);
-/* 172 */     arrayOfByte[8] = (byte)(arrayOfByte[8] & 0x3F);
-/* 173 */     arrayOfByte[8] = (byte)(arrayOfByte[8] | 0x80);
-/* 174 */     return new UUID(arrayOfByte);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static UUID fromString(String paramString) {
-/* 192 */     String[] arrayOfString = paramString.split("-");
-/* 193 */     if (arrayOfString.length != 5)
-/* 194 */       throw new IllegalArgumentException("Invalid UUID string: " + paramString); 
-/* 195 */     for (byte b = 0; b < 5; b++) {
-/* 196 */       arrayOfString[b] = "0x" + arrayOfString[b];
-/*     */     }
-/* 198 */     long l1 = Long.decode(arrayOfString[0]).longValue();
-/* 199 */     l1 <<= 16L;
-/* 200 */     l1 |= Long.decode(arrayOfString[1]).longValue();
-/* 201 */     l1 <<= 16L;
-/* 202 */     l1 |= Long.decode(arrayOfString[2]).longValue();
-/*     */     
-/* 204 */     long l2 = Long.decode(arrayOfString[3]).longValue();
-/* 205 */     l2 <<= 48L;
-/* 206 */     l2 |= Long.decode(arrayOfString[4]).longValue();
-/*     */     
-/* 208 */     return new UUID(l1, l2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public long getLeastSignificantBits() {
-/* 219 */     return this.leastSigBits;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public long getMostSignificantBits() {
-/* 228 */     return this.mostSigBits;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int version() {
-/* 247 */     return (int)(this.mostSigBits >> 12L & 0xFL);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int variant() {
-/* 271 */     return (int)(this.leastSigBits >>> (int)(64L - (this.leastSigBits >>> 62L)) & this.leastSigBits >> 63L);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public long timestamp() {
-/* 292 */     if (version() != 1) {
-/* 293 */       throw new UnsupportedOperationException("Not a time-based UUID");
-/*     */     }
-/*     */     
-/* 296 */     return (this.mostSigBits & 0xFFFL) << 48L | (this.mostSigBits >> 16L & 0xFFFFL) << 32L | this.mostSigBits >>> 32L;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int clockSequence() {
-/* 318 */     if (version() != 1) {
-/* 319 */       throw new UnsupportedOperationException("Not a time-based UUID");
-/*     */     }
-/*     */     
-/* 322 */     return (int)((this.leastSigBits & 0x3FFF000000000000L) >>> 48L);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public long node() {
-/* 342 */     if (version() != 1) {
-/* 343 */       throw new UnsupportedOperationException("Not a time-based UUID");
-/*     */     }
-/*     */     
-/* 346 */     return this.leastSigBits & 0xFFFFFFFFFFFFL;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 376 */     return digits(this.mostSigBits >> 32L, 8) + "-" + 
-/* 377 */       digits(this.mostSigBits >> 16L, 4) + "-" + 
-/* 378 */       digits(this.mostSigBits, 4) + "-" + 
-/* 379 */       digits(this.leastSigBits >> 48L, 4) + "-" + 
-/* 380 */       digits(this.leastSigBits, 12);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private static String digits(long paramLong, int paramInt) {
-/* 385 */     long l = 1L << paramInt * 4;
-/* 386 */     return Long.toHexString(l | paramLong & l - 1L).substring(1);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int hashCode() {
-/* 395 */     long l = this.mostSigBits ^ this.leastSigBits;
-/* 396 */     return (int)(l >> 32L) ^ (int)l;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean equals(Object paramObject) {
-/* 412 */     if (null == paramObject || paramObject.getClass() != UUID.class)
-/* 413 */       return false; 
-/* 414 */     UUID uUID = (UUID)paramObject;
-/* 415 */     return (this.mostSigBits == uUID.mostSigBits && this.leastSigBits == uUID.leastSigBits);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int compareTo(UUID paramUUID) {
-/* 438 */     return (this.mostSigBits < paramUUID.mostSigBits) ? -1 : ((this.mostSigBits > paramUUID.mostSigBits) ? 1 : ((this.leastSigBits < paramUUID.leastSigBits) ? -1 : ((this.leastSigBits > paramUUID.leastSigBits) ? 1 : 0)));
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\UUID.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.util;
+
+import java.security.*;
+
+/**
+ * A class that represents an immutable universally unique identifier (UUID).
+ * A UUID represents a 128-bit value.
+ *
+ * <p> There exist different variants of these global identifiers.  The methods
+ * of this class are for manipulating the Leach-Salz variant, although the
+ * constructors allow the creation of any variant of UUID (described below).
+ *
+ * <p> The layout of a variant 2 (Leach-Salz) UUID is as follows:
+ *
+ * The most significant long consists of the following unsigned fields:
+ * <pre>
+ * 0xFFFFFFFF00000000 time_low
+ * 0x00000000FFFF0000 time_mid
+ * 0x000000000000F000 version
+ * 0x0000000000000FFF time_hi
+ * </pre>
+ * The least significant long consists of the following unsigned fields:
+ * <pre>
+ * 0xC000000000000000 variant
+ * 0x3FFF000000000000 clock_seq
+ * 0x0000FFFFFFFFFFFF node
+ * </pre>
+ *
+ * <p> The variant field contains a value which identifies the layout of the
+ * {@code UUID}.  The bit layout described above is valid only for a {@code
+ * UUID} with a variant value of 2, which indicates the Leach-Salz variant.
+ *
+ * <p> The version field holds a value that describes the type of this {@code
+ * UUID}.  There are four different basic types of UUIDs: time-based, DCE
+ * security, name-based, and randomly generated UUIDs.  These types have a
+ * version value of 1, 2, 3 and 4, respectively.
+ *
+ * <p> For more information including algorithms used to create {@code UUID}s,
+ * see <a href="http://www.ietf.org/rfc/rfc4122.txt"> <i>RFC&nbsp;4122: A
+ * Universally Unique IDentifier (UUID) URN Namespace</i></a>, section 4.2
+ * &quot;Algorithms for Creating a Time-Based UUID&quot;.
+ *
+ * @since   1.5
+ */
+public final class UUID implements java.io.Serializable, Comparable<UUID> {
+
+    /**
+     * Explicit serialVersionUID for interoperability.
+     */
+    private static final long serialVersionUID = -4856846361193249489L;
+
+    /*
+     * The most significant 64 bits of this UUID.
+     *
+     * @serial
+     */
+    private final long mostSigBits;
+
+    /*
+     * The least significant 64 bits of this UUID.
+     *
+     * @serial
+     */
+    private final long leastSigBits;
+
+    /*
+     * The random number generator used by this class to create random
+     * based UUIDs. In a holder class to defer initialization until needed.
+     */
+    private static class Holder {
+        static final SecureRandom numberGenerator = new SecureRandom();
+    }
+
+    // Constructors and Factories
+
+    /*
+     * Private constructor which uses a byte array to construct the new UUID.
+     */
+    private UUID(byte[] data) {
+        long msb = 0;
+        long lsb = 0;
+        assert data.length == 16 : "data must be 16 bytes in length";
+        for (int i=0; i<8; i++)
+            msb = (msb << 8) | (data[i] & 0xff);
+        for (int i=8; i<16; i++)
+            lsb = (lsb << 8) | (data[i] & 0xff);
+        this.mostSigBits = msb;
+        this.leastSigBits = lsb;
+    }
+
+    /**
+     * Constructs a new {@code UUID} using the specified data.  {@code
+     * mostSigBits} is used for the most significant 64 bits of the {@code
+     * UUID} and {@code leastSigBits} becomes the least significant 64 bits of
+     * the {@code UUID}.
+     *
+     * @param  mostSigBits
+     *         The most significant bits of the {@code UUID}
+     *
+     * @param  leastSigBits
+     *         The least significant bits of the {@code UUID}
+     */
+    public UUID(long mostSigBits, long leastSigBits) {
+        this.mostSigBits = mostSigBits;
+        this.leastSigBits = leastSigBits;
+    }
+
+    /**
+     * Static factory to retrieve a type 4 (pseudo randomly generated) UUID.
+     *
+     * The {@code UUID} is generated using a cryptographically strong pseudo
+     * random number generator.
+     *
+     * @return  A randomly generated {@code UUID}
+     */
+    public static UUID randomUUID() {
+        SecureRandom ng = Holder.numberGenerator;
+
+        byte[] randomBytes = new byte[16];
+        ng.nextBytes(randomBytes);
+        randomBytes[6]  &= 0x0f;  /* clear version        */
+        randomBytes[6]  |= 0x40;  /* set to version 4     */
+        randomBytes[8]  &= 0x3f;  /* clear variant        */
+        randomBytes[8]  |= 0x80;  /* set to IETF variant  */
+        return new UUID(randomBytes);
+    }
+
+    /**
+     * Static factory to retrieve a type 3 (name based) {@code UUID} based on
+     * the specified byte array.
+     *
+     * @param  name
+     *         A byte array to be used to construct a {@code UUID}
+     *
+     * @return  A {@code UUID} generated from the specified array
+     */
+    public static UUID nameUUIDFromBytes(byte[] name) {
+        MessageDigest md;
+        try {
+            md = MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException nsae) {
+            throw new InternalError("MD5 not supported", nsae);
+        }
+        byte[] md5Bytes = md.digest(name);
+        md5Bytes[6]  &= 0x0f;  /* clear version        */
+        md5Bytes[6]  |= 0x30;  /* set to version 3     */
+        md5Bytes[8]  &= 0x3f;  /* clear variant        */
+        md5Bytes[8]  |= 0x80;  /* set to IETF variant  */
+        return new UUID(md5Bytes);
+    }
+
+    /**
+     * Creates a {@code UUID} from the string standard representation as
+     * described in the {@link #toString} method.
+     *
+     * @param  name
+     *         A string that specifies a {@code UUID}
+     *
+     * @return  A {@code UUID} with the specified value
+     *
+     * @throws  IllegalArgumentException
+     *          If name does not conform to the string representation as
+     *          described in {@link #toString}
+     *
+     */
+    public static UUID fromString(String name) {
+        String[] components = name.split("-");
+        if (components.length != 5)
+            throw new IllegalArgumentException("Invalid UUID string: "+name);
+        for (int i=0; i<5; i++)
+            components[i] = "0x"+components[i];
+
+        long mostSigBits = Long.decode(components[0]).longValue();
+        mostSigBits <<= 16;
+        mostSigBits |= Long.decode(components[1]).longValue();
+        mostSigBits <<= 16;
+        mostSigBits |= Long.decode(components[2]).longValue();
+
+        long leastSigBits = Long.decode(components[3]).longValue();
+        leastSigBits <<= 48;
+        leastSigBits |= Long.decode(components[4]).longValue();
+
+        return new UUID(mostSigBits, leastSigBits);
+    }
+
+    // Field Accessor Methods
+
+    /**
+     * Returns the least significant 64 bits of this UUID's 128 bit value.
+     *
+     * @return  The least significant 64 bits of this UUID's 128 bit value
+     */
+    public long getLeastSignificantBits() {
+        return leastSigBits;
+    }
+
+    /**
+     * Returns the most significant 64 bits of this UUID's 128 bit value.
+     *
+     * @return  The most significant 64 bits of this UUID's 128 bit value
+     */
+    public long getMostSignificantBits() {
+        return mostSigBits;
+    }
+
+    /**
+     * The version number associated with this {@code UUID}.  The version
+     * number describes how this {@code UUID} was generated.
+     *
+     * The version number has the following meaning:
+     * <ul>
+     * <li>1    Time-based UUID
+     * <li>2    DCE security UUID
+     * <li>3    Name-based UUID
+     * <li>4    Randomly generated UUID
+     * </ul>
+     *
+     * @return  The version number of this {@code UUID}
+     */
+    public int version() {
+        // Version is bits masked by 0x000000000000F000 in MS long
+        return (int)((mostSigBits >> 12) & 0x0f);
+    }
+
+    /**
+     * The variant number associated with this {@code UUID}.  The variant
+     * number describes the layout of the {@code UUID}.
+     *
+     * The variant number has the following meaning:
+     * <ul>
+     * <li>0    Reserved for NCS backward compatibility
+     * <li>2    <a href="http://www.ietf.org/rfc/rfc4122.txt">IETF&nbsp;RFC&nbsp;4122</a>
+     * (Leach-Salz), used by this class
+     * <li>6    Reserved, Microsoft Corporation backward compatibility
+     * <li>7    Reserved for future definition
+     * </ul>
+     *
+     * @return  The variant number of this {@code UUID}
+     */
+    public int variant() {
+        // This field is composed of a varying number of bits.
+        // 0    -    -    Reserved for NCS backward compatibility
+        // 1    0    -    The IETF aka Leach-Salz variant (used by this class)
+        // 1    1    0    Reserved, Microsoft backward compatibility
+        // 1    1    1    Reserved for future definition.
+        return (int) ((leastSigBits >>> (64 - (leastSigBits >>> 62)))
+                      & (leastSigBits >> 63));
+    }
+
+    /**
+     * The timestamp value associated with this UUID.
+     *
+     * <p> The 60 bit timestamp value is constructed from the time_low,
+     * time_mid, and time_hi fields of this {@code UUID}.  The resulting
+     * timestamp is measured in 100-nanosecond units since midnight,
+     * October 15, 1582 UTC.
+     *
+     * <p> The timestamp value is only meaningful in a time-based UUID, which
+     * has version type 1.  If this {@code UUID} is not a time-based UUID then
+     * this method throws UnsupportedOperationException.
+     *
+     * @throws UnsupportedOperationException
+     *         If this UUID is not a version 1 UUID
+     * @return The timestamp of this {@code UUID}.
+     */
+    public long timestamp() {
+        if (version() != 1) {
+            throw new UnsupportedOperationException("Not a time-based UUID");
+        }
+
+        return (mostSigBits & 0x0FFFL) << 48
+             | ((mostSigBits >> 16) & 0x0FFFFL) << 32
+             | mostSigBits >>> 32;
+    }
+
+    /**
+     * The clock sequence value associated with this UUID.
+     *
+     * <p> The 14 bit clock sequence value is constructed from the clock
+     * sequence field of this UUID.  The clock sequence field is used to
+     * guarantee temporal uniqueness in a time-based UUID.
+     *
+     * <p> The {@code clockSequence} value is only meaningful in a time-based
+     * UUID, which has version type 1.  If this UUID is not a time-based UUID
+     * then this method throws UnsupportedOperationException.
+     *
+     * @return  The clock sequence of this {@code UUID}
+     *
+     * @throws  UnsupportedOperationException
+     *          If this UUID is not a version 1 UUID
+     */
+    public int clockSequence() {
+        if (version() != 1) {
+            throw new UnsupportedOperationException("Not a time-based UUID");
+        }
+
+        return (int)((leastSigBits & 0x3FFF000000000000L) >>> 48);
+    }
+
+    /**
+     * The node value associated with this UUID.
+     *
+     * <p> The 48 bit node value is constructed from the node field of this
+     * UUID.  This field is intended to hold the IEEE 802 address of the machine
+     * that generated this UUID to guarantee spatial uniqueness.
+     *
+     * <p> The node value is only meaningful in a time-based UUID, which has
+     * version type 1.  If this UUID is not a time-based UUID then this method
+     * throws UnsupportedOperationException.
+     *
+     * @return  The node value of this {@code UUID}
+     *
+     * @throws  UnsupportedOperationException
+     *          If this UUID is not a version 1 UUID
+     */
+    public long node() {
+        if (version() != 1) {
+            throw new UnsupportedOperationException("Not a time-based UUID");
+        }
+
+        return leastSigBits & 0x0000FFFFFFFFFFFFL;
+    }
+
+    // Object Inherited Methods
+
+    /**
+     * Returns a {@code String} object representing this {@code UUID}.
+     *
+     * <p> The UUID string representation is as described by this BNF:
+     * <blockquote><pre>
+     * {@code
+     * UUID                   = <time_low> "-" <time_mid> "-"
+     *                          <time_high_and_version> "-"
+     *                          <variant_and_sequence> "-"
+     *                          <node>
+     * time_low               = 4*<hexOctet>
+     * time_mid               = 2*<hexOctet>
+     * time_high_and_version  = 2*<hexOctet>
+     * variant_and_sequence   = 2*<hexOctet>
+     * node                   = 6*<hexOctet>
+     * hexOctet               = <hexDigit><hexDigit>
+     * hexDigit               =
+     *       "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
+     *       | "a" | "b" | "c" | "d" | "e" | "f"
+     *       | "A" | "B" | "C" | "D" | "E" | "F"
+     * }</pre></blockquote>
+     *
+     * @return  A string representation of this {@code UUID}
+     */
+    public String toString() {
+        return (digits(mostSigBits >> 32, 8) + "-" +
+                digits(mostSigBits >> 16, 4) + "-" +
+                digits(mostSigBits, 4) + "-" +
+                digits(leastSigBits >> 48, 4) + "-" +
+                digits(leastSigBits, 12));
+    }
+
+    /** Returns val represented by the specified number of hex digits. */
+    private static String digits(long val, int digits) {
+        long hi = 1L << (digits * 4);
+        return Long.toHexString(hi | (val & (hi - 1))).substring(1);
+    }
+
+    /**
+     * Returns a hash code for this {@code UUID}.
+     *
+     * @return  A hash code value for this {@code UUID}
+     */
+    public int hashCode() {
+        long hilo = mostSigBits ^ leastSigBits;
+        return ((int)(hilo >> 32)) ^ (int) hilo;
+    }
+
+    /**
+     * Compares this object to the specified object.  The result is {@code
+     * true} if and only if the argument is not {@code null}, is a {@code UUID}
+     * object, has the same variant, and contains the same value, bit for bit,
+     * as this {@code UUID}.
+     *
+     * @param  obj
+     *         The object to be compared
+     *
+     * @return  {@code true} if the objects are the same; {@code false}
+     *          otherwise
+     */
+    public boolean equals(Object obj) {
+        if ((null == obj) || (obj.getClass() != UUID.class))
+            return false;
+        UUID id = (UUID)obj;
+        return (mostSigBits == id.mostSigBits &&
+                leastSigBits == id.leastSigBits);
+    }
+
+    // Comparison Operations
+
+    /**
+     * Compares this UUID with the specified UUID.
+     *
+     * <p> The first of two UUIDs is greater than the second if the most
+     * significant field in which the UUIDs differ is greater for the first
+     * UUID.
+     *
+     * @param  val
+     *         {@code UUID} to which this {@code UUID} is to be compared
+     *
+     * @return  -1, 0 or 1 as this {@code UUID} is less than, equal to, or
+     *          greater than {@code val}
+     *
+     */
+    public int compareTo(UUID val) {
+        // The ordering is intentionally set up so that the UUIDs
+        // can simply be numerically compared as two numbers
+        return (this.mostSigBits < val.mostSigBits ? -1 :
+                (this.mostSigBits > val.mostSigBits ? 1 :
+                 (this.leastSigBits < val.leastSigBits ? -1 :
+                  (this.leastSigBits > val.leastSigBits ? 1 :
+                   0))));
+    }
+}

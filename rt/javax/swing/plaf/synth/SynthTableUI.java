@@ -1,836 +1,830 @@
-/*     */ package javax.swing.plaf.synth;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Component;
-/*     */ import java.awt.Dimension;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Point;
-/*     */ import java.awt.Rectangle;
-/*     */ import java.beans.PropertyChangeEvent;
-/*     */ import java.beans.PropertyChangeListener;
-/*     */ import java.text.DateFormat;
-/*     */ import java.text.Format;
-/*     */ import java.text.NumberFormat;
-/*     */ import java.util.Date;
-/*     */ import javax.swing.Icon;
-/*     */ import javax.swing.ImageIcon;
-/*     */ import javax.swing.JCheckBox;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.JTable;
-/*     */ import javax.swing.LookAndFeel;
-/*     */ import javax.swing.TransferHandler;
-/*     */ import javax.swing.border.Border;
-/*     */ import javax.swing.plaf.ColorUIResource;
-/*     */ import javax.swing.plaf.ComponentUI;
-/*     */ import javax.swing.plaf.basic.BasicTableUI;
-/*     */ import javax.swing.table.DefaultTableCellRenderer;
-/*     */ import javax.swing.table.JTableHeader;
-/*     */ import javax.swing.table.TableCellRenderer;
-/*     */ import javax.swing.table.TableColumn;
-/*     */ import javax.swing.table.TableColumnModel;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class SynthTableUI
-/*     */   extends BasicTableUI
-/*     */   implements SynthUI, PropertyChangeListener
-/*     */ {
-/*     */   private SynthStyle style;
-/*     */   private boolean useTableColors;
-/*     */   private boolean useUIBorder;
-/*     */   private Color alternateColor;
-/*     */   private TableCellRenderer dateRenderer;
-/*     */   private TableCellRenderer numberRenderer;
-/*     */   private TableCellRenderer doubleRender;
-/*     */   private TableCellRenderer floatRenderer;
-/*     */   private TableCellRenderer iconRenderer;
-/*     */   private TableCellRenderer imageIconRenderer;
-/*     */   private TableCellRenderer booleanRenderer;
-/*     */   private TableCellRenderer objectRenderer;
-/*     */   
-/*     */   public static ComponentUI createUI(JComponent paramJComponent) {
-/*  97 */     return new SynthTableUI();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void installDefaults() {
-/* 110 */     this.dateRenderer = installRendererIfPossible(Date.class, (TableCellRenderer)null);
-/* 111 */     this.numberRenderer = installRendererIfPossible(Number.class, (TableCellRenderer)null);
-/* 112 */     this.doubleRender = installRendererIfPossible(Double.class, (TableCellRenderer)null);
-/* 113 */     this.floatRenderer = installRendererIfPossible(Float.class, (TableCellRenderer)null);
-/* 114 */     this.iconRenderer = installRendererIfPossible(Icon.class, (TableCellRenderer)null);
-/* 115 */     this.imageIconRenderer = installRendererIfPossible(ImageIcon.class, (TableCellRenderer)null);
-/* 116 */     this.booleanRenderer = installRendererIfPossible(Boolean.class, new SynthBooleanTableCellRenderer());
-/*     */     
-/* 118 */     this.objectRenderer = installRendererIfPossible(Object.class, new SynthTableCellRenderer());
-/*     */     
-/* 120 */     updateStyle(this.table);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private TableCellRenderer installRendererIfPossible(Class<?> paramClass, TableCellRenderer paramTableCellRenderer) {
-/* 125 */     TableCellRenderer tableCellRenderer = this.table.getDefaultRenderer(paramClass);
-/*     */     
-/* 127 */     if (tableCellRenderer instanceof javax.swing.plaf.UIResource) {
-/* 128 */       this.table.setDefaultRenderer(paramClass, paramTableCellRenderer);
-/*     */     }
-/* 130 */     return tableCellRenderer;
-/*     */   }
-/*     */   
-/*     */   private void updateStyle(JTable paramJTable) {
-/* 134 */     SynthContext synthContext = getContext(paramJTable, 1);
-/* 135 */     SynthStyle synthStyle = this.style;
-/* 136 */     this.style = SynthLookAndFeel.updateStyle(synthContext, this);
-/* 137 */     if (this.style != synthStyle) {
-/* 138 */       synthContext.setComponentState(513);
-/*     */       
-/* 140 */       Color color1 = this.table.getSelectionBackground();
-/* 141 */       if (color1 == null || color1 instanceof javax.swing.plaf.UIResource) {
-/* 142 */         this.table.setSelectionBackground(this.style.getColor(synthContext, ColorType.TEXT_BACKGROUND));
-/*     */       }
-/*     */ 
-/*     */       
-/* 146 */       Color color2 = this.table.getSelectionForeground();
-/* 147 */       if (color2 == null || color2 instanceof javax.swing.plaf.UIResource) {
-/* 148 */         this.table.setSelectionForeground(this.style.getColor(synthContext, ColorType.TEXT_FOREGROUND));
-/*     */       }
-/*     */ 
-/*     */       
-/* 152 */       synthContext.setComponentState(1);
-/*     */       
-/* 154 */       Color color3 = this.table.getGridColor();
-/* 155 */       if (color3 == null || color3 instanceof javax.swing.plaf.UIResource) {
-/* 156 */         color3 = (Color)this.style.get(synthContext, "Table.gridColor");
-/* 157 */         if (color3 == null) {
-/* 158 */           color3 = this.style.getColor(synthContext, ColorType.FOREGROUND);
-/*     */         }
-/* 160 */         this.table.setGridColor((color3 == null) ? new ColorUIResource(Color.GRAY) : color3);
-/*     */       } 
-/*     */       
-/* 163 */       this.useTableColors = this.style.getBoolean(synthContext, "Table.rendererUseTableColors", true);
-/*     */       
-/* 165 */       this.useUIBorder = this.style.getBoolean(synthContext, "Table.rendererUseUIBorder", true);
-/*     */ 
-/*     */       
-/* 168 */       Object object = this.style.get(synthContext, "Table.rowHeight");
-/* 169 */       if (object != null) {
-/* 170 */         LookAndFeel.installProperty(this.table, "rowHeight", object);
-/*     */       }
-/* 172 */       boolean bool = this.style.getBoolean(synthContext, "Table.showGrid", true);
-/* 173 */       if (!bool) {
-/* 174 */         this.table.setShowGrid(false);
-/*     */       }
-/* 176 */       Dimension dimension = this.table.getIntercellSpacing();
-/*     */       
-/* 178 */       if (dimension != null) {
-/* 179 */         dimension = (Dimension)this.style.get(synthContext, "Table.intercellSpacing");
-/*     */       }
-/* 181 */       this.alternateColor = (Color)this.style.get(synthContext, "Table.alternateRowColor");
-/* 182 */       if (dimension != null) {
-/* 183 */         this.table.setIntercellSpacing(dimension);
-/*     */       }
-/*     */ 
-/*     */       
-/* 187 */       if (synthStyle != null) {
-/* 188 */         uninstallKeyboardActions();
-/* 189 */         installKeyboardActions();
-/*     */       } 
-/*     */     } 
-/* 192 */     synthContext.dispose();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void installListeners() {
-/* 200 */     super.installListeners();
-/* 201 */     this.table.addPropertyChangeListener(this);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void uninstallDefaults() {
-/* 209 */     this.table.setDefaultRenderer(Date.class, this.dateRenderer);
-/* 210 */     this.table.setDefaultRenderer(Number.class, this.numberRenderer);
-/* 211 */     this.table.setDefaultRenderer(Double.class, this.doubleRender);
-/* 212 */     this.table.setDefaultRenderer(Float.class, this.floatRenderer);
-/* 213 */     this.table.setDefaultRenderer(Icon.class, this.iconRenderer);
-/* 214 */     this.table.setDefaultRenderer(ImageIcon.class, this.imageIconRenderer);
-/* 215 */     this.table.setDefaultRenderer(Boolean.class, this.booleanRenderer);
-/* 216 */     this.table.setDefaultRenderer(Object.class, this.objectRenderer);
-/*     */     
-/* 218 */     if (this.table.getTransferHandler() instanceof javax.swing.plaf.UIResource) {
-/* 219 */       this.table.setTransferHandler((TransferHandler)null);
-/*     */     }
-/* 221 */     SynthContext synthContext = getContext(this.table, 1);
-/* 222 */     this.style.uninstallDefaults(synthContext);
-/* 223 */     synthContext.dispose();
-/* 224 */     this.style = null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void uninstallListeners() {
-/* 232 */     this.table.removePropertyChangeListener(this);
-/* 233 */     super.uninstallListeners();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SynthContext getContext(JComponent paramJComponent) {
-/* 245 */     return getContext(paramJComponent, SynthLookAndFeel.getComponentState(paramJComponent));
-/*     */   }
-/*     */   
-/*     */   private SynthContext getContext(JComponent paramJComponent, int paramInt) {
-/* 249 */     return SynthContext.getContext(paramJComponent, this.style, paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void update(Graphics paramGraphics, JComponent paramJComponent) {
-/* 270 */     SynthContext synthContext = getContext(paramJComponent);
-/*     */     
-/* 272 */     SynthLookAndFeel.update(synthContext, paramGraphics);
-/* 273 */     synthContext.getPainter().paintTableBackground(synthContext, paramGraphics, 0, 0, paramJComponent
-/* 274 */         .getWidth(), paramJComponent.getHeight());
-/* 275 */     paint(synthContext, paramGraphics);
-/* 276 */     synthContext.dispose();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void paintBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/* 285 */     paramSynthContext.getPainter().paintTableBorder(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void paint(Graphics paramGraphics, JComponent paramJComponent) {
-/* 299 */     SynthContext synthContext = getContext(paramJComponent);
-/*     */     
-/* 301 */     paint(synthContext, paramGraphics);
-/* 302 */     synthContext.dispose();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void paint(SynthContext paramSynthContext, Graphics paramGraphics) {
-/* 313 */     Rectangle rectangle1 = paramGraphics.getClipBounds();
-/*     */     
-/* 315 */     Rectangle rectangle2 = this.table.getBounds();
-/*     */ 
-/*     */     
-/* 318 */     rectangle2.x = rectangle2.y = 0;
-/*     */     
-/* 320 */     if (this.table.getRowCount() <= 0 || this.table.getColumnCount() <= 0 || 
-/*     */ 
-/*     */       
-/* 323 */       !rectangle2.intersects(rectangle1)) {
-/*     */       
-/* 325 */       paintDropLines(paramSynthContext, paramGraphics);
-/*     */       
-/*     */       return;
-/*     */     } 
-/* 329 */     boolean bool = this.table.getComponentOrientation().isLeftToRight();
-/*     */     
-/* 331 */     Point point1 = rectangle1.getLocation();
-/*     */     
-/* 333 */     Point point2 = new Point(rectangle1.x + rectangle1.width - 1, rectangle1.y + rectangle1.height - 1);
-/*     */ 
-/*     */     
-/* 336 */     int i = this.table.rowAtPoint(point1);
-/* 337 */     int j = this.table.rowAtPoint(point2);
-/*     */ 
-/*     */     
-/* 340 */     if (i == -1) {
-/* 341 */       i = 0;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 347 */     if (j == -1) {
-/* 348 */       j = this.table.getRowCount() - 1;
-/*     */     }
-/*     */     
-/* 351 */     int k = this.table.columnAtPoint(bool ? point1 : point2);
-/* 352 */     int m = this.table.columnAtPoint(bool ? point2 : point1);
-/*     */     
-/* 354 */     if (k == -1) {
-/* 355 */       k = 0;
-/*     */     }
-/*     */ 
-/*     */     
-/* 359 */     if (m == -1) {
-/* 360 */       m = this.table.getColumnCount() - 1;
-/*     */     }
-/*     */ 
-/*     */     
-/* 364 */     paintCells(paramSynthContext, paramGraphics, i, j, k, m);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 369 */     paintGrid(paramSynthContext, paramGraphics, i, j, k, m);
-/*     */     
-/* 371 */     paintDropLines(paramSynthContext, paramGraphics);
-/*     */   }
-/*     */   
-/*     */   private void paintDropLines(SynthContext paramSynthContext, Graphics paramGraphics) {
-/* 375 */     JTable.DropLocation dropLocation = this.table.getDropLocation();
-/* 376 */     if (dropLocation == null) {
-/*     */       return;
-/*     */     }
-/*     */     
-/* 380 */     Color color1 = (Color)this.style.get(paramSynthContext, "Table.dropLineColor");
-/* 381 */     Color color2 = (Color)this.style.get(paramSynthContext, "Table.dropLineShortColor");
-/* 382 */     if (color1 == null && color2 == null) {
-/*     */       return;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 388 */     Rectangle rectangle = getHDropLineRect(dropLocation);
-/* 389 */     if (rectangle != null) {
-/* 390 */       int i = rectangle.x;
-/* 391 */       int j = rectangle.width;
-/* 392 */       if (color1 != null) {
-/* 393 */         extendRect(rectangle, true);
-/* 394 */         paramGraphics.setColor(color1);
-/* 395 */         paramGraphics.fillRect(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
-/*     */       } 
-/* 397 */       if (!dropLocation.isInsertColumn() && color2 != null) {
-/* 398 */         paramGraphics.setColor(color2);
-/* 399 */         paramGraphics.fillRect(i, rectangle.y, j, rectangle.height);
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 403 */     rectangle = getVDropLineRect(dropLocation);
-/* 404 */     if (rectangle != null) {
-/* 405 */       int i = rectangle.y;
-/* 406 */       int j = rectangle.height;
-/* 407 */       if (color1 != null) {
-/* 408 */         extendRect(rectangle, false);
-/* 409 */         paramGraphics.setColor(color1);
-/* 410 */         paramGraphics.fillRect(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
-/*     */       } 
-/* 412 */       if (!dropLocation.isInsertRow() && color2 != null) {
-/* 413 */         paramGraphics.setColor(color2);
-/* 414 */         paramGraphics.fillRect(rectangle.x, i, rectangle.width, j);
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   private Rectangle getHDropLineRect(JTable.DropLocation paramDropLocation) {
-/* 420 */     if (!paramDropLocation.isInsertRow()) {
-/* 421 */       return null;
-/*     */     }
-/*     */     
-/* 424 */     int i = paramDropLocation.getRow();
-/* 425 */     int j = paramDropLocation.getColumn();
-/* 426 */     if (j >= this.table.getColumnCount()) {
-/* 427 */       j--;
-/*     */     }
-/*     */     
-/* 430 */     Rectangle rectangle = this.table.getCellRect(i, j, true);
-/*     */     
-/* 432 */     if (i >= this.table.getRowCount()) {
-/* 433 */       i--;
-/* 434 */       Rectangle rectangle1 = this.table.getCellRect(i, j, true);
-/* 435 */       rectangle1.y += rectangle1.height;
-/*     */     } 
-/*     */     
-/* 438 */     if (rectangle.y == 0) {
-/* 439 */       rectangle.y = -1;
-/*     */     } else {
-/* 441 */       rectangle.y -= 2;
-/*     */     } 
-/*     */     
-/* 444 */     rectangle.height = 3;
-/*     */     
-/* 446 */     return rectangle;
-/*     */   }
-/*     */   
-/*     */   private Rectangle getVDropLineRect(JTable.DropLocation paramDropLocation) {
-/* 450 */     if (!paramDropLocation.isInsertColumn()) {
-/* 451 */       return null;
-/*     */     }
-/*     */     
-/* 454 */     boolean bool = this.table.getComponentOrientation().isLeftToRight();
-/* 455 */     int i = paramDropLocation.getColumn();
-/* 456 */     Rectangle rectangle = this.table.getCellRect(paramDropLocation.getRow(), i, true);
-/*     */     
-/* 458 */     if (i >= this.table.getColumnCount()) {
-/* 459 */       i--;
-/* 460 */       rectangle = this.table.getCellRect(paramDropLocation.getRow(), i, true);
-/* 461 */       if (bool) {
-/* 462 */         rectangle.x += rectangle.width;
-/*     */       }
-/* 464 */     } else if (!bool) {
-/* 465 */       rectangle.x += rectangle.width;
-/*     */     } 
-/*     */     
-/* 468 */     if (rectangle.x == 0) {
-/* 469 */       rectangle.x = -1;
-/*     */     } else {
-/* 471 */       rectangle.x -= 2;
-/*     */     } 
-/*     */     
-/* 474 */     rectangle.width = 3;
-/*     */     
-/* 476 */     return rectangle;
-/*     */   }
-/*     */   
-/*     */   private Rectangle extendRect(Rectangle paramRectangle, boolean paramBoolean) {
-/* 480 */     if (paramRectangle == null) {
-/* 481 */       return paramRectangle;
-/*     */     }
-/*     */     
-/* 484 */     if (paramBoolean) {
-/* 485 */       paramRectangle.x = 0;
-/* 486 */       paramRectangle.width = this.table.getWidth();
-/*     */     } else {
-/* 488 */       paramRectangle.y = 0;
-/*     */       
-/* 490 */       if (this.table.getRowCount() != 0) {
-/* 491 */         Rectangle rectangle = this.table.getCellRect(this.table.getRowCount() - 1, 0, true);
-/* 492 */         paramRectangle.height = rectangle.y + rectangle.height;
-/*     */       } else {
-/* 494 */         paramRectangle.height = this.table.getHeight();
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 498 */     return paramRectangle;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void paintGrid(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/* 510 */     paramGraphics.setColor(this.table.getGridColor());
-/*     */     
-/* 512 */     Rectangle rectangle1 = this.table.getCellRect(paramInt1, paramInt3, true);
-/* 513 */     Rectangle rectangle2 = this.table.getCellRect(paramInt2, paramInt4, true);
-/* 514 */     Rectangle rectangle3 = rectangle1.union(rectangle2);
-/* 515 */     SynthGraphicsUtils synthGraphicsUtils = paramSynthContext.getStyle().getGraphicsUtils(paramSynthContext);
-/*     */ 
-/*     */     
-/* 518 */     if (this.table.getShowHorizontalLines()) {
-/* 519 */       int i = rectangle3.x + rectangle3.width;
-/* 520 */       int j = rectangle3.y;
-/* 521 */       for (int k = paramInt1; k <= paramInt2; k++) {
-/* 522 */         j += this.table.getRowHeight(k);
-/* 523 */         synthGraphicsUtils.drawLine(paramSynthContext, "Table.grid", paramGraphics, rectangle3.x, j - 1, i - 1, j - 1);
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 527 */     if (this.table.getShowVerticalLines()) {
-/* 528 */       TableColumnModel tableColumnModel = this.table.getColumnModel();
-/* 529 */       int i = rectangle3.y + rectangle3.height;
-/*     */       
-/* 531 */       if (this.table.getComponentOrientation().isLeftToRight()) {
-/* 532 */         int j = rectangle3.x;
-/* 533 */         for (int k = paramInt3; k <= paramInt4; k++) {
-/* 534 */           int m = tableColumnModel.getColumn(k).getWidth();
-/* 535 */           j += m;
-/* 536 */           synthGraphicsUtils.drawLine(paramSynthContext, "Table.grid", paramGraphics, j - 1, 0, j - 1, i - 1);
-/*     */         } 
-/*     */       } else {
-/*     */         
-/* 540 */         int j = rectangle3.x;
-/* 541 */         for (int k = paramInt4; k >= paramInt3; k--) {
-/* 542 */           int m = tableColumnModel.getColumn(k).getWidth();
-/* 543 */           j += m;
-/* 544 */           synthGraphicsUtils.drawLine(paramSynthContext, "Table.grid", paramGraphics, j - 1, 0, j - 1, i - 1);
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private int viewIndexForColumn(TableColumn paramTableColumn) {
-/* 552 */     TableColumnModel tableColumnModel = this.table.getColumnModel();
-/* 553 */     for (byte b = 0; b < tableColumnModel.getColumnCount(); b++) {
-/* 554 */       if (tableColumnModel.getColumn(b) == paramTableColumn) {
-/* 555 */         return b;
-/*     */       }
-/*     */     } 
-/* 558 */     return -1;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void paintCells(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/* 563 */     JTableHeader jTableHeader = this.table.getTableHeader();
-/* 564 */     TableColumn tableColumn = (jTableHeader == null) ? null : jTableHeader.getDraggedColumn();
-/*     */     
-/* 566 */     TableColumnModel tableColumnModel = this.table.getColumnModel();
-/* 567 */     int i = tableColumnModel.getColumnMargin();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 572 */     if (this.table.getComponentOrientation().isLeftToRight()) {
-/* 573 */       for (int j = paramInt1; j <= paramInt2; j++) {
-/* 574 */         Rectangle rectangle = this.table.getCellRect(j, paramInt3, false);
-/* 575 */         for (int k = paramInt3; k <= paramInt4; k++) {
-/* 576 */           TableColumn tableColumn1 = tableColumnModel.getColumn(k);
-/* 577 */           int m = tableColumn1.getWidth();
-/* 578 */           rectangle.width = m - i;
-/* 579 */           if (tableColumn1 != tableColumn) {
-/* 580 */             paintCell(paramSynthContext, paramGraphics, rectangle, j, k);
-/*     */           }
-/* 582 */           rectangle.x += m;
-/*     */         } 
-/*     */       } 
-/*     */     } else {
-/* 586 */       for (int j = paramInt1; j <= paramInt2; j++) {
-/* 587 */         Rectangle rectangle = this.table.getCellRect(j, paramInt3, false);
-/* 588 */         TableColumn tableColumn1 = tableColumnModel.getColumn(paramInt3);
-/* 589 */         if (tableColumn1 != tableColumn) {
-/* 590 */           int m = tableColumn1.getWidth();
-/* 591 */           rectangle.width = m - i;
-/* 592 */           paintCell(paramSynthContext, paramGraphics, rectangle, j, paramInt3);
-/*     */         } 
-/* 594 */         for (int k = paramInt3 + 1; k <= paramInt4; k++) {
-/* 595 */           tableColumn1 = tableColumnModel.getColumn(k);
-/* 596 */           int m = tableColumn1.getWidth();
-/* 597 */           rectangle.width = m - i;
-/* 598 */           rectangle.x -= m;
-/* 599 */           if (tableColumn1 != tableColumn) {
-/* 600 */             paintCell(paramSynthContext, paramGraphics, rectangle, j, k);
-/*     */           }
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */     
-/* 607 */     if (tableColumn != null) {
-/* 608 */       paintDraggedArea(paramSynthContext, paramGraphics, paramInt1, paramInt2, tableColumn, jTableHeader.getDraggedDistance());
-/*     */     }
-/*     */ 
-/*     */     
-/* 612 */     this.rendererPane.removeAll();
-/*     */   }
-/*     */   
-/*     */   private void paintDraggedArea(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, TableColumn paramTableColumn, int paramInt3) {
-/* 616 */     int i = viewIndexForColumn(paramTableColumn);
-/*     */     
-/* 618 */     Rectangle rectangle1 = this.table.getCellRect(paramInt1, i, true);
-/* 619 */     Rectangle rectangle2 = this.table.getCellRect(paramInt2, i, true);
-/*     */     
-/* 621 */     Rectangle rectangle3 = rectangle1.union(rectangle2);
-/*     */ 
-/*     */     
-/* 624 */     paramGraphics.setColor(this.table.getParent().getBackground());
-/* 625 */     paramGraphics.fillRect(rectangle3.x, rectangle3.y, rectangle3.width, rectangle3.height);
-/*     */ 
-/*     */ 
-/*     */     
-/* 629 */     rectangle3.x += paramInt3;
-/*     */ 
-/*     */     
-/* 632 */     paramGraphics.setColor(paramSynthContext.getStyle().getColor(paramSynthContext, ColorType.BACKGROUND));
-/* 633 */     paramGraphics.fillRect(rectangle3.x, rectangle3.y, rectangle3.width, rectangle3.height);
-/*     */ 
-/*     */     
-/* 636 */     SynthGraphicsUtils synthGraphicsUtils = paramSynthContext.getStyle().getGraphicsUtils(paramSynthContext);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 641 */     if (this.table.getShowVerticalLines()) {
-/* 642 */       paramGraphics.setColor(this.table.getGridColor());
-/* 643 */       int k = rectangle3.x;
-/* 644 */       int m = rectangle3.y;
-/* 645 */       int n = k + rectangle3.width - 1;
-/* 646 */       int i1 = m + rectangle3.height - 1;
-/*     */       
-/* 648 */       synthGraphicsUtils.drawLine(paramSynthContext, "Table.grid", paramGraphics, k - 1, m, k - 1, i1);
-/*     */       
-/* 650 */       synthGraphicsUtils.drawLine(paramSynthContext, "Table.grid", paramGraphics, n, m, n, i1);
-/*     */     } 
-/*     */     
-/* 653 */     for (int j = paramInt1; j <= paramInt2; j++) {
-/*     */       
-/* 655 */       Rectangle rectangle = this.table.getCellRect(j, i, false);
-/* 656 */       rectangle.x += paramInt3;
-/* 657 */       paintCell(paramSynthContext, paramGraphics, rectangle, j, i);
-/*     */ 
-/*     */       
-/* 660 */       if (this.table.getShowHorizontalLines()) {
-/* 661 */         paramGraphics.setColor(this.table.getGridColor());
-/* 662 */         Rectangle rectangle4 = this.table.getCellRect(j, i, true);
-/* 663 */         rectangle4.x += paramInt3;
-/* 664 */         int k = rectangle4.x;
-/* 665 */         int m = rectangle4.y;
-/* 666 */         int n = k + rectangle4.width - 1;
-/* 667 */         int i1 = m + rectangle4.height - 1;
-/* 668 */         synthGraphicsUtils.drawLine(paramSynthContext, "Table.grid", paramGraphics, k, i1, n, i1);
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void paintCell(SynthContext paramSynthContext, Graphics paramGraphics, Rectangle paramRectangle, int paramInt1, int paramInt2) {
-/* 675 */     if (this.table.isEditing() && this.table.getEditingRow() == paramInt1 && this.table
-/* 676 */       .getEditingColumn() == paramInt2) {
-/* 677 */       Component component = this.table.getEditorComponent();
-/* 678 */       component.setBounds(paramRectangle);
-/* 679 */       component.validate();
-/*     */     } else {
-/*     */       
-/* 682 */       TableCellRenderer tableCellRenderer = this.table.getCellRenderer(paramInt1, paramInt2);
-/* 683 */       Component component = this.table.prepareRenderer(tableCellRenderer, paramInt1, paramInt2);
-/* 684 */       Color color = component.getBackground();
-/* 685 */       if ((color == null || color instanceof javax.swing.plaf.UIResource || component instanceof SynthBooleanTableCellRenderer) && 
-/*     */         
-/* 687 */         !this.table.isCellSelected(paramInt1, paramInt2) && 
-/* 688 */         this.alternateColor != null && paramInt1 % 2 != 0) {
-/* 689 */         component.setBackground(this.alternateColor);
-/*     */       }
-/*     */       
-/* 692 */       this.rendererPane.paintComponent(paramGraphics, component, this.table, paramRectangle.x, paramRectangle.y, paramRectangle.width, paramRectangle.height, true);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void propertyChange(PropertyChangeEvent paramPropertyChangeEvent) {
-/* 702 */     if (SynthLookAndFeel.shouldUpdateStyle(paramPropertyChangeEvent))
-/* 703 */       updateStyle((JTable)paramPropertyChangeEvent.getSource()); 
-/*     */   }
-/*     */   
-/*     */   private class SynthBooleanTableCellRenderer
-/*     */     extends JCheckBox
-/*     */     implements TableCellRenderer
-/*     */   {
-/*     */     private boolean isRowSelected;
-/*     */     
-/*     */     public SynthBooleanTableCellRenderer() {
-/* 713 */       setHorizontalAlignment(0);
-/* 714 */       setName("Table.cellRenderer");
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public Component getTableCellRendererComponent(JTable param1JTable, Object param1Object, boolean param1Boolean1, boolean param1Boolean2, int param1Int1, int param1Int2) {
-/* 720 */       this.isRowSelected = param1Boolean1;
-/*     */       
-/* 722 */       if (param1Boolean1) {
-/* 723 */         setForeground(unwrap(param1JTable.getSelectionForeground()));
-/* 724 */         setBackground(unwrap(param1JTable.getSelectionBackground()));
-/*     */       } else {
-/* 726 */         setForeground(unwrap(param1JTable.getForeground()));
-/* 727 */         setBackground(unwrap(param1JTable.getBackground()));
-/*     */       } 
-/*     */       
-/* 730 */       setSelected((param1Object != null && ((Boolean)param1Object).booleanValue()));
-/* 731 */       return this;
-/*     */     }
-/*     */     
-/*     */     private Color unwrap(Color param1Color) {
-/* 735 */       if (param1Color instanceof javax.swing.plaf.UIResource) {
-/* 736 */         return new Color(param1Color.getRGB());
-/*     */       }
-/* 738 */       return param1Color;
-/*     */     }
-/*     */     
-/*     */     public boolean isOpaque() {
-/* 742 */       return this.isRowSelected ? true : super.isOpaque();
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   private class SynthTableCellRenderer
-/*     */     extends DefaultTableCellRenderer {
-/*     */     private Object numberFormat;
-/*     */     private Object dateFormat;
-/*     */     
-/*     */     public void setOpaque(boolean param1Boolean) {
-/* 752 */       this.opaque = param1Boolean;
-/*     */     } private boolean opaque;
-/*     */     private SynthTableCellRenderer() {}
-/*     */     public boolean isOpaque() {
-/* 756 */       return this.opaque;
-/*     */     }
-/*     */     
-/*     */     public String getName() {
-/* 760 */       String str = super.getName();
-/* 761 */       if (str == null) {
-/* 762 */         return "Table.cellRenderer";
-/*     */       }
-/* 764 */       return str;
-/*     */     }
-/*     */     
-/*     */     public void setBorder(Border param1Border) {
-/* 768 */       if (SynthTableUI.this.useUIBorder || param1Border instanceof SynthBorder) {
-/* 769 */         super.setBorder(param1Border);
-/*     */       }
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public Component getTableCellRendererComponent(JTable param1JTable, Object param1Object, boolean param1Boolean1, boolean param1Boolean2, int param1Int1, int param1Int2) {
-/* 776 */       if (!SynthTableUI.this.useTableColors && (param1Boolean1 || param1Boolean2)) {
-/* 777 */         SynthLookAndFeel.setSelectedUI(
-/* 778 */             (SynthLabelUI)SynthLookAndFeel.getUIOfType(getUI(), SynthLabelUI.class), param1Boolean1, param1Boolean2, param1JTable
-/* 779 */             .isEnabled(), false);
-/*     */       } else {
-/*     */         
-/* 782 */         SynthLookAndFeel.resetSelectedUI();
-/*     */       } 
-/* 784 */       super.getTableCellRendererComponent(param1JTable, param1Object, param1Boolean1, param1Boolean2, param1Int1, param1Int2);
-/*     */ 
-/*     */       
-/* 787 */       setIcon((Icon)null);
-/* 788 */       if (param1JTable != null) {
-/* 789 */         configureValue(param1Object, param1JTable.getColumnClass(param1Int2));
-/*     */       }
-/* 791 */       return this;
-/*     */     }
-/*     */     
-/*     */     private void configureValue(Object param1Object, Class<Object> param1Class) {
-/* 795 */       if (param1Class == Object.class || param1Class == null) {
-/* 796 */         setHorizontalAlignment(10);
-/* 797 */       } else if (param1Class == Float.class || param1Class == Double.class) {
-/* 798 */         if (this.numberFormat == null) {
-/* 799 */           this.numberFormat = NumberFormat.getInstance();
-/*     */         }
-/* 801 */         setHorizontalAlignment(11);
-/* 802 */         setText((param1Object == null) ? "" : ((NumberFormat)this.numberFormat).format(param1Object));
-/*     */       }
-/* 804 */       else if (param1Class == Number.class) {
-/* 805 */         setHorizontalAlignment(11);
-/*     */       
-/*     */       }
-/* 808 */       else if (param1Class == Icon.class || param1Class == ImageIcon.class) {
-/* 809 */         setHorizontalAlignment(0);
-/* 810 */         setIcon((param1Object instanceof Icon) ? (Icon)param1Object : null);
-/* 811 */         setText("");
-/*     */       }
-/* 813 */       else if (param1Class == Date.class) {
-/* 814 */         if (this.dateFormat == null) {
-/* 815 */           this.dateFormat = DateFormat.getDateInstance();
-/*     */         }
-/* 817 */         setHorizontalAlignment(10);
-/* 818 */         setText((param1Object == null) ? "" : ((Format)this.dateFormat).format(param1Object));
-/*     */       } else {
-/*     */         
-/* 821 */         configureValue(param1Object, param1Class.getSuperclass());
-/*     */       } 
-/*     */     }
-/*     */     
-/*     */     public void paint(Graphics param1Graphics) {
-/* 826 */       super.paint(param1Graphics);
-/* 827 */       SynthLookAndFeel.resetSelectedUI();
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\synth\SynthTableUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.plaf.synth;
+
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.text.DateFormat;
+import java.text.Format;
+import java.text.NumberFormat;
+import java.util.Date;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JTable;
+import javax.swing.LookAndFeel;
+import javax.swing.border.Border;
+import javax.swing.plaf.*;
+import javax.swing.plaf.basic.BasicTableUI;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
+
+/**
+ * Provides the Synth L&amp;F UI delegate for
+ * {@link javax.swing.JTable}.
+ *
+ * @author Philip Milne
+ * @since 1.7
+ */
+public class SynthTableUI extends BasicTableUI
+                          implements SynthUI, PropertyChangeListener {
+//
+// Instance Variables
+//
+
+    private SynthStyle style;
+
+    private boolean useTableColors;
+    private boolean useUIBorder;
+    private Color alternateColor; //the background color to use for cells for alternate cells
+
+    // TableCellRenderer installed on the JTable at the time we're installed,
+    // cached so that we can reinstall them at uninstallUI time.
+    private TableCellRenderer dateRenderer;
+    private TableCellRenderer numberRenderer;
+    private TableCellRenderer doubleRender;
+    private TableCellRenderer floatRenderer;
+    private TableCellRenderer iconRenderer;
+    private TableCellRenderer imageIconRenderer;
+    private TableCellRenderer booleanRenderer;
+    private TableCellRenderer objectRenderer;
+
+//
+//  The installation/uninstall procedures and support
+//
+
+    /**
+     * Creates a new UI object for the given component.
+     *
+     * @param c component to create UI object for
+     * @return the UI object
+     */
+    public static ComponentUI createUI(JComponent c) {
+        return new SynthTableUI();
+    }
+
+    /**
+     * Initializes JTable properties, such as font, foreground, and background.
+     * The font, foreground, and background properties are only set if their
+     * current value is either null or a UIResource, other properties are set
+     * if the current value is null.
+     *
+     * @see #installUI
+     */
+    @Override
+    protected void installDefaults() {
+        dateRenderer = installRendererIfPossible(Date.class, null);
+        numberRenderer = installRendererIfPossible(Number.class, null);
+        doubleRender = installRendererIfPossible(Double.class, null);
+        floatRenderer = installRendererIfPossible(Float.class, null);
+        iconRenderer = installRendererIfPossible(Icon.class, null);
+        imageIconRenderer = installRendererIfPossible(ImageIcon.class, null);
+        booleanRenderer = installRendererIfPossible(Boolean.class,
+                                 new SynthBooleanTableCellRenderer());
+        objectRenderer = installRendererIfPossible(Object.class,
+                                        new SynthTableCellRenderer());
+        updateStyle(table);
+    }
+
+    private TableCellRenderer installRendererIfPossible(Class objectClass,
+                                     TableCellRenderer renderer) {
+        TableCellRenderer currentRenderer = table.getDefaultRenderer(
+                                 objectClass);
+        if (currentRenderer instanceof UIResource) {
+            table.setDefaultRenderer(objectClass, renderer);
+        }
+        return currentRenderer;
+    }
+
+    private void updateStyle(JTable c) {
+        SynthContext context = getContext(c, ENABLED);
+        SynthStyle oldStyle = style;
+        style = SynthLookAndFeel.updateStyle(context, this);
+        if (style != oldStyle) {
+            context.setComponentState(ENABLED | SELECTED);
+
+            Color sbg = table.getSelectionBackground();
+            if (sbg == null || sbg instanceof UIResource) {
+                table.setSelectionBackground(style.getColor(
+                                        context, ColorType.TEXT_BACKGROUND));
+            }
+
+            Color sfg = table.getSelectionForeground();
+            if (sfg == null || sfg instanceof UIResource) {
+                table.setSelectionForeground(style.getColor(
+                                  context, ColorType.TEXT_FOREGROUND));
+            }
+
+            context.setComponentState(ENABLED);
+
+            Color gridColor = table.getGridColor();
+            if (gridColor == null || gridColor instanceof UIResource) {
+                gridColor = (Color)style.get(context, "Table.gridColor");
+                if (gridColor == null) {
+                    gridColor = style.getColor(context, ColorType.FOREGROUND);
+                }
+                table.setGridColor(gridColor == null ? new ColorUIResource(Color.GRAY) : gridColor);
+            }
+
+            useTableColors = style.getBoolean(context,
+                                  "Table.rendererUseTableColors", true);
+            useUIBorder = style.getBoolean(context,
+                                  "Table.rendererUseUIBorder", true);
+
+            Object rowHeight = style.get(context, "Table.rowHeight");
+            if (rowHeight != null) {
+                LookAndFeel.installProperty(table, "rowHeight", rowHeight);
+            }
+            boolean showGrid = style.getBoolean(context, "Table.showGrid", true);
+            if (!showGrid) {
+                table.setShowGrid(false);
+            }
+            Dimension d = table.getIntercellSpacing();
+//            if (d == null || d instanceof UIResource) {
+            if (d != null) {
+                d = (Dimension)style.get(context, "Table.intercellSpacing");
+            }
+            alternateColor = (Color)style.get(context, "Table.alternateRowColor");
+            if (d != null) {
+                table.setIntercellSpacing(d);
+            }
+
+
+            if (oldStyle != null) {
+                uninstallKeyboardActions();
+                installKeyboardActions();
+            }
+        }
+        context.dispose();
+    }
+
+    /**
+     * Attaches listeners to the JTable.
+     */
+    @Override
+    protected void installListeners() {
+        super.installListeners();
+        table.addPropertyChangeListener(this);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void uninstallDefaults() {
+        table.setDefaultRenderer(Date.class, dateRenderer);
+        table.setDefaultRenderer(Number.class, numberRenderer);
+        table.setDefaultRenderer(Double.class, doubleRender);
+        table.setDefaultRenderer(Float.class, floatRenderer);
+        table.setDefaultRenderer(Icon.class, iconRenderer);
+        table.setDefaultRenderer(ImageIcon.class, imageIconRenderer);
+        table.setDefaultRenderer(Boolean.class, booleanRenderer);
+        table.setDefaultRenderer(Object.class, objectRenderer);
+
+        if (table.getTransferHandler() instanceof UIResource) {
+            table.setTransferHandler(null);
+        }
+        SynthContext context = getContext(table, ENABLED);
+        style.uninstallDefaults(context);
+        context.dispose();
+        style = null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void uninstallListeners() {
+        table.removePropertyChangeListener(this);
+        super.uninstallListeners();
+    }
+
+    //
+    // SynthUI
+    //
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public SynthContext getContext(JComponent c) {
+        return getContext(c, SynthLookAndFeel.getComponentState(c));
+    }
+
+    private SynthContext getContext(JComponent c, int state) {
+        return SynthContext.getContext(c, style, state);
+    }
+
+//
+//  Paint methods and support
+//
+
+    /**
+     * Notifies this UI delegate to repaint the specified component.
+     * This method paints the component background, then calls
+     * the {@link #paint(SynthContext,Graphics)} method.
+     *
+     * <p>In general, this method does not need to be overridden by subclasses.
+     * All Look and Feel rendering code should reside in the {@code paint} method.
+     *
+     * @param g the {@code Graphics} object used for painting
+     * @param c the component being painted
+     * @see #paint(SynthContext,Graphics)
+     */
+    @Override
+    public void update(Graphics g, JComponent c) {
+        SynthContext context = getContext(c);
+
+        SynthLookAndFeel.update(context, g);
+        context.getPainter().paintTableBackground(context,
+                          g, 0, 0, c.getWidth(), c.getHeight());
+        paint(context, g);
+        context.dispose();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void paintBorder(SynthContext context, Graphics g, int x,
+                            int y, int w, int h) {
+        context.getPainter().paintTableBorder(context, g, x, y, w, h);
+    }
+
+    /**
+     * Paints the specified component according to the Look and Feel.
+     * <p>This method is not used by Synth Look and Feel.
+     * Painting is handled by the {@link #paint(SynthContext,Graphics)} method.
+     *
+     * @param g the {@code Graphics} object used for painting
+     * @param c the component being painted
+     * @see #paint(SynthContext,Graphics)
+     */
+    @Override
+    public void paint(Graphics g, JComponent c) {
+        SynthContext context = getContext(c);
+
+        paint(context, g);
+        context.dispose();
+    }
+
+    /**
+     * Paints the specified component.
+     *
+     * @param context context for the component being painted
+     * @param g the {@code Graphics} object used for painting
+     * @see #update(Graphics,JComponent)
+     */
+    protected void paint(SynthContext context, Graphics g) {
+        Rectangle clip = g.getClipBounds();
+
+        Rectangle bounds = table.getBounds();
+        // account for the fact that the graphics has already been translated
+        // into the table's bounds
+        bounds.x = bounds.y = 0;
+
+        if (table.getRowCount() <= 0 || table.getColumnCount() <= 0 ||
+                // this check prevents us from painting the entire table
+                // when the clip doesn't intersect our bounds at all
+                !bounds.intersects(clip)) {
+
+            paintDropLines(context, g);
+            return;
+        }
+
+        boolean ltr = table.getComponentOrientation().isLeftToRight();
+
+        Point upperLeft = clip.getLocation();
+
+        Point lowerRight = new Point(clip.x + clip.width - 1,
+                                     clip.y + clip.height - 1);
+
+        int rMin = table.rowAtPoint(upperLeft);
+        int rMax = table.rowAtPoint(lowerRight);
+        // This should never happen (as long as our bounds intersect the clip,
+        // which is why we bail above if that is the case).
+        if (rMin == -1) {
+            rMin = 0;
+        }
+        // If the table does not have enough rows to fill the view we'll get -1.
+        // (We could also get -1 if our bounds don't intersect the clip,
+        // which is why we bail above if that is the case).
+        // Replace this with the index of the last row.
+        if (rMax == -1) {
+            rMax = table.getRowCount()-1;
+        }
+
+        int cMin = table.columnAtPoint(ltr ? upperLeft : lowerRight);
+        int cMax = table.columnAtPoint(ltr ? lowerRight : upperLeft);
+        // This should never happen.
+        if (cMin == -1) {
+            cMin = 0;
+        }
+        // If the table does not have enough columns to fill the view we'll get -1.
+        // Replace this with the index of the last column.
+        if (cMax == -1) {
+            cMax = table.getColumnCount()-1;
+        }
+
+        // Paint the cells.
+        paintCells(context, g, rMin, rMax, cMin, cMax);
+
+        // Paint the grid.
+        // it is important to paint the grid after the cells, otherwise the grid will be overpainted
+        // because in Synth cell renderers are likely to be opaque
+        paintGrid(context, g, rMin, rMax, cMin, cMax);
+
+        paintDropLines(context, g);
+    }
+
+    private void paintDropLines(SynthContext context, Graphics g) {
+        JTable.DropLocation loc = table.getDropLocation();
+        if (loc == null) {
+            return;
+        }
+
+        Color color = (Color)style.get(context, "Table.dropLineColor");
+        Color shortColor = (Color)style.get(context, "Table.dropLineShortColor");
+        if (color == null && shortColor == null) {
+            return;
+        }
+
+        Rectangle rect;
+
+        rect = getHDropLineRect(loc);
+        if (rect != null) {
+            int x = rect.x;
+            int w = rect.width;
+            if (color != null) {
+                extendRect(rect, true);
+                g.setColor(color);
+                g.fillRect(rect.x, rect.y, rect.width, rect.height);
+            }
+            if (!loc.isInsertColumn() && shortColor != null) {
+                g.setColor(shortColor);
+                g.fillRect(x, rect.y, w, rect.height);
+            }
+        }
+
+        rect = getVDropLineRect(loc);
+        if (rect != null) {
+            int y = rect.y;
+            int h = rect.height;
+            if (color != null) {
+                extendRect(rect, false);
+                g.setColor(color);
+                g.fillRect(rect.x, rect.y, rect.width, rect.height);
+            }
+            if (!loc.isInsertRow() && shortColor != null) {
+                g.setColor(shortColor);
+                g.fillRect(rect.x, y, rect.width, h);
+            }
+        }
+    }
+
+    private Rectangle getHDropLineRect(JTable.DropLocation loc) {
+        if (!loc.isInsertRow()) {
+            return null;
+        }
+
+        int row = loc.getRow();
+        int col = loc.getColumn();
+        if (col >= table.getColumnCount()) {
+            col--;
+        }
+
+        Rectangle rect = table.getCellRect(row, col, true);
+
+        if (row >= table.getRowCount()) {
+            row--;
+            Rectangle prevRect = table.getCellRect(row, col, true);
+            rect.y = prevRect.y + prevRect.height;
+        }
+
+        if (rect.y == 0) {
+            rect.y = -1;
+        } else {
+            rect.y -= 2;
+        }
+
+        rect.height = 3;
+
+        return rect;
+    }
+
+    private Rectangle getVDropLineRect(JTable.DropLocation loc) {
+        if (!loc.isInsertColumn()) {
+            return null;
+        }
+
+        boolean ltr = table.getComponentOrientation().isLeftToRight();
+        int col = loc.getColumn();
+        Rectangle rect = table.getCellRect(loc.getRow(), col, true);
+
+        if (col >= table.getColumnCount()) {
+            col--;
+            rect = table.getCellRect(loc.getRow(), col, true);
+            if (ltr) {
+                rect.x = rect.x + rect.width;
+            }
+        } else if (!ltr) {
+            rect.x = rect.x + rect.width;
+        }
+
+        if (rect.x == 0) {
+            rect.x = -1;
+        } else {
+            rect.x -= 2;
+        }
+
+        rect.width = 3;
+
+        return rect;
+    }
+
+    private Rectangle extendRect(Rectangle rect, boolean horizontal) {
+        if (rect == null) {
+            return rect;
+        }
+
+        if (horizontal) {
+            rect.x = 0;
+            rect.width = table.getWidth();
+        } else {
+            rect.y = 0;
+
+            if (table.getRowCount() != 0) {
+                Rectangle lastRect = table.getCellRect(table.getRowCount() - 1, 0, true);
+                rect.height = lastRect.y + lastRect.height;
+            } else {
+                rect.height = table.getHeight();
+            }
+        }
+
+        return rect;
+    }
+
+    /*
+     * Paints the grid lines within <I>aRect</I>, using the grid
+     * color set with <I>setGridColor</I>. Paints vertical lines
+     * if <code>getShowVerticalLines()</code> returns true and paints
+     * horizontal lines if <code>getShowHorizontalLines()</code>
+     * returns true.
+     */
+    private void paintGrid(SynthContext context, Graphics g, int rMin,
+                           int rMax, int cMin, int cMax) {
+        g.setColor(table.getGridColor());
+
+        Rectangle minCell = table.getCellRect(rMin, cMin, true);
+        Rectangle maxCell = table.getCellRect(rMax, cMax, true);
+        Rectangle damagedArea = minCell.union( maxCell );
+        SynthGraphicsUtils synthG = context.getStyle().getGraphicsUtils(
+                     context);
+
+        if (table.getShowHorizontalLines()) {
+            int tableWidth = damagedArea.x + damagedArea.width;
+            int y = damagedArea.y;
+            for (int row = rMin; row <= rMax; row++) {
+                y += table.getRowHeight(row);
+                synthG.drawLine(context, "Table.grid",
+                                g, damagedArea.x, y - 1, tableWidth - 1,y - 1);
+            }
+        }
+        if (table.getShowVerticalLines()) {
+            TableColumnModel cm = table.getColumnModel();
+            int tableHeight = damagedArea.y + damagedArea.height;
+            int x;
+            if (table.getComponentOrientation().isLeftToRight()) {
+                x = damagedArea.x;
+                for (int column = cMin; column <= cMax; column++) {
+                    int w = cm.getColumn(column).getWidth();
+                    x += w;
+                    synthG.drawLine(context, "Table.grid", g, x - 1, 0,
+                                    x - 1, tableHeight - 1);
+                }
+            } else {
+                x = damagedArea.x;
+                for (int column = cMax; column >= cMin; column--) {
+                    int w = cm.getColumn(column).getWidth();
+                    x += w;
+                    synthG.drawLine(context, "Table.grid", g, x - 1, 0, x - 1,
+                                    tableHeight - 1);
+                }
+            }
+        }
+    }
+
+    private int viewIndexForColumn(TableColumn aColumn) {
+        TableColumnModel cm = table.getColumnModel();
+        for (int column = 0; column < cm.getColumnCount(); column++) {
+            if (cm.getColumn(column) == aColumn) {
+                return column;
+            }
+        }
+        return -1;
+    }
+
+    private void paintCells(SynthContext context, Graphics g, int rMin,
+                            int rMax, int cMin, int cMax) {
+        JTableHeader header = table.getTableHeader();
+        TableColumn draggedColumn = (header == null) ? null : header.getDraggedColumn();
+
+        TableColumnModel cm = table.getColumnModel();
+        int columnMargin = cm.getColumnMargin();
+
+        Rectangle cellRect;
+        TableColumn aColumn;
+        int columnWidth;
+        if (table.getComponentOrientation().isLeftToRight()) {
+            for(int row = rMin; row <= rMax; row++) {
+                cellRect = table.getCellRect(row, cMin, false);
+                for(int column = cMin; column <= cMax; column++) {
+                    aColumn = cm.getColumn(column);
+                    columnWidth = aColumn.getWidth();
+                    cellRect.width = columnWidth - columnMargin;
+                    if (aColumn != draggedColumn) {
+                        paintCell(context, g, cellRect, row, column);
+                    }
+                    cellRect.x += columnWidth;
+                }
+            }
+        } else {
+            for(int row = rMin; row <= rMax; row++) {
+                cellRect = table.getCellRect(row, cMin, false);
+                aColumn = cm.getColumn(cMin);
+                if (aColumn != draggedColumn) {
+                    columnWidth = aColumn.getWidth();
+                    cellRect.width = columnWidth - columnMargin;
+                    paintCell(context, g, cellRect, row, cMin);
+                }
+                for(int column = cMin+1; column <= cMax; column++) {
+                    aColumn = cm.getColumn(column);
+                    columnWidth = aColumn.getWidth();
+                    cellRect.width = columnWidth - columnMargin;
+                    cellRect.x -= columnWidth;
+                    if (aColumn != draggedColumn) {
+                        paintCell(context, g, cellRect, row, column);
+                    }
+                }
+            }
+        }
+
+        // Paint the dragged column if we are dragging.
+        if (draggedColumn != null) {
+            paintDraggedArea(context, g, rMin, rMax, draggedColumn, header.getDraggedDistance());
+        }
+
+        // Remove any renderers that may be left in the rendererPane.
+        rendererPane.removeAll();
+    }
+
+    private void paintDraggedArea(SynthContext context, Graphics g, int rMin, int rMax, TableColumn draggedColumn, int distance) {
+        int draggedColumnIndex = viewIndexForColumn(draggedColumn);
+
+        Rectangle minCell = table.getCellRect(rMin, draggedColumnIndex, true);
+        Rectangle maxCell = table.getCellRect(rMax, draggedColumnIndex, true);
+
+        Rectangle vacatedColumnRect = minCell.union(maxCell);
+
+        // Paint a gray well in place of the moving column.
+        g.setColor(table.getParent().getBackground());
+        g.fillRect(vacatedColumnRect.x, vacatedColumnRect.y,
+                   vacatedColumnRect.width, vacatedColumnRect.height);
+
+        // Move to the where the cell has been dragged.
+        vacatedColumnRect.x += distance;
+
+        // Fill the background.
+        g.setColor(context.getStyle().getColor(context, ColorType.BACKGROUND));
+        g.fillRect(vacatedColumnRect.x, vacatedColumnRect.y,
+                   vacatedColumnRect.width, vacatedColumnRect.height);
+
+        SynthGraphicsUtils synthG = context.getStyle().getGraphicsUtils(
+                                            context);
+
+
+        // Paint the vertical grid lines if necessary.
+        if (table.getShowVerticalLines()) {
+            g.setColor(table.getGridColor());
+            int x1 = vacatedColumnRect.x;
+            int y1 = vacatedColumnRect.y;
+            int x2 = x1 + vacatedColumnRect.width - 1;
+            int y2 = y1 + vacatedColumnRect.height - 1;
+            // Left
+            synthG.drawLine(context, "Table.grid", g, x1-1, y1, x1-1, y2);
+            // Right
+            synthG.drawLine(context, "Table.grid", g, x2, y1, x2, y2);
+        }
+
+        for(int row = rMin; row <= rMax; row++) {
+            // Render the cell value
+            Rectangle r = table.getCellRect(row, draggedColumnIndex, false);
+            r.x += distance;
+            paintCell(context, g, r, row, draggedColumnIndex);
+
+            // Paint the (lower) horizontal grid line if necessary.
+            if (table.getShowHorizontalLines()) {
+                g.setColor(table.getGridColor());
+                Rectangle rcr = table.getCellRect(row, draggedColumnIndex, true);
+                rcr.x += distance;
+                int x1 = rcr.x;
+                int y1 = rcr.y;
+                int x2 = x1 + rcr.width - 1;
+                int y2 = y1 + rcr.height - 1;
+                synthG.drawLine(context, "Table.grid", g, x1, y2, x2, y2);
+            }
+        }
+    }
+
+    private void paintCell(SynthContext context, Graphics g,
+            Rectangle cellRect, int row, int column) {
+        if (table.isEditing() && table.getEditingRow()==row &&
+                                 table.getEditingColumn()==column) {
+            Component component = table.getEditorComponent();
+            component.setBounds(cellRect);
+            component.validate();
+        }
+        else {
+            TableCellRenderer renderer = table.getCellRenderer(row, column);
+            Component component = table.prepareRenderer(renderer, row, column);
+            Color b = component.getBackground();
+            if ((b == null || b instanceof UIResource
+                    || component instanceof SynthBooleanTableCellRenderer)
+                    && !table.isCellSelected(row, column)) {
+                if (alternateColor != null && row % 2 != 0) {
+                    component.setBackground(alternateColor);
+                }
+            }
+            rendererPane.paintComponent(g, component, table, cellRect.x,
+                    cellRect.y, cellRect.width, cellRect.height, true);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void propertyChange(PropertyChangeEvent event) {
+        if (SynthLookAndFeel.shouldUpdateStyle(event)) {
+            updateStyle((JTable)event.getSource());
+        }
+    }
+
+
+    private class SynthBooleanTableCellRenderer extends JCheckBox implements
+                      TableCellRenderer {
+        private boolean isRowSelected;
+
+        public SynthBooleanTableCellRenderer() {
+            setHorizontalAlignment(JLabel.CENTER);
+            setName("Table.cellRenderer");
+        }
+
+        public Component getTableCellRendererComponent(
+                            JTable table, Object value, boolean isSelected,
+                            boolean hasFocus, int row, int column) {
+            isRowSelected = isSelected;
+
+            if (isSelected) {
+                setForeground(unwrap(table.getSelectionForeground()));
+                setBackground(unwrap(table.getSelectionBackground()));
+            } else {
+                setForeground(unwrap(table.getForeground()));
+                setBackground(unwrap(table.getBackground()));
+            }
+
+            setSelected((value != null && ((Boolean)value).booleanValue()));
+            return this;
+        }
+
+        private Color unwrap(Color c) {
+            if (c instanceof UIResource) {
+                return new Color(c.getRGB());
+            }
+            return c;
+        }
+
+        public boolean isOpaque() {
+            return isRowSelected ? true : super.isOpaque();
+        }
+    }
+
+    private class SynthTableCellRenderer extends DefaultTableCellRenderer {
+        private Object numberFormat;
+        private Object dateFormat;
+        private boolean opaque;
+
+        public void setOpaque(boolean isOpaque) {
+            opaque = isOpaque;
+        }
+
+        public boolean isOpaque() {
+            return opaque;
+        }
+
+        public String getName() {
+            String name = super.getName();
+            if (name == null) {
+                return "Table.cellRenderer";
+            }
+            return name;
+        }
+
+        public void setBorder(Border b) {
+            if (useUIBorder || b instanceof SynthBorder) {
+                super.setBorder(b);
+            }
+        }
+
+        public Component getTableCellRendererComponent(
+                  JTable table, Object value, boolean isSelected,
+                  boolean hasFocus, int row, int column) {
+            if (!useTableColors && (isSelected || hasFocus)) {
+                SynthLookAndFeel.setSelectedUI((SynthLabelUI)SynthLookAndFeel.
+                             getUIOfType(getUI(), SynthLabelUI.class),
+                                   isSelected, hasFocus, table.isEnabled(), false);
+            }
+            else {
+                SynthLookAndFeel.resetSelectedUI();
+            }
+            super.getTableCellRendererComponent(table, value, isSelected,
+                                                hasFocus, row, column);
+
+            setIcon(null);
+            if (table != null) {
+                configureValue(value, table.getColumnClass(column));
+            }
+            return this;
+        }
+
+        private void configureValue(Object value, Class columnClass) {
+            if (columnClass == Object.class || columnClass == null) {
+                setHorizontalAlignment(JLabel.LEADING);
+            } else if (columnClass == Float.class || columnClass == Double.class) {
+                if (numberFormat == null) {
+                    numberFormat = NumberFormat.getInstance();
+                }
+                setHorizontalAlignment(JLabel.TRAILING);
+                setText((value == null) ? "" : ((NumberFormat)numberFormat).format(value));
+            }
+            else if (columnClass == Number.class) {
+                setHorizontalAlignment(JLabel.TRAILING);
+                // Super will have set value.
+            }
+            else if (columnClass == Icon.class || columnClass == ImageIcon.class) {
+                setHorizontalAlignment(JLabel.CENTER);
+                setIcon((value instanceof Icon) ? (Icon)value : null);
+                setText("");
+            }
+            else if (columnClass == Date.class) {
+                if (dateFormat == null) {
+                    dateFormat = DateFormat.getDateInstance();
+                }
+                setHorizontalAlignment(JLabel.LEADING);
+                setText((value == null) ? "" : ((Format)dateFormat).format(value));
+            }
+            else {
+                configureValue(value, columnClass.getSuperclass());
+            }
+        }
+
+        public void paint(Graphics g) {
+            super.paint(g);
+            SynthLookAndFeel.resetSelectedUI();
+        }
+    }
+}

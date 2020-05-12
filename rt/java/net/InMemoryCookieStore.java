@@ -1,491 +1,398 @@
-/*     */ package java.net;
-/*     */ 
-/*     */ import java.util.ArrayList;
-/*     */ import java.util.Collections;
-/*     */ import java.util.HashMap;
-/*     */ import java.util.Iterator;
-/*     */ import java.util.List;
-/*     */ import java.util.Map;
-/*     */ import java.util.concurrent.locks.ReentrantLock;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class InMemoryCookieStore
-/*     */   implements CookieStore
-/*     */ {
-/*  48 */   private List<HttpCookie> cookieJar = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  54 */   private Map<String, List<HttpCookie>> domainIndex = null;
-/*  55 */   private Map<URI, List<HttpCookie>> uriIndex = null;
-/*     */ 
-/*     */   
-/*  58 */   private ReentrantLock lock = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public InMemoryCookieStore() {
-/*  65 */     this.cookieJar = new ArrayList<>();
-/*  66 */     this.domainIndex = new HashMap<>();
-/*  67 */     this.uriIndex = new HashMap<>();
-/*     */     
-/*  69 */     this.lock = new ReentrantLock(false);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void add(URI paramURI, HttpCookie paramHttpCookie) {
-/*  77 */     if (paramHttpCookie == null) {
-/*  78 */       throw new NullPointerException("cookie is null");
-/*     */     }
-/*     */ 
-/*     */     
-/*  82 */     this.lock.lock();
-/*     */     
-/*     */     try {
-/*  85 */       this.cookieJar.remove(paramHttpCookie);
-/*     */ 
-/*     */       
-/*  88 */       if (paramHttpCookie.getMaxAge() != 0L) {
-/*  89 */         this.cookieJar.add(paramHttpCookie);
-/*     */         
-/*  91 */         if (paramHttpCookie.getDomain() != null) {
-/*  92 */           addIndex(this.domainIndex, paramHttpCookie.getDomain(), paramHttpCookie);
-/*     */         }
-/*  94 */         if (paramURI != null)
-/*     */         {
-/*  96 */           addIndex(this.uriIndex, getEffectiveURI(paramURI), paramHttpCookie);
-/*     */         }
-/*     */       } 
-/*     */     } finally {
-/* 100 */       this.lock.unlock();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public List<HttpCookie> get(URI paramURI) {
-/* 114 */     if (paramURI == null) {
-/* 115 */       throw new NullPointerException("uri is null");
-/*     */     }
-/*     */     
-/* 118 */     ArrayList<HttpCookie> arrayList = new ArrayList();
-/* 119 */     boolean bool = "https".equalsIgnoreCase(paramURI.getScheme());
-/* 120 */     this.lock.lock();
-/*     */     
-/*     */     try {
-/* 123 */       getInternal1(arrayList, this.domainIndex, paramURI.getHost(), bool);
-/*     */       
-/* 125 */       getInternal2(arrayList, this.uriIndex, getEffectiveURI(paramURI), bool);
-/*     */     } finally {
-/* 127 */       this.lock.unlock();
-/*     */     } 
-/*     */     
-/* 130 */     return arrayList;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public List<HttpCookie> getCookies() {
-/*     */     List<HttpCookie> list;
-/* 139 */     this.lock.lock();
-/*     */     try {
-/* 141 */       Iterator<HttpCookie> iterator = this.cookieJar.iterator();
-/* 142 */       while (iterator.hasNext()) {
-/* 143 */         if (((HttpCookie)iterator.next()).hasExpired()) {
-/* 144 */           iterator.remove();
-/*     */         }
-/*     */       } 
-/*     */     } finally {
-/* 148 */       list = Collections.unmodifiableList(this.cookieJar);
-/* 149 */       this.lock.unlock();
-/*     */     } 
-/*     */     
-/* 152 */     return list;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public List<URI> getURIs() {
-/* 160 */     ArrayList<URI> arrayList = new ArrayList();
-/*     */     
-/* 162 */     this.lock.lock();
-/*     */     try {
-/* 164 */       Iterator<URI> iterator = this.uriIndex.keySet().iterator();
-/* 165 */       while (iterator.hasNext()) {
-/* 166 */         URI uRI = iterator.next();
-/* 167 */         List list = this.uriIndex.get(uRI);
-/* 168 */         if (list == null || list.size() == 0)
-/*     */         {
-/*     */           
-/* 171 */           iterator.remove();
-/*     */         }
-/*     */       } 
-/*     */     } finally {
-/* 175 */       arrayList.addAll(this.uriIndex.keySet());
-/* 176 */       this.lock.unlock();
-/*     */     } 
-/*     */     
-/* 179 */     return arrayList;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean remove(URI paramURI, HttpCookie paramHttpCookie) {
-/* 188 */     if (paramHttpCookie == null) {
-/* 189 */       throw new NullPointerException("cookie is null");
-/*     */     }
-/*     */     
-/* 192 */     boolean bool = false;
-/* 193 */     this.lock.lock();
-/*     */     try {
-/* 195 */       bool = this.cookieJar.remove(paramHttpCookie);
-/*     */     } finally {
-/* 197 */       this.lock.unlock();
-/*     */     } 
-/*     */     
-/* 200 */     return bool;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean removeAll() {
-/* 208 */     this.lock.lock();
-/*     */     try {
-/* 210 */       if (this.cookieJar.isEmpty()) {
-/* 211 */         return false;
-/*     */       }
-/* 213 */       this.cookieJar.clear();
-/* 214 */       this.domainIndex.clear();
-/* 215 */       this.uriIndex.clear();
-/*     */     } finally {
-/* 217 */       this.lock.unlock();
-/*     */     } 
-/*     */     
-/* 220 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean netscapeDomainMatches(String paramString1, String paramString2) {
-/* 240 */     if (paramString1 == null || paramString2 == null) {
-/* 241 */       return false;
-/*     */     }
-/*     */ 
-/*     */     
-/* 245 */     boolean bool = ".local".equalsIgnoreCase(paramString1);
-/* 246 */     int i = paramString1.indexOf('.');
-/* 247 */     if (i == 0) {
-/* 248 */       i = paramString1.indexOf('.', 1);
-/*     */     }
-/* 250 */     if (!bool && (i == -1 || i == paramString1.length() - 1)) {
-/* 251 */       return false;
-/*     */     }
-/*     */ 
-/*     */     
-/* 255 */     int j = paramString2.indexOf('.');
-/* 256 */     if (j == -1 && bool) {
-/* 257 */       return true;
-/*     */     }
-/*     */     
-/* 260 */     int k = paramString1.length();
-/* 261 */     int m = paramString2.length() - k;
-/* 262 */     if (m == 0)
-/*     */     {
-/* 264 */       return paramString2.equalsIgnoreCase(paramString1); } 
-/* 265 */     if (m > 0) {
-/*     */       
-/* 267 */       String str1 = paramString2.substring(0, m);
-/* 268 */       String str2 = paramString2.substring(m);
-/*     */       
-/* 270 */       return str2.equalsIgnoreCase(paramString1);
-/* 271 */     }  if (m == -1)
-/*     */     {
-/* 273 */       return (paramString1.charAt(0) == '.' && paramString2
-/* 274 */         .equalsIgnoreCase(paramString1.substring(1)));
-/*     */     }
-/*     */     
-/* 277 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void getInternal1(List<HttpCookie> paramList, Map<String, List<HttpCookie>> paramMap, String paramString, boolean paramBoolean) {
-/* 284 */     ArrayList<HttpCookie> arrayList = new ArrayList();
-/* 285 */     for (Map.Entry<String, List<HttpCookie>> entry : paramMap.entrySet()) {
-/* 286 */       String str = (String)entry.getKey();
-/* 287 */       List list = (List)entry.getValue();
-/* 288 */       for (HttpCookie httpCookie : list) {
-/* 289 */         if ((httpCookie.getVersion() == 0 && netscapeDomainMatches(str, paramString)) || (httpCookie
-/* 290 */           .getVersion() == 1 && HttpCookie.domainMatches(str, paramString))) {
-/* 291 */           if (this.cookieJar.indexOf(httpCookie) != -1) {
-/*     */             
-/* 293 */             if (!httpCookie.hasExpired()) {
-/*     */ 
-/*     */               
-/* 296 */               if ((paramBoolean || !httpCookie.getSecure()) && 
-/* 297 */                 !paramList.contains(httpCookie))
-/* 298 */                 paramList.add(httpCookie); 
-/*     */               continue;
-/*     */             } 
-/* 301 */             arrayList.add(httpCookie);
-/*     */             
-/*     */             continue;
-/*     */           } 
-/*     */           
-/* 306 */           arrayList.add(httpCookie);
-/*     */         } 
-/*     */       } 
-/*     */ 
-/*     */       
-/* 311 */       for (HttpCookie httpCookie : arrayList) {
-/* 312 */         list.remove(httpCookie);
-/* 313 */         this.cookieJar.remove(httpCookie);
-/*     */       } 
-/*     */       
-/* 316 */       arrayList.clear();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private <T> void getInternal2(List<HttpCookie> paramList, Map<T, List<HttpCookie>> paramMap, Comparable<T> paramComparable, boolean paramBoolean) {
-/*     */     // Byte code:
-/*     */     //   0: aload_2
-/*     */     //   1: invokeinterface keySet : ()Ljava/util/Set;
-/*     */     //   6: invokeinterface iterator : ()Ljava/util/Iterator;
-/*     */     //   11: astore #5
-/*     */     //   13: aload #5
-/*     */     //   15: invokeinterface hasNext : ()Z
-/*     */     //   20: ifeq -> 186
-/*     */     //   23: aload #5
-/*     */     //   25: invokeinterface next : ()Ljava/lang/Object;
-/*     */     //   30: astore #6
-/*     */     //   32: aload_3
-/*     */     //   33: aload #6
-/*     */     //   35: invokeinterface compareTo : (Ljava/lang/Object;)I
-/*     */     //   40: ifne -> 183
-/*     */     //   43: aload_2
-/*     */     //   44: aload #6
-/*     */     //   46: invokeinterface get : (Ljava/lang/Object;)Ljava/lang/Object;
-/*     */     //   51: checkcast java/util/List
-/*     */     //   54: astore #7
-/*     */     //   56: aload #7
-/*     */     //   58: ifnull -> 183
-/*     */     //   61: aload #7
-/*     */     //   63: invokeinterface iterator : ()Ljava/util/Iterator;
-/*     */     //   68: astore #8
-/*     */     //   70: aload #8
-/*     */     //   72: invokeinterface hasNext : ()Z
-/*     */     //   77: ifeq -> 183
-/*     */     //   80: aload #8
-/*     */     //   82: invokeinterface next : ()Ljava/lang/Object;
-/*     */     //   87: checkcast java/net/HttpCookie
-/*     */     //   90: astore #9
-/*     */     //   92: aload_0
-/*     */     //   93: getfield cookieJar : Ljava/util/List;
-/*     */     //   96: aload #9
-/*     */     //   98: invokeinterface indexOf : (Ljava/lang/Object;)I
-/*     */     //   103: iconst_m1
-/*     */     //   104: if_icmpeq -> 173
-/*     */     //   107: aload #9
-/*     */     //   109: invokevirtual hasExpired : ()Z
-/*     */     //   112: ifne -> 151
-/*     */     //   115: iload #4
-/*     */     //   117: ifne -> 128
-/*     */     //   120: aload #9
-/*     */     //   122: invokevirtual getSecure : ()Z
-/*     */     //   125: ifne -> 180
-/*     */     //   128: aload_1
-/*     */     //   129: aload #9
-/*     */     //   131: invokeinterface contains : (Ljava/lang/Object;)Z
-/*     */     //   136: ifne -> 180
-/*     */     //   139: aload_1
-/*     */     //   140: aload #9
-/*     */     //   142: invokeinterface add : (Ljava/lang/Object;)Z
-/*     */     //   147: pop
-/*     */     //   148: goto -> 180
-/*     */     //   151: aload #8
-/*     */     //   153: invokeinterface remove : ()V
-/*     */     //   158: aload_0
-/*     */     //   159: getfield cookieJar : Ljava/util/List;
-/*     */     //   162: aload #9
-/*     */     //   164: invokeinterface remove : (Ljava/lang/Object;)Z
-/*     */     //   169: pop
-/*     */     //   170: goto -> 180
-/*     */     //   173: aload #8
-/*     */     //   175: invokeinterface remove : ()V
-/*     */     //   180: goto -> 70
-/*     */     //   183: goto -> 13
-/*     */     //   186: return
-/*     */     // Line number table:
-/*     */     //   Java source line number -> byte code offset
-/*     */     //   #328	-> 0
-/*     */     //   #329	-> 32
-/*     */     //   #330	-> 43
-/*     */     //   #332	-> 56
-/*     */     //   #333	-> 61
-/*     */     //   #334	-> 70
-/*     */     //   #335	-> 80
-/*     */     //   #336	-> 92
-/*     */     //   #338	-> 107
-/*     */     //   #340	-> 115
-/*     */     //   #341	-> 131
-/*     */     //   #342	-> 139
-/*     */     //   #344	-> 151
-/*     */     //   #345	-> 158
-/*     */     //   #350	-> 173
-/*     */     //   #352	-> 180
-/*     */     //   #355	-> 183
-/*     */     //   #356	-> 186
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private <T> void addIndex(Map<T, List<HttpCookie>> paramMap, T paramT, HttpCookie paramHttpCookie) {
-/* 363 */     if (paramT != null) {
-/* 364 */       List<HttpCookie> list = paramMap.get(paramT);
-/* 365 */       if (list != null) {
-/*     */         
-/* 367 */         list.remove(paramHttpCookie);
-/*     */         
-/* 369 */         list.add(paramHttpCookie);
-/*     */       } else {
-/* 371 */         list = new ArrayList<>();
-/* 372 */         list.add(paramHttpCookie);
-/* 373 */         paramMap.put(paramT, list);
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private URI getEffectiveURI(URI paramURI) {
-/* 384 */     URI uRI = null;
-/*     */     
-/*     */     try {
-/* 387 */       uRI = new URI("http", paramURI.getHost(), null, null, null);
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     }
-/* 392 */     catch (URISyntaxException uRISyntaxException) {
-/* 393 */       uRI = paramURI;
-/*     */     } 
-/*     */     
-/* 396 */     return uRI;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\net\InMemoryCookieStore.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.net;
+
+import java.net.URI;
+import java.net.CookieStore;
+import java.net.HttpCookie;
+import java.net.URISyntaxException;
+import java.util.List;
+import java.util.Map;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.concurrent.locks.ReentrantLock;
+
+/**
+ * A simple in-memory java.net.CookieStore implementation
+ *
+ * @author Edward Wang
+ * @since 1.6
+ */
+class InMemoryCookieStore implements CookieStore {
+    // the in-memory representation of cookies
+    private List<HttpCookie> cookieJar = null;
+
+    // the cookies are indexed by its domain and associated uri (if present)
+    // CAUTION: when a cookie removed from main data structure (i.e. cookieJar),
+    //          it won't be cleared in domainIndex & uriIndex. Double-check the
+    //          presence of cookie when retrieve one form index store.
+    private Map<String, List<HttpCookie>> domainIndex = null;
+    private Map<URI, List<HttpCookie>> uriIndex = null;
+
+    // use ReentrantLock instead of syncronized for scalability
+    private ReentrantLock lock = null;
+
+
+    /**
+     * The default ctor
+     */
+    public InMemoryCookieStore() {
+        cookieJar = new ArrayList<HttpCookie>();
+        domainIndex = new HashMap<String, List<HttpCookie>>();
+        uriIndex = new HashMap<URI, List<HttpCookie>>();
+
+        lock = new ReentrantLock(false);
+    }
+
+    /**
+     * Add one cookie into cookie store.
+     */
+    public void add(URI uri, HttpCookie cookie) {
+        // pre-condition : argument can't be null
+        if (cookie == null) {
+            throw new NullPointerException("cookie is null");
+        }
+
+
+        lock.lock();
+        try {
+            // remove the ole cookie if there has had one
+            cookieJar.remove(cookie);
+
+            // add new cookie if it has a non-zero max-age
+            if (cookie.getMaxAge() != 0) {
+                cookieJar.add(cookie);
+                // and add it to domain index
+                if (cookie.getDomain() != null) {
+                    addIndex(domainIndex, cookie.getDomain(), cookie);
+                }
+                if (uri != null) {
+                    // add it to uri index, too
+                    addIndex(uriIndex, getEffectiveURI(uri), cookie);
+                }
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+
+    /**
+     * Get all cookies, which:
+     *  1) given uri domain-matches with, or, associated with
+     *     given uri when added to the cookie store.
+     *  3) not expired.
+     * See RFC 2965 sec. 3.3.4 for more detail.
+     */
+    public List<HttpCookie> get(URI uri) {
+        // argument can't be null
+        if (uri == null) {
+            throw new NullPointerException("uri is null");
+        }
+
+        List<HttpCookie> cookies = new ArrayList<HttpCookie>();
+        boolean secureLink = "https".equalsIgnoreCase(uri.getScheme());
+        lock.lock();
+        try {
+            // check domainIndex first
+            getInternal1(cookies, domainIndex, uri.getHost(), secureLink);
+            // check uriIndex then
+            getInternal2(cookies, uriIndex, getEffectiveURI(uri), secureLink);
+        } finally {
+            lock.unlock();
+        }
+
+        return cookies;
+    }
+
+    /**
+     * Get all cookies in cookie store, except those have expired
+     */
+    public List<HttpCookie> getCookies() {
+        List<HttpCookie> rt;
+
+        lock.lock();
+        try {
+            Iterator<HttpCookie> it = cookieJar.iterator();
+            while (it.hasNext()) {
+                if (it.next().hasExpired()) {
+                    it.remove();
+                }
+            }
+        } finally {
+            rt = Collections.unmodifiableList(cookieJar);
+            lock.unlock();
+        }
+
+        return rt;
+    }
+
+    /**
+     * Get all URIs, which are associated with at least one cookie
+     * of this cookie store.
+     */
+    public List<URI> getURIs() {
+        List<URI> uris = new ArrayList<URI>();
+
+        lock.lock();
+        try {
+            Iterator<URI> it = uriIndex.keySet().iterator();
+            while (it.hasNext()) {
+                URI uri = it.next();
+                List<HttpCookie> cookies = uriIndex.get(uri);
+                if (cookies == null || cookies.size() == 0) {
+                    // no cookies list or an empty list associated with
+                    // this uri entry, delete it
+                    it.remove();
+                }
+            }
+        } finally {
+            uris.addAll(uriIndex.keySet());
+            lock.unlock();
+        }
+
+        return uris;
+    }
+
+
+    /**
+     * Remove a cookie from store
+     */
+    public boolean remove(URI uri, HttpCookie ck) {
+        // argument can't be null
+        if (ck == null) {
+            throw new NullPointerException("cookie is null");
+        }
+
+        boolean modified = false;
+        lock.lock();
+        try {
+            modified = cookieJar.remove(ck);
+        } finally {
+            lock.unlock();
+        }
+
+        return modified;
+    }
+
+
+    /**
+     * Remove all cookies in this cookie store.
+     */
+    public boolean removeAll() {
+        lock.lock();
+        try {
+            if (cookieJar.isEmpty()) {
+                return false;
+            }
+            cookieJar.clear();
+            domainIndex.clear();
+            uriIndex.clear();
+        } finally {
+            lock.unlock();
+        }
+
+        return true;
+    }
+
+
+    /* ---------------- Private operations -------------- */
+
+
+    /*
+     * This is almost the same as HttpCookie.domainMatches except for
+     * one difference: It won't reject cookies when the 'H' part of the
+     * domain contains a dot ('.').
+     * I.E.: RFC 2965 section 3.3.2 says that if host is x.y.domain.com
+     * and the cookie domain is .domain.com, then it should be rejected.
+     * However that's not how the real world works. Browsers don't reject and
+     * some sites, like yahoo.com do actually expect these cookies to be
+     * passed along.
+     * And should be used for 'old' style cookies (aka Netscape type of cookies)
+     */
+    private boolean netscapeDomainMatches(String domain, String host)
+    {
+        if (domain == null || host == null) {
+            return false;
+        }
+
+        // if there's no embedded dot in domain and domain is not .local
+        boolean isLocalDomain = ".local".equalsIgnoreCase(domain);
+        int embeddedDotInDomain = domain.indexOf('.');
+        if (embeddedDotInDomain == 0) {
+            embeddedDotInDomain = domain.indexOf('.', 1);
+        }
+        if (!isLocalDomain && (embeddedDotInDomain == -1 || embeddedDotInDomain == domain.length() - 1)) {
+            return false;
+        }
+
+        // if the host name contains no dot and the domain name is .local
+        int firstDotInHost = host.indexOf('.');
+        if (firstDotInHost == -1 && isLocalDomain) {
+            return true;
+        }
+
+        int domainLength = domain.length();
+        int lengthDiff = host.length() - domainLength;
+        if (lengthDiff == 0) {
+            // if the host name and the domain name are just string-compare euqal
+            return host.equalsIgnoreCase(domain);
+        } else if (lengthDiff > 0) {
+            // need to check H & D component
+            String H = host.substring(0, lengthDiff);
+            String D = host.substring(lengthDiff);
+
+            return (D.equalsIgnoreCase(domain));
+        } else if (lengthDiff == -1) {
+            // if domain is actually .host
+            return (domain.charAt(0) == '.' &&
+                    host.equalsIgnoreCase(domain.substring(1)));
+        }
+
+        return false;
+    }
+
+    private void getInternal1(List<HttpCookie> cookies, Map<String, List<HttpCookie>> cookieIndex,
+            String host, boolean secureLink) {
+        // Use a separate list to handle cookies that need to be removed so
+        // that there is no conflict with iterators.
+        ArrayList<HttpCookie> toRemove = new ArrayList<HttpCookie>();
+        for (Map.Entry<String, List<HttpCookie>> entry : cookieIndex.entrySet()) {
+            String domain = entry.getKey();
+            List<HttpCookie> lst = entry.getValue();
+            for (HttpCookie c : lst) {
+                if ((c.getVersion() == 0 && netscapeDomainMatches(domain, host)) ||
+                        (c.getVersion() == 1 && HttpCookie.domainMatches(domain, host))) {
+                    if ((cookieJar.indexOf(c) != -1)) {
+                        // the cookie still in main cookie store
+                        if (!c.hasExpired()) {
+                            // don't add twice and make sure it's the proper
+                            // security level
+                            if ((secureLink || !c.getSecure()) &&
+                                    !cookies.contains(c)) {
+                                cookies.add(c);
+                            }
+                        } else {
+                            toRemove.add(c);
+                        }
+                    } else {
+                        // the cookie has beed removed from main store,
+                        // so also remove it from domain indexed store
+                        toRemove.add(c);
+                    }
+                }
+            }
+            // Clear up the cookies that need to be removed
+            for (HttpCookie c : toRemove) {
+                lst.remove(c);
+                cookieJar.remove(c);
+
+            }
+            toRemove.clear();
+        }
+    }
+
+    // @param cookies           [OUT] contains the found cookies
+    // @param cookieIndex       the index
+    // @param comparator        the prediction to decide whether or not
+    //                          a cookie in index should be returned
+    private <T> void getInternal2(List<HttpCookie> cookies,
+                                Map<T, List<HttpCookie>> cookieIndex,
+                                Comparable<T> comparator, boolean secureLink)
+    {
+        for (T index : cookieIndex.keySet()) {
+            if (comparator.compareTo(index) == 0) {
+                List<HttpCookie> indexedCookies = cookieIndex.get(index);
+                // check the list of cookies associated with this domain
+                if (indexedCookies != null) {
+                    Iterator<HttpCookie> it = indexedCookies.iterator();
+                    while (it.hasNext()) {
+                        HttpCookie ck = it.next();
+                        if (cookieJar.indexOf(ck) != -1) {
+                            // the cookie still in main cookie store
+                            if (!ck.hasExpired()) {
+                                // don't add twice
+                                if ((secureLink || !ck.getSecure()) &&
+                                        !cookies.contains(ck))
+                                    cookies.add(ck);
+                            } else {
+                                it.remove();
+                                cookieJar.remove(ck);
+                            }
+                        } else {
+                            // the cookie has beed removed from main store,
+                            // so also remove it from domain indexed store
+                            it.remove();
+                        }
+                    }
+                } // end of indexedCookies != null
+            } // end of comparator.compareTo(index) == 0
+        } // end of cookieIndex iteration
+    }
+
+    // add 'cookie' indexed by 'index' into 'indexStore'
+    private <T> void addIndex(Map<T, List<HttpCookie>> indexStore,
+                              T index,
+                              HttpCookie cookie)
+    {
+        if (index != null) {
+            List<HttpCookie> cookies = indexStore.get(index);
+            if (cookies != null) {
+                // there may already have the same cookie, so remove it first
+                cookies.remove(cookie);
+
+                cookies.add(cookie);
+            } else {
+                cookies = new ArrayList<HttpCookie>();
+                cookies.add(cookie);
+                indexStore.put(index, cookies);
+            }
+        }
+    }
+
+
+    //
+    // for cookie purpose, the effective uri should only be http://host
+    // the path will be taken into account when path-match algorithm applied
+    //
+    private URI getEffectiveURI(URI uri) {
+        URI effectiveURI = null;
+        try {
+            effectiveURI = new URI("http",
+                                   uri.getHost(),
+                                   null,  // path component
+                                   null,  // query component
+                                   null   // fragment component
+                                  );
+        } catch (URISyntaxException ignored) {
+            effectiveURI = uri;
+        }
+
+        return effectiveURI;
+    }
+}

@@ -1,62 +1,57 @@
-/*    */ package javax.management;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class OperationsException
-/*    */   extends JMException
-/*    */ {
-/*    */   private static final long serialVersionUID = -4967597595580536216L;
-/*    */   
-/*    */   public OperationsException() {}
-/*    */   
-/*    */   public OperationsException(String paramString) {
-/* 54 */     super(paramString);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\management\OperationsException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.management;
+
+
+
+/**
+ * Represents exceptions thrown in the MBean server when performing operations
+ * on MBeans.
+ *
+ * @since 1.5
+ */
+public class OperationsException extends JMException   {
+
+    /* Serial version */
+    private static final long serialVersionUID = -4967597595580536216L;
+
+    /**
+     * Default constructor.
+     */
+    public OperationsException() {
+        super();
+    }
+
+    /**
+     * Constructor that allows a specific error message to be specified.
+     *
+     * @param message the detail message.
+     */
+    public OperationsException(String message) {
+        super(message);
+    }
+
+}

@@ -1,190 +1,184 @@
-/*     */ package com.sun.corba.se.impl.io;
-/*     */ 
-/*     */ import com.sun.corba.se.impl.logging.OMGSystemException;
-/*     */ import com.sun.org.omg.CORBA.Repository;
-/*     */ import com.sun.org.omg.CORBA.ValueDefPackage.FullValueDescription;
-/*     */ import com.sun.org.omg.SendingContext._CodeBaseImplBase;
-/*     */ import java.util.Hashtable;
-/*     */ import java.util.Stack;
-/*     */ import javax.rmi.CORBA.Util;
-/*     */ import javax.rmi.CORBA.ValueHandler;
-/*     */ import org.omg.CORBA.CompletionStatus;
-/*     */ import org.omg.CORBA.ORB;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class FVDCodeBaseImpl
-/*     */   extends _CodeBaseImplBase
-/*     */ {
-/*  58 */   private static Hashtable fvds = new Hashtable<>();
-/*     */ 
-/*     */ 
-/*     */   
-/*  62 */   private transient ORB orb = null;
-/*     */   
-/*  64 */   private transient OMGSystemException wrapper = OMGSystemException.get("rpc.encoding");
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  71 */   private transient ValueHandlerImpl vhandler = null;
-/*     */ 
-/*     */   
-/*     */   void setValueHandler(ValueHandler paramValueHandler) {
-/*  75 */     this.vhandler = (ValueHandlerImpl)paramValueHandler;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public Repository get_ir() {
-/*  80 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String implementation(String paramString) {
-/*     */     try {
-/*  88 */       if (this.vhandler == null) {
-/*  89 */         this.vhandler = ValueHandlerImpl.getInstance(false);
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */       
-/*  94 */       String str = Util.getCodebase(this.vhandler.getClassFromType(paramString));
-/*  95 */       if (str == null) {
-/*  96 */         return "";
-/*     */       }
-/*  98 */       return str;
-/*  99 */     } catch (ClassNotFoundException classNotFoundException) {
-/* 100 */       throw this.wrapper.missingLocalValueImpl(CompletionStatus.COMPLETED_MAYBE, classNotFoundException);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public String[] implementations(String[] paramArrayOfString) {
-/* 106 */     String[] arrayOfString = new String[paramArrayOfString.length];
-/*     */     
-/* 108 */     for (byte b = 0; b < paramArrayOfString.length; b++) {
-/* 109 */       arrayOfString[b] = implementation(paramArrayOfString[b]);
-/*     */     }
-/* 111 */     return arrayOfString;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public FullValueDescription meta(String paramString) {
-/*     */     try {
-/* 117 */       FullValueDescription fullValueDescription = (FullValueDescription)fvds.get(paramString);
-/*     */       
-/* 119 */       if (fullValueDescription == null) {
-/*     */ 
-/*     */         
-/* 122 */         if (this.vhandler == null) {
-/* 123 */           this.vhandler = ValueHandlerImpl.getInstance(false);
-/*     */         }
-/*     */         
-/*     */         try {
-/* 127 */           fullValueDescription = ValueUtility.translate(_orb(), 
-/* 128 */               ObjectStreamClass.lookup(this.vhandler.getAnyClassFromType(paramString)), this.vhandler);
-/* 129 */         } catch (Throwable throwable) {
-/* 130 */           if (this.orb == null)
-/* 131 */             this.orb = ORB.init(); 
-/* 132 */           fullValueDescription = ValueUtility.translate(this.orb, 
-/* 133 */               ObjectStreamClass.lookup(this.vhandler.getAnyClassFromType(paramString)), this.vhandler);
-/*     */         } 
-/*     */         
-/* 136 */         if (fullValueDescription != null) {
-/* 137 */           fvds.put(paramString, fullValueDescription);
-/*     */         } else {
-/* 139 */           throw this.wrapper.missingLocalValueImpl(CompletionStatus.COMPLETED_MAYBE);
-/*     */         } 
-/*     */       } 
-/*     */       
-/* 143 */       return fullValueDescription;
-/* 144 */     } catch (Throwable throwable) {
-/* 145 */       throw this.wrapper.incompatibleValueImpl(CompletionStatus.COMPLETED_MAYBE, throwable);
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public FullValueDescription[] metas(String[] paramArrayOfString) {
-/* 150 */     FullValueDescription[] arrayOfFullValueDescription = new FullValueDescription[paramArrayOfString.length];
-/*     */     
-/* 152 */     for (byte b = 0; b < paramArrayOfString.length; b++) {
-/* 153 */       arrayOfFullValueDescription[b] = meta(paramArrayOfString[b]);
-/*     */     }
-/* 155 */     return arrayOfFullValueDescription;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String[] bases(String paramString) {
-/*     */     try {
-/* 163 */       if (this.vhandler == null) {
-/* 164 */         this.vhandler = ValueHandlerImpl.getInstance(false);
-/*     */       }
-/*     */       
-/* 167 */       Stack<String> stack = new Stack();
-/* 168 */       Class<?> clazz = ObjectStreamClass.lookup(this.vhandler.getClassFromType(paramString)).forClass().getSuperclass();
-/*     */       
-/* 170 */       while (!clazz.equals(Object.class)) {
-/* 171 */         stack.push(this.vhandler.createForAnyType(clazz));
-/* 172 */         clazz = clazz.getSuperclass();
-/*     */       } 
-/*     */       
-/* 175 */       String[] arrayOfString = new String[stack.size()];
-/* 176 */       for (int i = arrayOfString.length - 1; i >= 0; i++) {
-/* 177 */         arrayOfString[i] = stack.pop();
-/*     */       }
-/* 179 */       return arrayOfString;
-/* 180 */     } catch (Throwable throwable) {
-/* 181 */       throw this.wrapper.missingLocalValueImpl(CompletionStatus.COMPLETED_MAYBE, throwable);
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\io\FVDCodeBaseImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+/*
+ * Licensed Materials - Property of IBM
+ * RMI-IIOP v1.0
+ * Copyright IBM Corp. 1998 1999  All Rights Reserved
+ *
+ */
+
+package com.sun.corba.se.impl.io;
+
+import org.omg.CORBA.ORB;
+import java.util.Properties;
+import javax.rmi.CORBA.Util;
+import javax.rmi.CORBA.ValueHandler;
+import java.util.Hashtable;
+import java.util.Stack;
+
+import com.sun.org.omg.CORBA.ValueDefPackage.FullValueDescription;
+import com.sun.org.omg.SendingContext._CodeBaseImplBase;
+import com.sun.org.omg.SendingContext.CodeBase;
+import com.sun.org.omg.SendingContext.CodeBaseHelper;
+import org.omg.CORBA.CompletionStatus;
+import org.omg.CORBA.ORB;
+
+import com.sun.corba.se.impl.logging.OMGSystemException;
+import com.sun.corba.se.spi.logging.CORBALogDomains;
+
+/**
+ * This class acts as the remote interface to receivers wishing to retrieve
+ * the information of a remote Class.
+ */
+public class FVDCodeBaseImpl extends _CodeBaseImplBase
+{
+    // Contains rep. ids as keys to FullValueDescriptions
+    private static Hashtable fvds = new Hashtable();
+
+    // Private ORBSingleton used when we need an ORB while not
+    // having a delegate set.
+    private transient ORB orb = null;
+
+    private transient OMGSystemException wrapper = OMGSystemException.get(
+        CORBALogDomains.RPC_ENCODING ) ;
+
+    // backward compatability so that appropriate rep-id calculations
+    // can take place
+    // this needs to be transient to prevent serialization during
+    // marshalling/unmarshalling
+    private transient ValueHandlerImpl vhandler = null;
+
+    void setValueHandler(ValueHandler vh)
+    {
+        vhandler = (com.sun.corba.se.impl.io.ValueHandlerImpl) vh;
+    }
+
+    // Operation to obtain the IR from the sending context
+    public com.sun.org.omg.CORBA.Repository get_ir (){
+        return null;
+    }
+
+    // Operations to obtain a URL to the implementation code
+    public String implementation (String x){
+        try{
+            // default to using the current ORB version in case the
+            // vhandler is not set
+            if (vhandler == null) {
+                vhandler = ValueHandlerImpl.getInstance(false);
+            }
+
+            // Util.getCodebase may return null which would
+            // cause a BAD_PARAM exception.
+            String result = Util.getCodebase(vhandler.getClassFromType(x));
+            if (result == null)
+                return "";
+            else
+                return result;
+        } catch(ClassNotFoundException cnfe){
+            throw wrapper.missingLocalValueImpl( CompletionStatus.COMPLETED_MAYBE,
+                cnfe ) ;
+        }
+    }
+
+    public String[] implementations (String[] x){
+        String result[] = new String[x.length];
+
+        for (int i = 0; i < x.length; i++)
+            result[i] = implementation(x[i]);
+
+        return result;
+    }
+
+    // the same information
+    public FullValueDescription meta (String x){
+        try{
+            FullValueDescription result = (FullValueDescription)fvds.get(x);
+
+            if (result == null) {
+                // default to using the current ORB version in case the
+                // vhandler is not set
+                if (vhandler == null) {
+                    vhandler = ValueHandlerImpl.getInstance(false);
+                }
+
+                try{
+                    result = ValueUtility.translate(_orb(),
+                        ObjectStreamClass.lookup(vhandler.getAnyClassFromType(x)), vhandler);
+                } catch(Throwable t){
+                    if (orb == null)
+                        orb = ORB.init(); //d11638
+                    result = ValueUtility.translate(orb,
+                        ObjectStreamClass.lookup(vhandler.getAnyClassFromType(x)), vhandler);
+                }
+
+                if (result != null){
+                    fvds.put(x, result);
+                } else {
+                    throw wrapper.missingLocalValueImpl( CompletionStatus.COMPLETED_MAYBE);
+                }
+            }
+
+            return result;
+        } catch(Throwable t){
+            throw wrapper.incompatibleValueImpl(CompletionStatus.COMPLETED_MAYBE,t);
+        }
+    }
+
+    public FullValueDescription[] metas (String[] x){
+        FullValueDescription descriptions[] = new FullValueDescription[x.length];
+
+        for (int i = 0; i < x.length; i++)
+            descriptions[i] = meta(x[i]);
+
+        return descriptions;
+    }
+
+    // information
+    public String[] bases (String x){
+        try {
+            // default to using the current ORB version in case the
+            // vhandler is not set
+            if (vhandler == null) {
+                vhandler = ValueHandlerImpl.getInstance(false);
+            }
+
+            Stack repIds = new Stack();
+            Class parent = ObjectStreamClass.lookup(vhandler.getClassFromType(x)).forClass().getSuperclass();
+
+            while (!parent.equals(java.lang.Object.class)) {
+                repIds.push(vhandler.createForAnyType(parent));
+                parent = parent.getSuperclass();
+            }
+
+            String result[] = new String[repIds.size()];
+            for (int i = result.length - 1; i >= 0; i++)
+                result[i] = (String)repIds.pop();
+
+            return result;
+        } catch (Throwable t) {
+            throw wrapper.missingLocalValueImpl( CompletionStatus.COMPLETED_MAYBE, t );
+        }
+    }
+}

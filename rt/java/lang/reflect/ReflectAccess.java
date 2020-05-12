@@ -1,156 +1,150 @@
-/*     */ package java.lang.reflect;
-/*     */ 
-/*     */ import java.lang.reflect.Constructor;
-/*     */ import java.lang.reflect.Executable;
-/*     */ import java.lang.reflect.Field;
-/*     */ import java.lang.reflect.Method;
-/*     */ import sun.reflect.ConstructorAccessor;
-/*     */ import sun.reflect.LangReflectAccess;
-/*     */ import sun.reflect.MethodAccessor;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class ReflectAccess
-/*     */   implements LangReflectAccess
-/*     */ {
-/*     */   public Field newField(Class<?> paramClass1, String paramString1, Class<?> paramClass2, int paramInt1, int paramInt2, String paramString2, byte[] paramArrayOfbyte) {
-/*  44 */     return new Field(paramClass1, paramString1, paramClass2, paramInt1, paramInt2, paramString2, paramArrayOfbyte);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Method newMethod(Class<?> paramClass1, String paramString1, Class<?>[] paramArrayOfClass1, Class<?> paramClass2, Class<?>[] paramArrayOfClass2, int paramInt1, int paramInt2, String paramString2, byte[] paramArrayOfbyte1, byte[] paramArrayOfbyte2, byte[] paramArrayOfbyte3) {
-/*  65 */     return new Method(paramClass1, paramString1, paramArrayOfClass1, paramClass2, paramArrayOfClass2, paramInt1, paramInt2, paramString2, paramArrayOfbyte1, paramArrayOfbyte2, paramArrayOfbyte3);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public <T> Constructor<T> newConstructor(Class<T> paramClass, Class<?>[] paramArrayOfClass1, Class<?>[] paramArrayOfClass2, int paramInt1, int paramInt2, String paramString, byte[] paramArrayOfbyte1, byte[] paramArrayOfbyte2) {
-/*  87 */     return new Constructor<>(paramClass, paramArrayOfClass1, paramArrayOfClass2, paramInt1, paramInt2, paramString, paramArrayOfbyte1, paramArrayOfbyte2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public MethodAccessor getMethodAccessor(Method paramMethod) {
-/*  98 */     return paramMethod.getMethodAccessor();
-/*     */   }
-/*     */   
-/*     */   public void setMethodAccessor(Method paramMethod, MethodAccessor paramMethodAccessor) {
-/* 102 */     paramMethod.setMethodAccessor(paramMethodAccessor);
-/*     */   }
-/*     */   
-/*     */   public ConstructorAccessor getConstructorAccessor(Constructor<?> paramConstructor) {
-/* 106 */     return paramConstructor.getConstructorAccessor();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setConstructorAccessor(Constructor<?> paramConstructor, ConstructorAccessor paramConstructorAccessor) {
-/* 112 */     paramConstructor.setConstructorAccessor(paramConstructorAccessor);
-/*     */   }
-/*     */   
-/*     */   public int getConstructorSlot(Constructor<?> paramConstructor) {
-/* 116 */     return paramConstructor.getSlot();
-/*     */   }
-/*     */   
-/*     */   public String getConstructorSignature(Constructor<?> paramConstructor) {
-/* 120 */     return paramConstructor.getSignature();
-/*     */   }
-/*     */   
-/*     */   public byte[] getConstructorAnnotations(Constructor<?> paramConstructor) {
-/* 124 */     return paramConstructor.getRawAnnotations();
-/*     */   }
-/*     */   
-/*     */   public byte[] getConstructorParameterAnnotations(Constructor<?> paramConstructor) {
-/* 128 */     return paramConstructor.getRawParameterAnnotations();
-/*     */   }
-/*     */   
-/*     */   public byte[] getExecutableTypeAnnotationBytes(Executable paramExecutable) {
-/* 132 */     return paramExecutable.getTypeAnnotationBytes();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Method copyMethod(Method paramMethod) {
-/* 140 */     return paramMethod.copy();
-/*     */   }
-/*     */   
-/*     */   public Field copyField(Field paramField) {
-/* 144 */     return paramField.copy();
-/*     */   }
-/*     */   
-/*     */   public <T> Constructor<T> copyConstructor(Constructor<T> paramConstructor) {
-/* 148 */     return paramConstructor.copy();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\lang\reflect\ReflectAccess.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.lang.reflect;
+
+import sun.reflect.MethodAccessor;
+import sun.reflect.ConstructorAccessor;
+
+/** Package-private class implementing the
+    sun.reflect.LangReflectAccess interface, allowing the java.lang
+    package to instantiate objects in this package. */
+
+class ReflectAccess implements sun.reflect.LangReflectAccess {
+    public Field newField(Class<?> declaringClass,
+                          String name,
+                          Class<?> type,
+                          int modifiers,
+                          int slot,
+                          String signature,
+                          byte[] annotations)
+    {
+        return new Field(declaringClass,
+                         name,
+                         type,
+                         modifiers,
+                         slot,
+                         signature,
+                         annotations);
+    }
+
+    public Method newMethod(Class<?> declaringClass,
+                            String name,
+                            Class<?>[] parameterTypes,
+                            Class<?> returnType,
+                            Class<?>[] checkedExceptions,
+                            int modifiers,
+                            int slot,
+                            String signature,
+                            byte[] annotations,
+                            byte[] parameterAnnotations,
+                            byte[] annotationDefault)
+    {
+        return new Method(declaringClass,
+                          name,
+                          parameterTypes,
+                          returnType,
+                          checkedExceptions,
+                          modifiers,
+                          slot,
+                          signature,
+                          annotations,
+                          parameterAnnotations,
+                          annotationDefault);
+    }
+
+    public <T> Constructor<T> newConstructor(Class<T> declaringClass,
+                                             Class<?>[] parameterTypes,
+                                             Class<?>[] checkedExceptions,
+                                             int modifiers,
+                                             int slot,
+                                             String signature,
+                                             byte[] annotations,
+                                             byte[] parameterAnnotations)
+    {
+        return new Constructor<>(declaringClass,
+                                  parameterTypes,
+                                  checkedExceptions,
+                                  modifiers,
+                                  slot,
+                                  signature,
+                                  annotations,
+                                  parameterAnnotations);
+    }
+
+    public MethodAccessor getMethodAccessor(Method m) {
+        return m.getMethodAccessor();
+    }
+
+    public void setMethodAccessor(Method m, MethodAccessor accessor) {
+        m.setMethodAccessor(accessor);
+    }
+
+    public ConstructorAccessor getConstructorAccessor(Constructor<?> c) {
+        return c.getConstructorAccessor();
+    }
+
+    public void setConstructorAccessor(Constructor<?> c,
+                                       ConstructorAccessor accessor)
+    {
+        c.setConstructorAccessor(accessor);
+    }
+
+    public int getConstructorSlot(Constructor<?> c) {
+        return c.getSlot();
+    }
+
+    public String getConstructorSignature(Constructor<?> c) {
+        return c.getSignature();
+    }
+
+    public byte[] getConstructorAnnotations(Constructor<?> c) {
+        return c.getRawAnnotations();
+    }
+
+    public byte[] getConstructorParameterAnnotations(Constructor<?> c) {
+        return c.getRawParameterAnnotations();
+    }
+
+    public byte[] getExecutableTypeAnnotationBytes(Executable ex) {
+        return ex.getTypeAnnotationBytes();
+    }
+
+    //
+    // Copying routines, needed to quickly fabricate new Field,
+    // Method, and Constructor objects from templates
+    //
+    public Method      copyMethod(Method arg) {
+        return arg.copy();
+    }
+
+    public Field       copyField(Field arg) {
+        return arg.copy();
+    }
+
+    public <T> Constructor<T> copyConstructor(Constructor<T> arg) {
+        return arg.copy();
+    }
+}

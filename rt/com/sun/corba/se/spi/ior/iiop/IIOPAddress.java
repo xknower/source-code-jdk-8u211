@@ -1,15 +1,38 @@
+/*
+ * Copyright (c) 2002, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package com.sun.corba.se.spi.ior.iiop;
 
-import com.sun.corba.se.spi.ior.Writeable;
+import com.sun.corba.se.spi.ior.Writeable ;
 
-public interface IIOPAddress extends Writeable {
-  String getHost();
-  
-  int getPort();
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\spi\ior\iiop\IIOPAddress.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/** IIOPAddress represents the host and port used to establish a
+ * TCP connection for an IIOP request.
  */
+public interface IIOPAddress extends Writeable
+{
+    public String getHost() ;
+
+    public int getPort() ;
+}

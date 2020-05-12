@@ -1,11 +1,42 @@
+/*
+ * Copyright (c) 1998, 2006, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package javax.swing.event;
 
 import java.awt.event.MouseAdapter;
 
-public abstract class MouseInputAdapter extends MouseAdapter implements MouseInputListener {}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\event\MouseInputAdapter.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * An empty implementation of the {@code MouseInputListener} interface, provided
+ * as a convenience to simplify the task of creating listeners, by extending
+ * and implementing only the methods of interest. This class also provides an
+ * empty implementation of the {@code MouseWheelListener} interface, through
+ * its extension from AWT's {@code MouseAdapter}.
+ *
+ * @author Philip Milne
+ * @author Shannon Hickey
  */
+public abstract class MouseInputAdapter extends MouseAdapter
+                                        implements MouseInputListener {
+}

@@ -1,417 +1,416 @@
-/*     */ package com.sun.org.apache.xalan.internal.xsltc.dom;
-/*     */ 
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.DOM;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.Translet;
-/*     */ import com.sun.org.apache.xml.internal.dtm.DTMAxisIterator;
-/*     */ import java.util.Vector;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public abstract class NodeCounter
-/*     */ {
-/*     */   public static final int END = -1;
-/*  41 */   protected int _node = -1;
-/*  42 */   protected int _nodeType = -1;
-/*  43 */   protected double _value = -2.147483648E9D;
-/*     */   
-/*     */   public final DOM _document;
-/*     */   
-/*     */   public final DTMAxisIterator _iterator;
-/*     */   
-/*     */   public final Translet _translet;
-/*     */   protected String _format;
-/*     */   protected String _lang;
-/*     */   protected String _letterValue;
-/*     */   protected String _groupSep;
-/*     */   protected int _groupSize;
-/*     */   private boolean _separFirst = true;
-/*     */   private boolean _separLast = false;
-/*  57 */   private Vector _separToks = new Vector();
-/*  58 */   private Vector _formatToks = new Vector();
-/*  59 */   private int _nSepars = 0;
-/*  60 */   private int _nFormats = 0;
-/*     */   
-/*  62 */   private static final String[] Thousands = new String[] { "", "m", "mm", "mmm" };
-/*     */   
-/*  64 */   private static final String[] Hundreds = new String[] { "", "c", "cc", "ccc", "cd", "d", "dc", "dcc", "dccc", "cm" };
-/*     */   
-/*  66 */   private static final String[] Tens = new String[] { "", "x", "xx", "xxx", "xl", "l", "lx", "lxx", "lxxx", "xc" };
-/*     */   
-/*  68 */   private static final String[] Ones = new String[] { "", "i", "ii", "iii", "iv", "v", "vi", "vii", "viii", "ix" };
-/*     */ 
-/*     */   
-/*  71 */   private StringBuilder _tempBuffer = new StringBuilder();
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected boolean _hasFrom;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected NodeCounter(Translet translet, DOM document, DTMAxisIterator iterator) {
-/*  80 */     this._translet = translet;
-/*  81 */     this._document = document;
-/*  82 */     this._iterator = iterator;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected NodeCounter(Translet translet, DOM document, DTMAxisIterator iterator, boolean hasFrom) {
-/*  87 */     this._translet = translet;
-/*  88 */     this._document = document;
-/*  89 */     this._iterator = iterator;
-/*  90 */     this._hasFrom = hasFrom;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public abstract NodeCounter setStartNode(int paramInt);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public NodeCounter setValue(double value) {
-/* 104 */     this._value = value;
-/* 105 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void setFormatting(String format, String lang, String letterValue, String groupSep, String groupSize) {
-/* 113 */     this._lang = lang;
-/* 114 */     this._groupSep = groupSep;
-/* 115 */     this._letterValue = letterValue;
-/* 116 */     this._groupSize = parseStringToAnInt(groupSize);
-/* 117 */     setTokens(format);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int parseStringToAnInt(String s) {
-/* 132 */     if (s == null) {
-/* 133 */       return 0;
-/*     */     }
-/* 135 */     int result = 0;
-/* 136 */     boolean negative = false;
-/* 137 */     int radix = 10, i = 0, max = s.length();
-/*     */ 
-/*     */     
-/* 140 */     if (max > 0) {
-/* 141 */       int limit; if (s.charAt(0) == '-') {
-/* 142 */         negative = true;
-/* 143 */         limit = Integer.MIN_VALUE;
-/* 144 */         i++;
-/*     */       } else {
-/* 146 */         limit = -2147483647;
-/*     */       } 
-/* 148 */       int multmin = limit / radix;
-/* 149 */       if (i < max) {
-/* 150 */         int digit = Character.digit(s.charAt(i++), radix);
-/* 151 */         if (digit < 0) {
-/* 152 */           return 0;
-/*     */         }
-/* 154 */         result = -digit;
-/*     */       } 
-/* 156 */       while (i < max) {
-/*     */         
-/* 158 */         int digit = Character.digit(s.charAt(i++), radix);
-/* 159 */         if (digit < 0)
-/* 160 */           return 0; 
-/* 161 */         if (result < multmin)
-/* 162 */           return 0; 
-/* 163 */         result *= radix;
-/* 164 */         if (result < limit + digit)
-/* 165 */           return 0; 
-/* 166 */         result -= digit;
-/*     */       } 
-/*     */     } else {
-/* 169 */       return 0;
-/*     */     } 
-/* 171 */     if (negative) {
-/* 172 */       if (i > 1) {
-/* 173 */         return result;
-/*     */       }
-/* 175 */       return 0;
-/*     */     } 
-/* 177 */     return -result;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private final void setTokens(String format) {
-/* 183 */     if (this._format != null && format.equals(this._format)) {
-/*     */       return;
-/*     */     }
-/* 186 */     this._format = format;
-/*     */     
-/* 188 */     int length = this._format.length();
-/* 189 */     boolean isFirst = true;
-/* 190 */     this._separFirst = true;
-/* 191 */     this._separLast = false;
-/* 192 */     this._nSepars = 0;
-/* 193 */     this._nFormats = 0;
-/* 194 */     this._separToks.clear();
-/* 195 */     this._formatToks.clear();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 201 */     for (int j = 0, i = 0; i < length; ) {
-/* 202 */       char c = format.charAt(i);
-/* 203 */       for (j = i; Character.isLetterOrDigit(c) && 
-/* 204 */         ++i != length;) {
-/* 205 */         c = format.charAt(i);
-/*     */       }
-/* 207 */       if (i > j) {
-/* 208 */         if (isFirst) {
-/* 209 */           this._separToks.addElement(".");
-/* 210 */           isFirst = this._separFirst = false;
-/*     */         } 
-/* 212 */         this._formatToks.addElement(format.substring(j, i));
-/*     */       } 
-/*     */       
-/* 215 */       if (i == length)
-/*     */         break; 
-/* 217 */       c = format.charAt(i);
-/* 218 */       for (j = i; !Character.isLetterOrDigit(c) && 
-/* 219 */         ++i != length; ) {
-/* 220 */         c = format.charAt(i);
-/* 221 */         isFirst = false;
-/*     */       } 
-/* 223 */       if (i > j) {
-/* 224 */         this._separToks.addElement(format.substring(j, i));
-/*     */       }
-/*     */     } 
-/*     */     
-/* 228 */     this._nSepars = this._separToks.size();
-/* 229 */     this._nFormats = this._formatToks.size();
-/* 230 */     if (this._nSepars > this._nFormats) this._separLast = true;
-/*     */     
-/* 232 */     if (this._separFirst) this._nSepars--; 
-/* 233 */     if (this._separLast) this._nSepars--; 
-/* 234 */     if (this._nSepars == 0) {
-/* 235 */       this._separToks.insertElementAt(".", 1);
-/* 236 */       this._nSepars++;
-/*     */     } 
-/* 238 */     if (this._separFirst) this._nSepars++;
-/*     */   
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public NodeCounter setDefaultFormatting() {
-/* 245 */     setFormatting("1", "en", "alphabetic", null, null);
-/* 246 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public abstract String getCounter();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getCounter(String format, String lang, String letterValue, String groupSep, String groupSize) {
-/* 262 */     setFormatting(format, lang, letterValue, groupSep, groupSize);
-/* 263 */     return getCounter();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean matchesCount(int node) {
-/* 272 */     return (this._nodeType == this._document.getExpandedTypeID(node));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean matchesFrom(int node) {
-/* 280 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected String formatNumbers(int value) {
-/* 287 */     return formatNumbers(new int[] { value });
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected String formatNumbers(int[] values) {
-/* 295 */     int nValues = values.length;
-/*     */     
-/* 297 */     boolean isEmpty = true;
-/* 298 */     for (int i = 0; i < nValues; i++) {
-/* 299 */       if (values[i] != Integer.MIN_VALUE)
-/* 300 */         isEmpty = false; 
-/* 301 */     }  if (isEmpty) return "";
-/*     */ 
-/*     */     
-/* 304 */     boolean isFirst = true;
-/* 305 */     int t = 0, n = 0, s = 1;
-/* 306 */     this._tempBuffer.setLength(0);
-/* 307 */     StringBuilder buffer = this._tempBuffer;
-/*     */ 
-/*     */     
-/* 310 */     if (this._separFirst) buffer.append(this._separToks.elementAt(0));
-/*     */ 
-/*     */     
-/* 313 */     while (n < nValues) {
-/* 314 */       int value = values[n];
-/* 315 */       if (value != Integer.MIN_VALUE) {
-/* 316 */         if (!isFirst) buffer.append(this._separToks.elementAt(s++)); 
-/* 317 */         formatValue(value, this._formatToks.elementAt(t++), buffer);
-/* 318 */         if (t == this._nFormats) t--; 
-/* 319 */         if (s >= this._nSepars) s--; 
-/* 320 */         isFirst = false;
-/*     */       } 
-/* 322 */       n++;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 326 */     if (this._separLast) buffer.append(this._separToks.lastElement()); 
-/* 327 */     return buffer.toString();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void formatValue(int value, String format, StringBuilder buffer) {
-/* 336 */     char c = format.charAt(0);
-/*     */     
-/* 338 */     if (Character.isDigit(c)) {
-/* 339 */       char zero = (char)(c - Character.getNumericValue(c));
-/*     */       
-/* 341 */       StringBuilder temp = buffer;
-/* 342 */       if (this._groupSize > 0) {
-/* 343 */         temp = new StringBuilder();
-/*     */       }
-/* 345 */       String s = "";
-/* 346 */       int n = value;
-/* 347 */       while (n > 0) {
-/* 348 */         s = (char)(zero + n % 10) + s;
-/* 349 */         n /= 10;
-/*     */       } 
-/*     */       int i;
-/* 352 */       for (i = 0; i < format.length() - s.length(); i++) {
-/* 353 */         temp.append(zero);
-/*     */       }
-/* 355 */       temp.append(s);
-/*     */       
-/* 357 */       if (this._groupSize > 0) {
-/* 358 */         for (i = 0; i < temp.length(); i++) {
-/* 359 */           if (i != 0 && (temp.length() - i) % this._groupSize == 0) {
-/* 360 */             buffer.append(this._groupSep);
-/*     */           }
-/* 362 */           buffer.append(temp.charAt(i));
-/*     */         }
-/*     */       
-/*     */       }
-/* 366 */     } else if (c == 'i' && !this._letterValue.equals("alphabetic")) {
-/* 367 */       buffer.append(romanValue(value));
-/*     */     }
-/* 369 */     else if (c == 'I' && !this._letterValue.equals("alphabetic")) {
-/* 370 */       buffer.append(romanValue(value).toUpperCase());
-/*     */     } else {
-/*     */       
-/* 373 */       int min = c;
-/* 374 */       int max = c;
-/*     */ 
-/*     */       
-/* 377 */       if (c >= 'α' && c <= 'ω') {
-/* 378 */         max = 969;
-/*     */       }
-/*     */       else {
-/*     */         
-/* 382 */         while (Character.isLetterOrDigit((char)(max + 1))) {
-/* 383 */           max++;
-/*     */         }
-/*     */       } 
-/* 386 */       buffer.append(alphaValue(value, min, max));
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   private String alphaValue(int value, int min, int max) {
-/* 391 */     if (value <= 0) {
-/* 392 */       return "" + value;
-/*     */     }
-/*     */     
-/* 395 */     int range = max - min + 1;
-/* 396 */     char last = (char)((value - 1) % range + min);
-/* 397 */     if (value > range) {
-/* 398 */       return alphaValue((value - 1) / range, min, max) + last;
-/*     */     }
-/*     */     
-/* 401 */     return "" + last;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private String romanValue(int n) {
-/* 406 */     if (n <= 0 || n > 4000) {
-/* 407 */       return "" + n;
-/*     */     }
-/* 409 */     return Thousands[n / 1000] + Hundreds[n / 100 % 10] + Tens[n / 10 % 10] + Ones[n % 10];
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\dom\NodeCounter.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: NodeCounter.java,v 1.2.4.1 2005/09/12 11:52:36 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.dom;
+
+import java.util.Vector;
+
+import com.sun.org.apache.xalan.internal.xsltc.DOM;
+import com.sun.org.apache.xalan.internal.xsltc.Translet;
+import com.sun.org.apache.xml.internal.dtm.DTM;
+import com.sun.org.apache.xml.internal.dtm.DTMAxisIterator;
+
+/**
+ * @author Jacek Ambroziak
+ * @author Santiago Pericas-Geertsen
+ * @author Morten Jorgensen
+ */
+public abstract class NodeCounter {
+    public static final int END = DTM.NULL;
+
+    protected int _node = END;
+    protected int _nodeType = DOM.FIRST_TYPE - 1;
+    protected double _value = Integer.MIN_VALUE;
+
+    public final DOM          _document;
+    public final DTMAxisIterator _iterator;
+    public final Translet     _translet;
+
+    protected String _format;
+    protected String _lang;
+    protected String _letterValue;
+    protected String _groupSep;
+    protected int    _groupSize;
+
+    private boolean _separFirst = true;
+    private boolean _separLast = false;
+    private Vector _separToks = new Vector();
+    private Vector _formatToks = new Vector();
+    private int _nSepars  = 0;
+    private int _nFormats = 0;
+
+    private final static String[] Thousands =
+        {"", "m", "mm", "mmm" };
+    private final static String[] Hundreds =
+    {"", "c", "cc", "ccc", "cd", "d", "dc", "dcc", "dccc", "cm"};
+    private final static String[] Tens =
+    {"", "x", "xx", "xxx", "xl", "l", "lx", "lxx", "lxxx", "xc"};
+    private final static String[] Ones =
+    {"", "i", "ii", "iii", "iv", "v", "vi", "vii", "viii", "ix"};
+
+    private StringBuilder _tempBuffer = new StringBuilder();
+
+    /**
+     * Indicates if this instance of xsl:number has a from pattern.
+     */
+    protected boolean _hasFrom;
+
+    protected NodeCounter(Translet translet,
+              DOM document, DTMAxisIterator iterator) {
+    _translet = translet;
+    _document = document;
+    _iterator = iterator;
+    }
+
+    protected NodeCounter(Translet translet,
+              DOM document, DTMAxisIterator iterator, boolean hasFrom) {
+        _translet = translet;
+        _document = document;
+        _iterator = iterator;
+        _hasFrom = hasFrom;
+    }
+
+    /**
+     * Set the start node for this counter. The same <tt>NodeCounter</tt>
+     * object can be used multiple times by resetting the starting node.
+     */
+    abstract public NodeCounter setStartNode(int node);
+
+    /**
+     * If the user specified a value attribute, use this instead of
+     * counting nodes.
+     */
+    public NodeCounter setValue(double value) {
+    _value = value;
+    return this;
+    }
+
+    /**
+     * Sets formatting fields before calling formatNumbers().
+     */
+    protected void setFormatting(String format, String lang, String letterValue,
+                 String groupSep, String groupSize) {
+    _lang = lang;
+    _groupSep = groupSep;
+    _letterValue = letterValue;
+    _groupSize = parseStringToAnInt(groupSize);
+    setTokens(format);
+
+ }
+
+    /**
+     * Effectively does the same thing as Integer.parseInt(String s) except
+     * instead of throwing a NumberFormatException, it returns 0.  This method
+     * is used instead of Integer.parseInt() since it does not incur the
+     * overhead of throwing an Exception which is expensive.
+     *
+     * @param s  A String to be parsed into an int.
+     * @return  Either an int represented by the incoming String s, or 0 if
+     *          the parsing is not successful.
+     */
+    private int parseStringToAnInt(String s) {
+        if (s == null)
+            return 0;
+
+        int result = 0;
+        boolean negative = false;
+        int radix = 10, i = 0, max = s.length();
+        int limit, multmin, digit;
+
+        if (max > 0) {
+            if (s.charAt(0) == '-') {
+                negative = true;
+                limit = Integer.MIN_VALUE;
+                i++;
+            } else {
+                limit = -Integer.MAX_VALUE;
+            }
+            multmin = limit / radix;
+            if (i < max) {
+                digit = Character.digit(s.charAt(i++), radix);
+                if (digit < 0)
+                    return 0;
+                else
+                    result = -digit;
+            }
+            while (i < max) {
+                // Accumulating negatively avoids surprises near MAX_VALUE
+                digit = Character.digit(s.charAt(i++), radix);
+                if (digit < 0)
+                    return 0;
+                if (result < multmin)
+                    return 0;
+                result *= radix;
+                if (result < limit + digit)
+                    return 0;
+                result -= digit;
+            }
+        } else {
+            return 0;
+        }
+        if (negative) {
+            if (i > 1)
+                return result;
+            else /* Only got "-" */
+                return 0;
+        } else {
+            return -result;
+        }
+    }
+
+  // format == null assumed here
+ private final void setTokens(final String format){
+     if( (_format!=null) &&(format.equals(_format)) ){// has already been set
+        return;
+     }
+     _format = format;
+     // reset
+     final int length = _format.length();
+     boolean isFirst = true;
+     _separFirst = true;
+     _separLast = false;
+     _nSepars  = 0;
+     _nFormats = 0;
+     _separToks.clear() ;
+     _formatToks.clear();
+
+         /*
+          * Tokenize the format string into alphanumeric and non-alphanumeric
+          * tokens as described in M. Kay page 241.
+          */
+         for (int j = 0, i = 0; i < length;) {
+                 char c = format.charAt(i);
+                 for (j = i; Character.isLetterOrDigit(c);) {
+                     if (++i == length) break;
+             c = format.charAt(i);
+                 }
+                 if (i > j) {
+                     if (isFirst) {
+                         _separToks.addElement(".");
+                         isFirst = _separFirst = false;
+                     }
+                     _formatToks.addElement(format.substring(j, i));
+                 }
+
+                 if (i == length) break;
+
+                 c = format.charAt(i);
+                 for (j = i; !Character.isLetterOrDigit(c);) {
+                     if (++i == length) break;
+                     c = format.charAt(i);
+                     isFirst = false;
+                 }
+                 if (i > j) {
+                     _separToks.addElement(format.substring(j, i));
+                 }
+             }
+
+         _nSepars = _separToks.size();
+         _nFormats = _formatToks.size();
+         if (_nSepars > _nFormats) _separLast = true;
+
+         if (_separFirst) _nSepars--;
+         if (_separLast) _nSepars--;
+         if (_nSepars == 0) {
+             _separToks.insertElementAt(".", 1);
+             _nSepars++;
+         }
+         if (_separFirst) _nSepars ++;
+
+ }
+    /**
+     * Sets formatting fields to their default values.
+     */
+    public NodeCounter setDefaultFormatting() {
+    setFormatting("1", "en", "alphabetic", null, null);
+    return this;
+    }
+
+    /**
+     * Returns the position of <tt>node</tt> according to the level and
+     * the from and count patterns.
+     */
+    abstract public String getCounter();
+
+    /**
+     * Returns the position of <tt>node</tt> according to the level and
+     * the from and count patterns. This position is converted into a
+     * string based on the arguments passed.
+     */
+    public String getCounter(String format, String lang, String letterValue,
+                String groupSep, String groupSize) {
+    setFormatting(format, lang, letterValue, groupSep, groupSize);
+    return getCounter();
+    }
+
+    /**
+     * Returns true if <tt>node</tt> matches the count pattern. By
+     * default a node matches the count patterns if it is of the
+     * same type as the starting node.
+     */
+    public boolean matchesCount(int node) {
+    return _nodeType == _document.getExpandedTypeID(node);
+    }
+
+    /**
+     * Returns true if <tt>node</tt> matches the from pattern. By default,
+     * no node matches the from pattern.
+     */
+    public boolean matchesFrom(int node) {
+    return false;
+    }
+
+    /**
+     * Format a single value according to the format parameters.
+     */
+    protected String formatNumbers(int value) {
+    return formatNumbers(new int[] { value });
+    }
+
+    /**
+     * Format a sequence of values according to the format paramaters
+     * set by calling setFormatting().
+     */
+    protected String formatNumbers(int[] values) {
+    final int nValues = values.length;
+
+    boolean isEmpty = true;
+    for (int i = 0; i < nValues; i++)
+        if (values[i] != Integer.MIN_VALUE)
+        isEmpty = false;
+    if (isEmpty) return("");
+
+    // Format the output string using the values array and the fmt. tokens
+    boolean isFirst = true;
+    int t = 0, n = 0, s = 1;
+  _tempBuffer.setLength(0);
+    final StringBuilder buffer = _tempBuffer;
+
+    // Append separation token before first digit/letter/numeral
+    if (_separFirst) buffer.append((String)_separToks.elementAt(0));
+
+    // Append next digit/letter/numeral and separation token
+    while (n < nValues) {
+        final int value = values[n];
+        if (value != Integer.MIN_VALUE) {
+        if (!isFirst) buffer.append((String) _separToks.elementAt(s++));
+        formatValue(value, (String)_formatToks.elementAt(t++), buffer);
+        if (t == _nFormats) t--;
+        if (s >= _nSepars) s--;
+        isFirst = false;
+        }
+        n++;
+    }
+
+    // Append separation token after last digit/letter/numeral
+    if (_separLast) buffer.append((String)_separToks.lastElement());
+    return buffer.toString();
+    }
+
+    /**
+     * Format a single value based on the appropriate formatting token.
+     * This method is based on saxon (Michael Kay) and only implements
+     * lang="en".
+     */
+    private void formatValue(int value, String format, StringBuilder buffer) {
+        char c = format.charAt(0);
+
+        if (Character.isDigit(c)) {
+            char zero = (char)(c - Character.getNumericValue(c));
+
+            StringBuilder temp = buffer;
+            if (_groupSize > 0) {
+                temp = new StringBuilder();
+            }
+            String s = "";
+            int n = value;
+            while (n > 0) {
+                s = (char) ((int) zero + (n % 10)) + s;
+                n = n / 10;
+            }
+
+            for (int i = 0; i < format.length() - s.length(); i++) {
+                temp.append(zero);
+            }
+            temp.append(s);
+
+            if (_groupSize > 0) {
+                for (int i = 0; i < temp.length(); i++) {
+                    if (i != 0 && ((temp.length() - i) % _groupSize) == 0) {
+                        buffer.append(_groupSep);
+                    }
+                    buffer.append(temp.charAt(i));
+                }
+            }
+        }
+    else if (c == 'i' && !_letterValue.equals("alphabetic")) {
+            buffer.append(romanValue(value));
+        }
+    else if (c == 'I' && !_letterValue.equals("alphabetic")) {
+            buffer.append(romanValue(value).toUpperCase());
+        }
+    else {
+        int min = (int) c;
+        int max = (int) c;
+
+        // Special case for Greek alphabet
+        if (c >= 0x3b1 && c <= 0x3c9) {
+        max = 0x3c9;    // omega
+        }
+        else {
+        // General case: search for end of group
+        while (Character.isLetterOrDigit((char) (max + 1))) {
+            max++;
+        }
+        }
+            buffer.append(alphaValue(value, min, max));
+        }
+    }
+
+    private String alphaValue(int value, int min, int max) {
+        if (value <= 0) {
+        return "" + value;
+    }
+
+        int range = max - min + 1;
+        char last = (char)(((value-1) % range) + min);
+        if (value > range) {
+            return alphaValue((value-1) / range, min, max) + last;
+        }
+    else {
+            return "" + last;
+        }
+    }
+
+    private String romanValue(int n) {
+        if (n <= 0 || n > 4000) {
+        return "" + n;
+    }
+        return
+        Thousands[n / 1000] +
+        Hundreds[(n / 100) % 10] +
+        Tens[(n/10) % 10] +
+        Ones[n % 10];
+    }
+
+}

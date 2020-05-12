@@ -1,70 +1,64 @@
-/*    */ package com.sun.corba.se.impl.presentation.rmi;
-/*    */ 
-/*    */ import com.sun.corba.se.spi.presentation.rmi.PresentationManager;
-/*    */ import com.sun.corba.se.spi.presentation.rmi.StubAdapter;
-/*    */ import org.omg.CORBA.Object;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public abstract class StubFactoryBase
-/*    */   implements PresentationManager.StubFactory
-/*    */ {
-/* 42 */   private String[] typeIds = null;
-/*    */   
-/*    */   protected final PresentationManager.ClassData classData;
-/*    */ 
-/*    */   
-/*    */   protected StubFactoryBase(PresentationManager.ClassData paramClassData) {
-/* 48 */     this.classData = paramClassData;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public synchronized String[] getTypeIds() {
-/* 53 */     if (this.typeIds == null) {
-/* 54 */       if (this.classData == null) {
-/* 55 */         Object object = makeStub();
-/* 56 */         this.typeIds = StubAdapter.getTypeIds(object);
-/*    */       } else {
-/* 58 */         this.typeIds = this.classData.getTypeIds();
-/*    */       } 
-/*    */     }
-/*    */     
-/* 62 */     return this.typeIds;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\presentation\rmi\StubFactoryBase.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.presentation.rmi ;
+
+import javax.rmi.CORBA.Tie ;
+
+import java.lang.reflect.InvocationHandler ;
+import java.lang.reflect.Proxy ;
+
+import com.sun.corba.se.spi.presentation.rmi.PresentationManager ;
+import com.sun.corba.se.spi.presentation.rmi.DynamicStub ;
+import com.sun.corba.se.spi.presentation.rmi.StubAdapter ;
+
+import com.sun.corba.se.spi.orbutil.proxy.InvocationHandlerFactory ;
+import com.sun.corba.se.spi.orbutil.proxy.LinkedInvocationHandler ;
+
+public abstract class StubFactoryBase implements PresentationManager.StubFactory
+{
+    private String[] typeIds = null ;
+
+    protected final PresentationManager.ClassData classData ;
+
+    protected StubFactoryBase( PresentationManager.ClassData classData )
+    {
+        this.classData = classData ;
+    }
+
+    public synchronized String[] getTypeIds()
+    {
+        if (typeIds == null) {
+            if (classData == null) {
+                org.omg.CORBA.Object stub = makeStub() ;
+                typeIds = StubAdapter.getTypeIds( stub ) ;
+            } else {
+                typeIds = classData.getTypeIds() ;
+            }
+        }
+
+        return typeIds ;
+    }
+}

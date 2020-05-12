@@ -1,61 +1,55 @@
-/*    */ package com.sun.corba.se.impl.copyobject;
-/*    */ 
-/*    */ import com.sun.corba.se.spi.copyobject.ObjectCopier;
-/*    */ import com.sun.corba.se.spi.copyobject.ReflectiveCopyException;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class FallbackObjectCopierImpl
-/*    */   implements ObjectCopier
-/*    */ {
-/*    */   private ObjectCopier first;
-/*    */   private ObjectCopier second;
-/*    */   
-/*    */   public FallbackObjectCopierImpl(ObjectCopier paramObjectCopier1, ObjectCopier paramObjectCopier2) {
-/* 42 */     this.first = paramObjectCopier1;
-/* 43 */     this.second = paramObjectCopier2;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public Object copy(Object paramObject) throws ReflectiveCopyException {
-/*    */     try {
-/* 49 */       return this.first.copy(paramObject);
-/* 50 */     } catch (ReflectiveCopyException reflectiveCopyException) {
-/*    */       
-/* 52 */       return this.second.copy(paramObject);
-/*    */     } 
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\copyobject\FallbackObjectCopierImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.copyobject ;
+
+import com.sun.corba.se.spi.copyobject.ObjectCopier ;
+import com.sun.corba.se.spi.copyobject.ReflectiveCopyException ;
+
+/** Trys a first ObjectCopier.  If the first throws a ReflectiveCopyException,
+ * falls back and tries a second ObjectCopier.
+ */
+public class FallbackObjectCopierImpl implements ObjectCopier
+{
+    private ObjectCopier first ;
+    private ObjectCopier second ;
+
+    public FallbackObjectCopierImpl( ObjectCopier first,
+        ObjectCopier second )
+    {
+        this.first = first ;
+        this.second = second ;
+    }
+
+    public Object copy( Object src ) throws ReflectiveCopyException
+    {
+        try {
+            return first.copy( src ) ;
+        } catch (ReflectiveCopyException rce ) {
+            // XXX log this fallback at a low level
+            return second.copy( src ) ;
+        }
+    }
+}

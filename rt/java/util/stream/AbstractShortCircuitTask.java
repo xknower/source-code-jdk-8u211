@@ -1,240 +1,234 @@
-/*     */ package java.util.stream;
-/*     */ 
-/*     */ import java.util.Spliterator;
-/*     */ import java.util.concurrent.atomic.AtomicReference;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ abstract class AbstractShortCircuitTask<P_IN, P_OUT, R, K extends AbstractShortCircuitTask<P_IN, P_OUT, R, K>>
-/*     */   extends AbstractTask<P_IN, P_OUT, R, K>
-/*     */ {
-/*     */   protected final AtomicReference<R> sharedResult;
-/*     */   protected volatile boolean canceled;
-/*     */   
-/*     */   protected AbstractShortCircuitTask(PipelineHelper<P_OUT> paramPipelineHelper, Spliterator<P_IN> paramSpliterator) {
-/*  70 */     super(paramPipelineHelper, paramSpliterator);
-/*  71 */     this.sharedResult = new AtomicReference<>(null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected AbstractShortCircuitTask(K paramK, Spliterator<P_IN> paramSpliterator) {
-/*  83 */     super(paramK, paramSpliterator);
-/*  84 */     this.sharedResult = ((AbstractShortCircuitTask)paramK).sharedResult;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected abstract R getEmptyResult();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void compute() {
-/* 102 */     Spliterator<P_IN> spliterator = this.spliterator;
-/* 103 */     long l1 = spliterator.estimateSize();
-/* 104 */     long l2 = getTargetSize(l1);
-/* 105 */     boolean bool = false;
-/* 106 */     AbstractShortCircuitTask abstractShortCircuitTask = this;
-/* 107 */     AtomicReference<R> atomicReference = this.sharedResult;
-/*     */     R r;
-/* 109 */     while ((r = atomicReference.get()) == null) {
-/* 110 */       AbstractShortCircuitTask abstractShortCircuitTask3; if (abstractShortCircuitTask.taskCanceled()) {
-/* 111 */         r = (R)abstractShortCircuitTask.getEmptyResult(); break;
-/*     */       } 
-/*     */       Spliterator<P_IN> spliterator1;
-/* 114 */       if (l1 <= l2 || (spliterator1 = spliterator.trySplit()) == null) {
-/* 115 */         r = (R)abstractShortCircuitTask.doLeaf();
-/*     */         
-/*     */         break;
-/*     */       } 
-/* 119 */       AbstractShortCircuitTask abstractShortCircuitTask1 = (AbstractShortCircuitTask)abstractShortCircuitTask.makeChild(spliterator1);
-/* 120 */       AbstractShortCircuitTask abstractShortCircuitTask2 = (AbstractShortCircuitTask)abstractShortCircuitTask.makeChild(spliterator);
-/* 121 */       abstractShortCircuitTask.setPendingCount(1);
-/* 122 */       if (bool) {
-/* 123 */         bool = false;
-/* 124 */         spliterator = spliterator1;
-/* 125 */         abstractShortCircuitTask = abstractShortCircuitTask1;
-/* 126 */         abstractShortCircuitTask3 = abstractShortCircuitTask2;
-/*     */       } else {
-/*     */         
-/* 129 */         bool = true;
-/* 130 */         abstractShortCircuitTask = abstractShortCircuitTask2;
-/* 131 */         abstractShortCircuitTask3 = abstractShortCircuitTask1;
-/*     */       } 
-/* 133 */       abstractShortCircuitTask3.fork();
-/* 134 */       l1 = spliterator.estimateSize();
-/*     */     } 
-/* 136 */     abstractShortCircuitTask.setLocalResult(r);
-/* 137 */     abstractShortCircuitTask.tryComplete();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void shortCircuit(R paramR) {
-/* 151 */     if (paramR != null) {
-/* 152 */       this.sharedResult.compareAndSet(null, paramR);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void setLocalResult(R paramR) {
-/* 163 */     if (isRoot()) {
-/* 164 */       if (paramR != null) {
-/* 165 */         this.sharedResult.compareAndSet(null, paramR);
-/*     */       }
-/*     */     } else {
-/* 168 */       super.setLocalResult(paramR);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public R getRawResult() {
-/* 176 */     return getLocalResult();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public R getLocalResult() {
-/* 185 */     if (isRoot()) {
-/* 186 */       R r = this.sharedResult.get();
-/* 187 */       return (r == null) ? getEmptyResult() : r;
-/*     */     } 
-/*     */     
-/* 190 */     return super.getLocalResult();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void cancel() {
-/* 197 */     this.canceled = true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected boolean taskCanceled() {
-/* 207 */     boolean bool = this.canceled;
-/* 208 */     if (!bool) {
-/* 209 */       for (AbstractShortCircuitTask abstractShortCircuitTask = (AbstractShortCircuitTask)getParent(); !bool && abstractShortCircuitTask != null; abstractShortCircuitTask = (AbstractShortCircuitTask)abstractShortCircuitTask.getParent()) {
-/* 210 */         bool = abstractShortCircuitTask.canceled;
-/*     */       }
-/*     */     }
-/* 213 */     return bool;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void cancelLaterNodes() {
-/* 223 */     AbstractShortCircuitTask abstractShortCircuitTask1 = (AbstractShortCircuitTask)getParent(), abstractShortCircuitTask2 = this;
-/* 224 */     for (; abstractShortCircuitTask1 != null; 
-/* 225 */       abstractShortCircuitTask2 = abstractShortCircuitTask1, abstractShortCircuitTask1 = (AbstractShortCircuitTask)abstractShortCircuitTask1.getParent()) {
-/*     */       
-/* 227 */       if (abstractShortCircuitTask1.leftChild == abstractShortCircuitTask2) {
-/* 228 */         AbstractShortCircuitTask abstractShortCircuitTask = (AbstractShortCircuitTask)abstractShortCircuitTask1.rightChild;
-/* 229 */         if (!abstractShortCircuitTask.canceled)
-/* 230 */           abstractShortCircuitTask.cancel(); 
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\stream\AbstractShortCircuitTask.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package java.util.stream;
+
+import java.util.Spliterator;
+import java.util.concurrent.atomic.AtomicReference;
+
+/**
+ * Abstract class for fork-join tasks used to implement short-circuiting
+ * stream ops, which can produce a result without processing all elements of the
+ * stream.
+ *
+ * @param <P_IN> type of input elements to the pipeline
+ * @param <P_OUT> type of output elements from the pipeline
+ * @param <R> type of intermediate result, may be different from operation
+ *        result type
+ * @param <K> type of child and sibling tasks
+ * @since 1.8
+ */
+@SuppressWarnings("serial")
+abstract class AbstractShortCircuitTask<P_IN, P_OUT, R,
+                                        K extends AbstractShortCircuitTask<P_IN, P_OUT, R, K>>
+        extends AbstractTask<P_IN, P_OUT, R, K> {
+    /**
+     * The result for this computation; this is shared among all tasks and set
+     * exactly once
+     */
+    protected final AtomicReference<R> sharedResult;
+
+    /**
+     * Indicates whether this task has been canceled.  Tasks may cancel other
+     * tasks in the computation under various conditions, such as in a
+     * find-first operation, a task that finds a value will cancel all tasks
+     * that are later in the encounter order.
+     */
+    protected volatile boolean canceled;
+
+    /**
+     * Constructor for root tasks.
+     *
+     * @param helper the {@code PipelineHelper} describing the stream pipeline
+     *               up to this operation
+     * @param spliterator the {@code Spliterator} describing the source for this
+     *                    pipeline
+     */
+    protected AbstractShortCircuitTask(PipelineHelper<P_OUT> helper,
+                                       Spliterator<P_IN> spliterator) {
+        super(helper, spliterator);
+        sharedResult = new AtomicReference<>(null);
+    }
+
+    /**
+     * Constructor for non-root nodes.
+     *
+     * @param parent parent task in the computation tree
+     * @param spliterator the {@code Spliterator} for the portion of the
+     *                    computation tree described by this task
+     */
+    protected AbstractShortCircuitTask(K parent,
+                                       Spliterator<P_IN> spliterator) {
+        super(parent, spliterator);
+        sharedResult = parent.sharedResult;
+    }
+
+    /**
+     * Returns the value indicating the computation completed with no task
+     * finding a short-circuitable result.  For example, for a "find" operation,
+     * this might be null or an empty {@code Optional}.
+     *
+     * @return the result to return when no task finds a result
+     */
+    protected abstract R getEmptyResult();
+
+    /**
+     * Overrides AbstractTask version to include checks for early
+     * exits while splitting or computing.
+     */
+    @Override
+    public void compute() {
+        Spliterator<P_IN> rs = spliterator, ls;
+        long sizeEstimate = rs.estimateSize();
+        long sizeThreshold = getTargetSize(sizeEstimate);
+        boolean forkRight = false;
+        @SuppressWarnings("unchecked") K task = (K) this;
+        AtomicReference<R> sr = sharedResult;
+        R result;
+        while ((result = sr.get()) == null) {
+            if (task.taskCanceled()) {
+                result = task.getEmptyResult();
+                break;
+            }
+            if (sizeEstimate <= sizeThreshold || (ls = rs.trySplit()) == null) {
+                result = task.doLeaf();
+                break;
+            }
+            K leftChild, rightChild, taskToFork;
+            task.leftChild  = leftChild = task.makeChild(ls);
+            task.rightChild = rightChild = task.makeChild(rs);
+            task.setPendingCount(1);
+            if (forkRight) {
+                forkRight = false;
+                rs = ls;
+                task = leftChild;
+                taskToFork = rightChild;
+            }
+            else {
+                forkRight = true;
+                task = rightChild;
+                taskToFork = leftChild;
+            }
+            taskToFork.fork();
+            sizeEstimate = rs.estimateSize();
+        }
+        task.setLocalResult(result);
+        task.tryComplete();
+    }
+
+
+    /**
+     * Declares that a globally valid result has been found.  If another task has
+     * not already found the answer, the result is installed in
+     * {@code sharedResult}.  The {@code compute()} method will check
+     * {@code sharedResult} before proceeding with computation, so this causes
+     * the computation to terminate early.
+     *
+     * @param result the result found
+     */
+    protected void shortCircuit(R result) {
+        if (result != null)
+            sharedResult.compareAndSet(null, result);
+    }
+
+    /**
+     * Sets a local result for this task.  If this task is the root, set the
+     * shared result instead (if not already set).
+     *
+     * @param localResult The result to set for this task
+     */
+    @Override
+    protected void setLocalResult(R localResult) {
+        if (isRoot()) {
+            if (localResult != null)
+                sharedResult.compareAndSet(null, localResult);
+        }
+        else
+            super.setLocalResult(localResult);
+    }
+
+    /**
+     * Retrieves the local result for this task
+     */
+    @Override
+    public R getRawResult() {
+        return getLocalResult();
+    }
+
+    /**
+     * Retrieves the local result for this task.  If this task is the root,
+     * retrieves the shared result instead.
+     */
+    @Override
+    public R getLocalResult() {
+        if (isRoot()) {
+            R answer = sharedResult.get();
+            return (answer == null) ? getEmptyResult() : answer;
+        }
+        else
+            return super.getLocalResult();
+    }
+
+    /**
+     * Mark this task as canceled
+     */
+    protected void cancel() {
+        canceled = true;
+    }
+
+    /**
+     * Queries whether this task is canceled.  A task is considered canceled if
+     * it or any of its parents have been canceled.
+     *
+     * @return {@code true} if this task or any parent is canceled.
+     */
+    protected boolean taskCanceled() {
+        boolean cancel = canceled;
+        if (!cancel) {
+            for (K parent = getParent(); !cancel && parent != null; parent = parent.getParent())
+                cancel = parent.canceled;
+        }
+
+        return cancel;
+    }
+
+    /**
+     * Cancels all tasks which succeed this one in the encounter order.  This
+     * includes canceling all the current task's right sibling, as well as the
+     * later right siblings of all its parents.
+     */
+    protected void cancelLaterNodes() {
+        // Go up the tree, cancel right siblings of this node and all parents
+        for (@SuppressWarnings("unchecked") K parent = getParent(), node = (K) this;
+             parent != null;
+             node = parent, parent = parent.getParent()) {
+            // If node is a left child of parent, then has a right sibling
+            if (parent.leftChild == node) {
+                K rightSibling = parent.rightChild;
+                if (!rightSibling.canceled)
+                    rightSibling.cancel();
+            }
+        }
+    }
+}

@@ -1,188 +1,183 @@
-/*     */ package java.util.stream;
-/*     */ 
-/*     */ import java.util.AbstractCollection;
-/*     */ import java.util.Collection;
-/*     */ import java.util.HashSet;
-/*     */ import java.util.Objects;
-/*     */ import java.util.Set;
-/*     */ import java.util.Spliterator;
-/*     */ import java.util.concurrent.ConcurrentHashMap;
-/*     */ import java.util.concurrent.atomic.AtomicBoolean;
-/*     */ import java.util.function.IntFunction;
-/*     */ import java.util.function.Supplier;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class DistinctOps
-/*     */ {
-/*     */   static <T> ReferencePipeline<T, T> makeRef(AbstractPipeline<?, T, ?> paramAbstractPipeline) {
-/*  55 */     return new ReferencePipeline.StatefulOp<T, T>(paramAbstractPipeline, StreamShape.REFERENCE, StreamOpFlag.IS_DISTINCT | StreamOpFlag.NOT_SIZED)
-/*     */       {
-/*     */ 
-/*     */ 
-/*     */         
-/*     */         <P_IN> Node<T> reduce(PipelineHelper<T> param1PipelineHelper, Spliterator<P_IN> param1Spliterator)
-/*     */         {
-/*  62 */           TerminalOp<?, ?> terminalOp = ReduceOps.makeRef(java.util.LinkedHashSet::new, HashSet::add, AbstractCollection::addAll);
-/*     */           
-/*  64 */           return Nodes.node((Collection<T>)terminalOp.<P_IN>evaluateParallel(param1PipelineHelper, param1Spliterator));
-/*     */         }
-/*     */ 
-/*     */ 
-/*     */         
-/*     */         <P_IN> Node<T> opEvaluateParallel(PipelineHelper<T> param1PipelineHelper, Spliterator<P_IN> param1Spliterator, IntFunction<T[]> param1IntFunction) {
-/*     */           HashSet<T> hashSet;
-/*  71 */           if (StreamOpFlag.DISTINCT.isKnown(param1PipelineHelper.getStreamAndOpFlags()))
-/*     */           {
-/*  73 */             return param1PipelineHelper.evaluate(param1Spliterator, false, param1IntFunction);
-/*     */           }
-/*  75 */           if (StreamOpFlag.ORDERED.isKnown(param1PipelineHelper.getStreamAndOpFlags())) {
-/*  76 */             return reduce(param1PipelineHelper, param1Spliterator);
-/*     */           }
-/*     */ 
-/*     */           
-/*  80 */           AtomicBoolean atomicBoolean = new AtomicBoolean(false);
-/*  81 */           ConcurrentHashMap<Object, Object> concurrentHashMap = new ConcurrentHashMap<>();
-/*  82 */           TerminalOp<?, Void> terminalOp = ForEachOps.makeRef(param1Object -> { if (param1Object == null) { param1AtomicBoolean.set(true); } else { param1ConcurrentHashMap.putIfAbsent(param1Object, Boolean.TRUE); }  }false);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */           
-/*  88 */           terminalOp.evaluateParallel(param1PipelineHelper, param1Spliterator);
-/*     */ 
-/*     */ 
-/*     */           
-/*  92 */           ConcurrentHashMap.KeySetView<Object, Object> keySetView = concurrentHashMap.keySet();
-/*  93 */           if (atomicBoolean.get()) {
-/*     */             
-/*  95 */             hashSet = new HashSet(keySetView);
-/*  96 */             hashSet.add(null);
-/*     */           } 
-/*  98 */           return Nodes.node(hashSet);
-/*     */         }
-/*     */ 
-/*     */ 
-/*     */         
-/*     */         <P_IN> Spliterator<T> opEvaluateParallelLazy(PipelineHelper<T> param1PipelineHelper, Spliterator<P_IN> param1Spliterator) {
-/* 104 */           if (StreamOpFlag.DISTINCT.isKnown(param1PipelineHelper.getStreamAndOpFlags()))
-/*     */           {
-/* 106 */             return param1PipelineHelper.wrapSpliterator(param1Spliterator);
-/*     */           }
-/* 108 */           if (StreamOpFlag.ORDERED.isKnown(param1PipelineHelper.getStreamAndOpFlags()))
-/*     */           {
-/* 110 */             return reduce(param1PipelineHelper, param1Spliterator).spliterator();
-/*     */           }
-/*     */ 
-/*     */           
-/* 114 */           return new StreamSpliterators.DistinctSpliterator<>(param1PipelineHelper.wrapSpliterator(param1Spliterator));
-/*     */         }
-/*     */ 
-/*     */ 
-/*     */         
-/*     */         Sink<T> opWrapSink(int param1Int, Sink<T> param1Sink) {
-/* 120 */           Objects.requireNonNull(param1Sink);
-/*     */           
-/* 122 */           if (StreamOpFlag.DISTINCT.isKnown(param1Int))
-/* 123 */             return param1Sink; 
-/* 124 */           if (StreamOpFlag.SORTED.isKnown(param1Int)) {
-/* 125 */             return new Sink.ChainedReference<T, T>(param1Sink)
-/*     */               {
-/*     */                 boolean seenNull;
-/*     */                 T lastSeen;
-/*     */                 
-/*     */                 public void begin(long param2Long) {
-/* 131 */                   this.seenNull = false;
-/* 132 */                   this.lastSeen = null;
-/* 133 */                   this.downstream.begin(-1L);
-/*     */                 }
-/*     */ 
-/*     */                 
-/*     */                 public void end() {
-/* 138 */                   this.seenNull = false;
-/* 139 */                   this.lastSeen = null;
-/* 140 */                   this.downstream.end();
-/*     */                 }
-/*     */ 
-/*     */                 
-/*     */                 public void accept(T param2T) {
-/* 145 */                   if (param2T == null) {
-/* 146 */                     if (!this.seenNull) {
-/* 147 */                       this.seenNull = true;
-/* 148 */                       this.downstream.accept(this.lastSeen = null);
-/*     */                     } 
-/* 150 */                   } else if (this.lastSeen == null || !param2T.equals(this.lastSeen)) {
-/* 151 */                     this.downstream.accept(this.lastSeen = param2T);
-/*     */                   } 
-/*     */                 }
-/*     */               };
-/*     */           }
-/* 156 */           return new Sink.ChainedReference<T, T>(param1Sink)
-/*     */             {
-/*     */               Set<T> seen;
-/*     */               
-/*     */               public void begin(long param2Long) {
-/* 161 */                 this.seen = new HashSet<>();
-/* 162 */                 this.downstream.begin(-1L);
-/*     */               }
-/*     */ 
-/*     */               
-/*     */               public void end() {
-/* 167 */                 this.seen = null;
-/* 168 */                 this.downstream.end();
-/*     */               }
-/*     */ 
-/*     */               
-/*     */               public void accept(T param2T) {
-/* 173 */                 if (!this.seen.contains(param2T)) {
-/* 174 */                   this.seen.add(param2T);
-/* 175 */                   this.downstream.accept(param2T);
-/*     */                 } 
-/*     */               }
-/*     */             };
-/*     */         }
-/*     */       };
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\stream\DistinctOps.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package java.util.stream;
+
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Objects;
+import java.util.Set;
+import java.util.Spliterator;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.IntFunction;
+
+/**
+ * Factory methods for transforming streams into duplicate-free streams, using
+ * {@link Object#equals(Object)} to determine equality.
+ *
+ * @since 1.8
+ */
+final class DistinctOps {
+
+    private DistinctOps() { }
+
+    /**
+     * Appends a "distinct" operation to the provided stream, and returns the
+     * new stream.
+     *
+     * @param <T> the type of both input and output elements
+     * @param upstream a reference stream with element type T
+     * @return the new stream
+     */
+    static <T> ReferencePipeline<T, T> makeRef(AbstractPipeline<?, T, ?> upstream) {
+        return new ReferencePipeline.StatefulOp<T, T>(upstream, StreamShape.REFERENCE,
+                                                      StreamOpFlag.IS_DISTINCT | StreamOpFlag.NOT_SIZED) {
+
+            <P_IN> Node<T> reduce(PipelineHelper<T> helper, Spliterator<P_IN> spliterator) {
+                // If the stream is SORTED then it should also be ORDERED so the following will also
+                // preserve the sort order
+                TerminalOp<T, LinkedHashSet<T>> reduceOp
+                        = ReduceOps.<T, LinkedHashSet<T>>makeRef(LinkedHashSet::new, LinkedHashSet::add,
+                                                                 LinkedHashSet::addAll);
+                return Nodes.node(reduceOp.evaluateParallel(helper, spliterator));
+            }
+
+            @Override
+            <P_IN> Node<T> opEvaluateParallel(PipelineHelper<T> helper,
+                                              Spliterator<P_IN> spliterator,
+                                              IntFunction<T[]> generator) {
+                if (StreamOpFlag.DISTINCT.isKnown(helper.getStreamAndOpFlags())) {
+                    // No-op
+                    return helper.evaluate(spliterator, false, generator);
+                }
+                else if (StreamOpFlag.ORDERED.isKnown(helper.getStreamAndOpFlags())) {
+                    return reduce(helper, spliterator);
+                }
+                else {
+                    // Holder of null state since ConcurrentHashMap does not support null values
+                    AtomicBoolean seenNull = new AtomicBoolean(false);
+                    ConcurrentHashMap<T, Boolean> map = new ConcurrentHashMap<>();
+                    TerminalOp<T, Void> forEachOp = ForEachOps.makeRef(t -> {
+                        if (t == null)
+                            seenNull.set(true);
+                        else
+                            map.putIfAbsent(t, Boolean.TRUE);
+                    }, false);
+                    forEachOp.evaluateParallel(helper, spliterator);
+
+                    // If null has been seen then copy the key set into a HashSet that supports null values
+                    // and add null
+                    Set<T> keys = map.keySet();
+                    if (seenNull.get()) {
+                        // TODO Implement a more efficient set-union view, rather than copying
+                        keys = new HashSet<>(keys);
+                        keys.add(null);
+                    }
+                    return Nodes.node(keys);
+                }
+            }
+
+            @Override
+            <P_IN> Spliterator<T> opEvaluateParallelLazy(PipelineHelper<T> helper, Spliterator<P_IN> spliterator) {
+                if (StreamOpFlag.DISTINCT.isKnown(helper.getStreamAndOpFlags())) {
+                    // No-op
+                    return helper.wrapSpliterator(spliterator);
+                }
+                else if (StreamOpFlag.ORDERED.isKnown(helper.getStreamAndOpFlags())) {
+                    // Not lazy, barrier required to preserve order
+                    return reduce(helper, spliterator).spliterator();
+                }
+                else {
+                    // Lazy
+                    return new StreamSpliterators.DistinctSpliterator<>(helper.wrapSpliterator(spliterator));
+                }
+            }
+
+            @Override
+            Sink<T> opWrapSink(int flags, Sink<T> sink) {
+                Objects.requireNonNull(sink);
+
+                if (StreamOpFlag.DISTINCT.isKnown(flags)) {
+                    return sink;
+                } else if (StreamOpFlag.SORTED.isKnown(flags)) {
+                    return new Sink.ChainedReference<T, T>(sink) {
+                        boolean seenNull;
+                        T lastSeen;
+
+                        @Override
+                        public void begin(long size) {
+                            seenNull = false;
+                            lastSeen = null;
+                            downstream.begin(-1);
+                        }
+
+                        @Override
+                        public void end() {
+                            seenNull = false;
+                            lastSeen = null;
+                            downstream.end();
+                        }
+
+                        @Override
+                        public void accept(T t) {
+                            if (t == null) {
+                                if (!seenNull) {
+                                    seenNull = true;
+                                    downstream.accept(lastSeen = null);
+                                }
+                            } else if (lastSeen == null || !t.equals(lastSeen)) {
+                                downstream.accept(lastSeen = t);
+                            }
+                        }
+                    };
+                } else {
+                    return new Sink.ChainedReference<T, T>(sink) {
+                        Set<T> seen;
+
+                        @Override
+                        public void begin(long size) {
+                            seen = new HashSet<>();
+                            downstream.begin(-1);
+                        }
+
+                        @Override
+                        public void end() {
+                            seen = null;
+                            downstream.end();
+                        }
+
+                        @Override
+                        public void accept(T t) {
+                            if (!seen.contains(t)) {
+                                seen.add(t);
+                                downstream.accept(t);
+                            }
+                        }
+                    };
+                }
+            }
+        };
+    }
+}

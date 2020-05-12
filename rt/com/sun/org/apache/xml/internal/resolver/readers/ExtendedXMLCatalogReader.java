@@ -1,193 +1,187 @@
-/*     */ package com.sun.org.apache.xml.internal.resolver.readers;
-/*     */ 
-/*     */ import com.sun.org.apache.xml.internal.resolver.Catalog;
-/*     */ import com.sun.org.apache.xml.internal.resolver.CatalogEntry;
-/*     */ import com.sun.org.apache.xml.internal.resolver.CatalogException;
-/*     */ import com.sun.org.apache.xml.internal.resolver.Resolver;
-/*     */ import java.util.Vector;
-/*     */ import org.xml.sax.Attributes;
-/*     */ import org.xml.sax.SAXException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class ExtendedXMLCatalogReader
-/*     */   extends OASISXMLCatalogReader
-/*     */ {
-/*     */   public static final String extendedNamespaceName = "http://nwalsh.com/xcatalog/1.0";
-/*     */   
-/*     */   public void startElement(String namespaceURI, String localName, String qName, Attributes atts) throws SAXException {
-/*  70 */     boolean inExtension = inExtensionNamespace();
-/*     */     
-/*  72 */     super.startElement(namespaceURI, localName, qName, atts);
-/*     */     
-/*  74 */     int entryType = -1;
-/*  75 */     Vector<String> entryArgs = new Vector();
-/*     */     
-/*  77 */     if (namespaceURI != null && "http://nwalsh.com/xcatalog/1.0".equals(namespaceURI) && !inExtension) {
-/*     */ 
-/*     */ 
-/*     */       
-/*  81 */       if (atts.getValue("xml:base") != null) {
-/*  82 */         String baseURI = atts.getValue("xml:base");
-/*  83 */         entryType = Catalog.BASE;
-/*  84 */         entryArgs.add(baseURI);
-/*  85 */         this.baseURIStack.push(baseURI);
-/*     */         
-/*  87 */         this.debug.message(4, "xml:base", baseURI);
-/*     */         
-/*     */         try {
-/*  90 */           CatalogEntry ce = new CatalogEntry(entryType, entryArgs);
-/*  91 */           this.catalog.addEntry(ce);
-/*  92 */         } catch (CatalogException cex) {
-/*  93 */           if (cex.getExceptionType() == 3) {
-/*  94 */             this.debug.message(1, "Invalid catalog entry type", localName);
-/*  95 */           } else if (cex.getExceptionType() == 2) {
-/*  96 */             this.debug.message(1, "Invalid catalog entry (base)", localName);
-/*     */           } 
-/*     */         } 
-/*     */         
-/* 100 */         entryType = -1;
-/* 101 */         entryArgs = new Vector<>();
-/*     */       } else {
-/* 103 */         this.baseURIStack.push(this.baseURIStack.peek());
-/*     */       } 
-/*     */       
-/* 106 */       if (localName.equals("uriSuffix")) {
-/* 107 */         if (checkAttributes(atts, "suffix", "uri")) {
-/* 108 */           entryType = Resolver.URISUFFIX;
-/* 109 */           entryArgs.add(atts.getValue("suffix"));
-/* 110 */           entryArgs.add(atts.getValue("uri"));
-/*     */           
-/* 112 */           this.debug.message(4, "uriSuffix", atts
-/* 113 */               .getValue("suffix"), atts
-/* 114 */               .getValue("uri"));
-/*     */         } 
-/* 116 */       } else if (localName.equals("systemSuffix")) {
-/* 117 */         if (checkAttributes(atts, "suffix", "uri")) {
-/* 118 */           entryType = Resolver.SYSTEMSUFFIX;
-/* 119 */           entryArgs.add(atts.getValue("suffix"));
-/* 120 */           entryArgs.add(atts.getValue("uri"));
-/*     */           
-/* 122 */           this.debug.message(4, "systemSuffix", atts
-/* 123 */               .getValue("suffix"), atts
-/* 124 */               .getValue("uri"));
-/*     */         } 
-/*     */       } else {
-/*     */         
-/* 128 */         this.debug.message(1, "Invalid catalog entry type", localName);
-/*     */       } 
-/*     */       
-/* 131 */       if (entryType >= 0) {
-/*     */         try {
-/* 133 */           CatalogEntry ce = new CatalogEntry(entryType, entryArgs);
-/* 134 */           this.catalog.addEntry(ce);
-/* 135 */         } catch (CatalogException cex) {
-/* 136 */           if (cex.getExceptionType() == 3) {
-/* 137 */             this.debug.message(1, "Invalid catalog entry type", localName);
-/* 138 */           } else if (cex.getExceptionType() == 2) {
-/* 139 */             this.debug.message(1, "Invalid catalog entry", localName);
-/*     */           } 
-/*     */         } 
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void endElement(String namespaceURI, String localName, String qName) throws SAXException {
-/* 152 */     super.endElement(namespaceURI, localName, qName);
-/*     */ 
-/*     */ 
-/*     */     
-/* 156 */     boolean inExtension = inExtensionNamespace();
-/*     */     
-/* 158 */     int entryType = -1;
-/* 159 */     Vector<String> entryArgs = new Vector();
-/*     */     
-/* 161 */     if (namespaceURI != null && "http://nwalsh.com/xcatalog/1.0"
-/* 162 */       .equals(namespaceURI) && !inExtension) {
-/*     */ 
-/*     */       
-/* 165 */       String popURI = this.baseURIStack.pop();
-/* 166 */       String baseURI = this.baseURIStack.peek();
-/*     */       
-/* 168 */       if (!baseURI.equals(popURI)) {
-/* 169 */         entryType = Catalog.BASE;
-/* 170 */         entryArgs.add(baseURI);
-/*     */         
-/* 172 */         this.debug.message(4, "(reset) xml:base", baseURI);
-/*     */         
-/*     */         try {
-/* 175 */           CatalogEntry ce = new CatalogEntry(entryType, entryArgs);
-/* 176 */           this.catalog.addEntry(ce);
-/* 177 */         } catch (CatalogException cex) {
-/* 178 */           if (cex.getExceptionType() == 3) {
-/* 179 */             this.debug.message(1, "Invalid catalog entry type", localName);
-/* 180 */           } else if (cex.getExceptionType() == 2) {
-/* 181 */             this.debug.message(1, "Invalid catalog entry (rbase)", localName);
-/*     */           } 
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\internal\resolver\readers\ExtendedXMLCatalogReader.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+// ExtendedXMLCatalogReader.java - Read XML Catalog files
+
+/*
+ * Copyright 2001-2004 The Apache Software Foundation or its licensors,
+ * as applicable.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xml.internal.resolver.readers;
+
+import java.util.Vector;
+import com.sun.org.apache.xml.internal.resolver.Catalog;
+import com.sun.org.apache.xml.internal.resolver.Resolver;
+import com.sun.org.apache.xml.internal.resolver.CatalogEntry;
+import com.sun.org.apache.xml.internal.resolver.CatalogException;
+
+import org.xml.sax.*;
+import org.w3c.dom.*;
+
+/**
+ * Parse Extended OASIS Entity Resolution Technical Committee
+ * XML Catalog files.
+ *
+ * @see Catalog
+ *
+ * @author Norman Walsh
+ * <a href="mailto:Norman.Walsh@Sun.COM">Norman.Walsh@Sun.COM</a>
+ *
+ */
+public class ExtendedXMLCatalogReader extends OASISXMLCatalogReader {
+  /** The namespace name of extended catalog elements */
+  public static final String extendedNamespaceName = "http://nwalsh.com/xcatalog/1.0";
+
+  /**
+   * The SAX <code>startElement</code> method recognizes elements
+   * from the plain catalog format and instantiates CatalogEntry
+   * objects for them.
+   *
+   * @param namespaceURI The namespace name of the element.
+   * @param localName The local name of the element.
+   * @param qName The QName of the element.
+   * @param atts The list of attributes on the element.
+   *
+   * @see CatalogEntry
+   */
+  public void startElement (String namespaceURI,
+                            String localName,
+                            String qName,
+                            Attributes atts)
+    throws SAXException {
+
+    // Check before calling the super because super will report our
+    // namespace as an extension namespace, but that doesn't count
+    // for this element.
+    boolean inExtension = inExtensionNamespace();
+
+    super.startElement(namespaceURI, localName, qName, atts);
+
+    int entryType = -1;
+    Vector entryArgs = new Vector();
+
+    if (namespaceURI != null && extendedNamespaceName.equals(namespaceURI)
+        && !inExtension) {
+      // This is an Extended XML Catalog entry
+
+      if (atts.getValue("xml:base") != null) {
+        String baseURI = atts.getValue("xml:base");
+        entryType = Catalog.BASE;
+        entryArgs.add(baseURI);
+        baseURIStack.push(baseURI);
+
+        debug.message(4, "xml:base", baseURI);
+
+        try {
+          CatalogEntry ce = new CatalogEntry(entryType, entryArgs);
+          catalog.addEntry(ce);
+        } catch (CatalogException cex) {
+          if (cex.getExceptionType() == CatalogException.INVALID_ENTRY_TYPE) {
+            debug.message(1, "Invalid catalog entry type", localName);
+          } else if (cex.getExceptionType() == CatalogException.INVALID_ENTRY) {
+            debug.message(1, "Invalid catalog entry (base)", localName);
+          }
+        }
+
+        entryType = -1;
+        entryArgs = new Vector();
+      } else {
+        baseURIStack.push(baseURIStack.peek());
+      }
+
+      if (localName.equals("uriSuffix")) {
+        if (checkAttributes(atts, "suffix", "uri")) {
+          entryType = Resolver.URISUFFIX;
+          entryArgs.add(atts.getValue("suffix"));
+          entryArgs.add(atts.getValue("uri"));
+
+          debug.message(4, "uriSuffix",
+                        atts.getValue("suffix"),
+                        atts.getValue("uri"));
+        }
+      } else if (localName.equals("systemSuffix")) {
+        if (checkAttributes(atts, "suffix", "uri")) {
+          entryType = Resolver.SYSTEMSUFFIX;
+          entryArgs.add(atts.getValue("suffix"));
+          entryArgs.add(atts.getValue("uri"));
+
+          debug.message(4, "systemSuffix",
+                        atts.getValue("suffix"),
+                        atts.getValue("uri"));
+        }
+      } else {
+        // This is equivalent to an invalid catalog entry type
+        debug.message(1, "Invalid catalog entry type", localName);
+      }
+
+      if (entryType >= 0) {
+        try {
+          CatalogEntry ce = new CatalogEntry(entryType, entryArgs);
+          catalog.addEntry(ce);
+        } catch (CatalogException cex) {
+          if (cex.getExceptionType() == CatalogException.INVALID_ENTRY_TYPE) {
+            debug.message(1, "Invalid catalog entry type", localName);
+          } else if (cex.getExceptionType() == CatalogException.INVALID_ENTRY) {
+            debug.message(1, "Invalid catalog entry", localName);
+          }
+        }
+      }
+    }
+  }
+
+  /** The SAX <code>endElement</code> method does nothing. */
+  public void endElement (String namespaceURI,
+                          String localName,
+                          String qName)
+    throws SAXException {
+
+    super.endElement(namespaceURI, localName, qName);
+
+    // Check after popping the stack so we don't erroneously think we
+    // are our own extension namespace...
+    boolean inExtension = inExtensionNamespace();
+
+    int entryType = -1;
+    Vector entryArgs = new Vector();
+
+    if (namespaceURI != null
+        && (extendedNamespaceName.equals(namespaceURI))
+        && !inExtension) {
+
+      String popURI = (String) baseURIStack.pop();
+      String baseURI = (String) baseURIStack.peek();
+
+      if (!baseURI.equals(popURI)) {
+        entryType = catalog.BASE;
+        entryArgs.add(baseURI);
+
+        debug.message(4, "(reset) xml:base", baseURI);
+
+        try {
+          CatalogEntry ce = new CatalogEntry(entryType, entryArgs);
+          catalog.addEntry(ce);
+        } catch (CatalogException cex) {
+          if (cex.getExceptionType() == CatalogException.INVALID_ENTRY_TYPE) {
+            debug.message(1, "Invalid catalog entry type", localName);
+          } else if (cex.getExceptionType() == CatalogException.INVALID_ENTRY) {
+            debug.message(1, "Invalid catalog entry (rbase)", localName);
+          }
+        }
+      }
+    }
+  }
+}

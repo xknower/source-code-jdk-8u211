@@ -1,1643 +1,1619 @@
-/*      */ package java.util.prefs;
-/*      */ 
-/*      */ import java.io.IOException;
-/*      */ import java.io.OutputStream;
-/*      */ import java.security.AccessController;
-/*      */ import java.security.PrivilegedAction;
-/*      */ import java.util.EventObject;
-/*      */ import java.util.HashMap;
-/*      */ import java.util.Iterator;
-/*      */ import java.util.LinkedList;
-/*      */ import java.util.List;
-/*      */ import java.util.Map;
-/*      */ import java.util.Objects;
-/*      */ import java.util.StringTokenizer;
-/*      */ import java.util.TreeSet;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public abstract class AbstractPreferences
-/*      */   extends Preferences
-/*      */ {
-/*      */   private final String name;
-/*      */   private final String absolutePath;
-/*      */   final AbstractPreferences parent;
-/*      */   private final AbstractPreferences root;
-/*      */   protected boolean newNode = false;
-/*  158 */   private Map<String, AbstractPreferences> kidCache = new HashMap<>();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean removed = false;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  169 */   private PreferenceChangeListener[] prefListeners = new PreferenceChangeListener[0];
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  175 */   private NodeChangeListener[] nodeListeners = new NodeChangeListener[0];
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  184 */   protected final Object lock = new Object();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected AbstractPreferences(AbstractPreferences paramAbstractPreferences, String paramString) {
-/*  199 */     if (paramAbstractPreferences == null) {
-/*  200 */       if (!paramString.equals("")) {
-/*  201 */         throw new IllegalArgumentException("Root name '" + paramString + "' must be \"\"");
-/*      */       }
-/*  203 */       this.absolutePath = "/";
-/*  204 */       this.root = this;
-/*      */     } else {
-/*  206 */       if (paramString.indexOf('/') != -1) {
-/*  207 */         throw new IllegalArgumentException("Name '" + paramString + "' contains '/'");
-/*      */       }
-/*  209 */       if (paramString.equals("")) {
-/*  210 */         throw new IllegalArgumentException("Illegal name: empty string");
-/*      */       }
-/*  212 */       this.root = paramAbstractPreferences.root;
-/*  213 */       this
-/*  214 */         .absolutePath = (paramAbstractPreferences == this.root) ? ("/" + paramString) : (paramAbstractPreferences.absolutePath() + "/" + paramString);
-/*      */     } 
-/*  216 */     this.name = paramString;
-/*  217 */     this.parent = paramAbstractPreferences;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void put(String paramString1, String paramString2) {
-/*  240 */     if (paramString1 == null || paramString2 == null)
-/*  241 */       throw new NullPointerException(); 
-/*  242 */     if (paramString1.length() > 80)
-/*  243 */       throw new IllegalArgumentException("Key too long: " + paramString1); 
-/*  244 */     if (paramString2.length() > 8192) {
-/*  245 */       throw new IllegalArgumentException("Value too long: " + paramString2);
-/*      */     }
-/*  247 */     synchronized (this.lock) {
-/*  248 */       if (this.removed) {
-/*  249 */         throw new IllegalStateException("Node has been removed.");
-/*      */       }
-/*  251 */       putSpi(paramString1, paramString2);
-/*  252 */       enqueuePreferenceChangeEvent(paramString1, paramString2);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String get(String paramString1, String paramString2) {
-/*  279 */     if (paramString1 == null)
-/*  280 */       throw new NullPointerException("Null key"); 
-/*  281 */     synchronized (this.lock) {
-/*  282 */       if (this.removed) {
-/*  283 */         throw new IllegalStateException("Node has been removed.");
-/*      */       }
-/*  285 */       String str = null;
-/*      */       try {
-/*  287 */         str = getSpi(paramString1);
-/*  288 */       } catch (Exception exception) {}
-/*      */ 
-/*      */       
-/*  291 */       return (str == null) ? paramString2 : str;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void remove(String paramString) {
-/*  311 */     Objects.requireNonNull(paramString, "Specified key cannot be null");
-/*  312 */     synchronized (this.lock) {
-/*  313 */       if (this.removed) {
-/*  314 */         throw new IllegalStateException("Node has been removed.");
-/*      */       }
-/*  316 */       removeSpi(paramString);
-/*  317 */       enqueuePreferenceChangeEvent(paramString, null);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void clear() throws BackingStoreException {
-/*  336 */     synchronized (this.lock) {
-/*  337 */       String[] arrayOfString = keys();
-/*  338 */       for (byte b = 0; b < arrayOfString.length; b++) {
-/*  339 */         remove(arrayOfString[b]);
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void putInt(String paramString, int paramInt) {
-/*  360 */     put(paramString, Integer.toString(paramInt));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getInt(String paramString, int paramInt) {
-/*  386 */     int i = paramInt;
-/*      */     try {
-/*  388 */       String str = get(paramString, null);
-/*  389 */       if (str != null)
-/*  390 */         i = Integer.parseInt(str); 
-/*  391 */     } catch (NumberFormatException numberFormatException) {}
-/*      */ 
-/*      */ 
-/*      */     
-/*  395 */     return i;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void putLong(String paramString, long paramLong) {
-/*  415 */     put(paramString, Long.toString(paramLong));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public long getLong(String paramString, long paramLong) {
-/*  441 */     long l = paramLong;
-/*      */     try {
-/*  443 */       String str = get(paramString, null);
-/*  444 */       if (str != null)
-/*  445 */         l = Long.parseLong(str); 
-/*  446 */     } catch (NumberFormatException numberFormatException) {}
-/*      */ 
-/*      */ 
-/*      */     
-/*  450 */     return l;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void putBoolean(String paramString, boolean paramBoolean) {
-/*  470 */     put(paramString, String.valueOf(paramBoolean));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean getBoolean(String paramString, boolean paramBoolean) {
-/*  499 */     boolean bool = paramBoolean;
-/*  500 */     String str = get(paramString, null);
-/*  501 */     if (str != null) {
-/*  502 */       if (str.equalsIgnoreCase("true")) {
-/*  503 */         bool = true;
-/*  504 */       } else if (str.equalsIgnoreCase("false")) {
-/*  505 */         bool = false;
-/*      */       } 
-/*      */     }
-/*  508 */     return bool;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void putFloat(String paramString, float paramFloat) {
-/*  528 */     put(paramString, Float.toString(paramFloat));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public float getFloat(String paramString, float paramFloat) {
-/*  554 */     float f = paramFloat;
-/*      */     try {
-/*  556 */       String str = get(paramString, null);
-/*  557 */       if (str != null)
-/*  558 */         f = Float.parseFloat(str); 
-/*  559 */     } catch (NumberFormatException numberFormatException) {}
-/*      */ 
-/*      */ 
-/*      */     
-/*  563 */     return f;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void putDouble(String paramString, double paramDouble) {
-/*  583 */     put(paramString, Double.toString(paramDouble));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public double getDouble(String paramString, double paramDouble) {
-/*  609 */     double d = paramDouble;
-/*      */     try {
-/*  611 */       String str = get(paramString, null);
-/*  612 */       if (str != null)
-/*  613 */         d = Double.parseDouble(str); 
-/*  614 */     } catch (NumberFormatException numberFormatException) {}
-/*      */ 
-/*      */ 
-/*      */     
-/*  618 */     return d;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void putByteArray(String paramString, byte[] paramArrayOfbyte) {
-/*  634 */     put(paramString, Base64.byteArrayToBase64(paramArrayOfbyte));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public byte[] getByteArray(String paramString, byte[] paramArrayOfbyte) {
-/*  655 */     byte[] arrayOfByte = paramArrayOfbyte;
-/*  656 */     String str = get(paramString, null);
-/*      */     try {
-/*  658 */       if (str != null) {
-/*  659 */         arrayOfByte = Base64.base64ToByteArray(str);
-/*      */       }
-/*  661 */     } catch (RuntimeException runtimeException) {}
-/*      */ 
-/*      */ 
-/*      */     
-/*  665 */     return arrayOfByte;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String[] keys() throws BackingStoreException {
-/*  684 */     synchronized (this.lock) {
-/*  685 */       if (this.removed) {
-/*  686 */         throw new IllegalStateException("Node has been removed.");
-/*      */       }
-/*  688 */       return keysSpi();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String[] childrenNames() throws BackingStoreException {
-/*  713 */     synchronized (this.lock) {
-/*  714 */       if (this.removed) {
-/*  715 */         throw new IllegalStateException("Node has been removed.");
-/*      */       }
-/*  717 */       TreeSet<String> treeSet = new TreeSet(this.kidCache.keySet());
-/*  718 */       for (String str : childrenNamesSpi())
-/*  719 */         treeSet.add(str); 
-/*  720 */       return treeSet.<String>toArray(EMPTY_STRING_ARRAY);
-/*      */     } 
-/*      */   }
-/*      */   
-/*  724 */   private static final String[] EMPTY_STRING_ARRAY = new String[0];
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected final AbstractPreferences[] cachedChildren() {
-/*  732 */     return (AbstractPreferences[])this.kidCache.values().toArray((Object[])EMPTY_ABSTRACT_PREFS_ARRAY);
-/*      */   }
-/*      */   
-/*  735 */   private static final AbstractPreferences[] EMPTY_ABSTRACT_PREFS_ARRAY = new AbstractPreferences[0];
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Preferences parent() {
-/*  751 */     synchronized (this.lock) {
-/*  752 */       if (this.removed) {
-/*  753 */         throw new IllegalStateException("Node has been removed.");
-/*      */       }
-/*  755 */       return this.parent;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Preferences node(String paramString) {
-/*  805 */     synchronized (this.lock) {
-/*  806 */       if (this.removed)
-/*  807 */         throw new IllegalStateException("Node has been removed."); 
-/*  808 */       if (paramString.equals(""))
-/*  809 */         return this; 
-/*  810 */       if (paramString.equals("/"))
-/*  811 */         return this.root; 
-/*  812 */       if (paramString.charAt(0) != '/') {
-/*  813 */         return node(new StringTokenizer(paramString, "/", true));
-/*      */       }
-/*      */     } 
-/*      */     
-/*  817 */     return this.root.node(new StringTokenizer(paramString.substring(1), "/", true));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Preferences node(StringTokenizer paramStringTokenizer) {
-/*  824 */     String str = paramStringTokenizer.nextToken();
-/*  825 */     if (str.equals("/"))
-/*  826 */       throw new IllegalArgumentException("Consecutive slashes in path"); 
-/*  827 */     synchronized (this.lock) {
-/*  828 */       AbstractPreferences abstractPreferences = this.kidCache.get(str);
-/*  829 */       if (abstractPreferences == null) {
-/*  830 */         if (str.length() > 80) {
-/*  831 */           throw new IllegalArgumentException("Node name " + str + " too long");
-/*      */         }
-/*  833 */         abstractPreferences = childSpi(str);
-/*  834 */         if (abstractPreferences.newNode)
-/*  835 */           enqueueNodeAddedEvent(abstractPreferences); 
-/*  836 */         this.kidCache.put(str, abstractPreferences);
-/*      */       } 
-/*  838 */       if (!paramStringTokenizer.hasMoreTokens())
-/*  839 */         return abstractPreferences; 
-/*  840 */       paramStringTokenizer.nextToken();
-/*  841 */       if (!paramStringTokenizer.hasMoreTokens())
-/*  842 */         throw new IllegalArgumentException("Path ends with slash"); 
-/*  843 */       return abstractPreferences.node(paramStringTokenizer);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean nodeExists(String paramString) throws BackingStoreException {
-/*  870 */     synchronized (this.lock) {
-/*  871 */       if (paramString.equals(""))
-/*  872 */         return !this.removed; 
-/*  873 */       if (this.removed)
-/*  874 */         throw new IllegalStateException("Node has been removed."); 
-/*  875 */       if (paramString.equals("/"))
-/*  876 */         return true; 
-/*  877 */       if (paramString.charAt(0) != '/') {
-/*  878 */         return nodeExists(new StringTokenizer(paramString, "/", true));
-/*      */       }
-/*      */     } 
-/*      */     
-/*  882 */     return this.root.nodeExists(new StringTokenizer(paramString.substring(1), "/", true));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean nodeExists(StringTokenizer paramStringTokenizer) throws BackingStoreException {
-/*  892 */     String str = paramStringTokenizer.nextToken();
-/*  893 */     if (str.equals("/"))
-/*  894 */       throw new IllegalArgumentException("Consecutive slashes in path"); 
-/*  895 */     synchronized (this.lock) {
-/*  896 */       AbstractPreferences abstractPreferences = this.kidCache.get(str);
-/*  897 */       if (abstractPreferences == null)
-/*  898 */         abstractPreferences = getChild(str); 
-/*  899 */       if (abstractPreferences == null)
-/*  900 */         return false; 
-/*  901 */       if (!paramStringTokenizer.hasMoreTokens())
-/*  902 */         return true; 
-/*  903 */       paramStringTokenizer.nextToken();
-/*  904 */       if (!paramStringTokenizer.hasMoreTokens())
-/*  905 */         throw new IllegalArgumentException("Path ends with slash"); 
-/*  906 */       return abstractPreferences.nodeExists(paramStringTokenizer);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void removeNode() throws BackingStoreException {
-/*  943 */     if (this == this.root)
-/*  944 */       throw new UnsupportedOperationException("Can't remove the root!"); 
-/*  945 */     synchronized (this.parent.lock) {
-/*  946 */       removeNode2();
-/*  947 */       this.parent.kidCache.remove(this.name);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void removeNode2() throws BackingStoreException {
-/*  956 */     synchronized (this.lock) {
-/*  957 */       if (this.removed) {
-/*  958 */         throw new IllegalStateException("Node already removed.");
-/*      */       }
-/*      */       
-/*  961 */       String[] arrayOfString = childrenNamesSpi();
-/*  962 */       for (byte b = 0; b < arrayOfString.length; b++) {
-/*  963 */         if (!this.kidCache.containsKey(arrayOfString[b])) {
-/*  964 */           this.kidCache.put(arrayOfString[b], childSpi(arrayOfString[b]));
-/*      */         }
-/*      */       } 
-/*  967 */       Iterator<AbstractPreferences> iterator = this.kidCache.values().iterator();
-/*  968 */       while (iterator.hasNext()) {
-/*      */         try {
-/*  970 */           ((AbstractPreferences)iterator.next()).removeNode2();
-/*  971 */           iterator.remove();
-/*  972 */         } catch (BackingStoreException backingStoreException) {}
-/*      */       } 
-/*      */ 
-/*      */       
-/*  976 */       removeNodeSpi();
-/*  977 */       this.removed = true;
-/*  978 */       this.parent.enqueueNodeRemovedEvent(this);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String name() {
-/*  992 */     return this.name;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String absolutePath() {
-/* 1007 */     return this.absolutePath;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isUserNode() {
-/* 1024 */     return ((Boolean)AccessController.<Boolean>doPrivileged(new PrivilegedAction<Boolean>()
-/*      */         {
-/*      */           public Boolean run() {
-/* 1027 */             return Boolean.valueOf((AbstractPreferences.this.root == Preferences.userRoot()));
-/*      */           }
-/* 1029 */         })).booleanValue();
-/*      */   }
-/*      */   
-/*      */   public void addPreferenceChangeListener(PreferenceChangeListener paramPreferenceChangeListener) {
-/* 1033 */     if (paramPreferenceChangeListener == null)
-/* 1034 */       throw new NullPointerException("Change listener is null."); 
-/* 1035 */     synchronized (this.lock) {
-/* 1036 */       if (this.removed) {
-/* 1037 */         throw new IllegalStateException("Node has been removed.");
-/*      */       }
-/*      */       
-/* 1040 */       PreferenceChangeListener[] arrayOfPreferenceChangeListener = this.prefListeners;
-/* 1041 */       this.prefListeners = new PreferenceChangeListener[arrayOfPreferenceChangeListener.length + 1];
-/* 1042 */       System.arraycopy(arrayOfPreferenceChangeListener, 0, this.prefListeners, 0, arrayOfPreferenceChangeListener.length);
-/* 1043 */       this.prefListeners[arrayOfPreferenceChangeListener.length] = paramPreferenceChangeListener;
-/*      */     } 
-/* 1045 */     startEventDispatchThreadIfNecessary();
-/*      */   }
-/*      */   
-/*      */   public void removePreferenceChangeListener(PreferenceChangeListener paramPreferenceChangeListener) {
-/* 1049 */     synchronized (this.lock) {
-/* 1050 */       if (this.removed)
-/* 1051 */         throw new IllegalStateException("Node has been removed."); 
-/* 1052 */       if (this.prefListeners == null || this.prefListeners.length == 0) {
-/* 1053 */         throw new IllegalArgumentException("Listener not registered.");
-/*      */       }
-/*      */       
-/* 1056 */       PreferenceChangeListener[] arrayOfPreferenceChangeListener = new PreferenceChangeListener[this.prefListeners.length - 1];
-/*      */       
-/* 1058 */       byte b = 0;
-/* 1059 */       while (b < arrayOfPreferenceChangeListener.length && this.prefListeners[b] != paramPreferenceChangeListener) {
-/* 1060 */         arrayOfPreferenceChangeListener[b] = this.prefListeners[b++];
-/*      */       }
-/* 1062 */       if (b == arrayOfPreferenceChangeListener.length && this.prefListeners[b] != paramPreferenceChangeListener)
-/* 1063 */         throw new IllegalArgumentException("Listener not registered."); 
-/* 1064 */       while (b < arrayOfPreferenceChangeListener.length)
-/* 1065 */         arrayOfPreferenceChangeListener[b] = this.prefListeners[++b]; 
-/* 1066 */       this.prefListeners = arrayOfPreferenceChangeListener;
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   public void addNodeChangeListener(NodeChangeListener paramNodeChangeListener) {
-/* 1071 */     if (paramNodeChangeListener == null)
-/* 1072 */       throw new NullPointerException("Change listener is null."); 
-/* 1073 */     synchronized (this.lock) {
-/* 1074 */       if (this.removed) {
-/* 1075 */         throw new IllegalStateException("Node has been removed.");
-/*      */       }
-/*      */       
-/* 1078 */       if (this.nodeListeners == null) {
-/* 1079 */         this.nodeListeners = new NodeChangeListener[1];
-/* 1080 */         this.nodeListeners[0] = paramNodeChangeListener;
-/*      */       } else {
-/* 1082 */         NodeChangeListener[] arrayOfNodeChangeListener = this.nodeListeners;
-/* 1083 */         this.nodeListeners = new NodeChangeListener[arrayOfNodeChangeListener.length + 1];
-/* 1084 */         System.arraycopy(arrayOfNodeChangeListener, 0, this.nodeListeners, 0, arrayOfNodeChangeListener.length);
-/* 1085 */         this.nodeListeners[arrayOfNodeChangeListener.length] = paramNodeChangeListener;
-/*      */       } 
-/*      */     } 
-/* 1088 */     startEventDispatchThreadIfNecessary();
-/*      */   }
-/*      */   
-/*      */   public void removeNodeChangeListener(NodeChangeListener paramNodeChangeListener) {
-/* 1092 */     synchronized (this.lock) {
-/* 1093 */       if (this.removed)
-/* 1094 */         throw new IllegalStateException("Node has been removed."); 
-/* 1095 */       if (this.nodeListeners == null || this.nodeListeners.length == 0) {
-/* 1096 */         throw new IllegalArgumentException("Listener not registered.");
-/*      */       }
-/*      */       
-/* 1099 */       byte b = 0;
-/* 1100 */       while (b < this.nodeListeners.length && this.nodeListeners[b] != paramNodeChangeListener)
-/* 1101 */         b++; 
-/* 1102 */       if (b == this.nodeListeners.length)
-/* 1103 */         throw new IllegalArgumentException("Listener not registered."); 
-/* 1104 */       NodeChangeListener[] arrayOfNodeChangeListener = new NodeChangeListener[this.nodeListeners.length - 1];
-/*      */       
-/* 1106 */       if (b != 0)
-/* 1107 */         System.arraycopy(this.nodeListeners, 0, arrayOfNodeChangeListener, 0, b); 
-/* 1108 */       if (b != arrayOfNodeChangeListener.length) {
-/* 1109 */         System.arraycopy(this.nodeListeners, b + 1, arrayOfNodeChangeListener, b, arrayOfNodeChangeListener.length - b);
-/*      */       }
-/* 1111 */       this.nodeListeners = arrayOfNodeChangeListener;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected AbstractPreferences getChild(String paramString) throws BackingStoreException {
-/* 1257 */     synchronized (this.lock) {
-/*      */       
-/* 1259 */       String[] arrayOfString = childrenNames();
-/* 1260 */       for (byte b = 0; b < arrayOfString.length; b++) {
-/* 1261 */         if (arrayOfString[b].equals(paramString))
-/* 1262 */           return childSpi(arrayOfString[b]); 
-/*      */       } 
-/* 1264 */     }  return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String toString() {
-/* 1304 */     return (isUserNode() ? "User" : "System") + " Preference Node: " + 
-/* 1305 */       absolutePath();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void sync() throws BackingStoreException {
-/* 1329 */     sync2();
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private void sync2() throws BackingStoreException {
-/*      */     AbstractPreferences[] arrayOfAbstractPreferences;
-/* 1335 */     synchronized (this.lock) {
-/* 1336 */       if (this.removed)
-/* 1337 */         throw new IllegalStateException("Node has been removed"); 
-/* 1338 */       syncSpi();
-/* 1339 */       arrayOfAbstractPreferences = cachedChildren();
-/*      */     } 
-/*      */     
-/* 1342 */     for (byte b = 0; b < arrayOfAbstractPreferences.length; b++) {
-/* 1343 */       arrayOfAbstractPreferences[b].sync2();
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void flush() throws BackingStoreException {
-/* 1389 */     flush2();
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private void flush2() throws BackingStoreException {
-/*      */     AbstractPreferences[] arrayOfAbstractPreferences;
-/* 1395 */     synchronized (this.lock) {
-/* 1396 */       flushSpi();
-/* 1397 */       if (this.removed)
-/*      */         return; 
-/* 1399 */       arrayOfAbstractPreferences = cachedChildren();
-/*      */     } 
-/*      */     
-/* 1402 */     for (byte b = 0; b < arrayOfAbstractPreferences.length; b++) {
-/* 1403 */       arrayOfAbstractPreferences[b].flush2();
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected boolean isRemoved() {
-/* 1437 */     synchronized (this.lock) {
-/* 1438 */       return this.removed;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/* 1450 */   private static final List<EventObject> eventQueue = new LinkedList<>();
-/*      */ 
-/*      */   
-/*      */   private class NodeAddedEvent
-/*      */     extends NodeChangeEvent
-/*      */   {
-/*      */     private static final long serialVersionUID = -6743557530157328528L;
-/*      */ 
-/*      */     
-/*      */     NodeAddedEvent(Preferences param1Preferences1, Preferences param1Preferences2) {
-/* 1460 */       super(param1Preferences1, param1Preferences2);
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   private class NodeRemovedEvent extends NodeChangeEvent {
-/*      */     NodeRemovedEvent(Preferences param1Preferences1, Preferences param1Preferences2) {
-/* 1466 */       super(param1Preferences1, param1Preferences2);
-/*      */     }
-/*      */     
-/*      */     private static final long serialVersionUID = 8735497392918824837L;
-/*      */   }
-/*      */   
-/*      */   private static class EventDispatchThread
-/*      */     extends Thread {
-/*      */     private EventDispatchThread() {}
-/*      */     
-/*      */     public void run() {
-/*      */       while (true) {
-/* 1478 */         EventObject eventObject = null;
-/* 1479 */         synchronized (AbstractPreferences.eventQueue) { while (true) {
-/*      */             try {
-/* 1481 */               if (AbstractPreferences.eventQueue.isEmpty()) {
-/* 1482 */                 AbstractPreferences.eventQueue.wait(); continue;
-/* 1483 */               }  eventObject = AbstractPreferences.eventQueue.remove(0);
-/* 1484 */             } catch (InterruptedException interruptedException) {
-/*      */               return;
-/*      */             } 
-/*      */             
-/*      */             break;
-/*      */           }  }
-/*      */         
-/* 1491 */         AbstractPreferences abstractPreferences = (AbstractPreferences)eventObject.getSource();
-/* 1492 */         if (eventObject instanceof PreferenceChangeEvent) {
-/* 1493 */           PreferenceChangeEvent preferenceChangeEvent = (PreferenceChangeEvent)eventObject;
-/* 1494 */           PreferenceChangeListener[] arrayOfPreferenceChangeListener = abstractPreferences.prefListeners();
-/* 1495 */           for (byte b1 = 0; b1 < arrayOfPreferenceChangeListener.length; b1++)
-/* 1496 */             arrayOfPreferenceChangeListener[b1].preferenceChange(preferenceChangeEvent);  continue;
-/*      */         } 
-/* 1498 */         NodeChangeEvent nodeChangeEvent = (NodeChangeEvent)eventObject;
-/* 1499 */         NodeChangeListener[] arrayOfNodeChangeListener = abstractPreferences.nodeListeners();
-/* 1500 */         if (nodeChangeEvent instanceof AbstractPreferences.NodeAddedEvent) {
-/* 1501 */           for (byte b1 = 0; b1 < arrayOfNodeChangeListener.length; b1++)
-/* 1502 */             arrayOfNodeChangeListener[b1].childAdded(nodeChangeEvent); 
-/*      */           continue;
-/*      */         } 
-/* 1505 */         for (byte b = 0; b < arrayOfNodeChangeListener.length; b++) {
-/* 1506 */           arrayOfNodeChangeListener[b].childRemoved(nodeChangeEvent);
-/*      */         }
-/*      */       } 
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */   
-/* 1513 */   private static Thread eventDispatchThread = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static synchronized void startEventDispatchThreadIfNecessary() {
-/* 1521 */     if (eventDispatchThread == null) {
-/*      */       
-/* 1523 */       eventDispatchThread = new EventDispatchThread();
-/* 1524 */       eventDispatchThread.setDaemon(true);
-/* 1525 */       eventDispatchThread.start();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   PreferenceChangeListener[] prefListeners() {
-/* 1536 */     synchronized (this.lock) {
-/* 1537 */       return this.prefListeners;
-/*      */     } 
-/*      */   }
-/*      */   NodeChangeListener[] nodeListeners() {
-/* 1541 */     synchronized (this.lock) {
-/* 1542 */       return this.nodeListeners;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void enqueuePreferenceChangeEvent(String paramString1, String paramString2) {
-/* 1552 */     if (this.prefListeners.length != 0) {
-/* 1553 */       synchronized (eventQueue) {
-/* 1554 */         eventQueue.add(new PreferenceChangeEvent(this, paramString1, paramString2));
-/* 1555 */         eventQueue.notify();
-/*      */       } 
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void enqueueNodeAddedEvent(Preferences paramPreferences) {
-/* 1566 */     if (this.nodeListeners.length != 0) {
-/* 1567 */       synchronized (eventQueue) {
-/* 1568 */         eventQueue.add(new NodeAddedEvent(this, paramPreferences));
-/* 1569 */         eventQueue.notify();
-/*      */       } 
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void enqueueNodeRemovedEvent(Preferences paramPreferences) {
-/* 1580 */     if (this.nodeListeners.length != 0) {
-/* 1581 */       synchronized (eventQueue) {
-/* 1582 */         eventQueue.add(new NodeRemovedEvent(this, paramPreferences));
-/* 1583 */         eventQueue.notify();
-/*      */       } 
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void exportNode(OutputStream paramOutputStream) throws IOException, BackingStoreException {
-/* 1601 */     XmlSupport.export(paramOutputStream, this, false);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void exportSubtree(OutputStream paramOutputStream) throws IOException, BackingStoreException {
-/* 1617 */     XmlSupport.export(paramOutputStream, this, true);
-/*      */   }
-/*      */   
-/*      */   protected abstract void putSpi(String paramString1, String paramString2);
-/*      */   
-/*      */   protected abstract String getSpi(String paramString);
-/*      */   
-/*      */   protected abstract void removeSpi(String paramString);
-/*      */   
-/*      */   protected abstract void removeNodeSpi() throws BackingStoreException;
-/*      */   
-/*      */   protected abstract String[] keysSpi() throws BackingStoreException;
-/*      */   
-/*      */   protected abstract String[] childrenNamesSpi() throws BackingStoreException;
-/*      */   
-/*      */   protected abstract AbstractPreferences childSpi(String paramString);
-/*      */   
-/*      */   protected abstract void syncSpi() throws BackingStoreException;
-/*      */   
-/*      */   protected abstract void flushSpi() throws BackingStoreException;
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\prefs\AbstractPreferences.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.util.prefs;
+
+import java.util.*;
+import java.io.*;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+// These imports needed only as a workaround for a JavaDoc bug
+import java.lang.Integer;
+import java.lang.Long;
+import java.lang.Float;
+import java.lang.Double;
+
+/**
+ * This class provides a skeletal implementation of the {@link Preferences}
+ * class, greatly easing the task of implementing it.
+ *
+ * <p><strong>This class is for <tt>Preferences</tt> implementers only.
+ * Normal users of the <tt>Preferences</tt> facility should have no need to
+ * consult this documentation.  The {@link Preferences} documentation
+ * should suffice.</strong>
+ *
+ * <p>Implementors must override the nine abstract service-provider interface
+ * (SPI) methods: {@link #getSpi(String)}, {@link #putSpi(String,String)},
+ * {@link #removeSpi(String)}, {@link #childSpi(String)}, {@link
+ * #removeNodeSpi()}, {@link #keysSpi()}, {@link #childrenNamesSpi()}, {@link
+ * #syncSpi()} and {@link #flushSpi()}.  All of the concrete methods specify
+ * precisely how they are implemented atop these SPI methods.  The implementor
+ * may, at his discretion, override one or more of the concrete methods if the
+ * default implementation is unsatisfactory for any reason, such as
+ * performance.
+ *
+ * <p>The SPI methods fall into three groups concerning exception
+ * behavior. The <tt>getSpi</tt> method should never throw exceptions, but it
+ * doesn't really matter, as any exception thrown by this method will be
+ * intercepted by {@link #get(String,String)}, which will return the specified
+ * default value to the caller.  The <tt>removeNodeSpi, keysSpi,
+ * childrenNamesSpi, syncSpi</tt> and <tt>flushSpi</tt> methods are specified
+ * to throw {@link BackingStoreException}, and the implementation is required
+ * to throw this checked exception if it is unable to perform the operation.
+ * The exception propagates outward, causing the corresponding API method
+ * to fail.
+ *
+ * <p>The remaining SPI methods {@link #putSpi(String,String)}, {@link
+ * #removeSpi(String)} and {@link #childSpi(String)} have more complicated
+ * exception behavior.  They are not specified to throw
+ * <tt>BackingStoreException</tt>, as they can generally obey their contracts
+ * even if the backing store is unavailable.  This is true because they return
+ * no information and their effects are not required to become permanent until
+ * a subsequent call to {@link Preferences#flush()} or
+ * {@link Preferences#sync()}. Generally speaking, these SPI methods should not
+ * throw exceptions.  In some implementations, there may be circumstances
+ * under which these calls cannot even enqueue the requested operation for
+ * later processing.  Even under these circumstances it is generally better to
+ * simply ignore the invocation and return, rather than throwing an
+ * exception.  Under these circumstances, however, all subsequent invocations
+ * of <tt>flush()</tt> and <tt>sync</tt> should return <tt>false</tt>, as
+ * returning <tt>true</tt> would imply that all previous operations had
+ * successfully been made permanent.
+ *
+ * <p>There is one circumstance under which <tt>putSpi, removeSpi and
+ * childSpi</tt> <i>should</i> throw an exception: if the caller lacks
+ * sufficient privileges on the underlying operating system to perform the
+ * requested operation.  This will, for instance, occur on most systems
+ * if a non-privileged user attempts to modify system preferences.
+ * (The required privileges will vary from implementation to
+ * implementation.  On some implementations, they are the right to modify the
+ * contents of some directory in the file system; on others they are the right
+ * to modify contents of some key in a registry.)  Under any of these
+ * circumstances, it would generally be undesirable to let the program
+ * continue executing as if these operations would become permanent at a later
+ * time.  While implementations are not required to throw an exception under
+ * these circumstances, they are encouraged to do so.  A {@link
+ * SecurityException} would be appropriate.
+ *
+ * <p>Most of the SPI methods require the implementation to read or write
+ * information at a preferences node.  The implementor should beware of the
+ * fact that another VM may have concurrently deleted this node from the
+ * backing store.  It is the implementation's responsibility to recreate the
+ * node if it has been deleted.
+ *
+ * <p>Implementation note: In Sun's default <tt>Preferences</tt>
+ * implementations, the user's identity is inherited from the underlying
+ * operating system and does not change for the lifetime of the virtual
+ * machine.  It is recognized that server-side <tt>Preferences</tt>
+ * implementations may have the user identity change from request to request,
+ * implicitly passed to <tt>Preferences</tt> methods via the use of a
+ * static {@link ThreadLocal} instance.  Authors of such implementations are
+ * <i>strongly</i> encouraged to determine the user at the time preferences
+ * are accessed (for example by the {@link #get(String,String)} or {@link
+ * #put(String,String)} method) rather than permanently associating a user
+ * with each <tt>Preferences</tt> instance.  The latter behavior conflicts
+ * with normal <tt>Preferences</tt> usage and would lead to great confusion.
+ *
+ * @author  Josh Bloch
+ * @see     Preferences
+ * @since   1.4
+ */
+public abstract class AbstractPreferences extends Preferences {
+    /**
+     * Our name relative to parent.
+     */
+    private final String name;
+
+    /**
+     * Our absolute path name.
+     */
+    private final String absolutePath;
+
+    /**
+     * Our parent node.
+     */
+    final AbstractPreferences parent;
+
+    /**
+     * Our root node.
+     */
+    private final AbstractPreferences root; // Relative to this node
+
+    /**
+     * This field should be <tt>true</tt> if this node did not exist in the
+     * backing store prior to the creation of this object.  The field
+     * is initialized to false, but may be set to true by a subclass
+     * constructor (and should not be modified thereafter).  This field
+     * indicates whether a node change event should be fired when
+     * creation is complete.
+     */
+    protected boolean newNode = false;
+
+    /**
+     * All known unremoved children of this node.  (This "cache" is consulted
+     * prior to calling childSpi() or getChild().
+     */
+    private Map<String, AbstractPreferences> kidCache = new HashMap<>();
+
+    /**
+     * This field is used to keep track of whether or not this node has
+     * been removed.  Once it's set to true, it will never be reset to false.
+     */
+    private boolean removed = false;
+
+    /**
+     * Registered preference change listeners.
+     */
+    private PreferenceChangeListener[] prefListeners =
+        new PreferenceChangeListener[0];
+
+    /**
+     * Registered node change listeners.
+     */
+    private NodeChangeListener[] nodeListeners = new NodeChangeListener[0];
+
+    /**
+     * An object whose monitor is used to lock this node.  This object
+     * is used in preference to the node itself to reduce the likelihood of
+     * intentional or unintentional denial of service due to a locked node.
+     * To avoid deadlock, a node is <i>never</i> locked by a thread that
+     * holds a lock on a descendant of that node.
+     */
+    protected final Object lock = new Object();
+
+    /**
+     * Creates a preference node with the specified parent and the specified
+     * name relative to its parent.
+     *
+     * @param parent the parent of this preference node, or null if this
+     *               is the root.
+     * @param name the name of this preference node, relative to its parent,
+     *             or <tt>""</tt> if this is the root.
+     * @throws IllegalArgumentException if <tt>name</tt> contains a slash
+     *          (<tt>'/'</tt>),  or <tt>parent</tt> is <tt>null</tt> and
+     *          name isn't <tt>""</tt>.
+     */
+    protected AbstractPreferences(AbstractPreferences parent, String name) {
+        if (parent==null) {
+            if (!name.equals(""))
+                throw new IllegalArgumentException("Root name '"+name+
+                                                   "' must be \"\"");
+            this.absolutePath = "/";
+            root = this;
+        } else {
+            if (name.indexOf('/') != -1)
+                throw new IllegalArgumentException("Name '" + name +
+                                                 "' contains '/'");
+            if (name.equals(""))
+              throw new IllegalArgumentException("Illegal name: empty string");
+
+            root = parent.root;
+            absolutePath = (parent==root ? "/" + name
+                                         : parent.absolutePath() + "/" + name);
+        }
+        this.name = name;
+        this.parent = parent;
+    }
+
+    /**
+     * Implements the <tt>put</tt> method as per the specification in
+     * {@link Preferences#put(String,String)}.
+     *
+     * <p>This implementation checks that the key and value are legal,
+     * obtains this preference node's lock, checks that the node
+     * has not been removed, invokes {@link #putSpi(String,String)}, and if
+     * there are any preference change listeners, enqueues a notification
+     * event for processing by the event dispatch thread.
+     *
+     * @param key key with which the specified value is to be associated.
+     * @param value value to be associated with the specified key.
+     * @throws NullPointerException if key or value is <tt>null</tt>.
+     * @throws IllegalArgumentException if <tt>key.length()</tt> exceeds
+     *       <tt>MAX_KEY_LENGTH</tt> or if <tt>value.length</tt> exceeds
+     *       <tt>MAX_VALUE_LENGTH</tt>.
+     * @throws IllegalStateException if this node (or an ancestor) has been
+     *         removed with the {@link #removeNode()} method.
+     */
+    public void put(String key, String value) {
+        if (key==null || value==null)
+            throw new NullPointerException();
+        if (key.length() > MAX_KEY_LENGTH)
+            throw new IllegalArgumentException("Key too long: "+key);
+        if (value.length() > MAX_VALUE_LENGTH)
+            throw new IllegalArgumentException("Value too long: "+value);
+
+        synchronized(lock) {
+            if (removed)
+                throw new IllegalStateException("Node has been removed.");
+
+            putSpi(key, value);
+            enqueuePreferenceChangeEvent(key, value);
+        }
+    }
+
+    /**
+     * Implements the <tt>get</tt> method as per the specification in
+     * {@link Preferences#get(String,String)}.
+     *
+     * <p>This implementation first checks to see if <tt>key</tt> is
+     * <tt>null</tt> throwing a <tt>NullPointerException</tt> if this is
+     * the case.  Then it obtains this preference node's lock,
+     * checks that the node has not been removed, invokes {@link
+     * #getSpi(String)}, and returns the result, unless the <tt>getSpi</tt>
+     * invocation returns <tt>null</tt> or throws an exception, in which case
+     * this invocation returns <tt>def</tt>.
+     *
+     * @param key key whose associated value is to be returned.
+     * @param def the value to be returned in the event that this
+     *        preference node has no value associated with <tt>key</tt>.
+     * @return the value associated with <tt>key</tt>, or <tt>def</tt>
+     *         if no value is associated with <tt>key</tt>.
+     * @throws IllegalStateException if this node (or an ancestor) has been
+     *         removed with the {@link #removeNode()} method.
+     * @throws NullPointerException if key is <tt>null</tt>.  (A
+     *         <tt>null</tt> default <i>is</i> permitted.)
+     */
+    public String get(String key, String def) {
+        if (key==null)
+            throw new NullPointerException("Null key");
+        synchronized(lock) {
+            if (removed)
+                throw new IllegalStateException("Node has been removed.");
+
+            String result = null;
+            try {
+                result = getSpi(key);
+            } catch (Exception e) {
+                // Ignoring exception causes default to be returned
+            }
+            return (result==null ? def : result);
+        }
+    }
+
+    /**
+     * Implements the <tt>remove(String)</tt> method as per the specification
+     * in {@link Preferences#remove(String)}.
+     *
+     * <p>This implementation obtains this preference node's lock,
+     * checks that the node has not been removed, invokes
+     * {@link #removeSpi(String)} and if there are any preference
+     * change listeners, enqueues a notification event for processing by the
+     * event dispatch thread.
+     *
+     * @param key key whose mapping is to be removed from the preference node.
+     * @throws IllegalStateException if this node (or an ancestor) has been
+     *         removed with the {@link #removeNode()} method.
+     * @throws NullPointerException {@inheritDoc}.
+     */
+    public void remove(String key) {
+        Objects.requireNonNull(key, "Specified key cannot be null");
+        synchronized(lock) {
+            if (removed)
+                throw new IllegalStateException("Node has been removed.");
+
+            removeSpi(key);
+            enqueuePreferenceChangeEvent(key, null);
+        }
+    }
+
+    /**
+     * Implements the <tt>clear</tt> method as per the specification in
+     * {@link Preferences#clear()}.
+     *
+     * <p>This implementation obtains this preference node's lock,
+     * invokes {@link #keys()} to obtain an array of keys, and
+     * iterates over the array invoking {@link #remove(String)} on each key.
+     *
+     * @throws BackingStoreException if this operation cannot be completed
+     *         due to a failure in the backing store, or inability to
+     *         communicate with it.
+     * @throws IllegalStateException if this node (or an ancestor) has been
+     *         removed with the {@link #removeNode()} method.
+     */
+    public void clear() throws BackingStoreException {
+        synchronized(lock) {
+            String[] keys = keys();
+            for (int i=0; i<keys.length; i++)
+                remove(keys[i]);
+        }
+    }
+
+    /**
+     * Implements the <tt>putInt</tt> method as per the specification in
+     * {@link Preferences#putInt(String,int)}.
+     *
+     * <p>This implementation translates <tt>value</tt> to a string with
+     * {@link Integer#toString(int)} and invokes {@link #put(String,String)}
+     * on the result.
+     *
+     * @param key key with which the string form of value is to be associated.
+     * @param value value whose string form is to be associated with key.
+     * @throws NullPointerException if key is <tt>null</tt>.
+     * @throws IllegalArgumentException if <tt>key.length()</tt> exceeds
+     *         <tt>MAX_KEY_LENGTH</tt>.
+     * @throws IllegalStateException if this node (or an ancestor) has been
+     *         removed with the {@link #removeNode()} method.
+     */
+    public void putInt(String key, int value) {
+        put(key, Integer.toString(value));
+    }
+
+    /**
+     * Implements the <tt>getInt</tt> method as per the specification in
+     * {@link Preferences#getInt(String,int)}.
+     *
+     * <p>This implementation invokes {@link #get(String,String) <tt>get(key,
+     * null)</tt>}.  If the return value is non-null, the implementation
+     * attempts to translate it to an <tt>int</tt> with
+     * {@link Integer#parseInt(String)}.  If the attempt succeeds, the return
+     * value is returned by this method.  Otherwise, <tt>def</tt> is returned.
+     *
+     * @param key key whose associated value is to be returned as an int.
+     * @param def the value to be returned in the event that this
+     *        preference node has no value associated with <tt>key</tt>
+     *        or the associated value cannot be interpreted as an int.
+     * @return the int value represented by the string associated with
+     *         <tt>key</tt> in this preference node, or <tt>def</tt> if the
+     *         associated value does not exist or cannot be interpreted as
+     *         an int.
+     * @throws IllegalStateException if this node (or an ancestor) has been
+     *         removed with the {@link #removeNode()} method.
+     * @throws NullPointerException if <tt>key</tt> is <tt>null</tt>.
+     */
+    public int getInt(String key, int def) {
+        int result = def;
+        try {
+            String value = get(key, null);
+            if (value != null)
+                result = Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            // Ignoring exception causes specified default to be returned
+        }
+
+        return result;
+    }
+
+    /**
+     * Implements the <tt>putLong</tt> method as per the specification in
+     * {@link Preferences#putLong(String,long)}.
+     *
+     * <p>This implementation translates <tt>value</tt> to a string with
+     * {@link Long#toString(long)} and invokes {@link #put(String,String)}
+     * on the result.
+     *
+     * @param key key with which the string form of value is to be associated.
+     * @param value value whose string form is to be associated with key.
+     * @throws NullPointerException if key is <tt>null</tt>.
+     * @throws IllegalArgumentException if <tt>key.length()</tt> exceeds
+     *         <tt>MAX_KEY_LENGTH</tt>.
+     * @throws IllegalStateException if this node (or an ancestor) has been
+     *         removed with the {@link #removeNode()} method.
+     */
+    public void putLong(String key, long value) {
+        put(key, Long.toString(value));
+    }
+
+    /**
+     * Implements the <tt>getLong</tt> method as per the specification in
+     * {@link Preferences#getLong(String,long)}.
+     *
+     * <p>This implementation invokes {@link #get(String,String) <tt>get(key,
+     * null)</tt>}.  If the return value is non-null, the implementation
+     * attempts to translate it to a <tt>long</tt> with
+     * {@link Long#parseLong(String)}.  If the attempt succeeds, the return
+     * value is returned by this method.  Otherwise, <tt>def</tt> is returned.
+     *
+     * @param key key whose associated value is to be returned as a long.
+     * @param def the value to be returned in the event that this
+     *        preference node has no value associated with <tt>key</tt>
+     *        or the associated value cannot be interpreted as a long.
+     * @return the long value represented by the string associated with
+     *         <tt>key</tt> in this preference node, or <tt>def</tt> if the
+     *         associated value does not exist or cannot be interpreted as
+     *         a long.
+     * @throws IllegalStateException if this node (or an ancestor) has been
+     *         removed with the {@link #removeNode()} method.
+     * @throws NullPointerException if <tt>key</tt> is <tt>null</tt>.
+     */
+    public long getLong(String key, long def) {
+        long result = def;
+        try {
+            String value = get(key, null);
+            if (value != null)
+                result = Long.parseLong(value);
+        } catch (NumberFormatException e) {
+            // Ignoring exception causes specified default to be returned
+        }
+
+        return result;
+    }
+
+    /**
+     * Implements the <tt>putBoolean</tt> method as per the specification in
+     * {@link Preferences#putBoolean(String,boolean)}.
+     *
+     * <p>This implementation translates <tt>value</tt> to a string with
+     * {@link String#valueOf(boolean)} and invokes {@link #put(String,String)}
+     * on the result.
+     *
+     * @param key key with which the string form of value is to be associated.
+     * @param value value whose string form is to be associated with key.
+     * @throws NullPointerException if key is <tt>null</tt>.
+     * @throws IllegalArgumentException if <tt>key.length()</tt> exceeds
+     *         <tt>MAX_KEY_LENGTH</tt>.
+     * @throws IllegalStateException if this node (or an ancestor) has been
+     *         removed with the {@link #removeNode()} method.
+     */
+    public void putBoolean(String key, boolean value) {
+        put(key, String.valueOf(value));
+    }
+
+    /**
+     * Implements the <tt>getBoolean</tt> method as per the specification in
+     * {@link Preferences#getBoolean(String,boolean)}.
+     *
+     * <p>This implementation invokes {@link #get(String,String) <tt>get(key,
+     * null)</tt>}.  If the return value is non-null, it is compared with
+     * <tt>"true"</tt> using {@link String#equalsIgnoreCase(String)}.  If the
+     * comparison returns <tt>true</tt>, this invocation returns
+     * <tt>true</tt>.  Otherwise, the original return value is compared with
+     * <tt>"false"</tt>, again using {@link String#equalsIgnoreCase(String)}.
+     * If the comparison returns <tt>true</tt>, this invocation returns
+     * <tt>false</tt>.  Otherwise, this invocation returns <tt>def</tt>.
+     *
+     * @param key key whose associated value is to be returned as a boolean.
+     * @param def the value to be returned in the event that this
+     *        preference node has no value associated with <tt>key</tt>
+     *        or the associated value cannot be interpreted as a boolean.
+     * @return the boolean value represented by the string associated with
+     *         <tt>key</tt> in this preference node, or <tt>def</tt> if the
+     *         associated value does not exist or cannot be interpreted as
+     *         a boolean.
+     * @throws IllegalStateException if this node (or an ancestor) has been
+     *         removed with the {@link #removeNode()} method.
+     * @throws NullPointerException if <tt>key</tt> is <tt>null</tt>.
+     */
+    public boolean getBoolean(String key, boolean def) {
+        boolean result = def;
+        String value = get(key, null);
+        if (value != null) {
+            if (value.equalsIgnoreCase("true"))
+                result = true;
+            else if (value.equalsIgnoreCase("false"))
+                result = false;
+        }
+
+        return result;
+    }
+
+    /**
+     * Implements the <tt>putFloat</tt> method as per the specification in
+     * {@link Preferences#putFloat(String,float)}.
+     *
+     * <p>This implementation translates <tt>value</tt> to a string with
+     * {@link Float#toString(float)} and invokes {@link #put(String,String)}
+     * on the result.
+     *
+     * @param key key with which the string form of value is to be associated.
+     * @param value value whose string form is to be associated with key.
+     * @throws NullPointerException if key is <tt>null</tt>.
+     * @throws IllegalArgumentException if <tt>key.length()</tt> exceeds
+     *         <tt>MAX_KEY_LENGTH</tt>.
+     * @throws IllegalStateException if this node (or an ancestor) has been
+     *         removed with the {@link #removeNode()} method.
+     */
+    public void putFloat(String key, float value) {
+        put(key, Float.toString(value));
+    }
+
+    /**
+     * Implements the <tt>getFloat</tt> method as per the specification in
+     * {@link Preferences#getFloat(String,float)}.
+     *
+     * <p>This implementation invokes {@link #get(String,String) <tt>get(key,
+     * null)</tt>}.  If the return value is non-null, the implementation
+     * attempts to translate it to an <tt>float</tt> with
+     * {@link Float#parseFloat(String)}.  If the attempt succeeds, the return
+     * value is returned by this method.  Otherwise, <tt>def</tt> is returned.
+     *
+     * @param key key whose associated value is to be returned as a float.
+     * @param def the value to be returned in the event that this
+     *        preference node has no value associated with <tt>key</tt>
+     *        or the associated value cannot be interpreted as a float.
+     * @return the float value represented by the string associated with
+     *         <tt>key</tt> in this preference node, or <tt>def</tt> if the
+     *         associated value does not exist or cannot be interpreted as
+     *         a float.
+     * @throws IllegalStateException if this node (or an ancestor) has been
+     *         removed with the {@link #removeNode()} method.
+     * @throws NullPointerException if <tt>key</tt> is <tt>null</tt>.
+     */
+    public float getFloat(String key, float def) {
+        float result = def;
+        try {
+            String value = get(key, null);
+            if (value != null)
+                result = Float.parseFloat(value);
+        } catch (NumberFormatException e) {
+            // Ignoring exception causes specified default to be returned
+        }
+
+        return result;
+    }
+
+    /**
+     * Implements the <tt>putDouble</tt> method as per the specification in
+     * {@link Preferences#putDouble(String,double)}.
+     *
+     * <p>This implementation translates <tt>value</tt> to a string with
+     * {@link Double#toString(double)} and invokes {@link #put(String,String)}
+     * on the result.
+     *
+     * @param key key with which the string form of value is to be associated.
+     * @param value value whose string form is to be associated with key.
+     * @throws NullPointerException if key is <tt>null</tt>.
+     * @throws IllegalArgumentException if <tt>key.length()</tt> exceeds
+     *         <tt>MAX_KEY_LENGTH</tt>.
+     * @throws IllegalStateException if this node (or an ancestor) has been
+     *         removed with the {@link #removeNode()} method.
+     */
+    public void putDouble(String key, double value) {
+        put(key, Double.toString(value));
+    }
+
+    /**
+     * Implements the <tt>getDouble</tt> method as per the specification in
+     * {@link Preferences#getDouble(String,double)}.
+     *
+     * <p>This implementation invokes {@link #get(String,String) <tt>get(key,
+     * null)</tt>}.  If the return value is non-null, the implementation
+     * attempts to translate it to an <tt>double</tt> with
+     * {@link Double#parseDouble(String)}.  If the attempt succeeds, the return
+     * value is returned by this method.  Otherwise, <tt>def</tt> is returned.
+     *
+     * @param key key whose associated value is to be returned as a double.
+     * @param def the value to be returned in the event that this
+     *        preference node has no value associated with <tt>key</tt>
+     *        or the associated value cannot be interpreted as a double.
+     * @return the double value represented by the string associated with
+     *         <tt>key</tt> in this preference node, or <tt>def</tt> if the
+     *         associated value does not exist or cannot be interpreted as
+     *         a double.
+     * @throws IllegalStateException if this node (or an ancestor) has been
+     *         removed with the {@link #removeNode()} method.
+     * @throws NullPointerException if <tt>key</tt> is <tt>null</tt>.
+     */
+    public double getDouble(String key, double def) {
+        double result = def;
+        try {
+            String value = get(key, null);
+            if (value != null)
+                result = Double.parseDouble(value);
+        } catch (NumberFormatException e) {
+            // Ignoring exception causes specified default to be returned
+        }
+
+        return result;
+    }
+
+    /**
+     * Implements the <tt>putByteArray</tt> method as per the specification in
+     * {@link Preferences#putByteArray(String,byte[])}.
+     *
+     * @param key key with which the string form of value is to be associated.
+     * @param value value whose string form is to be associated with key.
+     * @throws NullPointerException if key or value is <tt>null</tt>.
+     * @throws IllegalArgumentException if key.length() exceeds MAX_KEY_LENGTH
+     *         or if value.length exceeds MAX_VALUE_LENGTH*3/4.
+     * @throws IllegalStateException if this node (or an ancestor) has been
+     *         removed with the {@link #removeNode()} method.
+     */
+    public void putByteArray(String key, byte[] value) {
+        put(key, Base64.byteArrayToBase64(value));
+    }
+
+    /**
+     * Implements the <tt>getByteArray</tt> method as per the specification in
+     * {@link Preferences#getByteArray(String,byte[])}.
+     *
+     * @param key key whose associated value is to be returned as a byte array.
+     * @param def the value to be returned in the event that this
+     *        preference node has no value associated with <tt>key</tt>
+     *        or the associated value cannot be interpreted as a byte array.
+     * @return the byte array value represented by the string associated with
+     *         <tt>key</tt> in this preference node, or <tt>def</tt> if the
+     *         associated value does not exist or cannot be interpreted as
+     *         a byte array.
+     * @throws IllegalStateException if this node (or an ancestor) has been
+     *         removed with the {@link #removeNode()} method.
+     * @throws NullPointerException if <tt>key</tt> is <tt>null</tt>.  (A
+     *         <tt>null</tt> value for <tt>def</tt> <i>is</i> permitted.)
+     */
+    public byte[] getByteArray(String key, byte[] def) {
+        byte[] result = def;
+        String value = get(key, null);
+        try {
+            if (value != null)
+                result = Base64.base64ToByteArray(value);
+        }
+        catch (RuntimeException e) {
+            // Ignoring exception causes specified default to be returned
+        }
+
+        return result;
+    }
+
+    /**
+     * Implements the <tt>keys</tt> method as per the specification in
+     * {@link Preferences#keys()}.
+     *
+     * <p>This implementation obtains this preference node's lock, checks that
+     * the node has not been removed and invokes {@link #keysSpi()}.
+     *
+     * @return an array of the keys that have an associated value in this
+     *         preference node.
+     * @throws BackingStoreException if this operation cannot be completed
+     *         due to a failure in the backing store, or inability to
+     *         communicate with it.
+     * @throws IllegalStateException if this node (or an ancestor) has been
+     *         removed with the {@link #removeNode()} method.
+     */
+    public String[] keys() throws BackingStoreException {
+        synchronized(lock) {
+            if (removed)
+                throw new IllegalStateException("Node has been removed.");
+
+            return keysSpi();
+        }
+    }
+
+    /**
+     * Implements the <tt>children</tt> method as per the specification in
+     * {@link Preferences#childrenNames()}.
+     *
+     * <p>This implementation obtains this preference node's lock, checks that
+     * the node has not been removed, constructs a <tt>TreeSet</tt> initialized
+     * to the names of children already cached (the children in this node's
+     * "child-cache"), invokes {@link #childrenNamesSpi()}, and adds all of the
+     * returned child-names into the set.  The elements of the tree set are
+     * dumped into a <tt>String</tt> array using the <tt>toArray</tt> method,
+     * and this array is returned.
+     *
+     * @return the names of the children of this preference node.
+     * @throws BackingStoreException if this operation cannot be completed
+     *         due to a failure in the backing store, or inability to
+     *         communicate with it.
+     * @throws IllegalStateException if this node (or an ancestor) has been
+     *         removed with the {@link #removeNode()} method.
+     * @see #cachedChildren()
+     */
+    public String[] childrenNames() throws BackingStoreException {
+        synchronized(lock) {
+            if (removed)
+                throw new IllegalStateException("Node has been removed.");
+
+            Set<String> s = new TreeSet<>(kidCache.keySet());
+            for (String kid : childrenNamesSpi())
+                s.add(kid);
+            return s.toArray(EMPTY_STRING_ARRAY);
+        }
+    }
+
+    private static final String[] EMPTY_STRING_ARRAY = new String[0];
+
+    /**
+     * Returns all known unremoved children of this node.
+     *
+     * @return all known unremoved children of this node.
+     */
+    protected final AbstractPreferences[] cachedChildren() {
+        return kidCache.values().toArray(EMPTY_ABSTRACT_PREFS_ARRAY);
+    }
+
+    private static final AbstractPreferences[] EMPTY_ABSTRACT_PREFS_ARRAY
+        = new AbstractPreferences[0];
+
+    /**
+     * Implements the <tt>parent</tt> method as per the specification in
+     * {@link Preferences#parent()}.
+     *
+     * <p>This implementation obtains this preference node's lock, checks that
+     * the node has not been removed and returns the parent value that was
+     * passed to this node's constructor.
+     *
+     * @return the parent of this preference node.
+     * @throws IllegalStateException if this node (or an ancestor) has been
+     *         removed with the {@link #removeNode()} method.
+     */
+    public Preferences parent() {
+        synchronized(lock) {
+            if (removed)
+                throw new IllegalStateException("Node has been removed.");
+
+            return parent;
+        }
+    }
+
+    /**
+     * Implements the <tt>node</tt> method as per the specification in
+     * {@link Preferences#node(String)}.
+     *
+     * <p>This implementation obtains this preference node's lock and checks
+     * that the node has not been removed.  If <tt>path</tt> is <tt>""</tt>,
+     * this node is returned; if <tt>path</tt> is <tt>"/"</tt>, this node's
+     * root is returned.  If the first character in <tt>path</tt> is
+     * not <tt>'/'</tt>, the implementation breaks <tt>path</tt> into
+     * tokens and recursively traverses the path from this node to the
+     * named node, "consuming" a name and a slash from <tt>path</tt> at
+     * each step of the traversal.  At each step, the current node is locked
+     * and the node's child-cache is checked for the named node.  If it is
+     * not found, the name is checked to make sure its length does not
+     * exceed <tt>MAX_NAME_LENGTH</tt>.  Then the {@link #childSpi(String)}
+     * method is invoked, and the result stored in this node's child-cache.
+     * If the newly created <tt>Preferences</tt> object's {@link #newNode}
+     * field is <tt>true</tt> and there are any node change listeners,
+     * a notification event is enqueued for processing by the event dispatch
+     * thread.
+     *
+     * <p>When there are no more tokens, the last value found in the
+     * child-cache or returned by <tt>childSpi</tt> is returned by this
+     * method.  If during the traversal, two <tt>"/"</tt> tokens occur
+     * consecutively, or the final token is <tt>"/"</tt> (rather than a name),
+     * an appropriate <tt>IllegalArgumentException</tt> is thrown.
+     *
+     * <p> If the first character of <tt>path</tt> is <tt>'/'</tt>
+     * (indicating an absolute path name) this preference node's
+     * lock is dropped prior to breaking <tt>path</tt> into tokens, and
+     * this method recursively traverses the path starting from the root
+     * (rather than starting from this node).  The traversal is otherwise
+     * identical to the one described for relative path names.  Dropping
+     * the lock on this node prior to commencing the traversal at the root
+     * node is essential to avoid the possibility of deadlock, as per the
+     * {@link #lock locking invariant}.
+     *
+     * @param path the path name of the preference node to return.
+     * @return the specified preference node.
+     * @throws IllegalArgumentException if the path name is invalid (i.e.,
+     *         it contains multiple consecutive slash characters, or ends
+     *         with a slash character and is more than one character long).
+     * @throws IllegalStateException if this node (or an ancestor) has been
+     *         removed with the {@link #removeNode()} method.
+     */
+    public Preferences node(String path) {
+        synchronized(lock) {
+            if (removed)
+                throw new IllegalStateException("Node has been removed.");
+            if (path.equals(""))
+                return this;
+            if (path.equals("/"))
+                return root;
+            if (path.charAt(0) != '/')
+                return node(new StringTokenizer(path, "/", true));
+        }
+
+        // Absolute path.  Note that we've dropped our lock to avoid deadlock
+        return root.node(new StringTokenizer(path.substring(1), "/", true));
+    }
+
+    /**
+     * tokenizer contains <name> {'/' <name>}*
+     */
+    private Preferences node(StringTokenizer path) {
+        String token = path.nextToken();
+        if (token.equals("/"))  // Check for consecutive slashes
+            throw new IllegalArgumentException("Consecutive slashes in path");
+        synchronized(lock) {
+            AbstractPreferences child = kidCache.get(token);
+            if (child == null) {
+                if (token.length() > MAX_NAME_LENGTH)
+                    throw new IllegalArgumentException(
+                        "Node name " + token + " too long");
+                child = childSpi(token);
+                if (child.newNode)
+                    enqueueNodeAddedEvent(child);
+                kidCache.put(token, child);
+            }
+            if (!path.hasMoreTokens())
+                return child;
+            path.nextToken();  // Consume slash
+            if (!path.hasMoreTokens())
+                throw new IllegalArgumentException("Path ends with slash");
+            return child.node(path);
+        }
+    }
+
+    /**
+     * Implements the <tt>nodeExists</tt> method as per the specification in
+     * {@link Preferences#nodeExists(String)}.
+     *
+     * <p>This implementation is very similar to {@link #node(String)},
+     * except that {@link #getChild(String)} is used instead of {@link
+     * #childSpi(String)}.
+     *
+     * @param path the path name of the node whose existence is to be checked.
+     * @return true if the specified node exists.
+     * @throws BackingStoreException if this operation cannot be completed
+     *         due to a failure in the backing store, or inability to
+     *         communicate with it.
+     * @throws IllegalArgumentException if the path name is invalid (i.e.,
+     *         it contains multiple consecutive slash characters, or ends
+     *         with a slash character and is more than one character long).
+     * @throws IllegalStateException if this node (or an ancestor) has been
+     *         removed with the {@link #removeNode()} method and
+     *         <tt>pathname</tt> is not the empty string (<tt>""</tt>).
+     */
+    public boolean nodeExists(String path)
+        throws BackingStoreException
+    {
+        synchronized(lock) {
+            if (path.equals(""))
+                return !removed;
+            if (removed)
+                throw new IllegalStateException("Node has been removed.");
+            if (path.equals("/"))
+                return true;
+            if (path.charAt(0) != '/')
+                return nodeExists(new StringTokenizer(path, "/", true));
+        }
+
+        // Absolute path.  Note that we've dropped our lock to avoid deadlock
+        return root.nodeExists(new StringTokenizer(path.substring(1), "/",
+                                                   true));
+    }
+
+    /**
+     * tokenizer contains <name> {'/' <name>}*
+     */
+    private boolean nodeExists(StringTokenizer path)
+        throws BackingStoreException
+    {
+        String token = path.nextToken();
+        if (token.equals("/"))  // Check for consecutive slashes
+            throw new IllegalArgumentException("Consecutive slashes in path");
+        synchronized(lock) {
+            AbstractPreferences child = kidCache.get(token);
+            if (child == null)
+                child = getChild(token);
+            if (child==null)
+                return false;
+            if (!path.hasMoreTokens())
+                return true;
+            path.nextToken();  // Consume slash
+            if (!path.hasMoreTokens())
+                throw new IllegalArgumentException("Path ends with slash");
+            return child.nodeExists(path);
+        }
+    }
+
+    /**
+
+     * Implements the <tt>removeNode()</tt> method as per the specification in
+     * {@link Preferences#removeNode()}.
+     *
+     * <p>This implementation checks to see that this node is the root; if so,
+     * it throws an appropriate exception.  Then, it locks this node's parent,
+     * and calls a recursive helper method that traverses the subtree rooted at
+     * this node.  The recursive method locks the node on which it was called,
+     * checks that it has not already been removed, and then ensures that all
+     * of its children are cached: The {@link #childrenNamesSpi()} method is
+     * invoked and each returned child name is checked for containment in the
+     * child-cache.  If a child is not already cached, the {@link
+     * #childSpi(String)} method is invoked to create a <tt>Preferences</tt>
+     * instance for it, and this instance is put into the child-cache.  Then
+     * the helper method calls itself recursively on each node contained in its
+     * child-cache.  Next, it invokes {@link #removeNodeSpi()}, marks itself
+     * as removed, and removes itself from its parent's child-cache.  Finally,
+     * if there are any node change listeners, it enqueues a notification
+     * event for processing by the event dispatch thread.
+     *
+     * <p>Note that the helper method is always invoked with all ancestors up
+     * to the "closest non-removed ancestor" locked.
+     *
+     * @throws IllegalStateException if this node (or an ancestor) has already
+     *         been removed with the {@link #removeNode()} method.
+     * @throws UnsupportedOperationException if this method is invoked on
+     *         the root node.
+     * @throws BackingStoreException if this operation cannot be completed
+     *         due to a failure in the backing store, or inability to
+     *         communicate with it.
+     */
+    public void removeNode() throws BackingStoreException {
+        if (this==root)
+            throw new UnsupportedOperationException("Can't remove the root!");
+        synchronized(parent.lock) {
+            removeNode2();
+            parent.kidCache.remove(name);
+        }
+    }
+
+    /*
+     * Called with locks on all nodes on path from parent of "removal root"
+     * to this (including the former but excluding the latter).
+     */
+    private void removeNode2() throws BackingStoreException {
+        synchronized(lock) {
+            if (removed)
+                throw new IllegalStateException("Node already removed.");
+
+            // Ensure that all children are cached
+            String[] kidNames = childrenNamesSpi();
+            for (int i=0; i<kidNames.length; i++)
+                if (!kidCache.containsKey(kidNames[i]))
+                    kidCache.put(kidNames[i], childSpi(kidNames[i]));
+
+            // Recursively remove all cached children
+            for (Iterator<AbstractPreferences> i = kidCache.values().iterator();
+                 i.hasNext();) {
+                try {
+                    i.next().removeNode2();
+                    i.remove();
+                } catch (BackingStoreException x) { }
+            }
+
+            // Now we have no descendants - it's time to die!
+            removeNodeSpi();
+            removed = true;
+            parent.enqueueNodeRemovedEvent(this);
+        }
+    }
+
+    /**
+     * Implements the <tt>name</tt> method as per the specification in
+     * {@link Preferences#name()}.
+     *
+     * <p>This implementation merely returns the name that was
+     * passed to this node's constructor.
+     *
+     * @return this preference node's name, relative to its parent.
+     */
+    public String name() {
+        return name;
+    }
+
+    /**
+     * Implements the <tt>absolutePath</tt> method as per the specification in
+     * {@link Preferences#absolutePath()}.
+     *
+     * <p>This implementation merely returns the absolute path name that
+     * was computed at the time that this node was constructed (based on
+     * the name that was passed to this node's constructor, and the names
+     * that were passed to this node's ancestors' constructors).
+     *
+     * @return this preference node's absolute path name.
+     */
+    public String absolutePath() {
+        return absolutePath;
+    }
+
+    /**
+     * Implements the <tt>isUserNode</tt> method as per the specification in
+     * {@link Preferences#isUserNode()}.
+     *
+     * <p>This implementation compares this node's root node (which is stored
+     * in a private field) with the value returned by
+     * {@link Preferences#userRoot()}.  If the two object references are
+     * identical, this method returns true.
+     *
+     * @return <tt>true</tt> if this preference node is in the user
+     *         preference tree, <tt>false</tt> if it's in the system
+     *         preference tree.
+     */
+    public boolean isUserNode() {
+        return AccessController.doPrivileged(
+            new PrivilegedAction<Boolean>() {
+                public Boolean run() {
+                    return root == Preferences.userRoot();
+            }
+            }).booleanValue();
+    }
+
+    public void addPreferenceChangeListener(PreferenceChangeListener pcl) {
+        if (pcl==null)
+            throw new NullPointerException("Change listener is null.");
+        synchronized(lock) {
+            if (removed)
+                throw new IllegalStateException("Node has been removed.");
+
+            // Copy-on-write
+            PreferenceChangeListener[] old = prefListeners;
+            prefListeners = new PreferenceChangeListener[old.length + 1];
+            System.arraycopy(old, 0, prefListeners, 0, old.length);
+            prefListeners[old.length] = pcl;
+        }
+        startEventDispatchThreadIfNecessary();
+    }
+
+    public void removePreferenceChangeListener(PreferenceChangeListener pcl) {
+        synchronized(lock) {
+            if (removed)
+                throw new IllegalStateException("Node has been removed.");
+            if ((prefListeners == null) || (prefListeners.length == 0))
+                throw new IllegalArgumentException("Listener not registered.");
+
+            // Copy-on-write
+            PreferenceChangeListener[] newPl =
+                new PreferenceChangeListener[prefListeners.length - 1];
+            int i = 0;
+            while (i < newPl.length && prefListeners[i] != pcl)
+                newPl[i] = prefListeners[i++];
+
+            if (i == newPl.length &&  prefListeners[i] != pcl)
+                throw new IllegalArgumentException("Listener not registered.");
+            while (i < newPl.length)
+                newPl[i] = prefListeners[++i];
+            prefListeners = newPl;
+        }
+    }
+
+    public void addNodeChangeListener(NodeChangeListener ncl) {
+        if (ncl==null)
+            throw new NullPointerException("Change listener is null.");
+        synchronized(lock) {
+            if (removed)
+                throw new IllegalStateException("Node has been removed.");
+
+            // Copy-on-write
+            if (nodeListeners == null) {
+                nodeListeners = new NodeChangeListener[1];
+                nodeListeners[0] = ncl;
+            } else {
+                NodeChangeListener[] old = nodeListeners;
+                nodeListeners = new NodeChangeListener[old.length + 1];
+                System.arraycopy(old, 0, nodeListeners, 0, old.length);
+                nodeListeners[old.length] = ncl;
+            }
+        }
+        startEventDispatchThreadIfNecessary();
+    }
+
+    public void removeNodeChangeListener(NodeChangeListener ncl) {
+        synchronized(lock) {
+            if (removed)
+                throw new IllegalStateException("Node has been removed.");
+            if ((nodeListeners == null) || (nodeListeners.length == 0))
+                throw new IllegalArgumentException("Listener not registered.");
+
+            // Copy-on-write
+            int i = 0;
+            while (i < nodeListeners.length && nodeListeners[i] != ncl)
+                i++;
+            if (i == nodeListeners.length)
+                throw new IllegalArgumentException("Listener not registered.");
+            NodeChangeListener[] newNl =
+                new NodeChangeListener[nodeListeners.length - 1];
+            if (i != 0)
+                System.arraycopy(nodeListeners, 0, newNl, 0, i);
+            if (i != newNl.length)
+                System.arraycopy(nodeListeners, i + 1,
+                                 newNl, i, newNl.length - i);
+            nodeListeners = newNl;
+        }
+    }
+
+    // "SPI" METHODS
+
+    /**
+     * Put the given key-value association into this preference node.  It is
+     * guaranteed that <tt>key</tt> and <tt>value</tt> are non-null and of
+     * legal length.  Also, it is guaranteed that this node has not been
+     * removed.  (The implementor needn't check for any of these things.)
+     *
+     * <p>This method is invoked with the lock on this node held.
+     * @param key the key
+     * @param value the value
+     */
+    protected abstract void putSpi(String key, String value);
+
+    /**
+     * Return the value associated with the specified key at this preference
+     * node, or <tt>null</tt> if there is no association for this key, or the
+     * association cannot be determined at this time.  It is guaranteed that
+     * <tt>key</tt> is non-null.  Also, it is guaranteed that this node has
+     * not been removed.  (The implementor needn't check for either of these
+     * things.)
+     *
+     * <p> Generally speaking, this method should not throw an exception
+     * under any circumstances.  If, however, if it does throw an exception,
+     * the exception will be intercepted and treated as a <tt>null</tt>
+     * return value.
+     *
+     * <p>This method is invoked with the lock on this node held.
+     *
+     * @param key the key
+     * @return the value associated with the specified key at this preference
+     *          node, or <tt>null</tt> if there is no association for this
+     *          key, or the association cannot be determined at this time.
+     */
+    protected abstract String getSpi(String key);
+
+    /**
+     * Remove the association (if any) for the specified key at this
+     * preference node.  It is guaranteed that <tt>key</tt> is non-null.
+     * Also, it is guaranteed that this node has not been removed.
+     * (The implementor needn't check for either of these things.)
+     *
+     * <p>This method is invoked with the lock on this node held.
+     * @param key the key
+     */
+    protected abstract void removeSpi(String key);
+
+    /**
+     * Removes this preference node, invalidating it and any preferences that
+     * it contains.  The named child will have no descendants at the time this
+     * invocation is made (i.e., the {@link Preferences#removeNode()} method
+     * invokes this method repeatedly in a bottom-up fashion, removing each of
+     * a node's descendants before removing the node itself).
+     *
+     * <p>This method is invoked with the lock held on this node and its
+     * parent (and all ancestors that are being removed as a
+     * result of a single invocation to {@link Preferences#removeNode()}).
+     *
+     * <p>The removal of a node needn't become persistent until the
+     * <tt>flush</tt> method is invoked on this node (or an ancestor).
+     *
+     * <p>If this node throws a <tt>BackingStoreException</tt>, the exception
+     * will propagate out beyond the enclosing {@link #removeNode()}
+     * invocation.
+     *
+     * @throws BackingStoreException if this operation cannot be completed
+     *         due to a failure in the backing store, or inability to
+     *         communicate with it.
+     */
+    protected abstract void removeNodeSpi() throws BackingStoreException;
+
+    /**
+     * Returns all of the keys that have an associated value in this
+     * preference node.  (The returned array will be of size zero if
+     * this node has no preferences.)  It is guaranteed that this node has not
+     * been removed.
+     *
+     * <p>This method is invoked with the lock on this node held.
+     *
+     * <p>If this node throws a <tt>BackingStoreException</tt>, the exception
+     * will propagate out beyond the enclosing {@link #keys()} invocation.
+     *
+     * @return an array of the keys that have an associated value in this
+     *         preference node.
+     * @throws BackingStoreException if this operation cannot be completed
+     *         due to a failure in the backing store, or inability to
+     *         communicate with it.
+     */
+    protected abstract String[] keysSpi() throws BackingStoreException;
+
+    /**
+     * Returns the names of the children of this preference node.  (The
+     * returned array will be of size zero if this node has no children.)
+     * This method need not return the names of any nodes already cached,
+     * but may do so without harm.
+     *
+     * <p>This method is invoked with the lock on this node held.
+     *
+     * <p>If this node throws a <tt>BackingStoreException</tt>, the exception
+     * will propagate out beyond the enclosing {@link #childrenNames()}
+     * invocation.
+     *
+     * @return an array containing the names of the children of this
+     *         preference node.
+     * @throws BackingStoreException if this operation cannot be completed
+     *         due to a failure in the backing store, or inability to
+     *         communicate with it.
+     */
+    protected abstract String[] childrenNamesSpi()
+        throws BackingStoreException;
+
+    /**
+     * Returns the named child if it exists, or <tt>null</tt> if it does not.
+     * It is guaranteed that <tt>nodeName</tt> is non-null, non-empty,
+     * does not contain the slash character ('/'), and is no longer than
+     * {@link #MAX_NAME_LENGTH} characters.  Also, it is guaranteed
+     * that this node has not been removed.  (The implementor needn't check
+     * for any of these things if he chooses to override this method.)
+     *
+     * <p>Finally, it is guaranteed that the named node has not been returned
+     * by a previous invocation of this method or {@link #childSpi} after the
+     * last time that it was removed.  In other words, a cached value will
+     * always be used in preference to invoking this method.  (The implementor
+     * needn't maintain his own cache of previously returned children if he
+     * chooses to override this method.)
+     *
+     * <p>This implementation obtains this preference node's lock, invokes
+     * {@link #childrenNames()} to get an array of the names of this node's
+     * children, and iterates over the array comparing the name of each child
+     * with the specified node name.  If a child node has the correct name,
+     * the {@link #childSpi(String)} method is invoked and the resulting
+     * node is returned.  If the iteration completes without finding the
+     * specified name, <tt>null</tt> is returned.
+     *
+     * @param nodeName name of the child to be searched for.
+     * @return the named child if it exists, or null if it does not.
+     * @throws BackingStoreException if this operation cannot be completed
+     *         due to a failure in the backing store, or inability to
+     *         communicate with it.
+     */
+    protected AbstractPreferences getChild(String nodeName)
+            throws BackingStoreException {
+        synchronized(lock) {
+            // assert kidCache.get(nodeName)==null;
+            String[] kidNames = childrenNames();
+            for (int i=0; i<kidNames.length; i++)
+                if (kidNames[i].equals(nodeName))
+                    return childSpi(kidNames[i]);
+        }
+        return null;
+    }
+
+    /**
+     * Returns the named child of this preference node, creating it if it does
+     * not already exist.  It is guaranteed that <tt>name</tt> is non-null,
+     * non-empty, does not contain the slash character ('/'), and is no longer
+     * than {@link #MAX_NAME_LENGTH} characters.  Also, it is guaranteed that
+     * this node has not been removed.  (The implementor needn't check for any
+     * of these things.)
+     *
+     * <p>Finally, it is guaranteed that the named node has not been returned
+     * by a previous invocation of this method or {@link #getChild(String)}
+     * after the last time that it was removed.  In other words, a cached
+     * value will always be used in preference to invoking this method.
+     * Subclasses need not maintain their own cache of previously returned
+     * children.
+     *
+     * <p>The implementer must ensure that the returned node has not been
+     * removed.  If a like-named child of this node was previously removed, the
+     * implementer must return a newly constructed <tt>AbstractPreferences</tt>
+     * node; once removed, an <tt>AbstractPreferences</tt> node
+     * cannot be "resuscitated."
+     *
+     * <p>If this method causes a node to be created, this node is not
+     * guaranteed to be persistent until the <tt>flush</tt> method is
+     * invoked on this node or one of its ancestors (or descendants).
+     *
+     * <p>This method is invoked with the lock on this node held.
+     *
+     * @param name The name of the child node to return, relative to
+     *        this preference node.
+     * @return The named child node.
+     */
+    protected abstract AbstractPreferences childSpi(String name);
+
+    /**
+     * Returns the absolute path name of this preferences node.
+     */
+    public String toString() {
+        return (this.isUserNode() ? "User" : "System") +
+               " Preference Node: " + this.absolutePath();
+    }
+
+    /**
+     * Implements the <tt>sync</tt> method as per the specification in
+     * {@link Preferences#sync()}.
+     *
+     * <p>This implementation calls a recursive helper method that locks this
+     * node, invokes syncSpi() on it, unlocks this node, and recursively
+     * invokes this method on each "cached child."  A cached child is a child
+     * of this node that has been created in this VM and not subsequently
+     * removed.  In effect, this method does a depth first traversal of the
+     * "cached subtree" rooted at this node, calling syncSpi() on each node in
+     * the subTree while only that node is locked. Note that syncSpi() is
+     * invoked top-down.
+     *
+     * @throws BackingStoreException if this operation cannot be completed
+     *         due to a failure in the backing store, or inability to
+     *         communicate with it.
+     * @throws IllegalStateException if this node (or an ancestor) has been
+     *         removed with the {@link #removeNode()} method.
+     * @see #flush()
+     */
+    public void sync() throws BackingStoreException {
+        sync2();
+    }
+
+    private void sync2() throws BackingStoreException {
+        AbstractPreferences[] cachedKids;
+
+        synchronized(lock) {
+            if (removed)
+                throw new IllegalStateException("Node has been removed");
+            syncSpi();
+            cachedKids = cachedChildren();
+        }
+
+        for (int i=0; i<cachedKids.length; i++)
+            cachedKids[i].sync2();
+    }
+
+    /**
+     * This method is invoked with this node locked.  The contract of this
+     * method is to synchronize any cached preferences stored at this node
+     * with any stored in the backing store.  (It is perfectly possible that
+     * this node does not exist on the backing store, either because it has
+     * been deleted by another VM, or because it has not yet been created.)
+     * Note that this method should <i>not</i> synchronize the preferences in
+     * any subnodes of this node.  If the backing store naturally syncs an
+     * entire subtree at once, the implementer is encouraged to override
+     * sync(), rather than merely overriding this method.
+     *
+     * <p>If this node throws a <tt>BackingStoreException</tt>, the exception
+     * will propagate out beyond the enclosing {@link #sync()} invocation.
+     *
+     * @throws BackingStoreException if this operation cannot be completed
+     *         due to a failure in the backing store, or inability to
+     *         communicate with it.
+     */
+    protected abstract void syncSpi() throws BackingStoreException;
+
+    /**
+     * Implements the <tt>flush</tt> method as per the specification in
+     * {@link Preferences#flush()}.
+     *
+     * <p>This implementation calls a recursive helper method that locks this
+     * node, invokes flushSpi() on it, unlocks this node, and recursively
+     * invokes this method on each "cached child."  A cached child is a child
+     * of this node that has been created in this VM and not subsequently
+     * removed.  In effect, this method does a depth first traversal of the
+     * "cached subtree" rooted at this node, calling flushSpi() on each node in
+     * the subTree while only that node is locked. Note that flushSpi() is
+     * invoked top-down.
+     *
+     * <p> If this method is invoked on a node that has been removed with
+     * the {@link #removeNode()} method, flushSpi() is invoked on this node,
+     * but not on others.
+     *
+     * @throws BackingStoreException if this operation cannot be completed
+     *         due to a failure in the backing store, or inability to
+     *         communicate with it.
+     * @see #flush()
+     */
+    public void flush() throws BackingStoreException {
+        flush2();
+    }
+
+    private void flush2() throws BackingStoreException {
+        AbstractPreferences[] cachedKids;
+
+        synchronized(lock) {
+            flushSpi();
+            if(removed)
+                return;
+            cachedKids = cachedChildren();
+        }
+
+        for (int i = 0; i < cachedKids.length; i++)
+            cachedKids[i].flush2();
+    }
+
+    /**
+     * This method is invoked with this node locked.  The contract of this
+     * method is to force any cached changes in the contents of this
+     * preference node to the backing store, guaranteeing their persistence.
+     * (It is perfectly possible that this node does not exist on the backing
+     * store, either because it has been deleted by another VM, or because it
+     * has not yet been created.)  Note that this method should <i>not</i>
+     * flush the preferences in any subnodes of this node.  If the backing
+     * store naturally flushes an entire subtree at once, the implementer is
+     * encouraged to override flush(), rather than merely overriding this
+     * method.
+     *
+     * <p>If this node throws a <tt>BackingStoreException</tt>, the exception
+     * will propagate out beyond the enclosing {@link #flush()} invocation.
+     *
+     * @throws BackingStoreException if this operation cannot be completed
+     *         due to a failure in the backing store, or inability to
+     *         communicate with it.
+     */
+    protected abstract void flushSpi() throws BackingStoreException;
+
+    /**
+     * Returns <tt>true</tt> iff this node (or an ancestor) has been
+     * removed with the {@link #removeNode()} method.  This method
+     * locks this node prior to returning the contents of the private
+     * field used to track this state.
+     *
+     * @return <tt>true</tt> iff this node (or an ancestor) has been
+     *       removed with the {@link #removeNode()} method.
+     */
+    protected boolean isRemoved() {
+        synchronized(lock) {
+            return removed;
+        }
+    }
+
+    /**
+     * Queue of pending notification events.  When a preference or node
+     * change event for which there are one or more listeners occurs,
+     * it is placed on this queue and the queue is notified.  A background
+     * thread waits on this queue and delivers the events.  This decouples
+     * event delivery from preference activity, greatly simplifying
+     * locking and reducing opportunity for deadlock.
+     */
+    private static final List<EventObject> eventQueue = new LinkedList<>();
+
+    /**
+     * These two classes are used to distinguish NodeChangeEvents on
+     * eventQueue so the event dispatch thread knows whether to call
+     * childAdded or childRemoved.
+     */
+    private class NodeAddedEvent extends NodeChangeEvent {
+        private static final long serialVersionUID = -6743557530157328528L;
+        NodeAddedEvent(Preferences parent, Preferences child) {
+            super(parent, child);
+        }
+    }
+    private class NodeRemovedEvent extends NodeChangeEvent {
+        private static final long serialVersionUID = 8735497392918824837L;
+        NodeRemovedEvent(Preferences parent, Preferences child) {
+            super(parent, child);
+        }
+    }
+
+    /**
+     * A single background thread ("the event notification thread") monitors
+     * the event queue and delivers events that are placed on the queue.
+     */
+    private static class EventDispatchThread extends Thread {
+        public void run() {
+            while(true) {
+                // Wait on eventQueue till an event is present
+                EventObject event = null;
+                synchronized(eventQueue) {
+                    try {
+                        while (eventQueue.isEmpty())
+                            eventQueue.wait();
+                        event = eventQueue.remove(0);
+                    } catch (InterruptedException e) {
+                        // XXX Log "Event dispatch thread interrupted. Exiting"
+                        return;
+                    }
+                }
+
+                // Now we have event & hold no locks; deliver evt to listeners
+                AbstractPreferences src=(AbstractPreferences)event.getSource();
+                if (event instanceof PreferenceChangeEvent) {
+                    PreferenceChangeEvent pce = (PreferenceChangeEvent)event;
+                    PreferenceChangeListener[] listeners = src.prefListeners();
+                    for (int i=0; i<listeners.length; i++)
+                        listeners[i].preferenceChange(pce);
+                } else {
+                    NodeChangeEvent nce = (NodeChangeEvent)event;
+                    NodeChangeListener[] listeners = src.nodeListeners();
+                    if (nce instanceof NodeAddedEvent) {
+                        for (int i=0; i<listeners.length; i++)
+                            listeners[i].childAdded(nce);
+                    } else {
+                        // assert nce instanceof NodeRemovedEvent;
+                        for (int i=0; i<listeners.length; i++)
+                            listeners[i].childRemoved(nce);
+                    }
+                }
+            }
+        }
+    }
+
+    private static Thread eventDispatchThread = null;
+
+    /**
+     * This method starts the event dispatch thread the first time it
+     * is called.  The event dispatch thread will be started only
+     * if someone registers a listener.
+     */
+    private static synchronized void startEventDispatchThreadIfNecessary() {
+        if (eventDispatchThread == null) {
+            // XXX Log "Starting event dispatch thread"
+            eventDispatchThread = new EventDispatchThread();
+            eventDispatchThread.setDaemon(true);
+            eventDispatchThread.start();
+        }
+    }
+
+    /**
+     * Return this node's preference/node change listeners.  Even though
+     * we're using a copy-on-write lists, we use synchronized accessors to
+     * ensure information transmission from the writing thread to the
+     * reading thread.
+     */
+    PreferenceChangeListener[] prefListeners() {
+        synchronized(lock) {
+            return prefListeners;
+        }
+    }
+    NodeChangeListener[] nodeListeners() {
+        synchronized(lock) {
+            return nodeListeners;
+        }
+    }
+
+    /**
+     * Enqueue a preference change event for delivery to registered
+     * preference change listeners unless there are no registered
+     * listeners.  Invoked with this.lock held.
+     */
+    private void enqueuePreferenceChangeEvent(String key, String newValue) {
+        if (prefListeners.length != 0) {
+            synchronized(eventQueue) {
+                eventQueue.add(new PreferenceChangeEvent(this, key, newValue));
+                eventQueue.notify();
+            }
+        }
+    }
+
+    /**
+     * Enqueue a "node added" event for delivery to registered node change
+     * listeners unless there are no registered listeners.  Invoked with
+     * this.lock held.
+     */
+    private void enqueueNodeAddedEvent(Preferences child) {
+        if (nodeListeners.length != 0) {
+            synchronized(eventQueue) {
+                eventQueue.add(new NodeAddedEvent(this, child));
+                eventQueue.notify();
+            }
+        }
+    }
+
+    /**
+     * Enqueue a "node removed" event for delivery to registered node change
+     * listeners unless there are no registered listeners.  Invoked with
+     * this.lock held.
+     */
+    private void enqueueNodeRemovedEvent(Preferences child) {
+        if (nodeListeners.length != 0) {
+            synchronized(eventQueue) {
+                eventQueue.add(new NodeRemovedEvent(this, child));
+                eventQueue.notify();
+            }
+        }
+    }
+
+    /**
+     * Implements the <tt>exportNode</tt> method as per the specification in
+     * {@link Preferences#exportNode(OutputStream)}.
+     *
+     * @param os the output stream on which to emit the XML document.
+     * @throws IOException if writing to the specified output stream
+     *         results in an <tt>IOException</tt>.
+     * @throws BackingStoreException if preference data cannot be read from
+     *         backing store.
+     */
+    public void exportNode(OutputStream os)
+        throws IOException, BackingStoreException
+    {
+        XmlSupport.export(os, this, false);
+    }
+
+    /**
+     * Implements the <tt>exportSubtree</tt> method as per the specification in
+     * {@link Preferences#exportSubtree(OutputStream)}.
+     *
+     * @param os the output stream on which to emit the XML document.
+     * @throws IOException if writing to the specified output stream
+     *         results in an <tt>IOException</tt>.
+     * @throws BackingStoreException if preference data cannot be read from
+     *         backing store.
+     */
+    public void exportSubtree(OutputStream os)
+        throws IOException, BackingStoreException
+    {
+        XmlSupport.export(os, this, true);
+    }
+}

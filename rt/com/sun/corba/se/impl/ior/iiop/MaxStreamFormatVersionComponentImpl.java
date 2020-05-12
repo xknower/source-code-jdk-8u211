@@ -1,104 +1,98 @@
-/*    */ package com.sun.corba.se.impl.ior.iiop;
-/*    */ 
-/*    */ import com.sun.corba.se.impl.orbutil.ORBUtility;
-/*    */ import com.sun.corba.se.spi.ior.TaggedComponentBase;
-/*    */ import com.sun.corba.se.spi.ior.iiop.MaxStreamFormatVersionComponent;
-/*    */ import org.omg.CORBA_2_3.portable.OutputStream;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class MaxStreamFormatVersionComponentImpl
-/*    */   extends TaggedComponentBase
-/*    */   implements MaxStreamFormatVersionComponent
-/*    */ {
-/*    */   private byte version;
-/* 51 */   public static final MaxStreamFormatVersionComponentImpl singleton = new MaxStreamFormatVersionComponentImpl();
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public boolean equals(Object paramObject) {
-/* 56 */     if (!(paramObject instanceof MaxStreamFormatVersionComponentImpl)) {
-/* 57 */       return false;
-/*    */     }
-/* 59 */     MaxStreamFormatVersionComponentImpl maxStreamFormatVersionComponentImpl = (MaxStreamFormatVersionComponentImpl)paramObject;
-/*    */ 
-/*    */     
-/* 62 */     return (this.version == maxStreamFormatVersionComponentImpl.version);
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public int hashCode() {
-/* 67 */     return this.version;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public String toString() {
-/* 72 */     return "MaxStreamFormatVersionComponentImpl[version=" + this.version + "]";
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public MaxStreamFormatVersionComponentImpl() {
-/* 77 */     this.version = ORBUtility.getMaxStreamFormatVersion();
-/*    */   }
-/*    */   
-/*    */   public MaxStreamFormatVersionComponentImpl(byte paramByte) {
-/* 81 */     this.version = paramByte;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public byte getMaxStreamFormatVersion() {
-/* 86 */     return this.version;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public void writeContents(OutputStream paramOutputStream) {
-/* 91 */     paramOutputStream.write_octet(this.version);
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public int getId() {
-/* 96 */     return 38;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\ior\iiop\MaxStreamFormatVersionComponentImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+/**
+ */
+package com.sun.corba.se.impl.ior.iiop;
+
+import org.omg.IOP.TAG_RMI_CUSTOM_MAX_STREAM_FORMAT;
+
+import org.omg.CORBA_2_3.portable.OutputStream;
+
+import javax.rmi.CORBA.Util;
+import javax.rmi.CORBA.ValueHandler;
+import javax.rmi.CORBA.ValueHandlerMultiFormat;
+
+import com.sun.corba.se.impl.orbutil.ORBUtility;
+
+import com.sun.corba.se.spi.ior.TaggedComponentBase;
+
+import com.sun.corba.se.spi.ior.iiop.MaxStreamFormatVersionComponent;
+
+// Java to IDL ptc 02-01-12 1.4.11
+// TAG_RMI_CUSTOM_MAX_STREAM_FORMAT
+public class MaxStreamFormatVersionComponentImpl extends TaggedComponentBase
+    implements MaxStreamFormatVersionComponent
+{
+    private byte version;
+
+    public static final MaxStreamFormatVersionComponentImpl singleton
+        = new MaxStreamFormatVersionComponentImpl();
+
+    public boolean equals(Object obj)
+    {
+        if (!(obj instanceof MaxStreamFormatVersionComponentImpl))
+            return false ;
+
+        MaxStreamFormatVersionComponentImpl other =
+            (MaxStreamFormatVersionComponentImpl)obj ;
+
+        return version == other.version ;
+    }
+
+    public int hashCode()
+    {
+        return version ;
+    }
+
+    public String toString()
+    {
+        return "MaxStreamFormatVersionComponentImpl[version=" + version + "]" ;
+    }
+
+    public MaxStreamFormatVersionComponentImpl()
+    {
+        version = ORBUtility.getMaxStreamFormatVersion();
+    }
+
+    public MaxStreamFormatVersionComponentImpl(byte streamFormatVersion) {
+        version = streamFormatVersion;
+    }
+
+    public byte getMaxStreamFormatVersion()
+    {
+        return version;
+    }
+
+    public void writeContents(OutputStream os)
+    {
+        os.write_octet(version);
+    }
+
+    public int getId()
+    {
+        return TAG_RMI_CUSTOM_MAX_STREAM_FORMAT.value;
+    }
+}

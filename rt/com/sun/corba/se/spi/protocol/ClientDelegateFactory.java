@@ -1,13 +1,36 @@
-package com.sun.corba.se.spi.protocol;
-
-import com.sun.corba.se.spi.transport.CorbaContactInfoList;
-
-public interface ClientDelegateFactory {
-  CorbaClientDelegate create(CorbaContactInfoList paramCorbaContactInfoList);
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\spi\protocol\ClientDelegateFactory.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.spi.protocol ;
+
+import com.sun.corba.se.spi.transport.CorbaContactInfoList ;
+
+import com.sun.corba.se.spi.protocol.CorbaClientDelegate ;
+
+/** Interface used to create a ClientDelegate from a ContactInfoList.
+ */
+public interface ClientDelegateFactory {
+    CorbaClientDelegate create( CorbaContactInfoList list ) ;
+}

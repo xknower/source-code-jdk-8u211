@@ -1,476 +1,471 @@
-/*     */ package com.sun.jmx.mbeanserver;
-/*     */ 
-/*     */ import java.lang.ref.WeakReference;
-/*     */ import java.lang.reflect.Array;
-/*     */ import java.lang.reflect.Constructor;
-/*     */ import java.lang.reflect.InvocationTargetException;
-/*     */ import java.lang.reflect.Method;
-/*     */ import java.lang.reflect.Type;
-/*     */ import java.util.Arrays;
-/*     */ import java.util.List;
-/*     */ import java.util.WeakHashMap;
-/*     */ import javax.management.Descriptor;
-/*     */ import javax.management.ImmutableDescriptor;
-/*     */ import javax.management.InvalidAttributeValueException;
-/*     */ import javax.management.MBeanAttributeInfo;
-/*     */ import javax.management.MBeanConstructorInfo;
-/*     */ import javax.management.MBeanException;
-/*     */ import javax.management.MBeanInfo;
-/*     */ import javax.management.MBeanNotificationInfo;
-/*     */ import javax.management.MBeanOperationInfo;
-/*     */ import javax.management.NotCompliantMBeanException;
-/*     */ import javax.management.NotificationBroadcaster;
-/*     */ import javax.management.ReflectionException;
-/*     */ import sun.reflect.misc.ReflectUtil;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ abstract class MBeanIntrospector<M>
-/*     */ {
-/*     */   abstract PerInterfaceMap<M> getPerInterfaceMap();
-/*     */   
-/*     */   abstract MBeanInfoMap getMBeanInfoMap();
-/*     */   
-/*     */   abstract MBeanAnalyzer<M> getAnalyzer(Class<?> paramClass) throws NotCompliantMBeanException;
-/*     */   
-/*     */   abstract boolean isMXBean();
-/*     */   
-/*     */   abstract M mFrom(Method paramMethod);
-/*     */   
-/*     */   abstract String getName(M paramM);
-/*     */   
-/*     */   abstract Type getGenericReturnType(M paramM);
-/*     */   
-/*     */   abstract Type[] getGenericParameterTypes(M paramM);
-/*     */   
-/*     */   abstract String[] getSignature(M paramM);
-/*     */   
-/*     */   abstract void checkMethod(M paramM);
-/*     */   
-/*     */   abstract Object invokeM2(M paramM, Object paramObject1, Object[] paramArrayOfObject, Object paramObject2) throws InvocationTargetException, IllegalAccessException, MBeanException;
-/*     */   
-/*     */   abstract boolean validParameter(M paramM, Object paramObject1, int paramInt, Object paramObject2);
-/*     */   
-/*     */   abstract MBeanAttributeInfo getMBeanAttributeInfo(String paramString, M paramM1, M paramM2);
-/*     */   
-/*     */   abstract MBeanOperationInfo getMBeanOperationInfo(String paramString, M paramM);
-/*     */   
-/*     */   abstract Descriptor getBasicMBeanDescriptor();
-/*     */   
-/*     */   abstract Descriptor getMBeanDescriptor(Class<?> paramClass);
-/*     */   
-/*     */   static final class PerInterfaceMap<M>
-/*     */     extends WeakHashMap<Class<?>, WeakReference<PerInterface<M>>> {}
-/*     */   
-/*     */   final List<Method> getMethods(Class<?> paramClass) {
-/* 180 */     ReflectUtil.checkPackageAccess(paramClass);
-/* 181 */     return Arrays.asList(paramClass.getMethods());
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   final PerInterface<M> getPerInterface(Class<?> paramClass) throws NotCompliantMBeanException {
-/* 186 */     PerInterfaceMap<M> perInterfaceMap = getPerInterfaceMap();
-/* 187 */     synchronized (perInterfaceMap) {
-/* 188 */       WeakReference<PerInterface<M>> weakReference = perInterfaceMap.get(paramClass);
-/* 189 */       PerInterface<M> perInterface = (weakReference == null) ? null : weakReference.get();
-/* 190 */       if (perInterface == null) {
-/*     */         try {
-/* 192 */           MBeanAnalyzer<M> mBeanAnalyzer = getAnalyzer(paramClass);
-/*     */           
-/* 194 */           MBeanInfo mBeanInfo = makeInterfaceMBeanInfo(paramClass, mBeanAnalyzer);
-/* 195 */           perInterface = new PerInterface<>(paramClass, this, mBeanAnalyzer, mBeanInfo);
-/*     */           
-/* 197 */           weakReference = new WeakReference<>(perInterface);
-/* 198 */           perInterfaceMap.put(paramClass, weakReference);
-/* 199 */         } catch (Exception exception) {
-/* 200 */           throw Introspector.throwException(paramClass, exception);
-/*     */         } 
-/*     */       }
-/* 203 */       return perInterface;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private MBeanInfo makeInterfaceMBeanInfo(Class<?> paramClass, MBeanAnalyzer<M> paramMBeanAnalyzer) {
-/* 217 */     MBeanInfoMaker mBeanInfoMaker = new MBeanInfoMaker();
-/* 218 */     paramMBeanAnalyzer.visit(mBeanInfoMaker);
-/*     */ 
-/*     */     
-/* 221 */     return mBeanInfoMaker.makeMBeanInfo(paramClass, "Information on the management interface of the MBean");
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   final boolean consistent(M paramM1, M paramM2) {
-/* 226 */     return (paramM1 == null || paramM2 == null || 
-/* 227 */       getGenericReturnType(paramM1).equals(getGenericParameterTypes(paramM2)[0]));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   final Object invokeM(M paramM, Object paramObject1, Object[] paramArrayOfObject, Object paramObject2) throws MBeanException, ReflectionException {
-/*     */     try {
-/* 237 */       return invokeM2(paramM, paramObject1, paramArrayOfObject, paramObject2);
-/* 238 */     } catch (InvocationTargetException invocationTargetException) {
-/* 239 */       unwrapInvocationTargetException(invocationTargetException);
-/* 240 */       throw new RuntimeException(invocationTargetException);
-/* 241 */     } catch (IllegalAccessException illegalAccessException) {
-/* 242 */       throw new ReflectionException(illegalAccessException, illegalAccessException.toString());
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   final void invokeSetter(String paramString, M paramM, Object paramObject1, Object paramObject2, Object paramObject3) throws MBeanException, ReflectionException, InvalidAttributeValueException {
-/*     */     try {
-/* 267 */       invokeM2(paramM, paramObject1, new Object[] { paramObject2 }, paramObject3);
-/* 268 */     } catch (IllegalAccessException illegalAccessException) {
-/* 269 */       throw new ReflectionException(illegalAccessException, illegalAccessException.toString());
-/* 270 */     } catch (RuntimeException runtimeException) {
-/* 271 */       maybeInvalidParameter(paramString, paramM, paramObject2, paramObject3);
-/* 272 */       throw runtimeException;
-/* 273 */     } catch (InvocationTargetException invocationTargetException) {
-/* 274 */       maybeInvalidParameter(paramString, paramM, paramObject2, paramObject3);
-/* 275 */       unwrapInvocationTargetException(invocationTargetException);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void maybeInvalidParameter(String paramString, M paramM, Object paramObject1, Object paramObject2) throws InvalidAttributeValueException {
-/* 282 */     if (!validParameter(paramM, paramObject1, 0, paramObject2)) {
-/* 283 */       String str = "Invalid value for attribute " + paramString + ": " + paramObject1;
-/*     */       
-/* 285 */       throw new InvalidAttributeValueException(str);
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   static boolean isValidParameter(Method paramMethod, Object paramObject, int paramInt) {
-/* 290 */     Class<?> clazz = paramMethod.getParameterTypes()[paramInt];
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     try {
-/* 295 */       Object object = Array.newInstance(clazz, 1);
-/* 296 */       Array.set(object, 0, paramObject);
-/* 297 */       return true;
-/* 298 */     } catch (IllegalArgumentException illegalArgumentException) {
-/* 299 */       return false;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static void unwrapInvocationTargetException(InvocationTargetException paramInvocationTargetException) throws MBeanException {
-/* 306 */     Throwable throwable = paramInvocationTargetException.getCause();
-/* 307 */     if (throwable instanceof RuntimeException)
-/* 308 */       throw (RuntimeException)throwable; 
-/* 309 */     if (throwable instanceof Error) {
-/* 310 */       throw (Error)throwable;
-/*     */     }
-/* 312 */     throw new MBeanException((Exception)throwable, (throwable == null) ? null : throwable
-/* 313 */         .toString());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private class MBeanInfoMaker
-/*     */     implements MBeanAnalyzer.MBeanVisitor<M>
-/*     */   {
-/*     */     public void visitAttribute(String param1String, M param1M1, M param1M2) {
-/* 324 */       MBeanAttributeInfo mBeanAttributeInfo = MBeanIntrospector.this.getMBeanAttributeInfo(param1String, param1M1, param1M2);
-/*     */       
-/* 326 */       this.attrs.add(mBeanAttributeInfo);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public void visitOperation(String param1String, M param1M) {
-/* 332 */       MBeanOperationInfo mBeanOperationInfo = MBeanIntrospector.this.getMBeanOperationInfo(param1String, param1M);
-/*     */       
-/* 334 */       this.ops.add(mBeanOperationInfo);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     MBeanInfo makeMBeanInfo(Class<?> param1Class, String param1String) {
-/* 342 */       MBeanAttributeInfo[] arrayOfMBeanAttributeInfo = this.attrs.<MBeanAttributeInfo>toArray(new MBeanAttributeInfo[0]);
-/*     */       
-/* 344 */       MBeanOperationInfo[] arrayOfMBeanOperationInfo = this.ops.<MBeanOperationInfo>toArray(new MBeanOperationInfo[0]);
-/*     */       
-/* 346 */       String str = "interfaceClassName=" + param1Class.getName();
-/* 347 */       ImmutableDescriptor immutableDescriptor1 = new ImmutableDescriptor(new String[] { str });
-/*     */       
-/* 349 */       Descriptor descriptor1 = MBeanIntrospector.this.getBasicMBeanDescriptor();
-/*     */       
-/* 351 */       Descriptor descriptor2 = Introspector.descriptorForElement(param1Class);
-/*     */       
-/* 353 */       ImmutableDescriptor immutableDescriptor2 = DescriptorCache.getInstance().union(new Descriptor[] { immutableDescriptor1, descriptor1, descriptor2 });
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 358 */       return new MBeanInfo(param1Class.getName(), param1String, arrayOfMBeanAttributeInfo, null, arrayOfMBeanOperationInfo, null, immutableDescriptor2);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 367 */     private final List<MBeanAttributeInfo> attrs = Util.newList();
-/* 368 */     private final List<MBeanOperationInfo> ops = Util.newList();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     private MBeanInfoMaker() {}
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static class MBeanInfoMap
-/*     */     extends WeakHashMap<Class<?>, WeakHashMap<Class<?>, MBeanInfo>> {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   final MBeanInfo getMBeanInfo(Object paramObject, PerInterface<M> paramPerInterface) {
-/* 392 */     MBeanInfo mBeanInfo = getClassMBeanInfo(paramObject.getClass(), paramPerInterface);
-/* 393 */     MBeanNotificationInfo[] arrayOfMBeanNotificationInfo = findNotifications(paramObject);
-/* 394 */     if (arrayOfMBeanNotificationInfo == null || arrayOfMBeanNotificationInfo.length == 0) {
-/* 395 */       return mBeanInfo;
-/*     */     }
-/* 397 */     return new MBeanInfo(mBeanInfo.getClassName(), mBeanInfo
-/* 398 */         .getDescription(), mBeanInfo
-/* 399 */         .getAttributes(), mBeanInfo
-/* 400 */         .getConstructors(), mBeanInfo
-/* 401 */         .getOperations(), arrayOfMBeanNotificationInfo, mBeanInfo
-/*     */         
-/* 403 */         .getDescriptor());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   final MBeanInfo getClassMBeanInfo(Class<?> paramClass, PerInterface<M> paramPerInterface) {
-/* 416 */     MBeanInfoMap mBeanInfoMap = getMBeanInfoMap();
-/* 417 */     synchronized (mBeanInfoMap) {
-/* 418 */       WeakHashMap<Class<?>, MBeanInfo> weakHashMap = mBeanInfoMap.get(paramClass);
-/* 419 */       if (weakHashMap == null) {
-/* 420 */         weakHashMap = new WeakHashMap<>();
-/* 421 */         mBeanInfoMap.put(paramClass, weakHashMap);
-/*     */       } 
-/* 423 */       Class<?> clazz = paramPerInterface.getMBeanInterface();
-/* 424 */       MBeanInfo mBeanInfo = weakHashMap.get(clazz);
-/* 425 */       if (mBeanInfo == null) {
-/* 426 */         MBeanInfo mBeanInfo1 = paramPerInterface.getMBeanInfo();
-/*     */         
-/* 428 */         ImmutableDescriptor immutableDescriptor = ImmutableDescriptor.union(new Descriptor[] { mBeanInfo1.getDescriptor(), 
-/* 429 */               getMBeanDescriptor(paramClass) });
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 434 */         mBeanInfo = new MBeanInfo(paramClass.getName(), mBeanInfo1.getDescription(), mBeanInfo1.getAttributes(), findConstructors(paramClass), mBeanInfo1.getOperations(), (MBeanNotificationInfo[])null, immutableDescriptor);
-/*     */ 
-/*     */         
-/* 437 */         weakHashMap.put(clazz, mBeanInfo);
-/*     */       } 
-/* 439 */       return mBeanInfo;
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   static MBeanNotificationInfo[] findNotifications(Object paramObject) {
-/* 444 */     if (!(paramObject instanceof NotificationBroadcaster)) {
-/* 445 */       return null;
-/*     */     }
-/* 447 */     MBeanNotificationInfo[] arrayOfMBeanNotificationInfo1 = ((NotificationBroadcaster)paramObject).getNotificationInfo();
-/* 448 */     if (arrayOfMBeanNotificationInfo1 == null)
-/* 449 */       return null; 
-/* 450 */     MBeanNotificationInfo[] arrayOfMBeanNotificationInfo2 = new MBeanNotificationInfo[arrayOfMBeanNotificationInfo1.length];
-/*     */     
-/* 452 */     for (byte b = 0; b < arrayOfMBeanNotificationInfo1.length; b++) {
-/* 453 */       MBeanNotificationInfo mBeanNotificationInfo = arrayOfMBeanNotificationInfo1[b];
-/* 454 */       if (mBeanNotificationInfo.getClass() != MBeanNotificationInfo.class)
-/* 455 */         mBeanNotificationInfo = (MBeanNotificationInfo)mBeanNotificationInfo.clone(); 
-/* 456 */       arrayOfMBeanNotificationInfo2[b] = mBeanNotificationInfo;
-/*     */     } 
-/* 458 */     return arrayOfMBeanNotificationInfo2;
-/*     */   }
-/*     */   
-/*     */   private static MBeanConstructorInfo[] findConstructors(Class<?> paramClass) {
-/* 462 */     Constructor[] arrayOfConstructor = (Constructor[])paramClass.getConstructors();
-/* 463 */     MBeanConstructorInfo[] arrayOfMBeanConstructorInfo = new MBeanConstructorInfo[arrayOfConstructor.length];
-/* 464 */     for (byte b = 0; b < arrayOfConstructor.length; b++)
-/*     */     {
-/* 466 */       arrayOfMBeanConstructorInfo[b] = new MBeanConstructorInfo("Public constructor of the MBean", arrayOfConstructor[b]);
-/*     */     }
-/* 468 */     return arrayOfMBeanConstructorInfo;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\jmx\mbeanserver\MBeanIntrospector.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2005, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.jmx.mbeanserver;
+
+
+import static com.sun.jmx.mbeanserver.Util.*;
+
+import java.lang.ref.WeakReference;
+import java.lang.reflect.Array;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Type;
+import java.util.Arrays;
+import java.util.List;
+import java.util.WeakHashMap;
+
+import javax.management.Descriptor;
+import javax.management.ImmutableDescriptor;
+import javax.management.IntrospectionException;
+import javax.management.InvalidAttributeValueException;
+import javax.management.MBeanAttributeInfo;
+import javax.management.MBeanConstructorInfo;
+import javax.management.MBeanException;
+import javax.management.MBeanInfo;
+import javax.management.MBeanNotificationInfo;
+import javax.management.MBeanOperationInfo;
+import javax.management.NotCompliantMBeanException;
+import javax.management.NotificationBroadcaster;
+import javax.management.ReflectionException;
+import sun.reflect.misc.ReflectUtil;
+
+/**
+ * An introspector for MBeans of a certain type.  There is one instance
+ * of this class for Standard MBeans, and one for every MXBeanMappingFactory;
+ * these two cases correspond to the two concrete subclasses of this abstract
+ * class.
+ *
+ * @param <M> the representation of methods for this kind of MBean:
+ * Method for Standard MBeans, ConvertingMethod for MXBeans.
+ *
+ * @since 1.6
+ */
+/*
+ * Using a type parameter <M> allows us to deal with the fact that
+ * Method and ConvertingMethod have no useful common ancestor, on
+ * which we could call getName, getGenericReturnType, etc.  A simpler approach
+ * would be to wrap every Method in an object that does have a common
+ * ancestor with ConvertingMethod.  But that would mean an extra object
+ * for every Method in every Standard MBean interface.
+ */
+abstract class MBeanIntrospector<M> {
+    static final class PerInterfaceMap<M>
+            extends WeakHashMap<Class<?>, WeakReference<PerInterface<M>>> {}
+
+    /** The map from interface to PerInterface for this type of MBean. */
+    abstract PerInterfaceMap<M> getPerInterfaceMap();
+    /**
+     * The map from concrete implementation class and interface to
+     * MBeanInfo for this type of MBean.
+     */
+    abstract MBeanInfoMap getMBeanInfoMap();
+
+    /** Make an interface analyzer for this type of MBean. */
+    abstract MBeanAnalyzer<M> getAnalyzer(Class<?> mbeanInterface)
+    throws NotCompliantMBeanException;
+
+    /** True if MBeans with this kind of introspector are MXBeans. */
+    abstract boolean isMXBean();
+
+    /** Find the M corresponding to the given Method. */
+    abstract M mFrom(Method m);
+
+    /** Get the name of this method. */
+    abstract String getName(M m);
+
+    /**
+     * Get the return type of this method.  This is the return type
+     * of a method in a Java interface, so for MXBeans it is the
+     * declared Java type, not the mapped Open Type.
+     */
+    abstract Type getGenericReturnType(M m);
+
+    /**
+     * Get the parameter types of this method in the Java interface
+     * it came from.
+     */
+    abstract Type[] getGenericParameterTypes(M m);
+
+    /**
+     * Get the signature of this method as a caller would have to supply
+     * it in MBeanServer.invoke.  For MXBeans, the named types will be
+     * the mapped Open Types for the parameters.
+     */
+    abstract String[] getSignature(M m);
+
+    /**
+     * Check that this method is valid.  For example, a method in an
+     * MXBean interface is not valid if one of its parameters cannot be
+     * mapped to an Open Type.
+     */
+    abstract void checkMethod(M m);
+
+    /**
+     * Invoke the method with the given target and arguments.
+     *
+     * @param cookie Additional information about the target.  For an
+     * MXBean, this is the MXBeanLookup associated with the MXBean.
+     */
+    /*
+     * It would be cleaner if the type of the cookie were a
+     * type parameter to this class, but that would involve a lot of
+     * messy type parameter propagation just to avoid a couple of casts.
+     */
+    abstract Object invokeM2(M m, Object target, Object[] args, Object cookie)
+    throws InvocationTargetException, IllegalAccessException,
+            MBeanException;
+
+    /**
+     * Test whether the given value is valid for the given parameter of this
+     * M.
+     */
+    abstract boolean validParameter(M m, Object value, int paramNo,
+            Object cookie);
+
+    /**
+     * Construct an MBeanAttributeInfo for the given attribute based on the
+     * given getter and setter.  One but not both of the getter and setter
+     * may be null.
+     */
+    abstract MBeanAttributeInfo getMBeanAttributeInfo(String attributeName,
+            M getter, M setter);
+    /**
+     * Construct an MBeanOperationInfo for the given operation based on
+     * the M it was derived from.
+     */
+    abstract MBeanOperationInfo getMBeanOperationInfo(String operationName,
+            M operation);
+
+    /**
+     * Get a Descriptor containing fields that MBeans of this kind will
+     * always have.  For example, MXBeans will always have "mxbean=true".
+     */
+    abstract Descriptor getBasicMBeanDescriptor();
+
+    /**
+     * Get a Descriptor containing additional fields beyond the ones
+     * from getBasicMBeanDescriptor that MBeans whose concrete class
+     * is resourceClass will always have.
+     */
+    abstract Descriptor getMBeanDescriptor(Class<?> resourceClass);
+
+    /**
+     * Get the methods to be analyzed to build the MBean interface.
+     */
+    final List<Method> getMethods(final Class<?> mbeanType) {
+        ReflectUtil.checkPackageAccess(mbeanType);
+        return Arrays.asList(mbeanType.getMethods());
+    }
+
+    final PerInterface<M> getPerInterface(Class<?> mbeanInterface)
+    throws NotCompliantMBeanException {
+        PerInterfaceMap<M> map = getPerInterfaceMap();
+        synchronized (map) {
+            WeakReference<PerInterface<M>> wr = map.get(mbeanInterface);
+            PerInterface<M> pi = (wr == null) ? null : wr.get();
+            if (pi == null) {
+                try {
+                    MBeanAnalyzer<M> analyzer = getAnalyzer(mbeanInterface);
+                    MBeanInfo mbeanInfo =
+                            makeInterfaceMBeanInfo(mbeanInterface, analyzer);
+                    pi = new PerInterface<M>(mbeanInterface, this, analyzer,
+                            mbeanInfo);
+                    wr = new WeakReference<PerInterface<M>>(pi);
+                    map.put(mbeanInterface, wr);
+                } catch (Exception x) {
+                    throw Introspector.throwException(mbeanInterface,x);
+                }
+            }
+            return pi;
+        }
+    }
+
+    /**
+     * Make the MBeanInfo skeleton for the given MBean interface using
+     * the given analyzer.  This will never be the MBeanInfo of any real
+     * MBean (because the getClassName() must be a concrete class), but
+     * its MBeanAttributeInfo[] and MBeanOperationInfo[] can be inserted
+     * into such an MBeanInfo, and its Descriptor can be the basis for
+     * the MBeanInfo's Descriptor.
+     */
+    private MBeanInfo makeInterfaceMBeanInfo(Class<?> mbeanInterface,
+            MBeanAnalyzer<M> analyzer) {
+        final MBeanInfoMaker maker = new MBeanInfoMaker();
+        analyzer.visit(maker);
+        final String description =
+                "Information on the management interface of the MBean";
+        return maker.makeMBeanInfo(mbeanInterface, description);
+    }
+
+    /** True if the given getter and setter are consistent. */
+    final boolean consistent(M getter, M setter) {
+        return (getter == null || setter == null ||
+                getGenericReturnType(getter).equals(getGenericParameterTypes(setter)[0]));
+    }
+
+    /**
+     * Invoke the given M on the given target with the given args and cookie.
+     * Wrap exceptions appropriately.
+     */
+    final Object invokeM(M m, Object target, Object[] args, Object cookie)
+    throws MBeanException, ReflectionException {
+        try {
+            return invokeM2(m, target, args, cookie);
+        } catch (InvocationTargetException e) {
+            unwrapInvocationTargetException(e);
+            throw new RuntimeException(e); // not reached
+        } catch (IllegalAccessException e) {
+            throw new ReflectionException(e, e.toString());
+        }
+        /* We do not catch and wrap RuntimeException or Error,
+         * because we're in a DynamicMBean, so the logic for DynamicMBeans
+         * will do the wrapping.
+         */
+    }
+
+    /**
+     * Invoke the given setter on the given target with the given argument
+     * and cookie.  Wrap exceptions appropriately.
+     */
+    /* If the value is of the wrong type for the method we are about to
+     * invoke, we are supposed to throw an InvalidAttributeValueException.
+     * Rather than making the check always, we invoke the method, then
+     * if it throws an exception we check the type to see if that was
+     * what caused the exception.  The assumption is that an exception
+     * from an invalid type will arise before any user method is ever
+     * called (either in reflection or in OpenConverter).
+     */
+    final void invokeSetter(String name, M setter, Object target, Object arg,
+            Object cookie)
+            throws MBeanException, ReflectionException,
+            InvalidAttributeValueException {
+        try {
+            invokeM2(setter, target, new Object[] {arg}, cookie);
+        } catch (IllegalAccessException e) {
+            throw new ReflectionException(e, e.toString());
+        } catch (RuntimeException e) {
+            maybeInvalidParameter(name, setter, arg, cookie);
+            throw e;
+        } catch (InvocationTargetException e) {
+            maybeInvalidParameter(name, setter, arg, cookie);
+            unwrapInvocationTargetException(e);
+        }
+    }
+
+    private void maybeInvalidParameter(String name, M setter, Object arg,
+            Object cookie)
+            throws InvalidAttributeValueException {
+        if (!validParameter(setter, arg, 0, cookie)) {
+            final String msg =
+                    "Invalid value for attribute " + name + ": " + arg;
+            throw new InvalidAttributeValueException(msg);
+        }
+    }
+
+    static boolean isValidParameter(Method m, Object value, int paramNo) {
+        Class<?> c = m.getParameterTypes()[paramNo];
+        try {
+            // Following is expensive but we only call this method to determine
+            // if an exception is due to an incompatible parameter type.
+            // Plain old c.isInstance doesn't work for primitive types.
+            Object a = Array.newInstance(c, 1);
+            Array.set(a, 0, value);
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+    }
+
+    private static void
+            unwrapInvocationTargetException(InvocationTargetException e)
+            throws MBeanException {
+        Throwable t = e.getCause();
+        if (t instanceof RuntimeException)
+            throw (RuntimeException) t;
+        else if (t instanceof Error)
+            throw (Error) t;
+        else
+            throw new MBeanException((Exception) t,
+                    (t == null ? null : t.toString()));
+    }
+
+    /** A visitor that constructs the per-interface MBeanInfo. */
+    private class MBeanInfoMaker
+            implements MBeanAnalyzer.MBeanVisitor<M> {
+
+        public void visitAttribute(String attributeName,
+                M getter,
+                M setter) {
+            MBeanAttributeInfo mbai =
+                    getMBeanAttributeInfo(attributeName, getter, setter);
+
+            attrs.add(mbai);
+        }
+
+        public void visitOperation(String operationName,
+                M operation) {
+            MBeanOperationInfo mboi =
+                    getMBeanOperationInfo(operationName, operation);
+
+            ops.add(mboi);
+        }
+
+        /** Make an MBeanInfo based on the attributes and operations
+         *  found in the interface. */
+        MBeanInfo makeMBeanInfo(Class<?> mbeanInterface,
+                String description) {
+            final MBeanAttributeInfo[] attrArray =
+                    attrs.toArray(new MBeanAttributeInfo[0]);
+            final MBeanOperationInfo[] opArray =
+                    ops.toArray(new MBeanOperationInfo[0]);
+            final String interfaceClassName =
+                    "interfaceClassName=" + mbeanInterface.getName();
+            final Descriptor classNameDescriptor =
+                    new ImmutableDescriptor(interfaceClassName);
+            final Descriptor mbeanDescriptor = getBasicMBeanDescriptor();
+            final Descriptor annotatedDescriptor =
+                    Introspector.descriptorForElement(mbeanInterface);
+            final Descriptor descriptor =
+                DescriptorCache.getInstance().union(
+                    classNameDescriptor,
+                    mbeanDescriptor,
+                    annotatedDescriptor);
+
+            return new MBeanInfo(mbeanInterface.getName(),
+                    description,
+                    attrArray,
+                    null,
+                    opArray,
+                    null,
+                    descriptor);
+        }
+
+        private final List<MBeanAttributeInfo> attrs = newList();
+        private final List<MBeanOperationInfo> ops = newList();
+    }
+
+    /*
+     * Looking up the MBeanInfo for a given base class (implementation class)
+     * is complicated by the fact that we may use the same base class with
+     * several different explicit MBean interfaces via the
+     * javax.management.StandardMBean class.  It is further complicated
+     * by the fact that we have to be careful not to retain a strong reference
+     * to any Class object for fear we would prevent a ClassLoader from being
+     * garbage-collected.  So we have a first lookup from the base class
+     * to a map for each interface that base class might specify giving
+     * the MBeanInfo constructed for that base class and interface.
+     */
+    static class MBeanInfoMap
+            extends WeakHashMap<Class<?>, WeakHashMap<Class<?>, MBeanInfo>> {
+    }
+
+    /**
+     * Return the MBeanInfo for the given resource, based on the given
+     * per-interface data.
+     */
+    final MBeanInfo getMBeanInfo(Object resource, PerInterface<M> perInterface) {
+        MBeanInfo mbi =
+                getClassMBeanInfo(resource.getClass(), perInterface);
+        MBeanNotificationInfo[] notifs = findNotifications(resource);
+        if (notifs == null || notifs.length == 0)
+            return mbi;
+        else {
+            return new MBeanInfo(mbi.getClassName(),
+                    mbi.getDescription(),
+                    mbi.getAttributes(),
+                    mbi.getConstructors(),
+                    mbi.getOperations(),
+                    notifs,
+                    mbi.getDescriptor());
+        }
+    }
+
+    /**
+     * Return the basic MBeanInfo for resources of the given class and
+     * per-interface data.  This MBeanInfo might not be the final MBeanInfo
+     * for instances of the class, because if the class is a
+     * NotificationBroadcaster then each instance gets to decide what
+     * MBeanNotificationInfo[] to put in its own MBeanInfo.
+     */
+    final MBeanInfo getClassMBeanInfo(Class<?> resourceClass,
+            PerInterface<M> perInterface) {
+        MBeanInfoMap map = getMBeanInfoMap();
+        synchronized (map) {
+            WeakHashMap<Class<?>, MBeanInfo> intfMap = map.get(resourceClass);
+            if (intfMap == null) {
+                intfMap = new WeakHashMap<Class<?>, MBeanInfo>();
+                map.put(resourceClass, intfMap);
+            }
+            Class<?> intfClass = perInterface.getMBeanInterface();
+            MBeanInfo mbi = intfMap.get(intfClass);
+            if (mbi == null) {
+                MBeanInfo imbi = perInterface.getMBeanInfo();
+                Descriptor descriptor =
+                        ImmutableDescriptor.union(imbi.getDescriptor(),
+                        getMBeanDescriptor(resourceClass));
+                mbi = new MBeanInfo(resourceClass.getName(),
+                        imbi.getDescription(),
+                        imbi.getAttributes(),
+                        findConstructors(resourceClass),
+                        imbi.getOperations(),
+                        (MBeanNotificationInfo[]) null,
+                        descriptor);
+                intfMap.put(intfClass, mbi);
+            }
+            return mbi;
+        }
+    }
+
+    static MBeanNotificationInfo[] findNotifications(Object moi) {
+        if (!(moi instanceof NotificationBroadcaster))
+            return null;
+        MBeanNotificationInfo[] mbn =
+                ((NotificationBroadcaster) moi).getNotificationInfo();
+        if (mbn == null)
+            return null;
+        MBeanNotificationInfo[] result =
+                new MBeanNotificationInfo[mbn.length];
+        for (int i = 0; i < mbn.length; i++) {
+            MBeanNotificationInfo ni = mbn[i];
+            if (ni.getClass() != MBeanNotificationInfo.class)
+                ni = (MBeanNotificationInfo) ni.clone();
+            result[i] = ni;
+        }
+        return result;
+    }
+
+    private static MBeanConstructorInfo[] findConstructors(Class<?> c) {
+        Constructor<?>[] cons = c.getConstructors();
+        MBeanConstructorInfo[] mbc = new MBeanConstructorInfo[cons.length];
+        for (int i = 0; i < cons.length; i++) {
+            final String descr = "Public constructor of the MBean";
+            mbc[i] = new MBeanConstructorInfo(descr, cons[i]);
+        }
+        return mbc;
+    }
+
+}

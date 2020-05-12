@@ -1,214 +1,209 @@
-/*     */ package com.sun.org.apache.xerces.internal.xinclude;
-/*     */ 
-/*     */ import java.util.Stack;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class XPointerFramework
-/*     */ {
-/*     */   XPointerSchema[] fXPointerSchema;
-/*     */   String[] fSchemaPointerName;
-/*     */   String[] fSchemaPointerURI;
-/*     */   String fSchemaPointer;
-/*     */   String fCurrentSchemaPointer;
-/*     */   Stack fSchemaNotAvailable;
-/*  79 */   int fCountSchemaName = 0;
-/*  80 */   int schemaLength = 0;
-/*     */   XPointerSchema fDefaultXPointerSchema;
-/*     */   
-/*     */   public XPointerFramework() {
-/*  84 */     this(null);
-/*     */   }
-/*     */   
-/*     */   public XPointerFramework(XPointerSchema[] xpointerschema) {
-/*  88 */     this.fXPointerSchema = xpointerschema;
-/*  89 */     this.fSchemaNotAvailable = new Stack();
-/*     */   }
-/*     */   
-/*     */   public void reset() {
-/*  93 */     this.fXPointerSchema = null;
-/*  94 */     this.fXPointerSchema = null;
-/*  95 */     this.fCountSchemaName = 0;
-/*  96 */     this.schemaLength = 0;
-/*  97 */     this.fSchemaPointerName = null;
-/*  98 */     this.fSchemaPointerURI = null;
-/*  99 */     this.fDefaultXPointerSchema = null;
-/* 100 */     this.fCurrentSchemaPointer = null;
-/*     */   }
-/*     */   
-/*     */   public void setXPointerSchema(XPointerSchema[] xpointerschema) {
-/* 104 */     this.fXPointerSchema = xpointerschema;
-/*     */   }
-/*     */   
-/*     */   public void setSchemaPointer(String schemaPointer) {
-/* 108 */     this.fSchemaPointer = schemaPointer;
-/*     */   }
-/*     */   
-/*     */   public XPointerSchema getNextXPointerSchema() {
-/* 112 */     int i = this.fCountSchemaName;
-/* 113 */     if (this.fSchemaPointerName == null) {
-/* 114 */       getSchemaNames();
-/*     */     }
-/* 116 */     if (this.fDefaultXPointerSchema == null) {
-/* 117 */       getDefaultSchema();
-/*     */     }
-/* 119 */     if (this.fDefaultXPointerSchema.getXpointerSchemaName().equalsIgnoreCase(this.fSchemaPointerName[i])) {
-/* 120 */       this.fDefaultXPointerSchema.reset();
-/* 121 */       this.fDefaultXPointerSchema.setXPointerSchemaPointer(this.fSchemaPointerURI[i]);
-/* 122 */       this.fCountSchemaName = ++i;
-/* 123 */       return getDefaultSchema();
-/*     */     } 
-/* 125 */     if (this.fXPointerSchema == null) {
-/* 126 */       this.fCountSchemaName = ++i;
-/* 127 */       return null;
-/*     */     } 
-/*     */     
-/* 130 */     int fschemalength = this.fXPointerSchema.length;
-/*     */     
-/* 132 */     for (; this.fSchemaPointerName[i] != null; i++) {
-/* 133 */       for (int j = 0; j < fschemalength; j++) {
-/* 134 */         if (this.fSchemaPointerName[i].equalsIgnoreCase(this.fXPointerSchema[j].getXpointerSchemaName())) {
-/* 135 */           this.fXPointerSchema[j].setXPointerSchemaPointer(this.fSchemaPointerURI[i]);
-/* 136 */           this.fCountSchemaName = ++i;
-/* 137 */           return this.fXPointerSchema[j];
-/*     */         } 
-/*     */       } 
-/*     */       
-/* 141 */       if (this.fSchemaNotAvailable == null) {
-/* 142 */         this.fSchemaNotAvailable = new Stack();
-/*     */       }
-/* 144 */       this.fSchemaNotAvailable.push(this.fSchemaPointerName[i]);
-/*     */     } 
-/* 146 */     return null;
-/*     */   }
-/*     */   
-/*     */   public XPointerSchema getDefaultSchema() {
-/* 150 */     if (this.fDefaultXPointerSchema == null)
-/* 151 */       this.fDefaultXPointerSchema = new XPointerElementHandler(); 
-/* 152 */     return this.fDefaultXPointerSchema;
-/*     */   }
-/*     */   
-/*     */   public void getSchemaNames() {
-/* 156 */     int count = 0;
-/* 157 */     int index = 0, lastindex = 0;
-/* 158 */     int schemapointerindex = 0, schemapointerURIindex = 0;
-/*     */     
-/* 160 */     int length = this.fSchemaPointer.length();
-/* 161 */     this.fSchemaPointerName = new String[5];
-/* 162 */     this.fSchemaPointerURI = new String[5];
-/*     */     
-/* 164 */     index = this.fSchemaPointer.indexOf('(');
-/* 165 */     if (index <= 0) {
-/*     */       return;
-/*     */     }
-/* 168 */     this.fSchemaPointerName[schemapointerindex++] = this.fSchemaPointer.substring(0, index++).trim();
-/* 169 */     lastindex = index;
-/* 170 */     String tempURI = null;
-/* 171 */     count++;
-/*     */     
-/* 173 */     while (index < length) {
-/* 174 */       char c = this.fSchemaPointer.charAt(index);
-/* 175 */       if (c == '(')
-/* 176 */         count++; 
-/* 177 */       if (c == ')')
-/* 178 */         count--; 
-/* 179 */       if (count == 0) {
-/* 180 */         tempURI = this.fSchemaPointer.substring(lastindex, index).trim();
-/* 181 */         this.fSchemaPointerURI[schemapointerURIindex++] = getEscapedURI(tempURI);
-/* 182 */         lastindex = index;
-/* 183 */         if ((index = this.fSchemaPointer.indexOf('(', lastindex)) != -1) {
-/* 184 */           this.fSchemaPointerName[schemapointerindex++] = this.fSchemaPointer.substring(lastindex + 1, index).trim();
-/* 185 */           count++;
-/* 186 */           lastindex = index + 1;
-/*     */         } else {
-/*     */           
-/* 189 */           index = lastindex;
-/*     */         } 
-/*     */       } 
-/* 192 */       index++;
-/*     */     } 
-/* 194 */     this.schemaLength = schemapointerURIindex - 1;
-/*     */   }
-/*     */   
-/*     */   public String getEscapedURI(String URI) {
-/* 198 */     return URI;
-/*     */   }
-/*     */   
-/*     */   public int getSchemaCount() {
-/* 202 */     return this.schemaLength;
-/*     */   }
-/*     */   
-/*     */   public int getCurrentPointer() {
-/* 206 */     return this.fCountSchemaName;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\xinclude\XPointerFramework.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * The Apache Software License, Version 1.1
+ *
+ *
+ * Copyright (c) 2001-2003 The Apache Software Foundation.  All rights
+ * reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. The end-user documentation included with the redistribution,
+ *    if any, must include the following acknowledgment:
+ *       "This product includes software developed by the
+ *        Apache Software Foundation (http://www.apache.org/)."
+ *    Alternately, this acknowledgment may appear in the software itself,
+ *    if and wherever such third-party acknowledgments normally appear.
+ *
+ * 4. The names "Xerces" and "Apache Software Foundation" must
+ *    not be used to endorse or promote products derived from this
+ *    software without prior written permission. For written
+ *    permission, please contact apache@apache.org.
+ *
+ * 5. Products derived from this software may not be called "Apache",
+ *    nor may "Apache" appear in their name, without prior written
+ *    permission of the Apache Software Foundation.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED.  IN NO EVENT SHALL THE APACHE SOFTWARE FOUNDATION OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+ * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+ * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals on behalf of the Apache Software Foundation and was
+ * originally based on software copyright (c) 1999, International
+ * Business Machines, Inc., http://www.apache.org.  For more
+ * information on the Apache Software Foundation, please see
+ * <http://www.apache.org/>.
+ */
+package com.sun.org.apache.xerces.internal.xinclude;
+
+import java.util.Stack;
+import com.sun.org.apache.xerces.internal.xinclude.XPointerSchema;
+
+public class XPointerFramework{
+
+        /*
+                Todo's by next integration.
+                While constructing schema names and uris use a dynamic datastructure.
+         */
+
+    XPointerSchema [] fXPointerSchema;
+    String [] fSchemaPointerName;
+    String [] fSchemaPointerURI;
+    String fSchemaPointer;
+    String fCurrentSchemaPointer;
+    Stack fSchemaNotAvailable;
+    int fCountSchemaName = 0;
+    int schemaLength = 0;
+    XPointerSchema fDefaultXPointerSchema;
+
+    public XPointerFramework(){
+        this(null);
+    }
+
+    public XPointerFramework(XPointerSchema [] xpointerschema){
+        fXPointerSchema = xpointerschema;
+        fSchemaNotAvailable = new Stack();
+    }
+
+    public void reset(){
+        fXPointerSchema = null;
+        fXPointerSchema = null;
+        fCountSchemaName = 0;
+        schemaLength = 0;
+        fSchemaPointerName = null;
+        fSchemaPointerURI = null;
+        fDefaultXPointerSchema = null;
+        fCurrentSchemaPointer = null;
+    }
+
+    public void setXPointerSchema(XPointerSchema [] xpointerschema){
+        fXPointerSchema = xpointerschema;
+    }
+
+    public void setSchemaPointer(String schemaPointer){
+        fSchemaPointer = schemaPointer;
+    }
+
+    public XPointerSchema getNextXPointerSchema(){
+        int  i=fCountSchemaName;
+        if(fSchemaPointerName == null){
+            getSchemaNames();
+        }
+        if(fDefaultXPointerSchema == null){
+            getDefaultSchema();
+        }
+        if(fDefaultXPointerSchema.getXpointerSchemaName().equalsIgnoreCase(fSchemaPointerName[i])){
+            fDefaultXPointerSchema.reset();
+            fDefaultXPointerSchema.setXPointerSchemaPointer(fSchemaPointerURI[i]);
+            fCountSchemaName = ++i;
+            return  getDefaultSchema();
+        }
+        if(fXPointerSchema == null){
+            fCountSchemaName = ++i;
+            return null;
+        }
+
+        int fschemalength = fXPointerSchema.length;
+
+        for(;fSchemaPointerName[i] != null; i++){
+            for(int j=0; j<fschemalength; j++ ){
+                if(fSchemaPointerName[i].equalsIgnoreCase(fXPointerSchema[j].getXpointerSchemaName())){
+                    fXPointerSchema[j].setXPointerSchemaPointer(fSchemaPointerURI[i]);
+                    fCountSchemaName = ++i;
+                    return fXPointerSchema[j];
+                }
+            }
+
+            if(fSchemaNotAvailable == null)
+            fSchemaNotAvailable = new Stack();
+
+            fSchemaNotAvailable.push(fSchemaPointerName[i]);
+        }
+        return null;
+    }
+
+    public XPointerSchema getDefaultSchema(){
+        if(fDefaultXPointerSchema == null)
+            fDefaultXPointerSchema = new XPointerElementHandler();
+        return fDefaultXPointerSchema;
+    }
+
+    public void getSchemaNames(){
+        int count =0;
+        int index =0, lastindex =0;
+        int schemapointerindex  =0, schemapointerURIindex=0;
+        char c;
+        int length = fSchemaPointer.length();
+        fSchemaPointerName = new String [5];
+        fSchemaPointerURI = new String [5];
+
+        index = fSchemaPointer.indexOf('(');
+        if( index <= 0)
+            return;
+
+        fSchemaPointerName[schemapointerindex++] = fSchemaPointer.substring(0, index++).trim();
+        lastindex = index;
+        String tempURI = null;
+        count++;
+
+        while(index < length){
+            c = fSchemaPointer.charAt(index);
+            if(c == '(')
+                count++;
+            if(c == ')')
+                count--;
+            if(count==0 ){
+                tempURI = fSchemaPointer.substring(lastindex, index).trim();
+                fSchemaPointerURI[schemapointerURIindex++] = getEscapedURI(tempURI);
+                lastindex = index;
+                if((index = fSchemaPointer.indexOf('(', lastindex)) != -1){
+                    fSchemaPointerName[schemapointerindex++] = fSchemaPointer.substring(lastindex+1, index).trim();
+                    count++;
+                    lastindex = index+1;
+                }
+                else{
+                    index = lastindex;
+                }
+            }
+            index++;
+        }
+        schemaLength = schemapointerURIindex -1;
+    }
+
+    public String   getEscapedURI(String URI){
+        return URI;
+    }
+
+    public int getSchemaCount(){
+        return schemaLength;
+    }
+
+    public int getCurrentPointer(){
+        return fCountSchemaName;
+    }
+
+}//XPointerFramwork

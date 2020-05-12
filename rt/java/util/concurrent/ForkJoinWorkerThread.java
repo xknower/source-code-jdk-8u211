@@ -1,281 +1,276 @@
-/*     */ package java.util.concurrent;
-/*     */ 
-/*     */ import java.security.AccessControlContext;
-/*     */ import java.security.ProtectionDomain;
-/*     */ import sun.misc.Unsafe;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class ForkJoinWorkerThread
-/*     */   extends Thread
-/*     */ {
-/*     */   final ForkJoinPool pool;
-/*     */   final ForkJoinPool.WorkQueue workQueue;
-/*     */   private static final Unsafe U;
-/*     */   private static final long THREADLOCALS;
-/*     */   private static final long INHERITABLETHREADLOCALS;
-/*     */   private static final long INHERITEDACCESSCONTROLCONTEXT;
-/*     */   
-/*     */   protected ForkJoinWorkerThread(ForkJoinPool paramForkJoinPool) {
-/*  84 */     super("aForkJoinWorkerThread");
-/*  85 */     this.pool = paramForkJoinPool;
-/*  86 */     this.workQueue = paramForkJoinPool.registerWorker(this);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   ForkJoinWorkerThread(ForkJoinPool paramForkJoinPool, ThreadGroup paramThreadGroup, AccessControlContext paramAccessControlContext) {
-/*  94 */     super(paramThreadGroup, null, "aForkJoinWorkerThread");
-/*  95 */     U.putOrderedObject(this, INHERITEDACCESSCONTROLCONTEXT, paramAccessControlContext);
-/*  96 */     eraseThreadLocals();
-/*  97 */     this.pool = paramForkJoinPool;
-/*  98 */     this.workQueue = paramForkJoinPool.registerWorker(this);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ForkJoinPool getPool() {
-/* 107 */     return this.pool;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getPoolIndex() {
-/* 121 */     return this.workQueue.getPoolIndex();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void onStart() {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void onTermination(Throwable paramThrowable) {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void run() {
-/* 153 */     if (this.workQueue.array == null) {
-/* 154 */       Throwable throwable = null;
-/*     */       try {
-/* 156 */         onStart();
-/* 157 */         this.pool.runWorker(this.workQueue);
-/* 158 */       } catch (Throwable throwable1) {
-/* 159 */         throwable = throwable1;
-/*     */       } finally {
-/*     */         try {
-/* 162 */           onTermination(throwable);
-/* 163 */         } catch (Throwable throwable1) {
-/* 164 */           if (throwable == null)
-/* 165 */             throwable = throwable1; 
-/*     */         } finally {
-/* 167 */           this.pool.deregisterWorker(this, throwable);
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   final void eraseThreadLocals() {
-/* 177 */     U.putObject(this, THREADLOCALS, (Object)null);
-/* 178 */     U.putObject(this, INHERITABLETHREADLOCALS, (Object)null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void afterTopLevelExec() {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static {
-/*     */     try {
-/* 194 */       U = Unsafe.getUnsafe();
-/* 195 */       Class<Thread> clazz = Thread.class;
-/*     */       
-/* 197 */       THREADLOCALS = U.objectFieldOffset(clazz.getDeclaredField("threadLocals"));
-/*     */       
-/* 199 */       INHERITABLETHREADLOCALS = U.objectFieldOffset(clazz.getDeclaredField("inheritableThreadLocals"));
-/*     */       
-/* 201 */       INHERITEDACCESSCONTROLCONTEXT = U.objectFieldOffset(clazz.getDeclaredField("inheritedAccessControlContext"));
-/*     */     }
-/* 203 */     catch (Exception exception) {
-/* 204 */       throw new Error(exception);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static final class InnocuousForkJoinWorkerThread
-/*     */     extends ForkJoinWorkerThread
-/*     */   {
-/* 216 */     private static final ThreadGroup innocuousThreadGroup = createThreadGroup();
-/*     */ 
-/*     */     
-/* 219 */     private static final AccessControlContext INNOCUOUS_ACC = new AccessControlContext(new ProtectionDomain[] { new ProtectionDomain(null, null) });
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     InnocuousForkJoinWorkerThread(ForkJoinPool param1ForkJoinPool) {
-/* 226 */       super(param1ForkJoinPool, innocuousThreadGroup, INNOCUOUS_ACC);
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     void afterTopLevelExec() {
-/* 231 */       eraseThreadLocals();
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public ClassLoader getContextClassLoader() {
-/* 236 */       return ClassLoader.getSystemClassLoader();
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public void setUncaughtExceptionHandler(Thread.UncaughtExceptionHandler param1UncaughtExceptionHandler) {}
-/*     */ 
-/*     */     
-/*     */     public void setContextClassLoader(ClassLoader param1ClassLoader) {
-/* 244 */       throw new SecurityException("setContextClassLoader");
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     private static ThreadGroup createThreadGroup() {
-/*     */       try {
-/* 254 */         Unsafe unsafe = Unsafe.getUnsafe();
-/* 255 */         Class<Thread> clazz = Thread.class;
-/* 256 */         Class<ThreadGroup> clazz1 = ThreadGroup.class;
-/* 257 */         long l1 = unsafe.objectFieldOffset(clazz.getDeclaredField("group"));
-/* 258 */         long l2 = unsafe.objectFieldOffset(clazz1.getDeclaredField("parent"));
-/*     */         
-/* 260 */         ThreadGroup threadGroup = (ThreadGroup)unsafe.getObject(Thread.currentThread(), l1);
-/* 261 */         while (threadGroup != null) {
-/* 262 */           ThreadGroup threadGroup1 = (ThreadGroup)unsafe.getObject(threadGroup, l2);
-/* 263 */           if (threadGroup1 == null) {
-/* 264 */             return new ThreadGroup(threadGroup, "InnocuousForkJoinWorkerThreadGroup");
-/*     */           }
-/* 266 */           threadGroup = threadGroup1;
-/*     */         } 
-/* 268 */       } catch (Exception exception) {
-/* 269 */         throw new Error(exception);
-/*     */       } 
-/*     */       
-/* 272 */       throw new Error("Cannot create ThreadGroup");
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\concurrent\ForkJoinWorkerThread.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+/*
+ *
+ *
+ *
+ *
+ *
+ * Written by Doug Lea with assistance from members of JCP JSR-166
+ * Expert Group and released to the public domain, as explained at
+ * http://creativecommons.org/publicdomain/zero/1.0/
+ */
+
+package java.util.concurrent;
+
+import java.security.AccessControlContext;
+import java.security.ProtectionDomain;
+
+/**
+ * A thread managed by a {@link ForkJoinPool}, which executes
+ * {@link ForkJoinTask}s.
+ * This class is subclassable solely for the sake of adding
+ * functionality -- there are no overridable methods dealing with
+ * scheduling or execution.  However, you can override initialization
+ * and termination methods surrounding the main task processing loop.
+ * If you do create such a subclass, you will also need to supply a
+ * custom {@link ForkJoinPool.ForkJoinWorkerThreadFactory} to
+ * {@linkplain ForkJoinPool#ForkJoinPool use it} in a {@code ForkJoinPool}.
+ *
+ * @since 1.7
+ * @author Doug Lea
+ */
+public class ForkJoinWorkerThread extends Thread {
+    /*
+     * ForkJoinWorkerThreads are managed by ForkJoinPools and perform
+     * ForkJoinTasks. For explanation, see the internal documentation
+     * of class ForkJoinPool.
+     *
+     * This class just maintains links to its pool and WorkQueue.  The
+     * pool field is set immediately upon construction, but the
+     * workQueue field is not set until a call to registerWorker
+     * completes. This leads to a visibility race, that is tolerated
+     * by requiring that the workQueue field is only accessed by the
+     * owning thread.
+     *
+     * Support for (non-public) subclass InnocuousForkJoinWorkerThread
+     * requires that we break quite a lot of encapsulation (via Unsafe)
+     * both here and in the subclass to access and set Thread fields.
+     */
+
+    final ForkJoinPool pool;                // the pool this thread works in
+    final ForkJoinPool.WorkQueue workQueue; // work-stealing mechanics
+
+    /**
+     * Creates a ForkJoinWorkerThread operating in the given pool.
+     *
+     * @param pool the pool this thread works in
+     * @throws NullPointerException if pool is null
+     */
+    protected ForkJoinWorkerThread(ForkJoinPool pool) {
+        // Use a placeholder until a useful name can be set in registerWorker
+        super("aForkJoinWorkerThread");
+        this.pool = pool;
+        this.workQueue = pool.registerWorker(this);
+    }
+
+    /**
+     * Version for InnocuousForkJoinWorkerThread
+     */
+    ForkJoinWorkerThread(ForkJoinPool pool, ThreadGroup threadGroup,
+                         AccessControlContext acc) {
+        super(threadGroup, null, "aForkJoinWorkerThread");
+        U.putOrderedObject(this, INHERITEDACCESSCONTROLCONTEXT, acc);
+        eraseThreadLocals(); // clear before registering
+        this.pool = pool;
+        this.workQueue = pool.registerWorker(this);
+    }
+
+    /**
+     * Returns the pool hosting this thread.
+     *
+     * @return the pool
+     */
+    public ForkJoinPool getPool() {
+        return pool;
+    }
+
+    /**
+     * Returns the unique index number of this thread in its pool.
+     * The returned value ranges from zero to the maximum number of
+     * threads (minus one) that may exist in the pool, and does not
+     * change during the lifetime of the thread.  This method may be
+     * useful for applications that track status or collect results
+     * per-worker-thread rather than per-task.
+     *
+     * @return the index number
+     */
+    public int getPoolIndex() {
+        return workQueue.getPoolIndex();
+    }
+
+    /**
+     * Initializes internal state after construction but before
+     * processing any tasks. If you override this method, you must
+     * invoke {@code super.onStart()} at the beginning of the method.
+     * Initialization requires care: Most fields must have legal
+     * default values, to ensure that attempted accesses from other
+     * threads work correctly even before this thread starts
+     * processing tasks.
+     */
+    protected void onStart() {
+    }
+
+    /**
+     * Performs cleanup associated with termination of this worker
+     * thread.  If you override this method, you must invoke
+     * {@code super.onTermination} at the end of the overridden method.
+     *
+     * @param exception the exception causing this thread to abort due
+     * to an unrecoverable error, or {@code null} if completed normally
+     */
+    protected void onTermination(Throwable exception) {
+    }
+
+    /**
+     * This method is required to be public, but should never be
+     * called explicitly. It performs the main run loop to execute
+     * {@link ForkJoinTask}s.
+     */
+    public void run() {
+        if (workQueue.array == null) { // only run once
+            Throwable exception = null;
+            try {
+                onStart();
+                pool.runWorker(workQueue);
+            } catch (Throwable ex) {
+                exception = ex;
+            } finally {
+                try {
+                    onTermination(exception);
+                } catch (Throwable ex) {
+                    if (exception == null)
+                        exception = ex;
+                } finally {
+                    pool.deregisterWorker(this, exception);
+                }
+            }
+        }
+    }
+
+    /**
+     * Erases ThreadLocals by nulling out Thread maps.
+     */
+    final void eraseThreadLocals() {
+        U.putObject(this, THREADLOCALS, null);
+        U.putObject(this, INHERITABLETHREADLOCALS, null);
+    }
+
+    /**
+     * Non-public hook method for InnocuousForkJoinWorkerThread
+     */
+    void afterTopLevelExec() {
+    }
+
+    // Set up to allow setting thread fields in constructor
+    private static final sun.misc.Unsafe U;
+    private static final long THREADLOCALS;
+    private static final long INHERITABLETHREADLOCALS;
+    private static final long INHERITEDACCESSCONTROLCONTEXT;
+    static {
+        try {
+            U = sun.misc.Unsafe.getUnsafe();
+            Class<?> tk = Thread.class;
+            THREADLOCALS = U.objectFieldOffset
+                (tk.getDeclaredField("threadLocals"));
+            INHERITABLETHREADLOCALS = U.objectFieldOffset
+                (tk.getDeclaredField("inheritableThreadLocals"));
+            INHERITEDACCESSCONTROLCONTEXT = U.objectFieldOffset
+                (tk.getDeclaredField("inheritedAccessControlContext"));
+
+        } catch (Exception e) {
+            throw new Error(e);
+        }
+    }
+
+    /**
+     * A worker thread that has no permissions, is not a member of any
+     * user-defined ThreadGroup, and erases all ThreadLocals after
+     * running each top-level task.
+     */
+    static final class InnocuousForkJoinWorkerThread extends ForkJoinWorkerThread {
+        /** The ThreadGroup for all InnocuousForkJoinWorkerThreads */
+        private static final ThreadGroup innocuousThreadGroup =
+            createThreadGroup();
+
+        /** An AccessControlContext supporting no privileges */
+        private static final AccessControlContext INNOCUOUS_ACC =
+            new AccessControlContext(
+                new ProtectionDomain[] {
+                    new ProtectionDomain(null, null)
+                });
+
+        InnocuousForkJoinWorkerThread(ForkJoinPool pool) {
+            super(pool, innocuousThreadGroup, INNOCUOUS_ACC);
+        }
+
+        @Override // to erase ThreadLocals
+        void afterTopLevelExec() {
+            eraseThreadLocals();
+        }
+
+        @Override // to always report system loader
+        public ClassLoader getContextClassLoader() {
+            return ClassLoader.getSystemClassLoader();
+        }
+
+        @Override // to silently fail
+        public void setUncaughtExceptionHandler(UncaughtExceptionHandler x) { }
+
+        @Override // paranoically
+        public void setContextClassLoader(ClassLoader cl) {
+            throw new SecurityException("setContextClassLoader");
+        }
+
+        /**
+         * Returns a new group with the system ThreadGroup (the
+         * topmost, parent-less group) as parent.  Uses Unsafe to
+         * traverse Thread.group and ThreadGroup.parent fields.
+         */
+        private static ThreadGroup createThreadGroup() {
+            try {
+                sun.misc.Unsafe u = sun.misc.Unsafe.getUnsafe();
+                Class<?> tk = Thread.class;
+                Class<?> gk = ThreadGroup.class;
+                long tg = u.objectFieldOffset(tk.getDeclaredField("group"));
+                long gp = u.objectFieldOffset(gk.getDeclaredField("parent"));
+                ThreadGroup group = (ThreadGroup)
+                    u.getObject(Thread.currentThread(), tg);
+                while (group != null) {
+                    ThreadGroup parent = (ThreadGroup)u.getObject(group, gp);
+                    if (parent == null)
+                        return new ThreadGroup(group,
+                                               "InnocuousForkJoinWorkerThreadGroup");
+                    group = parent;
+                }
+            } catch (Exception e) {
+                throw new Error(e);
+            }
+            // fall through if null as cannot-happen safeguard
+            throw new Error("Cannot create ThreadGroup");
+        }
+    }
+
+}

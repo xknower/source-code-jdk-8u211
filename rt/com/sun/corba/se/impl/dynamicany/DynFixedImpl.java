@@ -1,216 +1,210 @@
-/*     */ package com.sun.corba.se.impl.dynamicany;
-/*     */ 
-/*     */ import com.sun.corba.se.spi.orb.ORB;
-/*     */ import java.math.BigDecimal;
-/*     */ import java.math.BigInteger;
-/*     */ import org.omg.CORBA.Any;
-/*     */ import org.omg.CORBA.TypeCode;
-/*     */ import org.omg.CORBA.TypeCodePackage.BadKind;
-/*     */ import org.omg.DynamicAny.DynAnyPackage.InvalidValue;
-/*     */ import org.omg.DynamicAny.DynAnyPackage.TypeMismatch;
-/*     */ import org.omg.DynamicAny.DynFixed;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class DynFixedImpl
-/*     */   extends DynAnyBasicImpl
-/*     */   implements DynFixed
-/*     */ {
-/*     */   private DynFixedImpl() {
-/*  48 */     this((ORB)null, (Any)null, false);
-/*     */   }
-/*     */   
-/*     */   protected DynFixedImpl(ORB paramORB, Any paramAny, boolean paramBoolean) {
-/*  52 */     super(paramORB, paramAny, paramBoolean);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected DynFixedImpl(ORB paramORB, TypeCode paramTypeCode) {
-/*  57 */     super(paramORB, paramTypeCode);
-/*  58 */     this.index = -1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String get_value() {
-/*  74 */     if (this.status == 2) {
-/*  75 */       throw this.wrapper.dynAnyDestroyed();
-/*     */     }
-/*  77 */     return this.any.extract_fixed().toString();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean set_value(String paramString) throws TypeMismatch, InvalidValue {
-/*     */     String str3, str4;
-/*     */     int j;
-/*     */     BigDecimal bigDecimal;
-/* 101 */     if (this.status == 2) {
-/* 102 */       throw this.wrapper.dynAnyDestroyed();
-/*     */     }
-/* 104 */     short s1 = 0;
-/* 105 */     short s2 = 0;
-/* 106 */     boolean bool = true;
-/*     */     try {
-/* 108 */       s1 = this.any.type().fixed_digits();
-/* 109 */       s2 = this.any.type().fixed_scale();
-/* 110 */     } catch (BadKind badKind) {}
-/*     */ 
-/*     */     
-/* 113 */     String str1 = paramString.trim();
-/* 114 */     if (str1.length() == 0) {
-/* 115 */       throw new TypeMismatch();
-/*     */     }
-/* 117 */     String str2 = "";
-/* 118 */     if (str1.charAt(0) == '-') {
-/* 119 */       str2 = "-";
-/* 120 */       str1 = str1.substring(1);
-/* 121 */     } else if (str1.charAt(0) == '+') {
-/* 122 */       str2 = "+";
-/* 123 */       str1 = str1.substring(1);
-/*     */     } 
-/*     */     
-/* 126 */     int i = str1.indexOf('d');
-/* 127 */     if (i == -1) {
-/* 128 */       i = str1.indexOf('D');
-/*     */     }
-/* 130 */     if (i != -1) {
-/* 131 */       str1 = str1.substring(0, i);
-/*     */     }
-/*     */     
-/* 134 */     if (str1.length() == 0) {
-/* 135 */       throw new TypeMismatch();
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 141 */     int k = str1.indexOf('.');
-/* 142 */     if (k == -1) {
-/* 143 */       str3 = str1;
-/* 144 */       str4 = null;
-/* 145 */       boolean bool1 = false;
-/* 146 */       j = str3.length();
-/* 147 */     } else if (k == 0) {
-/* 148 */       str3 = null;
-/* 149 */       str4 = str1;
-/* 150 */       int m = str4.length();
-/* 151 */       j = m;
-/*     */     } else {
-/* 153 */       str3 = str1.substring(0, k);
-/* 154 */       str4 = str1.substring(k + 1);
-/* 155 */       int m = str4.length();
-/* 156 */       j = str3.length() + m;
-/*     */     } 
-/*     */     
-/* 159 */     if (j > s1) {
-/* 160 */       bool = false;
-/*     */       
-/* 162 */       if (str3.length() < s1) {
-/* 163 */         str4 = str4.substring(0, s1 - str3.length());
-/* 164 */       } else if (str3.length() == s1) {
-/*     */ 
-/*     */         
-/* 167 */         str4 = null;
-/*     */       }
-/*     */       else {
-/*     */         
-/* 171 */         throw new InvalidValue();
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     try {
-/* 186 */       new BigInteger(str3);
-/* 187 */       if (str4 == null) {
-/* 188 */         bigDecimal = new BigDecimal(str2 + str3);
-/*     */       } else {
-/* 190 */         new BigInteger(str4);
-/* 191 */         bigDecimal = new BigDecimal(str2 + str3 + "." + str4);
-/*     */       } 
-/* 193 */     } catch (NumberFormatException numberFormatException) {
-/* 194 */       throw new TypeMismatch();
-/*     */     } 
-/* 196 */     this.any.insert_fixed(bigDecimal, this.any.type());
-/* 197 */     return bool;
-/*     */   }
-/*     */   
-/*     */   public String toString() {
-/* 201 */     short s1 = 0;
-/* 202 */     short s2 = 0;
-/*     */     try {
-/* 204 */       s1 = this.any.type().fixed_digits();
-/* 205 */       s2 = this.any.type().fixed_scale();
-/* 206 */     } catch (BadKind badKind) {}
-/*     */     
-/* 208 */     return "DynFixed with value=" + get_value() + ", digits=" + s1 + ", scale=" + s2;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\dynamicany\DynFixedImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.dynamicany;
+
+import org.omg.CORBA.TypeCode;
+import org.omg.CORBA.Any;
+import org.omg.CORBA.NO_IMPLEMENT;
+import org.omg.DynamicAny.*;
+import org.omg.DynamicAny.DynAnyPackage.*;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import org.omg.CORBA.TypeCodePackage.BadKind;
+
+import com.sun.corba.se.spi.orb.ORB ;
+import com.sun.corba.se.spi.logging.CORBALogDomains ;
+import com.sun.corba.se.impl.logging.ORBUtilSystemException ;
+
+public class DynFixedImpl extends DynAnyBasicImpl implements DynFixed
+{
+    //
+    // Constructors
+    //
+
+    private DynFixedImpl() {
+        this(null, (Any)null, false);
+    }
+
+    protected DynFixedImpl(ORB orb, Any any, boolean copyValue) {
+        super(orb, any, copyValue);
+    }
+
+    // Sets the current position to -1 and the value to zero.
+    protected DynFixedImpl(ORB orb, TypeCode typeCode) {
+        super(orb, typeCode);
+        index = NO_INDEX;
+    }
+
+    //
+    // DynAny interface methods
+    //
+/*
+    public int component_count() {
+        return 0;
+    }
+*/
+    //
+    // DynFixed interface methods
+    //
+
+    public String get_value () {
+        if (status == STATUS_DESTROYED) {
+            throw wrapper.dynAnyDestroyed() ;
+        }
+        return any.extract_fixed().toString();
+    }
+
+    // Initializes the value of the DynFixed.
+    // The val string must contain a fixed string constant in the same format
+    // as used for IDL fixed-point literals.
+    //
+    // It may consist of an integer part, an optional decimal point,
+    // a fraction part and an optional letter d or D.
+    // The integer and fraction parts both must be sequences of decimal (base 10) digits.
+    // Either the integer part or the fraction part, but not both, may be missing.
+    //
+    // If val contains a value whose scale exceeds that of the DynFixed or is not initialized,
+    // the operation raises InvalidValue.
+    // The return value is true if val can be represented as the DynFixed without loss of precision.
+    // If val has more fractional digits than can be represented in the DynFixed,
+    // fractional digits are truncated and the return value is false.
+    // If val does not contain a valid fixed-point literal or contains extraneous characters
+    // other than leading or trailing white space, the operation raises TypeMismatch.
+    //
+    public boolean set_value (String val)
+        throws org.omg.DynamicAny.DynAnyPackage.TypeMismatch,
+               org.omg.DynamicAny.DynAnyPackage.InvalidValue
+    {
+        if (status == STATUS_DESTROYED) {
+            throw wrapper.dynAnyDestroyed() ;
+        }
+        int digits = 0;
+        int scale = 0;
+        boolean preservedPrecision = true;
+        try {
+            digits = any.type().fixed_digits();
+            scale = any.type().fixed_scale();
+        } catch (BadKind ex) { // impossible
+        }
+        // First get rid of leading or trailing whitespace which is allowed
+        String string = val.trim();
+        if (string.length() == 0)
+            throw new TypeMismatch();
+        // Now scan for the sign
+        String sign = "";
+        if (string.charAt(0) == '-') {
+            sign = "-";
+            string = string.substring(1);
+        } else if (string.charAt(0) == '+') {
+            sign = "+";
+            string = string.substring(1);
+        }
+        // Now get rid of the letter d or D.
+        int dIndex = string.indexOf('d');
+        if (dIndex == -1) {
+            dIndex = string.indexOf('D');
+        }
+        if (dIndex != -1) {
+            string = string.substring(0, dIndex);
+        }
+        // Just to be sure
+        if (string.length() == 0)
+            throw new TypeMismatch();
+        // Now look for the dot to determine the integer part
+        String integerPart;
+        String fractionPart;
+        int currentScale;
+        int currentDigits;
+        int dotIndex = string.indexOf('.');
+        if (dotIndex == -1) {
+            integerPart = string;
+            fractionPart = null;
+            currentScale = 0;
+            currentDigits = integerPart.length();
+        } else if (dotIndex == 0 ) {
+            integerPart = null;
+            fractionPart = string;
+            currentScale = fractionPart.length();
+            currentDigits = currentScale;
+        } else {
+            integerPart = string.substring(0, dotIndex);
+            fractionPart = string.substring(dotIndex + 1);
+            currentScale = fractionPart.length();
+            currentDigits = integerPart.length() + currentScale;
+        }
+        // Let's see if we have to drop some precision
+        if (currentDigits > digits) {
+            preservedPrecision = false;
+            // truncate the fraction part
+            if (integerPart.length() < digits) {
+                fractionPart = fractionPart.substring(0, digits - integerPart.length());
+            } else if (integerPart.length() == digits) {
+                // currentScale > 0
+                // drop the fraction completely
+                fractionPart = null;
+            } else {
+                // integerPart.length() > digits
+                // unable to truncate fraction part
+                throw new InvalidValue();
+            }
+        }
+        // If val contains a value whose scale exceeds that of the DynFixed or is not initialized,
+        // the operation raises InvalidValue.
+        // Reinterpreted to mean raise InvalidValue only if the integer part exceeds precision,
+        // which is handled above (integerPart.length() > digits)
+/*
+        if (currentScale > scale) {
+            throw new InvalidValue("Scale exceeds " + scale);
+        }
+*/
+        // Now check whether both parts are valid numbers
+        BigDecimal result;
+        try {
+            new BigInteger(integerPart);
+            if (fractionPart == null) {
+                result = new BigDecimal(sign + integerPart);
+            } else {
+                new BigInteger(fractionPart);
+                result = new BigDecimal(sign + integerPart + "." + fractionPart);
+            }
+        } catch (NumberFormatException nfe) {
+            throw new TypeMismatch();
+        }
+        any.insert_fixed(result, any.type());
+        return preservedPrecision;
+    }
+
+    public String toString() {
+        int digits = 0;
+        int scale = 0;
+        try {
+            digits = any.type().fixed_digits();
+            scale = any.type().fixed_scale();
+        } catch (BadKind ex) { // impossible
+        }
+        return "DynFixed with value=" + this.get_value() + ", digits=" + digits + ", scale=" + scale;
+    }
+}

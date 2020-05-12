@@ -1,79 +1,74 @@
-/*    */ package com.sun.org.apache.xpath.internal.jaxp;
-/*    */ 
-/*    */ import com.sun.org.apache.xalan.internal.res.XSLMessages;
-/*    */ import com.sun.org.apache.xml.internal.utils.QName;
-/*    */ import com.sun.org.apache.xpath.internal.VariableStack;
-/*    */ import com.sun.org.apache.xpath.internal.XPathContext;
-/*    */ import com.sun.org.apache.xpath.internal.objects.XObject;
-/*    */ import javax.xml.namespace.QName;
-/*    */ import javax.xml.transform.TransformerException;
-/*    */ import javax.xml.xpath.XPathVariableResolver;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class JAXPVariableStack
-/*    */   extends VariableStack
-/*    */ {
-/*    */   private final XPathVariableResolver resolver;
-/*    */   
-/*    */   public JAXPVariableStack(XPathVariableResolver resolver) {
-/* 47 */     this.resolver = resolver;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public XObject getVariableOrParam(XPathContext xctxt, QName qname) throws TransformerException, IllegalArgumentException {
-/* 52 */     if (qname == null) {
-/*    */ 
-/*    */       
-/* 55 */       String fmsg = XSLMessages.createXPATHMessage("ER_ARG_CANNOT_BE_NULL", new Object[] { "Variable qname" });
-/*    */ 
-/*    */       
-/* 58 */       throw new IllegalArgumentException(fmsg);
-/*    */     } 
-/*    */ 
-/*    */ 
-/*    */     
-/* 63 */     QName name = new QName(qname.getNamespace(), qname.getLocalPart());
-/* 64 */     Object varValue = this.resolver.resolveVariable(name);
-/* 65 */     if (varValue == null) {
-/* 66 */       String fmsg = XSLMessages.createXPATHMessage("ER_RESOLVE_VARIABLE_RETURNS_NULL", new Object[] { name
-/*    */             
-/* 68 */             .toString() });
-/* 69 */       throw new TransformerException(fmsg);
-/*    */     } 
-/* 71 */     return XObject.create(varValue, xctxt);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xpath\internal\jaxp\JAXPVariableStack.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+// $Id: JAXPVariableStack.java,v 1.1.2.1 2005/08/01 01:30:17 jeffsuttor Exp $
+
+package com.sun.org.apache.xpath.internal.jaxp;
+
+import javax.xml.transform.TransformerException;
+import javax.xml.xpath.XPathVariableResolver;
+
+import com.sun.org.apache.xml.internal.utils.QName;
+import com.sun.org.apache.xpath.internal.VariableStack;
+import com.sun.org.apache.xpath.internal.XPathContext;
+import com.sun.org.apache.xpath.internal.objects.XObject;
+
+import com.sun.org.apache.xpath.internal.res.XPATHErrorResources;
+import com.sun.org.apache.xalan.internal.res.XSLMessages;
+
+
+/**
+ * Overrides {@link VariableStack} and delegates the call to
+ * {@link javax.xml.xpath.XPathVariableResolver}.
+ *
+ * @author Ramesh Mandava ( ramesh.mandava@sun.com )
+ */
+public class JAXPVariableStack extends VariableStack {
+
+    private final XPathVariableResolver resolver;
+
+    public JAXPVariableStack(XPathVariableResolver resolver) {
+        this.resolver = resolver;
+    }
+
+    public XObject getVariableOrParam(XPathContext xctxt, QName qname)
+        throws TransformerException,IllegalArgumentException {
+        if ( qname == null ) {
+            //JAXP 1.3 spec says that if variable name is null then
+            // we need to through IllegalArgumentException
+            String fmsg = XSLMessages.createXPATHMessage(
+                XPATHErrorResources.ER_ARG_CANNOT_BE_NULL,
+                new Object[] {"Variable qname"} );
+            throw new IllegalArgumentException( fmsg );
+        }
+        javax.xml.namespace.QName name =
+            new javax.xml.namespace.QName(
+                qname.getNamespace(),
+                qname.getLocalPart());
+        Object varValue = resolver.resolveVariable( name );
+        if ( varValue == null ) {
+            String fmsg = XSLMessages.createXPATHMessage(
+                XPATHErrorResources.ER_RESOLVE_VARIABLE_RETURNS_NULL,
+                new Object[] { name.toString()} );
+            throw new TransformerException( fmsg );
+        }
+        return XObject.create( varValue, xctxt );
+    }
+
+}

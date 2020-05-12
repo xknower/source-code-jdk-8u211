@@ -1,1156 +1,948 @@
-/*     */ package java.util.concurrent;
-/*     */ 
-/*     */ import java.io.IOException;
-/*     */ import java.io.ObjectInputStream;
-/*     */ import java.io.ObjectOutputStream;
-/*     */ import java.io.Serializable;
-/*     */ import java.util.AbstractQueue;
-/*     */ import java.util.ArrayList;
-/*     */ import java.util.Collection;
-/*     */ import java.util.Iterator;
-/*     */ import java.util.NoSuchElementException;
-/*     */ import java.util.Queue;
-/*     */ import java.util.Spliterator;
-/*     */ import java.util.Spliterators;
-/*     */ import java.util.function.Consumer;
-/*     */ import sun.misc.Unsafe;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class ConcurrentLinkedQueue<E>
-/*     */   extends AbstractQueue<E>
-/*     */   implements Queue<E>, Serializable
-/*     */ {
-/*     */   private static final long serialVersionUID = 196745693267521676L;
-/*     */   private volatile transient Node<E> head;
-/*     */   private volatile transient Node<E> tail;
-/*     */   private static final Unsafe UNSAFE;
-/*     */   private static final long headOffset;
-/*     */   private static final long tailOffset;
-/*     */   
-/*     */   private static class Node<E>
-/*     */   {
-/*     */     volatile E item;
-/*     */     volatile Node<E> next;
-/*     */     private static final Unsafe UNSAFE;
-/*     */     private static final long itemOffset;
-/*     */     private static final long nextOffset;
-/*     */     
-/*     */     Node(E param1E) {
-/* 189 */       UNSAFE.putObject(this, itemOffset, param1E);
-/*     */     }
-/*     */     
-/*     */     boolean casItem(E param1E1, E param1E2) {
-/* 193 */       return UNSAFE.compareAndSwapObject(this, itemOffset, param1E1, param1E2);
-/*     */     }
-/*     */     
-/*     */     void lazySetNext(Node<E> param1Node) {
-/* 197 */       UNSAFE.putOrderedObject(this, nextOffset, param1Node);
-/*     */     }
-/*     */     
-/*     */     boolean casNext(Node<E> param1Node1, Node<E> param1Node2) {
-/* 201 */       return UNSAFE.compareAndSwapObject(this, nextOffset, param1Node1, param1Node2);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     static {
-/*     */       try {
-/* 212 */         UNSAFE = Unsafe.getUnsafe();
-/* 213 */         Class<Node> clazz = Node.class;
-/*     */         
-/* 215 */         itemOffset = UNSAFE.objectFieldOffset(clazz.getDeclaredField("item"));
-/*     */         
-/* 217 */         nextOffset = UNSAFE.objectFieldOffset(clazz.getDeclaredField("next"));
-/* 218 */       } catch (Exception exception) {
-/* 219 */         throw new Error(exception);
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ConcurrentLinkedQueue() {
-/* 256 */     this.head = this.tail = new Node<>(null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ConcurrentLinkedQueue(Collection<? extends E> paramCollection) {
-/*     */     // Byte code:
-/*     */     //   0: aload_0
-/*     */     //   1: invokespecial <init> : ()V
-/*     */     //   4: aconst_null
-/*     */     //   5: astore_2
-/*     */     //   6: aconst_null
-/*     */     //   7: astore_3
-/*     */     //   8: aload_1
-/*     */     //   9: invokeinterface iterator : ()Ljava/util/Iterator;
-/*     */     //   14: astore #4
-/*     */     //   16: aload #4
-/*     */     //   18: invokeinterface hasNext : ()Z
-/*     */     //   23: ifeq -> 75
-/*     */     //   26: aload #4
-/*     */     //   28: invokeinterface next : ()Ljava/lang/Object;
-/*     */     //   33: astore #5
-/*     */     //   35: aload #5
-/*     */     //   37: invokestatic checkNotNull : (Ljava/lang/Object;)V
-/*     */     //   40: new java/util/concurrent/ConcurrentLinkedQueue$Node
-/*     */     //   43: dup
-/*     */     //   44: aload #5
-/*     */     //   46: invokespecial <init> : (Ljava/lang/Object;)V
-/*     */     //   49: astore #6
-/*     */     //   51: aload_2
-/*     */     //   52: ifnonnull -> 63
-/*     */     //   55: aload #6
-/*     */     //   57: dup
-/*     */     //   58: astore_3
-/*     */     //   59: astore_2
-/*     */     //   60: goto -> 72
-/*     */     //   63: aload_3
-/*     */     //   64: aload #6
-/*     */     //   66: invokevirtual lazySetNext : (Ljava/util/concurrent/ConcurrentLinkedQueue$Node;)V
-/*     */     //   69: aload #6
-/*     */     //   71: astore_3
-/*     */     //   72: goto -> 16
-/*     */     //   75: aload_2
-/*     */     //   76: ifnonnull -> 90
-/*     */     //   79: new java/util/concurrent/ConcurrentLinkedQueue$Node
-/*     */     //   82: dup
-/*     */     //   83: aconst_null
-/*     */     //   84: invokespecial <init> : (Ljava/lang/Object;)V
-/*     */     //   87: dup
-/*     */     //   88: astore_3
-/*     */     //   89: astore_2
-/*     */     //   90: aload_0
-/*     */     //   91: aload_2
-/*     */     //   92: putfield head : Ljava/util/concurrent/ConcurrentLinkedQueue$Node;
-/*     */     //   95: aload_0
-/*     */     //   96: aload_3
-/*     */     //   97: putfield tail : Ljava/util/concurrent/ConcurrentLinkedQueue$Node;
-/*     */     //   100: return
-/*     */     // Line number table:
-/*     */     //   Java source line number -> byte code offset
-/*     */     //   #268	-> 0
-/*     */     //   #269	-> 4
-/*     */     //   #270	-> 8
-/*     */     //   #271	-> 35
-/*     */     //   #272	-> 40
-/*     */     //   #273	-> 51
-/*     */     //   #274	-> 55
-/*     */     //   #276	-> 63
-/*     */     //   #277	-> 69
-/*     */     //   #279	-> 72
-/*     */     //   #280	-> 75
-/*     */     //   #281	-> 79
-/*     */     //   #282	-> 90
-/*     */     //   #283	-> 95
-/*     */     //   #284	-> 100
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean add(E paramE) {
-/* 297 */     return offer(paramE);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   final void updateHead(Node<E> paramNode1, Node<E> paramNode2) {
-/* 305 */     if (paramNode1 != paramNode2 && casHead(paramNode1, paramNode2)) {
-/* 306 */       paramNode1.lazySetNext(paramNode1);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   final Node<E> succ(Node<E> paramNode) {
-/* 315 */     Node<E> node = paramNode.next;
-/* 316 */     return (paramNode == node) ? this.head : node;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean offer(E paramE) {
-/* 327 */     checkNotNull(paramE);
-/* 328 */     Node<E> node1 = new Node<>(paramE);
-/*     */     
-/* 330 */     Node<E> node2 = this.tail, node3 = node2; while (true) {
-/* 331 */       Node<E> node = node3.next;
-/* 332 */       if (node == null) {
-/*     */         
-/* 334 */         if (node3.casNext(null, node1)) {
-/*     */ 
-/*     */ 
-/*     */           
-/* 338 */           if (node3 != node2)
-/* 339 */             casTail(node2, node1); 
-/* 340 */           return true;
-/*     */         } 
-/*     */         continue;
-/*     */       } 
-/* 344 */       if (node3 == node) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 349 */         node3 = (node2 != (node2 = this.tail)) ? node2 : this.head;
-/*     */         continue;
-/*     */       } 
-/* 352 */       node3 = (node3 != node2 && node2 != (node2 = this.tail)) ? node2 : node;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public E poll() {
-/*     */     label21: while (true) {
-/* 359 */       Node<E> node1 = this.head, node2 = node1; while (true) {
-/* 360 */         E e = node2.item;
-/*     */         
-/* 362 */         if (e != null && node2.casItem(e, null)) {
-/*     */ 
-/*     */           
-/* 365 */           if (node2 != node1) {
-/* 366 */             Node<E> node3; updateHead(node1, ((node3 = node2.next) != null) ? node3 : node2);
-/* 367 */           }  return e;
-/*     */         }  Node<E> node;
-/* 369 */         if ((node = node2.next) == null) {
-/* 370 */           updateHead(node1, node2);
-/* 371 */           return null;
-/*     */         } 
-/* 373 */         if (node2 == node) {
-/*     */           continue label21;
-/*     */         }
-/* 376 */         node2 = node;
-/*     */       } 
-/*     */       break;
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public E peek() {
-/*     */     label13: while (true) {
-/* 384 */       Node<E> node1 = this.head, node2 = node1; while (true) {
-/* 385 */         E e = node2.item; Node<E> node;
-/* 386 */         if (e != null || (node = node2.next) == null) {
-/* 387 */           updateHead(node1, node2);
-/* 388 */           return e;
-/*     */         } 
-/* 390 */         if (node2 == node) {
-/*     */           continue label13;
-/*     */         }
-/* 393 */         node2 = node;
-/*     */       } 
-/*     */       break;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   Node<E> first() {
-/*     */     label20: while (true) {
-/* 409 */       Node<E> node1 = this.head, node2 = node1; while (true) {
-/* 410 */         boolean bool = (node2.item != null) ? true : false; Node<E> node;
-/* 411 */         if (bool || (node = node2.next) == null) {
-/* 412 */           updateHead(node1, node2);
-/* 413 */           return bool ? node2 : null;
-/*     */         } 
-/* 415 */         if (node2 == node) {
-/*     */           continue label20;
-/*     */         }
-/* 418 */         node2 = node;
-/*     */       } 
-/*     */       break;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isEmpty() {
-/* 429 */     return (first() == null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int size() {
-/* 449 */     byte b = 0;
-/* 450 */     for (Node<E> node = first(); node != null; node = succ(node)) {
-/* 451 */       if (node.item != null)
-/*     */       {
-/* 453 */         if (++b == Integer.MAX_VALUE)
-/*     */           break;  } 
-/* 455 */     }  return b;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean contains(Object paramObject) {
-/* 467 */     if (paramObject == null) return false; 
-/* 468 */     for (Node<E> node = first(); node != null; node = succ(node)) {
-/* 469 */       E e = node.item;
-/* 470 */       if (e != null && paramObject.equals(e))
-/* 471 */         return true; 
-/*     */     } 
-/* 473 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean remove(Object paramObject) {
-/* 488 */     if (paramObject != null) {
-/* 489 */       Node<E> node = null;
-/* 490 */       Object object = first(); while (true) { if (object != null)
-/* 491 */         { boolean bool = false;
-/* 492 */           E e = ((Node)object).item;
-/* 493 */           if (e != null)
-/* 494 */           { if (!paramObject.equals(e))
-/* 495 */             { Node<E> node2 = succ((Node<E>)object); }
-/*     */             else
-/*     */             
-/* 498 */             { bool = object.casItem(e, null);
-/*     */ 
-/*     */               
-/* 501 */               Node<E> node2 = succ((Node<E>)object); }  continue; }  } else { break; }  Node<E> node1 = succ((Node<E>)object);
-/*     */         
-/*     */         node = (Node<E>)object;
-/*     */         
-/*     */         object = SYNTHETIC_LOCAL_VARIABLE_2; }
-/*     */     
-/*     */     } 
-/* 508 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean addAll(Collection<? extends E> paramCollection) {
-/*     */     // Byte code:
-/*     */     //   0: aload_1
-/*     */     //   1: aload_0
-/*     */     //   2: if_acmpne -> 13
-/*     */     //   5: new java/lang/IllegalArgumentException
-/*     */     //   8: dup
-/*     */     //   9: invokespecial <init> : ()V
-/*     */     //   12: athrow
-/*     */     //   13: aconst_null
-/*     */     //   14: astore_2
-/*     */     //   15: aconst_null
-/*     */     //   16: astore_3
-/*     */     //   17: aload_1
-/*     */     //   18: invokeinterface iterator : ()Ljava/util/Iterator;
-/*     */     //   23: astore #4
-/*     */     //   25: aload #4
-/*     */     //   27: invokeinterface hasNext : ()Z
-/*     */     //   32: ifeq -> 84
-/*     */     //   35: aload #4
-/*     */     //   37: invokeinterface next : ()Ljava/lang/Object;
-/*     */     //   42: astore #5
-/*     */     //   44: aload #5
-/*     */     //   46: invokestatic checkNotNull : (Ljava/lang/Object;)V
-/*     */     //   49: new java/util/concurrent/ConcurrentLinkedQueue$Node
-/*     */     //   52: dup
-/*     */     //   53: aload #5
-/*     */     //   55: invokespecial <init> : (Ljava/lang/Object;)V
-/*     */     //   58: astore #6
-/*     */     //   60: aload_2
-/*     */     //   61: ifnonnull -> 72
-/*     */     //   64: aload #6
-/*     */     //   66: dup
-/*     */     //   67: astore_3
-/*     */     //   68: astore_2
-/*     */     //   69: goto -> 81
-/*     */     //   72: aload_3
-/*     */     //   73: aload #6
-/*     */     //   75: invokevirtual lazySetNext : (Ljava/util/concurrent/ConcurrentLinkedQueue$Node;)V
-/*     */     //   78: aload #6
-/*     */     //   80: astore_3
-/*     */     //   81: goto -> 25
-/*     */     //   84: aload_2
-/*     */     //   85: ifnonnull -> 90
-/*     */     //   88: iconst_0
-/*     */     //   89: ireturn
-/*     */     //   90: aload_0
-/*     */     //   91: getfield tail : Ljava/util/concurrent/ConcurrentLinkedQueue$Node;
-/*     */     //   94: astore #4
-/*     */     //   96: aload #4
-/*     */     //   98: astore #5
-/*     */     //   100: aload #5
-/*     */     //   102: getfield next : Ljava/util/concurrent/ConcurrentLinkedQueue$Node;
-/*     */     //   105: astore #6
-/*     */     //   107: aload #6
-/*     */     //   109: ifnonnull -> 155
-/*     */     //   112: aload #5
-/*     */     //   114: aconst_null
-/*     */     //   115: aload_2
-/*     */     //   116: invokevirtual casNext : (Ljava/util/concurrent/ConcurrentLinkedQueue$Node;Ljava/util/concurrent/ConcurrentLinkedQueue$Node;)Z
-/*     */     //   119: ifeq -> 216
-/*     */     //   122: aload_0
-/*     */     //   123: aload #4
-/*     */     //   125: aload_3
-/*     */     //   126: invokespecial casTail : (Ljava/util/concurrent/ConcurrentLinkedQueue$Node;Ljava/util/concurrent/ConcurrentLinkedQueue$Node;)Z
-/*     */     //   129: ifne -> 153
-/*     */     //   132: aload_0
-/*     */     //   133: getfield tail : Ljava/util/concurrent/ConcurrentLinkedQueue$Node;
-/*     */     //   136: astore #4
-/*     */     //   138: aload_3
-/*     */     //   139: getfield next : Ljava/util/concurrent/ConcurrentLinkedQueue$Node;
-/*     */     //   142: ifnonnull -> 153
-/*     */     //   145: aload_0
-/*     */     //   146: aload #4
-/*     */     //   148: aload_3
-/*     */     //   149: invokespecial casTail : (Ljava/util/concurrent/ConcurrentLinkedQueue$Node;Ljava/util/concurrent/ConcurrentLinkedQueue$Node;)Z
-/*     */     //   152: pop
-/*     */     //   153: iconst_1
-/*     */     //   154: ireturn
-/*     */     //   155: aload #5
-/*     */     //   157: aload #6
-/*     */     //   159: if_acmpne -> 188
-/*     */     //   162: aload #4
-/*     */     //   164: aload_0
-/*     */     //   165: getfield tail : Ljava/util/concurrent/ConcurrentLinkedQueue$Node;
-/*     */     //   168: dup
-/*     */     //   169: astore #4
-/*     */     //   171: if_acmpeq -> 179
-/*     */     //   174: aload #4
-/*     */     //   176: goto -> 183
-/*     */     //   179: aload_0
-/*     */     //   180: getfield head : Ljava/util/concurrent/ConcurrentLinkedQueue$Node;
-/*     */     //   183: astore #5
-/*     */     //   185: goto -> 216
-/*     */     //   188: aload #5
-/*     */     //   190: aload #4
-/*     */     //   192: if_acmpeq -> 212
-/*     */     //   195: aload #4
-/*     */     //   197: aload_0
-/*     */     //   198: getfield tail : Ljava/util/concurrent/ConcurrentLinkedQueue$Node;
-/*     */     //   201: dup
-/*     */     //   202: astore #4
-/*     */     //   204: if_acmpeq -> 212
-/*     */     //   207: aload #4
-/*     */     //   209: goto -> 214
-/*     */     //   212: aload #6
-/*     */     //   214: astore #5
-/*     */     //   216: goto -> 100
-/*     */     // Line number table:
-/*     */     //   Java source line number -> byte code offset
-/*     */     //   #524	-> 0
-/*     */     //   #526	-> 5
-/*     */     //   #529	-> 13
-/*     */     //   #530	-> 17
-/*     */     //   #531	-> 44
-/*     */     //   #532	-> 49
-/*     */     //   #533	-> 60
-/*     */     //   #534	-> 64
-/*     */     //   #536	-> 72
-/*     */     //   #537	-> 78
-/*     */     //   #539	-> 81
-/*     */     //   #540	-> 84
-/*     */     //   #541	-> 88
-/*     */     //   #544	-> 90
-/*     */     //   #545	-> 100
-/*     */     //   #546	-> 107
-/*     */     //   #548	-> 112
-/*     */     //   #551	-> 122
-/*     */     //   #554	-> 132
-/*     */     //   #555	-> 138
-/*     */     //   #556	-> 145
-/*     */     //   #558	-> 153
-/*     */     //   #562	-> 155
-/*     */     //   #567	-> 162
-/*     */     //   #570	-> 188
-/*     */     //   #571	-> 216
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object[] toArray() {
-/* 589 */     ArrayList<E> arrayList = new ArrayList();
-/* 590 */     for (Node<E> node = first(); node != null; node = succ(node)) {
-/* 591 */       E e = node.item;
-/* 592 */       if (e != null)
-/* 593 */         arrayList.add(e); 
-/*     */     } 
-/* 595 */     return arrayList.toArray();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public <T> T[] toArray(T[] paramArrayOfT) {
-/* 636 */     byte b = 0;
-/*     */     Node<E> node1;
-/* 638 */     for (node1 = first(); node1 != null && b < paramArrayOfT.length; node1 = succ(node1)) {
-/* 639 */       E e = node1.item;
-/* 640 */       if (e != null)
-/* 641 */         paramArrayOfT[b++] = (T)e; 
-/*     */     } 
-/* 643 */     if (node1 == null) {
-/* 644 */       if (b < paramArrayOfT.length)
-/* 645 */         paramArrayOfT[b] = null; 
-/* 646 */       return paramArrayOfT;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 650 */     ArrayList<E> arrayList = new ArrayList();
-/* 651 */     for (Node<E> node2 = first(); node2 != null; node2 = succ(node2)) {
-/* 652 */       E e = node2.item;
-/* 653 */       if (e != null)
-/* 654 */         arrayList.add(e); 
-/*     */     } 
-/* 656 */     return arrayList.toArray(paramArrayOfT);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Iterator<E> iterator() {
-/* 669 */     return new Itr();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private class Itr
-/*     */     implements Iterator<E>
-/*     */   {
-/*     */     private ConcurrentLinkedQueue.Node<E> nextNode;
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     private E nextItem;
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     private ConcurrentLinkedQueue.Node<E> lastRet;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     Itr() {
-/* 692 */       advance();
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     private E advance() {
-/*     */       ConcurrentLinkedQueue.Node<E> node1, node2;
-/* 700 */       this.lastRet = this.nextNode;
-/* 701 */       E e = this.nextItem;
-/*     */ 
-/*     */       
-/* 704 */       if (this.nextNode == null) {
-/* 705 */         node2 = ConcurrentLinkedQueue.this.first();
-/* 706 */         node1 = null;
-/*     */       } else {
-/* 708 */         node1 = this.nextNode;
-/* 709 */         node2 = ConcurrentLinkedQueue.this.succ(this.nextNode);
-/*     */       } 
-/*     */       
-/*     */       while (true) {
-/* 713 */         if (node2 == null) {
-/* 714 */           this.nextNode = null;
-/* 715 */           this.nextItem = null;
-/* 716 */           return e;
-/*     */         } 
-/* 718 */         E e1 = node2.item;
-/* 719 */         if (e1 != null) {
-/* 720 */           this.nextNode = node2;
-/* 721 */           this.nextItem = e1;
-/* 722 */           return e;
-/*     */         } 
-/*     */         
-/* 725 */         ConcurrentLinkedQueue.Node<E> node = ConcurrentLinkedQueue.this.succ(node2);
-/* 726 */         if (node1 != null && node != null)
-/* 727 */           node1.casNext(node2, node); 
-/* 728 */         node2 = node;
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public boolean hasNext() {
-/* 734 */       return (this.nextNode != null);
-/*     */     }
-/*     */     
-/*     */     public E next() {
-/* 738 */       if (this.nextNode == null) throw new NoSuchElementException(); 
-/* 739 */       return advance();
-/*     */     }
-/*     */     
-/*     */     public void remove() {
-/* 743 */       ConcurrentLinkedQueue.Node<E> node = this.lastRet;
-/* 744 */       if (node == null) throw new IllegalStateException();
-/*     */       
-/* 746 */       node.item = null;
-/* 747 */       this.lastRet = null;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void writeObject(ObjectOutputStream paramObjectOutputStream) throws IOException {
-/* 763 */     paramObjectOutputStream.defaultWriteObject();
-/*     */ 
-/*     */     
-/* 766 */     for (Node<E> node = first(); node != null; node = succ(node)) {
-/* 767 */       E e = node.item;
-/* 768 */       if (e != null) {
-/* 769 */         paramObjectOutputStream.writeObject(e);
-/*     */       }
-/*     */     } 
-/*     */     
-/* 773 */     paramObjectOutputStream.writeObject(null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void readObject(ObjectInputStream paramObjectInputStream) throws IOException, ClassNotFoundException {
-/* 785 */     paramObjectInputStream.defaultReadObject();
-/*     */ 
-/*     */     
-/* 788 */     Node<E> node1 = null, node2 = null;
-/*     */     Object object;
-/* 790 */     while ((object = paramObjectInputStream.readObject()) != null) {
-/*     */       
-/* 792 */       Node<E> node = new Node(object);
-/* 793 */       if (node1 == null) {
-/* 794 */         node1 = node2 = node; continue;
-/*     */       } 
-/* 796 */       node2.lazySetNext(node);
-/* 797 */       node2 = node;
-/*     */     } 
-/*     */     
-/* 800 */     if (node1 == null)
-/* 801 */       node1 = node2 = new Node(null); 
-/* 802 */     this.head = node1;
-/* 803 */     this.tail = node2;
-/*     */   }
-/*     */   
-/*     */   static final class CLQSpliterator<E> implements Spliterator<E> {
-/*     */     static final int MAX_BATCH = 33554432;
-/*     */     final ConcurrentLinkedQueue<E> queue;
-/*     */     ConcurrentLinkedQueue.Node<E> current;
-/*     */     int batch;
-/*     */     boolean exhausted;
-/*     */     
-/*     */     CLQSpliterator(ConcurrentLinkedQueue<E> param1ConcurrentLinkedQueue) {
-/* 814 */       this.queue = param1ConcurrentLinkedQueue;
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public Spliterator<E> trySplit() {
-/* 819 */       ConcurrentLinkedQueue<E> concurrentLinkedQueue = this.queue;
-/* 820 */       int i = this.batch;
-/* 821 */       byte b = (i <= 0) ? 1 : ((i >= 33554432) ? 33554432 : (i + 1)); ConcurrentLinkedQueue.Node<E> node;
-/* 822 */       if (!this.exhausted && ((node = this.current) != null || (
-/* 823 */         node = concurrentLinkedQueue.first()) != null) && node.next != null) {
-/*     */         
-/* 825 */         Object[] arrayOfObject = new Object[b];
-/* 826 */         byte b1 = 0;
-/*     */         do {
-/* 828 */           arrayOfObject[b1] = node.item; if (node.item != null)
-/* 829 */             b1++; 
-/* 830 */           if (node != (node = node.next))
-/* 831 */             continue;  node = concurrentLinkedQueue.first();
-/* 832 */         } while (node != null && b1 < b);
-/* 833 */         if ((this.current = node) == null)
-/* 834 */           this.exhausted = true; 
-/* 835 */         if (b1 > 0) {
-/* 836 */           this.batch = b1;
-/* 837 */           return 
-/* 838 */             Spliterators.spliterator(arrayOfObject, 0, b1, 4368);
-/*     */         } 
-/*     */       } 
-/*     */       
-/* 842 */       return null;
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public void forEachRemaining(Consumer<? super E> param1Consumer) {
-/* 847 */       if (param1Consumer == null) throw new NullPointerException(); 
-/* 848 */       ConcurrentLinkedQueue<E> concurrentLinkedQueue = this.queue; ConcurrentLinkedQueue.Node<E> node;
-/* 849 */       if (!this.exhausted && ((node = this.current) != null || (
-/* 850 */         node = concurrentLinkedQueue.first()) != null)) {
-/* 851 */         this.exhausted = true;
-/*     */         do {
-/* 853 */           E e = node.item;
-/* 854 */           if (node == (node = node.next))
-/* 855 */             node = concurrentLinkedQueue.first(); 
-/* 856 */           if (e == null)
-/* 857 */             continue;  param1Consumer.accept(e);
-/* 858 */         } while (node != null);
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public boolean tryAdvance(Consumer<? super E> param1Consumer) {
-/* 864 */       if (param1Consumer == null) throw new NullPointerException(); 
-/* 865 */       ConcurrentLinkedQueue<E> concurrentLinkedQueue = this.queue; ConcurrentLinkedQueue.Node<E> node;
-/* 866 */       if (!this.exhausted && ((node = this.current) != null || (
-/* 867 */         node = concurrentLinkedQueue.first()) != null)) {
-/*     */         E e;
-/*     */         do {
-/* 870 */           e = node.item;
-/* 871 */           if (node != (node = node.next))
-/* 872 */             continue;  node = concurrentLinkedQueue.first();
-/* 873 */         } while (e == null && node != null);
-/* 874 */         if ((this.current = node) == null)
-/* 875 */           this.exhausted = true; 
-/* 876 */         if (e != null) {
-/* 877 */           param1Consumer.accept(e);
-/* 878 */           return true;
-/*     */         } 
-/*     */       } 
-/* 881 */       return false;
-/*     */     }
-/*     */     public long estimateSize() {
-/* 884 */       return Long.MAX_VALUE;
-/*     */     }
-/*     */     public int characteristics() {
-/* 887 */       return 4368;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Spliterator<E> spliterator() {
-/* 910 */     return new CLQSpliterator<>(this);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static void checkNotNull(Object paramObject) {
-/* 919 */     if (paramObject == null)
-/* 920 */       throw new NullPointerException(); 
-/*     */   }
-/*     */   
-/*     */   private boolean casTail(Node<E> paramNode1, Node<E> paramNode2) {
-/* 924 */     return UNSAFE.compareAndSwapObject(this, tailOffset, paramNode1, paramNode2);
-/*     */   }
-/*     */   
-/*     */   private boolean casHead(Node<E> paramNode1, Node<E> paramNode2) {
-/* 928 */     return UNSAFE.compareAndSwapObject(this, headOffset, paramNode1, paramNode2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static {
-/*     */     try {
-/* 938 */       UNSAFE = Unsafe.getUnsafe();
-/* 939 */       Class<ConcurrentLinkedQueue> clazz = ConcurrentLinkedQueue.class;
-/*     */       
-/* 941 */       headOffset = UNSAFE.objectFieldOffset(clazz.getDeclaredField("head"));
-/*     */       
-/* 943 */       tailOffset = UNSAFE.objectFieldOffset(clazz.getDeclaredField("tail"));
-/* 944 */     } catch (Exception exception) {
-/* 945 */       throw new Error(exception);
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\concurrent\ConcurrentLinkedQueue.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+/*
+ *
+ *
+ *
+ *
+ *
+ * Written by Doug Lea and Martin Buchholz with assistance from members of
+ * JCP JSR-166 Expert Group and released to the public domain, as explained
+ * at http://creativecommons.org/publicdomain/zero/1.0/
+ */
+
+package java.util.concurrent;
+
+import java.util.AbstractQueue;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+import java.util.Queue;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.function.Consumer;
+
+/**
+ * An unbounded thread-safe {@linkplain Queue queue} based on linked nodes.
+ * This queue orders elements FIFO (first-in-first-out).
+ * The <em>head</em> of the queue is that element that has been on the
+ * queue the longest time.
+ * The <em>tail</em> of the queue is that element that has been on the
+ * queue the shortest time. New elements
+ * are inserted at the tail of the queue, and the queue retrieval
+ * operations obtain elements at the head of the queue.
+ * A {@code ConcurrentLinkedQueue} is an appropriate choice when
+ * many threads will share access to a common collection.
+ * Like most other concurrent collection implementations, this class
+ * does not permit the use of {@code null} elements.
+ *
+ * <p>This implementation employs an efficient <em>non-blocking</em>
+ * algorithm based on one described in <a
+ * href="http://www.cs.rochester.edu/u/michael/PODC96.html"> Simple,
+ * Fast, and Practical Non-Blocking and Blocking Concurrent Queue
+ * Algorithms</a> by Maged M. Michael and Michael L. Scott.
+ *
+ * <p>Iterators are <i>weakly consistent</i>, returning elements
+ * reflecting the state of the queue at some point at or since the
+ * creation of the iterator.  They do <em>not</em> throw {@link
+ * java.util.ConcurrentModificationException}, and may proceed concurrently
+ * with other operations.  Elements contained in the queue since the creation
+ * of the iterator will be returned exactly once.
+ *
+ * <p>Beware that, unlike in most collections, the {@code size} method
+ * is <em>NOT</em> a constant-time operation. Because of the
+ * asynchronous nature of these queues, determining the current number
+ * of elements requires a traversal of the elements, and so may report
+ * inaccurate results if this collection is modified during traversal.
+ * Additionally, the bulk operations {@code addAll},
+ * {@code removeAll}, {@code retainAll}, {@code containsAll},
+ * {@code equals}, and {@code toArray} are <em>not</em> guaranteed
+ * to be performed atomically. For example, an iterator operating
+ * concurrently with an {@code addAll} operation might view only some
+ * of the added elements.
+ *
+ * <p>This class and its iterator implement all of the <em>optional</em>
+ * methods of the {@link Queue} and {@link Iterator} interfaces.
+ *
+ * <p>Memory consistency effects: As with other concurrent
+ * collections, actions in a thread prior to placing an object into a
+ * {@code ConcurrentLinkedQueue}
+ * <a href="package-summary.html#MemoryVisibility"><i>happen-before</i></a>
+ * actions subsequent to the access or removal of that element from
+ * the {@code ConcurrentLinkedQueue} in another thread.
+ *
+ * <p>This class is a member of the
+ * <a href="{@docRoot}/../technotes/guides/collections/index.html">
+ * Java Collections Framework</a>.
+ *
+ * @since 1.5
+ * @author Doug Lea
+ * @param <E> the type of elements held in this collection
+ */
+public class ConcurrentLinkedQueue<E> extends AbstractQueue<E>
+        implements Queue<E>, java.io.Serializable {
+    private static final long serialVersionUID = 196745693267521676L;
+
+    /*
+     * This is a modification of the Michael & Scott algorithm,
+     * adapted for a garbage-collected environment, with support for
+     * interior node deletion (to support remove(Object)).  For
+     * explanation, read the paper.
+     *
+     * Note that like most non-blocking algorithms in this package,
+     * this implementation relies on the fact that in garbage
+     * collected systems, there is no possibility of ABA problems due
+     * to recycled nodes, so there is no need to use "counted
+     * pointers" or related techniques seen in versions used in
+     * non-GC'ed settings.
+     *
+     * The fundamental invariants are:
+     * - There is exactly one (last) Node with a null next reference,
+     *   which is CASed when enqueueing.  This last Node can be
+     *   reached in O(1) time from tail, but tail is merely an
+     *   optimization - it can always be reached in O(N) time from
+     *   head as well.
+     * - The elements contained in the queue are the non-null items in
+     *   Nodes that are reachable from head.  CASing the item
+     *   reference of a Node to null atomically removes it from the
+     *   queue.  Reachability of all elements from head must remain
+     *   true even in the case of concurrent modifications that cause
+     *   head to advance.  A dequeued Node may remain in use
+     *   indefinitely due to creation of an Iterator or simply a
+     *   poll() that has lost its time slice.
+     *
+     * The above might appear to imply that all Nodes are GC-reachable
+     * from a predecessor dequeued Node.  That would cause two problems:
+     * - allow a rogue Iterator to cause unbounded memory retention
+     * - cause cross-generational linking of old Nodes to new Nodes if
+     *   a Node was tenured while live, which generational GCs have a
+     *   hard time dealing with, causing repeated major collections.
+     * However, only non-deleted Nodes need to be reachable from
+     * dequeued Nodes, and reachability does not necessarily have to
+     * be of the kind understood by the GC.  We use the trick of
+     * linking a Node that has just been dequeued to itself.  Such a
+     * self-link implicitly means to advance to head.
+     *
+     * Both head and tail are permitted to lag.  In fact, failing to
+     * update them every time one could is a significant optimization
+     * (fewer CASes). As with LinkedTransferQueue (see the internal
+     * documentation for that class), we use a slack threshold of two;
+     * that is, we update head/tail when the current pointer appears
+     * to be two or more steps away from the first/last node.
+     *
+     * Since head and tail are updated concurrently and independently,
+     * it is possible for tail to lag behind head (why not)?
+     *
+     * CASing a Node's item reference to null atomically removes the
+     * element from the queue.  Iterators skip over Nodes with null
+     * items.  Prior implementations of this class had a race between
+     * poll() and remove(Object) where the same element would appear
+     * to be successfully removed by two concurrent operations.  The
+     * method remove(Object) also lazily unlinks deleted Nodes, but
+     * this is merely an optimization.
+     *
+     * When constructing a Node (before enqueuing it) we avoid paying
+     * for a volatile write to item by using Unsafe.putObject instead
+     * of a normal write.  This allows the cost of enqueue to be
+     * "one-and-a-half" CASes.
+     *
+     * Both head and tail may or may not point to a Node with a
+     * non-null item.  If the queue is empty, all items must of course
+     * be null.  Upon creation, both head and tail refer to a dummy
+     * Node with null item.  Both head and tail are only updated using
+     * CAS, so they never regress, although again this is merely an
+     * optimization.
+     */
+
+    private static class Node<E> {
+        volatile E item;
+        volatile Node<E> next;
+
+        /**
+         * Constructs a new node.  Uses relaxed write because item can
+         * only be seen after publication via casNext.
+         */
+        Node(E item) {
+            UNSAFE.putObject(this, itemOffset, item);
+        }
+
+        boolean casItem(E cmp, E val) {
+            return UNSAFE.compareAndSwapObject(this, itemOffset, cmp, val);
+        }
+
+        void lazySetNext(Node<E> val) {
+            UNSAFE.putOrderedObject(this, nextOffset, val);
+        }
+
+        boolean casNext(Node<E> cmp, Node<E> val) {
+            return UNSAFE.compareAndSwapObject(this, nextOffset, cmp, val);
+        }
+
+        // Unsafe mechanics
+
+        private static final sun.misc.Unsafe UNSAFE;
+        private static final long itemOffset;
+        private static final long nextOffset;
+
+        static {
+            try {
+                UNSAFE = sun.misc.Unsafe.getUnsafe();
+                Class<?> k = Node.class;
+                itemOffset = UNSAFE.objectFieldOffset
+                    (k.getDeclaredField("item"));
+                nextOffset = UNSAFE.objectFieldOffset
+                    (k.getDeclaredField("next"));
+            } catch (Exception e) {
+                throw new Error(e);
+            }
+        }
+    }
+
+    /**
+     * A node from which the first live (non-deleted) node (if any)
+     * can be reached in O(1) time.
+     * Invariants:
+     * - all live nodes are reachable from head via succ()
+     * - head != null
+     * - (tmp = head).next != tmp || tmp != head
+     * Non-invariants:
+     * - head.item may or may not be null.
+     * - it is permitted for tail to lag behind head, that is, for tail
+     *   to not be reachable from head!
+     */
+    private transient volatile Node<E> head;
+
+    /**
+     * A node from which the last node on list (that is, the unique
+     * node with node.next == null) can be reached in O(1) time.
+     * Invariants:
+     * - the last node is always reachable from tail via succ()
+     * - tail != null
+     * Non-invariants:
+     * - tail.item may or may not be null.
+     * - it is permitted for tail to lag behind head, that is, for tail
+     *   to not be reachable from head!
+     * - tail.next may or may not be self-pointing to tail.
+     */
+    private transient volatile Node<E> tail;
+
+    /**
+     * Creates a {@code ConcurrentLinkedQueue} that is initially empty.
+     */
+    public ConcurrentLinkedQueue() {
+        head = tail = new Node<E>(null);
+    }
+
+    /**
+     * Creates a {@code ConcurrentLinkedQueue}
+     * initially containing the elements of the given collection,
+     * added in traversal order of the collection's iterator.
+     *
+     * @param c the collection of elements to initially contain
+     * @throws NullPointerException if the specified collection or any
+     *         of its elements are null
+     */
+    public ConcurrentLinkedQueue(Collection<? extends E> c) {
+        Node<E> h = null, t = null;
+        for (E e : c) {
+            checkNotNull(e);
+            Node<E> newNode = new Node<E>(e);
+            if (h == null)
+                h = t = newNode;
+            else {
+                t.lazySetNext(newNode);
+                t = newNode;
+            }
+        }
+        if (h == null)
+            h = t = new Node<E>(null);
+        head = h;
+        tail = t;
+    }
+
+    // Have to override just to update the javadoc
+
+    /**
+     * Inserts the specified element at the tail of this queue.
+     * As the queue is unbounded, this method will never throw
+     * {@link IllegalStateException} or return {@code false}.
+     *
+     * @return {@code true} (as specified by {@link Collection#add})
+     * @throws NullPointerException if the specified element is null
+     */
+    public boolean add(E e) {
+        return offer(e);
+    }
+
+    /**
+     * Tries to CAS head to p. If successful, repoint old head to itself
+     * as sentinel for succ(), below.
+     */
+    final void updateHead(Node<E> h, Node<E> p) {
+        if (h != p && casHead(h, p))
+            h.lazySetNext(h);
+    }
+
+    /**
+     * Returns the successor of p, or the head node if p.next has been
+     * linked to self, which will only be true if traversing with a
+     * stale pointer that is now off the list.
+     */
+    final Node<E> succ(Node<E> p) {
+        Node<E> next = p.next;
+        return (p == next) ? head : next;
+    }
+
+    /**
+     * Inserts the specified element at the tail of this queue.
+     * As the queue is unbounded, this method will never return {@code false}.
+     *
+     * @return {@code true} (as specified by {@link Queue#offer})
+     * @throws NullPointerException if the specified element is null
+     */
+    public boolean offer(E e) {
+        checkNotNull(e);
+        final Node<E> newNode = new Node<E>(e);
+
+        for (Node<E> t = tail, p = t;;) {
+            Node<E> q = p.next;
+            if (q == null) {
+                // p is last node
+                if (p.casNext(null, newNode)) {
+                    // Successful CAS is the linearization point
+                    // for e to become an element of this queue,
+                    // and for newNode to become "live".
+                    if (p != t) // hop two nodes at a time
+                        casTail(t, newNode);  // Failure is OK.
+                    return true;
+                }
+                // Lost CAS race to another thread; re-read next
+            }
+            else if (p == q)
+                // We have fallen off list.  If tail is unchanged, it
+                // will also be off-list, in which case we need to
+                // jump to head, from which all live nodes are always
+                // reachable.  Else the new tail is a better bet.
+                p = (t != (t = tail)) ? t : head;
+            else
+                // Check for tail updates after two hops.
+                p = (p != t && t != (t = tail)) ? t : q;
+        }
+    }
+
+    public E poll() {
+        restartFromHead:
+        for (;;) {
+            for (Node<E> h = head, p = h, q;;) {
+                E item = p.item;
+
+                if (item != null && p.casItem(item, null)) {
+                    // Successful CAS is the linearization point
+                    // for item to be removed from this queue.
+                    if (p != h) // hop two nodes at a time
+                        updateHead(h, ((q = p.next) != null) ? q : p);
+                    return item;
+                }
+                else if ((q = p.next) == null) {
+                    updateHead(h, p);
+                    return null;
+                }
+                else if (p == q)
+                    continue restartFromHead;
+                else
+                    p = q;
+            }
+        }
+    }
+
+    public E peek() {
+        restartFromHead:
+        for (;;) {
+            for (Node<E> h = head, p = h, q;;) {
+                E item = p.item;
+                if (item != null || (q = p.next) == null) {
+                    updateHead(h, p);
+                    return item;
+                }
+                else if (p == q)
+                    continue restartFromHead;
+                else
+                    p = q;
+            }
+        }
+    }
+
+    /**
+     * Returns the first live (non-deleted) node on list, or null if none.
+     * This is yet another variant of poll/peek; here returning the
+     * first node, not element.  We could make peek() a wrapper around
+     * first(), but that would cost an extra volatile read of item,
+     * and the need to add a retry loop to deal with the possibility
+     * of losing a race to a concurrent poll().
+     */
+    Node<E> first() {
+        restartFromHead:
+        for (;;) {
+            for (Node<E> h = head, p = h, q;;) {
+                boolean hasItem = (p.item != null);
+                if (hasItem || (q = p.next) == null) {
+                    updateHead(h, p);
+                    return hasItem ? p : null;
+                }
+                else if (p == q)
+                    continue restartFromHead;
+                else
+                    p = q;
+            }
+        }
+    }
+
+    /**
+     * Returns {@code true} if this queue contains no elements.
+     *
+     * @return {@code true} if this queue contains no elements
+     */
+    public boolean isEmpty() {
+        return first() == null;
+    }
+
+    /**
+     * Returns the number of elements in this queue.  If this queue
+     * contains more than {@code Integer.MAX_VALUE} elements, returns
+     * {@code Integer.MAX_VALUE}.
+     *
+     * <p>Beware that, unlike in most collections, this method is
+     * <em>NOT</em> a constant-time operation. Because of the
+     * asynchronous nature of these queues, determining the current
+     * number of elements requires an O(n) traversal.
+     * Additionally, if elements are added or removed during execution
+     * of this method, the returned result may be inaccurate.  Thus,
+     * this method is typically not very useful in concurrent
+     * applications.
+     *
+     * @return the number of elements in this queue
+     */
+    public int size() {
+        int count = 0;
+        for (Node<E> p = first(); p != null; p = succ(p))
+            if (p.item != null)
+                // Collection.size() spec says to max out
+                if (++count == Integer.MAX_VALUE)
+                    break;
+        return count;
+    }
+
+    /**
+     * Returns {@code true} if this queue contains the specified element.
+     * More formally, returns {@code true} if and only if this queue contains
+     * at least one element {@code e} such that {@code o.equals(e)}.
+     *
+     * @param o object to be checked for containment in this queue
+     * @return {@code true} if this queue contains the specified element
+     */
+    public boolean contains(Object o) {
+        if (o == null) return false;
+        for (Node<E> p = first(); p != null; p = succ(p)) {
+            E item = p.item;
+            if (item != null && o.equals(item))
+                return true;
+        }
+        return false;
+    }
+
+    /**
+     * Removes a single instance of the specified element from this queue,
+     * if it is present.  More formally, removes an element {@code e} such
+     * that {@code o.equals(e)}, if this queue contains one or more such
+     * elements.
+     * Returns {@code true} if this queue contained the specified element
+     * (or equivalently, if this queue changed as a result of the call).
+     *
+     * @param o element to be removed from this queue, if present
+     * @return {@code true} if this queue changed as a result of the call
+     */
+    public boolean remove(Object o) {
+        if (o != null) {
+            Node<E> next, pred = null;
+            for (Node<E> p = first(); p != null; pred = p, p = next) {
+                boolean removed = false;
+                E item = p.item;
+                if (item != null) {
+                    if (!o.equals(item)) {
+                        next = succ(p);
+                        continue;
+                    }
+                    removed = p.casItem(item, null);
+                }
+
+                next = succ(p);
+                if (pred != null && next != null) // unlink
+                    pred.casNext(p, next);
+                if (removed)
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Appends all of the elements in the specified collection to the end of
+     * this queue, in the order that they are returned by the specified
+     * collection's iterator.  Attempts to {@code addAll} of a queue to
+     * itself result in {@code IllegalArgumentException}.
+     *
+     * @param c the elements to be inserted into this queue
+     * @return {@code true} if this queue changed as a result of the call
+     * @throws NullPointerException if the specified collection or any
+     *         of its elements are null
+     * @throws IllegalArgumentException if the collection is this queue
+     */
+    public boolean addAll(Collection<? extends E> c) {
+        if (c == this)
+            // As historically specified in AbstractQueue#addAll
+            throw new IllegalArgumentException();
+
+        // Copy c into a private chain of Nodes
+        Node<E> beginningOfTheEnd = null, last = null;
+        for (E e : c) {
+            checkNotNull(e);
+            Node<E> newNode = new Node<E>(e);
+            if (beginningOfTheEnd == null)
+                beginningOfTheEnd = last = newNode;
+            else {
+                last.lazySetNext(newNode);
+                last = newNode;
+            }
+        }
+        if (beginningOfTheEnd == null)
+            return false;
+
+        // Atomically append the chain at the tail of this collection
+        for (Node<E> t = tail, p = t;;) {
+            Node<E> q = p.next;
+            if (q == null) {
+                // p is last node
+                if (p.casNext(null, beginningOfTheEnd)) {
+                    // Successful CAS is the linearization point
+                    // for all elements to be added to this queue.
+                    if (!casTail(t, last)) {
+                        // Try a little harder to update tail,
+                        // since we may be adding many elements.
+                        t = tail;
+                        if (last.next == null)
+                            casTail(t, last);
+                    }
+                    return true;
+                }
+                // Lost CAS race to another thread; re-read next
+            }
+            else if (p == q)
+                // We have fallen off list.  If tail is unchanged, it
+                // will also be off-list, in which case we need to
+                // jump to head, from which all live nodes are always
+                // reachable.  Else the new tail is a better bet.
+                p = (t != (t = tail)) ? t : head;
+            else
+                // Check for tail updates after two hops.
+                p = (p != t && t != (t = tail)) ? t : q;
+        }
+    }
+
+    /**
+     * Returns an array containing all of the elements in this queue, in
+     * proper sequence.
+     *
+     * <p>The returned array will be "safe" in that no references to it are
+     * maintained by this queue.  (In other words, this method must allocate
+     * a new array).  The caller is thus free to modify the returned array.
+     *
+     * <p>This method acts as bridge between array-based and collection-based
+     * APIs.
+     *
+     * @return an array containing all of the elements in this queue
+     */
+    public Object[] toArray() {
+        // Use ArrayList to deal with resizing.
+        ArrayList<E> al = new ArrayList<E>();
+        for (Node<E> p = first(); p != null; p = succ(p)) {
+            E item = p.item;
+            if (item != null)
+                al.add(item);
+        }
+        return al.toArray();
+    }
+
+    /**
+     * Returns an array containing all of the elements in this queue, in
+     * proper sequence; the runtime type of the returned array is that of
+     * the specified array.  If the queue fits in the specified array, it
+     * is returned therein.  Otherwise, a new array is allocated with the
+     * runtime type of the specified array and the size of this queue.
+     *
+     * <p>If this queue fits in the specified array with room to spare
+     * (i.e., the array has more elements than this queue), the element in
+     * the array immediately following the end of the queue is set to
+     * {@code null}.
+     *
+     * <p>Like the {@link #toArray()} method, this method acts as bridge between
+     * array-based and collection-based APIs.  Further, this method allows
+     * precise control over the runtime type of the output array, and may,
+     * under certain circumstances, be used to save allocation costs.
+     *
+     * <p>Suppose {@code x} is a queue known to contain only strings.
+     * The following code can be used to dump the queue into a newly
+     * allocated array of {@code String}:
+     *
+     *  <pre> {@code String[] y = x.toArray(new String[0]);}</pre>
+     *
+     * Note that {@code toArray(new Object[0])} is identical in function to
+     * {@code toArray()}.
+     *
+     * @param a the array into which the elements of the queue are to
+     *          be stored, if it is big enough; otherwise, a new array of the
+     *          same runtime type is allocated for this purpose
+     * @return an array containing all of the elements in this queue
+     * @throws ArrayStoreException if the runtime type of the specified array
+     *         is not a supertype of the runtime type of every element in
+     *         this queue
+     * @throws NullPointerException if the specified array is null
+     */
+    @SuppressWarnings("unchecked")
+    public <T> T[] toArray(T[] a) {
+        // try to use sent-in array
+        int k = 0;
+        Node<E> p;
+        for (p = first(); p != null && k < a.length; p = succ(p)) {
+            E item = p.item;
+            if (item != null)
+                a[k++] = (T)item;
+        }
+        if (p == null) {
+            if (k < a.length)
+                a[k] = null;
+            return a;
+        }
+
+        // If won't fit, use ArrayList version
+        ArrayList<E> al = new ArrayList<E>();
+        for (Node<E> q = first(); q != null; q = succ(q)) {
+            E item = q.item;
+            if (item != null)
+                al.add(item);
+        }
+        return al.toArray(a);
+    }
+
+    /**
+     * Returns an iterator over the elements in this queue in proper sequence.
+     * The elements will be returned in order from first (head) to last (tail).
+     *
+     * <p>The returned iterator is
+     * <a href="package-summary.html#Weakly"><i>weakly consistent</i></a>.
+     *
+     * @return an iterator over the elements in this queue in proper sequence
+     */
+    public Iterator<E> iterator() {
+        return new Itr();
+    }
+
+    private class Itr implements Iterator<E> {
+        /**
+         * Next node to return item for.
+         */
+        private Node<E> nextNode;
+
+        /**
+         * nextItem holds on to item fields because once we claim
+         * that an element exists in hasNext(), we must return it in
+         * the following next() call even if it was in the process of
+         * being removed when hasNext() was called.
+         */
+        private E nextItem;
+
+        /**
+         * Node of the last returned item, to support remove.
+         */
+        private Node<E> lastRet;
+
+        Itr() {
+            advance();
+        }
+
+        /**
+         * Moves to next valid node and returns item to return for
+         * next(), or null if no such.
+         */
+        private E advance() {
+            lastRet = nextNode;
+            E x = nextItem;
+
+            Node<E> pred, p;
+            if (nextNode == null) {
+                p = first();
+                pred = null;
+            } else {
+                pred = nextNode;
+                p = succ(nextNode);
+            }
+
+            for (;;) {
+                if (p == null) {
+                    nextNode = null;
+                    nextItem = null;
+                    return x;
+                }
+                E item = p.item;
+                if (item != null) {
+                    nextNode = p;
+                    nextItem = item;
+                    return x;
+                } else {
+                    // skip over nulls
+                    Node<E> next = succ(p);
+                    if (pred != null && next != null)
+                        pred.casNext(p, next);
+                    p = next;
+                }
+            }
+        }
+
+        public boolean hasNext() {
+            return nextNode != null;
+        }
+
+        public E next() {
+            if (nextNode == null) throw new NoSuchElementException();
+            return advance();
+        }
+
+        public void remove() {
+            Node<E> l = lastRet;
+            if (l == null) throw new IllegalStateException();
+            // rely on a future traversal to relink.
+            l.item = null;
+            lastRet = null;
+        }
+    }
+
+    /**
+     * Saves this queue to a stream (that is, serializes it).
+     *
+     * @param s the stream
+     * @throws java.io.IOException if an I/O error occurs
+     * @serialData All of the elements (each an {@code E}) in
+     * the proper order, followed by a null
+     */
+    private void writeObject(java.io.ObjectOutputStream s)
+        throws java.io.IOException {
+
+        // Write out any hidden stuff
+        s.defaultWriteObject();
+
+        // Write out all elements in the proper order.
+        for (Node<E> p = first(); p != null; p = succ(p)) {
+            Object item = p.item;
+            if (item != null)
+                s.writeObject(item);
+        }
+
+        // Use trailing null as sentinel
+        s.writeObject(null);
+    }
+
+    /**
+     * Reconstitutes this queue from a stream (that is, deserializes it).
+     * @param s the stream
+     * @throws ClassNotFoundException if the class of a serialized object
+     *         could not be found
+     * @throws java.io.IOException if an I/O error occurs
+     */
+    private void readObject(java.io.ObjectInputStream s)
+        throws java.io.IOException, ClassNotFoundException {
+        s.defaultReadObject();
+
+        // Read in elements until trailing null sentinel found
+        Node<E> h = null, t = null;
+        Object item;
+        while ((item = s.readObject()) != null) {
+            @SuppressWarnings("unchecked")
+            Node<E> newNode = new Node<E>((E) item);
+            if (h == null)
+                h = t = newNode;
+            else {
+                t.lazySetNext(newNode);
+                t = newNode;
+            }
+        }
+        if (h == null)
+            h = t = new Node<E>(null);
+        head = h;
+        tail = t;
+    }
+
+    /** A customized variant of Spliterators.IteratorSpliterator */
+    static final class CLQSpliterator<E> implements Spliterator<E> {
+        static final int MAX_BATCH = 1 << 25;  // max batch array size;
+        final ConcurrentLinkedQueue<E> queue;
+        Node<E> current;    // current node; null until initialized
+        int batch;          // batch size for splits
+        boolean exhausted;  // true when no more nodes
+        CLQSpliterator(ConcurrentLinkedQueue<E> queue) {
+            this.queue = queue;
+        }
+
+        public Spliterator<E> trySplit() {
+            Node<E> p;
+            final ConcurrentLinkedQueue<E> q = this.queue;
+            int b = batch;
+            int n = (b <= 0) ? 1 : (b >= MAX_BATCH) ? MAX_BATCH : b + 1;
+            if (!exhausted &&
+                ((p = current) != null || (p = q.first()) != null) &&
+                p.next != null) {
+                Object[] a = new Object[n];
+                int i = 0;
+                do {
+                    if ((a[i] = p.item) != null)
+                        ++i;
+                    if (p == (p = p.next))
+                        p = q.first();
+                } while (p != null && i < n);
+                if ((current = p) == null)
+                    exhausted = true;
+                if (i > 0) {
+                    batch = i;
+                    return Spliterators.spliterator
+                        (a, 0, i, Spliterator.ORDERED | Spliterator.NONNULL |
+                         Spliterator.CONCURRENT);
+                }
+            }
+            return null;
+        }
+
+        public void forEachRemaining(Consumer<? super E> action) {
+            Node<E> p;
+            if (action == null) throw new NullPointerException();
+            final ConcurrentLinkedQueue<E> q = this.queue;
+            if (!exhausted &&
+                ((p = current) != null || (p = q.first()) != null)) {
+                exhausted = true;
+                do {
+                    E e = p.item;
+                    if (p == (p = p.next))
+                        p = q.first();
+                    if (e != null)
+                        action.accept(e);
+                } while (p != null);
+            }
+        }
+
+        public boolean tryAdvance(Consumer<? super E> action) {
+            Node<E> p;
+            if (action == null) throw new NullPointerException();
+            final ConcurrentLinkedQueue<E> q = this.queue;
+            if (!exhausted &&
+                ((p = current) != null || (p = q.first()) != null)) {
+                E e;
+                do {
+                    e = p.item;
+                    if (p == (p = p.next))
+                        p = q.first();
+                } while (e == null && p != null);
+                if ((current = p) == null)
+                    exhausted = true;
+                if (e != null) {
+                    action.accept(e);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public long estimateSize() { return Long.MAX_VALUE; }
+
+        public int characteristics() {
+            return Spliterator.ORDERED | Spliterator.NONNULL |
+                Spliterator.CONCURRENT;
+        }
+    }
+
+    /**
+     * Returns a {@link Spliterator} over the elements in this queue.
+     *
+     * <p>The returned spliterator is
+     * <a href="package-summary.html#Weakly"><i>weakly consistent</i></a>.
+     *
+     * <p>The {@code Spliterator} reports {@link Spliterator#CONCURRENT},
+     * {@link Spliterator#ORDERED}, and {@link Spliterator#NONNULL}.
+     *
+     * @implNote
+     * The {@code Spliterator} implements {@code trySplit} to permit limited
+     * parallelism.
+     *
+     * @return a {@code Spliterator} over the elements in this queue
+     * @since 1.8
+     */
+    @Override
+    public Spliterator<E> spliterator() {
+        return new CLQSpliterator<E>(this);
+    }
+
+    /**
+     * Throws NullPointerException if argument is null.
+     *
+     * @param v the element
+     */
+    private static void checkNotNull(Object v) {
+        if (v == null)
+            throw new NullPointerException();
+    }
+
+    private boolean casTail(Node<E> cmp, Node<E> val) {
+        return UNSAFE.compareAndSwapObject(this, tailOffset, cmp, val);
+    }
+
+    private boolean casHead(Node<E> cmp, Node<E> val) {
+        return UNSAFE.compareAndSwapObject(this, headOffset, cmp, val);
+    }
+
+    // Unsafe mechanics
+
+    private static final sun.misc.Unsafe UNSAFE;
+    private static final long headOffset;
+    private static final long tailOffset;
+    static {
+        try {
+            UNSAFE = sun.misc.Unsafe.getUnsafe();
+            Class<?> k = ConcurrentLinkedQueue.class;
+            headOffset = UNSAFE.objectFieldOffset
+                (k.getDeclaredField("head"));
+            tailOffset = UNSAFE.objectFieldOffset
+                (k.getDeclaredField("tail"));
+        } catch (Exception e) {
+            throw new Error(e);
+        }
+    }
+}

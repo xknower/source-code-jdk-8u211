@@ -1,5863 +1,5858 @@
-/*      */ package java.util.regex;
-/*      */ 
-/*      */ import java.io.IOException;
-/*      */ import java.io.ObjectInputStream;
-/*      */ import java.io.Serializable;
-/*      */ import java.text.Normalizer;
-/*      */ import java.util.ArrayList;
-/*      */ import java.util.Arrays;
-/*      */ import java.util.HashMap;
-/*      */ import java.util.Iterator;
-/*      */ import java.util.Locale;
-/*      */ import java.util.Map;
-/*      */ import java.util.NoSuchElementException;
-/*      */ import java.util.Spliterators;
-/*      */ import java.util.function.Predicate;
-/*      */ import java.util.stream.Stream;
-/*      */ import java.util.stream.StreamSupport;
-/*      */ import sun.text.Normalizer;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public final class Pattern
-/*      */   implements Serializable
-/*      */ {
-/*      */   public static final int UNIX_LINES = 1;
-/*      */   public static final int CASE_INSENSITIVE = 2;
-/*      */   public static final int COMMENTS = 4;
-/*      */   public static final int MULTILINE = 8;
-/*      */   public static final int LITERAL = 16;
-/*      */   public static final int DOTALL = 32;
-/*      */   public static final int UNICODE_CASE = 64;
-/*      */   public static final int CANON_EQ = 128;
-/*      */   public static final int UNICODE_CHARACTER_CLASS = 256;
-/*      */   private static final long serialVersionUID = 5073258162644648461L;
-/*      */   private String pattern;
-/*      */   private int flags;
-/*      */   private volatile transient boolean compiled = false;
-/*      */   private transient String normalizedPattern;
-/*      */   transient Node root;
-/*      */   transient Node matchRoot;
-/*      */   transient int[] buffer;
-/*      */   volatile transient Map<String, Integer> namedGroups;
-/*      */   transient GroupHead[] groupNodes;
-/*      */   private transient int[] temp;
-/*      */   transient int capturingGroupCount;
-/*      */   transient int localCount;
-/*      */   private transient int cursor;
-/*      */   private transient int patternLength;
-/*      */   private transient boolean hasSupplementary;
-/*      */   static final int MAX_REPS = 2147483647;
-/*      */   static final int GREEDY = 0;
-/*      */   static final int LAZY = 1;
-/*      */   static final int POSSESSIVE = 2;
-/*      */   static final int INDEPENDENT = 3;
-/*      */   
-/*      */   public static Pattern compile(String paramString) {
-/* 1028 */     return new Pattern(paramString, 0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static Pattern compile(String paramString, int paramInt) {
-/* 1054 */     return new Pattern(paramString, paramInt);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String pattern() {
-/* 1063 */     return this.pattern;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String toString() {
-/* 1075 */     return this.pattern;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Matcher matcher(CharSequence paramCharSequence) {
-/* 1087 */     if (!this.compiled)
-/* 1088 */       synchronized (this) {
-/* 1089 */         if (!this.compiled) {
-/* 1090 */           compile();
-/*      */         }
-/*      */       }  
-/* 1093 */     return new Matcher(this, paramCharSequence);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int flags() {
-/* 1103 */     return this.flags;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static boolean matches(String paramString, CharSequence paramCharSequence) {
-/* 1133 */     Pattern pattern = compile(paramString);
-/* 1134 */     Matcher matcher = pattern.matcher(paramCharSequence);
-/* 1135 */     return matcher.matches();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String[] split(CharSequence paramCharSequence, int paramInt) {
-/* 1203 */     int i = 0;
-/* 1204 */     boolean bool = (paramInt > 0) ? true : false;
-/* 1205 */     ArrayList<String> arrayList = new ArrayList();
-/* 1206 */     Matcher matcher = matcher(paramCharSequence);
-/*      */ 
-/*      */     
-/* 1209 */     while (matcher.find()) {
-/* 1210 */       if (!bool || arrayList.size() < paramInt - 1) {
-/* 1211 */         if (!i && i == matcher.start() && matcher.start() == matcher.end()) {
-/*      */           continue;
-/*      */         }
-/*      */ 
-/*      */         
-/* 1216 */         String str = paramCharSequence.subSequence(i, matcher.start()).toString();
-/* 1217 */         arrayList.add(str);
-/* 1218 */         i = matcher.end(); continue;
-/* 1219 */       }  if (arrayList.size() == paramInt - 1) {
-/*      */         
-/* 1221 */         String str = paramCharSequence.subSequence(i, paramCharSequence.length()).toString();
-/* 1222 */         arrayList.add(str);
-/* 1223 */         i = matcher.end();
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1228 */     if (i == 0) {
-/* 1229 */       return new String[] { paramCharSequence.toString() };
-/*      */     }
-/*      */     
-/* 1232 */     if (!bool || arrayList.size() < paramInt) {
-/* 1233 */       arrayList.add(paramCharSequence.subSequence(i, paramCharSequence.length()).toString());
-/*      */     }
-/*      */     
-/* 1236 */     int j = arrayList.size();
-/* 1237 */     if (paramInt == 0)
-/* 1238 */       while (j > 0 && ((String)arrayList.get(j - 1)).equals(""))
-/* 1239 */         j--;  
-/* 1240 */     String[] arrayOfString = new String[j];
-/* 1241 */     return (String[])arrayList.subList(0, j).toArray((Object[])arrayOfString);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String[] split(CharSequence paramCharSequence) {
-/* 1273 */     return split(paramCharSequence, 0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static String quote(String paramString) {
-/* 1291 */     int i = paramString.indexOf("\\E");
-/* 1292 */     if (i == -1) {
-/* 1293 */       return "\\Q" + paramString + "\\E";
-/*      */     }
-/* 1295 */     StringBuilder stringBuilder = new StringBuilder(paramString.length() * 2);
-/* 1296 */     stringBuilder.append("\\Q");
-/* 1297 */     i = 0;
-/* 1298 */     int j = 0;
-/* 1299 */     while ((i = paramString.indexOf("\\E", j)) != -1) {
-/* 1300 */       stringBuilder.append(paramString.substring(j, i));
-/* 1301 */       j = i + 2;
-/* 1302 */       stringBuilder.append("\\E\\\\E\\Q");
-/*      */     } 
-/* 1304 */     stringBuilder.append(paramString.substring(j, paramString.length()));
-/* 1305 */     stringBuilder.append("\\E");
-/* 1306 */     return stringBuilder.toString();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void readObject(ObjectInputStream paramObjectInputStream) throws IOException, ClassNotFoundException {
-/* 1317 */     paramObjectInputStream.defaultReadObject();
-/*      */ 
-/*      */     
-/* 1320 */     this.capturingGroupCount = 1;
-/* 1321 */     this.localCount = 0;
-/*      */ 
-/*      */     
-/* 1324 */     this.compiled = false;
-/* 1325 */     if (this.pattern.length() == 0) {
-/* 1326 */       this.root = new Start(lastAccept);
-/* 1327 */       this.matchRoot = lastAccept;
-/* 1328 */       this.compiled = true;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Pattern(String paramString, int paramInt) {
-/* 1339 */     this.pattern = paramString;
-/* 1340 */     this.flags = paramInt;
-/*      */ 
-/*      */     
-/* 1343 */     if ((this.flags & 0x100) != 0) {
-/* 1344 */       this.flags |= 0x40;
-/*      */     }
-/*      */     
-/* 1347 */     this.capturingGroupCount = 1;
-/* 1348 */     this.localCount = 0;
-/*      */     
-/* 1350 */     if (this.pattern.length() > 0) {
-/* 1351 */       compile();
-/*      */     } else {
-/* 1353 */       this.root = new Start(lastAccept);
-/* 1354 */       this.matchRoot = lastAccept;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void normalize() {
-/* 1363 */     boolean bool = false;
-/* 1364 */     int i = -1;
-/*      */ 
-/*      */     
-/* 1367 */     this.normalizedPattern = Normalizer.normalize(this.pattern, Normalizer.Form.NFD);
-/* 1368 */     this.patternLength = this.normalizedPattern.length();
-/*      */ 
-/*      */     
-/* 1371 */     StringBuilder stringBuilder = new StringBuilder(this.patternLength); int j;
-/* 1372 */     for (j = 0; j < this.patternLength; ) {
-/* 1373 */       int k = this.normalizedPattern.codePointAt(j);
-/*      */       
-/* 1375 */       if (Character.getType(k) == 6 && i != -1) {
-/*      */         
-/* 1377 */         StringBuilder stringBuilder1 = new StringBuilder();
-/* 1378 */         stringBuilder1.appendCodePoint(i);
-/* 1379 */         stringBuilder1.appendCodePoint(k);
-/* 1380 */         while (Character.getType(k) == 6) {
-/* 1381 */           j += Character.charCount(k);
-/* 1382 */           if (j >= this.patternLength)
-/*      */             break; 
-/* 1384 */           k = this.normalizedPattern.codePointAt(j);
-/* 1385 */           stringBuilder1.appendCodePoint(k);
-/*      */         } 
-/* 1387 */         String str = produceEquivalentAlternation(stringBuilder1
-/* 1388 */             .toString());
-/* 1389 */         stringBuilder.setLength(stringBuilder.length() - Character.charCount(i));
-/* 1390 */         stringBuilder.append("(?:").append(str).append(")");
-/* 1391 */       } else if (k == 91 && i != 92) {
-/* 1392 */         j = normalizeCharClass(stringBuilder, j);
-/*      */       } else {
-/* 1394 */         stringBuilder.appendCodePoint(k);
-/*      */       } 
-/* 1396 */       i = k;
-/* 1397 */       j += Character.charCount(k);
-/*      */     } 
-/* 1399 */     this.normalizedPattern = stringBuilder.toString();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int normalizeCharClass(StringBuilder paramStringBuilder, int paramInt) {
-/*      */     String str;
-/* 1408 */     StringBuilder stringBuilder1 = new StringBuilder();
-/* 1409 */     StringBuilder stringBuilder2 = null;
-/* 1410 */     int i = -1;
-/*      */ 
-/*      */     
-/* 1413 */     paramInt++;
-/* 1414 */     if (paramInt == this.normalizedPattern.length())
-/* 1415 */       throw error("Unclosed character class"); 
-/* 1416 */     stringBuilder1.append("[");
-/*      */     while (true) {
-/* 1418 */       int j = this.normalizedPattern.codePointAt(paramInt);
-/*      */ 
-/*      */       
-/* 1421 */       if (j == 93 && i != 92) {
-/* 1422 */         stringBuilder1.append((char)j); break;
-/*      */       } 
-/* 1424 */       if (Character.getType(j) == 6) {
-/* 1425 */         StringBuilder stringBuilder = new StringBuilder();
-/* 1426 */         stringBuilder.appendCodePoint(i);
-/* 1427 */         while (Character.getType(j) == 6) {
-/* 1428 */           stringBuilder.appendCodePoint(j);
-/* 1429 */           paramInt += Character.charCount(j);
-/* 1430 */           if (paramInt >= this.normalizedPattern.length())
-/*      */             break; 
-/* 1432 */           j = this.normalizedPattern.codePointAt(paramInt);
-/*      */         } 
-/* 1434 */         String str1 = produceEquivalentAlternation(stringBuilder
-/* 1435 */             .toString());
-/*      */         
-/* 1437 */         stringBuilder1.setLength(stringBuilder1.length() - Character.charCount(i));
-/* 1438 */         if (stringBuilder2 == null)
-/* 1439 */           stringBuilder2 = new StringBuilder(); 
-/* 1440 */         stringBuilder2.append('|');
-/* 1441 */         stringBuilder2.append(str1);
-/*      */       } else {
-/* 1443 */         stringBuilder1.appendCodePoint(j);
-/* 1444 */         paramInt++;
-/*      */       } 
-/* 1446 */       if (paramInt == this.normalizedPattern.length())
-/* 1447 */         throw error("Unclosed character class"); 
-/* 1448 */       i = j;
-/*      */     } 
-/*      */     
-/* 1451 */     if (stringBuilder2 != null) {
-/* 1452 */       str = "(?:" + stringBuilder1.toString() + stringBuilder2.toString() + ")";
-/*      */     } else {
-/* 1454 */       str = stringBuilder1.toString();
-/*      */     } 
-/*      */     
-/* 1457 */     paramStringBuilder.append(str);
-/* 1458 */     return paramInt;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private String produceEquivalentAlternation(String paramString) {
-/* 1467 */     int i = countChars(paramString, 0, 1);
-/* 1468 */     if (paramString.length() == i)
-/*      */     {
-/* 1470 */       return paramString;
-/*      */     }
-/* 1472 */     String str1 = paramString.substring(0, i);
-/* 1473 */     String str2 = paramString.substring(i);
-/*      */     
-/* 1475 */     String[] arrayOfString = producePermutations(str2);
-/* 1476 */     StringBuilder stringBuilder = new StringBuilder(paramString);
-/*      */ 
-/*      */     
-/* 1479 */     for (byte b = 0; b < arrayOfString.length; b++) {
-/* 1480 */       String str = str1 + arrayOfString[b];
-/* 1481 */       if (b > 0)
-/* 1482 */         stringBuilder.append("|" + str); 
-/* 1483 */       str = composeOneStep(str);
-/* 1484 */       if (str != null)
-/* 1485 */         stringBuilder.append("|" + produceEquivalentAlternation(str)); 
-/*      */     } 
-/* 1487 */     return stringBuilder.toString();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private String[] producePermutations(String paramString) {
-/* 1500 */     if (paramString.length() == countChars(paramString, 0, 1)) {
-/* 1501 */       return new String[] { paramString };
-/*      */     }
-/* 1503 */     if (paramString.length() == countChars(paramString, 0, 2)) {
-/* 1504 */       int n = Character.codePointAt(paramString, 0);
-/* 1505 */       int i1 = Character.codePointAt(paramString, Character.charCount(n));
-/* 1506 */       if (getClass(i1) == getClass(n)) {
-/* 1507 */         return new String[] { paramString };
-/*      */       }
-/* 1509 */       String[] arrayOfString = new String[2];
-/* 1510 */       arrayOfString[0] = paramString;
-/* 1511 */       StringBuilder stringBuilder = new StringBuilder(2);
-/* 1512 */       stringBuilder.appendCodePoint(i1);
-/* 1513 */       stringBuilder.appendCodePoint(n);
-/* 1514 */       arrayOfString[1] = stringBuilder.toString();
-/* 1515 */       return arrayOfString;
-/*      */     } 
-/*      */     
-/* 1518 */     int i = 1;
-/* 1519 */     int j = countCodePoints(paramString);
-/* 1520 */     for (byte b1 = 1; b1 < j; b1++) {
-/* 1521 */       i *= b1 + 1;
-/*      */     }
-/* 1523 */     String[] arrayOfString1 = new String[i];
-/*      */     
-/* 1525 */     int[] arrayOfInt = new int[j]; byte b2; int k;
-/* 1526 */     for (b2 = 0, k = 0; b2 < j; b2++) {
-/* 1527 */       int n = Character.codePointAt(paramString, k);
-/* 1528 */       arrayOfInt[b2] = getClass(n);
-/* 1529 */       k += Character.charCount(n);
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1534 */     b2 = 0;
-/*      */     
-/*      */     int m;
-/* 1537 */     for (byte b3 = 0; b3 < j; b3++, m += k) {
-/* 1538 */       k = countChars(paramString, m, 1);
-/* 1539 */       boolean bool = false;
-/* 1540 */       for (int n = b3 - 1; n >= 0; n--) {
-/* 1541 */         if (arrayOfInt[n] == arrayOfInt[b3]) {
-/*      */           break label43;
-/*      */         }
-/*      */       } 
-/* 1545 */       StringBuilder stringBuilder = new StringBuilder(paramString);
-/* 1546 */       String str1 = stringBuilder.delete(m, m + k).toString();
-/* 1547 */       String[] arrayOfString = producePermutations(str1);
-/*      */       
-/* 1549 */       String str2 = paramString.substring(m, m + k); byte b;
-/* 1550 */       label43: for (b = 0; b < arrayOfString.length; b++)
-/* 1551 */         arrayOfString1[b2++] = str2 + arrayOfString[b]; 
-/*      */     } 
-/* 1553 */     String[] arrayOfString2 = new String[b2];
-/* 1554 */     for (m = 0; m < b2; m++)
-/* 1555 */       arrayOfString2[m] = arrayOfString1[m]; 
-/* 1556 */     return arrayOfString2;
-/*      */   }
-/*      */   
-/*      */   private int getClass(int paramInt) {
-/* 1560 */     return Normalizer.getCombiningClass(paramInt);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private String composeOneStep(String paramString) {
-/* 1571 */     int i = countChars(paramString, 0, 2);
-/* 1572 */     String str1 = paramString.substring(0, i);
-/* 1573 */     String str2 = Normalizer.normalize(str1, Normalizer.Form.NFC);
-/*      */     
-/* 1575 */     if (str2.equals(str1)) {
-/* 1576 */       return null;
-/*      */     }
-/* 1578 */     String str3 = paramString.substring(i);
-/* 1579 */     return str2 + str3;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void RemoveQEQuoting() {
-/* 1588 */     int i = this.patternLength;
-/* 1589 */     byte b1 = 0;
-/* 1590 */     while (b1 < i - 1) {
-/* 1591 */       if (this.temp[b1] != 92) {
-/* 1592 */         b1++; continue;
-/* 1593 */       }  if (this.temp[b1 + 1] != 81) {
-/* 1594 */         b1 += 2;
-/*      */       }
-/*      */     } 
-/*      */     
-/* 1598 */     if (b1 >= i - 1)
-/*      */       return; 
-/* 1600 */     byte b2 = b1;
-/* 1601 */     b1 += 2;
-/* 1602 */     int[] arrayOfInt = new int[b2 + 3 * (i - b1) + 2];
-/* 1603 */     System.arraycopy(this.temp, 0, arrayOfInt, 0, b2);
-/*      */     
-/* 1605 */     boolean bool1 = true;
-/* 1606 */     boolean bool2 = true;
-/* 1607 */     while (b1 < i) {
-/* 1608 */       int j = this.temp[b1++];
-/* 1609 */       if (!ASCII.isAscii(j) || ASCII.isAlpha(j)) {
-/* 1610 */         arrayOfInt[b2++] = j;
-/* 1611 */       } else if (ASCII.isDigit(j)) {
-/* 1612 */         if (bool2) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/* 1618 */           arrayOfInt[b2++] = 92;
-/* 1619 */           arrayOfInt[b2++] = 120;
-/* 1620 */           arrayOfInt[b2++] = 51;
-/*      */         } 
-/* 1622 */         arrayOfInt[b2++] = j;
-/* 1623 */       } else if (j != 92) {
-/* 1624 */         if (bool1) arrayOfInt[b2++] = 92; 
-/* 1625 */         arrayOfInt[b2++] = j;
-/* 1626 */       } else if (bool1) {
-/* 1627 */         if (this.temp[b1] == 69) {
-/* 1628 */           b1++;
-/* 1629 */           bool1 = false;
-/*      */         } else {
-/* 1631 */           arrayOfInt[b2++] = 92;
-/* 1632 */           arrayOfInt[b2++] = 92;
-/*      */         } 
-/*      */       } else {
-/* 1635 */         if (this.temp[b1] == 81) {
-/* 1636 */           b1++;
-/* 1637 */           bool1 = true;
-/* 1638 */           bool2 = true;
-/*      */           continue;
-/*      */         } 
-/* 1641 */         arrayOfInt[b2++] = j;
-/* 1642 */         if (b1 != i) {
-/* 1643 */           arrayOfInt[b2++] = this.temp[b1++];
-/*      */         }
-/*      */       } 
-/*      */       
-/* 1647 */       bool2 = false;
-/*      */     } 
-/*      */     
-/* 1650 */     this.patternLength = b2;
-/* 1651 */     this.temp = Arrays.copyOf(arrayOfInt, b2 + 2);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void compile() {
-/* 1660 */     if (has(128) && !has(16)) {
-/* 1661 */       normalize();
-/*      */     } else {
-/* 1663 */       this.normalizedPattern = this.pattern;
-/*      */     } 
-/* 1665 */     this.patternLength = this.normalizedPattern.length();
-/*      */ 
-/*      */ 
-/*      */     
-/* 1669 */     this.temp = new int[this.patternLength + 2];
-/*      */     
-/* 1671 */     this.hasSupplementary = false;
-/* 1672 */     byte b = 0;
-/*      */     
-/* 1674 */     for (int i = 0; i < this.patternLength; i += Character.charCount(j)) {
-/* 1675 */       int j = this.normalizedPattern.codePointAt(i);
-/* 1676 */       if (isSupplementary(j)) {
-/* 1677 */         this.hasSupplementary = true;
-/*      */       }
-/* 1679 */       this.temp[b++] = j;
-/*      */     } 
-/*      */     
-/* 1682 */     this.patternLength = b;
-/*      */     
-/* 1684 */     if (!has(16)) {
-/* 1685 */       RemoveQEQuoting();
-/*      */     }
-/*      */     
-/* 1688 */     this.buffer = new int[32];
-/* 1689 */     this.groupNodes = new GroupHead[10];
-/* 1690 */     this.namedGroups = null;
-/*      */     
-/* 1692 */     if (has(16)) {
-/*      */       
-/* 1694 */       this.matchRoot = newSlice(this.temp, this.patternLength, this.hasSupplementary);
-/* 1695 */       this.matchRoot.next = lastAccept;
-/*      */     } else {
-/*      */       
-/* 1698 */       this.matchRoot = expr(lastAccept);
-/*      */       
-/* 1700 */       if (this.patternLength != this.cursor) {
-/* 1701 */         if (peek() == 41) {
-/* 1702 */           throw error("Unmatched closing ')'");
-/*      */         }
-/* 1704 */         throw error("Unexpected internal error");
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1710 */     if (this.matchRoot instanceof Slice) {
-/* 1711 */       this.root = BnM.optimize(this.matchRoot);
-/* 1712 */       if (this.root == this.matchRoot) {
-/* 1713 */         this.root = this.hasSupplementary ? new StartS(this.matchRoot) : new Start(this.matchRoot);
-/*      */       }
-/* 1715 */     } else if (this.matchRoot instanceof Begin || this.matchRoot instanceof First) {
-/* 1716 */       this.root = this.matchRoot;
-/*      */     } else {
-/* 1718 */       this.root = this.hasSupplementary ? new StartS(this.matchRoot) : new Start(this.matchRoot);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1722 */     this.temp = null;
-/* 1723 */     this.buffer = null;
-/* 1724 */     this.groupNodes = null;
-/* 1725 */     this.patternLength = 0;
-/* 1726 */     this.compiled = true;
-/*      */   }
-/*      */   
-/*      */   Map<String, Integer> namedGroups() {
-/* 1730 */     if (this.namedGroups == null)
-/* 1731 */       this.namedGroups = new HashMap<>(2); 
-/* 1732 */     return this.namedGroups;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static void printObjectTree(Node paramNode) {
-/* 1739 */     while (paramNode != null) {
-/* 1740 */       if (paramNode instanceof Prolog)
-/* 1741 */       { System.out.println(paramNode);
-/* 1742 */         printObjectTree(((Prolog)paramNode).loop);
-/* 1743 */         System.out.println("**** end contents prolog loop"); }
-/* 1744 */       else if (paramNode instanceof Loop)
-/* 1745 */       { System.out.println(paramNode);
-/* 1746 */         printObjectTree(((Loop)paramNode).body);
-/* 1747 */         System.out.println("**** end contents Loop body"); }
-/* 1748 */       else if (paramNode instanceof Curly)
-/* 1749 */       { System.out.println(paramNode);
-/* 1750 */         printObjectTree(((Curly)paramNode).atom);
-/* 1751 */         System.out.println("**** end contents Curly body"); }
-/* 1752 */       else if (paramNode instanceof GroupCurly)
-/* 1753 */       { System.out.println(paramNode);
-/* 1754 */         printObjectTree(((GroupCurly)paramNode).atom);
-/* 1755 */         System.out.println("**** end contents GroupCurly body"); }
-/* 1756 */       else { if (paramNode instanceof GroupTail) {
-/* 1757 */           System.out.println(paramNode);
-/* 1758 */           System.out.println("Tail next is " + paramNode.next);
-/*      */           return;
-/*      */         } 
-/* 1761 */         System.out.println(paramNode); }
-/*      */       
-/* 1763 */       paramNode = paramNode.next;
-/* 1764 */       if (paramNode != null)
-/* 1765 */         System.out.println("->next:"); 
-/* 1766 */       if (paramNode == accept) {
-/* 1767 */         System.out.println("Accept Node");
-/* 1768 */         paramNode = null;
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   static final class TreeInfo
-/*      */   {
-/*      */     int minLength;
-/*      */     
-/*      */     int maxLength;
-/*      */     
-/*      */     boolean maxValid;
-/*      */     boolean deterministic;
-/*      */     
-/*      */     TreeInfo() {
-/* 1784 */       reset();
-/*      */     }
-/*      */     void reset() {
-/* 1787 */       this.minLength = 0;
-/* 1788 */       this.maxLength = 0;
-/* 1789 */       this.maxValid = true;
-/* 1790 */       this.deterministic = true;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean has(int paramInt) {
-/* 1804 */     return ((this.flags & paramInt) != 0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void accept(int paramInt, String paramString) {
-/* 1811 */     int i = this.temp[this.cursor++];
-/* 1812 */     if (has(4))
-/* 1813 */       i = parsePastWhitespace(i); 
-/* 1814 */     if (paramInt != i) {
-/* 1815 */       throw error(paramString);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void mark(int paramInt) {
-/* 1823 */     this.temp[this.patternLength] = paramInt;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int peek() {
-/* 1830 */     int i = this.temp[this.cursor];
-/* 1831 */     if (has(4))
-/* 1832 */       i = peekPastWhitespace(i); 
-/* 1833 */     return i;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int read() {
-/* 1840 */     int i = this.temp[this.cursor++];
-/* 1841 */     if (has(4))
-/* 1842 */       i = parsePastWhitespace(i); 
-/* 1843 */     return i;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int readEscaped() {
-/* 1851 */     return this.temp[this.cursor++];
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int next() {
-/* 1859 */     int i = this.temp[++this.cursor];
-/* 1860 */     if (has(4))
-/* 1861 */       i = peekPastWhitespace(i); 
-/* 1862 */     return i;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int nextEscaped() {
-/* 1870 */     return this.temp[++this.cursor];
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int peekPastWhitespace(int paramInt) {
-/* 1878 */     while (ASCII.isSpace(paramInt) || paramInt == 35) {
-/* 1879 */       while (ASCII.isSpace(paramInt))
-/* 1880 */         paramInt = this.temp[++this.cursor]; 
-/* 1881 */       if (paramInt == 35) {
-/* 1882 */         paramInt = peekPastLine();
-/*      */       }
-/*      */     } 
-/* 1885 */     return paramInt;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int parsePastWhitespace(int paramInt) {
-/* 1892 */     while (ASCII.isSpace(paramInt) || paramInt == 35) {
-/* 1893 */       while (ASCII.isSpace(paramInt))
-/* 1894 */         paramInt = this.temp[this.cursor++]; 
-/* 1895 */       if (paramInt == 35)
-/* 1896 */         paramInt = parsePastLine(); 
-/*      */     } 
-/* 1898 */     return paramInt;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int parsePastLine() {
-/* 1905 */     int i = this.temp[this.cursor++];
-/* 1906 */     while (i != 0 && !isLineSeparator(i))
-/* 1907 */       i = this.temp[this.cursor++]; 
-/* 1908 */     return i;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int peekPastLine() {
-/* 1915 */     int i = this.temp[++this.cursor];
-/* 1916 */     while (i != 0 && !isLineSeparator(i))
-/* 1917 */       i = this.temp[++this.cursor]; 
-/* 1918 */     return i;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean isLineSeparator(int paramInt) {
-/* 1925 */     if (has(1)) {
-/* 1926 */       return (paramInt == 10);
-/*      */     }
-/* 1928 */     return (paramInt == 10 || paramInt == 13 || (paramInt | 0x1) == 8233 || paramInt == 133);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int skip() {
-/* 1939 */     int i = this.cursor;
-/* 1940 */     int j = this.temp[i + 1];
-/* 1941 */     this.cursor = i + 2;
-/* 1942 */     return j;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void unread() {
-/* 1949 */     this.cursor--;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private PatternSyntaxException error(String paramString) {
-/* 1957 */     return new PatternSyntaxException(paramString, this.normalizedPattern, this.cursor - 1);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean findSupplementary(int paramInt1, int paramInt2) {
-/* 1965 */     for (int i = paramInt1; i < paramInt2; i++) {
-/* 1966 */       if (isSupplementary(this.temp[i]))
-/* 1967 */         return true; 
-/*      */     } 
-/* 1969 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static final boolean isSupplementary(int paramInt) {
-/* 1977 */     return (paramInt >= 65536 || 
-/* 1978 */       Character.isSurrogate((char)paramInt));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Node expr(Node paramNode) {
-/* 1992 */     Node node1 = null;
-/* 1993 */     Node node2 = null;
-/* 1994 */     Node node3 = null;
-/* 1995 */     BranchConn branchConn = null;
-/*      */     
-/*      */     while (true) {
-/* 1998 */       Node node4 = sequence(paramNode);
-/* 1999 */       Node node5 = this.root;
-/* 2000 */       if (node1 == null) {
-/* 2001 */         node1 = node4;
-/* 2002 */         node2 = node5;
-/*      */       } else {
-/*      */         
-/* 2005 */         if (branchConn == null) {
-/* 2006 */           branchConn = new BranchConn();
-/* 2007 */           branchConn.next = paramNode;
-/*      */         } 
-/* 2009 */         if (node4 == paramNode) {
-/*      */ 
-/*      */ 
-/*      */           
-/* 2013 */           node4 = null;
-/*      */         } else {
-/*      */           
-/* 2016 */           node5.next = branchConn;
-/*      */         } 
-/* 2018 */         if (node1 == node3) {
-/* 2019 */           node3.add(node4);
-/*      */         } else {
-/* 2021 */           if (node1 == paramNode) {
-/* 2022 */             node1 = null;
-/*      */           }
-/*      */           else {
-/*      */             
-/* 2026 */             node2.next = branchConn;
-/*      */           } 
-/* 2028 */           node1 = node3 = new Branch(node1, node4, branchConn);
-/*      */         } 
-/*      */       } 
-/* 2031 */       if (peek() != 124) {
-/* 2032 */         return node1;
-/*      */       }
-/* 2034 */       next();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Node sequence(Node paramNode) {
-/* 2043 */     Node node1 = null;
-/* 2044 */     Node node2 = null;
-/* 2045 */     Node node3 = null;
-/*      */     
-/*      */     while (true) {
-/* 2048 */       int i = peek();
-/* 2049 */       switch (i) {
-/*      */ 
-/*      */         
-/*      */         case 40:
-/* 2053 */           node3 = group0();
-/*      */           
-/* 2055 */           if (node3 == null)
-/*      */             continue; 
-/* 2057 */           if (node1 == null) {
-/* 2058 */             node1 = node3;
-/*      */           } else {
-/* 2060 */             node2.next = node3;
-/*      */           } 
-/* 2062 */           node2 = this.root;
-/*      */           continue;
-/*      */         case 91:
-/* 2065 */           node3 = clazz(true);
-/*      */           break;
-/*      */         case 92:
-/* 2068 */           i = nextEscaped();
-/* 2069 */           if (i == 112 || i == 80) {
-/* 2070 */             boolean bool1 = true;
-/* 2071 */             boolean bool2 = (i == 80) ? true : false;
-/* 2072 */             i = next();
-/* 2073 */             if (i != 123) {
-/* 2074 */               unread();
-/*      */             } else {
-/* 2076 */               bool1 = false;
-/*      */             } 
-/* 2078 */             node3 = family(bool1, bool2); break;
-/*      */           } 
-/* 2080 */           unread();
-/* 2081 */           node3 = atom();
-/*      */           break;
-/*      */         
-/*      */         case 94:
-/* 2085 */           next();
-/* 2086 */           if (has(8)) {
-/* 2087 */             if (has(1)) {
-/* 2088 */               node3 = new UnixCaret(); break;
-/*      */             } 
-/* 2090 */             node3 = new Caret(); break;
-/*      */           } 
-/* 2092 */           node3 = new Begin();
-/*      */           break;
-/*      */         
-/*      */         case 36:
-/* 2096 */           next();
-/* 2097 */           if (has(1)) {
-/* 2098 */             node3 = new UnixDollar(has(8)); break;
-/*      */           } 
-/* 2100 */           node3 = new Dollar(has(8));
-/*      */           break;
-/*      */         case 46:
-/* 2103 */           next();
-/* 2104 */           if (has(32)) {
-/* 2105 */             node3 = new All(); break;
-/*      */           } 
-/* 2107 */           if (has(1)) {
-/* 2108 */             node3 = new UnixDot(); break;
-/*      */           } 
-/* 2110 */           node3 = new Dot();
-/*      */           break;
-/*      */         
-/*      */         case 41:
-/*      */         case 124:
-/*      */           break;
-/*      */         
-/*      */         case 93:
-/*      */         case 125:
-/* 2119 */           node3 = atom();
-/*      */           break;
-/*      */         case 42:
-/*      */         case 43:
-/*      */         case 63:
-/* 2124 */           next();
-/* 2125 */           throw error("Dangling meta character '" + (char)i + "'");
-/*      */         case 0:
-/* 2127 */           if (this.cursor >= this.patternLength) {
-/*      */             break;
-/*      */           }
-/*      */         
-/*      */         default:
-/* 2132 */           node3 = atom();
-/*      */           break;
-/*      */       } 
-/*      */       
-/* 2136 */       node3 = closure(node3);
-/*      */       
-/* 2138 */       if (node1 == null) {
-/* 2139 */         node1 = node2 = node3; continue;
-/*      */       } 
-/* 2141 */       node2.next = node3;
-/* 2142 */       node2 = node3;
-/*      */     } 
-/*      */     
-/* 2145 */     if (node1 == null) {
-/* 2146 */       return paramNode;
-/*      */     }
-/* 2148 */     node2.next = paramNode;
-/* 2149 */     this.root = node2;
-/* 2150 */     return node1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Node atom() {
-/* 2158 */     byte b = 0;
-/* 2159 */     int i = -1;
-/* 2160 */     boolean bool = false;
-/* 2161 */     int j = peek();
-/*      */     while (true) {
-/* 2163 */       switch (j) {
-/*      */         case 42:
-/*      */         case 43:
-/*      */         case 63:
-/*      */         case 123:
-/* 2168 */           if (b > 1) {
-/* 2169 */             this.cursor = i;
-/* 2170 */             b--;
-/*      */           } 
-/*      */           break;
-/*      */         case 36:
-/*      */         case 40:
-/*      */         case 41:
-/*      */         case 46:
-/*      */         case 91:
-/*      */         case 94:
-/*      */         case 124:
-/*      */           break;
-/*      */         case 92:
-/* 2182 */           j = nextEscaped();
-/* 2183 */           if (j == 112 || j == 80) {
-/* 2184 */             if (b > 0) {
-/* 2185 */               unread();
-/*      */               break;
-/*      */             } 
-/* 2188 */             boolean bool1 = (j == 80) ? true : false;
-/* 2189 */             boolean bool2 = true;
-/* 2190 */             j = next();
-/* 2191 */             if (j != 123) {
-/* 2192 */               unread();
-/*      */             } else {
-/* 2194 */               bool2 = false;
-/* 2195 */             }  return family(bool2, bool1);
-/*      */           } 
-/*      */           
-/* 2198 */           unread();
-/* 2199 */           i = this.cursor;
-/* 2200 */           j = escape(false, (b == 0), false);
-/* 2201 */           if (j >= 0) {
-/* 2202 */             append(j, b);
-/* 2203 */             b++;
-/* 2204 */             if (isSupplementary(j)) {
-/* 2205 */               bool = true;
-/*      */             }
-/* 2207 */             j = peek(); continue;
-/*      */           } 
-/* 2209 */           if (b == 0) {
-/* 2210 */             return this.root;
-/*      */           }
-/*      */           
-/* 2213 */           this.cursor = i;
-/*      */           break;
-/*      */         case 0:
-/* 2216 */           if (this.cursor >= this.patternLength) {
-/*      */             break;
-/*      */           }
-/*      */           break;
-/*      */       } 
-/* 2221 */       i = this.cursor;
-/* 2222 */       append(j, b);
-/* 2223 */       b++;
-/* 2224 */       if (isSupplementary(j)) {
-/* 2225 */         bool = true;
-/*      */       }
-/* 2227 */       j = next();
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2232 */     if (b == 1) {
-/* 2233 */       return newSingle(this.buffer[0]);
-/*      */     }
-/* 2235 */     return newSlice(this.buffer, b, bool);
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private void append(int paramInt1, int paramInt2) {
-/* 2240 */     if (paramInt2 >= this.buffer.length) {
-/* 2241 */       int[] arrayOfInt = new int[paramInt2 + paramInt2];
-/* 2242 */       System.arraycopy(this.buffer, 0, arrayOfInt, 0, paramInt2);
-/* 2243 */       this.buffer = arrayOfInt;
-/*      */     } 
-/* 2245 */     this.buffer[paramInt2] = paramInt1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Node ref(int paramInt) {
-/* 2255 */     boolean bool = false;
-/* 2256 */     while (!bool) {
-/* 2257 */       int j, i = peek();
-/* 2258 */       switch (i) {
-/*      */         case 48:
-/*      */         case 49:
-/*      */         case 50:
-/*      */         case 51:
-/*      */         case 52:
-/*      */         case 53:
-/*      */         case 54:
-/*      */         case 55:
-/*      */         case 56:
-/*      */         case 57:
-/* 2269 */           j = paramInt * 10 + i - 48;
-/*      */ 
-/*      */           
-/* 2272 */           if (this.capturingGroupCount - 1 < j) {
-/* 2273 */             bool = true;
-/*      */             continue;
-/*      */           } 
-/* 2276 */           paramInt = j;
-/* 2277 */           read();
-/*      */           continue;
-/*      */       } 
-/* 2280 */       bool = true;
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2284 */     if (has(2)) {
-/* 2285 */       return new CIBackRef(paramInt, has(64));
-/*      */     }
-/* 2287 */     return new BackRef(paramInt);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int escape(boolean paramBoolean1, boolean paramBoolean2, boolean paramBoolean3) {
-/* 2299 */     int i = skip();
-/* 2300 */     switch (i) {
-/*      */       case 48:
-/* 2302 */         return o();
-/*      */       case 49:
-/*      */       case 50:
-/*      */       case 51:
-/*      */       case 52:
-/*      */       case 53:
-/*      */       case 54:
-/*      */       case 55:
-/*      */       case 56:
-/*      */       case 57:
-/* 2312 */         if (!paramBoolean1)
-/* 2313 */         { if (paramBoolean2) {
-/* 2314 */             this.root = ref(i - 48);
-/*      */           }
-/* 2316 */           return -1; } 
-/*      */       case 65:
-/* 2318 */         if (!paramBoolean1)
-/* 2319 */         { if (paramBoolean2) this.root = new Begin(); 
-/* 2320 */           return -1; } 
-/*      */       case 66:
-/* 2322 */         if (!paramBoolean1) {
-/* 2323 */           if (paramBoolean2) this.root = new Bound(Bound.NONE, has(256)); 
-/* 2324 */           return -1;
-/*      */         } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       case 67:
-/* 2473 */         throw error("Illegal/unsupported escape sequence");case 68: if (paramBoolean2) this.root = has(256) ? (new Utype(UnicodeProp.DIGIT)).complement() : (new Ctype(1024)).complement();  return -1;case 69: case 70: throw error("Illegal/unsupported escape sequence");case 71: if (!paramBoolean1) { if (paramBoolean2) this.root = new LastMatch();  return -1; } case 72: if (paramBoolean2) this.root = (new HorizWS()).complement();  return -1;case 73: case 74: case 75: case 76: case 77: case 78: case 79: case 80: case 81: throw error("Illegal/unsupported escape sequence");case 82: if (!paramBoolean1) { if (paramBoolean2) this.root = new LineEnding();  return -1; } case 83: if (paramBoolean2) this.root = has(256) ? (new Utype(UnicodeProp.WHITE_SPACE)).complement() : (new Ctype(2048)).complement();  return -1;case 84: case 85: throw error("Illegal/unsupported escape sequence");case 86: if (paramBoolean2) this.root = (new VertWS()).complement();  return -1;case 87: if (paramBoolean2) this.root = has(256) ? (new Utype(UnicodeProp.WORD)).complement() : (new Ctype(67328)).complement();  return -1;case 88: case 89: throw error("Illegal/unsupported escape sequence");case 90: if (!paramBoolean1) { if (paramBoolean2) if (has(1)) { this.root = new UnixDollar(false); } else { this.root = new Dollar(false); }   return -1; } case 97: return 7;case 98: if (!paramBoolean1) { if (paramBoolean2) this.root = new Bound(Bound.BOTH, has(256));  return -1; } case 99: return c();case 100: if (paramBoolean2) this.root = has(256) ? new Utype(UnicodeProp.DIGIT) : new Ctype(1024);  return -1;case 101: return 27;case 102: return 12;case 103: throw error("Illegal/unsupported escape sequence");case 104: if (paramBoolean2) this.root = new HorizWS();  return -1;case 105: case 106: throw error("Illegal/unsupported escape sequence");case 107: if (!paramBoolean1) { if (read() != 60) throw error("\\k is not followed by '<' for named capturing group");  String str = groupname(read()); if (!namedGroups().containsKey(str)) throw error("(named capturing group <" + str + "> does not exit");  if (paramBoolean2) if (has(2)) { this.root = new CIBackRef(((Integer)namedGroups().get(str)).intValue(), has(64)); } else { this.root = new BackRef(((Integer)namedGroups().get(str)).intValue()); }   return -1; } case 108: case 109: throw error("Illegal/unsupported escape sequence");case 110: return 10;case 111: case 112: case 113: throw error("Illegal/unsupported escape sequence");case 114: return 13;case 115: if (paramBoolean2) this.root = has(256) ? new Utype(UnicodeProp.WHITE_SPACE) : new Ctype(2048);  return -1;case 116: return 9;case 117: return u();case 118: if (paramBoolean3) return 11;  if (paramBoolean2) this.root = new VertWS();  return -1;case 119: if (paramBoolean2) this.root = has(256) ? new Utype(UnicodeProp.WORD) : new Ctype(67328);  return -1;case 120: return x();case 121: throw error("Illegal/unsupported escape sequence");
-/*      */       case 122:
-/*      */         if (!paramBoolean1) {
-/*      */           if (paramBoolean2)
-/*      */             this.root = new End(); 
-/*      */           return -1;
-/*      */         } 
-/*      */     } 
-/*      */     return i;
-/*      */   }
-/*      */   private CharProperty clazz(boolean paramBoolean) {
-/* 2484 */     CharProperty charProperty1 = null;
-/* 2485 */     CharProperty charProperty2 = null;
-/* 2486 */     BitClass bitClass = new BitClass();
-/* 2487 */     boolean bool1 = true;
-/* 2488 */     boolean bool2 = true;
-/* 2489 */     int i = next();
-/*      */     while (true) {
-/* 2491 */       switch (i) {
-/*      */         
-/*      */         case 94:
-/* 2494 */           if (!bool2 || 
-/* 2495 */             this.temp[this.cursor - 1] != 91)
-/*      */             break; 
-/* 2497 */           i = next();
-/* 2498 */           bool1 = !bool1 ? true : false;
-/*      */           continue;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*      */         case 91:
-/* 2505 */           bool2 = false;
-/* 2506 */           charProperty2 = clazz(true);
-/* 2507 */           if (charProperty1 == null) {
-/* 2508 */             charProperty1 = charProperty2;
-/*      */           } else {
-/* 2510 */             charProperty1 = union(charProperty1, charProperty2);
-/* 2511 */           }  i = peek();
-/*      */           continue;
-/*      */         case 38:
-/* 2514 */           bool2 = false;
-/* 2515 */           i = next();
-/* 2516 */           if (i == 38) {
-/* 2517 */             i = next();
-/* 2518 */             CharProperty charProperty = null;
-/* 2519 */             while (i != 93 && i != 38) {
-/* 2520 */               if (i == 91)
-/* 2521 */               { if (charProperty == null) {
-/* 2522 */                   charProperty = clazz(true);
-/*      */                 } else {
-/* 2524 */                   charProperty = union(charProperty, clazz(true));
-/*      */                 }  }
-/* 2526 */               else { unread();
-/* 2527 */                 charProperty = clazz(false); }
-/*      */               
-/* 2529 */               i = peek();
-/*      */             } 
-/* 2531 */             if (charProperty != null)
-/* 2532 */               charProperty2 = charProperty; 
-/* 2533 */             if (charProperty1 == null) {
-/* 2534 */               if (charProperty == null) {
-/* 2535 */                 throw error("Bad class syntax");
-/*      */               }
-/* 2537 */               charProperty1 = charProperty; continue;
-/*      */             } 
-/* 2539 */             charProperty1 = intersection(charProperty1, charProperty2);
-/*      */             
-/*      */             continue;
-/*      */           } 
-/* 2543 */           unread();
-/*      */           break;
-/*      */ 
-/*      */         
-/*      */         case 0:
-/* 2548 */           bool2 = false;
-/* 2549 */           if (this.cursor >= this.patternLength)
-/* 2550 */             throw error("Unclosed character class"); 
-/*      */           break;
-/*      */         case 93:
-/* 2553 */           bool2 = false;
-/* 2554 */           if (charProperty1 != null) {
-/* 2555 */             if (paramBoolean)
-/* 2556 */               next(); 
-/* 2557 */             return charProperty1;
-/*      */           } 
-/*      */           break;
-/*      */         default:
-/* 2561 */           bool2 = false;
-/*      */           break;
-/*      */       } 
-/* 2564 */       charProperty2 = range(bitClass);
-/* 2565 */       if (bool1) {
-/* 2566 */         if (charProperty1 == null) {
-/* 2567 */           charProperty1 = charProperty2;
-/*      */         }
-/* 2569 */         else if (charProperty1 != charProperty2) {
-/* 2570 */           charProperty1 = union(charProperty1, charProperty2);
-/*      */         }
-/*      */       
-/* 2573 */       } else if (charProperty1 == null) {
-/* 2574 */         charProperty1 = charProperty2.complement();
-/*      */       }
-/* 2576 */       else if (charProperty1 != charProperty2) {
-/* 2577 */         charProperty1 = setDifference(charProperty1, charProperty2);
-/*      */       } 
-/*      */       
-/* 2580 */       i = peek();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private CharProperty bitsOrSingle(BitClass paramBitClass, int paramInt) {
-/* 2603 */     if (paramInt < 256 && (
-/* 2604 */       !has(2) || !has(64) || (paramInt != 255 && paramInt != 181 && paramInt != 73 && paramInt != 105 && paramInt != 83 && paramInt != 115 && paramInt != 75 && paramInt != 107 && paramInt != 197 && paramInt != 229)))
-/*      */     {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2610 */       return paramBitClass.add(paramInt, flags()); } 
-/* 2611 */     return newSingle(paramInt);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private CharProperty range(BitClass paramBitClass) {
-/* 2619 */     int i = peek();
-/* 2620 */     if (i == 92) {
-/* 2621 */       i = nextEscaped();
-/* 2622 */       if (i == 112 || i == 80) {
-/* 2623 */         boolean bool1 = (i == 80) ? true : false;
-/* 2624 */         boolean bool2 = true;
-/*      */         
-/* 2626 */         i = next();
-/* 2627 */         if (i != 123) {
-/* 2628 */           unread();
-/*      */         } else {
-/* 2630 */           bool2 = false;
-/* 2631 */         }  return family(bool2, bool1);
-/*      */       } 
-/* 2633 */       boolean bool = (this.temp[this.cursor + 1] == 45) ? true : false;
-/* 2634 */       unread();
-/* 2635 */       i = escape(true, true, bool);
-/* 2636 */       if (i == -1) {
-/* 2637 */         return (CharProperty)this.root;
-/*      */       }
-/*      */     } else {
-/* 2640 */       next();
-/*      */     } 
-/* 2642 */     if (i >= 0) {
-/* 2643 */       if (peek() == 45) {
-/* 2644 */         int j = this.temp[this.cursor + 1];
-/* 2645 */         if (j == 91) {
-/* 2646 */           return bitsOrSingle(paramBitClass, i);
-/*      */         }
-/* 2648 */         if (j != 93) {
-/* 2649 */           next();
-/* 2650 */           int k = peek();
-/* 2651 */           if (k == 92) {
-/* 2652 */             k = escape(true, false, true);
-/*      */           } else {
-/* 2654 */             next();
-/*      */           } 
-/* 2656 */           if (k < i) {
-/* 2657 */             throw error("Illegal character range");
-/*      */           }
-/* 2659 */           if (has(2)) {
-/* 2660 */             return caseInsensitiveRangeFor(i, k);
-/*      */           }
-/* 2662 */           return rangeFor(i, k);
-/*      */         } 
-/*      */       } 
-/* 2665 */       return bitsOrSingle(paramBitClass, i);
-/*      */     } 
-/* 2667 */     throw error("Unexpected character '" + (char)i + "'");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private CharProperty family(boolean paramBoolean1, boolean paramBoolean2) {
-/*      */     String str;
-/* 2676 */     next();
-/*      */     
-/* 2678 */     CharProperty charProperty = null;
-/*      */     
-/* 2680 */     if (paramBoolean1) {
-/* 2681 */       int j = this.temp[this.cursor];
-/* 2682 */       if (!Character.isSupplementaryCodePoint(j)) {
-/* 2683 */         str = String.valueOf((char)j);
-/*      */       } else {
-/* 2685 */         str = new String(this.temp, this.cursor, 1);
-/*      */       } 
-/* 2687 */       read();
-/*      */     } else {
-/* 2689 */       int j = this.cursor;
-/* 2690 */       mark(125);
-/* 2691 */       while (read() != 125);
-/*      */       
-/* 2693 */       mark(0);
-/* 2694 */       int k = this.cursor;
-/* 2695 */       if (k > this.patternLength)
-/* 2696 */         throw error("Unclosed character family"); 
-/* 2697 */       if (j + 1 >= k)
-/* 2698 */         throw error("Empty character family"); 
-/* 2699 */       str = new String(this.temp, j, k - j - 1);
-/*      */     } 
-/*      */     
-/* 2702 */     int i = str.indexOf('=');
-/* 2703 */     if (i != -1) {
-/*      */       
-/* 2705 */       String str1 = str.substring(i + 1);
-/* 2706 */       str = str.substring(0, i).toLowerCase(Locale.ENGLISH);
-/* 2707 */       if ("sc".equals(str) || "script".equals(str)) {
-/* 2708 */         charProperty = unicodeScriptPropertyFor(str1);
-/* 2709 */       } else if ("blk".equals(str) || "block".equals(str)) {
-/* 2710 */         charProperty = unicodeBlockPropertyFor(str1);
-/* 2711 */       } else if ("gc".equals(str) || "general_category".equals(str)) {
-/* 2712 */         charProperty = charPropertyNodeFor(str1);
-/*      */       } else {
-/* 2714 */         throw error("Unknown Unicode property {name=<" + str + ">, value=<" + str1 + ">}");
-/*      */       }
-/*      */     
-/*      */     }
-/* 2718 */     else if (str.startsWith("In")) {
-/*      */       
-/* 2720 */       charProperty = unicodeBlockPropertyFor(str.substring(2));
-/* 2721 */     } else if (str.startsWith("Is")) {
-/*      */       
-/* 2723 */       str = str.substring(2);
-/* 2724 */       UnicodeProp unicodeProp = UnicodeProp.forName(str);
-/* 2725 */       if (unicodeProp != null)
-/* 2726 */         charProperty = new Utype(unicodeProp); 
-/* 2727 */       if (charProperty == null)
-/* 2728 */         charProperty = CharPropertyNames.charPropertyFor(str); 
-/* 2729 */       if (charProperty == null)
-/* 2730 */         charProperty = unicodeScriptPropertyFor(str); 
-/*      */     } else {
-/* 2732 */       if (has(256)) {
-/* 2733 */         UnicodeProp unicodeProp = UnicodeProp.forPOSIXName(str);
-/* 2734 */         if (unicodeProp != null)
-/* 2735 */           charProperty = new Utype(unicodeProp); 
-/*      */       } 
-/* 2737 */       if (charProperty == null) {
-/* 2738 */         charProperty = charPropertyNodeFor(str);
-/*      */       }
-/*      */     } 
-/* 2741 */     if (paramBoolean2) {
-/* 2742 */       if (charProperty instanceof Category || charProperty instanceof Block)
-/* 2743 */         this.hasSupplementary = true; 
-/* 2744 */       charProperty = charProperty.complement();
-/*      */     } 
-/* 2746 */     return charProperty;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private CharProperty unicodeScriptPropertyFor(String paramString) {
-/*      */     Character.UnicodeScript unicodeScript;
-/*      */     try {
-/* 2757 */       unicodeScript = Character.UnicodeScript.forName(paramString);
-/* 2758 */     } catch (IllegalArgumentException illegalArgumentException) {
-/* 2759 */       throw error("Unknown character script name {" + paramString + "}");
-/*      */     } 
-/* 2761 */     return new Script(unicodeScript);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private CharProperty unicodeBlockPropertyFor(String paramString) {
-/*      */     Character.UnicodeBlock unicodeBlock;
-/*      */     try {
-/* 2770 */       unicodeBlock = Character.UnicodeBlock.forName(paramString);
-/* 2771 */     } catch (IllegalArgumentException illegalArgumentException) {
-/* 2772 */       throw error("Unknown character block name {" + paramString + "}");
-/*      */     } 
-/* 2774 */     return new Block(unicodeBlock);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private CharProperty charPropertyNodeFor(String paramString) {
-/* 2781 */     CharProperty charProperty = CharPropertyNames.charPropertyFor(paramString);
-/* 2782 */     if (charProperty == null)
-/* 2783 */       throw error("Unknown character property name {" + paramString + "}"); 
-/* 2784 */     return charProperty;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private String groupname(int paramInt) {
-/* 2792 */     StringBuilder stringBuilder = new StringBuilder();
-/* 2793 */     stringBuilder.append(Character.toChars(paramInt));
-/* 2794 */     while (ASCII.isLower(paramInt = read()) || ASCII.isUpper(paramInt) || 
-/* 2795 */       ASCII.isDigit(paramInt)) {
-/* 2796 */       stringBuilder.append(Character.toChars(paramInt));
-/*      */     }
-/* 2798 */     if (stringBuilder.length() == 0)
-/* 2799 */       throw error("named capturing group has 0 length name"); 
-/* 2800 */     if (paramInt != 62)
-/* 2801 */       throw error("named capturing group is missing trailing '>'"); 
-/* 2802 */     return stringBuilder.toString();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Node group0() {
-/* 2811 */     boolean bool = false;
-/* 2812 */     Node node1 = null;
-/* 2813 */     Node node2 = null;
-/* 2814 */     int i = this.flags;
-/* 2815 */     this.root = null;
-/* 2816 */     int j = next();
-/* 2817 */     if (j == 63) {
-/* 2818 */       int k; TreeInfo treeInfo; boolean bool1; j = skip();
-/* 2819 */       switch (j) {
-/*      */         case 58:
-/* 2821 */           node1 = createGroup(true);
-/* 2822 */           node2 = this.root;
-/* 2823 */           node1.next = expr(node2);
-/*      */           break;
-/*      */         case 33:
-/*      */         case 61:
-/* 2827 */           node1 = createGroup(true);
-/* 2828 */           node2 = this.root;
-/* 2829 */           node1.next = expr(node2);
-/* 2830 */           if (j == 61) {
-/* 2831 */             node1 = node2 = new Pos(node1); break;
-/*      */           } 
-/* 2833 */           node1 = node2 = new Neg(node1);
-/*      */           break;
-/*      */         
-/*      */         case 62:
-/* 2837 */           node1 = createGroup(true);
-/* 2838 */           node2 = this.root;
-/* 2839 */           node1.next = expr(node2);
-/* 2840 */           node1 = node2 = new Ques(node1, 3);
-/*      */           break;
-/*      */         case 60:
-/* 2843 */           j = read();
-/* 2844 */           if (ASCII.isLower(j) || ASCII.isUpper(j)) {
-/*      */             
-/* 2846 */             String str = groupname(j);
-/* 2847 */             if (namedGroups().containsKey(str)) {
-/* 2848 */               throw error("Named capturing group <" + str + "> is already defined");
-/*      */             }
-/* 2850 */             bool = true;
-/* 2851 */             node1 = createGroup(false);
-/* 2852 */             node2 = this.root;
-/* 2853 */             namedGroups().put(str, Integer.valueOf(this.capturingGroupCount - 1));
-/* 2854 */             node1.next = expr(node2);
-/*      */             break;
-/*      */           } 
-/* 2857 */           k = this.cursor;
-/* 2858 */           node1 = createGroup(true);
-/* 2859 */           node2 = this.root;
-/* 2860 */           node1.next = expr(node2);
-/* 2861 */           node2.next = lookbehindEnd;
-/* 2862 */           treeInfo = new TreeInfo();
-/* 2863 */           node1.study(treeInfo);
-/* 2864 */           if (!treeInfo.maxValid) {
-/* 2865 */             throw error("Look-behind group does not have an obvious maximum length");
-/*      */           }
-/*      */           
-/* 2868 */           bool1 = findSupplementary(k, this.patternLength);
-/* 2869 */           if (j == 61) {
-/* 2870 */             node1 = node2 = bool1 ? new BehindS(node1, treeInfo.maxLength, treeInfo.minLength) : new Behind(node1, treeInfo.maxLength, treeInfo.minLength);
-/*      */             
-/*      */             break;
-/*      */           } 
-/*      */           
-/* 2875 */           if (j == 33) {
-/* 2876 */             node1 = node2 = bool1 ? new NotBehindS(node1, treeInfo.maxLength, treeInfo.minLength) : new NotBehind(node1, treeInfo.maxLength, treeInfo.minLength);
-/*      */ 
-/*      */             
-/*      */             break;
-/*      */           } 
-/*      */           
-/* 2882 */           throw error("Unknown look-behind group");
-/*      */ 
-/*      */         
-/*      */         case 36:
-/*      */         case 64:
-/* 2887 */           throw error("Unknown group type");
-/*      */         default:
-/* 2889 */           unread();
-/* 2890 */           addFlag();
-/* 2891 */           j = read();
-/* 2892 */           if (j == 41) {
-/* 2893 */             return null;
-/*      */           }
-/* 2895 */           if (j != 58) {
-/* 2896 */             throw error("Unknown inline modifier");
-/*      */           }
-/* 2898 */           node1 = createGroup(true);
-/* 2899 */           node2 = this.root;
-/* 2900 */           node1.next = expr(node2);
-/*      */           break;
-/*      */       } 
-/*      */     } else {
-/* 2904 */       bool = true;
-/* 2905 */       node1 = createGroup(false);
-/* 2906 */       node2 = this.root;
-/* 2907 */       node1.next = expr(node2);
-/*      */     } 
-/*      */     
-/* 2910 */     accept(41, "Unclosed group");
-/* 2911 */     this.flags = i;
-/*      */ 
-/*      */     
-/* 2914 */     Node node3 = closure(node1);
-/* 2915 */     if (node3 == node1) {
-/* 2916 */       this.root = node2;
-/* 2917 */       return node3;
-/*      */     } 
-/* 2919 */     if (node1 == node2) {
-/* 2920 */       this.root = node3;
-/* 2921 */       return node3;
-/*      */     } 
-/*      */     
-/* 2924 */     if (node3 instanceof Ques) {
-/* 2925 */       Ques ques = (Ques)node3;
-/* 2926 */       if (ques.type == 2) {
-/* 2927 */         this.root = node3;
-/* 2928 */         return node3;
-/*      */       } 
-/* 2930 */       node2.next = new BranchConn();
-/* 2931 */       node2 = node2.next;
-/* 2932 */       if (ques.type == 0) {
-/* 2933 */         node1 = new Branch(node1, null, node2);
-/*      */       } else {
-/* 2935 */         node1 = new Branch(null, node1, node2);
-/*      */       } 
-/* 2937 */       this.root = node2;
-/* 2938 */       return node1;
-/* 2939 */     }  if (node3 instanceof Curly) {
-/* 2940 */       Loop loop; Curly curly = (Curly)node3;
-/* 2941 */       if (curly.type == 2) {
-/* 2942 */         this.root = node3;
-/* 2943 */         return node3;
-/*      */       } 
-/*      */       
-/* 2946 */       TreeInfo treeInfo = new TreeInfo();
-/* 2947 */       if (node1.study(treeInfo)) {
-/* 2948 */         GroupTail groupTail = (GroupTail)node2;
-/* 2949 */         node1 = this.root = new GroupCurly(node1.next, curly.cmin, curly.cmax, curly.type, ((GroupTail)node2).localIndex, ((GroupTail)node2).groupIndex, bool);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 2954 */         return node1;
-/*      */       } 
-/* 2956 */       int k = ((GroupHead)node1).localIndex;
-/*      */       
-/* 2958 */       if (curly.type == 0) {
-/* 2959 */         loop = new Loop(this.localCount, k);
-/*      */       } else {
-/* 2961 */         loop = new LazyLoop(this.localCount, k);
-/* 2962 */       }  Prolog prolog = new Prolog(loop);
-/* 2963 */       this.localCount++;
-/* 2964 */       loop.cmin = curly.cmin;
-/* 2965 */       loop.cmax = curly.cmax;
-/* 2966 */       loop.body = node1;
-/* 2967 */       node2.next = loop;
-/* 2968 */       this.root = loop;
-/* 2969 */       return prolog;
-/*      */     } 
-/*      */     
-/* 2972 */     throw error("Internal logic error");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Node createGroup(boolean paramBoolean) {
-/* 2981 */     int i = this.localCount++;
-/* 2982 */     int j = 0;
-/* 2983 */     if (!paramBoolean)
-/* 2984 */       j = this.capturingGroupCount++; 
-/* 2985 */     GroupHead groupHead = new GroupHead(i);
-/* 2986 */     this.root = new GroupTail(i, j);
-/* 2987 */     if (!paramBoolean && j < 10)
-/* 2988 */       this.groupNodes[j] = groupHead; 
-/* 2989 */     return groupHead;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void addFlag() {
-/* 2997 */     int i = peek();
-/*      */     while (true) {
-/* 2999 */       switch (i) {
-/*      */         case 105:
-/* 3001 */           this.flags |= 0x2;
-/*      */           break;
-/*      */         case 109:
-/* 3004 */           this.flags |= 0x8;
-/*      */           break;
-/*      */         case 115:
-/* 3007 */           this.flags |= 0x20;
-/*      */           break;
-/*      */         case 100:
-/* 3010 */           this.flags |= 0x1;
-/*      */           break;
-/*      */         case 117:
-/* 3013 */           this.flags |= 0x40;
-/*      */           break;
-/*      */         case 99:
-/* 3016 */           this.flags |= 0x80;
-/*      */           break;
-/*      */         case 120:
-/* 3019 */           this.flags |= 0x4;
-/*      */           break;
-/*      */         case 85:
-/* 3022 */           this.flags |= 0x140;
-/*      */           break;
-/*      */         case 45:
-/* 3025 */           i = next();
-/* 3026 */           subFlag();
-/*      */         default:
-/*      */           return;
-/*      */       } 
-/* 3030 */       i = next();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void subFlag() {
-/* 3040 */     int i = peek();
-/*      */     while (true) {
-/* 3042 */       switch (i) {
-/*      */         case 105:
-/* 3044 */           this.flags &= 0xFFFFFFFD;
-/*      */           break;
-/*      */         case 109:
-/* 3047 */           this.flags &= 0xFFFFFFF7;
-/*      */           break;
-/*      */         case 115:
-/* 3050 */           this.flags &= 0xFFFFFFDF;
-/*      */           break;
-/*      */         case 100:
-/* 3053 */           this.flags &= 0xFFFFFFFE;
-/*      */           break;
-/*      */         case 117:
-/* 3056 */           this.flags &= 0xFFFFFFBF;
-/*      */           break;
-/*      */         case 99:
-/* 3059 */           this.flags &= 0xFFFFFF7F;
-/*      */           break;
-/*      */         case 120:
-/* 3062 */           this.flags &= 0xFFFFFFFB;
-/*      */           break;
-/*      */         case 85:
-/* 3065 */           this.flags &= 0xFFFFFEBF;
-/*      */         default:
-/*      */           return;
-/*      */       } 
-/* 3069 */       i = next();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Node closure(Node paramNode) {
-/* 3090 */     int i = peek();
-/* 3091 */     switch (i) {
-/*      */       case 63:
-/* 3093 */         i = next();
-/* 3094 */         if (i == 63) {
-/* 3095 */           next();
-/* 3096 */           return new Ques(paramNode, 1);
-/* 3097 */         }  if (i == 43) {
-/* 3098 */           next();
-/* 3099 */           return new Ques(paramNode, 2);
-/*      */         } 
-/* 3101 */         return new Ques(paramNode, 0);
-/*      */       case 42:
-/* 3103 */         i = next();
-/* 3104 */         if (i == 63) {
-/* 3105 */           next();
-/* 3106 */           return new Curly(paramNode, 0, 2147483647, 1);
-/* 3107 */         }  if (i == 43) {
-/* 3108 */           next();
-/* 3109 */           return new Curly(paramNode, 0, 2147483647, 2);
-/*      */         } 
-/* 3111 */         return new Curly(paramNode, 0, 2147483647, 0);
-/*      */       case 43:
-/* 3113 */         i = next();
-/* 3114 */         if (i == 63) {
-/* 3115 */           next();
-/* 3116 */           return new Curly(paramNode, 1, 2147483647, 1);
-/* 3117 */         }  if (i == 43) {
-/* 3118 */           next();
-/* 3119 */           return new Curly(paramNode, 1, 2147483647, 2);
-/*      */         } 
-/* 3121 */         return new Curly(paramNode, 1, 2147483647, 0);
-/*      */       case 123:
-/* 3123 */         i = this.temp[this.cursor + 1];
-/* 3124 */         if (ASCII.isDigit(i)) {
-/* 3125 */           Curly curly; skip();
-/* 3126 */           int j = 0;
-/*      */           do {
-/* 3128 */             j = j * 10 + i - 48;
-/* 3129 */           } while (ASCII.isDigit(i = read()));
-/* 3130 */           int k = j;
-/* 3131 */           if (i == 44) {
-/* 3132 */             i = read();
-/* 3133 */             k = Integer.MAX_VALUE;
-/* 3134 */             if (i != 125) {
-/* 3135 */               k = 0;
-/* 3136 */               while (ASCII.isDigit(i)) {
-/* 3137 */                 k = k * 10 + i - 48;
-/* 3138 */                 i = read();
-/*      */               } 
-/*      */             } 
-/*      */           } 
-/* 3142 */           if (i != 125)
-/* 3143 */             throw error("Unclosed counted closure"); 
-/* 3144 */           if ((j | k | k - j) < 0) {
-/* 3145 */             throw error("Illegal repetition range");
-/*      */           }
-/* 3147 */           i = peek();
-/* 3148 */           if (i == 63) {
-/* 3149 */             next();
-/* 3150 */             curly = new Curly(paramNode, j, k, 1);
-/* 3151 */           } else if (i == 43) {
-/* 3152 */             next();
-/* 3153 */             curly = new Curly(paramNode, j, k, 2);
-/*      */           } else {
-/* 3155 */             curly = new Curly(paramNode, j, k, 0);
-/*      */           } 
-/* 3157 */           return curly;
-/*      */         } 
-/* 3159 */         throw error("Illegal repetition");
-/*      */     } 
-/*      */     
-/* 3162 */     return paramNode;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int c() {
-/* 3170 */     if (this.cursor < this.patternLength) {
-/* 3171 */       return read() ^ 0x40;
-/*      */     }
-/* 3173 */     throw error("Illegal control escape sequence");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int o() {
-/* 3180 */     int i = read();
-/* 3181 */     if ((i - 48 | 55 - i) >= 0) {
-/* 3182 */       int j = read();
-/* 3183 */       if ((j - 48 | 55 - j) >= 0) {
-/* 3184 */         int k = read();
-/* 3185 */         if ((k - 48 | 55 - k) >= 0 && (i - 48 | 51 - i) >= 0) {
-/* 3186 */           return (i - 48) * 64 + (j - 48) * 8 + k - 48;
-/*      */         }
-/* 3188 */         unread();
-/* 3189 */         return (i - 48) * 8 + j - 48;
-/*      */       } 
-/* 3191 */       unread();
-/* 3192 */       return i - 48;
-/*      */     } 
-/* 3194 */     throw error("Illegal octal escape sequence");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int x() {
-/* 3201 */     int i = read();
-/* 3202 */     if (ASCII.isHexDigit(i)) {
-/* 3203 */       int j = read();
-/* 3204 */       if (ASCII.isHexDigit(j)) {
-/* 3205 */         return ASCII.toDigit(i) * 16 + ASCII.toDigit(j);
-/*      */       }
-/* 3207 */     } else if (i == 123 && ASCII.isHexDigit(peek())) {
-/* 3208 */       int j = 0;
-/* 3209 */       while (ASCII.isHexDigit(i = read())) {
-/* 3210 */         j = (j << 4) + ASCII.toDigit(i);
-/* 3211 */         if (j > 1114111)
-/* 3212 */           throw error("Hexadecimal codepoint is too big"); 
-/*      */       } 
-/* 3214 */       if (i != 125)
-/* 3215 */         throw error("Unclosed hexadecimal escape sequence"); 
-/* 3216 */       return j;
-/*      */     } 
-/* 3218 */     throw error("Illegal hexadecimal escape sequence");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int cursor() {
-/* 3225 */     return this.cursor;
-/*      */   }
-/*      */   
-/*      */   private void setcursor(int paramInt) {
-/* 3229 */     this.cursor = paramInt;
-/*      */   }
-/*      */   
-/*      */   private int uxxxx() {
-/* 3233 */     int i = 0;
-/* 3234 */     for (byte b = 0; b < 4; b++) {
-/* 3235 */       int j = read();
-/* 3236 */       if (!ASCII.isHexDigit(j)) {
-/* 3237 */         throw error("Illegal Unicode escape sequence");
-/*      */       }
-/* 3239 */       i = i * 16 + ASCII.toDigit(j);
-/*      */     } 
-/* 3241 */     return i;
-/*      */   }
-/*      */   
-/*      */   private int u() {
-/* 3245 */     int i = uxxxx();
-/* 3246 */     if (Character.isHighSurrogate((char)i)) {
-/* 3247 */       int j = cursor();
-/* 3248 */       if (read() == 92 && read() == 117) {
-/* 3249 */         int k = uxxxx();
-/* 3250 */         if (Character.isLowSurrogate((char)k))
-/* 3251 */           return Character.toCodePoint((char)i, (char)k); 
-/*      */       } 
-/* 3253 */       setcursor(j);
-/*      */     } 
-/* 3255 */     return i;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static final int countChars(CharSequence paramCharSequence, int paramInt1, int paramInt2) {
-/* 3265 */     if (paramInt2 == 1 && !Character.isHighSurrogate(paramCharSequence.charAt(paramInt1))) {
-/* 3266 */       assert paramInt1 >= 0 && paramInt1 < paramCharSequence.length();
-/* 3267 */       return 1;
-/*      */     } 
-/* 3269 */     int i = paramCharSequence.length();
-/* 3270 */     int j = paramInt1;
-/* 3271 */     if (paramInt2 >= 0) {
-/* 3272 */       assert paramInt1 >= 0 && paramInt1 < i;
-/* 3273 */       for (byte b1 = 0; j < i && b1 < paramInt2; b1++) {
-/* 3274 */         if (Character.isHighSurrogate(paramCharSequence.charAt(j++)) && 
-/* 3275 */           j < i && Character.isLowSurrogate(paramCharSequence.charAt(j))) {
-/* 3276 */           j++;
-/*      */         }
-/*      */       } 
-/*      */       
-/* 3280 */       return j - paramInt1;
-/*      */     } 
-/*      */     
-/* 3283 */     assert paramInt1 >= 0 && paramInt1 <= i;
-/* 3284 */     if (paramInt1 == 0) {
-/* 3285 */       return 0;
-/*      */     }
-/* 3287 */     int k = -paramInt2;
-/* 3288 */     for (byte b = 0; j > 0 && b < k; b++) {
-/* 3289 */       if (Character.isLowSurrogate(paramCharSequence.charAt(--j)) && 
-/* 3290 */         j > 0 && Character.isHighSurrogate(paramCharSequence.charAt(j - 1))) {
-/* 3291 */         j--;
-/*      */       }
-/*      */     } 
-/*      */     
-/* 3295 */     return paramInt1 - j;
-/*      */   }
-/*      */   
-/*      */   private static final int countCodePoints(CharSequence paramCharSequence) {
-/* 3299 */     int i = paramCharSequence.length();
-/* 3300 */     byte b1 = 0;
-/* 3301 */     for (byte b2 = 0; b2 < i; ) {
-/* 3302 */       b1++;
-/* 3303 */       if (Character.isHighSurrogate(paramCharSequence.charAt(b2++)) && 
-/* 3304 */         b2 < i && Character.isLowSurrogate(paramCharSequence.charAt(b2))) {
-/* 3305 */         b2++;
-/*      */       }
-/*      */     } 
-/*      */     
-/* 3309 */     return b1;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private static final class BitClass
-/*      */     extends BmpCharProperty
-/*      */   {
-/*      */     final boolean[] bits;
-/*      */     
-/*      */     BitClass() {
-/* 3319 */       this.bits = new boolean[256]; } private BitClass(boolean[] param1ArrayOfboolean) {
-/* 3320 */       this.bits = param1ArrayOfboolean;
-/*      */     } BitClass add(int param1Int1, int param1Int2) {
-/* 3322 */       assert param1Int1 >= 0 && param1Int1 <= 255;
-/* 3323 */       if ((param1Int2 & 0x2) != 0) {
-/* 3324 */         if (ASCII.isAscii(param1Int1)) {
-/* 3325 */           this.bits[ASCII.toUpper(param1Int1)] = true;
-/* 3326 */           this.bits[ASCII.toLower(param1Int1)] = true;
-/* 3327 */         } else if ((param1Int2 & 0x40) != 0) {
-/* 3328 */           this.bits[Character.toLowerCase(param1Int1)] = true;
-/* 3329 */           this.bits[Character.toUpperCase(param1Int1)] = true;
-/*      */         } 
-/*      */       }
-/* 3332 */       this.bits[param1Int1] = true;
-/* 3333 */       return this;
-/*      */     }
-/*      */     boolean isSatisfiedBy(int param1Int) {
-/* 3336 */       return (param1Int < 256 && this.bits[param1Int]);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private CharProperty newSingle(int paramInt) {
-/* 3344 */     if (has(2))
-/*      */     {
-/* 3346 */       if (has(64)) {
-/* 3347 */         int j = Character.toUpperCase(paramInt);
-/* 3348 */         int i = Character.toLowerCase(j);
-/* 3349 */         if (j != i)
-/* 3350 */           return new SingleU(i); 
-/* 3351 */       } else if (ASCII.isAscii(paramInt)) {
-/* 3352 */         int i = ASCII.toLower(paramInt);
-/* 3353 */         int j = ASCII.toUpper(paramInt);
-/* 3354 */         if (i != j)
-/* 3355 */           return new SingleI(i, j); 
-/*      */       } 
-/*      */     }
-/* 3358 */     if (isSupplementary(paramInt))
-/* 3359 */       return new SingleS(paramInt); 
-/* 3360 */     return new Single(paramInt);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Node newSlice(int[] paramArrayOfint, int paramInt, boolean paramBoolean) {
-/* 3367 */     int[] arrayOfInt = new int[paramInt];
-/* 3368 */     if (has(2)) {
-/* 3369 */       if (has(64)) {
-/* 3370 */         for (byte b2 = 0; b2 < paramInt; b2++) {
-/* 3371 */           arrayOfInt[b2] = Character.toLowerCase(
-/* 3372 */               Character.toUpperCase(paramArrayOfint[b2]));
-/*      */         }
-/* 3374 */         return paramBoolean ? new SliceUS(arrayOfInt) : new SliceU(arrayOfInt);
-/*      */       } 
-/* 3376 */       for (byte b1 = 0; b1 < paramInt; b1++) {
-/* 3377 */         arrayOfInt[b1] = ASCII.toLower(paramArrayOfint[b1]);
-/*      */       }
-/* 3379 */       return paramBoolean ? new SliceIS(arrayOfInt) : new SliceI(arrayOfInt);
-/*      */     } 
-/* 3381 */     for (byte b = 0; b < paramInt; b++) {
-/* 3382 */       arrayOfInt[b] = paramArrayOfint[b];
-/*      */     }
-/* 3384 */     return paramBoolean ? new SliceS(arrayOfInt) : new Slice(arrayOfInt);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static class Node
-/*      */   {
-/* 3403 */     Node next = Pattern.accept;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     boolean match(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 3409 */       param1Matcher.last = param1Int;
-/* 3410 */       param1Matcher.groups[0] = param1Matcher.first;
-/* 3411 */       param1Matcher.groups[1] = param1Matcher.last;
-/* 3412 */       return true;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     boolean study(Pattern.TreeInfo param1TreeInfo) {
-/* 3418 */       if (this.next != null) {
-/* 3419 */         return this.next.study(param1TreeInfo);
-/*      */       }
-/* 3421 */       return param1TreeInfo.deterministic;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static class LastNode
-/*      */     extends Node
-/*      */   {
-/*      */     boolean match(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 3433 */       if (param1Matcher.acceptMode == 1 && param1Int != param1Matcher.to)
-/* 3434 */         return false; 
-/* 3435 */       param1Matcher.last = param1Int;
-/* 3436 */       param1Matcher.groups[0] = param1Matcher.first;
-/* 3437 */       param1Matcher.groups[1] = param1Matcher.last;
-/* 3438 */       return true;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static class Start
-/*      */     extends Node
-/*      */   {
-/*      */     int minLength;
-/*      */ 
-/*      */     
-/*      */     Start(Pattern.Node param1Node) {
-/* 3451 */       this.next = param1Node;
-/* 3452 */       Pattern.TreeInfo treeInfo = new Pattern.TreeInfo();
-/* 3453 */       this.next.study(treeInfo);
-/* 3454 */       this.minLength = treeInfo.minLength;
-/*      */     }
-/*      */     boolean match(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 3457 */       if (param1Int > param1Matcher.to - this.minLength) {
-/* 3458 */         param1Matcher.hitEnd = true;
-/* 3459 */         return false;
-/*      */       } 
-/* 3461 */       int i = param1Matcher.to - this.minLength;
-/* 3462 */       for (; param1Int <= i; param1Int++) {
-/* 3463 */         if (this.next.match(param1Matcher, param1Int, param1CharSequence)) {
-/* 3464 */           param1Matcher.first = param1Int;
-/* 3465 */           param1Matcher.groups[0] = param1Matcher.first;
-/* 3466 */           param1Matcher.groups[1] = param1Matcher.last;
-/* 3467 */           return true;
-/*      */         } 
-/*      */       } 
-/* 3470 */       param1Matcher.hitEnd = true;
-/* 3471 */       return false;
-/*      */     }
-/*      */     boolean study(Pattern.TreeInfo param1TreeInfo) {
-/* 3474 */       this.next.study(param1TreeInfo);
-/* 3475 */       param1TreeInfo.maxValid = false;
-/* 3476 */       param1TreeInfo.deterministic = false;
-/* 3477 */       return false;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   static final class StartS
-/*      */     extends Start
-/*      */   {
-/*      */     StartS(Pattern.Node param1Node) {
-/* 3486 */       super(param1Node);
-/*      */     }
-/*      */     boolean match(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 3489 */       if (param1Int > param1Matcher.to - this.minLength) {
-/* 3490 */         param1Matcher.hitEnd = true;
-/* 3491 */         return false;
-/*      */       } 
-/* 3493 */       int i = param1Matcher.to - this.minLength;
-/* 3494 */       while (param1Int <= i) {
-/*      */         
-/* 3496 */         if (this.next.match(param1Matcher, param1Int, param1CharSequence)) {
-/* 3497 */           param1Matcher.first = param1Int;
-/* 3498 */           param1Matcher.groups[0] = param1Matcher.first;
-/* 3499 */           param1Matcher.groups[1] = param1Matcher.last;
-/* 3500 */           return true;
-/*      */         } 
-/* 3502 */         if (param1Int == i) {
-/*      */           break;
-/*      */         }
-/*      */         
-/* 3506 */         if (Character.isHighSurrogate(param1CharSequence.charAt(param1Int++)) && 
-/* 3507 */           param1Int < param1CharSequence.length() && 
-/* 3508 */           Character.isLowSurrogate(param1CharSequence.charAt(param1Int))) {
-/* 3509 */           param1Int++;
-/*      */         }
-/*      */       } 
-/*      */       
-/* 3513 */       param1Matcher.hitEnd = true;
-/* 3514 */       return false;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static final class Begin
-/*      */     extends Node
-/*      */   {
-/*      */     boolean match(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 3525 */       byte b = param1Matcher.anchoringBounds ? param1Matcher.from : 0;
-/*      */       
-/* 3527 */       if (param1Int == b && this.next.match(param1Matcher, param1Int, param1CharSequence)) {
-/* 3528 */         param1Matcher.first = param1Int;
-/* 3529 */         param1Matcher.groups[0] = param1Int;
-/* 3530 */         param1Matcher.groups[1] = param1Matcher.last;
-/* 3531 */         return true;
-/*      */       } 
-/* 3533 */       return false;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static final class End
-/*      */     extends Node
-/*      */   {
-/*      */     boolean match(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 3545 */       int i = param1Matcher.anchoringBounds ? param1Matcher.to : param1Matcher.getTextLength();
-/* 3546 */       if (param1Int == i) {
-/* 3547 */         param1Matcher.hitEnd = true;
-/* 3548 */         return this.next.match(param1Matcher, param1Int, param1CharSequence);
-/*      */       } 
-/* 3550 */       return false;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static final class Caret
-/*      */     extends Node
-/*      */   {
-/*      */     boolean match(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 3560 */       int i = param1Matcher.from;
-/* 3561 */       int j = param1Matcher.to;
-/* 3562 */       if (!param1Matcher.anchoringBounds) {
-/* 3563 */         i = 0;
-/* 3564 */         j = param1Matcher.getTextLength();
-/*      */       } 
-/*      */       
-/* 3567 */       if (param1Int == j) {
-/* 3568 */         param1Matcher.hitEnd = true;
-/* 3569 */         return false;
-/*      */       } 
-/* 3571 */       if (param1Int > i) {
-/* 3572 */         char c = param1CharSequence.charAt(param1Int - 1);
-/* 3573 */         if (c != '\n' && c != '\r' && (c | 0x1) != 8233 && c != '')
-/*      */         {
-/*      */           
-/* 3576 */           return false;
-/*      */         }
-/*      */         
-/* 3579 */         if (c == '\r' && param1CharSequence.charAt(param1Int) == '\n')
-/* 3580 */           return false; 
-/*      */       } 
-/* 3582 */       return this.next.match(param1Matcher, param1Int, param1CharSequence);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   static final class UnixCaret
-/*      */     extends Node
-/*      */   {
-/*      */     boolean match(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 3591 */       int i = param1Matcher.from;
-/* 3592 */       int j = param1Matcher.to;
-/* 3593 */       if (!param1Matcher.anchoringBounds) {
-/* 3594 */         i = 0;
-/* 3595 */         j = param1Matcher.getTextLength();
-/*      */       } 
-/*      */       
-/* 3598 */       if (param1Int == j) {
-/* 3599 */         param1Matcher.hitEnd = true;
-/* 3600 */         return false;
-/*      */       } 
-/* 3602 */       if (param1Int > i) {
-/* 3603 */         char c = param1CharSequence.charAt(param1Int - 1);
-/* 3604 */         if (c != '\n') {
-/* 3605 */           return false;
-/*      */         }
-/*      */       } 
-/* 3608 */       return this.next.match(param1Matcher, param1Int, param1CharSequence);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static final class LastMatch
-/*      */     extends Node
-/*      */   {
-/*      */     boolean match(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 3618 */       if (param1Int != param1Matcher.oldLast)
-/* 3619 */         return false; 
-/* 3620 */       return this.next.match(param1Matcher, param1Int, param1CharSequence);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static final class Dollar
-/*      */     extends Node
-/*      */   {
-/*      */     boolean multiline;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     Dollar(boolean param1Boolean) {
-/* 3640 */       this.multiline = param1Boolean;
-/*      */     }
-/*      */     
-/*      */     boolean match(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 3644 */       int i = param1Matcher.anchoringBounds ? param1Matcher.to : param1Matcher.getTextLength();
-/* 3645 */       if (!this.multiline) {
-/* 3646 */         if (param1Int < i - 2)
-/* 3647 */           return false; 
-/* 3648 */         if (param1Int == i - 2) {
-/* 3649 */           char c = param1CharSequence.charAt(param1Int);
-/* 3650 */           if (c != '\r')
-/* 3651 */             return false; 
-/* 3652 */           c = param1CharSequence.charAt(param1Int + 1);
-/* 3653 */           if (c != '\n') {
-/* 3654 */             return false;
-/*      */           }
-/*      */         } 
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 3665 */       if (param1Int < i) {
-/* 3666 */         char c = param1CharSequence.charAt(param1Int);
-/* 3667 */         if (c == '\n') {
-/*      */           
-/* 3669 */           if (param1Int > 0 && param1CharSequence.charAt(param1Int - 1) == '\r')
-/* 3670 */             return false; 
-/* 3671 */           if (this.multiline)
-/* 3672 */             return this.next.match(param1Matcher, param1Int, param1CharSequence); 
-/* 3673 */         } else if (c == '\r' || c == '' || (c | 0x1) == 8233) {
-/*      */           
-/* 3675 */           if (this.multiline)
-/* 3676 */             return this.next.match(param1Matcher, param1Int, param1CharSequence); 
-/*      */         } else {
-/* 3678 */           return false;
-/*      */         } 
-/*      */       } 
-/*      */       
-/* 3682 */       param1Matcher.hitEnd = true;
-/*      */ 
-/*      */       
-/* 3685 */       param1Matcher.requireEnd = true;
-/* 3686 */       return this.next.match(param1Matcher, param1Int, param1CharSequence);
-/*      */     }
-/*      */     boolean study(Pattern.TreeInfo param1TreeInfo) {
-/* 3689 */       this.next.study(param1TreeInfo);
-/* 3690 */       return param1TreeInfo.deterministic;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   static final class UnixDollar
-/*      */     extends Node
-/*      */   {
-/*      */     boolean multiline;
-/*      */     
-/*      */     UnixDollar(boolean param1Boolean) {
-/* 3701 */       this.multiline = param1Boolean;
-/*      */     }
-/*      */     
-/*      */     boolean match(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 3705 */       int i = param1Matcher.anchoringBounds ? param1Matcher.to : param1Matcher.getTextLength();
-/* 3706 */       if (param1Int < i) {
-/* 3707 */         char c = param1CharSequence.charAt(param1Int);
-/* 3708 */         if (c == '\n') {
-/*      */ 
-/*      */           
-/* 3711 */           if (!this.multiline && param1Int != i - 1) {
-/* 3712 */             return false;
-/*      */           }
-/*      */           
-/* 3715 */           if (this.multiline)
-/* 3716 */             return this.next.match(param1Matcher, param1Int, param1CharSequence); 
-/*      */         } else {
-/* 3718 */           return false;
-/*      */         } 
-/*      */       } 
-/*      */ 
-/*      */       
-/* 3723 */       param1Matcher.hitEnd = true;
-/*      */ 
-/*      */       
-/* 3726 */       param1Matcher.requireEnd = true;
-/* 3727 */       return this.next.match(param1Matcher, param1Int, param1CharSequence);
-/*      */     }
-/*      */     boolean study(Pattern.TreeInfo param1TreeInfo) {
-/* 3730 */       this.next.study(param1TreeInfo);
-/* 3731 */       return param1TreeInfo.deterministic;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static final class LineEnding
-/*      */     extends Node
-/*      */   {
-/*      */     boolean match(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 3741 */       if (param1Int < param1Matcher.to) {
-/* 3742 */         char c = param1CharSequence.charAt(param1Int);
-/* 3743 */         if (c == '\n' || c == '\013' || c == '\f' || c == '' || c == ' ' || c == ' ')
-/*      */         {
-/* 3745 */           return this.next.match(param1Matcher, param1Int + 1, param1CharSequence); } 
-/* 3746 */         if (c == '\r') {
-/* 3747 */           param1Int++;
-/* 3748 */           if (param1Int < param1Matcher.to && param1CharSequence.charAt(param1Int) == '\n')
-/* 3749 */             param1Int++; 
-/* 3750 */           return this.next.match(param1Matcher, param1Int, param1CharSequence);
-/*      */         } 
-/*      */       } else {
-/* 3753 */         param1Matcher.hitEnd = true;
-/*      */       } 
-/* 3755 */       return false;
-/*      */     }
-/*      */     boolean study(Pattern.TreeInfo param1TreeInfo) {
-/* 3758 */       param1TreeInfo.minLength++;
-/* 3759 */       param1TreeInfo.maxLength += 2;
-/* 3760 */       return this.next.study(param1TreeInfo);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private static abstract class CharProperty
-/*      */     extends Node
-/*      */   {
-/*      */     private CharProperty() {}
-/*      */     
-/*      */     CharProperty complement() {
-/* 3771 */       return new CharProperty() {
-/*      */           boolean isSatisfiedBy(int param2Int) {
-/* 3773 */             return !Pattern.CharProperty.this.isSatisfiedBy(param2Int); }
-/*      */         };
-/*      */     } boolean match(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 3776 */       if (param1Int < param1Matcher.to) {
-/* 3777 */         int i = Character.codePointAt(param1CharSequence, param1Int);
-/* 3778 */         return (isSatisfiedBy(i) && this.next
-/* 3779 */           .match(param1Matcher, param1Int + Character.charCount(i), param1CharSequence));
-/*      */       } 
-/* 3781 */       param1Matcher.hitEnd = true;
-/* 3782 */       return false;
-/*      */     }
-/*      */     
-/*      */     boolean study(Pattern.TreeInfo param1TreeInfo) {
-/* 3786 */       param1TreeInfo.minLength++;
-/* 3787 */       param1TreeInfo.maxLength++;
-/* 3788 */       return this.next.study(param1TreeInfo);
-/*      */     }
-/*      */     
-/*      */     abstract boolean isSatisfiedBy(int param1Int);
-/*      */   }
-/*      */   
-/*      */   private static abstract class BmpCharProperty extends CharProperty {
-/*      */     private BmpCharProperty() {}
-/*      */     
-/*      */     boolean match(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 3798 */       if (param1Int < param1Matcher.to) {
-/* 3799 */         return (isSatisfiedBy(param1CharSequence.charAt(param1Int)) && this.next
-/* 3800 */           .match(param1Matcher, param1Int + 1, param1CharSequence));
-/*      */       }
-/* 3802 */       param1Matcher.hitEnd = true;
-/* 3803 */       return false;
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   static final class SingleS
-/*      */     extends CharProperty
-/*      */   {
-/*      */     final int c;
-/*      */     
-/*      */     SingleS(int param1Int) {
-/* 3813 */       this.c = param1Int;
-/*      */     } boolean isSatisfiedBy(int param1Int) {
-/* 3815 */       return (param1Int == this.c);
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   static final class Single
-/*      */     extends BmpCharProperty {
-/*      */     final int c;
-/*      */     
-/*      */     Single(int param1Int) {
-/* 3824 */       this.c = param1Int;
-/*      */     } boolean isSatisfiedBy(int param1Int) {
-/* 3826 */       return (param1Int == this.c);
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   static final class SingleI
-/*      */     extends BmpCharProperty
-/*      */   {
-/*      */     final int lower;
-/*      */     final int upper;
-/*      */     
-/*      */     SingleI(int param1Int1, int param1Int2) {
-/* 3837 */       this.lower = param1Int1;
-/* 3838 */       this.upper = param1Int2;
-/*      */     }
-/*      */     boolean isSatisfiedBy(int param1Int) {
-/* 3841 */       return (param1Int == this.lower || param1Int == this.upper);
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   static final class SingleU
-/*      */     extends CharProperty
-/*      */   {
-/*      */     final int lower;
-/*      */     
-/*      */     SingleU(int param1Int) {
-/* 3851 */       this.lower = param1Int;
-/*      */     }
-/*      */     boolean isSatisfiedBy(int param1Int) {
-/* 3854 */       return (this.lower == param1Int || this.lower == 
-/* 3855 */         Character.toLowerCase(Character.toUpperCase(param1Int)));
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   static final class Block
-/*      */     extends CharProperty
-/*      */   {
-/*      */     final Character.UnicodeBlock block;
-/*      */     
-/*      */     Block(Character.UnicodeBlock param1UnicodeBlock) {
-/* 3865 */       this.block = param1UnicodeBlock;
-/*      */     }
-/*      */     boolean isSatisfiedBy(int param1Int) {
-/* 3868 */       return (this.block == Character.UnicodeBlock.of(param1Int));
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   static final class Script
-/*      */     extends CharProperty
-/*      */   {
-/*      */     final Character.UnicodeScript script;
-/*      */     
-/*      */     Script(Character.UnicodeScript param1UnicodeScript) {
-/* 3878 */       this.script = param1UnicodeScript;
-/*      */     }
-/*      */     boolean isSatisfiedBy(int param1Int) {
-/* 3881 */       return (this.script == Character.UnicodeScript.of(param1Int));
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   static final class Category
-/*      */     extends CharProperty {
-/*      */     final int typeMask;
-/*      */     
-/*      */     Category(int param1Int) {
-/* 3890 */       this.typeMask = param1Int;
-/*      */     } boolean isSatisfiedBy(int param1Int) {
-/* 3892 */       return ((this.typeMask & 1 << Character.getType(param1Int)) != 0);
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   static final class Utype
-/*      */     extends CharProperty {
-/*      */     final UnicodeProp uprop;
-/*      */     
-/*      */     Utype(UnicodeProp param1UnicodeProp) {
-/* 3901 */       this.uprop = param1UnicodeProp;
-/*      */     } boolean isSatisfiedBy(int param1Int) {
-/* 3903 */       return this.uprop.is(param1Int);
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   static final class Ctype
-/*      */     extends BmpCharProperty {
-/*      */     final int ctype;
-/*      */     
-/*      */     Ctype(int param1Int) {
-/* 3912 */       this.ctype = param1Int;
-/*      */     } boolean isSatisfiedBy(int param1Int) {
-/* 3914 */       return (param1Int < 128 && ASCII.isType(param1Int, this.ctype));
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   static final class VertWS
-/*      */     extends BmpCharProperty
-/*      */   {
-/*      */     boolean isSatisfiedBy(int param1Int) {
-/* 3923 */       return ((param1Int >= 10 && param1Int <= 13) || param1Int == 133 || param1Int == 8232 || param1Int == 8233);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static final class HorizWS
-/*      */     extends BmpCharProperty
-/*      */   {
-/*      */     boolean isSatisfiedBy(int param1Int) {
-/* 3933 */       return (param1Int == 9 || param1Int == 32 || param1Int == 160 || param1Int == 5760 || param1Int == 6158 || (param1Int >= 8192 && param1Int <= 8202) || param1Int == 8239 || param1Int == 8287 || param1Int == 12288);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static class SliceNode
-/*      */     extends Node
-/*      */   {
-/*      */     int[] buffer;
-/*      */ 
-/*      */     
-/*      */     SliceNode(int[] param1ArrayOfint) {
-/* 3946 */       this.buffer = param1ArrayOfint;
-/*      */     }
-/*      */     boolean study(Pattern.TreeInfo param1TreeInfo) {
-/* 3949 */       param1TreeInfo.minLength += this.buffer.length;
-/* 3950 */       param1TreeInfo.maxLength += this.buffer.length;
-/* 3951 */       return this.next.study(param1TreeInfo);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static final class Slice
-/*      */     extends SliceNode
-/*      */   {
-/*      */     Slice(int[] param1ArrayOfint) {
-/* 3961 */       super(param1ArrayOfint);
-/*      */     }
-/*      */     boolean match(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 3964 */       int[] arrayOfInt = this.buffer;
-/* 3965 */       int i = arrayOfInt.length;
-/* 3966 */       for (byte b = 0; b < i; b++) {
-/* 3967 */         if (param1Int + b >= param1Matcher.to) {
-/* 3968 */           param1Matcher.hitEnd = true;
-/* 3969 */           return false;
-/*      */         } 
-/* 3971 */         if (arrayOfInt[b] != param1CharSequence.charAt(param1Int + b))
-/* 3972 */           return false; 
-/*      */       } 
-/* 3974 */       return this.next.match(param1Matcher, param1Int + i, param1CharSequence);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static class SliceI
-/*      */     extends SliceNode
-/*      */   {
-/*      */     SliceI(int[] param1ArrayOfint) {
-/* 3984 */       super(param1ArrayOfint);
-/*      */     }
-/*      */     boolean match(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 3987 */       int[] arrayOfInt = this.buffer;
-/* 3988 */       int i = arrayOfInt.length;
-/* 3989 */       for (byte b = 0; b < i; b++) {
-/* 3990 */         if (param1Int + b >= param1Matcher.to) {
-/* 3991 */           param1Matcher.hitEnd = true;
-/* 3992 */           return false;
-/*      */         } 
-/* 3994 */         char c = param1CharSequence.charAt(param1Int + b);
-/* 3995 */         if (arrayOfInt[b] != c && arrayOfInt[b] != 
-/* 3996 */           ASCII.toLower(c))
-/* 3997 */           return false; 
-/*      */       } 
-/* 3999 */       return this.next.match(param1Matcher, param1Int + i, param1CharSequence);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static final class SliceU
-/*      */     extends SliceNode
-/*      */   {
-/*      */     SliceU(int[] param1ArrayOfint) {
-/* 4009 */       super(param1ArrayOfint);
-/*      */     }
-/*      */     boolean match(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 4012 */       int[] arrayOfInt = this.buffer;
-/* 4013 */       int i = arrayOfInt.length;
-/* 4014 */       for (byte b = 0; b < i; b++) {
-/* 4015 */         if (param1Int + b >= param1Matcher.to) {
-/* 4016 */           param1Matcher.hitEnd = true;
-/* 4017 */           return false;
-/*      */         } 
-/* 4019 */         char c = param1CharSequence.charAt(param1Int + b);
-/* 4020 */         if (arrayOfInt[b] != c && arrayOfInt[b] != 
-/* 4021 */           Character.toLowerCase(Character.toUpperCase(c)))
-/* 4022 */           return false; 
-/*      */       } 
-/* 4024 */       return this.next.match(param1Matcher, param1Int + i, param1CharSequence);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static final class SliceS
-/*      */     extends SliceNode
-/*      */   {
-/*      */     SliceS(int[] param1ArrayOfint) {
-/* 4034 */       super(param1ArrayOfint);
-/*      */     }
-/*      */     boolean match(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 4037 */       int[] arrayOfInt = this.buffer;
-/* 4038 */       int i = param1Int;
-/* 4039 */       for (byte b = 0; b < arrayOfInt.length; b++) {
-/* 4040 */         if (i >= param1Matcher.to) {
-/* 4041 */           param1Matcher.hitEnd = true;
-/* 4042 */           return false;
-/*      */         } 
-/* 4044 */         int j = Character.codePointAt(param1CharSequence, i);
-/* 4045 */         if (arrayOfInt[b] != j)
-/* 4046 */           return false; 
-/* 4047 */         i += Character.charCount(j);
-/* 4048 */         if (i > param1Matcher.to) {
-/* 4049 */           param1Matcher.hitEnd = true;
-/* 4050 */           return false;
-/*      */         } 
-/*      */       } 
-/* 4053 */       return this.next.match(param1Matcher, i, param1CharSequence);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static class SliceIS
-/*      */     extends SliceNode
-/*      */   {
-/*      */     SliceIS(int[] param1ArrayOfint) {
-/* 4063 */       super(param1ArrayOfint);
-/*      */     }
-/*      */     int toLower(int param1Int) {
-/* 4066 */       return ASCII.toLower(param1Int);
-/*      */     }
-/*      */     boolean match(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 4069 */       int[] arrayOfInt = this.buffer;
-/* 4070 */       int i = param1Int;
-/* 4071 */       for (byte b = 0; b < arrayOfInt.length; b++) {
-/* 4072 */         if (i >= param1Matcher.to) {
-/* 4073 */           param1Matcher.hitEnd = true;
-/* 4074 */           return false;
-/*      */         } 
-/* 4076 */         int j = Character.codePointAt(param1CharSequence, i);
-/* 4077 */         if (arrayOfInt[b] != j && arrayOfInt[b] != toLower(j))
-/* 4078 */           return false; 
-/* 4079 */         i += Character.charCount(j);
-/* 4080 */         if (i > param1Matcher.to) {
-/* 4081 */           param1Matcher.hitEnd = true;
-/* 4082 */           return false;
-/*      */         } 
-/*      */       } 
-/* 4085 */       return this.next.match(param1Matcher, i, param1CharSequence);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static final class SliceUS
-/*      */     extends SliceIS
-/*      */   {
-/*      */     SliceUS(int[] param1ArrayOfint) {
-/* 4095 */       super(param1ArrayOfint);
-/*      */     }
-/*      */     int toLower(int param1Int) {
-/* 4098 */       return Character.toLowerCase(Character.toUpperCase(param1Int));
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   private static boolean inRange(int paramInt1, int paramInt2, int paramInt3) {
-/* 4103 */     return (paramInt1 <= paramInt2 && paramInt2 <= paramInt3);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static CharProperty rangeFor(final int lower, final int upper) {
-/* 4111 */     return new CharProperty() {
-/*      */         boolean isSatisfiedBy(int param1Int) {
-/* 4113 */           return Pattern.inRange(lower, param1Int, upper);
-/*      */         }
-/*      */       };
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private CharProperty caseInsensitiveRangeFor(final int lower, final int upper) {
-/* 4122 */     if (has(64))
-/* 4123 */       return new CharProperty()
-/*      */         {
-/* 4125 */           boolean isSatisfiedBy(int param1Int) { if (Pattern.inRange(lower, param1Int, upper))
-/* 4126 */               return true; 
-/* 4127 */             int i = Character.toUpperCase(param1Int);
-/* 4128 */             return (Pattern.inRange(lower, i, upper) || Pattern
-/* 4129 */               .inRange(lower, Character.toLowerCase(i), upper)); } }; 
-/* 4130 */     return new CharProperty() {
-/*      */         boolean isSatisfiedBy(int param1Int) {
-/* 4132 */           return (Pattern.inRange(lower, param1Int, upper) || (
-/* 4133 */             ASCII.isAscii(param1Int) && (Pattern
-/* 4134 */             .inRange(lower, ASCII.toUpper(param1Int), upper) || Pattern
-/* 4135 */             .inRange(lower, ASCII.toLower(param1Int), upper))));
-/*      */         }
-/*      */       };
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   static final class All
-/*      */     extends CharProperty
-/*      */   {
-/*      */     boolean isSatisfiedBy(int param1Int) {
-/* 4145 */       return true;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   static final class Dot
-/*      */     extends CharProperty
-/*      */   {
-/*      */     boolean isSatisfiedBy(int param1Int) {
-/* 4154 */       return (param1Int != 10 && param1Int != 13 && (param1Int | 0x1) != 8233 && param1Int != 133);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static final class UnixDot
-/*      */     extends CharProperty
-/*      */   {
-/*      */     boolean isSatisfiedBy(int param1Int) {
-/* 4166 */       return (param1Int != 10);
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   static final class Ques
-/*      */     extends Node
-/*      */   {
-/*      */     Pattern.Node atom;
-/*      */     int type;
-/*      */     
-/*      */     Ques(Pattern.Node param1Node, int param1Int) {
-/* 4177 */       this.atom = param1Node;
-/* 4178 */       this.type = param1Int;
-/*      */     }
-/*      */     boolean match(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 4181 */       switch (this.type) {
-/*      */         case 0:
-/* 4183 */           return ((this.atom.match(param1Matcher, param1Int, param1CharSequence) && this.next.match(param1Matcher, param1Matcher.last, param1CharSequence)) || this.next
-/* 4184 */             .match(param1Matcher, param1Int, param1CharSequence));
-/*      */         case 1:
-/* 4186 */           return (this.next.match(param1Matcher, param1Int, param1CharSequence) || (this.atom
-/* 4187 */             .match(param1Matcher, param1Int, param1CharSequence) && this.next.match(param1Matcher, param1Matcher.last, param1CharSequence)));
-/*      */         case 2:
-/* 4189 */           if (this.atom.match(param1Matcher, param1Int, param1CharSequence)) param1Int = param1Matcher.last; 
-/* 4190 */           return this.next.match(param1Matcher, param1Int, param1CharSequence);
-/*      */       } 
-/* 4192 */       return (this.atom.match(param1Matcher, param1Int, param1CharSequence) && this.next.match(param1Matcher, param1Matcher.last, param1CharSequence));
-/*      */     }
-/*      */     
-/*      */     boolean study(Pattern.TreeInfo param1TreeInfo) {
-/* 4196 */       if (this.type != 3) {
-/* 4197 */         int i = param1TreeInfo.minLength;
-/* 4198 */         this.atom.study(param1TreeInfo);
-/* 4199 */         param1TreeInfo.minLength = i;
-/* 4200 */         param1TreeInfo.deterministic = false;
-/* 4201 */         return this.next.study(param1TreeInfo);
-/*      */       } 
-/* 4203 */       this.atom.study(param1TreeInfo);
-/* 4204 */       return this.next.study(param1TreeInfo);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   static final class Curly
-/*      */     extends Node
-/*      */   {
-/*      */     Pattern.Node atom;
-/*      */     
-/*      */     int type;
-/*      */     
-/*      */     int cmin;
-/*      */     
-/*      */     int cmax;
-/*      */     
-/*      */     Curly(Pattern.Node param1Node, int param1Int1, int param1Int2, int param1Int3) {
-/* 4221 */       this.atom = param1Node;
-/* 4222 */       this.type = param1Int3;
-/* 4223 */       this.cmin = param1Int1;
-/* 4224 */       this.cmax = param1Int2;
-/*      */     }
-/*      */     boolean match(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/*      */       byte b;
-/* 4228 */       for (b = 0; b < this.cmin; b++) {
-/* 4229 */         if (this.atom.match(param1Matcher, param1Int, param1CharSequence)) {
-/* 4230 */           param1Int = param1Matcher.last;
-/*      */         } else {
-/*      */           
-/* 4233 */           return false;
-/*      */         } 
-/* 4235 */       }  if (this.type == 0)
-/* 4236 */         return match0(param1Matcher, param1Int, b, param1CharSequence); 
-/* 4237 */       if (this.type == 1) {
-/* 4238 */         return match1(param1Matcher, param1Int, b, param1CharSequence);
-/*      */       }
-/* 4240 */       return match2(param1Matcher, param1Int, b, param1CharSequence);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     boolean match0(Matcher param1Matcher, int param1Int1, int param1Int2, CharSequence param1CharSequence) {
-/* 4246 */       if (param1Int2 >= this.cmax)
-/*      */       {
-/*      */         
-/* 4249 */         return this.next.match(param1Matcher, param1Int1, param1CharSequence);
-/*      */       }
-/* 4251 */       int i = param1Int2;
-/* 4252 */       if (this.atom.match(param1Matcher, param1Int1, param1CharSequence)) {
-/*      */         
-/* 4254 */         int j = param1Matcher.last - param1Int1;
-/* 4255 */         if (j != 0) {
-/*      */ 
-/*      */           
-/* 4258 */           param1Int1 = param1Matcher.last;
-/* 4259 */           param1Int2++;
-/*      */           
-/* 4261 */           while (param1Int2 < this.cmax && 
-/* 4262 */             this.atom.match(param1Matcher, param1Int1, param1CharSequence)) {
-/*      */             
-/* 4264 */             if (param1Int1 + j != param1Matcher.last) {
-/* 4265 */               if (match0(param1Matcher, param1Matcher.last, param1Int2 + 1, param1CharSequence))
-/* 4266 */                 return true; 
-/*      */               break;
-/*      */             } 
-/* 4269 */             param1Int1 += j;
-/* 4270 */             param1Int2++;
-/*      */           } 
-/*      */           
-/* 4273 */           while (param1Int2 >= i) {
-/* 4274 */             if (this.next.match(param1Matcher, param1Int1, param1CharSequence))
-/* 4275 */               return true; 
-/* 4276 */             param1Int1 -= j;
-/* 4277 */             param1Int2--;
-/*      */           } 
-/* 4279 */           return false;
-/*      */         } 
-/* 4281 */       }  return this.next.match(param1Matcher, param1Int1, param1CharSequence);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     boolean match1(Matcher param1Matcher, int param1Int1, int param1Int2, CharSequence param1CharSequence) {
-/*      */       while (true) {
-/* 4289 */         if (this.next.match(param1Matcher, param1Int1, param1CharSequence)) {
-/* 4290 */           return true;
-/*      */         }
-/* 4292 */         if (param1Int2 >= this.cmax) {
-/* 4293 */           return false;
-/*      */         }
-/* 4295 */         if (!this.atom.match(param1Matcher, param1Int1, param1CharSequence)) {
-/* 4296 */           return false;
-/*      */         }
-/* 4298 */         if (param1Int1 == param1Matcher.last) {
-/* 4299 */           return false;
-/*      */         }
-/* 4301 */         param1Int1 = param1Matcher.last;
-/* 4302 */         param1Int2++;
-/*      */       } 
-/*      */     }
-/*      */     boolean match2(Matcher param1Matcher, int param1Int1, int param1Int2, CharSequence param1CharSequence) {
-/* 4306 */       for (; param1Int2 < this.cmax && 
-/* 4307 */         this.atom.match(param1Matcher, param1Int1, param1CharSequence); param1Int2++) {
-/*      */         
-/* 4309 */         if (param1Int1 == param1Matcher.last)
-/*      */           break; 
-/* 4311 */         param1Int1 = param1Matcher.last;
-/*      */       } 
-/* 4313 */       return this.next.match(param1Matcher, param1Int1, param1CharSequence);
-/*      */     }
-/*      */     
-/*      */     boolean study(Pattern.TreeInfo param1TreeInfo) {
-/* 4317 */       int i = param1TreeInfo.minLength;
-/* 4318 */       int j = param1TreeInfo.maxLength;
-/* 4319 */       boolean bool1 = param1TreeInfo.maxValid;
-/* 4320 */       boolean bool2 = param1TreeInfo.deterministic;
-/* 4321 */       param1TreeInfo.reset();
-/*      */       
-/* 4323 */       this.atom.study(param1TreeInfo);
-/*      */       
-/* 4325 */       int k = param1TreeInfo.minLength * this.cmin + i;
-/* 4326 */       if (k < i) {
-/* 4327 */         k = 268435455;
-/*      */       }
-/* 4329 */       param1TreeInfo.minLength = k;
-/*      */       
-/* 4331 */       if (bool1 & param1TreeInfo.maxValid) {
-/* 4332 */         k = param1TreeInfo.maxLength * this.cmax + j;
-/* 4333 */         param1TreeInfo.maxLength = k;
-/* 4334 */         if (k < j) {
-/* 4335 */           param1TreeInfo.maxValid = false;
-/*      */         }
-/*      */       } else {
-/* 4338 */         param1TreeInfo.maxValid = false;
-/*      */       } 
-/*      */       
-/* 4341 */       if (param1TreeInfo.deterministic && this.cmin == this.cmax) {
-/* 4342 */         param1TreeInfo.deterministic = bool2;
-/*      */       } else {
-/* 4344 */         param1TreeInfo.deterministic = false;
-/* 4345 */       }  return this.next.study(param1TreeInfo);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   static final class GroupCurly
-/*      */     extends Node
-/*      */   {
-/*      */     Pattern.Node atom;
-/*      */     
-/*      */     int type;
-/*      */     
-/*      */     int cmin;
-/*      */     
-/*      */     int cmax;
-/*      */     
-/*      */     int localIndex;
-/*      */     
-/*      */     int groupIndex;
-/*      */     
-/*      */     boolean capture;
-/*      */     
-/*      */     GroupCurly(Pattern.Node param1Node, int param1Int1, int param1Int2, int param1Int3, int param1Int4, int param1Int5, boolean param1Boolean) {
-/* 4368 */       this.atom = param1Node;
-/* 4369 */       this.type = param1Int3;
-/* 4370 */       this.cmin = param1Int1;
-/* 4371 */       this.cmax = param1Int2;
-/* 4372 */       this.localIndex = param1Int4;
-/* 4373 */       this.groupIndex = param1Int5;
-/* 4374 */       this.capture = param1Boolean;
-/*      */     }
-/*      */     boolean match(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 4377 */       int[] arrayOfInt1 = param1Matcher.groups;
-/* 4378 */       int[] arrayOfInt2 = param1Matcher.locals;
-/* 4379 */       int i = arrayOfInt2[this.localIndex];
-/* 4380 */       int j = 0;
-/* 4381 */       int k = 0;
-/*      */       
-/* 4383 */       if (this.capture) {
-/* 4384 */         j = arrayOfInt1[this.groupIndex];
-/* 4385 */         k = arrayOfInt1[this.groupIndex + 1];
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */       
-/* 4390 */       arrayOfInt2[this.localIndex] = -1;
-/*      */       
-/* 4392 */       boolean bool = true;
-/* 4393 */       for (byte b = 0; b < this.cmin; b++) {
-/* 4394 */         if (this.atom.match(param1Matcher, param1Int, param1CharSequence)) {
-/* 4395 */           if (this.capture) {
-/* 4396 */             arrayOfInt1[this.groupIndex] = param1Int;
-/* 4397 */             arrayOfInt1[this.groupIndex + 1] = param1Matcher.last;
-/*      */           } 
-/* 4399 */           param1Int = param1Matcher.last;
-/*      */         } else {
-/* 4401 */           bool = false;
-/*      */           break;
-/*      */         } 
-/*      */       } 
-/* 4405 */       if (bool) {
-/* 4406 */         if (this.type == 0) {
-/* 4407 */           bool = match0(param1Matcher, param1Int, this.cmin, param1CharSequence);
-/* 4408 */         } else if (this.type == 1) {
-/* 4409 */           bool = match1(param1Matcher, param1Int, this.cmin, param1CharSequence);
-/*      */         } else {
-/* 4411 */           bool = match2(param1Matcher, param1Int, this.cmin, param1CharSequence);
-/*      */         } 
-/*      */       }
-/* 4414 */       if (!bool) {
-/* 4415 */         arrayOfInt2[this.localIndex] = i;
-/* 4416 */         if (this.capture) {
-/* 4417 */           arrayOfInt1[this.groupIndex] = j;
-/* 4418 */           arrayOfInt1[this.groupIndex + 1] = k;
-/*      */         } 
-/*      */       } 
-/* 4421 */       return bool;
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     boolean match0(Matcher param1Matcher, int param1Int1, int param1Int2, CharSequence param1CharSequence) {
-/* 4426 */       int i = param1Int2;
-/* 4427 */       int[] arrayOfInt = param1Matcher.groups;
-/* 4428 */       int j = 0;
-/* 4429 */       int k = 0;
-/* 4430 */       if (this.capture) {
-/* 4431 */         j = arrayOfInt[this.groupIndex];
-/* 4432 */         k = arrayOfInt[this.groupIndex + 1];
-/*      */       } 
-/*      */       
-/* 4435 */       if (param1Int2 < this.cmax)
-/*      */       {
-/* 4437 */         if (this.atom.match(param1Matcher, param1Int1, param1CharSequence)) {
-/*      */           
-/* 4439 */           int m = param1Matcher.last - param1Int1;
-/* 4440 */           if (m <= 0) {
-/* 4441 */             if (this.capture) {
-/* 4442 */               arrayOfInt[this.groupIndex] = param1Int1;
-/* 4443 */               arrayOfInt[this.groupIndex + 1] = param1Int1 + m;
-/*      */             } 
-/* 4445 */             param1Int1 += m;
-/*      */           } else {
-/*      */             
-/*      */             while (true) {
-/* 4449 */               if (this.capture) {
-/* 4450 */                 arrayOfInt[this.groupIndex] = param1Int1;
-/* 4451 */                 arrayOfInt[this.groupIndex + 1] = param1Int1 + m;
-/*      */               } 
-/* 4453 */               param1Int1 += m;
-/* 4454 */               if (++param1Int2 >= this.cmax)
-/*      */                 break; 
-/* 4456 */               if (!this.atom.match(param1Matcher, param1Int1, param1CharSequence))
-/*      */                 break; 
-/* 4458 */               if (param1Int1 + m != param1Matcher.last) {
-/* 4459 */                 if (match0(param1Matcher, param1Int1, param1Int2, param1CharSequence))
-/* 4460 */                   return true; 
-/*      */                 break;
-/*      */               } 
-/*      */             } 
-/* 4464 */             while (param1Int2 > i) {
-/* 4465 */               if (this.next.match(param1Matcher, param1Int1, param1CharSequence)) {
-/* 4466 */                 if (this.capture) {
-/* 4467 */                   arrayOfInt[this.groupIndex + 1] = param1Int1;
-/* 4468 */                   arrayOfInt[this.groupIndex] = param1Int1 - m;
-/*      */                 } 
-/* 4470 */                 return true;
-/*      */               } 
-/*      */               
-/* 4473 */               param1Int1 -= m;
-/* 4474 */               if (this.capture) {
-/* 4475 */                 arrayOfInt[this.groupIndex + 1] = param1Int1;
-/* 4476 */                 arrayOfInt[this.groupIndex] = param1Int1 - m;
-/*      */               } 
-/* 4478 */               param1Int2--;
-/*      */             } 
-/*      */           } 
-/*      */         } 
-/*      */       }
-/* 4483 */       if (this.capture) {
-/* 4484 */         arrayOfInt[this.groupIndex] = j;
-/* 4485 */         arrayOfInt[this.groupIndex + 1] = k;
-/*      */       } 
-/* 4487 */       return this.next.match(param1Matcher, param1Int1, param1CharSequence);
-/*      */     }
-/*      */     
-/*      */     boolean match1(Matcher param1Matcher, int param1Int1, int param1Int2, CharSequence param1CharSequence) {
-/*      */       while (true) {
-/* 4492 */         if (this.next.match(param1Matcher, param1Int1, param1CharSequence))
-/* 4493 */           return true; 
-/* 4494 */         if (param1Int2 >= this.cmax)
-/* 4495 */           return false; 
-/* 4496 */         if (!this.atom.match(param1Matcher, param1Int1, param1CharSequence))
-/* 4497 */           return false; 
-/* 4498 */         if (param1Int1 == param1Matcher.last)
-/* 4499 */           return false; 
-/* 4500 */         if (this.capture) {
-/* 4501 */           param1Matcher.groups[this.groupIndex] = param1Int1;
-/* 4502 */           param1Matcher.groups[this.groupIndex + 1] = param1Matcher.last;
-/*      */         } 
-/* 4504 */         param1Int1 = param1Matcher.last;
-/* 4505 */         param1Int2++;
-/*      */       } 
-/*      */     }
-/*      */     
-/*      */     boolean match2(Matcher param1Matcher, int param1Int1, int param1Int2, CharSequence param1CharSequence) {
-/* 4510 */       for (; param1Int2 < this.cmax && 
-/* 4511 */         this.atom.match(param1Matcher, param1Int1, param1CharSequence); param1Int2++) {
-/*      */ 
-/*      */         
-/* 4514 */         if (this.capture) {
-/* 4515 */           param1Matcher.groups[this.groupIndex] = param1Int1;
-/* 4516 */           param1Matcher.groups[this.groupIndex + 1] = param1Matcher.last;
-/*      */         } 
-/* 4518 */         if (param1Int1 == param1Matcher.last) {
-/*      */           break;
-/*      */         }
-/* 4521 */         param1Int1 = param1Matcher.last;
-/*      */       } 
-/* 4523 */       return this.next.match(param1Matcher, param1Int1, param1CharSequence);
-/*      */     }
-/*      */     
-/*      */     boolean study(Pattern.TreeInfo param1TreeInfo) {
-/* 4527 */       int i = param1TreeInfo.minLength;
-/* 4528 */       int j = param1TreeInfo.maxLength;
-/* 4529 */       boolean bool1 = param1TreeInfo.maxValid;
-/* 4530 */       boolean bool2 = param1TreeInfo.deterministic;
-/* 4531 */       param1TreeInfo.reset();
-/*      */       
-/* 4533 */       this.atom.study(param1TreeInfo);
-/*      */       
-/* 4535 */       int k = param1TreeInfo.minLength * this.cmin + i;
-/* 4536 */       if (k < i) {
-/* 4537 */         k = 268435455;
-/*      */       }
-/* 4539 */       param1TreeInfo.minLength = k;
-/*      */       
-/* 4541 */       if (bool1 & param1TreeInfo.maxValid) {
-/* 4542 */         k = param1TreeInfo.maxLength * this.cmax + j;
-/* 4543 */         param1TreeInfo.maxLength = k;
-/* 4544 */         if (k < j) {
-/* 4545 */           param1TreeInfo.maxValid = false;
-/*      */         }
-/*      */       } else {
-/* 4548 */         param1TreeInfo.maxValid = false;
-/*      */       } 
-/*      */       
-/* 4551 */       if (param1TreeInfo.deterministic && this.cmin == this.cmax) {
-/* 4552 */         param1TreeInfo.deterministic = bool2;
-/*      */       } else {
-/* 4554 */         param1TreeInfo.deterministic = false;
-/*      */       } 
-/* 4556 */       return this.next.study(param1TreeInfo);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static final class BranchConn
-/*      */     extends Node
-/*      */   {
-/*      */     boolean match(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 4570 */       return this.next.match(param1Matcher, param1Int, param1CharSequence);
-/*      */     }
-/*      */     boolean study(Pattern.TreeInfo param1TreeInfo) {
-/* 4573 */       return param1TreeInfo.deterministic;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static final class Branch
-/*      */     extends Node
-/*      */   {
-/* 4583 */     Pattern.Node[] atoms = new Pattern.Node[2];
-/* 4584 */     int size = 2; Pattern.Node conn;
-/*      */     
-/*      */     Branch(Pattern.Node param1Node1, Pattern.Node param1Node2, Pattern.Node param1Node3) {
-/* 4587 */       this.conn = param1Node3;
-/* 4588 */       this.atoms[0] = param1Node1;
-/* 4589 */       this.atoms[1] = param1Node2;
-/*      */     }
-/*      */     
-/*      */     void add(Pattern.Node param1Node) {
-/* 4593 */       if (this.size >= this.atoms.length) {
-/* 4594 */         Pattern.Node[] arrayOfNode = new Pattern.Node[this.atoms.length * 2];
-/* 4595 */         System.arraycopy(this.atoms, 0, arrayOfNode, 0, this.atoms.length);
-/* 4596 */         this.atoms = arrayOfNode;
-/*      */       } 
-/* 4598 */       this.atoms[this.size++] = param1Node;
-/*      */     }
-/*      */     
-/*      */     boolean match(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 4602 */       for (byte b = 0; b < this.size; b++) {
-/* 4603 */         if (this.atoms[b] == null) {
-/* 4604 */           if (this.conn.next.match(param1Matcher, param1Int, param1CharSequence))
-/* 4605 */             return true; 
-/* 4606 */         } else if (this.atoms[b].match(param1Matcher, param1Int, param1CharSequence)) {
-/* 4607 */           return true;
-/*      */         } 
-/*      */       } 
-/* 4610 */       return false;
-/*      */     }
-/*      */     
-/*      */     boolean study(Pattern.TreeInfo param1TreeInfo) {
-/* 4614 */       int i = param1TreeInfo.minLength;
-/* 4615 */       int j = param1TreeInfo.maxLength;
-/* 4616 */       boolean bool = param1TreeInfo.maxValid;
-/*      */       
-/* 4618 */       int k = Integer.MAX_VALUE;
-/* 4619 */       int m = -1;
-/* 4620 */       for (byte b = 0; b < this.size; b++) {
-/* 4621 */         param1TreeInfo.reset();
-/* 4622 */         if (this.atoms[b] != null)
-/* 4623 */           this.atoms[b].study(param1TreeInfo); 
-/* 4624 */         k = Math.min(k, param1TreeInfo.minLength);
-/* 4625 */         m = Math.max(m, param1TreeInfo.maxLength);
-/* 4626 */         bool &= param1TreeInfo.maxValid;
-/*      */       } 
-/*      */       
-/* 4629 */       i += k;
-/* 4630 */       j += m;
-/*      */       
-/* 4632 */       param1TreeInfo.reset();
-/* 4633 */       this.conn.next.study(param1TreeInfo);
-/*      */       
-/* 4635 */       param1TreeInfo.minLength += i;
-/* 4636 */       param1TreeInfo.maxLength += j;
-/* 4637 */       param1TreeInfo.maxValid &= bool;
-/* 4638 */       param1TreeInfo.deterministic = false;
-/* 4639 */       return false;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static final class GroupHead
-/*      */     extends Node
-/*      */   {
-/*      */     int localIndex;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     GroupHead(int param1Int) {
-/* 4655 */       this.localIndex = param1Int;
-/*      */     }
-/*      */     boolean match(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 4658 */       int i = param1Matcher.locals[this.localIndex];
-/* 4659 */       param1Matcher.locals[this.localIndex] = param1Int;
-/* 4660 */       boolean bool = this.next.match(param1Matcher, param1Int, param1CharSequence);
-/* 4661 */       param1Matcher.locals[this.localIndex] = i;
-/* 4662 */       return bool;
-/*      */     }
-/*      */     boolean matchRef(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 4665 */       int i = param1Matcher.locals[this.localIndex];
-/* 4666 */       param1Matcher.locals[this.localIndex] = param1Int ^ 0xFFFFFFFF;
-/* 4667 */       boolean bool = this.next.match(param1Matcher, param1Int, param1CharSequence);
-/* 4668 */       param1Matcher.locals[this.localIndex] = i;
-/* 4669 */       return bool;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   static final class GroupRef
-/*      */     extends Node
-/*      */   {
-/*      */     Pattern.GroupHead head;
-/*      */ 
-/*      */     
-/*      */     GroupRef(Pattern.GroupHead param1GroupHead) {
-/* 4681 */       this.head = param1GroupHead;
-/*      */     }
-/*      */     boolean match(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 4684 */       return (this.head.matchRef(param1Matcher, param1Int, param1CharSequence) && this.next
-/* 4685 */         .match(param1Matcher, param1Matcher.last, param1CharSequence));
-/*      */     }
-/*      */     boolean study(Pattern.TreeInfo param1TreeInfo) {
-/* 4688 */       param1TreeInfo.maxValid = false;
-/* 4689 */       param1TreeInfo.deterministic = false;
-/* 4690 */       return this.next.study(param1TreeInfo);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static final class GroupTail
-/*      */     extends Node
-/*      */   {
-/*      */     int localIndex;
-/*      */ 
-/*      */     
-/*      */     int groupIndex;
-/*      */ 
-/*      */     
-/*      */     GroupTail(int param1Int1, int param1Int2) {
-/* 4706 */       this.localIndex = param1Int1;
-/* 4707 */       this.groupIndex = param1Int2 + param1Int2;
-/*      */     }
-/*      */     boolean match(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 4710 */       int i = param1Matcher.locals[this.localIndex];
-/* 4711 */       if (i >= 0) {
-/*      */ 
-/*      */         
-/* 4714 */         int j = param1Matcher.groups[this.groupIndex];
-/* 4715 */         int k = param1Matcher.groups[this.groupIndex + 1];
-/*      */         
-/* 4717 */         param1Matcher.groups[this.groupIndex] = i;
-/* 4718 */         param1Matcher.groups[this.groupIndex + 1] = param1Int;
-/* 4719 */         if (this.next.match(param1Matcher, param1Int, param1CharSequence)) {
-/* 4720 */           return true;
-/*      */         }
-/* 4722 */         param1Matcher.groups[this.groupIndex] = j;
-/* 4723 */         param1Matcher.groups[this.groupIndex + 1] = k;
-/* 4724 */         return false;
-/*      */       } 
-/*      */ 
-/*      */       
-/* 4728 */       param1Matcher.last = param1Int;
-/* 4729 */       return true;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   static final class Prolog
-/*      */     extends Node
-/*      */   {
-/*      */     Pattern.Loop loop;
-/*      */     
-/*      */     Prolog(Pattern.Loop param1Loop) {
-/* 4740 */       this.loop = param1Loop;
-/*      */     }
-/*      */     boolean match(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 4743 */       return this.loop.matchInit(param1Matcher, param1Int, param1CharSequence);
-/*      */     }
-/*      */     boolean study(Pattern.TreeInfo param1TreeInfo) {
-/* 4746 */       return this.loop.study(param1TreeInfo);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   static class Loop
-/*      */     extends Node
-/*      */   {
-/*      */     Pattern.Node body;
-/*      */     
-/*      */     int countIndex;
-/*      */     int beginIndex;
-/*      */     int cmin;
-/*      */     int cmax;
-/*      */     
-/*      */     Loop(int param1Int1, int param1Int2) {
-/* 4762 */       this.countIndex = param1Int1;
-/* 4763 */       this.beginIndex = param1Int2;
-/*      */     }
-/*      */     
-/*      */     boolean match(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 4767 */       if (param1Int > param1Matcher.locals[this.beginIndex]) {
-/* 4768 */         int i = param1Matcher.locals[this.countIndex];
-/*      */ 
-/*      */ 
-/*      */         
-/* 4772 */         if (i < this.cmin) {
-/* 4773 */           param1Matcher.locals[this.countIndex] = i + 1;
-/* 4774 */           boolean bool = this.body.match(param1Matcher, param1Int, param1CharSequence);
-/*      */ 
-/*      */           
-/* 4777 */           if (!bool) {
-/* 4778 */             param1Matcher.locals[this.countIndex] = i;
-/*      */           }
-/*      */           
-/* 4781 */           return bool;
-/*      */         } 
-/*      */ 
-/*      */         
-/* 4785 */         if (i < this.cmax) {
-/* 4786 */           param1Matcher.locals[this.countIndex] = i + 1;
-/* 4787 */           boolean bool = this.body.match(param1Matcher, param1Int, param1CharSequence);
-/*      */ 
-/*      */           
-/* 4790 */           if (!bool) {
-/* 4791 */             param1Matcher.locals[this.countIndex] = i;
-/*      */           } else {
-/* 4793 */             return true;
-/*      */           } 
-/*      */         } 
-/* 4796 */       }  return this.next.match(param1Matcher, param1Int, param1CharSequence);
-/*      */     }
-/*      */     boolean matchInit(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 4799 */       int i = param1Matcher.locals[this.countIndex];
-/* 4800 */       boolean bool = false;
-/* 4801 */       if (0 < this.cmin) {
-/* 4802 */         param1Matcher.locals[this.countIndex] = 1;
-/* 4803 */         bool = this.body.match(param1Matcher, param1Int, param1CharSequence);
-/* 4804 */       } else if (0 < this.cmax) {
-/* 4805 */         param1Matcher.locals[this.countIndex] = 1;
-/* 4806 */         bool = this.body.match(param1Matcher, param1Int, param1CharSequence);
-/* 4807 */         if (!bool)
-/* 4808 */           bool = this.next.match(param1Matcher, param1Int, param1CharSequence); 
-/*      */       } else {
-/* 4810 */         bool = this.next.match(param1Matcher, param1Int, param1CharSequence);
-/*      */       } 
-/* 4812 */       param1Matcher.locals[this.countIndex] = i;
-/* 4813 */       return bool;
-/*      */     }
-/*      */     boolean study(Pattern.TreeInfo param1TreeInfo) {
-/* 4816 */       param1TreeInfo.maxValid = false;
-/* 4817 */       param1TreeInfo.deterministic = false;
-/* 4818 */       return false;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static final class LazyLoop
-/*      */     extends Loop
-/*      */   {
-/*      */     LazyLoop(int param1Int1, int param1Int2) {
-/* 4830 */       super(param1Int1, param1Int2);
-/*      */     }
-/*      */     
-/*      */     boolean match(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 4834 */       if (param1Int > param1Matcher.locals[this.beginIndex]) {
-/* 4835 */         int i = param1Matcher.locals[this.countIndex];
-/* 4836 */         if (i < this.cmin) {
-/* 4837 */           param1Matcher.locals[this.countIndex] = i + 1;
-/* 4838 */           boolean bool = this.body.match(param1Matcher, param1Int, param1CharSequence);
-/*      */ 
-/*      */           
-/* 4841 */           if (!bool)
-/* 4842 */             param1Matcher.locals[this.countIndex] = i; 
-/* 4843 */           return bool;
-/*      */         } 
-/* 4845 */         if (this.next.match(param1Matcher, param1Int, param1CharSequence))
-/* 4846 */           return true; 
-/* 4847 */         if (i < this.cmax) {
-/* 4848 */           param1Matcher.locals[this.countIndex] = i + 1;
-/* 4849 */           boolean bool = this.body.match(param1Matcher, param1Int, param1CharSequence);
-/*      */ 
-/*      */           
-/* 4852 */           if (!bool)
-/* 4853 */             param1Matcher.locals[this.countIndex] = i; 
-/* 4854 */           return bool;
-/*      */         } 
-/* 4856 */         return false;
-/*      */       } 
-/* 4858 */       return this.next.match(param1Matcher, param1Int, param1CharSequence);
-/*      */     }
-/*      */     boolean matchInit(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 4861 */       int i = param1Matcher.locals[this.countIndex];
-/* 4862 */       boolean bool = false;
-/* 4863 */       if (0 < this.cmin) {
-/* 4864 */         param1Matcher.locals[this.countIndex] = 1;
-/* 4865 */         bool = this.body.match(param1Matcher, param1Int, param1CharSequence);
-/* 4866 */       } else if (this.next.match(param1Matcher, param1Int, param1CharSequence)) {
-/* 4867 */         bool = true;
-/* 4868 */       } else if (0 < this.cmax) {
-/* 4869 */         param1Matcher.locals[this.countIndex] = 1;
-/* 4870 */         bool = this.body.match(param1Matcher, param1Int, param1CharSequence);
-/*      */       } 
-/* 4872 */       param1Matcher.locals[this.countIndex] = i;
-/* 4873 */       return bool;
-/*      */     }
-/*      */     boolean study(Pattern.TreeInfo param1TreeInfo) {
-/* 4876 */       param1TreeInfo.maxValid = false;
-/* 4877 */       param1TreeInfo.deterministic = false;
-/* 4878 */       return false;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   static class BackRef
-/*      */     extends Node
-/*      */   {
-/*      */     int groupIndex;
-/*      */ 
-/*      */     
-/*      */     BackRef(int param1Int) {
-/* 4890 */       this.groupIndex = param1Int + param1Int;
-/*      */     }
-/*      */     boolean match(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 4893 */       int i = param1Matcher.groups[this.groupIndex];
-/* 4894 */       int j = param1Matcher.groups[this.groupIndex + 1];
-/*      */       
-/* 4896 */       int k = j - i;
-/*      */       
-/* 4898 */       if (i < 0) {
-/* 4899 */         return false;
-/*      */       }
-/*      */       
-/* 4902 */       if (param1Int + k > param1Matcher.to) {
-/* 4903 */         param1Matcher.hitEnd = true;
-/* 4904 */         return false;
-/*      */       } 
-/*      */ 
-/*      */       
-/* 4908 */       for (byte b = 0; b < k; b++) {
-/* 4909 */         if (param1CharSequence.charAt(param1Int + b) != param1CharSequence.charAt(i + b))
-/* 4910 */           return false; 
-/*      */       } 
-/* 4912 */       return this.next.match(param1Matcher, param1Int + k, param1CharSequence);
-/*      */     }
-/*      */     boolean study(Pattern.TreeInfo param1TreeInfo) {
-/* 4915 */       param1TreeInfo.maxValid = false;
-/* 4916 */       return this.next.study(param1TreeInfo);
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   static class CIBackRef extends Node {
-/*      */     int groupIndex;
-/*      */     boolean doUnicodeCase;
-/*      */     
-/*      */     CIBackRef(int param1Int, boolean param1Boolean) {
-/* 4925 */       this.groupIndex = param1Int + param1Int;
-/* 4926 */       this.doUnicodeCase = param1Boolean;
-/*      */     }
-/*      */     boolean match(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 4929 */       int i = param1Matcher.groups[this.groupIndex];
-/* 4930 */       int j = param1Matcher.groups[this.groupIndex + 1];
-/*      */       
-/* 4932 */       int k = j - i;
-/*      */ 
-/*      */       
-/* 4935 */       if (i < 0) {
-/* 4936 */         return false;
-/*      */       }
-/*      */       
-/* 4939 */       if (param1Int + k > param1Matcher.to) {
-/* 4940 */         param1Matcher.hitEnd = true;
-/* 4941 */         return false;
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */       
-/* 4946 */       int m = param1Int;
-/* 4947 */       for (byte b = 0; b < k; b++) {
-/* 4948 */         int n = Character.codePointAt(param1CharSequence, m);
-/* 4949 */         int i1 = Character.codePointAt(param1CharSequence, i);
-/* 4950 */         if (n != i1) {
-/* 4951 */           if (this.doUnicodeCase) {
-/* 4952 */             int i2 = Character.toUpperCase(n);
-/* 4953 */             int i3 = Character.toUpperCase(i1);
-/* 4954 */             if (i2 != i3 && 
-/* 4955 */               Character.toLowerCase(i2) != 
-/* 4956 */               Character.toLowerCase(i3)) {
-/* 4957 */               return false;
-/*      */             }
-/* 4959 */           } else if (ASCII.toLower(n) != ASCII.toLower(i1)) {
-/* 4960 */             return false;
-/*      */           } 
-/*      */         }
-/* 4963 */         m += Character.charCount(n);
-/* 4964 */         i += Character.charCount(i1);
-/*      */       } 
-/*      */       
-/* 4967 */       return this.next.match(param1Matcher, param1Int + k, param1CharSequence);
-/*      */     }
-/*      */     boolean study(Pattern.TreeInfo param1TreeInfo) {
-/* 4970 */       param1TreeInfo.maxValid = false;
-/* 4971 */       return this.next.study(param1TreeInfo);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static final class First
-/*      */     extends Node
-/*      */   {
-/*      */     Pattern.Node atom;
-/*      */ 
-/*      */     
-/*      */     First(Pattern.Node param1Node) {
-/* 4984 */       this.atom = Pattern.BnM.optimize(param1Node);
-/*      */     }
-/*      */     boolean match(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 4987 */       if (this.atom instanceof Pattern.BnM) {
-/* 4988 */         return (this.atom.match(param1Matcher, param1Int, param1CharSequence) && this.next
-/* 4989 */           .match(param1Matcher, param1Matcher.last, param1CharSequence));
-/*      */       }
-/*      */       while (true) {
-/* 4992 */         if (param1Int > param1Matcher.to) {
-/* 4993 */           param1Matcher.hitEnd = true;
-/* 4994 */           return false;
-/*      */         } 
-/* 4996 */         if (this.atom.match(param1Matcher, param1Int, param1CharSequence)) {
-/* 4997 */           return this.next.match(param1Matcher, param1Matcher.last, param1CharSequence);
-/*      */         }
-/* 4999 */         param1Int += Pattern.countChars(param1CharSequence, param1Int, 1);
-/* 5000 */         param1Matcher.first++;
-/*      */       } 
-/*      */     }
-/*      */     boolean study(Pattern.TreeInfo param1TreeInfo) {
-/* 5004 */       this.atom.study(param1TreeInfo);
-/* 5005 */       param1TreeInfo.maxValid = false;
-/* 5006 */       param1TreeInfo.deterministic = false;
-/* 5007 */       return this.next.study(param1TreeInfo);
-/*      */     } }
-/*      */   static final class Conditional extends Node { Pattern.Node cond;
-/*      */     Pattern.Node yes;
-/*      */     Pattern.Node not;
-/*      */     
-/*      */     Conditional(Pattern.Node param1Node1, Pattern.Node param1Node2, Pattern.Node param1Node3) {
-/* 5014 */       this.cond = param1Node1;
-/* 5015 */       this.yes = param1Node2;
-/* 5016 */       this.not = param1Node3;
-/*      */     }
-/*      */     boolean match(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 5019 */       if (this.cond.match(param1Matcher, param1Int, param1CharSequence)) {
-/* 5020 */         return this.yes.match(param1Matcher, param1Int, param1CharSequence);
-/*      */       }
-/* 5022 */       return this.not.match(param1Matcher, param1Int, param1CharSequence);
-/*      */     }
-/*      */     
-/*      */     boolean study(Pattern.TreeInfo param1TreeInfo) {
-/* 5026 */       int i = param1TreeInfo.minLength;
-/* 5027 */       int j = param1TreeInfo.maxLength;
-/* 5028 */       boolean bool1 = param1TreeInfo.maxValid;
-/* 5029 */       param1TreeInfo.reset();
-/* 5030 */       this.yes.study(param1TreeInfo);
-/*      */       
-/* 5032 */       int k = param1TreeInfo.minLength;
-/* 5033 */       int m = param1TreeInfo.maxLength;
-/* 5034 */       boolean bool2 = param1TreeInfo.maxValid;
-/* 5035 */       param1TreeInfo.reset();
-/* 5036 */       this.not.study(param1TreeInfo);
-/*      */       
-/* 5038 */       param1TreeInfo.minLength = i + Math.min(k, param1TreeInfo.minLength);
-/* 5039 */       param1TreeInfo.maxLength = j + Math.max(m, param1TreeInfo.maxLength);
-/* 5040 */       param1TreeInfo.maxValid = bool1 & bool2 & param1TreeInfo.maxValid;
-/* 5041 */       param1TreeInfo.deterministic = false;
-/* 5042 */       return this.next.study(param1TreeInfo);
-/*      */     } }
-/*      */ 
-/*      */   
-/*      */   static final class Pos
-/*      */     extends Node
-/*      */   {
-/*      */     Pattern.Node cond;
-/*      */     
-/*      */     Pos(Pattern.Node param1Node) {
-/* 5052 */       this.cond = param1Node;
-/*      */     }
-/*      */     boolean match(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 5055 */       int i = param1Matcher.to;
-/* 5056 */       boolean bool = false;
-/*      */ 
-/*      */       
-/* 5059 */       if (param1Matcher.transparentBounds)
-/* 5060 */         param1Matcher.to = param1Matcher.getTextLength(); 
-/*      */       try {
-/* 5062 */         bool = this.cond.match(param1Matcher, param1Int, param1CharSequence);
-/*      */       } finally {
-/*      */         
-/* 5065 */         param1Matcher.to = i;
-/*      */       } 
-/* 5067 */       return (bool && this.next.match(param1Matcher, param1Int, param1CharSequence));
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   static final class Neg
-/*      */     extends Node
-/*      */   {
-/*      */     Pattern.Node cond;
-/*      */     
-/*      */     Neg(Pattern.Node param1Node) {
-/* 5077 */       this.cond = param1Node;
-/*      */     }
-/*      */     boolean match(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 5080 */       int i = param1Matcher.to;
-/* 5081 */       boolean bool = false;
-/*      */ 
-/*      */       
-/* 5084 */       if (param1Matcher.transparentBounds)
-/* 5085 */         param1Matcher.to = param1Matcher.getTextLength(); 
-/*      */       try {
-/* 5087 */         if (param1Int < param1Matcher.to) {
-/* 5088 */           bool = !this.cond.match(param1Matcher, param1Int, param1CharSequence) ? true : false;
-/*      */         }
-/*      */         else {
-/*      */           
-/* 5092 */           param1Matcher.requireEnd = true;
-/* 5093 */           bool = !this.cond.match(param1Matcher, param1Int, param1CharSequence) ? true : false;
-/*      */         } 
-/*      */       } finally {
-/*      */         
-/* 5097 */         param1Matcher.to = i;
-/*      */       } 
-/* 5099 */       return (bool && this.next.match(param1Matcher, param1Int, param1CharSequence));
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/* 5107 */   static Node lookbehindEnd = new Node() {
-/*      */       boolean match(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 5109 */         return (param1Int == param1Matcher.lookbehindTo);
-/*      */       }
-/*      */     };
-/*      */   
-/*      */   static class Behind
-/*      */     extends Node {
-/*      */     Pattern.Node cond;
-/*      */     int rmax;
-/*      */     int rmin;
-/*      */     
-/*      */     Behind(Pattern.Node param1Node, int param1Int1, int param1Int2) {
-/* 5120 */       this.cond = param1Node;
-/* 5121 */       this.rmax = param1Int1;
-/* 5122 */       this.rmin = param1Int2;
-/*      */     }
-/*      */     
-/*      */     boolean match(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 5126 */       int i = param1Matcher.from;
-/* 5127 */       boolean bool = false;
-/* 5128 */       boolean bool1 = !param1Matcher.transparentBounds ? param1Matcher.from : false;
-/*      */       
-/* 5130 */       int j = Math.max(param1Int - this.rmax, bool1);
-/*      */       
-/* 5132 */       int k = param1Matcher.lookbehindTo;
-/* 5133 */       param1Matcher.lookbehindTo = param1Int;
-/*      */       
-/* 5135 */       if (param1Matcher.transparentBounds)
-/* 5136 */         param1Matcher.from = 0; 
-/* 5137 */       for (int m = param1Int - this.rmin; !bool && m >= j; m--) {
-/* 5138 */         bool = this.cond.match(param1Matcher, m, param1CharSequence);
-/*      */       }
-/* 5140 */       param1Matcher.from = i;
-/* 5141 */       param1Matcher.lookbehindTo = k;
-/* 5142 */       return (bool && this.next.match(param1Matcher, param1Int, param1CharSequence));
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static final class BehindS
-/*      */     extends Behind
-/*      */   {
-/*      */     BehindS(Pattern.Node param1Node, int param1Int1, int param1Int2) {
-/* 5152 */       super(param1Node, param1Int1, param1Int2);
-/*      */     }
-/*      */     boolean match(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 5155 */       int i = Pattern.countChars(param1CharSequence, param1Int, -this.rmax);
-/* 5156 */       int j = Pattern.countChars(param1CharSequence, param1Int, -this.rmin);
-/* 5157 */       int k = param1Matcher.from;
-/* 5158 */       boolean bool = !param1Matcher.transparentBounds ? param1Matcher.from : false;
-/*      */       
-/* 5160 */       boolean bool1 = false;
-/* 5161 */       int m = Math.max(param1Int - i, bool);
-/*      */       
-/* 5163 */       int n = param1Matcher.lookbehindTo;
-/* 5164 */       param1Matcher.lookbehindTo = param1Int;
-/*      */       
-/* 5166 */       if (param1Matcher.transparentBounds) {
-/* 5167 */         param1Matcher.from = 0;
-/*      */       }
-/* 5169 */       int i1 = param1Int - j;
-/* 5170 */       for (; !bool1 && i1 >= m; 
-/* 5171 */         i1 -= (i1 > m) ? Pattern.countChars(param1CharSequence, i1, -1) : 1) {
-/* 5172 */         bool1 = this.cond.match(param1Matcher, i1, param1CharSequence);
-/*      */       }
-/* 5174 */       param1Matcher.from = k;
-/* 5175 */       param1Matcher.lookbehindTo = n;
-/* 5176 */       return (bool1 && this.next.match(param1Matcher, param1Int, param1CharSequence));
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   static class NotBehind
-/*      */     extends Node {
-/*      */     Pattern.Node cond;
-/*      */     int rmax;
-/*      */     int rmin;
-/*      */     
-/*      */     NotBehind(Pattern.Node param1Node, int param1Int1, int param1Int2) {
-/* 5187 */       this.cond = param1Node;
-/* 5188 */       this.rmax = param1Int1;
-/* 5189 */       this.rmin = param1Int2;
-/*      */     }
-/*      */     
-/*      */     boolean match(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 5193 */       int i = param1Matcher.lookbehindTo;
-/* 5194 */       int j = param1Matcher.from;
-/* 5195 */       boolean bool = false;
-/* 5196 */       boolean bool1 = !param1Matcher.transparentBounds ? param1Matcher.from : false;
-/*      */       
-/* 5198 */       int k = Math.max(param1Int - this.rmax, bool1);
-/* 5199 */       param1Matcher.lookbehindTo = param1Int;
-/*      */       
-/* 5201 */       if (param1Matcher.transparentBounds)
-/* 5202 */         param1Matcher.from = 0; 
-/* 5203 */       for (int m = param1Int - this.rmin; !bool && m >= k; m--) {
-/* 5204 */         bool = this.cond.match(param1Matcher, m, param1CharSequence);
-/*      */       }
-/*      */       
-/* 5207 */       param1Matcher.from = j;
-/* 5208 */       param1Matcher.lookbehindTo = i;
-/* 5209 */       return (!bool && this.next.match(param1Matcher, param1Int, param1CharSequence));
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static final class NotBehindS
-/*      */     extends NotBehind
-/*      */   {
-/*      */     NotBehindS(Pattern.Node param1Node, int param1Int1, int param1Int2) {
-/* 5219 */       super(param1Node, param1Int1, param1Int2);
-/*      */     }
-/*      */     boolean match(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 5222 */       int i = Pattern.countChars(param1CharSequence, param1Int, -this.rmax);
-/* 5223 */       int j = Pattern.countChars(param1CharSequence, param1Int, -this.rmin);
-/* 5224 */       int k = param1Matcher.from;
-/* 5225 */       int m = param1Matcher.lookbehindTo;
-/* 5226 */       boolean bool = false;
-/* 5227 */       boolean bool1 = !param1Matcher.transparentBounds ? param1Matcher.from : false;
-/*      */       
-/* 5229 */       int n = Math.max(param1Int - i, bool1);
-/* 5230 */       param1Matcher.lookbehindTo = param1Int;
-/*      */       
-/* 5232 */       if (param1Matcher.transparentBounds)
-/* 5233 */         param1Matcher.from = 0; 
-/* 5234 */       int i1 = param1Int - j;
-/* 5235 */       for (; !bool && i1 >= n; 
-/* 5236 */         i1 -= (i1 > n) ? Pattern.countChars(param1CharSequence, i1, -1) : 1) {
-/* 5237 */         bool = this.cond.match(param1Matcher, i1, param1CharSequence);
-/*      */       }
-/*      */       
-/* 5240 */       param1Matcher.from = k;
-/* 5241 */       param1Matcher.lookbehindTo = m;
-/* 5242 */       return (!bool && this.next.match(param1Matcher, param1Int, param1CharSequence));
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static CharProperty union(final CharProperty lhs, final CharProperty rhs) {
-/* 5251 */     return new CharProperty() {
-/*      */         boolean isSatisfiedBy(int param1Int) {
-/* 5253 */           return (lhs.isSatisfiedBy(param1Int) || rhs.isSatisfiedBy(param1Int));
-/*      */         }
-/*      */       };
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static CharProperty intersection(final CharProperty lhs, final CharProperty rhs) {
-/* 5261 */     return new CharProperty() {
-/*      */         boolean isSatisfiedBy(int param1Int) {
-/* 5263 */           return (lhs.isSatisfiedBy(param1Int) && rhs.isSatisfiedBy(param1Int));
-/*      */         }
-/*      */       };
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static CharProperty setDifference(final CharProperty lhs, final CharProperty rhs) {
-/* 5271 */     return new CharProperty() {
-/*      */         boolean isSatisfiedBy(int param1Int) {
-/* 5273 */           return (!rhs.isSatisfiedBy(param1Int) && lhs.isSatisfiedBy(param1Int));
-/*      */         }
-/*      */       };
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static final class Bound
-/*      */     extends Node
-/*      */   {
-/* 5284 */     static int LEFT = 1;
-/* 5285 */     static int RIGHT = 2;
-/* 5286 */     static int BOTH = 3;
-/* 5287 */     static int NONE = 4; int type;
-/*      */     boolean useUWORD;
-/*      */     
-/*      */     Bound(int param1Int, boolean param1Boolean) {
-/* 5291 */       this.type = param1Int;
-/* 5292 */       this.useUWORD = param1Boolean;
-/*      */     }
-/*      */     
-/*      */     boolean isWord(int param1Int) {
-/* 5296 */       return this.useUWORD ? UnicodeProp.WORD.is(param1Int) : ((param1Int == 95 || 
-/* 5297 */         Character.isLetterOrDigit(param1Int)));
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     int check(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 5302 */       boolean bool1 = false;
-/* 5303 */       int i = param1Matcher.from;
-/* 5304 */       int j = param1Matcher.to;
-/* 5305 */       if (param1Matcher.transparentBounds) {
-/* 5306 */         i = 0;
-/* 5307 */         j = param1Matcher.getTextLength();
-/*      */       } 
-/* 5309 */       if (param1Int > i) {
-/* 5310 */         int k = Character.codePointBefore(param1CharSequence, param1Int);
-/*      */ 
-/*      */         
-/* 5313 */         bool1 = (isWord(k) || (Character.getType(k) == 6 && Pattern.hasBaseCharacter(param1Matcher, param1Int - 1, param1CharSequence))) ? true : false;
-/*      */       } 
-/* 5315 */       boolean bool2 = false;
-/* 5316 */       if (param1Int < j) {
-/* 5317 */         int k = Character.codePointAt(param1CharSequence, param1Int);
-/*      */ 
-/*      */         
-/* 5320 */         bool2 = (isWord(k) || (Character.getType(k) == 6 && Pattern.hasBaseCharacter(param1Matcher, param1Int, param1CharSequence))) ? true : false;
-/*      */       } else {
-/*      */         
-/* 5323 */         param1Matcher.hitEnd = true;
-/*      */         
-/* 5325 */         param1Matcher.requireEnd = true;
-/*      */       } 
-/* 5327 */       return ((bool1 ^ bool2) != 0) ? (bool2 ? LEFT : RIGHT) : NONE;
-/*      */     }
-/*      */     boolean match(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 5330 */       return ((check(param1Matcher, param1Int, param1CharSequence) & this.type) > 0 && this.next
-/* 5331 */         .match(param1Matcher, param1Int, param1CharSequence));
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static boolean hasBaseCharacter(Matcher paramMatcher, int paramInt, CharSequence paramCharSequence) {
-/* 5342 */     byte b = !paramMatcher.transparentBounds ? paramMatcher.from : 0;
-/*      */     
-/* 5344 */     for (int i = paramInt; i >= b; ) {
-/* 5345 */       int j = Character.codePointAt(paramCharSequence, i);
-/* 5346 */       if (Character.isLetterOrDigit(j))
-/* 5347 */         return true; 
-/* 5348 */       if (Character.getType(j) == 6) {
-/*      */         i--; continue;
-/* 5350 */       }  return false;
-/*      */     } 
-/* 5352 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static class BnM
-/*      */     extends Node
-/*      */   {
-/*      */     int[] buffer;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     int[] lastOcc;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     int[] optoSft;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     static Pattern.Node optimize(Pattern.Node param1Node) {
-/* 5396 */       if (!(param1Node instanceof Pattern.Slice)) {
-/* 5397 */         return param1Node;
-/*      */       }
-/*      */       
-/* 5400 */       int[] arrayOfInt1 = ((Pattern.Slice)param1Node).buffer;
-/* 5401 */       int i = arrayOfInt1.length;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 5406 */       if (i < 4) {
-/* 5407 */         return param1Node;
-/*      */       }
-/*      */       
-/* 5410 */       int[] arrayOfInt2 = new int[128];
-/* 5411 */       int[] arrayOfInt3 = new int[i];
-/*      */       
-/*      */       int j;
-/*      */       
-/* 5415 */       for (j = 0; j < i; j++) {
-/* 5416 */         arrayOfInt2[arrayOfInt1[j] & 0x7F] = j + 1;
-/*      */       }
-/*      */ 
-/*      */       
-/* 5420 */       for (j = i; j > 0; j--) {
-/*      */         
-/* 5422 */         int k = i - 1; while (true) { if (k >= j) {
-/*      */             
-/* 5424 */             if (arrayOfInt1[k] == arrayOfInt1[k - j]) {
-/*      */               
-/* 5426 */               arrayOfInt3[k - 1] = j;
-/*      */ 
-/*      */               
-/*      */               k--;
-/*      */             } 
-/*      */ 
-/*      */             
-/*      */             break;
-/*      */           } 
-/*      */           
-/* 5436 */           while (k > 0)
-/* 5437 */             arrayOfInt3[--k] = j; 
-/*      */           break; }
-/*      */       
-/*      */       } 
-/* 5441 */       arrayOfInt3[i - 1] = 1;
-/* 5442 */       if (param1Node instanceof Pattern.SliceS)
-/* 5443 */         return new Pattern.BnMS(arrayOfInt1, arrayOfInt2, arrayOfInt3, param1Node.next); 
-/* 5444 */       return new BnM(arrayOfInt1, arrayOfInt2, arrayOfInt3, param1Node.next);
-/*      */     }
-/*      */     BnM(int[] param1ArrayOfint1, int[] param1ArrayOfint2, int[] param1ArrayOfint3, Pattern.Node param1Node) {
-/* 5447 */       this.buffer = param1ArrayOfint1;
-/* 5448 */       this.lastOcc = param1ArrayOfint2;
-/* 5449 */       this.optoSft = param1ArrayOfint3;
-/* 5450 */       this.next = param1Node;
-/*      */     }
-/*      */     boolean match(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 5453 */       int[] arrayOfInt = this.buffer;
-/* 5454 */       int i = arrayOfInt.length;
-/* 5455 */       int j = param1Matcher.to - i;
-/*      */ 
-/*      */       
-/* 5458 */       label19: while (param1Int <= j) {
-/*      */         
-/* 5460 */         for (int k = i - 1; k >= 0; k--) {
-/* 5461 */           char c = param1CharSequence.charAt(param1Int + k);
-/* 5462 */           if (c != arrayOfInt[k]) {
-/*      */ 
-/*      */             
-/* 5465 */             param1Int += Math.max(k + 1 - this.lastOcc[c & 0x7F], this.optoSft[k]);
-/*      */             
-/*      */             continue label19;
-/*      */           } 
-/*      */         } 
-/* 5470 */         param1Matcher.first = param1Int;
-/* 5471 */         boolean bool = this.next.match(param1Matcher, param1Int + i, param1CharSequence);
-/* 5472 */         if (bool) {
-/* 5473 */           param1Matcher.first = param1Int;
-/* 5474 */           param1Matcher.groups[0] = param1Matcher.first;
-/* 5475 */           param1Matcher.groups[1] = param1Matcher.last;
-/* 5476 */           return true;
-/*      */         } 
-/* 5478 */         param1Int++;
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */       
-/* 5483 */       param1Matcher.hitEnd = true;
-/* 5484 */       return false;
-/*      */     }
-/*      */     boolean study(Pattern.TreeInfo param1TreeInfo) {
-/* 5487 */       param1TreeInfo.minLength += this.buffer.length;
-/* 5488 */       param1TreeInfo.maxValid = false;
-/* 5489 */       return this.next.study(param1TreeInfo);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   static final class BnMS
-/*      */     extends BnM
-/*      */   {
-/*      */     int lengthInChars;
-/*      */ 
-/*      */     
-/*      */     BnMS(int[] param1ArrayOfint1, int[] param1ArrayOfint2, int[] param1ArrayOfint3, Pattern.Node param1Node) {
-/* 5501 */       super(param1ArrayOfint1, param1ArrayOfint2, param1ArrayOfint3, param1Node);
-/* 5502 */       for (byte b = 0; b < this.buffer.length; b++)
-/* 5503 */         this.lengthInChars += Character.charCount(this.buffer[b]); 
-/*      */     }
-/*      */     
-/*      */     boolean match(Matcher param1Matcher, int param1Int, CharSequence param1CharSequence) {
-/* 5507 */       int[] arrayOfInt = this.buffer;
-/* 5508 */       int i = arrayOfInt.length;
-/* 5509 */       int j = param1Matcher.to - this.lengthInChars;
-/*      */ 
-/*      */       
-/* 5512 */       label19: while (param1Int <= j) {
-/*      */ 
-/*      */         
-/* 5515 */         int k = Pattern.countChars(param1CharSequence, param1Int, i), m = i - 1;
-/* 5516 */         for (; k > 0; k -= Character.charCount(n), m--) {
-/* 5517 */           int n = Character.codePointBefore(param1CharSequence, param1Int + k);
-/* 5518 */           if (n != arrayOfInt[m]) {
-/*      */ 
-/*      */             
-/* 5521 */             int i1 = Math.max(m + 1 - this.lastOcc[n & 0x7F], this.optoSft[m]);
-/* 5522 */             param1Int += Pattern.countChars(param1CharSequence, param1Int, i1);
-/*      */             
-/*      */             continue label19;
-/*      */           } 
-/*      */         } 
-/* 5527 */         param1Matcher.first = param1Int;
-/* 5528 */         boolean bool = this.next.match(param1Matcher, param1Int + this.lengthInChars, param1CharSequence);
-/* 5529 */         if (bool) {
-/* 5530 */           param1Matcher.first = param1Int;
-/* 5531 */           param1Matcher.groups[0] = param1Matcher.first;
-/* 5532 */           param1Matcher.groups[1] = param1Matcher.last;
-/* 5533 */           return true;
-/*      */         } 
-/* 5535 */         param1Int += Pattern.countChars(param1CharSequence, param1Int, 1);
-/*      */       } 
-/* 5537 */       param1Matcher.hitEnd = true;
-/* 5538 */       return false;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/* 5548 */   static Node accept = new Node();
-/*      */   
-/* 5550 */   static Node lastAccept = new LastNode();
-/*      */   
-/*      */   private static class CharPropertyNames
-/*      */   {
-/*      */     static Pattern.CharProperty charPropertyFor(String param1String) {
-/* 5555 */       CharPropertyFactory charPropertyFactory = map.get(param1String);
-/* 5556 */       return (charPropertyFactory == null) ? null : charPropertyFactory.make();
-/*      */     }
-/*      */     
-/*      */     private static abstract class CharPropertyFactory {
-/*      */       private CharPropertyFactory() {}
-/*      */       
-/*      */       abstract Pattern.CharProperty make(); }
-/*      */     
-/*      */     private static void defCategory(String param1String, final int typeMask) {
-/* 5565 */       map.put(param1String, new CharPropertyFactory() { Pattern.CharProperty make() {
-/* 5566 */               return new Pattern.Category(typeMask);
-/*      */             } }
-/*      */         );
-/*      */     }
-/*      */     private static void defRange(String param1String, final int lower, final int upper) {
-/* 5571 */       map.put(param1String, new CharPropertyFactory() { Pattern.CharProperty make() {
-/* 5572 */               return Pattern.rangeFor(lower, upper);
-/*      */             } }
-/*      */         );
-/*      */     }
-/*      */     private static void defCtype(String param1String, final int ctype) {
-/* 5577 */       map.put(param1String, new CharPropertyFactory() { Pattern.CharProperty make() {
-/* 5578 */               return new Pattern.Ctype(ctype);
-/*      */             } }
-/*      */         );
-/*      */     }
-/*      */     private static abstract class CloneableProperty extends Pattern.CharProperty implements Cloneable { private CloneableProperty() {}
-/*      */       
-/*      */       public CloneableProperty clone() {
-/*      */         try {
-/* 5586 */           return (CloneableProperty)super.clone();
-/* 5587 */         } catch (CloneNotSupportedException cloneNotSupportedException) {
-/* 5588 */           throw new AssertionError(cloneNotSupportedException);
-/*      */         } 
-/*      */       } }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private static void defClone(String param1String, final CloneableProperty p) {
-/* 5595 */       map.put(param1String, new CharPropertyFactory() { Pattern.CharProperty make() {
-/* 5596 */               return p.clone();
-/*      */             } }
-/*      */         );
-/* 5599 */     } private static final HashMap<String, CharPropertyFactory> map = new HashMap<>();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     static {
-/* 5605 */       defCategory("Cn", 1);
-/* 5606 */       defCategory("Lu", 2);
-/* 5607 */       defCategory("Ll", 4);
-/* 5608 */       defCategory("Lt", 8);
-/* 5609 */       defCategory("Lm", 16);
-/* 5610 */       defCategory("Lo", 32);
-/* 5611 */       defCategory("Mn", 64);
-/* 5612 */       defCategory("Me", 128);
-/* 5613 */       defCategory("Mc", 256);
-/* 5614 */       defCategory("Nd", 512);
-/* 5615 */       defCategory("Nl", 1024);
-/* 5616 */       defCategory("No", 2048);
-/* 5617 */       defCategory("Zs", 4096);
-/* 5618 */       defCategory("Zl", 8192);
-/* 5619 */       defCategory("Zp", 16384);
-/* 5620 */       defCategory("Cc", 32768);
-/* 5621 */       defCategory("Cf", 65536);
-/* 5622 */       defCategory("Co", 262144);
-/* 5623 */       defCategory("Cs", 524288);
-/* 5624 */       defCategory("Pd", 1048576);
-/* 5625 */       defCategory("Ps", 2097152);
-/* 5626 */       defCategory("Pe", 4194304);
-/* 5627 */       defCategory("Pc", 8388608);
-/* 5628 */       defCategory("Po", 16777216);
-/* 5629 */       defCategory("Sm", 33554432);
-/* 5630 */       defCategory("Sc", 67108864);
-/* 5631 */       defCategory("Sk", 134217728);
-/* 5632 */       defCategory("So", 268435456);
-/* 5633 */       defCategory("Pi", 536870912);
-/* 5634 */       defCategory("Pf", 1073741824);
-/* 5635 */       defCategory("L", 62);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 5640 */       defCategory("M", 448);
-/*      */ 
-/*      */       
-/* 5643 */       defCategory("N", 3584);
-/*      */ 
-/*      */       
-/* 5646 */       defCategory("Z", 28672);
-/*      */ 
-/*      */       
-/* 5649 */       defCategory("C", 884736);
-/*      */ 
-/*      */ 
-/*      */       
-/* 5653 */       defCategory("P", 1643118592);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 5660 */       defCategory("S", 503316480);
-/*      */ 
-/*      */ 
-/*      */       
-/* 5664 */       defCategory("LC", 14);
-/*      */ 
-/*      */       
-/* 5667 */       defCategory("LD", 574);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 5673 */       defRange("L1", 0, 255);
-/* 5674 */       map.put("all", new CharPropertyFactory() { Pattern.CharProperty make() {
-/* 5675 */               return new Pattern.All();
-/*      */             } }
-/*      */         );
-/*      */       
-/* 5679 */       defRange("ASCII", 0, 127);
-/* 5680 */       defCtype("Alnum", 1792);
-/* 5681 */       defCtype("Alpha", 768);
-/* 5682 */       defCtype("Blank", 16384);
-/* 5683 */       defCtype("Cntrl", 8192);
-/* 5684 */       defRange("Digit", 48, 57);
-/* 5685 */       defCtype("Graph", 5888);
-/* 5686 */       defRange("Lower", 97, 122);
-/* 5687 */       defRange("Print", 32, 126);
-/* 5688 */       defCtype("Punct", 4096);
-/* 5689 */       defCtype("Space", 2048);
-/* 5690 */       defRange("Upper", 65, 90);
-/* 5691 */       defCtype("XDigit", 32768);
-/*      */ 
-/*      */       
-/* 5694 */       defClone("javaLowerCase", new CloneableProperty()
-/*      */           {
-/* 5696 */             boolean isSatisfiedBy(int param2Int) { return Character.isLowerCase(param2Int); } });
-/* 5697 */       defClone("javaUpperCase", new CloneableProperty()
-/*      */           {
-/* 5699 */             boolean isSatisfiedBy(int param2Int) { return Character.isUpperCase(param2Int); } });
-/* 5700 */       defClone("javaAlphabetic", new CloneableProperty()
-/*      */           {
-/* 5702 */             boolean isSatisfiedBy(int param2Int) { return Character.isAlphabetic(param2Int); } });
-/* 5703 */       defClone("javaIdeographic", new CloneableProperty()
-/*      */           {
-/* 5705 */             boolean isSatisfiedBy(int param2Int) { return Character.isIdeographic(param2Int); } });
-/* 5706 */       defClone("javaTitleCase", new CloneableProperty()
-/*      */           {
-/* 5708 */             boolean isSatisfiedBy(int param2Int) { return Character.isTitleCase(param2Int); } });
-/* 5709 */       defClone("javaDigit", new CloneableProperty()
-/*      */           {
-/* 5711 */             boolean isSatisfiedBy(int param2Int) { return Character.isDigit(param2Int); } });
-/* 5712 */       defClone("javaDefined", new CloneableProperty()
-/*      */           {
-/* 5714 */             boolean isSatisfiedBy(int param2Int) { return Character.isDefined(param2Int); } });
-/* 5715 */       defClone("javaLetter", new CloneableProperty()
-/*      */           {
-/* 5717 */             boolean isSatisfiedBy(int param2Int) { return Character.isLetter(param2Int); } });
-/* 5718 */       defClone("javaLetterOrDigit", new CloneableProperty()
-/*      */           {
-/* 5720 */             boolean isSatisfiedBy(int param2Int) { return Character.isLetterOrDigit(param2Int); } });
-/* 5721 */       defClone("javaJavaIdentifierStart", new CloneableProperty()
-/*      */           {
-/* 5723 */             boolean isSatisfiedBy(int param2Int) { return Character.isJavaIdentifierStart(param2Int); } });
-/* 5724 */       defClone("javaJavaIdentifierPart", new CloneableProperty()
-/*      */           {
-/* 5726 */             boolean isSatisfiedBy(int param2Int) { return Character.isJavaIdentifierPart(param2Int); } });
-/* 5727 */       defClone("javaUnicodeIdentifierStart", new CloneableProperty()
-/*      */           {
-/* 5729 */             boolean isSatisfiedBy(int param2Int) { return Character.isUnicodeIdentifierStart(param2Int); } });
-/* 5730 */       defClone("javaUnicodeIdentifierPart", new CloneableProperty()
-/*      */           {
-/* 5732 */             boolean isSatisfiedBy(int param2Int) { return Character.isUnicodeIdentifierPart(param2Int); } });
-/* 5733 */       defClone("javaIdentifierIgnorable", new CloneableProperty()
-/*      */           {
-/* 5735 */             boolean isSatisfiedBy(int param2Int) { return Character.isIdentifierIgnorable(param2Int); } });
-/* 5736 */       defClone("javaSpaceChar", new CloneableProperty()
-/*      */           {
-/* 5738 */             boolean isSatisfiedBy(int param2Int) { return Character.isSpaceChar(param2Int); } });
-/* 5739 */       defClone("javaWhitespace", new CloneableProperty()
-/*      */           {
-/* 5741 */             boolean isSatisfiedBy(int param2Int) { return Character.isWhitespace(param2Int); } });
-/* 5742 */       defClone("javaISOControl", new CloneableProperty()
-/*      */           {
-/* 5744 */             boolean isSatisfiedBy(int param2Int) { return Character.isISOControl(param2Int); } });
-/* 5745 */       defClone("javaMirrored", new CloneableProperty() {
-/*      */             boolean isSatisfiedBy(int param2Int) {
-/* 5747 */               return Character.isMirrored(param2Int);
-/*      */             }
-/*      */           });
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Predicate<String> asPredicate() {
-/* 5758 */     return paramString -> matcher(paramString).find();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Stream<String> splitAsStream(final CharSequence input) {
-/*      */     class MatcherIterator
-/*      */       implements Iterator<String>
-/*      */     {
-/*      */       private final Matcher matcher;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       private int current;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       private String nextElement;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       private int emptyElementCount;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       MatcherIterator() {
-/* 5805 */         this.matcher = Pattern.this.matcher(input);
-/*      */       }
-/*      */       
-/*      */       public String next() {
-/* 5809 */         if (!hasNext()) {
-/* 5810 */           throw new NoSuchElementException();
-/*      */         }
-/* 5812 */         if (this.emptyElementCount == 0) {
-/* 5813 */           String str = this.nextElement;
-/* 5814 */           this.nextElement = null;
-/* 5815 */           return str;
-/*      */         } 
-/* 5817 */         this.emptyElementCount--;
-/* 5818 */         return "";
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public boolean hasNext() {
-/* 5823 */         if (this.nextElement != null || this.emptyElementCount > 0) {
-/* 5824 */           return true;
-/*      */         }
-/* 5826 */         if (this.current == input.length()) {
-/* 5827 */           return false;
-/*      */         }
-/*      */ 
-/*      */         
-/* 5831 */         while (this.matcher.find()) {
-/* 5832 */           this.nextElement = input.subSequence(this.current, this.matcher.start()).toString();
-/* 5833 */           this.current = this.matcher.end();
-/* 5834 */           if (!this.nextElement.isEmpty())
-/* 5835 */             return true; 
-/* 5836 */           if (this.current > 0)
-/*      */           {
-/* 5838 */             this.emptyElementCount++;
-/*      */           }
-/*      */         } 
-/*      */ 
-/*      */         
-/* 5843 */         this.nextElement = input.subSequence(this.current, input.length()).toString();
-/* 5844 */         this.current = input.length();
-/* 5845 */         if (!this.nextElement.isEmpty()) {
-/* 5846 */           return true;
-/*      */         }
-/*      */         
-/* 5849 */         this.emptyElementCount = 0;
-/* 5850 */         this.nextElement = null;
-/* 5851 */         return false;
-/*      */       }
-/*      */     };
-/*      */     
-/* 5855 */     return StreamSupport.stream(Spliterators.spliteratorUnknownSize(new MatcherIterator(), 272), false);
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\regex\Pattern.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2017, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.util.regex;
+
+import java.text.Normalizer;
+import java.util.Locale;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Arrays;
+import java.util.NoSuchElementException;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+
+
+/**
+ * A compiled representation of a regular expression.
+ *
+ * <p> A regular expression, specified as a string, must first be compiled into
+ * an instance of this class.  The resulting pattern can then be used to create
+ * a {@link Matcher} object that can match arbitrary {@linkplain
+ * java.lang.CharSequence character sequences} against the regular
+ * expression.  All of the state involved in performing a match resides in the
+ * matcher, so many matchers can share the same pattern.
+ *
+ * <p> A typical invocation sequence is thus
+ *
+ * <blockquote><pre>
+ * Pattern p = Pattern.{@link #compile compile}("a*b");
+ * Matcher m = p.{@link #matcher matcher}("aaaaab");
+ * boolean b = m.{@link Matcher#matches matches}();</pre></blockquote>
+ *
+ * <p> A {@link #matches matches} method is defined by this class as a
+ * convenience for when a regular expression is used just once.  This method
+ * compiles an expression and matches an input sequence against it in a single
+ * invocation.  The statement
+ *
+ * <blockquote><pre>
+ * boolean b = Pattern.matches("a*b", "aaaaab");</pre></blockquote>
+ *
+ * is equivalent to the three statements above, though for repeated matches it
+ * is less efficient since it does not allow the compiled pattern to be reused.
+ *
+ * <p> Instances of this class are immutable and are safe for use by multiple
+ * concurrent threads.  Instances of the {@link Matcher} class are not safe for
+ * such use.
+ *
+ *
+ * <h3><a name="sum">Summary of regular-expression constructs</a></h3>
+ *
+ * <table border="0" cellpadding="1" cellspacing="0"
+ *  summary="Regular expression constructs, and what they match">
+ *
+ * <tr align="left">
+ * <th align="left" id="construct">Construct</th>
+ * <th align="left" id="matches">Matches</th>
+ * </tr>
+ *
+ * <tr><th>&nbsp;</th></tr>
+ * <tr align="left"><th colspan="2" id="characters">Characters</th></tr>
+ *
+ * <tr><td valign="top" headers="construct characters"><i>x</i></td>
+ *     <td headers="matches">The character <i>x</i></td></tr>
+ * <tr><td valign="top" headers="construct characters"><tt>\\</tt></td>
+ *     <td headers="matches">The backslash character</td></tr>
+ * <tr><td valign="top" headers="construct characters"><tt>\0</tt><i>n</i></td>
+ *     <td headers="matches">The character with octal value <tt>0</tt><i>n</i>
+ *         (0&nbsp;<tt>&lt;=</tt>&nbsp;<i>n</i>&nbsp;<tt>&lt;=</tt>&nbsp;7)</td></tr>
+ * <tr><td valign="top" headers="construct characters"><tt>\0</tt><i>nn</i></td>
+ *     <td headers="matches">The character with octal value <tt>0</tt><i>nn</i>
+ *         (0&nbsp;<tt>&lt;=</tt>&nbsp;<i>n</i>&nbsp;<tt>&lt;=</tt>&nbsp;7)</td></tr>
+ * <tr><td valign="top" headers="construct characters"><tt>\0</tt><i>mnn</i></td>
+ *     <td headers="matches">The character with octal value <tt>0</tt><i>mnn</i>
+ *         (0&nbsp;<tt>&lt;=</tt>&nbsp;<i>m</i>&nbsp;<tt>&lt;=</tt>&nbsp;3,
+ *         0&nbsp;<tt>&lt;=</tt>&nbsp;<i>n</i>&nbsp;<tt>&lt;=</tt>&nbsp;7)</td></tr>
+ * <tr><td valign="top" headers="construct characters"><tt>\x</tt><i>hh</i></td>
+ *     <td headers="matches">The character with hexadecimal&nbsp;value&nbsp;<tt>0x</tt><i>hh</i></td></tr>
+ * <tr><td valign="top" headers="construct characters"><tt>&#92;u</tt><i>hhhh</i></td>
+ *     <td headers="matches">The character with hexadecimal&nbsp;value&nbsp;<tt>0x</tt><i>hhhh</i></td></tr>
+ * <tr><td valign="top" headers="construct characters"><tt>&#92;x</tt><i>{h...h}</i></td>
+ *     <td headers="matches">The character with hexadecimal&nbsp;value&nbsp;<tt>0x</tt><i>h...h</i>
+ *         ({@link java.lang.Character#MIN_CODE_POINT Character.MIN_CODE_POINT}
+ *         &nbsp;&lt;=&nbsp;<tt>0x</tt><i>h...h</i>&nbsp;&lt;=&nbsp;
+ *          {@link java.lang.Character#MAX_CODE_POINT Character.MAX_CODE_POINT})</td></tr>
+ * <tr><td valign="top" headers="matches"><tt>\t</tt></td>
+ *     <td headers="matches">The tab character (<tt>'&#92;u0009'</tt>)</td></tr>
+ * <tr><td valign="top" headers="construct characters"><tt>\n</tt></td>
+ *     <td headers="matches">The newline (line feed) character (<tt>'&#92;u000A'</tt>)</td></tr>
+ * <tr><td valign="top" headers="construct characters"><tt>\r</tt></td>
+ *     <td headers="matches">The carriage-return character (<tt>'&#92;u000D'</tt>)</td></tr>
+ * <tr><td valign="top" headers="construct characters"><tt>\f</tt></td>
+ *     <td headers="matches">The form-feed character (<tt>'&#92;u000C'</tt>)</td></tr>
+ * <tr><td valign="top" headers="construct characters"><tt>\a</tt></td>
+ *     <td headers="matches">The alert (bell) character (<tt>'&#92;u0007'</tt>)</td></tr>
+ * <tr><td valign="top" headers="construct characters"><tt>\e</tt></td>
+ *     <td headers="matches">The escape character (<tt>'&#92;u001B'</tt>)</td></tr>
+ * <tr><td valign="top" headers="construct characters"><tt>\c</tt><i>x</i></td>
+ *     <td headers="matches">The control character corresponding to <i>x</i></td></tr>
+ *
+ * <tr><th>&nbsp;</th></tr>
+ * <tr align="left"><th colspan="2" id="classes">Character classes</th></tr>
+ *
+ * <tr><td valign="top" headers="construct classes">{@code [abc]}</td>
+ *     <td headers="matches">{@code a}, {@code b}, or {@code c} (simple class)</td></tr>
+ * <tr><td valign="top" headers="construct classes">{@code [^abc]}</td>
+ *     <td headers="matches">Any character except {@code a}, {@code b}, or {@code c} (negation)</td></tr>
+ * <tr><td valign="top" headers="construct classes">{@code [a-zA-Z]}</td>
+ *     <td headers="matches">{@code a} through {@code z}
+ *         or {@code A} through {@code Z}, inclusive (range)</td></tr>
+ * <tr><td valign="top" headers="construct classes">{@code [a-d[m-p]]}</td>
+ *     <td headers="matches">{@code a} through {@code d},
+ *      or {@code m} through {@code p}: {@code [a-dm-p]} (union)</td></tr>
+ * <tr><td valign="top" headers="construct classes">{@code [a-z&&[def]]}</td>
+ *     <td headers="matches">{@code d}, {@code e}, or {@code f} (intersection)</tr>
+ * <tr><td valign="top" headers="construct classes">{@code [a-z&&[^bc]]}</td>
+ *     <td headers="matches">{@code a} through {@code z},
+ *         except for {@code b} and {@code c}: {@code [ad-z]} (subtraction)</td></tr>
+ * <tr><td valign="top" headers="construct classes">{@code [a-z&&[^m-p]]}</td>
+ *     <td headers="matches">{@code a} through {@code z},
+ *          and not {@code m} through {@code p}: {@code [a-lq-z]}(subtraction)</td></tr>
+ * <tr><th>&nbsp;</th></tr>
+ *
+ * <tr align="left"><th colspan="2" id="predef">Predefined character classes</th></tr>
+ *
+ * <tr><td valign="top" headers="construct predef"><tt>.</tt></td>
+ *     <td headers="matches">Any character (may or may not match <a href="#lt">line terminators</a>)</td></tr>
+ * <tr><td valign="top" headers="construct predef"><tt>\d</tt></td>
+ *     <td headers="matches">A digit: <tt>[0-9]</tt></td></tr>
+ * <tr><td valign="top" headers="construct predef"><tt>\D</tt></td>
+ *     <td headers="matches">A non-digit: <tt>[^0-9]</tt></td></tr>
+ * <tr><td valign="top" headers="construct predef"><tt>\h</tt></td>
+ *     <td headers="matches">A horizontal whitespace character:
+ *     <tt>[ \t\xA0&#92;u1680&#92;u180e&#92;u2000-&#92;u200a&#92;u202f&#92;u205f&#92;u3000]</tt></td></tr>
+ * <tr><td valign="top" headers="construct predef"><tt>\H</tt></td>
+ *     <td headers="matches">A non-horizontal whitespace character: <tt>[^\h]</tt></td></tr>
+ * <tr><td valign="top" headers="construct predef"><tt>\s</tt></td>
+ *     <td headers="matches">A whitespace character: <tt>[ \t\n\x0B\f\r]</tt></td></tr>
+ * <tr><td valign="top" headers="construct predef"><tt>\S</tt></td>
+ *     <td headers="matches">A non-whitespace character: <tt>[^\s]</tt></td></tr>
+ * <tr><td valign="top" headers="construct predef"><tt>\v</tt></td>
+ *     <td headers="matches">A vertical whitespace character: <tt>[\n\x0B\f\r\x85&#92;u2028&#92;u2029]</tt>
+ *     </td></tr>
+ * <tr><td valign="top" headers="construct predef"><tt>\V</tt></td>
+ *     <td headers="matches">A non-vertical whitespace character: <tt>[^\v]</tt></td></tr>
+ * <tr><td valign="top" headers="construct predef"><tt>\w</tt></td>
+ *     <td headers="matches">A word character: <tt>[a-zA-Z_0-9]</tt></td></tr>
+ * <tr><td valign="top" headers="construct predef"><tt>\W</tt></td>
+ *     <td headers="matches">A non-word character: <tt>[^\w]</tt></td></tr>
+ * <tr><th>&nbsp;</th></tr>
+ * <tr align="left"><th colspan="2" id="posix"><b>POSIX character classes (US-ASCII only)</b></th></tr>
+ *
+ * <tr><td valign="top" headers="construct posix">{@code \p{Lower}}</td>
+ *     <td headers="matches">A lower-case alphabetic character: {@code [a-z]}</td></tr>
+ * <tr><td valign="top" headers="construct posix">{@code \p{Upper}}</td>
+ *     <td headers="matches">An upper-case alphabetic character:{@code [A-Z]}</td></tr>
+ * <tr><td valign="top" headers="construct posix">{@code \p{ASCII}}</td>
+ *     <td headers="matches">All ASCII:{@code [\x00-\x7F]}</td></tr>
+ * <tr><td valign="top" headers="construct posix">{@code \p{Alpha}}</td>
+ *     <td headers="matches">An alphabetic character:{@code [\p{Lower}\p{Upper}]}</td></tr>
+ * <tr><td valign="top" headers="construct posix">{@code \p{Digit}}</td>
+ *     <td headers="matches">A decimal digit: {@code [0-9]}</td></tr>
+ * <tr><td valign="top" headers="construct posix">{@code \p{Alnum}}</td>
+ *     <td headers="matches">An alphanumeric character:{@code [\p{Alpha}\p{Digit}]}</td></tr>
+ * <tr><td valign="top" headers="construct posix">{@code \p{Punct}}</td>
+ *     <td headers="matches">Punctuation: One of {@code !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~}</td></tr>
+ *     <!-- {@code [\!"#\$%&'\(\)\*\+,\-\./:;\<=\>\?@\[\\\]\^_`\{\|\}~]}
+ *          {@code [\X21-\X2F\X31-\X40\X5B-\X60\X7B-\X7E]} -->
+ * <tr><td valign="top" headers="construct posix">{@code \p{Graph}}</td>
+ *     <td headers="matches">A visible character: {@code [\p{Alnum}\p{Punct}]}</td></tr>
+ * <tr><td valign="top" headers="construct posix">{@code \p{Print}}</td>
+ *     <td headers="matches">A printable character: {@code [\p{Graph}\x20]}</td></tr>
+ * <tr><td valign="top" headers="construct posix">{@code \p{Blank}}</td>
+ *     <td headers="matches">A space or a tab: {@code [ \t]}</td></tr>
+ * <tr><td valign="top" headers="construct posix">{@code \p{Cntrl}}</td>
+ *     <td headers="matches">A control character: {@code [\x00-\x1F\x7F]}</td></tr>
+ * <tr><td valign="top" headers="construct posix">{@code \p{XDigit}}</td>
+ *     <td headers="matches">A hexadecimal digit: {@code [0-9a-fA-F]}</td></tr>
+ * <tr><td valign="top" headers="construct posix">{@code \p{Space}}</td>
+ *     <td headers="matches">A whitespace character: {@code [ \t\n\x0B\f\r]}</td></tr>
+ *
+ * <tr><th>&nbsp;</th></tr>
+ * <tr align="left"><th colspan="2">java.lang.Character classes (simple <a href="#jcc">java character type</a>)</th></tr>
+ *
+ * <tr><td valign="top"><tt>\p{javaLowerCase}</tt></td>
+ *     <td>Equivalent to java.lang.Character.isLowerCase()</td></tr>
+ * <tr><td valign="top"><tt>\p{javaUpperCase}</tt></td>
+ *     <td>Equivalent to java.lang.Character.isUpperCase()</td></tr>
+ * <tr><td valign="top"><tt>\p{javaWhitespace}</tt></td>
+ *     <td>Equivalent to java.lang.Character.isWhitespace()</td></tr>
+ * <tr><td valign="top"><tt>\p{javaMirrored}</tt></td>
+ *     <td>Equivalent to java.lang.Character.isMirrored()</td></tr>
+ *
+ * <tr><th>&nbsp;</th></tr>
+ * <tr align="left"><th colspan="2" id="unicode">Classes for Unicode scripts, blocks, categories and binary properties</th></tr>
+ * <tr><td valign="top" headers="construct unicode">{@code \p{IsLatin}}</td>
+ *     <td headers="matches">A Latin&nbsp;script character (<a href="#usc">script</a>)</td></tr>
+ * <tr><td valign="top" headers="construct unicode">{@code \p{InGreek}}</td>
+ *     <td headers="matches">A character in the Greek&nbsp;block (<a href="#ubc">block</a>)</td></tr>
+ * <tr><td valign="top" headers="construct unicode">{@code \p{Lu}}</td>
+ *     <td headers="matches">An uppercase letter (<a href="#ucc">category</a>)</td></tr>
+ * <tr><td valign="top" headers="construct unicode">{@code \p{IsAlphabetic}}</td>
+ *     <td headers="matches">An alphabetic character (<a href="#ubpc">binary property</a>)</td></tr>
+ * <tr><td valign="top" headers="construct unicode">{@code \p{Sc}}</td>
+ *     <td headers="matches">A currency symbol</td></tr>
+ * <tr><td valign="top" headers="construct unicode">{@code \P{InGreek}}</td>
+ *     <td headers="matches">Any character except one in the Greek block (negation)</td></tr>
+ * <tr><td valign="top" headers="construct unicode">{@code [\p{L}&&[^\p{Lu}]]}</td>
+ *     <td headers="matches">Any letter except an uppercase letter (subtraction)</td></tr>
+ *
+ * <tr><th>&nbsp;</th></tr>
+ * <tr align="left"><th colspan="2" id="bounds">Boundary matchers</th></tr>
+ *
+ * <tr><td valign="top" headers="construct bounds"><tt>^</tt></td>
+ *     <td headers="matches">The beginning of a line</td></tr>
+ * <tr><td valign="top" headers="construct bounds"><tt>$</tt></td>
+ *     <td headers="matches">The end of a line</td></tr>
+ * <tr><td valign="top" headers="construct bounds"><tt>\b</tt></td>
+ *     <td headers="matches">A word boundary</td></tr>
+ * <tr><td valign="top" headers="construct bounds"><tt>\B</tt></td>
+ *     <td headers="matches">A non-word boundary</td></tr>
+ * <tr><td valign="top" headers="construct bounds"><tt>\A</tt></td>
+ *     <td headers="matches">The beginning of the input</td></tr>
+ * <tr><td valign="top" headers="construct bounds"><tt>\G</tt></td>
+ *     <td headers="matches">The end of the previous match</td></tr>
+ * <tr><td valign="top" headers="construct bounds"><tt>\Z</tt></td>
+ *     <td headers="matches">The end of the input but for the final
+ *         <a href="#lt">terminator</a>, if&nbsp;any</td></tr>
+ * <tr><td valign="top" headers="construct bounds"><tt>\z</tt></td>
+ *     <td headers="matches">The end of the input</td></tr>
+ *
+ * <tr><th>&nbsp;</th></tr>
+ * <tr align="left"><th colspan="2" id="lineending">Linebreak matcher</th></tr>
+ * <tr><td valign="top" headers="construct lineending"><tt>\R</tt></td>
+ *     <td headers="matches">Any Unicode linebreak sequence, is equivalent to
+ *     <tt>&#92;u000D&#92;u000A|[&#92;u000A&#92;u000B&#92;u000C&#92;u000D&#92;u0085&#92;u2028&#92;u2029]
+ *     </tt></td></tr>
+ *
+ * <tr><th>&nbsp;</th></tr>
+ * <tr align="left"><th colspan="2" id="greedy">Greedy quantifiers</th></tr>
+ *
+ * <tr><td valign="top" headers="construct greedy"><i>X</i><tt>?</tt></td>
+ *     <td headers="matches"><i>X</i>, once or not at all</td></tr>
+ * <tr><td valign="top" headers="construct greedy"><i>X</i><tt>*</tt></td>
+ *     <td headers="matches"><i>X</i>, zero or more times</td></tr>
+ * <tr><td valign="top" headers="construct greedy"><i>X</i><tt>+</tt></td>
+ *     <td headers="matches"><i>X</i>, one or more times</td></tr>
+ * <tr><td valign="top" headers="construct greedy"><i>X</i><tt>{</tt><i>n</i><tt>}</tt></td>
+ *     <td headers="matches"><i>X</i>, exactly <i>n</i> times</td></tr>
+ * <tr><td valign="top" headers="construct greedy"><i>X</i><tt>{</tt><i>n</i><tt>,}</tt></td>
+ *     <td headers="matches"><i>X</i>, at least <i>n</i> times</td></tr>
+ * <tr><td valign="top" headers="construct greedy"><i>X</i><tt>{</tt><i>n</i><tt>,</tt><i>m</i><tt>}</tt></td>
+ *     <td headers="matches"><i>X</i>, at least <i>n</i> but not more than <i>m</i> times</td></tr>
+ *
+ * <tr><th>&nbsp;</th></tr>
+ * <tr align="left"><th colspan="2" id="reluc">Reluctant quantifiers</th></tr>
+ *
+ * <tr><td valign="top" headers="construct reluc"><i>X</i><tt>??</tt></td>
+ *     <td headers="matches"><i>X</i>, once or not at all</td></tr>
+ * <tr><td valign="top" headers="construct reluc"><i>X</i><tt>*?</tt></td>
+ *     <td headers="matches"><i>X</i>, zero or more times</td></tr>
+ * <tr><td valign="top" headers="construct reluc"><i>X</i><tt>+?</tt></td>
+ *     <td headers="matches"><i>X</i>, one or more times</td></tr>
+ * <tr><td valign="top" headers="construct reluc"><i>X</i><tt>{</tt><i>n</i><tt>}?</tt></td>
+ *     <td headers="matches"><i>X</i>, exactly <i>n</i> times</td></tr>
+ * <tr><td valign="top" headers="construct reluc"><i>X</i><tt>{</tt><i>n</i><tt>,}?</tt></td>
+ *     <td headers="matches"><i>X</i>, at least <i>n</i> times</td></tr>
+ * <tr><td valign="top" headers="construct reluc"><i>X</i><tt>{</tt><i>n</i><tt>,</tt><i>m</i><tt>}?</tt></td>
+ *     <td headers="matches"><i>X</i>, at least <i>n</i> but not more than <i>m</i> times</td></tr>
+ *
+ * <tr><th>&nbsp;</th></tr>
+ * <tr align="left"><th colspan="2" id="poss">Possessive quantifiers</th></tr>
+ *
+ * <tr><td valign="top" headers="construct poss"><i>X</i><tt>?+</tt></td>
+ *     <td headers="matches"><i>X</i>, once or not at all</td></tr>
+ * <tr><td valign="top" headers="construct poss"><i>X</i><tt>*+</tt></td>
+ *     <td headers="matches"><i>X</i>, zero or more times</td></tr>
+ * <tr><td valign="top" headers="construct poss"><i>X</i><tt>++</tt></td>
+ *     <td headers="matches"><i>X</i>, one or more times</td></tr>
+ * <tr><td valign="top" headers="construct poss"><i>X</i><tt>{</tt><i>n</i><tt>}+</tt></td>
+ *     <td headers="matches"><i>X</i>, exactly <i>n</i> times</td></tr>
+ * <tr><td valign="top" headers="construct poss"><i>X</i><tt>{</tt><i>n</i><tt>,}+</tt></td>
+ *     <td headers="matches"><i>X</i>, at least <i>n</i> times</td></tr>
+ * <tr><td valign="top" headers="construct poss"><i>X</i><tt>{</tt><i>n</i><tt>,</tt><i>m</i><tt>}+</tt></td>
+ *     <td headers="matches"><i>X</i>, at least <i>n</i> but not more than <i>m</i> times</td></tr>
+ *
+ * <tr><th>&nbsp;</th></tr>
+ * <tr align="left"><th colspan="2" id="logical">Logical operators</th></tr>
+ *
+ * <tr><td valign="top" headers="construct logical"><i>XY</i></td>
+ *     <td headers="matches"><i>X</i> followed by <i>Y</i></td></tr>
+ * <tr><td valign="top" headers="construct logical"><i>X</i><tt>|</tt><i>Y</i></td>
+ *     <td headers="matches">Either <i>X</i> or <i>Y</i></td></tr>
+ * <tr><td valign="top" headers="construct logical"><tt>(</tt><i>X</i><tt>)</tt></td>
+ *     <td headers="matches">X, as a <a href="#cg">capturing group</a></td></tr>
+ *
+ * <tr><th>&nbsp;</th></tr>
+ * <tr align="left"><th colspan="2" id="backref">Back references</th></tr>
+ *
+ * <tr><td valign="bottom" headers="construct backref"><tt>\</tt><i>n</i></td>
+ *     <td valign="bottom" headers="matches">Whatever the <i>n</i><sup>th</sup>
+ *     <a href="#cg">capturing group</a> matched</td></tr>
+ *
+ * <tr><td valign="bottom" headers="construct backref"><tt>\</tt><i>k</i>&lt;<i>name</i>&gt;</td>
+ *     <td valign="bottom" headers="matches">Whatever the
+ *     <a href="#groupname">named-capturing group</a> "name" matched</td></tr>
+ *
+ * <tr><th>&nbsp;</th></tr>
+ * <tr align="left"><th colspan="2" id="quot">Quotation</th></tr>
+ *
+ * <tr><td valign="top" headers="construct quot"><tt>\</tt></td>
+ *     <td headers="matches">Nothing, but quotes the following character</td></tr>
+ * <tr><td valign="top" headers="construct quot"><tt>\Q</tt></td>
+ *     <td headers="matches">Nothing, but quotes all characters until <tt>\E</tt></td></tr>
+ * <tr><td valign="top" headers="construct quot"><tt>\E</tt></td>
+ *     <td headers="matches">Nothing, but ends quoting started by <tt>\Q</tt></td></tr>
+ *     <!-- Metachars: !$()*+.<>?[\]^{|} -->
+ *
+ * <tr><th>&nbsp;</th></tr>
+ * <tr align="left"><th colspan="2" id="special">Special constructs (named-capturing and non-capturing)</th></tr>
+ *
+ * <tr><td valign="top" headers="construct special"><tt>(?&lt;<a href="#groupname">name</a>&gt;</tt><i>X</i><tt>)</tt></td>
+ *     <td headers="matches"><i>X</i>, as a named-capturing group</td></tr>
+ * <tr><td valign="top" headers="construct special"><tt>(?:</tt><i>X</i><tt>)</tt></td>
+ *     <td headers="matches"><i>X</i>, as a non-capturing group</td></tr>
+ * <tr><td valign="top" headers="construct special"><tt>(?idmsuxU-idmsuxU)&nbsp;</tt></td>
+ *     <td headers="matches">Nothing, but turns match flags <a href="#CASE_INSENSITIVE">i</a>
+ * <a href="#UNIX_LINES">d</a> <a href="#MULTILINE">m</a> <a href="#DOTALL">s</a>
+ * <a href="#UNICODE_CASE">u</a> <a href="#COMMENTS">x</a> <a href="#UNICODE_CHARACTER_CLASS">U</a>
+ * on - off</td></tr>
+ * <tr><td valign="top" headers="construct special"><tt>(?idmsux-idmsux:</tt><i>X</i><tt>)</tt>&nbsp;&nbsp;</td>
+ *     <td headers="matches"><i>X</i>, as a <a href="#cg">non-capturing group</a> with the
+ *         given flags <a href="#CASE_INSENSITIVE">i</a> <a href="#UNIX_LINES">d</a>
+ * <a href="#MULTILINE">m</a> <a href="#DOTALL">s</a> <a href="#UNICODE_CASE">u</a >
+ * <a href="#COMMENTS">x</a> on - off</td></tr>
+ * <tr><td valign="top" headers="construct special"><tt>(?=</tt><i>X</i><tt>)</tt></td>
+ *     <td headers="matches"><i>X</i>, via zero-width positive lookahead</td></tr>
+ * <tr><td valign="top" headers="construct special"><tt>(?!</tt><i>X</i><tt>)</tt></td>
+ *     <td headers="matches"><i>X</i>, via zero-width negative lookahead</td></tr>
+ * <tr><td valign="top" headers="construct special"><tt>(?&lt;=</tt><i>X</i><tt>)</tt></td>
+ *     <td headers="matches"><i>X</i>, via zero-width positive lookbehind</td></tr>
+ * <tr><td valign="top" headers="construct special"><tt>(?&lt;!</tt><i>X</i><tt>)</tt></td>
+ *     <td headers="matches"><i>X</i>, via zero-width negative lookbehind</td></tr>
+ * <tr><td valign="top" headers="construct special"><tt>(?&gt;</tt><i>X</i><tt>)</tt></td>
+ *     <td headers="matches"><i>X</i>, as an independent, non-capturing group</td></tr>
+ *
+ * </table>
+ *
+ * <hr>
+ *
+ *
+ * <h3><a name="bs">Backslashes, escapes, and quoting</a></h3>
+ *
+ * <p> The backslash character (<tt>'\'</tt>) serves to introduce escaped
+ * constructs, as defined in the table above, as well as to quote characters
+ * that otherwise would be interpreted as unescaped constructs.  Thus the
+ * expression <tt>\\</tt> matches a single backslash and <tt>\{</tt> matches a
+ * left brace.
+ *
+ * <p> It is an error to use a backslash prior to any alphabetic character that
+ * does not denote an escaped construct; these are reserved for future
+ * extensions to the regular-expression language.  A backslash may be used
+ * prior to a non-alphabetic character regardless of whether that character is
+ * part of an unescaped construct.
+ *
+ * <p> Backslashes within string literals in Java source code are interpreted
+ * as required by
+ * <cite>The Java&trade; Language Specification</cite>
+ * as either Unicode escapes (section 3.3) or other character escapes (section 3.10.6)
+ * It is therefore necessary to double backslashes in string
+ * literals that represent regular expressions to protect them from
+ * interpretation by the Java bytecode compiler.  The string literal
+ * <tt>"&#92;b"</tt>, for example, matches a single backspace character when
+ * interpreted as a regular expression, while <tt>"&#92;&#92;b"</tt> matches a
+ * word boundary.  The string literal <tt>"&#92;(hello&#92;)"</tt> is illegal
+ * and leads to a compile-time error; in order to match the string
+ * <tt>(hello)</tt> the string literal <tt>"&#92;&#92;(hello&#92;&#92;)"</tt>
+ * must be used.
+ *
+ * <h3><a name="cc">Character Classes</a></h3>
+ *
+ *    <p> Character classes may appear within other character classes, and
+ *    may be composed by the union operator (implicit) and the intersection
+ *    operator (<tt>&amp;&amp;</tt>).
+ *    The union operator denotes a class that contains every character that is
+ *    in at least one of its operand classes.  The intersection operator
+ *    denotes a class that contains every character that is in both of its
+ *    operand classes.
+ *
+ *    <p> The precedence of character-class operators is as follows, from
+ *    highest to lowest:
+ *
+ *    <blockquote><table border="0" cellpadding="1" cellspacing="0"
+ *                 summary="Precedence of character class operators.">
+ *      <tr><th>1&nbsp;&nbsp;&nbsp;&nbsp;</th>
+ *        <td>Literal escape&nbsp;&nbsp;&nbsp;&nbsp;</td>
+ *        <td><tt>\x</tt></td></tr>
+ *     <tr><th>2&nbsp;&nbsp;&nbsp;&nbsp;</th>
+ *        <td>Grouping</td>
+ *        <td><tt>[...]</tt></td></tr>
+ *     <tr><th>3&nbsp;&nbsp;&nbsp;&nbsp;</th>
+ *        <td>Range</td>
+ *        <td><tt>a-z</tt></td></tr>
+ *      <tr><th>4&nbsp;&nbsp;&nbsp;&nbsp;</th>
+ *        <td>Union</td>
+ *        <td><tt>[a-e][i-u]</tt></td></tr>
+ *      <tr><th>5&nbsp;&nbsp;&nbsp;&nbsp;</th>
+ *        <td>Intersection</td>
+ *        <td>{@code [a-z&&[aeiou]]}</td></tr>
+ *    </table></blockquote>
+ *
+ *    <p> Note that a different set of metacharacters are in effect inside
+ *    a character class than outside a character class. For instance, the
+ *    regular expression <tt>.</tt> loses its special meaning inside a
+ *    character class, while the expression <tt>-</tt> becomes a range
+ *    forming metacharacter.
+ *
+ * <h3><a name="lt">Line terminators</a></h3>
+ *
+ * <p> A <i>line terminator</i> is a one- or two-character sequence that marks
+ * the end of a line of the input character sequence.  The following are
+ * recognized as line terminators:
+ *
+ * <ul>
+ *
+ *   <li> A newline (line feed) character&nbsp;(<tt>'\n'</tt>),
+ *
+ *   <li> A carriage-return character followed immediately by a newline
+ *   character&nbsp;(<tt>"\r\n"</tt>),
+ *
+ *   <li> A standalone carriage-return character&nbsp;(<tt>'\r'</tt>),
+ *
+ *   <li> A next-line character&nbsp;(<tt>'&#92;u0085'</tt>),
+ *
+ *   <li> A line-separator character&nbsp;(<tt>'&#92;u2028'</tt>), or
+ *
+ *   <li> A paragraph-separator character&nbsp;(<tt>'&#92;u2029</tt>).
+ *
+ * </ul>
+ * <p>If {@link #UNIX_LINES} mode is activated, then the only line terminators
+ * recognized are newline characters.
+ *
+ * <p> The regular expression <tt>.</tt> matches any character except a line
+ * terminator unless the {@link #DOTALL} flag is specified.
+ *
+ * <p> By default, the regular expressions <tt>^</tt> and <tt>$</tt> ignore
+ * line terminators and only match at the beginning and the end, respectively,
+ * of the entire input sequence. If {@link #MULTILINE} mode is activated then
+ * <tt>^</tt> matches at the beginning of input and after any line terminator
+ * except at the end of input. When in {@link #MULTILINE} mode <tt>$</tt>
+ * matches just before a line terminator or the end of the input sequence.
+ *
+ * <h3><a name="cg">Groups and capturing</a></h3>
+ *
+ * <h4><a name="gnumber">Group number</a></h4>
+ * <p> Capturing groups are numbered by counting their opening parentheses from
+ * left to right.  In the expression <tt>((A)(B(C)))</tt>, for example, there
+ * are four such groups: </p>
+ *
+ * <blockquote><table cellpadding=1 cellspacing=0 summary="Capturing group numberings">
+ * <tr><th>1&nbsp;&nbsp;&nbsp;&nbsp;</th>
+ *     <td><tt>((A)(B(C)))</tt></td></tr>
+ * <tr><th>2&nbsp;&nbsp;&nbsp;&nbsp;</th>
+ *     <td><tt>(A)</tt></td></tr>
+ * <tr><th>3&nbsp;&nbsp;&nbsp;&nbsp;</th>
+ *     <td><tt>(B(C))</tt></td></tr>
+ * <tr><th>4&nbsp;&nbsp;&nbsp;&nbsp;</th>
+ *     <td><tt>(C)</tt></td></tr>
+ * </table></blockquote>
+ *
+ * <p> Group zero always stands for the entire expression.
+ *
+ * <p> Capturing groups are so named because, during a match, each subsequence
+ * of the input sequence that matches such a group is saved.  The captured
+ * subsequence may be used later in the expression, via a back reference, and
+ * may also be retrieved from the matcher once the match operation is complete.
+ *
+ * <h4><a name="groupname">Group name</a></h4>
+ * <p>A capturing group can also be assigned a "name", a <tt>named-capturing group</tt>,
+ * and then be back-referenced later by the "name". Group names are composed of
+ * the following characters. The first character must be a <tt>letter</tt>.
+ *
+ * <ul>
+ *   <li> The uppercase letters <tt>'A'</tt> through <tt>'Z'</tt>
+ *        (<tt>'&#92;u0041'</tt>&nbsp;through&nbsp;<tt>'&#92;u005a'</tt>),
+ *   <li> The lowercase letters <tt>'a'</tt> through <tt>'z'</tt>
+ *        (<tt>'&#92;u0061'</tt>&nbsp;through&nbsp;<tt>'&#92;u007a'</tt>),
+ *   <li> The digits <tt>'0'</tt> through <tt>'9'</tt>
+ *        (<tt>'&#92;u0030'</tt>&nbsp;through&nbsp;<tt>'&#92;u0039'</tt>),
+ * </ul>
+ *
+ * <p> A <tt>named-capturing group</tt> is still numbered as described in
+ * <a href="#gnumber">Group number</a>.
+ *
+ * <p> The captured input associated with a group is always the subsequence
+ * that the group most recently matched.  If a group is evaluated a second time
+ * because of quantification then its previously-captured value, if any, will
+ * be retained if the second evaluation fails.  Matching the string
+ * <tt>"aba"</tt> against the expression <tt>(a(b)?)+</tt>, for example, leaves
+ * group two set to <tt>"b"</tt>.  All captured input is discarded at the
+ * beginning of each match.
+ *
+ * <p> Groups beginning with <tt>(?</tt> are either pure, <i>non-capturing</i> groups
+ * that do not capture text and do not count towards the group total, or
+ * <i>named-capturing</i> group.
+ *
+ * <h3> Unicode support </h3>
+ *
+ * <p> This class is in conformance with Level 1 of <a
+ * href="http://www.unicode.org/reports/tr18/"><i>Unicode Technical
+ * Standard #18: Unicode Regular Expression</i></a>, plus RL2.1
+ * Canonical Equivalents.
+ * <p>
+ * <b>Unicode escape sequences</b> such as <tt>&#92;u2014</tt> in Java source code
+ * are processed as described in section 3.3 of
+ * <cite>The Java&trade; Language Specification</cite>.
+ * Such escape sequences are also implemented directly by the regular-expression
+ * parser so that Unicode escapes can be used in expressions that are read from
+ * files or from the keyboard.  Thus the strings <tt>"&#92;u2014"</tt> and
+ * <tt>"\\u2014"</tt>, while not equal, compile into the same pattern, which
+ * matches the character with hexadecimal value <tt>0x2014</tt>.
+ * <p>
+ * A Unicode character can also be represented in a regular-expression by
+ * using its <b>Hex notation</b>(hexadecimal code point value) directly as described in construct
+ * <tt>&#92;x{...}</tt>, for example a supplementary character U+2011F
+ * can be specified as <tt>&#92;x{2011F}</tt>, instead of two consecutive
+ * Unicode escape sequences of the surrogate pair
+ * <tt>&#92;uD840</tt><tt>&#92;uDD1F</tt>.
+ * <p>
+ * Unicode scripts, blocks, categories and binary properties are written with
+ * the <tt>\p</tt> and <tt>\P</tt> constructs as in Perl.
+ * <tt>\p{</tt><i>prop</i><tt>}</tt> matches if
+ * the input has the property <i>prop</i>, while <tt>\P{</tt><i>prop</i><tt>}</tt>
+ * does not match if the input has that property.
+ * <p>
+ * Scripts, blocks, categories and binary properties can be used both inside
+ * and outside of a character class.
+ *
+ * <p>
+ * <b><a name="usc">Scripts</a></b> are specified either with the prefix {@code Is}, as in
+ * {@code IsHiragana}, or by using  the {@code script} keyword (or its short
+ * form {@code sc})as in {@code script=Hiragana} or {@code sc=Hiragana}.
+ * <p>
+ * The script names supported by <code>Pattern</code> are the valid script names
+ * accepted and defined by
+ * {@link java.lang.Character.UnicodeScript#forName(String) UnicodeScript.forName}.
+ *
+ * <p>
+ * <b><a name="ubc">Blocks</a></b> are specified with the prefix {@code In}, as in
+ * {@code InMongolian}, or by using the keyword {@code block} (or its short
+ * form {@code blk}) as in {@code block=Mongolian} or {@code blk=Mongolian}.
+ * <p>
+ * The block names supported by <code>Pattern</code> are the valid block names
+ * accepted and defined by
+ * {@link java.lang.Character.UnicodeBlock#forName(String) UnicodeBlock.forName}.
+ * <p>
+ *
+ * <b><a name="ucc">Categories</a></b> may be specified with the optional prefix {@code Is}:
+ * Both {@code \p{L}} and {@code \p{IsL}} denote the category of Unicode
+ * letters. Same as scripts and blocks, categories can also be specified
+ * by using the keyword {@code general_category} (or its short form
+ * {@code gc}) as in {@code general_category=Lu} or {@code gc=Lu}.
+ * <p>
+ * The supported categories are those of
+ * <a href="http://www.unicode.org/unicode/standard/standard.html">
+ * <i>The Unicode Standard</i></a> in the version specified by the
+ * {@link java.lang.Character Character} class. The category names are those
+ * defined in the Standard, both normative and informative.
+ * <p>
+ *
+ * <b><a name="ubpc">Binary properties</a></b> are specified with the prefix {@code Is}, as in
+ * {@code IsAlphabetic}. The supported binary properties by <code>Pattern</code>
+ * are
+ * <ul>
+ *   <li> Alphabetic
+ *   <li> Ideographic
+ *   <li> Letter
+ *   <li> Lowercase
+ *   <li> Uppercase
+ *   <li> Titlecase
+ *   <li> Punctuation
+ *   <Li> Control
+ *   <li> White_Space
+ *   <li> Digit
+ *   <li> Hex_Digit
+ *   <li> Join_Control
+ *   <li> Noncharacter_Code_Point
+ *   <li> Assigned
+ * </ul>
+ * <p>
+ * The following <b>Predefined Character classes</b> and <b>POSIX character classes</b>
+ * are in conformance with the recommendation of <i>Annex C: Compatibility Properties</i>
+ * of <a href="http://www.unicode.org/reports/tr18/"><i>Unicode Regular Expression
+ * </i></a>, when {@link #UNICODE_CHARACTER_CLASS} flag is specified.
+ *
+ * <table border="0" cellpadding="1" cellspacing="0"
+ *  summary="predefined and posix character classes in Unicode mode">
+ * <tr align="left">
+ * <th align="left" id="predef_classes">Classes</th>
+ * <th align="left" id="predef_matches">Matches</th>
+ *</tr>
+ * <tr><td><tt>\p{Lower}</tt></td>
+ *     <td>A lowercase character:<tt>\p{IsLowercase}</tt></td></tr>
+ * <tr><td><tt>\p{Upper}</tt></td>
+ *     <td>An uppercase character:<tt>\p{IsUppercase}</tt></td></tr>
+ * <tr><td><tt>\p{ASCII}</tt></td>
+ *     <td>All ASCII:<tt>[\x00-\x7F]</tt></td></tr>
+ * <tr><td><tt>\p{Alpha}</tt></td>
+ *     <td>An alphabetic character:<tt>\p{IsAlphabetic}</tt></td></tr>
+ * <tr><td><tt>\p{Digit}</tt></td>
+ *     <td>A decimal digit character:<tt>p{IsDigit}</tt></td></tr>
+ * <tr><td><tt>\p{Alnum}</tt></td>
+ *     <td>An alphanumeric character:<tt>[\p{IsAlphabetic}\p{IsDigit}]</tt></td></tr>
+ * <tr><td><tt>\p{Punct}</tt></td>
+ *     <td>A punctuation character:<tt>p{IsPunctuation}</tt></td></tr>
+ * <tr><td><tt>\p{Graph}</tt></td>
+ *     <td>A visible character: <tt>[^\p{IsWhite_Space}\p{gc=Cc}\p{gc=Cs}\p{gc=Cn}]</tt></td></tr>
+ * <tr><td><tt>\p{Print}</tt></td>
+ *     <td>A printable character: {@code [\p{Graph}\p{Blank}&&[^\p{Cntrl}]]}</td></tr>
+ * <tr><td><tt>\p{Blank}</tt></td>
+ *     <td>A space or a tab: {@code [\p{IsWhite_Space}&&[^\p{gc=Zl}\p{gc=Zp}\x0a\x0b\x0c\x0d\x85]]}</td></tr>
+ * <tr><td><tt>\p{Cntrl}</tt></td>
+ *     <td>A control character: <tt>\p{gc=Cc}</tt></td></tr>
+ * <tr><td><tt>\p{XDigit}</tt></td>
+ *     <td>A hexadecimal digit: <tt>[\p{gc=Nd}\p{IsHex_Digit}]</tt></td></tr>
+ * <tr><td><tt>\p{Space}</tt></td>
+ *     <td>A whitespace character:<tt>\p{IsWhite_Space}</tt></td></tr>
+ * <tr><td><tt>\d</tt></td>
+ *     <td>A digit: <tt>\p{IsDigit}</tt></td></tr>
+ * <tr><td><tt>\D</tt></td>
+ *     <td>A non-digit: <tt>[^\d]</tt></td></tr>
+ * <tr><td><tt>\s</tt></td>
+ *     <td>A whitespace character: <tt>\p{IsWhite_Space}</tt></td></tr>
+ * <tr><td><tt>\S</tt></td>
+ *     <td>A non-whitespace character: <tt>[^\s]</tt></td></tr>
+ * <tr><td><tt>\w</tt></td>
+ *     <td>A word character: <tt>[\p{Alpha}\p{gc=Mn}\p{gc=Me}\p{gc=Mc}\p{Digit}\p{gc=Pc}\p{IsJoin_Control}]</tt></td></tr>
+ * <tr><td><tt>\W</tt></td>
+ *     <td>A non-word character: <tt>[^\w]</tt></td></tr>
+ * </table>
+ * <p>
+ * <a name="jcc">
+ * Categories that behave like the java.lang.Character
+ * boolean is<i>methodname</i> methods (except for the deprecated ones) are
+ * available through the same <tt>\p{</tt><i>prop</i><tt>}</tt> syntax where
+ * the specified property has the name <tt>java<i>methodname</i></tt></a>.
+ *
+ * <h3> Comparison to Perl 5 </h3>
+ *
+ * <p>The <code>Pattern</code> engine performs traditional NFA-based matching
+ * with ordered alternation as occurs in Perl 5.
+ *
+ * <p> Perl constructs not supported by this class: </p>
+ *
+ * <ul>
+ *    <li><p> Predefined character classes (Unicode character)
+ *    <p><tt>\X&nbsp;&nbsp;&nbsp;&nbsp;</tt>Match Unicode
+ *    <a href="http://www.unicode.org/reports/tr18/#Default_Grapheme_Clusters">
+ *    <i>extended grapheme cluster</i></a>
+ *    </p></li>
+ *
+ *    <li><p> The backreference constructs, <tt>\g{</tt><i>n</i><tt>}</tt> for
+ *    the <i>n</i><sup>th</sup><a href="#cg">capturing group</a> and
+ *    <tt>\g{</tt><i>name</i><tt>}</tt> for
+ *    <a href="#groupname">named-capturing group</a>.
+ *    </p></li>
+ *
+ *    <li><p> The named character construct, <tt>\N{</tt><i>name</i><tt>}</tt>
+ *    for a Unicode character by its name.
+ *    </p></li>
+ *
+ *    <li><p> The conditional constructs
+ *    <tt>(?(</tt><i>condition</i><tt>)</tt><i>X</i><tt>)</tt> and
+ *    <tt>(?(</tt><i>condition</i><tt>)</tt><i>X</i><tt>|</tt><i>Y</i><tt>)</tt>,
+ *    </p></li>
+ *
+ *    <li><p> The embedded code constructs <tt>(?{</tt><i>code</i><tt>})</tt>
+ *    and <tt>(??{</tt><i>code</i><tt>})</tt>,</p></li>
+ *
+ *    <li><p> The embedded comment syntax <tt>(?#comment)</tt>, and </p></li>
+ *
+ *    <li><p> The preprocessing operations <tt>\l</tt> <tt>&#92;u</tt>,
+ *    <tt>\L</tt>, and <tt>\U</tt>.  </p></li>
+ *
+ * </ul>
+ *
+ * <p> Constructs supported by this class but not by Perl: </p>
+ *
+ * <ul>
+ *
+ *    <li><p> Character-class union and intersection as described
+ *    <a href="#cc">above</a>.</p></li>
+ *
+ * </ul>
+ *
+ * <p> Notable differences from Perl: </p>
+ *
+ * <ul>
+ *
+ *    <li><p> In Perl, <tt>\1</tt> through <tt>\9</tt> are always interpreted
+ *    as back references; a backslash-escaped number greater than <tt>9</tt> is
+ *    treated as a back reference if at least that many subexpressions exist,
+ *    otherwise it is interpreted, if possible, as an octal escape.  In this
+ *    class octal escapes must always begin with a zero. In this class,
+ *    <tt>\1</tt> through <tt>\9</tt> are always interpreted as back
+ *    references, and a larger number is accepted as a back reference if at
+ *    least that many subexpressions exist at that point in the regular
+ *    expression, otherwise the parser will drop digits until the number is
+ *    smaller or equal to the existing number of groups or it is one digit.
+ *    </p></li>
+ *
+ *    <li><p> Perl uses the <tt>g</tt> flag to request a match that resumes
+ *    where the last match left off.  This functionality is provided implicitly
+ *    by the {@link Matcher} class: Repeated invocations of the {@link
+ *    Matcher#find find} method will resume where the last match left off,
+ *    unless the matcher is reset.  </p></li>
+ *
+ *    <li><p> In Perl, embedded flags at the top level of an expression affect
+ *    the whole expression.  In this class, embedded flags always take effect
+ *    at the point at which they appear, whether they are at the top level or
+ *    within a group; in the latter case, flags are restored at the end of the
+ *    group just as in Perl.  </p></li>
+ *
+ * </ul>
+ *
+ *
+ * <p> For a more precise description of the behavior of regular expression
+ * constructs, please see <a href="http://www.oreilly.com/catalog/regex3/">
+ * <i>Mastering Regular Expressions, 3nd Edition</i>, Jeffrey E. F. Friedl,
+ * O'Reilly and Associates, 2006.</a>
+ * </p>
+ *
+ * @see java.lang.String#split(String, int)
+ * @see java.lang.String#split(String)
+ *
+ * @author      Mike McCloskey
+ * @author      Mark Reinhold
+ * @author      JSR-51 Expert Group
+ * @since       1.4
+ * @spec        JSR-51
+ */
+
+public final class Pattern
+    implements java.io.Serializable
+{
+
+    /**
+     * Regular expression modifier values.  Instead of being passed as
+     * arguments, they can also be passed as inline modifiers.
+     * For example, the following statements have the same effect.
+     * <pre>
+     * RegExp r1 = RegExp.compile("abc", Pattern.I|Pattern.M);
+     * RegExp r2 = RegExp.compile("(?im)abc", 0);
+     * </pre>
+     *
+     * The flags are duplicated so that the familiar Perl match flag
+     * names are available.
+     */
+
+    /**
+     * Enables Unix lines mode.
+     *
+     * <p> In this mode, only the <tt>'\n'</tt> line terminator is recognized
+     * in the behavior of <tt>.</tt>, <tt>^</tt>, and <tt>$</tt>.
+     *
+     * <p> Unix lines mode can also be enabled via the embedded flag
+     * expression&nbsp;<tt>(?d)</tt>.
+     */
+    public static final int UNIX_LINES = 0x01;
+
+    /**
+     * Enables case-insensitive matching.
+     *
+     * <p> By default, case-insensitive matching assumes that only characters
+     * in the US-ASCII charset are being matched.  Unicode-aware
+     * case-insensitive matching can be enabled by specifying the {@link
+     * #UNICODE_CASE} flag in conjunction with this flag.
+     *
+     * <p> Case-insensitive matching can also be enabled via the embedded flag
+     * expression&nbsp;<tt>(?i)</tt>.
+     *
+     * <p> Specifying this flag may impose a slight performance penalty.  </p>
+     */
+    public static final int CASE_INSENSITIVE = 0x02;
+
+    /**
+     * Permits whitespace and comments in pattern.
+     *
+     * <p> In this mode, whitespace is ignored, and embedded comments starting
+     * with <tt>#</tt> are ignored until the end of a line.
+     *
+     * <p> Comments mode can also be enabled via the embedded flag
+     * expression&nbsp;<tt>(?x)</tt>.
+     */
+    public static final int COMMENTS = 0x04;
+
+    /**
+     * Enables multiline mode.
+     *
+     * <p> In multiline mode the expressions <tt>^</tt> and <tt>$</tt> match
+     * just after or just before, respectively, a line terminator or the end of
+     * the input sequence.  By default these expressions only match at the
+     * beginning and the end of the entire input sequence.
+     *
+     * <p> Multiline mode can also be enabled via the embedded flag
+     * expression&nbsp;<tt>(?m)</tt>.  </p>
+     */
+    public static final int MULTILINE = 0x08;
+
+    /**
+     * Enables literal parsing of the pattern.
+     *
+     * <p> When this flag is specified then the input string that specifies
+     * the pattern is treated as a sequence of literal characters.
+     * Metacharacters or escape sequences in the input sequence will be
+     * given no special meaning.
+     *
+     * <p>The flags CASE_INSENSITIVE and UNICODE_CASE retain their impact on
+     * matching when used in conjunction with this flag. The other flags
+     * become superfluous.
+     *
+     * <p> There is no embedded flag character for enabling literal parsing.
+     * @since 1.5
+     */
+    public static final int LITERAL = 0x10;
+
+    /**
+     * Enables dotall mode.
+     *
+     * <p> In dotall mode, the expression <tt>.</tt> matches any character,
+     * including a line terminator.  By default this expression does not match
+     * line terminators.
+     *
+     * <p> Dotall mode can also be enabled via the embedded flag
+     * expression&nbsp;<tt>(?s)</tt>.  (The <tt>s</tt> is a mnemonic for
+     * "single-line" mode, which is what this is called in Perl.)  </p>
+     */
+    public static final int DOTALL = 0x20;
+
+    /**
+     * Enables Unicode-aware case folding.
+     *
+     * <p> When this flag is specified then case-insensitive matching, when
+     * enabled by the {@link #CASE_INSENSITIVE} flag, is done in a manner
+     * consistent with the Unicode Standard.  By default, case-insensitive
+     * matching assumes that only characters in the US-ASCII charset are being
+     * matched.
+     *
+     * <p> Unicode-aware case folding can also be enabled via the embedded flag
+     * expression&nbsp;<tt>(?u)</tt>.
+     *
+     * <p> Specifying this flag may impose a performance penalty.  </p>
+     */
+    public static final int UNICODE_CASE = 0x40;
+
+    /**
+     * Enables canonical equivalence.
+     *
+     * <p> When this flag is specified then two characters will be considered
+     * to match if, and only if, their full canonical decompositions match.
+     * The expression <tt>"a&#92;u030A"</tt>, for example, will match the
+     * string <tt>"&#92;u00E5"</tt> when this flag is specified.  By default,
+     * matching does not take canonical equivalence into account.
+     *
+     * <p> There is no embedded flag character for enabling canonical
+     * equivalence.
+     *
+     * <p> Specifying this flag may impose a performance penalty.  </p>
+     */
+    public static final int CANON_EQ = 0x80;
+
+    /**
+     * Enables the Unicode version of <i>Predefined character classes</i> and
+     * <i>POSIX character classes</i>.
+     *
+     * <p> When this flag is specified then the (US-ASCII only)
+     * <i>Predefined character classes</i> and <i>POSIX character classes</i>
+     * are in conformance with
+     * <a href="http://www.unicode.org/reports/tr18/"><i>Unicode Technical
+     * Standard #18: Unicode Regular Expression</i></a>
+     * <i>Annex C: Compatibility Properties</i>.
+     * <p>
+     * The UNICODE_CHARACTER_CLASS mode can also be enabled via the embedded
+     * flag expression&nbsp;<tt>(?U)</tt>.
+     * <p>
+     * The flag implies UNICODE_CASE, that is, it enables Unicode-aware case
+     * folding.
+     * <p>
+     * Specifying this flag may impose a performance penalty.  </p>
+     * @since 1.7
+     */
+    public static final int UNICODE_CHARACTER_CLASS = 0x100;
+
+    /* Pattern has only two serialized components: The pattern string
+     * and the flags, which are all that is needed to recompile the pattern
+     * when it is deserialized.
+     */
+
+    /** use serialVersionUID from Merlin b59 for interoperability */
+    private static final long serialVersionUID = 5073258162644648461L;
+
+    /**
+     * The original regular-expression pattern string.
+     *
+     * @serial
+     */
+    private String pattern;
+
+    /**
+     * The original pattern flags.
+     *
+     * @serial
+     */
+    private int flags;
+
+    /**
+     * Boolean indicating this Pattern is compiled; this is necessary in order
+     * to lazily compile deserialized Patterns.
+     */
+    private transient volatile boolean compiled = false;
+
+    /**
+     * The normalized pattern string.
+     */
+    private transient String normalizedPattern;
+
+    /**
+     * The starting point of state machine for the find operation.  This allows
+     * a match to start anywhere in the input.
+     */
+    transient Node root;
+
+    /**
+     * The root of object tree for a match operation.  The pattern is matched
+     * at the beginning.  This may include a find that uses BnM or a First
+     * node.
+     */
+    transient Node matchRoot;
+
+    /**
+     * Temporary storage used by parsing pattern slice.
+     */
+    transient int[] buffer;
+
+    /**
+     * Map the "name" of the "named capturing group" to its group id
+     * node.
+     */
+    transient volatile Map<String, Integer> namedGroups;
+
+    /**
+     * Temporary storage used while parsing group references.
+     */
+    transient GroupHead[] groupNodes;
+
+    /**
+     * Temporary null terminated code point array used by pattern compiling.
+     */
+    private transient int[] temp;
+
+    /**
+     * The number of capturing groups in this Pattern. Used by matchers to
+     * allocate storage needed to perform a match.
+     */
+    transient int capturingGroupCount;
+
+    /**
+     * The local variable count used by parsing tree. Used by matchers to
+     * allocate storage needed to perform a match.
+     */
+    transient int localCount;
+
+    /**
+     * Index into the pattern string that keeps track of how much has been
+     * parsed.
+     */
+    private transient int cursor;
+
+    /**
+     * Holds the length of the pattern string.
+     */
+    private transient int patternLength;
+
+    /**
+     * If the Start node might possibly match supplementary characters.
+     * It is set to true during compiling if
+     * (1) There is supplementary char in pattern, or
+     * (2) There is complement node of Category or Block
+     */
+    private transient boolean hasSupplementary;
+
+    /**
+     * Compiles the given regular expression into a pattern.
+     *
+     * @param  regex
+     *         The expression to be compiled
+     * @return the given regular expression compiled into a pattern
+     * @throws  PatternSyntaxException
+     *          If the expression's syntax is invalid
+     */
+    public static Pattern compile(String regex) {
+        return new Pattern(regex, 0);
+    }
+
+    /**
+     * Compiles the given regular expression into a pattern with the given
+     * flags.
+     *
+     * @param  regex
+     *         The expression to be compiled
+     *
+     * @param  flags
+     *         Match flags, a bit mask that may include
+     *         {@link #CASE_INSENSITIVE}, {@link #MULTILINE}, {@link #DOTALL},
+     *         {@link #UNICODE_CASE}, {@link #CANON_EQ}, {@link #UNIX_LINES},
+     *         {@link #LITERAL}, {@link #UNICODE_CHARACTER_CLASS}
+     *         and {@link #COMMENTS}
+     *
+     * @return the given regular expression compiled into a pattern with the given flags
+     * @throws  IllegalArgumentException
+     *          If bit values other than those corresponding to the defined
+     *          match flags are set in <tt>flags</tt>
+     *
+     * @throws  PatternSyntaxException
+     *          If the expression's syntax is invalid
+     */
+    public static Pattern compile(String regex, int flags) {
+        return new Pattern(regex, flags);
+    }
+
+    /**
+     * Returns the regular expression from which this pattern was compiled.
+     *
+     * @return  The source of this pattern
+     */
+    public String pattern() {
+        return pattern;
+    }
+
+    /**
+     * <p>Returns the string representation of this pattern. This
+     * is the regular expression from which this pattern was
+     * compiled.</p>
+     *
+     * @return  The string representation of this pattern
+     * @since 1.5
+     */
+    public String toString() {
+        return pattern;
+    }
+
+    /**
+     * Creates a matcher that will match the given input against this pattern.
+     *
+     * @param  input
+     *         The character sequence to be matched
+     *
+     * @return  A new matcher for this pattern
+     */
+    public Matcher matcher(CharSequence input) {
+        if (!compiled) {
+            synchronized(this) {
+                if (!compiled)
+                    compile();
+            }
+        }
+        Matcher m = new Matcher(this, input);
+        return m;
+    }
+
+    /**
+     * Returns this pattern's match flags.
+     *
+     * @return  The match flags specified when this pattern was compiled
+     */
+    public int flags() {
+        return flags;
+    }
+
+    /**
+     * Compiles the given regular expression and attempts to match the given
+     * input against it.
+     *
+     * <p> An invocation of this convenience method of the form
+     *
+     * <blockquote><pre>
+     * Pattern.matches(regex, input);</pre></blockquote>
+     *
+     * behaves in exactly the same way as the expression
+     *
+     * <blockquote><pre>
+     * Pattern.compile(regex).matcher(input).matches()</pre></blockquote>
+     *
+     * <p> If a pattern is to be used multiple times, compiling it once and reusing
+     * it will be more efficient than invoking this method each time.  </p>
+     *
+     * @param  regex
+     *         The expression to be compiled
+     *
+     * @param  input
+     *         The character sequence to be matched
+     * @return whether or not the regular expression matches on the input
+     * @throws  PatternSyntaxException
+     *          If the expression's syntax is invalid
+     */
+    public static boolean matches(String regex, CharSequence input) {
+        Pattern p = Pattern.compile(regex);
+        Matcher m = p.matcher(input);
+        return m.matches();
+    }
+
+    /**
+     * Splits the given input sequence around matches of this pattern.
+     *
+     * <p> The array returned by this method contains each substring of the
+     * input sequence that is terminated by another subsequence that matches
+     * this pattern or is terminated by the end of the input sequence.  The
+     * substrings in the array are in the order in which they occur in the
+     * input. If this pattern does not match any subsequence of the input then
+     * the resulting array has just one element, namely the input sequence in
+     * string form.
+     *
+     * <p> When there is a positive-width match at the beginning of the input
+     * sequence then an empty leading substring is included at the beginning
+     * of the resulting array. A zero-width match at the beginning however
+     * never produces such empty leading substring.
+     *
+     * <p> The <tt>limit</tt> parameter controls the number of times the
+     * pattern is applied and therefore affects the length of the resulting
+     * array.  If the limit <i>n</i> is greater than zero then the pattern
+     * will be applied at most <i>n</i>&nbsp;-&nbsp;1 times, the array's
+     * length will be no greater than <i>n</i>, and the array's last entry
+     * will contain all input beyond the last matched delimiter.  If <i>n</i>
+     * is non-positive then the pattern will be applied as many times as
+     * possible and the array can have any length.  If <i>n</i> is zero then
+     * the pattern will be applied as many times as possible, the array can
+     * have any length, and trailing empty strings will be discarded.
+     *
+     * <p> The input <tt>"boo:and:foo"</tt>, for example, yields the following
+     * results with these parameters:
+     *
+     * <blockquote><table cellpadding=1 cellspacing=0
+     *              summary="Split examples showing regex, limit, and result">
+     * <tr><th align="left"><i>Regex&nbsp;&nbsp;&nbsp;&nbsp;</i></th>
+     *     <th align="left"><i>Limit&nbsp;&nbsp;&nbsp;&nbsp;</i></th>
+     *     <th align="left"><i>Result&nbsp;&nbsp;&nbsp;&nbsp;</i></th></tr>
+     * <tr><td align=center>:</td>
+     *     <td align=center>2</td>
+     *     <td><tt>{ "boo", "and:foo" }</tt></td></tr>
+     * <tr><td align=center>:</td>
+     *     <td align=center>5</td>
+     *     <td><tt>{ "boo", "and", "foo" }</tt></td></tr>
+     * <tr><td align=center>:</td>
+     *     <td align=center>-2</td>
+     *     <td><tt>{ "boo", "and", "foo" }</tt></td></tr>
+     * <tr><td align=center>o</td>
+     *     <td align=center>5</td>
+     *     <td><tt>{ "b", "", ":and:f", "", "" }</tt></td></tr>
+     * <tr><td align=center>o</td>
+     *     <td align=center>-2</td>
+     *     <td><tt>{ "b", "", ":and:f", "", "" }</tt></td></tr>
+     * <tr><td align=center>o</td>
+     *     <td align=center>0</td>
+     *     <td><tt>{ "b", "", ":and:f" }</tt></td></tr>
+     * </table></blockquote>
+     *
+     * @param  input
+     *         The character sequence to be split
+     *
+     * @param  limit
+     *         The result threshold, as described above
+     *
+     * @return  The array of strings computed by splitting the input
+     *          around matches of this pattern
+     */
+    public String[] split(CharSequence input, int limit) {
+        int index = 0;
+        boolean matchLimited = limit > 0;
+        ArrayList<String> matchList = new ArrayList<>();
+        Matcher m = matcher(input);
+
+        // Add segments before each match found
+        while(m.find()) {
+            if (!matchLimited || matchList.size() < limit - 1) {
+                if (index == 0 && index == m.start() && m.start() == m.end()) {
+                    // no empty leading substring included for zero-width match
+                    // at the beginning of the input char sequence.
+                    continue;
+                }
+                String match = input.subSequence(index, m.start()).toString();
+                matchList.add(match);
+                index = m.end();
+            } else if (matchList.size() == limit - 1) { // last one
+                String match = input.subSequence(index,
+                                                 input.length()).toString();
+                matchList.add(match);
+                index = m.end();
+            }
+        }
+
+        // If no match was found, return this
+        if (index == 0)
+            return new String[] {input.toString()};
+
+        // Add remaining segment
+        if (!matchLimited || matchList.size() < limit)
+            matchList.add(input.subSequence(index, input.length()).toString());
+
+        // Construct result
+        int resultSize = matchList.size();
+        if (limit == 0)
+            while (resultSize > 0 && matchList.get(resultSize-1).equals(""))
+                resultSize--;
+        String[] result = new String[resultSize];
+        return matchList.subList(0, resultSize).toArray(result);
+    }
+
+    /**
+     * Splits the given input sequence around matches of this pattern.
+     *
+     * <p> This method works as if by invoking the two-argument {@link
+     * #split(java.lang.CharSequence, int) split} method with the given input
+     * sequence and a limit argument of zero.  Trailing empty strings are
+     * therefore not included in the resulting array. </p>
+     *
+     * <p> The input <tt>"boo:and:foo"</tt>, for example, yields the following
+     * results with these expressions:
+     *
+     * <blockquote><table cellpadding=1 cellspacing=0
+     *              summary="Split examples showing regex and result">
+     * <tr><th align="left"><i>Regex&nbsp;&nbsp;&nbsp;&nbsp;</i></th>
+     *     <th align="left"><i>Result</i></th></tr>
+     * <tr><td align=center>:</td>
+     *     <td><tt>{ "boo", "and", "foo" }</tt></td></tr>
+     * <tr><td align=center>o</td>
+     *     <td><tt>{ "b", "", ":and:f" }</tt></td></tr>
+     * </table></blockquote>
+     *
+     *
+     * @param  input
+     *         The character sequence to be split
+     *
+     * @return  The array of strings computed by splitting the input
+     *          around matches of this pattern
+     */
+    public String[] split(CharSequence input) {
+        return split(input, 0);
+    }
+
+    /**
+     * Returns a literal pattern <code>String</code> for the specified
+     * <code>String</code>.
+     *
+     * <p>This method produces a <code>String</code> that can be used to
+     * create a <code>Pattern</code> that would match the string
+     * <code>s</code> as if it were a literal pattern.</p> Metacharacters
+     * or escape sequences in the input sequence will be given no special
+     * meaning.
+     *
+     * @param  s The string to be literalized
+     * @return  A literal string replacement
+     * @since 1.5
+     */
+    public static String quote(String s) {
+        int slashEIndex = s.indexOf("\\E");
+        if (slashEIndex == -1)
+            return "\\Q" + s + "\\E";
+
+        StringBuilder sb = new StringBuilder(s.length() * 2);
+        sb.append("\\Q");
+        slashEIndex = 0;
+        int current = 0;
+        while ((slashEIndex = s.indexOf("\\E", current)) != -1) {
+            sb.append(s.substring(current, slashEIndex));
+            current = slashEIndex + 2;
+            sb.append("\\E\\\\E\\Q");
+        }
+        sb.append(s.substring(current, s.length()));
+        sb.append("\\E");
+        return sb.toString();
+    }
+
+    /**
+     * Recompile the Pattern instance from a stream.  The original pattern
+     * string is read in and the object tree is recompiled from it.
+     */
+    private void readObject(java.io.ObjectInputStream s)
+        throws java.io.IOException, ClassNotFoundException {
+
+        // Read in all fields
+        s.defaultReadObject();
+
+        // Initialize counts
+        capturingGroupCount = 1;
+        localCount = 0;
+
+        // if length > 0, the Pattern is lazily compiled
+        compiled = false;
+        if (pattern.length() == 0) {
+            root = new Start(lastAccept);
+            matchRoot = lastAccept;
+            compiled = true;
+        }
+    }
+
+    /**
+     * This private constructor is used to create all Patterns. The pattern
+     * string and match flags are all that is needed to completely describe
+     * a Pattern. An empty pattern string results in an object tree with
+     * only a Start node and a LastNode node.
+     */
+    private Pattern(String p, int f) {
+        pattern = p;
+        flags = f;
+
+        // to use UNICODE_CASE if UNICODE_CHARACTER_CLASS present
+        if ((flags & UNICODE_CHARACTER_CLASS) != 0)
+            flags |= UNICODE_CASE;
+
+        // Reset group index count
+        capturingGroupCount = 1;
+        localCount = 0;
+
+        if (pattern.length() > 0) {
+            compile();
+        } else {
+            root = new Start(lastAccept);
+            matchRoot = lastAccept;
+        }
+    }
+
+    /**
+     * The pattern is converted to normalizedD form and then a pure group
+     * is constructed to match canonical equivalences of the characters.
+     */
+    private void normalize() {
+        boolean inCharClass = false;
+        int lastCodePoint = -1;
+
+        // Convert pattern into normalizedD form
+        normalizedPattern = Normalizer.normalize(pattern, Normalizer.Form.NFD);
+        patternLength = normalizedPattern.length();
+
+        // Modify pattern to match canonical equivalences
+        StringBuilder newPattern = new StringBuilder(patternLength);
+        for(int i=0; i<patternLength; ) {
+            int c = normalizedPattern.codePointAt(i);
+            StringBuilder sequenceBuffer;
+            if ((Character.getType(c) == Character.NON_SPACING_MARK)
+                && (lastCodePoint != -1)) {
+                sequenceBuffer = new StringBuilder();
+                sequenceBuffer.appendCodePoint(lastCodePoint);
+                sequenceBuffer.appendCodePoint(c);
+                while(Character.getType(c) == Character.NON_SPACING_MARK) {
+                    i += Character.charCount(c);
+                    if (i >= patternLength)
+                        break;
+                    c = normalizedPattern.codePointAt(i);
+                    sequenceBuffer.appendCodePoint(c);
+                }
+                String ea = produceEquivalentAlternation(
+                                               sequenceBuffer.toString());
+                newPattern.setLength(newPattern.length()-Character.charCount(lastCodePoint));
+                newPattern.append("(?:").append(ea).append(")");
+            } else if (c == '[' && lastCodePoint != '\\') {
+                i = normalizeCharClass(newPattern, i);
+            } else {
+                newPattern.appendCodePoint(c);
+            }
+            lastCodePoint = c;
+            i += Character.charCount(c);
+        }
+        normalizedPattern = newPattern.toString();
+    }
+
+    /**
+     * Complete the character class being parsed and add a set
+     * of alternations to it that will match the canonical equivalences
+     * of the characters within the class.
+     */
+    private int normalizeCharClass(StringBuilder newPattern, int i) {
+        StringBuilder charClass = new StringBuilder();
+        StringBuilder eq = null;
+        int lastCodePoint = -1;
+        String result;
+
+        i++;
+        if (i == normalizedPattern.length())
+            throw error("Unclosed character class");
+        charClass.append("[");
+        while(true) {
+            int c = normalizedPattern.codePointAt(i);
+            StringBuilder sequenceBuffer;
+
+            if (c == ']' && lastCodePoint != '\\') {
+                charClass.append((char)c);
+                break;
+            } else if (Character.getType(c) == Character.NON_SPACING_MARK) {
+                sequenceBuffer = new StringBuilder();
+                sequenceBuffer.appendCodePoint(lastCodePoint);
+                while(Character.getType(c) == Character.NON_SPACING_MARK) {
+                    sequenceBuffer.appendCodePoint(c);
+                    i += Character.charCount(c);
+                    if (i >= normalizedPattern.length())
+                        break;
+                    c = normalizedPattern.codePointAt(i);
+                }
+                String ea = produceEquivalentAlternation(
+                                                  sequenceBuffer.toString());
+
+                charClass.setLength(charClass.length()-Character.charCount(lastCodePoint));
+                if (eq == null)
+                    eq = new StringBuilder();
+                eq.append('|');
+                eq.append(ea);
+            } else {
+                charClass.appendCodePoint(c);
+                i++;
+            }
+            if (i == normalizedPattern.length())
+                throw error("Unclosed character class");
+            lastCodePoint = c;
+        }
+
+        if (eq != null) {
+            result = "(?:"+charClass.toString()+eq.toString()+")";
+        } else {
+            result = charClass.toString();
+        }
+
+        newPattern.append(result);
+        return i;
+    }
+
+    /**
+     * Given a specific sequence composed of a regular character and
+     * combining marks that follow it, produce the alternation that will
+     * match all canonical equivalences of that sequence.
+     */
+    private String produceEquivalentAlternation(String source) {
+        int len = countChars(source, 0, 1);
+        if (source.length() == len)
+            // source has one character.
+            return source;
+
+        String base = source.substring(0,len);
+        String combiningMarks = source.substring(len);
+
+        String[] perms = producePermutations(combiningMarks);
+        StringBuilder result = new StringBuilder(source);
+
+        // Add combined permutations
+        for(int x=0; x<perms.length; x++) {
+            String next = base + perms[x];
+            if (x>0)
+                result.append("|"+next);
+            next = composeOneStep(next);
+            if (next != null)
+                result.append("|"+produceEquivalentAlternation(next));
+        }
+        return result.toString();
+    }
+
+    /**
+     * Returns an array of strings that have all the possible
+     * permutations of the characters in the input string.
+     * This is used to get a list of all possible orderings
+     * of a set of combining marks. Note that some of the permutations
+     * are invalid because of combining class collisions, and these
+     * possibilities must be removed because they are not canonically
+     * equivalent.
+     */
+    private String[] producePermutations(String input) {
+        if (input.length() == countChars(input, 0, 1))
+            return new String[] {input};
+
+        if (input.length() == countChars(input, 0, 2)) {
+            int c0 = Character.codePointAt(input, 0);
+            int c1 = Character.codePointAt(input, Character.charCount(c0));
+            if (getClass(c1) == getClass(c0)) {
+                return new String[] {input};
+            }
+            String[] result = new String[2];
+            result[0] = input;
+            StringBuilder sb = new StringBuilder(2);
+            sb.appendCodePoint(c1);
+            sb.appendCodePoint(c0);
+            result[1] = sb.toString();
+            return result;
+        }
+
+        int length = 1;
+        int nCodePoints = countCodePoints(input);
+        for(int x=1; x<nCodePoints; x++)
+            length = length * (x+1);
+
+        String[] temp = new String[length];
+
+        int combClass[] = new int[nCodePoints];
+        for(int x=0, i=0; x<nCodePoints; x++) {
+            int c = Character.codePointAt(input, i);
+            combClass[x] = getClass(c);
+            i +=  Character.charCount(c);
+        }
+
+        // For each char, take it out and add the permutations
+        // of the remaining chars
+        int index = 0;
+        int len;
+        // offset maintains the index in code units.
+loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
+            len = countChars(input, offset, 1);
+            boolean skip = false;
+            for(int y=x-1; y>=0; y--) {
+                if (combClass[y] == combClass[x]) {
+                    continue loop;
+                }
+            }
+            StringBuilder sb = new StringBuilder(input);
+            String otherChars = sb.delete(offset, offset+len).toString();
+            String[] subResult = producePermutations(otherChars);
+
+            String prefix = input.substring(offset, offset+len);
+            for(int y=0; y<subResult.length; y++)
+                temp[index++] =  prefix + subResult[y];
+        }
+        String[] result = new String[index];
+        for (int x=0; x<index; x++)
+            result[x] = temp[x];
+        return result;
+    }
+
+    private int getClass(int c) {
+        return sun.text.Normalizer.getCombiningClass(c);
+    }
+
+    /**
+     * Attempts to compose input by combining the first character
+     * with the first combining mark following it. Returns a String
+     * that is the composition of the leading character with its first
+     * combining mark followed by the remaining combining marks. Returns
+     * null if the first two characters cannot be further composed.
+     */
+    private String composeOneStep(String input) {
+        int len = countChars(input, 0, 2);
+        String firstTwoCharacters = input.substring(0, len);
+        String result = Normalizer.normalize(firstTwoCharacters, Normalizer.Form.NFC);
+
+        if (result.equals(firstTwoCharacters))
+            return null;
+        else {
+            String remainder = input.substring(len);
+            return result + remainder;
+        }
+    }
+
+    /**
+     * Preprocess any \Q...\E sequences in `temp', meta-quoting them.
+     * See the description of `quotemeta' in perlfunc(1).
+     */
+    private void RemoveQEQuoting() {
+        final int pLen = patternLength;
+        int i = 0;
+        while (i < pLen-1) {
+            if (temp[i] != '\\')
+                i += 1;
+            else if (temp[i + 1] != 'Q')
+                i += 2;
+            else
+                break;
+        }
+        if (i >= pLen - 1)    // No \Q sequence found
+            return;
+        int j = i;
+        i += 2;
+        int[] newtemp = new int[j + 3*(pLen-i) + 2];
+        System.arraycopy(temp, 0, newtemp, 0, j);
+
+        boolean inQuote = true;
+        boolean beginQuote = true;
+        while (i < pLen) {
+            int c = temp[i++];
+            if (!ASCII.isAscii(c) || ASCII.isAlpha(c)) {
+                newtemp[j++] = c;
+            } else if (ASCII.isDigit(c)) {
+                if (beginQuote) {
+                    /*
+                     * A unicode escape \[0xu] could be before this quote,
+                     * and we don't want this numeric char to processed as
+                     * part of the escape.
+                     */
+                    newtemp[j++] = '\\';
+                    newtemp[j++] = 'x';
+                    newtemp[j++] = '3';
+                }
+                newtemp[j++] = c;
+            } else if (c != '\\') {
+                if (inQuote) newtemp[j++] = '\\';
+                newtemp[j++] = c;
+            } else if (inQuote) {
+                if (temp[i] == 'E') {
+                    i++;
+                    inQuote = false;
+                } else {
+                    newtemp[j++] = '\\';
+                    newtemp[j++] = '\\';
+                }
+            } else {
+                if (temp[i] == 'Q') {
+                    i++;
+                    inQuote = true;
+                    beginQuote = true;
+                    continue;
+                } else {
+                    newtemp[j++] = c;
+                    if (i != pLen)
+                        newtemp[j++] = temp[i++];
+                }
+            }
+
+            beginQuote = false;
+        }
+
+        patternLength = j;
+        temp = Arrays.copyOf(newtemp, j + 2); // double zero termination
+    }
+
+    /**
+     * Copies regular expression to an int array and invokes the parsing
+     * of the expression which will create the object tree.
+     */
+    private void compile() {
+        // Handle canonical equivalences
+        if (has(CANON_EQ) && !has(LITERAL)) {
+            normalize();
+        } else {
+            normalizedPattern = pattern;
+        }
+        patternLength = normalizedPattern.length();
+
+        // Copy pattern to int array for convenience
+        // Use double zero to terminate pattern
+        temp = new int[patternLength + 2];
+
+        hasSupplementary = false;
+        int c, count = 0;
+        // Convert all chars into code points
+        for (int x = 0; x < patternLength; x += Character.charCount(c)) {
+            c = normalizedPattern.codePointAt(x);
+            if (isSupplementary(c)) {
+                hasSupplementary = true;
+            }
+            temp[count++] = c;
+        }
+
+        patternLength = count;   // patternLength now in code points
+
+        if (! has(LITERAL))
+            RemoveQEQuoting();
+
+        // Allocate all temporary objects here.
+        buffer = new int[32];
+        groupNodes = new GroupHead[10];
+        namedGroups = null;
+
+        if (has(LITERAL)) {
+            // Literal pattern handling
+            matchRoot = newSlice(temp, patternLength, hasSupplementary);
+            matchRoot.next = lastAccept;
+        } else {
+            // Start recursive descent parsing
+            matchRoot = expr(lastAccept);
+            // Check extra pattern characters
+            if (patternLength != cursor) {
+                if (peek() == ')') {
+                    throw error("Unmatched closing ')'");
+                } else {
+                    throw error("Unexpected internal error");
+                }
+            }
+        }
+
+        // Peephole optimization
+        if (matchRoot instanceof Slice) {
+            root = BnM.optimize(matchRoot);
+            if (root == matchRoot) {
+                root = hasSupplementary ? new StartS(matchRoot) : new Start(matchRoot);
+            }
+        } else if (matchRoot instanceof Begin || matchRoot instanceof First) {
+            root = matchRoot;
+        } else {
+            root = hasSupplementary ? new StartS(matchRoot) : new Start(matchRoot);
+        }
+
+        // Release temporary storage
+        temp = null;
+        buffer = null;
+        groupNodes = null;
+        patternLength = 0;
+        compiled = true;
+    }
+
+    Map<String, Integer> namedGroups() {
+        if (namedGroups == null)
+            namedGroups = new HashMap<>(2);
+        return namedGroups;
+    }
+
+    /**
+     * Used to print out a subtree of the Pattern to help with debugging.
+     */
+    private static void printObjectTree(Node node) {
+        while(node != null) {
+            if (node instanceof Prolog) {
+                System.out.println(node);
+                printObjectTree(((Prolog)node).loop);
+                System.out.println("**** end contents prolog loop");
+            } else if (node instanceof Loop) {
+                System.out.println(node);
+                printObjectTree(((Loop)node).body);
+                System.out.println("**** end contents Loop body");
+            } else if (node instanceof Curly) {
+                System.out.println(node);
+                printObjectTree(((Curly)node).atom);
+                System.out.println("**** end contents Curly body");
+            } else if (node instanceof GroupCurly) {
+                System.out.println(node);
+                printObjectTree(((GroupCurly)node).atom);
+                System.out.println("**** end contents GroupCurly body");
+            } else if (node instanceof GroupTail) {
+                System.out.println(node);
+                System.out.println("Tail next is "+node.next);
+                return;
+            } else {
+                System.out.println(node);
+            }
+            node = node.next;
+            if (node != null)
+                System.out.println("->next:");
+            if (node == Pattern.accept) {
+                System.out.println("Accept Node");
+                node = null;
+            }
+       }
+    }
+
+    /**
+     * Used to accumulate information about a subtree of the object graph
+     * so that optimizations can be applied to the subtree.
+     */
+    static final class TreeInfo {
+        int minLength;
+        int maxLength;
+        boolean maxValid;
+        boolean deterministic;
+
+        TreeInfo() {
+            reset();
+        }
+        void reset() {
+            minLength = 0;
+            maxLength = 0;
+            maxValid = true;
+            deterministic = true;
+        }
+    }
+
+    /*
+     * The following private methods are mainly used to improve the
+     * readability of the code. In order to let the Java compiler easily
+     * inline them, we should not put many assertions or error checks in them.
+     */
+
+    /**
+     * Indicates whether a particular flag is set or not.
+     */
+    private boolean has(int f) {
+        return (flags & f) != 0;
+    }
+
+    /**
+     * Match next character, signal error if failed.
+     */
+    private void accept(int ch, String s) {
+        int testChar = temp[cursor++];
+        if (has(COMMENTS))
+            testChar = parsePastWhitespace(testChar);
+        if (ch != testChar) {
+            throw error(s);
+        }
+    }
+
+    /**
+     * Mark the end of pattern with a specific character.
+     */
+    private void mark(int c) {
+        temp[patternLength] = c;
+    }
+
+    /**
+     * Peek the next character, and do not advance the cursor.
+     */
+    private int peek() {
+        int ch = temp[cursor];
+        if (has(COMMENTS))
+            ch = peekPastWhitespace(ch);
+        return ch;
+    }
+
+    /**
+     * Read the next character, and advance the cursor by one.
+     */
+    private int read() {
+        int ch = temp[cursor++];
+        if (has(COMMENTS))
+            ch = parsePastWhitespace(ch);
+        return ch;
+    }
+
+    /**
+     * Read the next character, and advance the cursor by one,
+     * ignoring the COMMENTS setting
+     */
+    private int readEscaped() {
+        int ch = temp[cursor++];
+        return ch;
+    }
+
+    /**
+     * Advance the cursor by one, and peek the next character.
+     */
+    private int next() {
+        int ch = temp[++cursor];
+        if (has(COMMENTS))
+            ch = peekPastWhitespace(ch);
+        return ch;
+    }
+
+    /**
+     * Advance the cursor by one, and peek the next character,
+     * ignoring the COMMENTS setting
+     */
+    private int nextEscaped() {
+        int ch = temp[++cursor];
+        return ch;
+    }
+
+    /**
+     * If in xmode peek past whitespace and comments.
+     */
+    private int peekPastWhitespace(int ch) {
+        while (ASCII.isSpace(ch) || ch == '#') {
+            while (ASCII.isSpace(ch))
+                ch = temp[++cursor];
+            if (ch == '#') {
+                ch = peekPastLine();
+            }
+        }
+        return ch;
+    }
+
+    /**
+     * If in xmode parse past whitespace and comments.
+     */
+    private int parsePastWhitespace(int ch) {
+        while (ASCII.isSpace(ch) || ch == '#') {
+            while (ASCII.isSpace(ch))
+                ch = temp[cursor++];
+            if (ch == '#')
+                ch = parsePastLine();
+        }
+        return ch;
+    }
+
+    /**
+     * xmode parse past comment to end of line.
+     */
+    private int parsePastLine() {
+        int ch = temp[cursor++];
+        while (ch != 0 && !isLineSeparator(ch))
+            ch = temp[cursor++];
+        return ch;
+    }
+
+    /**
+     * xmode peek past comment to end of line.
+     */
+    private int peekPastLine() {
+        int ch = temp[++cursor];
+        while (ch != 0 && !isLineSeparator(ch))
+            ch = temp[++cursor];
+        return ch;
+    }
+
+    /**
+     * Determines if character is a line separator in the current mode
+     */
+    private boolean isLineSeparator(int ch) {
+        if (has(UNIX_LINES)) {
+            return ch == '\n';
+        } else {
+            return (ch == '\n' ||
+                    ch == '\r' ||
+                    (ch|1) == '\u2029' ||
+                    ch == '\u0085');
+        }
+    }
+
+    /**
+     * Read the character after the next one, and advance the cursor by two.
+     */
+    private int skip() {
+        int i = cursor;
+        int ch = temp[i+1];
+        cursor = i + 2;
+        return ch;
+    }
+
+    /**
+     * Unread one next character, and retreat cursor by one.
+     */
+    private void unread() {
+        cursor--;
+    }
+
+    /**
+     * Internal method used for handling all syntax errors. The pattern is
+     * displayed with a pointer to aid in locating the syntax error.
+     */
+    private PatternSyntaxException error(String s) {
+        return new PatternSyntaxException(s, normalizedPattern,  cursor - 1);
+    }
+
+    /**
+     * Determines if there is any supplementary character or unpaired
+     * surrogate in the specified range.
+     */
+    private boolean findSupplementary(int start, int end) {
+        for (int i = start; i < end; i++) {
+            if (isSupplementary(temp[i]))
+                return true;
+        }
+        return false;
+    }
+
+    /**
+     * Determines if the specified code point is a supplementary
+     * character or unpaired surrogate.
+     */
+    private static final boolean isSupplementary(int ch) {
+        return ch >= Character.MIN_SUPPLEMENTARY_CODE_POINT ||
+               Character.isSurrogate((char)ch);
+    }
+
+    /**
+     *  The following methods handle the main parsing. They are sorted
+     *  according to their precedence order, the lowest one first.
+     */
+
+    /**
+     * The expression is parsed with branch nodes added for alternations.
+     * This may be called recursively to parse sub expressions that may
+     * contain alternations.
+     */
+    private Node expr(Node end) {
+        Node prev = null;
+        Node firstTail = null;
+        Branch branch = null;
+        Node branchConn = null;
+
+        for (;;) {
+            Node node = sequence(end);
+            Node nodeTail = root;      //double return
+            if (prev == null) {
+                prev = node;
+                firstTail = nodeTail;
+            } else {
+                // Branch
+                if (branchConn == null) {
+                    branchConn = new BranchConn();
+                    branchConn.next = end;
+                }
+                if (node == end) {
+                    // if the node returned from sequence() is "end"
+                    // we have an empty expr, set a null atom into
+                    // the branch to indicate to go "next" directly.
+                    node = null;
+                } else {
+                    // the "tail.next" of each atom goes to branchConn
+                    nodeTail.next = branchConn;
+                }
+                if (prev == branch) {
+                    branch.add(node);
+                } else {
+                    if (prev == end) {
+                        prev = null;
+                    } else {
+                        // replace the "end" with "branchConn" at its tail.next
+                        // when put the "prev" into the branch as the first atom.
+                        firstTail.next = branchConn;
+                    }
+                    prev = branch = new Branch(prev, node, branchConn);
+                }
+            }
+            if (peek() != '|') {
+                return prev;
+            }
+            next();
+        }
+    }
+
+    @SuppressWarnings("fallthrough")
+    /**
+     * Parsing of sequences between alternations.
+     */
+    private Node sequence(Node end) {
+        Node head = null;
+        Node tail = null;
+        Node node = null;
+    LOOP:
+        for (;;) {
+            int ch = peek();
+            switch (ch) {
+            case '(':
+                // Because group handles its own closure,
+                // we need to treat it differently
+                node = group0();
+                // Check for comment or flag group
+                if (node == null)
+                    continue;
+                if (head == null)
+                    head = node;
+                else
+                    tail.next = node;
+                // Double return: Tail was returned in root
+                tail = root;
+                continue;
+            case '[':
+                node = clazz(true);
+                break;
+            case '\\':
+                ch = nextEscaped();
+                if (ch == 'p' || ch == 'P') {
+                    boolean oneLetter = true;
+                    boolean comp = (ch == 'P');
+                    ch = next(); // Consume { if present
+                    if (ch != '{') {
+                        unread();
+                    } else {
+                        oneLetter = false;
+                    }
+                    node = family(oneLetter, comp);
+                } else {
+                    unread();
+                    node = atom();
+                }
+                break;
+            case '^':
+                next();
+                if (has(MULTILINE)) {
+                    if (has(UNIX_LINES))
+                        node = new UnixCaret();
+                    else
+                        node = new Caret();
+                } else {
+                    node = new Begin();
+                }
+                break;
+            case '$':
+                next();
+                if (has(UNIX_LINES))
+                    node = new UnixDollar(has(MULTILINE));
+                else
+                    node = new Dollar(has(MULTILINE));
+                break;
+            case '.':
+                next();
+                if (has(DOTALL)) {
+                    node = new All();
+                } else {
+                    if (has(UNIX_LINES))
+                        node = new UnixDot();
+                    else {
+                        node = new Dot();
+                    }
+                }
+                break;
+            case '|':
+            case ')':
+                break LOOP;
+            case ']': // Now interpreting dangling ] and } as literals
+            case '}':
+                node = atom();
+                break;
+            case '?':
+            case '*':
+            case '+':
+                next();
+                throw error("Dangling meta character '" + ((char)ch) + "'");
+            case 0:
+                if (cursor >= patternLength) {
+                    break LOOP;
+                }
+                // Fall through
+            default:
+                node = atom();
+                break;
+            }
+
+            node = closure(node);
+
+            if (head == null) {
+                head = tail = node;
+            } else {
+                tail.next = node;
+                tail = node;
+            }
+        }
+        if (head == null) {
+            return end;
+        }
+        tail.next = end;
+        root = tail;      //double return
+        return head;
+    }
+
+    @SuppressWarnings("fallthrough")
+    /**
+     * Parse and add a new Single or Slice.
+     */
+    private Node atom() {
+        int first = 0;
+        int prev = -1;
+        boolean hasSupplementary = false;
+        int ch = peek();
+        for (;;) {
+            switch (ch) {
+            case '*':
+            case '+':
+            case '?':
+            case '{':
+                if (first > 1) {
+                    cursor = prev;    // Unwind one character
+                    first--;
+                }
+                break;
+            case '$':
+            case '.':
+            case '^':
+            case '(':
+            case '[':
+            case '|':
+            case ')':
+                break;
+            case '\\':
+                ch = nextEscaped();
+                if (ch == 'p' || ch == 'P') { // Property
+                    if (first > 0) { // Slice is waiting; handle it first
+                        unread();
+                        break;
+                    } else { // No slice; just return the family node
+                        boolean comp = (ch == 'P');
+                        boolean oneLetter = true;
+                        ch = next(); // Consume { if present
+                        if (ch != '{')
+                            unread();
+                        else
+                            oneLetter = false;
+                        return family(oneLetter, comp);
+                    }
+                }
+                unread();
+                prev = cursor;
+                ch = escape(false, first == 0, false);
+                if (ch >= 0) {
+                    append(ch, first);
+                    first++;
+                    if (isSupplementary(ch)) {
+                        hasSupplementary = true;
+                    }
+                    ch = peek();
+                    continue;
+                } else if (first == 0) {
+                    return root;
+                }
+                // Unwind meta escape sequence
+                cursor = prev;
+                break;
+            case 0:
+                if (cursor >= patternLength) {
+                    break;
+                }
+                // Fall through
+            default:
+                prev = cursor;
+                append(ch, first);
+                first++;
+                if (isSupplementary(ch)) {
+                    hasSupplementary = true;
+                }
+                ch = next();
+                continue;
+            }
+            break;
+        }
+        if (first == 1) {
+            return newSingle(buffer[0]);
+        } else {
+            return newSlice(buffer, first, hasSupplementary);
+        }
+    }
+
+    private void append(int ch, int len) {
+        if (len >= buffer.length) {
+            int[] tmp = new int[len+len];
+            System.arraycopy(buffer, 0, tmp, 0, len);
+            buffer = tmp;
+        }
+        buffer[len] = ch;
+    }
+
+    /**
+     * Parses a backref greedily, taking as many numbers as it
+     * can. The first digit is always treated as a backref, but
+     * multi digit numbers are only treated as a backref if at
+     * least that many backrefs exist at this point in the regex.
+     */
+    private Node ref(int refNum) {
+        boolean done = false;
+        while(!done) {
+            int ch = peek();
+            switch(ch) {
+            case '0':
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
+                int newRefNum = (refNum * 10) + (ch - '0');
+                // Add another number if it doesn't make a group
+                // that doesn't exist
+                if (capturingGroupCount - 1 < newRefNum) {
+                    done = true;
+                    break;
+                }
+                refNum = newRefNum;
+                read();
+                break;
+            default:
+                done = true;
+                break;
+            }
+        }
+        if (has(CASE_INSENSITIVE))
+            return new CIBackRef(refNum, has(UNICODE_CASE));
+        else
+            return new BackRef(refNum);
+    }
+
+    /**
+     * Parses an escape sequence to determine the actual value that needs
+     * to be matched.
+     * If -1 is returned and create was true a new object was added to the tree
+     * to handle the escape sequence.
+     * If the returned value is greater than zero, it is the value that
+     * matches the escape sequence.
+     */
+    private int escape(boolean inclass, boolean create, boolean isrange) {
+        int ch = skip();
+        switch (ch) {
+        case '0':
+            return o();
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9':
+            if (inclass) break;
+            if (create) {
+                root = ref((ch - '0'));
+            }
+            return -1;
+        case 'A':
+            if (inclass) break;
+            if (create) root = new Begin();
+            return -1;
+        case 'B':
+            if (inclass) break;
+            if (create) root = new Bound(Bound.NONE, has(UNICODE_CHARACTER_CLASS));
+            return -1;
+        case 'C':
+            break;
+        case 'D':
+            if (create) root = has(UNICODE_CHARACTER_CLASS)
+                               ? new Utype(UnicodeProp.DIGIT).complement()
+                               : new Ctype(ASCII.DIGIT).complement();
+            return -1;
+        case 'E':
+        case 'F':
+            break;
+        case 'G':
+            if (inclass) break;
+            if (create) root = new LastMatch();
+            return -1;
+        case 'H':
+            if (create) root = new HorizWS().complement();
+            return -1;
+        case 'I':
+        case 'J':
+        case 'K':
+        case 'L':
+        case 'M':
+        case 'N':
+        case 'O':
+        case 'P':
+        case 'Q':
+            break;
+        case 'R':
+            if (inclass) break;
+            if (create) root = new LineEnding();
+            return -1;
+        case 'S':
+            if (create) root = has(UNICODE_CHARACTER_CLASS)
+                               ? new Utype(UnicodeProp.WHITE_SPACE).complement()
+                               : new Ctype(ASCII.SPACE).complement();
+            return -1;
+        case 'T':
+        case 'U':
+            break;
+        case 'V':
+            if (create) root = new VertWS().complement();
+            return -1;
+        case 'W':
+            if (create) root = has(UNICODE_CHARACTER_CLASS)
+                               ? new Utype(UnicodeProp.WORD).complement()
+                               : new Ctype(ASCII.WORD).complement();
+            return -1;
+        case 'X':
+        case 'Y':
+            break;
+        case 'Z':
+            if (inclass) break;
+            if (create) {
+                if (has(UNIX_LINES))
+                    root = new UnixDollar(false);
+                else
+                    root = new Dollar(false);
+            }
+            return -1;
+        case 'a':
+            return '\007';
+        case 'b':
+            if (inclass) break;
+            if (create) root = new Bound(Bound.BOTH, has(UNICODE_CHARACTER_CLASS));
+            return -1;
+        case 'c':
+            return c();
+        case 'd':
+            if (create) root = has(UNICODE_CHARACTER_CLASS)
+                               ? new Utype(UnicodeProp.DIGIT)
+                               : new Ctype(ASCII.DIGIT);
+            return -1;
+        case 'e':
+            return '\033';
+        case 'f':
+            return '\f';
+        case 'g':
+            break;
+        case 'h':
+            if (create) root = new HorizWS();
+            return -1;
+        case 'i':
+        case 'j':
+            break;
+        case 'k':
+            if (inclass)
+                break;
+            if (read() != '<')
+                throw error("\\k is not followed by '<' for named capturing group");
+            String name = groupname(read());
+            if (!namedGroups().containsKey(name))
+                throw error("(named capturing group <"+ name+"> does not exit");
+            if (create) {
+                if (has(CASE_INSENSITIVE))
+                    root = new CIBackRef(namedGroups().get(name), has(UNICODE_CASE));
+                else
+                    root = new BackRef(namedGroups().get(name));
+            }
+            return -1;
+        case 'l':
+        case 'm':
+            break;
+        case 'n':
+            return '\n';
+        case 'o':
+        case 'p':
+        case 'q':
+            break;
+        case 'r':
+            return '\r';
+        case 's':
+            if (create) root = has(UNICODE_CHARACTER_CLASS)
+                               ? new Utype(UnicodeProp.WHITE_SPACE)
+                               : new Ctype(ASCII.SPACE);
+            return -1;
+        case 't':
+            return '\t';
+        case 'u':
+            return u();
+        case 'v':
+            // '\v' was implemented as VT/0x0B in releases < 1.8 (though
+            // undocumented). In JDK8 '\v' is specified as a predefined
+            // character class for all vertical whitespace characters.
+            // So [-1, root=VertWS node] pair is returned (instead of a
+            // single 0x0B). This breaks the range if '\v' is used as
+            // the start or end value, such as [\v-...] or [...-\v], in
+            // which a single definite value (0x0B) is expected. For
+            // compatibility concern '\013'/0x0B is returned if isrange.
+            if (isrange)
+                return '\013';
+            if (create) root = new VertWS();
+            return -1;
+        case 'w':
+            if (create) root = has(UNICODE_CHARACTER_CLASS)
+                               ? new Utype(UnicodeProp.WORD)
+                               : new Ctype(ASCII.WORD);
+            return -1;
+        case 'x':
+            return x();
+        case 'y':
+            break;
+        case 'z':
+            if (inclass) break;
+            if (create) root = new End();
+            return -1;
+        default:
+            return ch;
+        }
+        throw error("Illegal/unsupported escape sequence");
+    }
+
+    /**
+     * Parse a character class, and return the node that matches it.
+     *
+     * Consumes a ] on the way out if consume is true. Usually consume
+     * is true except for the case of [abc&&def] where def is a separate
+     * right hand node with "understood" brackets.
+     */
+    private CharProperty clazz(boolean consume) {
+        CharProperty prev = null;
+        CharProperty node = null;
+        BitClass bits = new BitClass();
+        boolean include = true;
+        boolean firstInClass = true;
+        int ch = next();
+        for (;;) {
+            switch (ch) {
+                case '^':
+                    // Negates if first char in a class, otherwise literal
+                    if (firstInClass) {
+                        if (temp[cursor-1] != '[')
+                            break;
+                        ch = next();
+                        include = !include;
+                        continue;
+                    } else {
+                        // ^ not first in class, treat as literal
+                        break;
+                    }
+                case '[':
+                    firstInClass = false;
+                    node = clazz(true);
+                    if (prev == null)
+                        prev = node;
+                    else
+                        prev = union(prev, node);
+                    ch = peek();
+                    continue;
+                case '&':
+                    firstInClass = false;
+                    ch = next();
+                    if (ch == '&') {
+                        ch = next();
+                        CharProperty rightNode = null;
+                        while (ch != ']' && ch != '&') {
+                            if (ch == '[') {
+                                if (rightNode == null)
+                                    rightNode = clazz(true);
+                                else
+                                    rightNode = union(rightNode, clazz(true));
+                            } else { // abc&&def
+                                unread();
+                                rightNode = clazz(false);
+                            }
+                            ch = peek();
+                        }
+                        if (rightNode != null)
+                            node = rightNode;
+                        if (prev == null) {
+                            if (rightNode == null)
+                                throw error("Bad class syntax");
+                            else
+                                prev = rightNode;
+                        } else {
+                            prev = intersection(prev, node);
+                        }
+                    } else {
+                        // treat as a literal &
+                        unread();
+                        break;
+                    }
+                    continue;
+                case 0:
+                    firstInClass = false;
+                    if (cursor >= patternLength)
+                        throw error("Unclosed character class");
+                    break;
+                case ']':
+                    firstInClass = false;
+                    if (prev != null) {
+                        if (consume)
+                            next();
+                        return prev;
+                    }
+                    break;
+                default:
+                    firstInClass = false;
+                    break;
+            }
+            node = range(bits);
+            if (include) {
+                if (prev == null) {
+                    prev = node;
+                } else {
+                    if (prev != node)
+                        prev = union(prev, node);
+                }
+            } else {
+                if (prev == null) {
+                    prev = node.complement();
+                } else {
+                    if (prev != node)
+                        prev = setDifference(prev, node);
+                }
+            }
+            ch = peek();
+        }
+    }
+
+    private CharProperty bitsOrSingle(BitClass bits, int ch) {
+        /* Bits can only handle codepoints in [u+0000-u+00ff] range.
+           Use "single" node instead of bits when dealing with unicode
+           case folding for codepoints listed below.
+           (1)Uppercase out of range: u+00ff, u+00b5
+              toUpperCase(u+00ff) -> u+0178
+              toUpperCase(u+00b5) -> u+039c
+           (2)LatinSmallLetterLongS u+17f
+              toUpperCase(u+017f) -> u+0053
+           (3)LatinSmallLetterDotlessI u+131
+              toUpperCase(u+0131) -> u+0049
+           (4)LatinCapitalLetterIWithDotAbove u+0130
+              toLowerCase(u+0130) -> u+0069
+           (5)KelvinSign u+212a
+              toLowerCase(u+212a) ==> u+006B
+           (6)AngstromSign u+212b
+              toLowerCase(u+212b) ==> u+00e5
+        */
+        int d;
+        if (ch < 256 &&
+            !(has(CASE_INSENSITIVE) && has(UNICODE_CASE) &&
+              (ch == 0xff || ch == 0xb5 ||
+               ch == 0x49 || ch == 0x69 ||  //I and i
+               ch == 0x53 || ch == 0x73 ||  //S and s
+               ch == 0x4b || ch == 0x6b ||  //K and k
+               ch == 0xc5 || ch == 0xe5)))  //A+ring
+            return bits.add(ch, flags());
+        return newSingle(ch);
+    }
+
+    /**
+     * Parse a single character or a character range in a character class
+     * and return its representative node.
+     */
+    private CharProperty range(BitClass bits) {
+        int ch = peek();
+        if (ch == '\\') {
+            ch = nextEscaped();
+            if (ch == 'p' || ch == 'P') { // A property
+                boolean comp = (ch == 'P');
+                boolean oneLetter = true;
+                // Consume { if present
+                ch = next();
+                if (ch != '{')
+                    unread();
+                else
+                    oneLetter = false;
+                return family(oneLetter, comp);
+            } else { // ordinary escape
+                boolean isrange = temp[cursor+1] == '-';
+                unread();
+                ch = escape(true, true, isrange);
+                if (ch == -1)
+                    return (CharProperty) root;
+            }
+        } else {
+            next();
+        }
+        if (ch >= 0) {
+            if (peek() == '-') {
+                int endRange = temp[cursor+1];
+                if (endRange == '[') {
+                    return bitsOrSingle(bits, ch);
+                }
+                if (endRange != ']') {
+                    next();
+                    int m = peek();
+                    if (m == '\\') {
+                        m = escape(true, false, true);
+                    } else {
+                        next();
+                    }
+                    if (m < ch) {
+                        throw error("Illegal character range");
+                    }
+                    if (has(CASE_INSENSITIVE))
+                        return caseInsensitiveRangeFor(ch, m);
+                    else
+                        return rangeFor(ch, m);
+                }
+            }
+            return bitsOrSingle(bits, ch);
+        }
+        throw error("Unexpected character '"+((char)ch)+"'");
+    }
+
+    /**
+     * Parses a Unicode character family and returns its representative node.
+     */
+    private CharProperty family(boolean singleLetter,
+                                boolean maybeComplement)
+    {
+        next();
+        String name;
+        CharProperty node = null;
+
+        if (singleLetter) {
+            int c = temp[cursor];
+            if (!Character.isSupplementaryCodePoint(c)) {
+                name = String.valueOf((char)c);
+            } else {
+                name = new String(temp, cursor, 1);
+            }
+            read();
+        } else {
+            int i = cursor;
+            mark('}');
+            while(read() != '}') {
+            }
+            mark('\000');
+            int j = cursor;
+            if (j > patternLength)
+                throw error("Unclosed character family");
+            if (i + 1 >= j)
+                throw error("Empty character family");
+            name = new String(temp, i, j-i-1);
+        }
+
+        int i = name.indexOf('=');
+        if (i != -1) {
+            // property construct \p{name=value}
+            String value = name.substring(i + 1);
+            name = name.substring(0, i).toLowerCase(Locale.ENGLISH);
+            if ("sc".equals(name) || "script".equals(name)) {
+                node = unicodeScriptPropertyFor(value);
+            } else if ("blk".equals(name) || "block".equals(name)) {
+                node = unicodeBlockPropertyFor(value);
+            } else if ("gc".equals(name) || "general_category".equals(name)) {
+                node = charPropertyNodeFor(value);
+            } else {
+                throw error("Unknown Unicode property {name=<" + name + ">, "
+                             + "value=<" + value + ">}");
+            }
+        } else {
+            if (name.startsWith("In")) {
+                // \p{inBlockName}
+                node = unicodeBlockPropertyFor(name.substring(2));
+            } else if (name.startsWith("Is")) {
+                // \p{isGeneralCategory} and \p{isScriptName}
+                name = name.substring(2);
+                UnicodeProp uprop = UnicodeProp.forName(name);
+                if (uprop != null)
+                    node = new Utype(uprop);
+                if (node == null)
+                    node = CharPropertyNames.charPropertyFor(name);
+                if (node == null)
+                    node = unicodeScriptPropertyFor(name);
+            } else {
+                if (has(UNICODE_CHARACTER_CLASS)) {
+                    UnicodeProp uprop = UnicodeProp.forPOSIXName(name);
+                    if (uprop != null)
+                        node = new Utype(uprop);
+                }
+                if (node == null)
+                    node = charPropertyNodeFor(name);
+            }
+        }
+        if (maybeComplement) {
+            if (node instanceof Category || node instanceof Block)
+                hasSupplementary = true;
+            node = node.complement();
+        }
+        return node;
+    }
+
+
+    /**
+     * Returns a CharProperty matching all characters belong to
+     * a UnicodeScript.
+     */
+    private CharProperty unicodeScriptPropertyFor(String name) {
+        final Character.UnicodeScript script;
+        try {
+            script = Character.UnicodeScript.forName(name);
+        } catch (IllegalArgumentException iae) {
+            throw error("Unknown character script name {" + name + "}");
+        }
+        return new Script(script);
+    }
+
+    /**
+     * Returns a CharProperty matching all characters in a UnicodeBlock.
+     */
+    private CharProperty unicodeBlockPropertyFor(String name) {
+        final Character.UnicodeBlock block;
+        try {
+            block = Character.UnicodeBlock.forName(name);
+        } catch (IllegalArgumentException iae) {
+            throw error("Unknown character block name {" + name + "}");
+        }
+        return new Block(block);
+    }
+
+    /**
+     * Returns a CharProperty matching all characters in a named property.
+     */
+    private CharProperty charPropertyNodeFor(String name) {
+        CharProperty p = CharPropertyNames.charPropertyFor(name);
+        if (p == null)
+            throw error("Unknown character property name {" + name + "}");
+        return p;
+    }
+
+    /**
+     * Parses and returns the name of a "named capturing group", the trailing
+     * ">" is consumed after parsing.
+     */
+    private String groupname(int ch) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(Character.toChars(ch));
+        while (ASCII.isLower(ch=read()) || ASCII.isUpper(ch) ||
+               ASCII.isDigit(ch)) {
+            sb.append(Character.toChars(ch));
+        }
+        if (sb.length() == 0)
+            throw error("named capturing group has 0 length name");
+        if (ch != '>')
+            throw error("named capturing group is missing trailing '>'");
+        return sb.toString();
+    }
+
+    /**
+     * Parses a group and returns the head node of a set of nodes that process
+     * the group. Sometimes a double return system is used where the tail is
+     * returned in root.
+     */
+    private Node group0() {
+        boolean capturingGroup = false;
+        Node head = null;
+        Node tail = null;
+        int save = flags;
+        root = null;
+        int ch = next();
+        if (ch == '?') {
+            ch = skip();
+            switch (ch) {
+            case ':':   //  (?:xxx) pure group
+                head = createGroup(true);
+                tail = root;
+                head.next = expr(tail);
+                break;
+            case '=':   // (?=xxx) and (?!xxx) lookahead
+            case '!':
+                head = createGroup(true);
+                tail = root;
+                head.next = expr(tail);
+                if (ch == '=') {
+                    head = tail = new Pos(head);
+                } else {
+                    head = tail = new Neg(head);
+                }
+                break;
+            case '>':   // (?>xxx)  independent group
+                head = createGroup(true);
+                tail = root;
+                head.next = expr(tail);
+                head = tail = new Ques(head, INDEPENDENT);
+                break;
+            case '<':   // (?<xxx)  look behind
+                ch = read();
+                if (ASCII.isLower(ch) || ASCII.isUpper(ch)) {
+                    // named captured group
+                    String name = groupname(ch);
+                    if (namedGroups().containsKey(name))
+                        throw error("Named capturing group <" + name
+                                    + "> is already defined");
+                    capturingGroup = true;
+                    head = createGroup(false);
+                    tail = root;
+                    namedGroups().put(name, capturingGroupCount-1);
+                    head.next = expr(tail);
+                    break;
+                }
+                int start = cursor;
+                head = createGroup(true);
+                tail = root;
+                head.next = expr(tail);
+                tail.next = lookbehindEnd;
+                TreeInfo info = new TreeInfo();
+                head.study(info);
+                if (info.maxValid == false) {
+                    throw error("Look-behind group does not have "
+                                + "an obvious maximum length");
+                }
+                boolean hasSupplementary = findSupplementary(start, patternLength);
+                if (ch == '=') {
+                    head = tail = (hasSupplementary ?
+                                   new BehindS(head, info.maxLength,
+                                               info.minLength) :
+                                   new Behind(head, info.maxLength,
+                                              info.minLength));
+                } else if (ch == '!') {
+                    head = tail = (hasSupplementary ?
+                                   new NotBehindS(head, info.maxLength,
+                                                  info.minLength) :
+                                   new NotBehind(head, info.maxLength,
+                                                 info.minLength));
+                } else {
+                    throw error("Unknown look-behind group");
+                }
+                break;
+            case '$':
+            case '@':
+                throw error("Unknown group type");
+            default:    // (?xxx:) inlined match flags
+                unread();
+                addFlag();
+                ch = read();
+                if (ch == ')') {
+                    return null;    // Inline modifier only
+                }
+                if (ch != ':') {
+                    throw error("Unknown inline modifier");
+                }
+                head = createGroup(true);
+                tail = root;
+                head.next = expr(tail);
+                break;
+            }
+        } else { // (xxx) a regular group
+            capturingGroup = true;
+            head = createGroup(false);
+            tail = root;
+            head.next = expr(tail);
+        }
+
+        accept(')', "Unclosed group");
+        flags = save;
+
+        // Check for quantifiers
+        Node node = closure(head);
+        if (node == head) { // No closure
+            root = tail;
+            return node;    // Dual return
+        }
+        if (head == tail) { // Zero length assertion
+            root = node;
+            return node;    // Dual return
+        }
+
+        if (node instanceof Ques) {
+            Ques ques = (Ques) node;
+            if (ques.type == POSSESSIVE) {
+                root = node;
+                return node;
+            }
+            tail.next = new BranchConn();
+            tail = tail.next;
+            if (ques.type == GREEDY) {
+                head = new Branch(head, null, tail);
+            } else { // Reluctant quantifier
+                head = new Branch(null, head, tail);
+            }
+            root = tail;
+            return head;
+        } else if (node instanceof Curly) {
+            Curly curly = (Curly) node;
+            if (curly.type == POSSESSIVE) {
+                root = node;
+                return node;
+            }
+            // Discover if the group is deterministic
+            TreeInfo info = new TreeInfo();
+            if (head.study(info)) { // Deterministic
+                GroupTail temp = (GroupTail) tail;
+                head = root = new GroupCurly(head.next, curly.cmin,
+                                   curly.cmax, curly.type,
+                                   ((GroupTail)tail).localIndex,
+                                   ((GroupTail)tail).groupIndex,
+                                             capturingGroup);
+                return head;
+            } else { // Non-deterministic
+                int temp = ((GroupHead) head).localIndex;
+                Loop loop;
+                if (curly.type == GREEDY)
+                    loop = new Loop(this.localCount, temp);
+                else  // Reluctant Curly
+                    loop = new LazyLoop(this.localCount, temp);
+                Prolog prolog = new Prolog(loop);
+                this.localCount += 1;
+                loop.cmin = curly.cmin;
+                loop.cmax = curly.cmax;
+                loop.body = head;
+                tail.next = loop;
+                root = loop;
+                return prolog; // Dual return
+            }
+        }
+        throw error("Internal logic error");
+    }
+
+    /**
+     * Create group head and tail nodes using double return. If the group is
+     * created with anonymous true then it is a pure group and should not
+     * affect group counting.
+     */
+    private Node createGroup(boolean anonymous) {
+        int localIndex = localCount++;
+        int groupIndex = 0;
+        if (!anonymous)
+            groupIndex = capturingGroupCount++;
+        GroupHead head = new GroupHead(localIndex);
+        root = new GroupTail(localIndex, groupIndex);
+        if (!anonymous && groupIndex < 10)
+            groupNodes[groupIndex] = head;
+        return head;
+    }
+
+    @SuppressWarnings("fallthrough")
+    /**
+     * Parses inlined match flags and set them appropriately.
+     */
+    private void addFlag() {
+        int ch = peek();
+        for (;;) {
+            switch (ch) {
+            case 'i':
+                flags |= CASE_INSENSITIVE;
+                break;
+            case 'm':
+                flags |= MULTILINE;
+                break;
+            case 's':
+                flags |= DOTALL;
+                break;
+            case 'd':
+                flags |= UNIX_LINES;
+                break;
+            case 'u':
+                flags |= UNICODE_CASE;
+                break;
+            case 'c':
+                flags |= CANON_EQ;
+                break;
+            case 'x':
+                flags |= COMMENTS;
+                break;
+            case 'U':
+                flags |= (UNICODE_CHARACTER_CLASS | UNICODE_CASE);
+                break;
+            case '-': // subFlag then fall through
+                ch = next();
+                subFlag();
+            default:
+                return;
+            }
+            ch = next();
+        }
+    }
+
+    @SuppressWarnings("fallthrough")
+    /**
+     * Parses the second part of inlined match flags and turns off
+     * flags appropriately.
+     */
+    private void subFlag() {
+        int ch = peek();
+        for (;;) {
+            switch (ch) {
+            case 'i':
+                flags &= ~CASE_INSENSITIVE;
+                break;
+            case 'm':
+                flags &= ~MULTILINE;
+                break;
+            case 's':
+                flags &= ~DOTALL;
+                break;
+            case 'd':
+                flags &= ~UNIX_LINES;
+                break;
+            case 'u':
+                flags &= ~UNICODE_CASE;
+                break;
+            case 'c':
+                flags &= ~CANON_EQ;
+                break;
+            case 'x':
+                flags &= ~COMMENTS;
+                break;
+            case 'U':
+                flags &= ~(UNICODE_CHARACTER_CLASS | UNICODE_CASE);
+            default:
+                return;
+            }
+            ch = next();
+        }
+    }
+
+    static final int MAX_REPS   = 0x7FFFFFFF;
+
+    static final int GREEDY     = 0;
+
+    static final int LAZY       = 1;
+
+    static final int POSSESSIVE = 2;
+
+    static final int INDEPENDENT = 3;
+
+    /**
+     * Processes repetition. If the next character peeked is a quantifier
+     * then new nodes must be appended to handle the repetition.
+     * Prev could be a single or a group, so it could be a chain of nodes.
+     */
+    private Node closure(Node prev) {
+        Node atom;
+        int ch = peek();
+        switch (ch) {
+        case '?':
+            ch = next();
+            if (ch == '?') {
+                next();
+                return new Ques(prev, LAZY);
+            } else if (ch == '+') {
+                next();
+                return new Ques(prev, POSSESSIVE);
+            }
+            return new Ques(prev, GREEDY);
+        case '*':
+            ch = next();
+            if (ch == '?') {
+                next();
+                return new Curly(prev, 0, MAX_REPS, LAZY);
+            } else if (ch == '+') {
+                next();
+                return new Curly(prev, 0, MAX_REPS, POSSESSIVE);
+            }
+            return new Curly(prev, 0, MAX_REPS, GREEDY);
+        case '+':
+            ch = next();
+            if (ch == '?') {
+                next();
+                return new Curly(prev, 1, MAX_REPS, LAZY);
+            } else if (ch == '+') {
+                next();
+                return new Curly(prev, 1, MAX_REPS, POSSESSIVE);
+            }
+            return new Curly(prev, 1, MAX_REPS, GREEDY);
+        case '{':
+            ch = temp[cursor+1];
+            if (ASCII.isDigit(ch)) {
+                skip();
+                int cmin = 0;
+                do {
+                    cmin = cmin * 10 + (ch - '0');
+                } while (ASCII.isDigit(ch = read()));
+                int cmax = cmin;
+                if (ch == ',') {
+                    ch = read();
+                    cmax = MAX_REPS;
+                    if (ch != '}') {
+                        cmax = 0;
+                        while (ASCII.isDigit(ch)) {
+                            cmax = cmax * 10 + (ch - '0');
+                            ch = read();
+                        }
+                    }
+                }
+                if (ch != '}')
+                    throw error("Unclosed counted closure");
+                if (((cmin) | (cmax) | (cmax - cmin)) < 0)
+                    throw error("Illegal repetition range");
+                Curly curly;
+                ch = peek();
+                if (ch == '?') {
+                    next();
+                    curly = new Curly(prev, cmin, cmax, LAZY);
+                } else if (ch == '+') {
+                    next();
+                    curly = new Curly(prev, cmin, cmax, POSSESSIVE);
+                } else {
+                    curly = new Curly(prev, cmin, cmax, GREEDY);
+                }
+                return curly;
+            } else {
+                throw error("Illegal repetition");
+            }
+        default:
+            return prev;
+        }
+    }
+
+    /**
+     *  Utility method for parsing control escape sequences.
+     */
+    private int c() {
+        if (cursor < patternLength) {
+            return read() ^ 64;
+        }
+        throw error("Illegal control escape sequence");
+    }
+
+    /**
+     *  Utility method for parsing octal escape sequences.
+     */
+    private int o() {
+        int n = read();
+        if (((n-'0')|('7'-n)) >= 0) {
+            int m = read();
+            if (((m-'0')|('7'-m)) >= 0) {
+                int o = read();
+                if ((((o-'0')|('7'-o)) >= 0) && (((n-'0')|('3'-n)) >= 0)) {
+                    return (n - '0') * 64 + (m - '0') * 8 + (o - '0');
+                }
+                unread();
+                return (n - '0') * 8 + (m - '0');
+            }
+            unread();
+            return (n - '0');
+        }
+        throw error("Illegal octal escape sequence");
+    }
+
+    /**
+     *  Utility method for parsing hexadecimal escape sequences.
+     */
+    private int x() {
+        int n = read();
+        if (ASCII.isHexDigit(n)) {
+            int m = read();
+            if (ASCII.isHexDigit(m)) {
+                return ASCII.toDigit(n) * 16 + ASCII.toDigit(m);
+            }
+        } else if (n == '{' && ASCII.isHexDigit(peek())) {
+            int ch = 0;
+            while (ASCII.isHexDigit(n = read())) {
+                ch = (ch << 4) + ASCII.toDigit(n);
+                if (ch > Character.MAX_CODE_POINT)
+                    throw error("Hexadecimal codepoint is too big");
+            }
+            if (n != '}')
+                throw error("Unclosed hexadecimal escape sequence");
+            return ch;
+        }
+        throw error("Illegal hexadecimal escape sequence");
+    }
+
+    /**
+     *  Utility method for parsing unicode escape sequences.
+     */
+    private int cursor() {
+        return cursor;
+    }
+
+    private void setcursor(int pos) {
+        cursor = pos;
+    }
+
+    private int uxxxx() {
+        int n = 0;
+        for (int i = 0; i < 4; i++) {
+            int ch = read();
+            if (!ASCII.isHexDigit(ch)) {
+                throw error("Illegal Unicode escape sequence");
+            }
+            n = n * 16 + ASCII.toDigit(ch);
+        }
+        return n;
+    }
+
+    private int u() {
+        int n = uxxxx();
+        if (Character.isHighSurrogate((char)n)) {
+            int cur = cursor();
+            if (read() == '\\' && read() == 'u') {
+                int n2 = uxxxx();
+                if (Character.isLowSurrogate((char)n2))
+                    return Character.toCodePoint((char)n, (char)n2);
+            }
+            setcursor(cur);
+        }
+        return n;
+    }
+
+    //
+    // Utility methods for code point support
+    //
+
+    private static final int countChars(CharSequence seq, int index,
+                                        int lengthInCodePoints) {
+        // optimization
+        if (lengthInCodePoints == 1 && !Character.isHighSurrogate(seq.charAt(index))) {
+            assert (index >= 0 && index < seq.length());
+            return 1;
+        }
+        int length = seq.length();
+        int x = index;
+        if (lengthInCodePoints >= 0) {
+            assert (index >= 0 && index < length);
+            for (int i = 0; x < length && i < lengthInCodePoints; i++) {
+                if (Character.isHighSurrogate(seq.charAt(x++))) {
+                    if (x < length && Character.isLowSurrogate(seq.charAt(x))) {
+                        x++;
+                    }
+                }
+            }
+            return x - index;
+        }
+
+        assert (index >= 0 && index <= length);
+        if (index == 0) {
+            return 0;
+        }
+        int len = -lengthInCodePoints;
+        for (int i = 0; x > 0 && i < len; i++) {
+            if (Character.isLowSurrogate(seq.charAt(--x))) {
+                if (x > 0 && Character.isHighSurrogate(seq.charAt(x-1))) {
+                    x--;
+                }
+            }
+        }
+        return index - x;
+    }
+
+    private static final int countCodePoints(CharSequence seq) {
+        int length = seq.length();
+        int n = 0;
+        for (int i = 0; i < length; ) {
+            n++;
+            if (Character.isHighSurrogate(seq.charAt(i++))) {
+                if (i < length && Character.isLowSurrogate(seq.charAt(i))) {
+                    i++;
+                }
+            }
+        }
+        return n;
+    }
+
+    /**
+     *  Creates a bit vector for matching Latin-1 values. A normal BitClass
+     *  never matches values above Latin-1, and a complemented BitClass always
+     *  matches values above Latin-1.
+     */
+    private static final class BitClass extends BmpCharProperty {
+        final boolean[] bits;
+        BitClass() { bits = new boolean[256]; }
+        private BitClass(boolean[] bits) { this.bits = bits; }
+        BitClass add(int c, int flags) {
+            assert c >= 0 && c <= 255;
+            if ((flags & CASE_INSENSITIVE) != 0) {
+                if (ASCII.isAscii(c)) {
+                    bits[ASCII.toUpper(c)] = true;
+                    bits[ASCII.toLower(c)] = true;
+                } else if ((flags & UNICODE_CASE) != 0) {
+                    bits[Character.toLowerCase(c)] = true;
+                    bits[Character.toUpperCase(c)] = true;
+                }
+            }
+            bits[c] = true;
+            return this;
+        }
+        boolean isSatisfiedBy(int ch) {
+            return ch < 256 && bits[ch];
+        }
+    }
+
+    /**
+     *  Returns a suitably optimized, single character matcher.
+     */
+    private CharProperty newSingle(final int ch) {
+        if (has(CASE_INSENSITIVE)) {
+            int lower, upper;
+            if (has(UNICODE_CASE)) {
+                upper = Character.toUpperCase(ch);
+                lower = Character.toLowerCase(upper);
+                if (upper != lower)
+                    return new SingleU(lower);
+            } else if (ASCII.isAscii(ch)) {
+                lower = ASCII.toLower(ch);
+                upper = ASCII.toUpper(ch);
+                if (lower != upper)
+                    return new SingleI(lower, upper);
+            }
+        }
+        if (isSupplementary(ch))
+            return new SingleS(ch);    // Match a given Unicode character
+        return new Single(ch);         // Match a given BMP character
+    }
+
+    /**
+     *  Utility method for creating a string slice matcher.
+     */
+    private Node newSlice(int[] buf, int count, boolean hasSupplementary) {
+        int[] tmp = new int[count];
+        if (has(CASE_INSENSITIVE)) {
+            if (has(UNICODE_CASE)) {
+                for (int i = 0; i < count; i++) {
+                    tmp[i] = Character.toLowerCase(
+                                 Character.toUpperCase(buf[i]));
+                }
+                return hasSupplementary? new SliceUS(tmp) : new SliceU(tmp);
+            }
+            for (int i = 0; i < count; i++) {
+                tmp[i] = ASCII.toLower(buf[i]);
+            }
+            return hasSupplementary? new SliceIS(tmp) : new SliceI(tmp);
+        }
+        for (int i = 0; i < count; i++) {
+            tmp[i] = buf[i];
+        }
+        return hasSupplementary ? new SliceS(tmp) : new Slice(tmp);
+    }
+
+    /**
+     * The following classes are the building components of the object
+     * tree that represents a compiled regular expression. The object tree
+     * is made of individual elements that handle constructs in the Pattern.
+     * Each type of object knows how to match its equivalent construct with
+     * the match() method.
+     */
+
+    /**
+     * Base class for all node classes. Subclasses should override the match()
+     * method as appropriate. This class is an accepting node, so its match()
+     * always returns true.
+     */
+    static class Node extends Object {
+        Node next;
+        Node() {
+            next = Pattern.accept;
+        }
+        /**
+         * This method implements the classic accept node.
+         */
+        boolean match(Matcher matcher, int i, CharSequence seq) {
+            matcher.last = i;
+            matcher.groups[0] = matcher.first;
+            matcher.groups[1] = matcher.last;
+            return true;
+        }
+        /**
+         * This method is good for all zero length assertions.
+         */
+        boolean study(TreeInfo info) {
+            if (next != null) {
+                return next.study(info);
+            } else {
+                return info.deterministic;
+            }
+        }
+    }
+
+    static class LastNode extends Node {
+        /**
+         * This method implements the classic accept node with
+         * the addition of a check to see if the match occurred
+         * using all of the input.
+         */
+        boolean match(Matcher matcher, int i, CharSequence seq) {
+            if (matcher.acceptMode == Matcher.ENDANCHOR && i != matcher.to)
+                return false;
+            matcher.last = i;
+            matcher.groups[0] = matcher.first;
+            matcher.groups[1] = matcher.last;
+            return true;
+        }
+    }
+
+    /**
+     * Used for REs that can start anywhere within the input string.
+     * This basically tries to match repeatedly at each spot in the
+     * input string, moving forward after each try. An anchored search
+     * or a BnM will bypass this node completely.
+     */
+    static class Start extends Node {
+        int minLength;
+        Start(Node node) {
+            this.next = node;
+            TreeInfo info = new TreeInfo();
+            next.study(info);
+            minLength = info.minLength;
+        }
+        boolean match(Matcher matcher, int i, CharSequence seq) {
+            if (i > matcher.to - minLength) {
+                matcher.hitEnd = true;
+                return false;
+            }
+            int guard = matcher.to - minLength;
+            for (; i <= guard; i++) {
+                if (next.match(matcher, i, seq)) {
+                    matcher.first = i;
+                    matcher.groups[0] = matcher.first;
+                    matcher.groups[1] = matcher.last;
+                    return true;
+                }
+            }
+            matcher.hitEnd = true;
+            return false;
+        }
+        boolean study(TreeInfo info) {
+            next.study(info);
+            info.maxValid = false;
+            info.deterministic = false;
+            return false;
+        }
+    }
+
+    /*
+     * StartS supports supplementary characters, including unpaired surrogates.
+     */
+    static final class StartS extends Start {
+        StartS(Node node) {
+            super(node);
+        }
+        boolean match(Matcher matcher, int i, CharSequence seq) {
+            if (i > matcher.to - minLength) {
+                matcher.hitEnd = true;
+                return false;
+            }
+            int guard = matcher.to - minLength;
+            while (i <= guard) {
+                //if ((ret = next.match(matcher, i, seq)) || i == guard)
+                if (next.match(matcher, i, seq)) {
+                    matcher.first = i;
+                    matcher.groups[0] = matcher.first;
+                    matcher.groups[1] = matcher.last;
+                    return true;
+                }
+                if (i == guard)
+                    break;
+                // Optimization to move to the next character. This is
+                // faster than countChars(seq, i, 1).
+                if (Character.isHighSurrogate(seq.charAt(i++))) {
+                    if (i < seq.length() &&
+                        Character.isLowSurrogate(seq.charAt(i))) {
+                        i++;
+                    }
+                }
+            }
+            matcher.hitEnd = true;
+            return false;
+        }
+    }
+
+    /**
+     * Node to anchor at the beginning of input. This object implements the
+     * match for a \A sequence, and the caret anchor will use this if not in
+     * multiline mode.
+     */
+    static final class Begin extends Node {
+        boolean match(Matcher matcher, int i, CharSequence seq) {
+            int fromIndex = (matcher.anchoringBounds) ?
+                matcher.from : 0;
+            if (i == fromIndex && next.match(matcher, i, seq)) {
+                matcher.first = i;
+                matcher.groups[0] = i;
+                matcher.groups[1] = matcher.last;
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+
+    /**
+     * Node to anchor at the end of input. This is the absolute end, so this
+     * should not match at the last newline before the end as $ will.
+     */
+    static final class End extends Node {
+        boolean match(Matcher matcher, int i, CharSequence seq) {
+            int endIndex = (matcher.anchoringBounds) ?
+                matcher.to : matcher.getTextLength();
+            if (i == endIndex) {
+                matcher.hitEnd = true;
+                return next.match(matcher, i, seq);
+            }
+            return false;
+        }
+    }
+
+    /**
+     * Node to anchor at the beginning of a line. This is essentially the
+     * object to match for the multiline ^.
+     */
+    static final class Caret extends Node {
+        boolean match(Matcher matcher, int i, CharSequence seq) {
+            int startIndex = matcher.from;
+            int endIndex = matcher.to;
+            if (!matcher.anchoringBounds) {
+                startIndex = 0;
+                endIndex = matcher.getTextLength();
+            }
+            // Perl does not match ^ at end of input even after newline
+            if (i == endIndex) {
+                matcher.hitEnd = true;
+                return false;
+            }
+            if (i > startIndex) {
+                char ch = seq.charAt(i-1);
+                if (ch != '\n' && ch != '\r'
+                    && (ch|1) != '\u2029'
+                    && ch != '\u0085' ) {
+                    return false;
+                }
+                // Should treat /r/n as one newline
+                if (ch == '\r' && seq.charAt(i) == '\n')
+                    return false;
+            }
+            return next.match(matcher, i, seq);
+        }
+    }
+
+    /**
+     * Node to anchor at the beginning of a line when in unixdot mode.
+     */
+    static final class UnixCaret extends Node {
+        boolean match(Matcher matcher, int i, CharSequence seq) {
+            int startIndex = matcher.from;
+            int endIndex = matcher.to;
+            if (!matcher.anchoringBounds) {
+                startIndex = 0;
+                endIndex = matcher.getTextLength();
+            }
+            // Perl does not match ^ at end of input even after newline
+            if (i == endIndex) {
+                matcher.hitEnd = true;
+                return false;
+            }
+            if (i > startIndex) {
+                char ch = seq.charAt(i-1);
+                if (ch != '\n') {
+                    return false;
+                }
+            }
+            return next.match(matcher, i, seq);
+        }
+    }
+
+    /**
+     * Node to match the location where the last match ended.
+     * This is used for the \G construct.
+     */
+    static final class LastMatch extends Node {
+        boolean match(Matcher matcher, int i, CharSequence seq) {
+            if (i != matcher.oldLast)
+                return false;
+            return next.match(matcher, i, seq);
+        }
+    }
+
+    /**
+     * Node to anchor at the end of a line or the end of input based on the
+     * multiline mode.
+     *
+     * When not in multiline mode, the $ can only match at the very end
+     * of the input, unless the input ends in a line terminator in which
+     * it matches right before the last line terminator.
+     *
+     * Note that \r\n is considered an atomic line terminator.
+     *
+     * Like ^ the $ operator matches at a position, it does not match the
+     * line terminators themselves.
+     */
+    static final class Dollar extends Node {
+        boolean multiline;
+        Dollar(boolean mul) {
+            multiline = mul;
+        }
+        boolean match(Matcher matcher, int i, CharSequence seq) {
+            int endIndex = (matcher.anchoringBounds) ?
+                matcher.to : matcher.getTextLength();
+            if (!multiline) {
+                if (i < endIndex - 2)
+                    return false;
+                if (i == endIndex - 2) {
+                    char ch = seq.charAt(i);
+                    if (ch != '\r')
+                        return false;
+                    ch = seq.charAt(i + 1);
+                    if (ch != '\n')
+                        return false;
+                }
+            }
+            // Matches before any line terminator; also matches at the
+            // end of input
+            // Before line terminator:
+            // If multiline, we match here no matter what
+            // If not multiline, fall through so that the end
+            // is marked as hit; this must be a /r/n or a /n
+            // at the very end so the end was hit; more input
+            // could make this not match here
+            if (i < endIndex) {
+                char ch = seq.charAt(i);
+                 if (ch == '\n') {
+                     // No match between \r\n
+                     if (i > 0 && seq.charAt(i-1) == '\r')
+                         return false;
+                     if (multiline)
+                         return next.match(matcher, i, seq);
+                 } else if (ch == '\r' || ch == '\u0085' ||
+                            (ch|1) == '\u2029') {
+                     if (multiline)
+                         return next.match(matcher, i, seq);
+                 } else { // No line terminator, no match
+                     return false;
+                 }
+            }
+            // Matched at current end so hit end
+            matcher.hitEnd = true;
+            // If a $ matches because of end of input, then more input
+            // could cause it to fail!
+            matcher.requireEnd = true;
+            return next.match(matcher, i, seq);
+        }
+        boolean study(TreeInfo info) {
+            next.study(info);
+            return info.deterministic;
+        }
+    }
+
+    /**
+     * Node to anchor at the end of a line or the end of input based on the
+     * multiline mode when in unix lines mode.
+     */
+    static final class UnixDollar extends Node {
+        boolean multiline;
+        UnixDollar(boolean mul) {
+            multiline = mul;
+        }
+        boolean match(Matcher matcher, int i, CharSequence seq) {
+            int endIndex = (matcher.anchoringBounds) ?
+                matcher.to : matcher.getTextLength();
+            if (i < endIndex) {
+                char ch = seq.charAt(i);
+                if (ch == '\n') {
+                    // If not multiline, then only possible to
+                    // match at very end or one before end
+                    if (multiline == false && i != endIndex - 1)
+                        return false;
+                    // If multiline return next.match without setting
+                    // matcher.hitEnd
+                    if (multiline)
+                        return next.match(matcher, i, seq);
+                } else {
+                    return false;
+                }
+            }
+            // Matching because at the end or 1 before the end;
+            // more input could change this so set hitEnd
+            matcher.hitEnd = true;
+            // If a $ matches because of end of input, then more input
+            // could cause it to fail!
+            matcher.requireEnd = true;
+            return next.match(matcher, i, seq);
+        }
+        boolean study(TreeInfo info) {
+            next.study(info);
+            return info.deterministic;
+        }
+    }
+
+    /**
+     * Node class that matches a Unicode line ending '\R'
+     */
+    static final class LineEnding extends Node {
+        boolean match(Matcher matcher, int i, CharSequence seq) {
+            // (u+000Du+000A|[u+000Au+000Bu+000Cu+000Du+0085u+2028u+2029])
+            if (i < matcher.to) {
+                int ch = seq.charAt(i);
+                if (ch == 0x0A || ch == 0x0B || ch == 0x0C ||
+                    ch == 0x85 || ch == 0x2028 || ch == 0x2029)
+                    return next.match(matcher, i + 1, seq);
+                if (ch == 0x0D) {
+                    i++;
+                    if (i < matcher.to && seq.charAt(i) == 0x0A)
+                        i++;
+                    return next.match(matcher, i, seq);
+                }
+            } else {
+                matcher.hitEnd = true;
+            }
+            return false;
+        }
+        boolean study(TreeInfo info) {
+            info.minLength++;
+            info.maxLength += 2;
+            return next.study(info);
+        }
+    }
+
+    /**
+     * Abstract node class to match one character satisfying some
+     * boolean property.
+     */
+    private static abstract class CharProperty extends Node {
+        abstract boolean isSatisfiedBy(int ch);
+        CharProperty complement() {
+            return new CharProperty() {
+                    boolean isSatisfiedBy(int ch) {
+                        return ! CharProperty.this.isSatisfiedBy(ch);}};
+        }
+        boolean match(Matcher matcher, int i, CharSequence seq) {
+            if (i < matcher.to) {
+                int ch = Character.codePointAt(seq, i);
+                return isSatisfiedBy(ch)
+                    && next.match(matcher, i+Character.charCount(ch), seq);
+            } else {
+                matcher.hitEnd = true;
+                return false;
+            }
+        }
+        boolean study(TreeInfo info) {
+            info.minLength++;
+            info.maxLength++;
+            return next.study(info);
+        }
+    }
+
+    /**
+     * Optimized version of CharProperty that works only for
+     * properties never satisfied by Supplementary characters.
+     */
+    private static abstract class BmpCharProperty extends CharProperty {
+        boolean match(Matcher matcher, int i, CharSequence seq) {
+            if (i < matcher.to) {
+                return isSatisfiedBy(seq.charAt(i))
+                    && next.match(matcher, i+1, seq);
+            } else {
+                matcher.hitEnd = true;
+                return false;
+            }
+        }
+    }
+
+    /**
+     * Node class that matches a Supplementary Unicode character
+     */
+    static final class SingleS extends CharProperty {
+        final int c;
+        SingleS(int c) { this.c = c; }
+        boolean isSatisfiedBy(int ch) {
+            return ch == c;
+        }
+    }
+
+    /**
+     * Optimization -- matches a given BMP character
+     */
+    static final class Single extends BmpCharProperty {
+        final int c;
+        Single(int c) { this.c = c; }
+        boolean isSatisfiedBy(int ch) {
+            return ch == c;
+        }
+    }
+
+    /**
+     * Case insensitive matches a given BMP character
+     */
+    static final class SingleI extends BmpCharProperty {
+        final int lower;
+        final int upper;
+        SingleI(int lower, int upper) {
+            this.lower = lower;
+            this.upper = upper;
+        }
+        boolean isSatisfiedBy(int ch) {
+            return ch == lower || ch == upper;
+        }
+    }
+
+    /**
+     * Unicode case insensitive matches a given Unicode character
+     */
+    static final class SingleU extends CharProperty {
+        final int lower;
+        SingleU(int lower) {
+            this.lower = lower;
+        }
+        boolean isSatisfiedBy(int ch) {
+            return lower == ch ||
+                lower == Character.toLowerCase(Character.toUpperCase(ch));
+        }
+    }
+
+    /**
+     * Node class that matches a Unicode block.
+     */
+    static final class Block extends CharProperty {
+        final Character.UnicodeBlock block;
+        Block(Character.UnicodeBlock block) {
+            this.block = block;
+        }
+        boolean isSatisfiedBy(int ch) {
+            return block == Character.UnicodeBlock.of(ch);
+        }
+    }
+
+    /**
+     * Node class that matches a Unicode script
+     */
+    static final class Script extends CharProperty {
+        final Character.UnicodeScript script;
+        Script(Character.UnicodeScript script) {
+            this.script = script;
+        }
+        boolean isSatisfiedBy(int ch) {
+            return script == Character.UnicodeScript.of(ch);
+        }
+    }
+
+    /**
+     * Node class that matches a Unicode category.
+     */
+    static final class Category extends CharProperty {
+        final int typeMask;
+        Category(int typeMask) { this.typeMask = typeMask; }
+        boolean isSatisfiedBy(int ch) {
+            return (typeMask & (1 << Character.getType(ch))) != 0;
+        }
+    }
+
+    /**
+     * Node class that matches a Unicode "type"
+     */
+    static final class Utype extends CharProperty {
+        final UnicodeProp uprop;
+        Utype(UnicodeProp uprop) { this.uprop = uprop; }
+        boolean isSatisfiedBy(int ch) {
+            return uprop.is(ch);
+        }
+    }
+
+    /**
+     * Node class that matches a POSIX type.
+     */
+    static final class Ctype extends BmpCharProperty {
+        final int ctype;
+        Ctype(int ctype) { this.ctype = ctype; }
+        boolean isSatisfiedBy(int ch) {
+            return ch < 128 && ASCII.isType(ch, ctype);
+        }
+    }
+
+    /**
+     * Node class that matches a Perl vertical whitespace
+     */
+    static final class VertWS extends BmpCharProperty {
+        boolean isSatisfiedBy(int cp) {
+            return (cp >= 0x0A && cp <= 0x0D) ||
+                   cp == 0x85 || cp == 0x2028 || cp == 0x2029;
+        }
+    }
+
+    /**
+     * Node class that matches a Perl horizontal whitespace
+     */
+    static final class HorizWS extends BmpCharProperty {
+        boolean isSatisfiedBy(int cp) {
+            return cp == 0x09 || cp == 0x20 || cp == 0xa0 ||
+                   cp == 0x1680 || cp == 0x180e ||
+                   cp >= 0x2000 && cp <= 0x200a ||
+                   cp == 0x202f || cp == 0x205f || cp == 0x3000;
+        }
+    }
+
+    /**
+     * Base class for all Slice nodes
+     */
+    static class SliceNode extends Node {
+        int[] buffer;
+        SliceNode(int[] buf) {
+            buffer = buf;
+        }
+        boolean study(TreeInfo info) {
+            info.minLength += buffer.length;
+            info.maxLength += buffer.length;
+            return next.study(info);
+        }
+    }
+
+    /**
+     * Node class for a case sensitive/BMP-only sequence of literal
+     * characters.
+     */
+    static final class Slice extends SliceNode {
+        Slice(int[] buf) {
+            super(buf);
+        }
+        boolean match(Matcher matcher, int i, CharSequence seq) {
+            int[] buf = buffer;
+            int len = buf.length;
+            for (int j=0; j<len; j++) {
+                if ((i+j) >= matcher.to) {
+                    matcher.hitEnd = true;
+                    return false;
+                }
+                if (buf[j] != seq.charAt(i+j))
+                    return false;
+            }
+            return next.match(matcher, i+len, seq);
+        }
+    }
+
+    /**
+     * Node class for a case_insensitive/BMP-only sequence of literal
+     * characters.
+     */
+    static class SliceI extends SliceNode {
+        SliceI(int[] buf) {
+            super(buf);
+        }
+        boolean match(Matcher matcher, int i, CharSequence seq) {
+            int[] buf = buffer;
+            int len = buf.length;
+            for (int j=0; j<len; j++) {
+                if ((i+j) >= matcher.to) {
+                    matcher.hitEnd = true;
+                    return false;
+                }
+                int c = seq.charAt(i+j);
+                if (buf[j] != c &&
+                    buf[j] != ASCII.toLower(c))
+                    return false;
+            }
+            return next.match(matcher, i+len, seq);
+        }
+    }
+
+    /**
+     * Node class for a unicode_case_insensitive/BMP-only sequence of
+     * literal characters. Uses unicode case folding.
+     */
+    static final class SliceU extends SliceNode {
+        SliceU(int[] buf) {
+            super(buf);
+        }
+        boolean match(Matcher matcher, int i, CharSequence seq) {
+            int[] buf = buffer;
+            int len = buf.length;
+            for (int j=0; j<len; j++) {
+                if ((i+j) >= matcher.to) {
+                    matcher.hitEnd = true;
+                    return false;
+                }
+                int c = seq.charAt(i+j);
+                if (buf[j] != c &&
+                    buf[j] != Character.toLowerCase(Character.toUpperCase(c)))
+                    return false;
+            }
+            return next.match(matcher, i+len, seq);
+        }
+    }
+
+    /**
+     * Node class for a case sensitive sequence of literal characters
+     * including supplementary characters.
+     */
+    static final class SliceS extends SliceNode {
+        SliceS(int[] buf) {
+            super(buf);
+        }
+        boolean match(Matcher matcher, int i, CharSequence seq) {
+            int[] buf = buffer;
+            int x = i;
+            for (int j = 0; j < buf.length; j++) {
+                if (x >= matcher.to) {
+                    matcher.hitEnd = true;
+                    return false;
+                }
+                int c = Character.codePointAt(seq, x);
+                if (buf[j] != c)
+                    return false;
+                x += Character.charCount(c);
+                if (x > matcher.to) {
+                    matcher.hitEnd = true;
+                    return false;
+                }
+            }
+            return next.match(matcher, x, seq);
+        }
+    }
+
+    /**
+     * Node class for a case insensitive sequence of literal characters
+     * including supplementary characters.
+     */
+    static class SliceIS extends SliceNode {
+        SliceIS(int[] buf) {
+            super(buf);
+        }
+        int toLower(int c) {
+            return ASCII.toLower(c);
+        }
+        boolean match(Matcher matcher, int i, CharSequence seq) {
+            int[] buf = buffer;
+            int x = i;
+            for (int j = 0; j < buf.length; j++) {
+                if (x >= matcher.to) {
+                    matcher.hitEnd = true;
+                    return false;
+                }
+                int c = Character.codePointAt(seq, x);
+                if (buf[j] != c && buf[j] != toLower(c))
+                    return false;
+                x += Character.charCount(c);
+                if (x > matcher.to) {
+                    matcher.hitEnd = true;
+                    return false;
+                }
+            }
+            return next.match(matcher, x, seq);
+        }
+    }
+
+    /**
+     * Node class for a case insensitive sequence of literal characters.
+     * Uses unicode case folding.
+     */
+    static final class SliceUS extends SliceIS {
+        SliceUS(int[] buf) {
+            super(buf);
+        }
+        int toLower(int c) {
+            return Character.toLowerCase(Character.toUpperCase(c));
+        }
+    }
+
+    private static boolean inRange(int lower, int ch, int upper) {
+        return lower <= ch && ch <= upper;
+    }
+
+    /**
+     * Returns node for matching characters within an explicit value range.
+     */
+    private static CharProperty rangeFor(final int lower,
+                                         final int upper) {
+        return new CharProperty() {
+                boolean isSatisfiedBy(int ch) {
+                    return inRange(lower, ch, upper);}};
+    }
+
+    /**
+     * Returns node for matching characters within an explicit value
+     * range in a case insensitive manner.
+     */
+    private CharProperty caseInsensitiveRangeFor(final int lower,
+                                                 final int upper) {
+        if (has(UNICODE_CASE))
+            return new CharProperty() {
+                boolean isSatisfiedBy(int ch) {
+                    if (inRange(lower, ch, upper))
+                        return true;
+                    int up = Character.toUpperCase(ch);
+                    return inRange(lower, up, upper) ||
+                           inRange(lower, Character.toLowerCase(up), upper);}};
+        return new CharProperty() {
+            boolean isSatisfiedBy(int ch) {
+                return inRange(lower, ch, upper) ||
+                    ASCII.isAscii(ch) &&
+                        (inRange(lower, ASCII.toUpper(ch), upper) ||
+                         inRange(lower, ASCII.toLower(ch), upper));
+            }};
+    }
+
+    /**
+     * Implements the Unicode category ALL and the dot metacharacter when
+     * in dotall mode.
+     */
+    static final class All extends CharProperty {
+        boolean isSatisfiedBy(int ch) {
+            return true;
+        }
+    }
+
+    /**
+     * Node class for the dot metacharacter when dotall is not enabled.
+     */
+    static final class Dot extends CharProperty {
+        boolean isSatisfiedBy(int ch) {
+            return (ch != '\n' && ch != '\r'
+                    && (ch|1) != '\u2029'
+                    && ch != '\u0085');
+        }
+    }
+
+    /**
+     * Node class for the dot metacharacter when dotall is not enabled
+     * but UNIX_LINES is enabled.
+     */
+    static final class UnixDot extends CharProperty {
+        boolean isSatisfiedBy(int ch) {
+            return ch != '\n';
+        }
+    }
+
+    /**
+     * The 0 or 1 quantifier. This one class implements all three types.
+     */
+    static final class Ques extends Node {
+        Node atom;
+        int type;
+        Ques(Node node, int type) {
+            this.atom = node;
+            this.type = type;
+        }
+        boolean match(Matcher matcher, int i, CharSequence seq) {
+            switch (type) {
+            case GREEDY:
+                return (atom.match(matcher, i, seq) && next.match(matcher, matcher.last, seq))
+                    || next.match(matcher, i, seq);
+            case LAZY:
+                return next.match(matcher, i, seq)
+                    || (atom.match(matcher, i, seq) && next.match(matcher, matcher.last, seq));
+            case POSSESSIVE:
+                if (atom.match(matcher, i, seq)) i = matcher.last;
+                return next.match(matcher, i, seq);
+            default:
+                return atom.match(matcher, i, seq) && next.match(matcher, matcher.last, seq);
+            }
+        }
+        boolean study(TreeInfo info) {
+            if (type != INDEPENDENT) {
+                int minL = info.minLength;
+                atom.study(info);
+                info.minLength = minL;
+                info.deterministic = false;
+                return next.study(info);
+            } else {
+                atom.study(info);
+                return next.study(info);
+            }
+        }
+    }
+
+    /**
+     * Handles the curly-brace style repetition with a specified minimum and
+     * maximum occurrences. The * quantifier is handled as a special case.
+     * This class handles the three types.
+     */
+    static final class Curly extends Node {
+        Node atom;
+        int type;
+        int cmin;
+        int cmax;
+
+        Curly(Node node, int cmin, int cmax, int type) {
+            this.atom = node;
+            this.type = type;
+            this.cmin = cmin;
+            this.cmax = cmax;
+        }
+        boolean match(Matcher matcher, int i, CharSequence seq) {
+            int j;
+            for (j = 0; j < cmin; j++) {
+                if (atom.match(matcher, i, seq)) {
+                    i = matcher.last;
+                    continue;
+                }
+                return false;
+            }
+            if (type == GREEDY)
+                return match0(matcher, i, j, seq);
+            else if (type == LAZY)
+                return match1(matcher, i, j, seq);
+            else
+                return match2(matcher, i, j, seq);
+        }
+        // Greedy match.
+        // i is the index to start matching at
+        // j is the number of atoms that have matched
+        boolean match0(Matcher matcher, int i, int j, CharSequence seq) {
+            if (j >= cmax) {
+                // We have matched the maximum... continue with the rest of
+                // the regular expression
+                return next.match(matcher, i, seq);
+            }
+            int backLimit = j;
+            while (atom.match(matcher, i, seq)) {
+                // k is the length of this match
+                int k = matcher.last - i;
+                if (k == 0) // Zero length match
+                    break;
+                // Move up index and number matched
+                i = matcher.last;
+                j++;
+                // We are greedy so match as many as we can
+                while (j < cmax) {
+                    if (!atom.match(matcher, i, seq))
+                        break;
+                    if (i + k != matcher.last) {
+                        if (match0(matcher, matcher.last, j+1, seq))
+                            return true;
+                        break;
+                    }
+                    i += k;
+                    j++;
+                }
+                // Handle backing off if match fails
+                while (j >= backLimit) {
+                   if (next.match(matcher, i, seq))
+                        return true;
+                    i -= k;
+                    j--;
+                }
+                return false;
+            }
+            return next.match(matcher, i, seq);
+        }
+        // Reluctant match. At this point, the minimum has been satisfied.
+        // i is the index to start matching at
+        // j is the number of atoms that have matched
+        boolean match1(Matcher matcher, int i, int j, CharSequence seq) {
+            for (;;) {
+                // Try finishing match without consuming any more
+                if (next.match(matcher, i, seq))
+                    return true;
+                // At the maximum, no match found
+                if (j >= cmax)
+                    return false;
+                // Okay, must try one more atom
+                if (!atom.match(matcher, i, seq))
+                    return false;
+                // If we haven't moved forward then must break out
+                if (i == matcher.last)
+                    return false;
+                // Move up index and number matched
+                i = matcher.last;
+                j++;
+            }
+        }
+        boolean match2(Matcher matcher, int i, int j, CharSequence seq) {
+            for (; j < cmax; j++) {
+                if (!atom.match(matcher, i, seq))
+                    break;
+                if (i == matcher.last)
+                    break;
+                i = matcher.last;
+            }
+            return next.match(matcher, i, seq);
+        }
+        boolean study(TreeInfo info) {
+            // Save original info
+            int minL = info.minLength;
+            int maxL = info.maxLength;
+            boolean maxV = info.maxValid;
+            boolean detm = info.deterministic;
+            info.reset();
+
+            atom.study(info);
+
+            int temp = info.minLength * cmin + minL;
+            if (temp < minL) {
+                temp = 0xFFFFFFF; // arbitrary large number
+            }
+            info.minLength = temp;
+
+            if (maxV & info.maxValid) {
+                temp = info.maxLength * cmax + maxL;
+                info.maxLength = temp;
+                if (temp < maxL) {
+                    info.maxValid = false;
+                }
+            } else {
+                info.maxValid = false;
+            }
+
+            if (info.deterministic && cmin == cmax)
+                info.deterministic = detm;
+            else
+                info.deterministic = false;
+            return next.study(info);
+        }
+    }
+
+    /**
+     * Handles the curly-brace style repetition with a specified minimum and
+     * maximum occurrences in deterministic cases. This is an iterative
+     * optimization over the Prolog and Loop system which would handle this
+     * in a recursive way. The * quantifier is handled as a special case.
+     * If capture is true then this class saves group settings and ensures
+     * that groups are unset when backing off of a group match.
+     */
+    static final class GroupCurly extends Node {
+        Node atom;
+        int type;
+        int cmin;
+        int cmax;
+        int localIndex;
+        int groupIndex;
+        boolean capture;
+
+        GroupCurly(Node node, int cmin, int cmax, int type, int local,
+                   int group, boolean capture) {
+            this.atom = node;
+            this.type = type;
+            this.cmin = cmin;
+            this.cmax = cmax;
+            this.localIndex = local;
+            this.groupIndex = group;
+            this.capture = capture;
+        }
+        boolean match(Matcher matcher, int i, CharSequence seq) {
+            int[] groups = matcher.groups;
+            int[] locals = matcher.locals;
+            int save0 = locals[localIndex];
+            int save1 = 0;
+            int save2 = 0;
+
+            if (capture) {
+                save1 = groups[groupIndex];
+                save2 = groups[groupIndex+1];
+            }
+
+            // Notify GroupTail there is no need to setup group info
+            // because it will be set here
+            locals[localIndex] = -1;
+
+            boolean ret = true;
+            for (int j = 0; j < cmin; j++) {
+                if (atom.match(matcher, i, seq)) {
+                    if (capture) {
+                        groups[groupIndex] = i;
+                        groups[groupIndex+1] = matcher.last;
+                    }
+                    i = matcher.last;
+                } else {
+                    ret = false;
+                    break;
+                }
+            }
+            if (ret) {
+                if (type == GREEDY) {
+                    ret = match0(matcher, i, cmin, seq);
+                } else if (type == LAZY) {
+                    ret = match1(matcher, i, cmin, seq);
+                } else {
+                    ret = match2(matcher, i, cmin, seq);
+                }
+            }
+            if (!ret) {
+                locals[localIndex] = save0;
+                if (capture) {
+                    groups[groupIndex] = save1;
+                    groups[groupIndex+1] = save2;
+                }
+            }
+            return ret;
+        }
+        // Aggressive group match
+        boolean match0(Matcher matcher, int i, int j, CharSequence seq) {
+            // don't back off passing the starting "j"
+            int min = j;
+            int[] groups = matcher.groups;
+            int save0 = 0;
+            int save1 = 0;
+            if (capture) {
+                save0 = groups[groupIndex];
+                save1 = groups[groupIndex+1];
+            }
+            for (;;) {
+                if (j >= cmax)
+                    break;
+                if (!atom.match(matcher, i, seq))
+                    break;
+                int k = matcher.last - i;
+                if (k <= 0) {
+                    if (capture) {
+                        groups[groupIndex] = i;
+                        groups[groupIndex+1] = i + k;
+                    }
+                    i = i + k;
+                    break;
+                }
+                for (;;) {
+                    if (capture) {
+                        groups[groupIndex] = i;
+                        groups[groupIndex+1] = i + k;
+                    }
+                    i = i + k;
+                    if (++j >= cmax)
+                        break;
+                    if (!atom.match(matcher, i, seq))
+                        break;
+                    if (i + k != matcher.last) {
+                        if (match0(matcher, i, j, seq))
+                            return true;
+                        break;
+                    }
+                }
+                while (j > min) {
+                    if (next.match(matcher, i, seq)) {
+                        if (capture) {
+                            groups[groupIndex+1] = i;
+                            groups[groupIndex] = i - k;
+                        }
+                        return true;
+                    }
+                    // backing off
+                    i = i - k;
+                    if (capture) {
+                        groups[groupIndex+1] = i;
+                        groups[groupIndex] = i - k;
+                    }
+                    j--;
+
+                }
+                break;
+            }
+            if (capture) {
+                groups[groupIndex] = save0;
+                groups[groupIndex+1] = save1;
+            }
+            return next.match(matcher, i, seq);
+        }
+        // Reluctant matching
+        boolean match1(Matcher matcher, int i, int j, CharSequence seq) {
+            for (;;) {
+                if (next.match(matcher, i, seq))
+                    return true;
+                if (j >= cmax)
+                    return false;
+                if (!atom.match(matcher, i, seq))
+                    return false;
+                if (i == matcher.last)
+                    return false;
+                if (capture) {
+                    matcher.groups[groupIndex] = i;
+                    matcher.groups[groupIndex+1] = matcher.last;
+                }
+                i = matcher.last;
+                j++;
+            }
+        }
+        // Possessive matching
+        boolean match2(Matcher matcher, int i, int j, CharSequence seq) {
+            for (; j < cmax; j++) {
+                if (!atom.match(matcher, i, seq)) {
+                    break;
+                }
+                if (capture) {
+                    matcher.groups[groupIndex] = i;
+                    matcher.groups[groupIndex+1] = matcher.last;
+                }
+                if (i == matcher.last) {
+                    break;
+                }
+                i = matcher.last;
+            }
+            return next.match(matcher, i, seq);
+        }
+        boolean study(TreeInfo info) {
+            // Save original info
+            int minL = info.minLength;
+            int maxL = info.maxLength;
+            boolean maxV = info.maxValid;
+            boolean detm = info.deterministic;
+            info.reset();
+
+            atom.study(info);
+
+            int temp = info.minLength * cmin + minL;
+            if (temp < minL) {
+                temp = 0xFFFFFFF; // Arbitrary large number
+            }
+            info.minLength = temp;
+
+            if (maxV & info.maxValid) {
+                temp = info.maxLength * cmax + maxL;
+                info.maxLength = temp;
+                if (temp < maxL) {
+                    info.maxValid = false;
+                }
+            } else {
+                info.maxValid = false;
+            }
+
+            if (info.deterministic && cmin == cmax) {
+                info.deterministic = detm;
+            } else {
+                info.deterministic = false;
+            }
+            return next.study(info);
+        }
+    }
+
+    /**
+     * A Guard node at the end of each atom node in a Branch. It
+     * serves the purpose of chaining the "match" operation to
+     * "next" but not the "study", so we can collect the TreeInfo
+     * of each atom node without including the TreeInfo of the
+     * "next".
+     */
+    static final class BranchConn extends Node {
+        BranchConn() {};
+        boolean match(Matcher matcher, int i, CharSequence seq) {
+            return next.match(matcher, i, seq);
+        }
+        boolean study(TreeInfo info) {
+            return info.deterministic;
+        }
+    }
+
+    /**
+     * Handles the branching of alternations. Note this is also used for
+     * the ? quantifier to branch between the case where it matches once
+     * and where it does not occur.
+     */
+    static final class Branch extends Node {
+        Node[] atoms = new Node[2];
+        int size = 2;
+        Node conn;
+        Branch(Node first, Node second, Node branchConn) {
+            conn = branchConn;
+            atoms[0] = first;
+            atoms[1] = second;
+        }
+
+        void add(Node node) {
+            if (size >= atoms.length) {
+                Node[] tmp = new Node[atoms.length*2];
+                System.arraycopy(atoms, 0, tmp, 0, atoms.length);
+                atoms = tmp;
+            }
+            atoms[size++] = node;
+        }
+
+        boolean match(Matcher matcher, int i, CharSequence seq) {
+            for (int n = 0; n < size; n++) {
+                if (atoms[n] == null) {
+                    if (conn.next.match(matcher, i, seq))
+                        return true;
+                } else if (atoms[n].match(matcher, i, seq)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        boolean study(TreeInfo info) {
+            int minL = info.minLength;
+            int maxL = info.maxLength;
+            boolean maxV = info.maxValid;
+
+            int minL2 = Integer.MAX_VALUE; //arbitrary large enough num
+            int maxL2 = -1;
+            for (int n = 0; n < size; n++) {
+                info.reset();
+                if (atoms[n] != null)
+                    atoms[n].study(info);
+                minL2 = Math.min(minL2, info.minLength);
+                maxL2 = Math.max(maxL2, info.maxLength);
+                maxV = (maxV & info.maxValid);
+            }
+
+            minL += minL2;
+            maxL += maxL2;
+
+            info.reset();
+            conn.next.study(info);
+
+            info.minLength += minL;
+            info.maxLength += maxL;
+            info.maxValid &= maxV;
+            info.deterministic = false;
+            return false;
+        }
+    }
+
+    /**
+     * The GroupHead saves the location where the group begins in the locals
+     * and restores them when the match is done.
+     *
+     * The matchRef is used when a reference to this group is accessed later
+     * in the expression. The locals will have a negative value in them to
+     * indicate that we do not want to unset the group if the reference
+     * doesn't match.
+     */
+    static final class GroupHead extends Node {
+        int localIndex;
+        GroupHead(int localCount) {
+            localIndex = localCount;
+        }
+        boolean match(Matcher matcher, int i, CharSequence seq) {
+            int save = matcher.locals[localIndex];
+            matcher.locals[localIndex] = i;
+            boolean ret = next.match(matcher, i, seq);
+            matcher.locals[localIndex] = save;
+            return ret;
+        }
+        boolean matchRef(Matcher matcher, int i, CharSequence seq) {
+            int save = matcher.locals[localIndex];
+            matcher.locals[localIndex] = ~i; // HACK
+            boolean ret = next.match(matcher, i, seq);
+            matcher.locals[localIndex] = save;
+            return ret;
+        }
+    }
+
+    /**
+     * Recursive reference to a group in the regular expression. It calls
+     * matchRef because if the reference fails to match we would not unset
+     * the group.
+     */
+    static final class GroupRef extends Node {
+        GroupHead head;
+        GroupRef(GroupHead head) {
+            this.head = head;
+        }
+        boolean match(Matcher matcher, int i, CharSequence seq) {
+            return head.matchRef(matcher, i, seq)
+                && next.match(matcher, matcher.last, seq);
+        }
+        boolean study(TreeInfo info) {
+            info.maxValid = false;
+            info.deterministic = false;
+            return next.study(info);
+        }
+    }
+
+    /**
+     * The GroupTail handles the setting of group beginning and ending
+     * locations when groups are successfully matched. It must also be able to
+     * unset groups that have to be backed off of.
+     *
+     * The GroupTail node is also used when a previous group is referenced,
+     * and in that case no group information needs to be set.
+     */
+    static final class GroupTail extends Node {
+        int localIndex;
+        int groupIndex;
+        GroupTail(int localCount, int groupCount) {
+            localIndex = localCount;
+            groupIndex = groupCount + groupCount;
+        }
+        boolean match(Matcher matcher, int i, CharSequence seq) {
+            int tmp = matcher.locals[localIndex];
+            if (tmp >= 0) { // This is the normal group case.
+                // Save the group so we can unset it if it
+                // backs off of a match.
+                int groupStart = matcher.groups[groupIndex];
+                int groupEnd = matcher.groups[groupIndex+1];
+
+                matcher.groups[groupIndex] = tmp;
+                matcher.groups[groupIndex+1] = i;
+                if (next.match(matcher, i, seq)) {
+                    return true;
+                }
+                matcher.groups[groupIndex] = groupStart;
+                matcher.groups[groupIndex+1] = groupEnd;
+                return false;
+            } else {
+                // This is a group reference case. We don't need to save any
+                // group info because it isn't really a group.
+                matcher.last = i;
+                return true;
+            }
+        }
+    }
+
+    /**
+     * This sets up a loop to handle a recursive quantifier structure.
+     */
+    static final class Prolog extends Node {
+        Loop loop;
+        Prolog(Loop loop) {
+            this.loop = loop;
+        }
+        boolean match(Matcher matcher, int i, CharSequence seq) {
+            return loop.matchInit(matcher, i, seq);
+        }
+        boolean study(TreeInfo info) {
+            return loop.study(info);
+        }
+    }
+
+    /**
+     * Handles the repetition count for a greedy Curly. The matchInit
+     * is called from the Prolog to save the index of where the group
+     * beginning is stored. A zero length group check occurs in the
+     * normal match but is skipped in the matchInit.
+     */
+    static class Loop extends Node {
+        Node body;
+        int countIndex; // local count index in matcher locals
+        int beginIndex; // group beginning index
+        int cmin, cmax;
+        Loop(int countIndex, int beginIndex) {
+            this.countIndex = countIndex;
+            this.beginIndex = beginIndex;
+        }
+        boolean match(Matcher matcher, int i, CharSequence seq) {
+            // Avoid infinite loop in zero-length case.
+            if (i > matcher.locals[beginIndex]) {
+                int count = matcher.locals[countIndex];
+
+                // This block is for before we reach the minimum
+                // iterations required for the loop to match
+                if (count < cmin) {
+                    matcher.locals[countIndex] = count + 1;
+                    boolean b = body.match(matcher, i, seq);
+                    // If match failed we must backtrack, so
+                    // the loop count should NOT be incremented
+                    if (!b)
+                        matcher.locals[countIndex] = count;
+                    // Return success or failure since we are under
+                    // minimum
+                    return b;
+                }
+                // This block is for after we have the minimum
+                // iterations required for the loop to match
+                if (count < cmax) {
+                    matcher.locals[countIndex] = count + 1;
+                    boolean b = body.match(matcher, i, seq);
+                    // If match failed we must backtrack, so
+                    // the loop count should NOT be incremented
+                    if (!b)
+                        matcher.locals[countIndex] = count;
+                    else
+                        return true;
+                }
+            }
+            return next.match(matcher, i, seq);
+        }
+        boolean matchInit(Matcher matcher, int i, CharSequence seq) {
+            int save = matcher.locals[countIndex];
+            boolean ret = false;
+            if (0 < cmin) {
+                matcher.locals[countIndex] = 1;
+                ret = body.match(matcher, i, seq);
+            } else if (0 < cmax) {
+                matcher.locals[countIndex] = 1;
+                ret = body.match(matcher, i, seq);
+                if (ret == false)
+                    ret = next.match(matcher, i, seq);
+            } else {
+                ret = next.match(matcher, i, seq);
+            }
+            matcher.locals[countIndex] = save;
+            return ret;
+        }
+        boolean study(TreeInfo info) {
+            info.maxValid = false;
+            info.deterministic = false;
+            return false;
+        }
+    }
+
+    /**
+     * Handles the repetition count for a reluctant Curly. The matchInit
+     * is called from the Prolog to save the index of where the group
+     * beginning is stored. A zero length group check occurs in the
+     * normal match but is skipped in the matchInit.
+     */
+    static final class LazyLoop extends Loop {
+        LazyLoop(int countIndex, int beginIndex) {
+            super(countIndex, beginIndex);
+        }
+        boolean match(Matcher matcher, int i, CharSequence seq) {
+            // Check for zero length group
+            if (i > matcher.locals[beginIndex]) {
+                int count = matcher.locals[countIndex];
+                if (count < cmin) {
+                    matcher.locals[countIndex] = count + 1;
+                    boolean result = body.match(matcher, i, seq);
+                    // If match failed we must backtrack, so
+                    // the loop count should NOT be incremented
+                    if (!result)
+                        matcher.locals[countIndex] = count;
+                    return result;
+                }
+                if (next.match(matcher, i, seq))
+                    return true;
+                if (count < cmax) {
+                    matcher.locals[countIndex] = count + 1;
+                    boolean result = body.match(matcher, i, seq);
+                    // If match failed we must backtrack, so
+                    // the loop count should NOT be incremented
+                    if (!result)
+                        matcher.locals[countIndex] = count;
+                    return result;
+                }
+                return false;
+            }
+            return next.match(matcher, i, seq);
+        }
+        boolean matchInit(Matcher matcher, int i, CharSequence seq) {
+            int save = matcher.locals[countIndex];
+            boolean ret = false;
+            if (0 < cmin) {
+                matcher.locals[countIndex] = 1;
+                ret = body.match(matcher, i, seq);
+            } else if (next.match(matcher, i, seq)) {
+                ret = true;
+            } else if (0 < cmax) {
+                matcher.locals[countIndex] = 1;
+                ret = body.match(matcher, i, seq);
+            }
+            matcher.locals[countIndex] = save;
+            return ret;
+        }
+        boolean study(TreeInfo info) {
+            info.maxValid = false;
+            info.deterministic = false;
+            return false;
+        }
+    }
+
+    /**
+     * Refers to a group in the regular expression. Attempts to match
+     * whatever the group referred to last matched.
+     */
+    static class BackRef extends Node {
+        int groupIndex;
+        BackRef(int groupCount) {
+            super();
+            groupIndex = groupCount + groupCount;
+        }
+        boolean match(Matcher matcher, int i, CharSequence seq) {
+            int j = matcher.groups[groupIndex];
+            int k = matcher.groups[groupIndex+1];
+
+            int groupSize = k - j;
+            // If the referenced group didn't match, neither can this
+            if (j < 0)
+                return false;
+
+            // If there isn't enough input left no match
+            if (i + groupSize > matcher.to) {
+                matcher.hitEnd = true;
+                return false;
+            }
+            // Check each new char to make sure it matches what the group
+            // referenced matched last time around
+            for (int index=0; index<groupSize; index++)
+                if (seq.charAt(i+index) != seq.charAt(j+index))
+                    return false;
+
+            return next.match(matcher, i+groupSize, seq);
+        }
+        boolean study(TreeInfo info) {
+            info.maxValid = false;
+            return next.study(info);
+        }
+    }
+
+    static class CIBackRef extends Node {
+        int groupIndex;
+        boolean doUnicodeCase;
+        CIBackRef(int groupCount, boolean doUnicodeCase) {
+            super();
+            groupIndex = groupCount + groupCount;
+            this.doUnicodeCase = doUnicodeCase;
+        }
+        boolean match(Matcher matcher, int i, CharSequence seq) {
+            int j = matcher.groups[groupIndex];
+            int k = matcher.groups[groupIndex+1];
+
+            int groupSize = k - j;
+
+            // If the referenced group didn't match, neither can this
+            if (j < 0)
+                return false;
+
+            // If there isn't enough input left no match
+            if (i + groupSize > matcher.to) {
+                matcher.hitEnd = true;
+                return false;
+            }
+
+            // Check each new char to make sure it matches what the group
+            // referenced matched last time around
+            int x = i;
+            for (int index=0; index<groupSize; index++) {
+                int c1 = Character.codePointAt(seq, x);
+                int c2 = Character.codePointAt(seq, j);
+                if (c1 != c2) {
+                    if (doUnicodeCase) {
+                        int cc1 = Character.toUpperCase(c1);
+                        int cc2 = Character.toUpperCase(c2);
+                        if (cc1 != cc2 &&
+                            Character.toLowerCase(cc1) !=
+                            Character.toLowerCase(cc2))
+                            return false;
+                    } else {
+                        if (ASCII.toLower(c1) != ASCII.toLower(c2))
+                            return false;
+                    }
+                }
+                x += Character.charCount(c1);
+                j += Character.charCount(c2);
+            }
+
+            return next.match(matcher, i+groupSize, seq);
+        }
+        boolean study(TreeInfo info) {
+            info.maxValid = false;
+            return next.study(info);
+        }
+    }
+
+    /**
+     * Searches until the next instance of its atom. This is useful for
+     * finding the atom efficiently without passing an instance of it
+     * (greedy problem) and without a lot of wasted search time (reluctant
+     * problem).
+     */
+    static final class First extends Node {
+        Node atom;
+        First(Node node) {
+            this.atom = BnM.optimize(node);
+        }
+        boolean match(Matcher matcher, int i, CharSequence seq) {
+            if (atom instanceof BnM) {
+                return atom.match(matcher, i, seq)
+                    && next.match(matcher, matcher.last, seq);
+            }
+            for (;;) {
+                if (i > matcher.to) {
+                    matcher.hitEnd = true;
+                    return false;
+                }
+                if (atom.match(matcher, i, seq)) {
+                    return next.match(matcher, matcher.last, seq);
+                }
+                i += countChars(seq, i, 1);
+                matcher.first++;
+            }
+        }
+        boolean study(TreeInfo info) {
+            atom.study(info);
+            info.maxValid = false;
+            info.deterministic = false;
+            return next.study(info);
+        }
+    }
+
+    static final class Conditional extends Node {
+        Node cond, yes, not;
+        Conditional(Node cond, Node yes, Node not) {
+            this.cond = cond;
+            this.yes = yes;
+            this.not = not;
+        }
+        boolean match(Matcher matcher, int i, CharSequence seq) {
+            if (cond.match(matcher, i, seq)) {
+                return yes.match(matcher, i, seq);
+            } else {
+                return not.match(matcher, i, seq);
+            }
+        }
+        boolean study(TreeInfo info) {
+            int minL = info.minLength;
+            int maxL = info.maxLength;
+            boolean maxV = info.maxValid;
+            info.reset();
+            yes.study(info);
+
+            int minL2 = info.minLength;
+            int maxL2 = info.maxLength;
+            boolean maxV2 = info.maxValid;
+            info.reset();
+            not.study(info);
+
+            info.minLength = minL + Math.min(minL2, info.minLength);
+            info.maxLength = maxL + Math.max(maxL2, info.maxLength);
+            info.maxValid = (maxV & maxV2 & info.maxValid);
+            info.deterministic = false;
+            return next.study(info);
+        }
+    }
+
+    /**
+     * Zero width positive lookahead.
+     */
+    static final class Pos extends Node {
+        Node cond;
+        Pos(Node cond) {
+            this.cond = cond;
+        }
+        boolean match(Matcher matcher, int i, CharSequence seq) {
+            int savedTo = matcher.to;
+            boolean conditionMatched = false;
+
+            // Relax transparent region boundaries for lookahead
+            if (matcher.transparentBounds)
+                matcher.to = matcher.getTextLength();
+            try {
+                conditionMatched = cond.match(matcher, i, seq);
+            } finally {
+                // Reinstate region boundaries
+                matcher.to = savedTo;
+            }
+            return conditionMatched && next.match(matcher, i, seq);
+        }
+    }
+
+    /**
+     * Zero width negative lookahead.
+     */
+    static final class Neg extends Node {
+        Node cond;
+        Neg(Node cond) {
+            this.cond = cond;
+        }
+        boolean match(Matcher matcher, int i, CharSequence seq) {
+            int savedTo = matcher.to;
+            boolean conditionMatched = false;
+
+            // Relax transparent region boundaries for lookahead
+            if (matcher.transparentBounds)
+                matcher.to = matcher.getTextLength();
+            try {
+                if (i < matcher.to) {
+                    conditionMatched = !cond.match(matcher, i, seq);
+                } else {
+                    // If a negative lookahead succeeds then more input
+                    // could cause it to fail!
+                    matcher.requireEnd = true;
+                    conditionMatched = !cond.match(matcher, i, seq);
+                }
+            } finally {
+                // Reinstate region boundaries
+                matcher.to = savedTo;
+            }
+            return conditionMatched && next.match(matcher, i, seq);
+        }
+    }
+
+    /**
+     * For use with lookbehinds; matches the position where the lookbehind
+     * was encountered.
+     */
+    static Node lookbehindEnd = new Node() {
+        boolean match(Matcher matcher, int i, CharSequence seq) {
+            return i == matcher.lookbehindTo;
+        }
+    };
+
+    /**
+     * Zero width positive lookbehind.
+     */
+    static class Behind extends Node {
+        Node cond;
+        int rmax, rmin;
+        Behind(Node cond, int rmax, int rmin) {
+            this.cond = cond;
+            this.rmax = rmax;
+            this.rmin = rmin;
+        }
+
+        boolean match(Matcher matcher, int i, CharSequence seq) {
+            int savedFrom = matcher.from;
+            boolean conditionMatched = false;
+            int startIndex = (!matcher.transparentBounds) ?
+                             matcher.from : 0;
+            int from = Math.max(i - rmax, startIndex);
+            // Set end boundary
+            int savedLBT = matcher.lookbehindTo;
+            matcher.lookbehindTo = i;
+            // Relax transparent region boundaries for lookbehind
+            if (matcher.transparentBounds)
+                matcher.from = 0;
+            for (int j = i - rmin; !conditionMatched && j >= from; j--) {
+                conditionMatched = cond.match(matcher, j, seq);
+            }
+            matcher.from = savedFrom;
+            matcher.lookbehindTo = savedLBT;
+            return conditionMatched && next.match(matcher, i, seq);
+        }
+    }
+
+    /**
+     * Zero width positive lookbehind, including supplementary
+     * characters or unpaired surrogates.
+     */
+    static final class BehindS extends Behind {
+        BehindS(Node cond, int rmax, int rmin) {
+            super(cond, rmax, rmin);
+        }
+        boolean match(Matcher matcher, int i, CharSequence seq) {
+            int rmaxChars = countChars(seq, i, -rmax);
+            int rminChars = countChars(seq, i, -rmin);
+            int savedFrom = matcher.from;
+            int startIndex = (!matcher.transparentBounds) ?
+                             matcher.from : 0;
+            boolean conditionMatched = false;
+            int from = Math.max(i - rmaxChars, startIndex);
+            // Set end boundary
+            int savedLBT = matcher.lookbehindTo;
+            matcher.lookbehindTo = i;
+            // Relax transparent region boundaries for lookbehind
+            if (matcher.transparentBounds)
+                matcher.from = 0;
+
+            for (int j = i - rminChars;
+                 !conditionMatched && j >= from;
+                 j -= j>from ? countChars(seq, j, -1) : 1) {
+                conditionMatched = cond.match(matcher, j, seq);
+            }
+            matcher.from = savedFrom;
+            matcher.lookbehindTo = savedLBT;
+            return conditionMatched && next.match(matcher, i, seq);
+        }
+    }
+
+    /**
+     * Zero width negative lookbehind.
+     */
+    static class NotBehind extends Node {
+        Node cond;
+        int rmax, rmin;
+        NotBehind(Node cond, int rmax, int rmin) {
+            this.cond = cond;
+            this.rmax = rmax;
+            this.rmin = rmin;
+        }
+
+        boolean match(Matcher matcher, int i, CharSequence seq) {
+            int savedLBT = matcher.lookbehindTo;
+            int savedFrom = matcher.from;
+            boolean conditionMatched = false;
+            int startIndex = (!matcher.transparentBounds) ?
+                             matcher.from : 0;
+            int from = Math.max(i - rmax, startIndex);
+            matcher.lookbehindTo = i;
+            // Relax transparent region boundaries for lookbehind
+            if (matcher.transparentBounds)
+                matcher.from = 0;
+            for (int j = i - rmin; !conditionMatched && j >= from; j--) {
+                conditionMatched = cond.match(matcher, j, seq);
+            }
+            // Reinstate region boundaries
+            matcher.from = savedFrom;
+            matcher.lookbehindTo = savedLBT;
+            return !conditionMatched && next.match(matcher, i, seq);
+        }
+    }
+
+    /**
+     * Zero width negative lookbehind, including supplementary
+     * characters or unpaired surrogates.
+     */
+    static final class NotBehindS extends NotBehind {
+        NotBehindS(Node cond, int rmax, int rmin) {
+            super(cond, rmax, rmin);
+        }
+        boolean match(Matcher matcher, int i, CharSequence seq) {
+            int rmaxChars = countChars(seq, i, -rmax);
+            int rminChars = countChars(seq, i, -rmin);
+            int savedFrom = matcher.from;
+            int savedLBT = matcher.lookbehindTo;
+            boolean conditionMatched = false;
+            int startIndex = (!matcher.transparentBounds) ?
+                             matcher.from : 0;
+            int from = Math.max(i - rmaxChars, startIndex);
+            matcher.lookbehindTo = i;
+            // Relax transparent region boundaries for lookbehind
+            if (matcher.transparentBounds)
+                matcher.from = 0;
+            for (int j = i - rminChars;
+                 !conditionMatched && j >= from;
+                 j -= j>from ? countChars(seq, j, -1) : 1) {
+                conditionMatched = cond.match(matcher, j, seq);
+            }
+            //Reinstate region boundaries
+            matcher.from = savedFrom;
+            matcher.lookbehindTo = savedLBT;
+            return !conditionMatched && next.match(matcher, i, seq);
+        }
+    }
+
+    /**
+     * Returns the set union of two CharProperty nodes.
+     */
+    private static CharProperty union(final CharProperty lhs,
+                                      final CharProperty rhs) {
+        return new CharProperty() {
+                boolean isSatisfiedBy(int ch) {
+                    return lhs.isSatisfiedBy(ch) || rhs.isSatisfiedBy(ch);}};
+    }
+
+    /**
+     * Returns the set intersection of two CharProperty nodes.
+     */
+    private static CharProperty intersection(final CharProperty lhs,
+                                             final CharProperty rhs) {
+        return new CharProperty() {
+                boolean isSatisfiedBy(int ch) {
+                    return lhs.isSatisfiedBy(ch) && rhs.isSatisfiedBy(ch);}};
+    }
+
+    /**
+     * Returns the set difference of two CharProperty nodes.
+     */
+    private static CharProperty setDifference(final CharProperty lhs,
+                                              final CharProperty rhs) {
+        return new CharProperty() {
+                boolean isSatisfiedBy(int ch) {
+                    return ! rhs.isSatisfiedBy(ch) && lhs.isSatisfiedBy(ch);}};
+    }
+
+    /**
+     * Handles word boundaries. Includes a field to allow this one class to
+     * deal with the different types of word boundaries we can match. The word
+     * characters include underscores, letters, and digits. Non spacing marks
+     * can are also part of a word if they have a base character, otherwise
+     * they are ignored for purposes of finding word boundaries.
+     */
+    static final class Bound extends Node {
+        static int LEFT = 0x1;
+        static int RIGHT= 0x2;
+        static int BOTH = 0x3;
+        static int NONE = 0x4;
+        int type;
+        boolean useUWORD;
+        Bound(int n, boolean useUWORD) {
+            type = n;
+            this.useUWORD = useUWORD;
+        }
+
+        boolean isWord(int ch) {
+            return useUWORD ? UnicodeProp.WORD.is(ch)
+                            : (ch == '_' || Character.isLetterOrDigit(ch));
+        }
+
+        int check(Matcher matcher, int i, CharSequence seq) {
+            int ch;
+            boolean left = false;
+            int startIndex = matcher.from;
+            int endIndex = matcher.to;
+            if (matcher.transparentBounds) {
+                startIndex = 0;
+                endIndex = matcher.getTextLength();
+            }
+            if (i > startIndex) {
+                ch = Character.codePointBefore(seq, i);
+                left = (isWord(ch) ||
+                    ((Character.getType(ch) == Character.NON_SPACING_MARK)
+                     && hasBaseCharacter(matcher, i-1, seq)));
+            }
+            boolean right = false;
+            if (i < endIndex) {
+                ch = Character.codePointAt(seq, i);
+                right = (isWord(ch) ||
+                    ((Character.getType(ch) == Character.NON_SPACING_MARK)
+                     && hasBaseCharacter(matcher, i, seq)));
+            } else {
+                // Tried to access char past the end
+                matcher.hitEnd = true;
+                // The addition of another char could wreck a boundary
+                matcher.requireEnd = true;
+            }
+            return ((left ^ right) ? (right ? LEFT : RIGHT) : NONE);
+        }
+        boolean match(Matcher matcher, int i, CharSequence seq) {
+            return (check(matcher, i, seq) & type) > 0
+                && next.match(matcher, i, seq);
+        }
+    }
+
+    /**
+     * Non spacing marks only count as word characters in bounds calculations
+     * if they have a base character.
+     */
+    private static boolean hasBaseCharacter(Matcher matcher, int i,
+                                            CharSequence seq)
+    {
+        int start = (!matcher.transparentBounds) ?
+            matcher.from : 0;
+        for (int x=i; x >= start; x--) {
+            int ch = Character.codePointAt(seq, x);
+            if (Character.isLetterOrDigit(ch))
+                return true;
+            if (Character.getType(ch) == Character.NON_SPACING_MARK)
+                continue;
+            return false;
+        }
+        return false;
+    }
+
+    /**
+     * Attempts to match a slice in the input using the Boyer-Moore string
+     * matching algorithm. The algorithm is based on the idea that the
+     * pattern can be shifted farther ahead in the search text if it is
+     * matched right to left.
+     * <p>
+     * The pattern is compared to the input one character at a time, from
+     * the rightmost character in the pattern to the left. If the characters
+     * all match the pattern has been found. If a character does not match,
+     * the pattern is shifted right a distance that is the maximum of two
+     * functions, the bad character shift and the good suffix shift. This
+     * shift moves the attempted match position through the input more
+     * quickly than a naive one position at a time check.
+     * <p>
+     * The bad character shift is based on the character from the text that
+     * did not match. If the character does not appear in the pattern, the
+     * pattern can be shifted completely beyond the bad character. If the
+     * character does occur in the pattern, the pattern can be shifted to
+     * line the pattern up with the next occurrence of that character.
+     * <p>
+     * The good suffix shift is based on the idea that some subset on the right
+     * side of the pattern has matched. When a bad character is found, the
+     * pattern can be shifted right by the pattern length if the subset does
+     * not occur again in pattern, or by the amount of distance to the
+     * next occurrence of the subset in the pattern.
+     *
+     * Boyer-Moore search methods adapted from code by Amy Yu.
+     */
+    static class BnM extends Node {
+        int[] buffer;
+        int[] lastOcc;
+        int[] optoSft;
+
+        /**
+         * Pre calculates arrays needed to generate the bad character
+         * shift and the good suffix shift. Only the last seven bits
+         * are used to see if chars match; This keeps the tables small
+         * and covers the heavily used ASCII range, but occasionally
+         * results in an aliased match for the bad character shift.
+         */
+        static Node optimize(Node node) {
+            if (!(node instanceof Slice)) {
+                return node;
+            }
+
+            int[] src = ((Slice) node).buffer;
+            int patternLength = src.length;
+            // The BM algorithm requires a bit of overhead;
+            // If the pattern is short don't use it, since
+            // a shift larger than the pattern length cannot
+            // be used anyway.
+            if (patternLength < 4) {
+                return node;
+            }
+            int i, j, k;
+            int[] lastOcc = new int[128];
+            int[] optoSft = new int[patternLength];
+            // Precalculate part of the bad character shift
+            // It is a table for where in the pattern each
+            // lower 7-bit value occurs
+            for (i = 0; i < patternLength; i++) {
+                lastOcc[src[i]&0x7F] = i + 1;
+            }
+            // Precalculate the good suffix shift
+            // i is the shift amount being considered
+NEXT:       for (i = patternLength; i > 0; i--) {
+                // j is the beginning index of suffix being considered
+                for (j = patternLength - 1; j >= i; j--) {
+                    // Testing for good suffix
+                    if (src[j] == src[j-i]) {
+                        // src[j..len] is a good suffix
+                        optoSft[j-1] = i;
+                    } else {
+                        // No match. The array has already been
+                        // filled up with correct values before.
+                        continue NEXT;
+                    }
+                }
+                // This fills up the remaining of optoSft
+                // any suffix can not have larger shift amount
+                // then its sub-suffix. Why???
+                while (j > 0) {
+                    optoSft[--j] = i;
+                }
+            }
+            // Set the guard value because of unicode compression
+            optoSft[patternLength-1] = 1;
+            if (node instanceof SliceS)
+                return new BnMS(src, lastOcc, optoSft, node.next);
+            return new BnM(src, lastOcc, optoSft, node.next);
+        }
+        BnM(int[] src, int[] lastOcc, int[] optoSft, Node next) {
+            this.buffer = src;
+            this.lastOcc = lastOcc;
+            this.optoSft = optoSft;
+            this.next = next;
+        }
+        boolean match(Matcher matcher, int i, CharSequence seq) {
+            int[] src = buffer;
+            int patternLength = src.length;
+            int last = matcher.to - patternLength;
+
+            // Loop over all possible match positions in text
+NEXT:       while (i <= last) {
+                // Loop over pattern from right to left
+                for (int j = patternLength - 1; j >= 0; j--) {
+                    int ch = seq.charAt(i+j);
+                    if (ch != src[j]) {
+                        // Shift search to the right by the maximum of the
+                        // bad character shift and the good suffix shift
+                        i += Math.max(j + 1 - lastOcc[ch&0x7F], optoSft[j]);
+                        continue NEXT;
+                    }
+                }
+                // Entire pattern matched starting at i
+                matcher.first = i;
+                boolean ret = next.match(matcher, i + patternLength, seq);
+                if (ret) {
+                    matcher.first = i;
+                    matcher.groups[0] = matcher.first;
+                    matcher.groups[1] = matcher.last;
+                    return true;
+                }
+                i++;
+            }
+            // BnM is only used as the leading node in the unanchored case,
+            // and it replaced its Start() which always searches to the end
+            // if it doesn't find what it's looking for, so hitEnd is true.
+            matcher.hitEnd = true;
+            return false;
+        }
+        boolean study(TreeInfo info) {
+            info.minLength += buffer.length;
+            info.maxValid = false;
+            return next.study(info);
+        }
+    }
+
+    /**
+     * Supplementary support version of BnM(). Unpaired surrogates are
+     * also handled by this class.
+     */
+    static final class BnMS extends BnM {
+        int lengthInChars;
+
+        BnMS(int[] src, int[] lastOcc, int[] optoSft, Node next) {
+            super(src, lastOcc, optoSft, next);
+            for (int x = 0; x < buffer.length; x++) {
+                lengthInChars += Character.charCount(buffer[x]);
+            }
+        }
+        boolean match(Matcher matcher, int i, CharSequence seq) {
+            int[] src = buffer;
+            int patternLength = src.length;
+            int last = matcher.to - lengthInChars;
+
+            // Loop over all possible match positions in text
+NEXT:       while (i <= last) {
+                // Loop over pattern from right to left
+                int ch;
+                for (int j = countChars(seq, i, patternLength), x = patternLength - 1;
+                     j > 0; j -= Character.charCount(ch), x--) {
+                    ch = Character.codePointBefore(seq, i+j);
+                    if (ch != src[x]) {
+                        // Shift search to the right by the maximum of the
+                        // bad character shift and the good suffix shift
+                        int n = Math.max(x + 1 - lastOcc[ch&0x7F], optoSft[x]);
+                        i += countChars(seq, i, n);
+                        continue NEXT;
+                    }
+                }
+                // Entire pattern matched starting at i
+                matcher.first = i;
+                boolean ret = next.match(matcher, i + lengthInChars, seq);
+                if (ret) {
+                    matcher.first = i;
+                    matcher.groups[0] = matcher.first;
+                    matcher.groups[1] = matcher.last;
+                    return true;
+                }
+                i += countChars(seq, i, 1);
+            }
+            matcher.hitEnd = true;
+            return false;
+        }
+    }
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+    /**
+     *  This must be the very first initializer.
+     */
+    static Node accept = new Node();
+
+    static Node lastAccept = new LastNode();
+
+    private static class CharPropertyNames {
+
+        static CharProperty charPropertyFor(String name) {
+            CharPropertyFactory m = map.get(name);
+            return m == null ? null : m.make();
+        }
+
+        private static abstract class CharPropertyFactory {
+            abstract CharProperty make();
+        }
+
+        private static void defCategory(String name,
+                                        final int typeMask) {
+            map.put(name, new CharPropertyFactory() {
+                    CharProperty make() { return new Category(typeMask);}});
+        }
+
+        private static void defRange(String name,
+                                     final int lower, final int upper) {
+            map.put(name, new CharPropertyFactory() {
+                    CharProperty make() { return rangeFor(lower, upper);}});
+        }
+
+        private static void defCtype(String name,
+                                     final int ctype) {
+            map.put(name, new CharPropertyFactory() {
+                    CharProperty make() { return new Ctype(ctype);}});
+        }
+
+        private static abstract class CloneableProperty
+            extends CharProperty implements Cloneable
+        {
+            public CloneableProperty clone() {
+                try {
+                    return (CloneableProperty) super.clone();
+                } catch (CloneNotSupportedException e) {
+                    throw new AssertionError(e);
+                }
+            }
+        }
+
+        private static void defClone(String name,
+                                     final CloneableProperty p) {
+            map.put(name, new CharPropertyFactory() {
+                    CharProperty make() { return p.clone();}});
+        }
+
+        private static final HashMap<String, CharPropertyFactory> map
+            = new HashMap<>();
+
+        static {
+            // Unicode character property aliases, defined in
+            // http://www.unicode.org/Public/UNIDATA/PropertyValueAliases.txt
+            defCategory("Cn", 1<<Character.UNASSIGNED);
+            defCategory("Lu", 1<<Character.UPPERCASE_LETTER);
+            defCategory("Ll", 1<<Character.LOWERCASE_LETTER);
+            defCategory("Lt", 1<<Character.TITLECASE_LETTER);
+            defCategory("Lm", 1<<Character.MODIFIER_LETTER);
+            defCategory("Lo", 1<<Character.OTHER_LETTER);
+            defCategory("Mn", 1<<Character.NON_SPACING_MARK);
+            defCategory("Me", 1<<Character.ENCLOSING_MARK);
+            defCategory("Mc", 1<<Character.COMBINING_SPACING_MARK);
+            defCategory("Nd", 1<<Character.DECIMAL_DIGIT_NUMBER);
+            defCategory("Nl", 1<<Character.LETTER_NUMBER);
+            defCategory("No", 1<<Character.OTHER_NUMBER);
+            defCategory("Zs", 1<<Character.SPACE_SEPARATOR);
+            defCategory("Zl", 1<<Character.LINE_SEPARATOR);
+            defCategory("Zp", 1<<Character.PARAGRAPH_SEPARATOR);
+            defCategory("Cc", 1<<Character.CONTROL);
+            defCategory("Cf", 1<<Character.FORMAT);
+            defCategory("Co", 1<<Character.PRIVATE_USE);
+            defCategory("Cs", 1<<Character.SURROGATE);
+            defCategory("Pd", 1<<Character.DASH_PUNCTUATION);
+            defCategory("Ps", 1<<Character.START_PUNCTUATION);
+            defCategory("Pe", 1<<Character.END_PUNCTUATION);
+            defCategory("Pc", 1<<Character.CONNECTOR_PUNCTUATION);
+            defCategory("Po", 1<<Character.OTHER_PUNCTUATION);
+            defCategory("Sm", 1<<Character.MATH_SYMBOL);
+            defCategory("Sc", 1<<Character.CURRENCY_SYMBOL);
+            defCategory("Sk", 1<<Character.MODIFIER_SYMBOL);
+            defCategory("So", 1<<Character.OTHER_SYMBOL);
+            defCategory("Pi", 1<<Character.INITIAL_QUOTE_PUNCTUATION);
+            defCategory("Pf", 1<<Character.FINAL_QUOTE_PUNCTUATION);
+            defCategory("L", ((1<<Character.UPPERCASE_LETTER) |
+                              (1<<Character.LOWERCASE_LETTER) |
+                              (1<<Character.TITLECASE_LETTER) |
+                              (1<<Character.MODIFIER_LETTER)  |
+                              (1<<Character.OTHER_LETTER)));
+            defCategory("M", ((1<<Character.NON_SPACING_MARK) |
+                              (1<<Character.ENCLOSING_MARK)   |
+                              (1<<Character.COMBINING_SPACING_MARK)));
+            defCategory("N", ((1<<Character.DECIMAL_DIGIT_NUMBER) |
+                              (1<<Character.LETTER_NUMBER)        |
+                              (1<<Character.OTHER_NUMBER)));
+            defCategory("Z", ((1<<Character.SPACE_SEPARATOR) |
+                              (1<<Character.LINE_SEPARATOR)  |
+                              (1<<Character.PARAGRAPH_SEPARATOR)));
+            defCategory("C", ((1<<Character.CONTROL)     |
+                              (1<<Character.FORMAT)      |
+                              (1<<Character.PRIVATE_USE) |
+                              (1<<Character.SURROGATE))); // Other
+            defCategory("P", ((1<<Character.DASH_PUNCTUATION)      |
+                              (1<<Character.START_PUNCTUATION)     |
+                              (1<<Character.END_PUNCTUATION)       |
+                              (1<<Character.CONNECTOR_PUNCTUATION) |
+                              (1<<Character.OTHER_PUNCTUATION)     |
+                              (1<<Character.INITIAL_QUOTE_PUNCTUATION) |
+                              (1<<Character.FINAL_QUOTE_PUNCTUATION)));
+            defCategory("S", ((1<<Character.MATH_SYMBOL)     |
+                              (1<<Character.CURRENCY_SYMBOL) |
+                              (1<<Character.MODIFIER_SYMBOL) |
+                              (1<<Character.OTHER_SYMBOL)));
+            defCategory("LC", ((1<<Character.UPPERCASE_LETTER) |
+                               (1<<Character.LOWERCASE_LETTER) |
+                               (1<<Character.TITLECASE_LETTER)));
+            defCategory("LD", ((1<<Character.UPPERCASE_LETTER) |
+                               (1<<Character.LOWERCASE_LETTER) |
+                               (1<<Character.TITLECASE_LETTER) |
+                               (1<<Character.MODIFIER_LETTER)  |
+                               (1<<Character.OTHER_LETTER)     |
+                               (1<<Character.DECIMAL_DIGIT_NUMBER)));
+            defRange("L1", 0x00, 0xFF); // Latin-1
+            map.put("all", new CharPropertyFactory() {
+                    CharProperty make() { return new All(); }});
+
+            // Posix regular expression character classes, defined in
+            // http://www.unix.org/onlinepubs/009695399/basedefs/xbd_chap09.html
+            defRange("ASCII", 0x00, 0x7F);   // ASCII
+            defCtype("Alnum", ASCII.ALNUM);  // Alphanumeric characters
+            defCtype("Alpha", ASCII.ALPHA);  // Alphabetic characters
+            defCtype("Blank", ASCII.BLANK);  // Space and tab characters
+            defCtype("Cntrl", ASCII.CNTRL);  // Control characters
+            defRange("Digit", '0', '9');     // Numeric characters
+            defCtype("Graph", ASCII.GRAPH);  // printable and visible
+            defRange("Lower", 'a', 'z');     // Lower-case alphabetic
+            defRange("Print", 0x20, 0x7E);   // Printable characters
+            defCtype("Punct", ASCII.PUNCT);  // Punctuation characters
+            defCtype("Space", ASCII.SPACE);  // Space characters
+            defRange("Upper", 'A', 'Z');     // Upper-case alphabetic
+            defCtype("XDigit",ASCII.XDIGIT); // hexadecimal digits
+
+            // Java character properties, defined by methods in Character.java
+            defClone("javaLowerCase", new CloneableProperty() {
+                boolean isSatisfiedBy(int ch) {
+                    return Character.isLowerCase(ch);}});
+            defClone("javaUpperCase", new CloneableProperty() {
+                boolean isSatisfiedBy(int ch) {
+                    return Character.isUpperCase(ch);}});
+            defClone("javaAlphabetic", new CloneableProperty() {
+                boolean isSatisfiedBy(int ch) {
+                    return Character.isAlphabetic(ch);}});
+            defClone("javaIdeographic", new CloneableProperty() {
+                boolean isSatisfiedBy(int ch) {
+                    return Character.isIdeographic(ch);}});
+            defClone("javaTitleCase", new CloneableProperty() {
+                boolean isSatisfiedBy(int ch) {
+                    return Character.isTitleCase(ch);}});
+            defClone("javaDigit", new CloneableProperty() {
+                boolean isSatisfiedBy(int ch) {
+                    return Character.isDigit(ch);}});
+            defClone("javaDefined", new CloneableProperty() {
+                boolean isSatisfiedBy(int ch) {
+                    return Character.isDefined(ch);}});
+            defClone("javaLetter", new CloneableProperty() {
+                boolean isSatisfiedBy(int ch) {
+                    return Character.isLetter(ch);}});
+            defClone("javaLetterOrDigit", new CloneableProperty() {
+                boolean isSatisfiedBy(int ch) {
+                    return Character.isLetterOrDigit(ch);}});
+            defClone("javaJavaIdentifierStart", new CloneableProperty() {
+                boolean isSatisfiedBy(int ch) {
+                    return Character.isJavaIdentifierStart(ch);}});
+            defClone("javaJavaIdentifierPart", new CloneableProperty() {
+                boolean isSatisfiedBy(int ch) {
+                    return Character.isJavaIdentifierPart(ch);}});
+            defClone("javaUnicodeIdentifierStart", new CloneableProperty() {
+                boolean isSatisfiedBy(int ch) {
+                    return Character.isUnicodeIdentifierStart(ch);}});
+            defClone("javaUnicodeIdentifierPart", new CloneableProperty() {
+                boolean isSatisfiedBy(int ch) {
+                    return Character.isUnicodeIdentifierPart(ch);}});
+            defClone("javaIdentifierIgnorable", new CloneableProperty() {
+                boolean isSatisfiedBy(int ch) {
+                    return Character.isIdentifierIgnorable(ch);}});
+            defClone("javaSpaceChar", new CloneableProperty() {
+                boolean isSatisfiedBy(int ch) {
+                    return Character.isSpaceChar(ch);}});
+            defClone("javaWhitespace", new CloneableProperty() {
+                boolean isSatisfiedBy(int ch) {
+                    return Character.isWhitespace(ch);}});
+            defClone("javaISOControl", new CloneableProperty() {
+                boolean isSatisfiedBy(int ch) {
+                    return Character.isISOControl(ch);}});
+            defClone("javaMirrored", new CloneableProperty() {
+                boolean isSatisfiedBy(int ch) {
+                    return Character.isMirrored(ch);}});
+        }
+    }
+
+    /**
+     * Creates a predicate which can be used to match a string.
+     *
+     * @return  The predicate which can be used for matching on a string
+     * @since   1.8
+     */
+    public Predicate<String> asPredicate() {
+        return s -> matcher(s).find();
+    }
+
+    /**
+     * Creates a stream from the given input sequence around matches of this
+     * pattern.
+     *
+     * <p> The stream returned by this method contains each substring of the
+     * input sequence that is terminated by another subsequence that matches
+     * this pattern or is terminated by the end of the input sequence.  The
+     * substrings in the stream are in the order in which they occur in the
+     * input. Trailing empty strings will be discarded and not encountered in
+     * the stream.
+     *
+     * <p> If this pattern does not match any subsequence of the input then
+     * the resulting stream has just one element, namely the input sequence in
+     * string form.
+     *
+     * <p> When there is a positive-width match at the beginning of the input
+     * sequence then an empty leading substring is included at the beginning
+     * of the stream. A zero-width match at the beginning however never produces
+     * such empty leading substring.
+     *
+     * <p> If the input sequence is mutable, it must remain constant during the
+     * execution of the terminal stream operation.  Otherwise, the result of the
+     * terminal stream operation is undefined.
+     *
+     * @param   input
+     *          The character sequence to be split
+     *
+     * @return  The stream of strings computed by splitting the input
+     *          around matches of this pattern
+     * @see     #split(CharSequence)
+     * @since   1.8
+     */
+    public Stream<String> splitAsStream(final CharSequence input) {
+        class MatcherIterator implements Iterator<String> {
+            private final Matcher matcher;
+            // The start position of the next sub-sequence of input
+            // when current == input.length there are no more elements
+            private int current;
+            // null if the next element, if any, needs to obtained
+            private String nextElement;
+            // > 0 if there are N next empty elements
+            private int emptyElementCount;
+
+            MatcherIterator() {
+                this.matcher = matcher(input);
+            }
+
+            public String next() {
+                if (!hasNext())
+                    throw new NoSuchElementException();
+
+                if (emptyElementCount == 0) {
+                    String n = nextElement;
+                    nextElement = null;
+                    return n;
+                } else {
+                    emptyElementCount--;
+                    return "";
+                }
+            }
+
+            public boolean hasNext() {
+                if (nextElement != null || emptyElementCount > 0)
+                    return true;
+
+                if (current == input.length())
+                    return false;
+
+                // Consume the next matching element
+                // Count sequence of matching empty elements
+                while (matcher.find()) {
+                    nextElement = input.subSequence(current, matcher.start()).toString();
+                    current = matcher.end();
+                    if (!nextElement.isEmpty()) {
+                        return true;
+                    } else if (current > 0) { // no empty leading substring for zero-width
+                                              // match at the beginning of the input
+                        emptyElementCount++;
+                    }
+                }
+
+                // Consume last matching element
+                nextElement = input.subSequence(current, input.length()).toString();
+                current = input.length();
+                if (!nextElement.isEmpty()) {
+                    return true;
+                } else {
+                    // Ignore a terminal sequence of matching empty elements
+                    emptyElementCount = 0;
+                    nextElement = null;
+                    return false;
+                }
+            }
+        }
+        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(
+                new MatcherIterator(), Spliterator.ORDERED | Spliterator.NONNULL), false);
+    }
+}

@@ -1,101 +1,95 @@
-/*    */ package javax.swing.plaf.metal;
-/*    */ 
-/*    */ import java.awt.Dimension;
-/*    */ import java.awt.Graphics;
-/*    */ import javax.swing.JComponent;
-/*    */ import javax.swing.JSeparator;
-/*    */ import javax.swing.LookAndFeel;
-/*    */ import javax.swing.plaf.ComponentUI;
-/*    */ import javax.swing.plaf.basic.BasicSeparatorUI;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class MetalSeparatorUI
-/*    */   extends BasicSeparatorUI
-/*    */ {
-/*    */   public static ComponentUI createUI(JComponent paramJComponent) {
-/* 58 */     return new MetalSeparatorUI();
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   protected void installDefaults(JSeparator paramJSeparator) {
-/* 63 */     LookAndFeel.installColors(paramJSeparator, "Separator.background", "Separator.foreground");
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public void paint(Graphics paramGraphics, JComponent paramJComponent) {
-/* 68 */     Dimension dimension = paramJComponent.getSize();
-/*    */     
-/* 70 */     if (((JSeparator)paramJComponent).getOrientation() == 1) {
-/*    */       
-/* 72 */       paramGraphics.setColor(paramJComponent.getForeground());
-/* 73 */       paramGraphics.drawLine(0, 0, 0, dimension.height);
-/*    */       
-/* 75 */       paramGraphics.setColor(paramJComponent.getBackground());
-/* 76 */       paramGraphics.drawLine(1, 0, 1, dimension.height);
-/*    */     }
-/*    */     else {
-/*    */       
-/* 80 */       paramGraphics.setColor(paramJComponent.getForeground());
-/* 81 */       paramGraphics.drawLine(0, 0, dimension.width, 0);
-/*    */       
-/* 83 */       paramGraphics.setColor(paramJComponent.getBackground());
-/* 84 */       paramGraphics.drawLine(0, 1, dimension.width, 1);
-/*    */     } 
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public Dimension getPreferredSize(JComponent paramJComponent) {
-/* 90 */     if (((JSeparator)paramJComponent).getOrientation() == 1) {
-/* 91 */       return new Dimension(2, 0);
-/*    */     }
-/* 93 */     return new Dimension(0, 2);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\metal\MetalSeparatorUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.plaf.metal;
+
+import javax.swing.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Insets;
+import java.awt.Rectangle;
+import javax.swing.plaf.*;
+import javax.swing.plaf.basic.BasicSeparatorUI;
+
+
+/**
+ * A Metal L&amp;F implementation of SeparatorUI.  This implementation
+ * is a "combined" view/controller.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @author Jeff Shapiro
+ */
+
+public class MetalSeparatorUI extends BasicSeparatorUI
+{
+    public static ComponentUI createUI( JComponent c )
+    {
+        return new MetalSeparatorUI();
+    }
+
+    protected void installDefaults( JSeparator s )
+    {
+        LookAndFeel.installColors( s, "Separator.background", "Separator.foreground" );
+    }
+
+    public void paint( Graphics g, JComponent c )
+    {
+        Dimension s = c.getSize();
+
+        if ( ((JSeparator)c).getOrientation() == JSeparator.VERTICAL )
+        {
+          g.setColor( c.getForeground() );
+          g.drawLine( 0, 0, 0, s.height );
+
+          g.setColor( c.getBackground() );
+          g.drawLine( 1, 0, 1, s.height );
+        }
+        else  // HORIZONTAL
+        {
+          g.setColor( c.getForeground() );
+          g.drawLine( 0, 0, s.width, 0 );
+
+          g.setColor( c.getBackground() );
+          g.drawLine( 0, 1, s.width, 1 );
+        }
+    }
+
+    public Dimension getPreferredSize( JComponent c )
+    {
+        if ( ((JSeparator)c).getOrientation() == JSeparator.VERTICAL )
+            return new Dimension( 2, 0 );
+        else
+            return new Dimension( 0, 2 );
+    }
+}

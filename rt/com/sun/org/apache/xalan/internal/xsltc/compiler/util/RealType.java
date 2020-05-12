@@ -1,349 +1,343 @@
-/*     */ package com.sun.org.apache.xalan.internal.xsltc.compiler.util;
-/*     */ 
-/*     */ import com.sun.org.apache.bcel.internal.generic.BranchHandle;
-/*     */ import com.sun.org.apache.bcel.internal.generic.CHECKCAST;
-/*     */ import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
-/*     */ import com.sun.org.apache.bcel.internal.generic.DLOAD;
-/*     */ import com.sun.org.apache.bcel.internal.generic.DSTORE;
-/*     */ import com.sun.org.apache.bcel.internal.generic.GOTO;
-/*     */ import com.sun.org.apache.bcel.internal.generic.IFEQ;
-/*     */ import com.sun.org.apache.bcel.internal.generic.IFNE;
-/*     */ import com.sun.org.apache.bcel.internal.generic.INVOKESPECIAL;
-/*     */ import com.sun.org.apache.bcel.internal.generic.INVOKESTATIC;
-/*     */ import com.sun.org.apache.bcel.internal.generic.INVOKEVIRTUAL;
-/*     */ import com.sun.org.apache.bcel.internal.generic.Instruction;
-/*     */ import com.sun.org.apache.bcel.internal.generic.InstructionConstants;
-/*     */ import com.sun.org.apache.bcel.internal.generic.InstructionList;
-/*     */ import com.sun.org.apache.bcel.internal.generic.LocalVariableGen;
-/*     */ import com.sun.org.apache.bcel.internal.generic.NEW;
-/*     */ import com.sun.org.apache.bcel.internal.generic.Type;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.FlowList;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class RealType
-/*     */   extends NumberType
-/*     */ {
-/*     */   public String toString() {
-/*  53 */     return "real";
-/*     */   }
-/*     */   
-/*     */   public boolean identicalTo(Type other) {
-/*  57 */     return (this == other);
-/*     */   }
-/*     */   
-/*     */   public String toSignature() {
-/*  61 */     return "D";
-/*     */   }
-/*     */   
-/*     */   public Type toJCType() {
-/*  65 */     return Type.DOUBLE;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int distanceTo(Type type) {
-/*  72 */     if (type == this) {
-/*  73 */       return 0;
-/*     */     }
-/*  75 */     if (type == Type.Int) {
-/*  76 */       return 1;
-/*     */     }
-/*     */     
-/*  79 */     return Integer.MAX_VALUE;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void translateTo(ClassGenerator classGen, MethodGenerator methodGen, Type type) {
-/*  91 */     if (type == Type.String) {
-/*  92 */       translateTo(classGen, methodGen, (StringType)type);
-/*     */     }
-/*  94 */     else if (type == Type.Boolean) {
-/*  95 */       translateTo(classGen, methodGen, (BooleanType)type);
-/*     */     }
-/*  97 */     else if (type == Type.Reference) {
-/*  98 */       translateTo(classGen, methodGen, (ReferenceType)type);
-/*     */     }
-/* 100 */     else if (type == Type.Int) {
-/* 101 */       translateTo(classGen, methodGen, (IntType)type);
-/*     */     }
-/*     */     else {
-/*     */       
-/* 105 */       ErrorMsg err = new ErrorMsg("DATA_CONVERSION_ERR", toString(), type.toString());
-/* 106 */       classGen.getParser().reportError(2, err);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void translateTo(ClassGenerator classGen, MethodGenerator methodGen, StringType type) {
-/* 118 */     ConstantPoolGen cpg = classGen.getConstantPool();
-/* 119 */     InstructionList il = methodGen.getInstructionList();
-/* 120 */     il.append(new INVOKESTATIC(cpg.addMethodref("com.sun.org.apache.xalan.internal.xsltc.runtime.BasisLibrary", "realToString", "(D)Ljava/lang/String;")));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void translateTo(ClassGenerator classGen, MethodGenerator methodGen, BooleanType type) {
-/* 133 */     InstructionList il = methodGen.getInstructionList();
-/* 134 */     FlowList falsel = translateToDesynthesized(classGen, methodGen, type);
-/* 135 */     il.append(ICONST_1);
-/* 136 */     BranchHandle truec = il.append(new GOTO(null));
-/* 137 */     falsel.backPatch(il.append(ICONST_0));
-/* 138 */     truec.setTarget(il.append(NOP));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void translateTo(ClassGenerator classGen, MethodGenerator methodGen, IntType type) {
-/* 148 */     ConstantPoolGen cpg = classGen.getConstantPool();
-/* 149 */     InstructionList il = methodGen.getInstructionList();
-/* 150 */     il.append(new INVOKESTATIC(cpg.addMethodref("com.sun.org.apache.xalan.internal.xsltc.runtime.BasisLibrary", "realToInt", "(D)I")));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public FlowList translateToDesynthesized(ClassGenerator classGen, MethodGenerator methodGen, BooleanType type) {
-/* 165 */     FlowList flowlist = new FlowList();
-/* 166 */     ConstantPoolGen cpg = classGen.getConstantPool();
-/* 167 */     InstructionList il = methodGen.getInstructionList();
-/*     */ 
-/*     */     
-/* 170 */     il.append(DUP2);
-/* 171 */     LocalVariableGen local = methodGen.addLocalVariable("real_to_boolean_tmp", Type.DOUBLE, null, null);
-/*     */ 
-/*     */     
-/* 174 */     local.setStart(il.append(new DSTORE(local.getIndex())));
-/*     */ 
-/*     */     
-/* 177 */     il.append(DCONST_0);
-/* 178 */     il.append(DCMPG);
-/* 179 */     flowlist.add(il.append(new IFEQ(null)));
-/*     */ 
-/*     */ 
-/*     */     
-/* 183 */     il.append(new DLOAD(local.getIndex()));
-/* 184 */     local.setEnd(il.append(new DLOAD(local.getIndex())));
-/* 185 */     il.append(DCMPG);
-/* 186 */     flowlist.add(il.append(new IFNE(null)));
-/* 187 */     return flowlist;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void translateTo(ClassGenerator classGen, MethodGenerator methodGen, ReferenceType type) {
-/* 198 */     ConstantPoolGen cpg = classGen.getConstantPool();
-/* 199 */     InstructionList il = methodGen.getInstructionList();
-/* 200 */     il.append(new NEW(cpg.addClass("java.lang.Double")));
-/* 201 */     il.append(DUP_X2);
-/* 202 */     il.append(DUP_X2);
-/* 203 */     il.append(POP);
-/* 204 */     il.append(new INVOKESPECIAL(cpg.addMethodref("java.lang.Double", "<init>", "(D)V")));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void translateTo(ClassGenerator classGen, MethodGenerator methodGen, Class<char> clazz) {
-/* 215 */     InstructionList il = methodGen.getInstructionList();
-/* 216 */     if (clazz == char.class) {
-/* 217 */       il.append(D2I);
-/* 218 */       il.append(I2C);
-/*     */     }
-/* 220 */     else if (clazz == byte.class) {
-/* 221 */       il.append(D2I);
-/* 222 */       il.append(I2B);
-/*     */     }
-/* 224 */     else if (clazz == short.class) {
-/* 225 */       il.append(D2I);
-/* 226 */       il.append(I2S);
-/*     */     }
-/* 228 */     else if (clazz == int.class) {
-/* 229 */       il.append(D2I);
-/*     */     }
-/* 231 */     else if (clazz == long.class) {
-/* 232 */       il.append(D2L);
-/*     */     }
-/* 234 */     else if (clazz == float.class) {
-/* 235 */       il.append(D2F);
-/*     */     }
-/* 237 */     else if (clazz == double.class) {
-/* 238 */       il.append(NOP);
-/*     */     
-/*     */     }
-/* 241 */     else if (clazz.isAssignableFrom(Double.class)) {
-/* 242 */       translateTo(classGen, methodGen, Type.Reference);
-/*     */     }
-/*     */     else {
-/*     */       
-/* 246 */       ErrorMsg err = new ErrorMsg("DATA_CONVERSION_ERR", toString(), clazz.getName());
-/* 247 */       classGen.getParser().reportError(2, err);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void translateFrom(ClassGenerator classGen, MethodGenerator methodGen, Class<char> clazz) {
-/* 257 */     InstructionList il = methodGen.getInstructionList();
-/*     */     
-/* 259 */     if (clazz == char.class || clazz == byte.class || clazz == short.class || clazz == int.class) {
-/*     */       
-/* 261 */       il.append(I2D);
-/*     */     }
-/* 263 */     else if (clazz == long.class) {
-/* 264 */       il.append(L2D);
-/*     */     }
-/* 266 */     else if (clazz == float.class) {
-/* 267 */       il.append(F2D);
-/*     */     }
-/* 269 */     else if (clazz == double.class) {
-/* 270 */       il.append(NOP);
-/*     */     }
-/*     */     else {
-/*     */       
-/* 274 */       ErrorMsg err = new ErrorMsg("DATA_CONVERSION_ERR", toString(), clazz.getName());
-/* 275 */       classGen.getParser().reportError(2, err);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void translateBox(ClassGenerator classGen, MethodGenerator methodGen) {
-/* 284 */     translateTo(classGen, methodGen, Type.Reference);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void translateUnBox(ClassGenerator classGen, MethodGenerator methodGen) {
-/* 292 */     ConstantPoolGen cpg = classGen.getConstantPool();
-/* 293 */     InstructionList il = methodGen.getInstructionList();
-/* 294 */     il.append(new CHECKCAST(cpg.addClass("java.lang.Double")));
-/* 295 */     il.append(new INVOKEVIRTUAL(cpg.addMethodref("java.lang.Double", "doubleValue", "()D")));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Instruction ADD() {
-/* 301 */     return InstructionConstants.DADD;
-/*     */   }
-/*     */   
-/*     */   public Instruction SUB() {
-/* 305 */     return InstructionConstants.DSUB;
-/*     */   }
-/*     */   
-/*     */   public Instruction MUL() {
-/* 309 */     return InstructionConstants.DMUL;
-/*     */   }
-/*     */   
-/*     */   public Instruction DIV() {
-/* 313 */     return InstructionConstants.DDIV;
-/*     */   }
-/*     */   
-/*     */   public Instruction REM() {
-/* 317 */     return InstructionConstants.DREM;
-/*     */   }
-/*     */   
-/*     */   public Instruction NEG() {
-/* 321 */     return InstructionConstants.DNEG;
-/*     */   }
-/*     */   
-/*     */   public Instruction LOAD(int slot) {
-/* 325 */     return new DLOAD(slot);
-/*     */   }
-/*     */   
-/*     */   public Instruction STORE(int slot) {
-/* 329 */     return new DSTORE(slot);
-/*     */   }
-/*     */   
-/*     */   public Instruction POP() {
-/* 333 */     return POP2;
-/*     */   }
-/*     */   
-/*     */   public Instruction CMP(boolean less) {
-/* 337 */     return less ? InstructionConstants.DCMPG : InstructionConstants.DCMPL;
-/*     */   }
-/*     */   
-/*     */   public Instruction DUP() {
-/* 341 */     return DUP2;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\compile\\util\RealType.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: RealType.java,v 1.2.4.1 2005/09/05 11:28:45 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.compiler.util;
+
+import com.sun.org.apache.bcel.internal.generic.BranchHandle;
+import com.sun.org.apache.bcel.internal.generic.CHECKCAST;
+import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
+import com.sun.org.apache.bcel.internal.generic.DLOAD;
+import com.sun.org.apache.bcel.internal.generic.DSTORE;
+import com.sun.org.apache.bcel.internal.generic.GOTO;
+import com.sun.org.apache.bcel.internal.generic.IFEQ;
+import com.sun.org.apache.bcel.internal.generic.IFNE;
+import com.sun.org.apache.bcel.internal.generic.INVOKESPECIAL;
+import com.sun.org.apache.bcel.internal.generic.INVOKESTATIC;
+import com.sun.org.apache.bcel.internal.generic.INVOKEVIRTUAL;
+import com.sun.org.apache.bcel.internal.generic.Instruction;
+import com.sun.org.apache.bcel.internal.generic.InstructionConstants;
+import com.sun.org.apache.bcel.internal.generic.InstructionList;
+import com.sun.org.apache.bcel.internal.generic.LocalVariableGen;
+import com.sun.org.apache.bcel.internal.generic.NEW;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.Constants;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.FlowList;
+
+/**
+ * @author Jacek Ambroziak
+ * @author Santiago Pericas-Geertsen
+ */
+public final class RealType extends NumberType {
+    protected RealType() {}
+
+    public String toString() {
+        return "real";
+    }
+
+    public boolean identicalTo(Type other) {
+        return this == other;
+    }
+
+    public String toSignature() {
+        return "D";
+    }
+
+    public com.sun.org.apache.bcel.internal.generic.Type toJCType() {
+        return com.sun.org.apache.bcel.internal.generic.Type.DOUBLE;
+    }
+
+    /**
+     * @see     com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type#distanceTo
+     */
+    public int distanceTo(Type type) {
+        if (type == this) {
+            return 0;
+        }
+        else if (type == Type.Int) {
+            return 1;
+        }
+        else {
+            return Integer.MAX_VALUE;
+        }
+    }
+
+    /**
+     * Translates a real into an object of internal type <code>type</code>. The
+     * translation to int is undefined since reals are never converted to ints.
+     *
+     * @see     com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type#translateTo
+     */
+    public void translateTo(ClassGenerator classGen, MethodGenerator methodGen,
+                            Type type) {
+        if (type == Type.String) {
+            translateTo(classGen, methodGen, (StringType) type);
+        }
+        else if (type == Type.Boolean) {
+            translateTo(classGen, methodGen, (BooleanType) type);
+        }
+        else if (type == Type.Reference) {
+            translateTo(classGen, methodGen, (ReferenceType) type);
+        }
+        else if (type == Type.Int) {
+            translateTo(classGen, methodGen, (IntType) type);
+        }
+        else {
+            ErrorMsg err = new ErrorMsg(ErrorMsg.DATA_CONVERSION_ERR,
+                                        toString(), type.toString());
+            classGen.getParser().reportError(Constants.FATAL, err);
+        }
+    }
+
+    /**
+     * Expects a real on the stack and pushes its string value by calling
+     * <code>Double.toString(double d)</code>.
+     *
+     * @see     com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type#translateTo
+     */
+    public void translateTo(ClassGenerator classGen, MethodGenerator methodGen,
+                            StringType type) {
+        final ConstantPoolGen cpg = classGen.getConstantPool();
+        final InstructionList il = methodGen.getInstructionList();
+        il.append(new INVOKESTATIC(cpg.addMethodref(BASIS_LIBRARY_CLASS,
+                                                    "realToString",
+                                                    "(D)" + STRING_SIG)));
+    }
+
+    /**
+     * Expects a real on the stack and pushes a 0 if that number is 0.0 and
+     * a 1 otherwise.
+     *
+     * @see     com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type#translateTo
+     */
+    public void translateTo(ClassGenerator classGen, MethodGenerator methodGen,
+                            BooleanType type) {
+        final InstructionList il = methodGen.getInstructionList();
+        FlowList falsel = translateToDesynthesized(classGen, methodGen, type);
+        il.append(ICONST_1);
+        final BranchHandle truec = il.append(new GOTO(null));
+        falsel.backPatch(il.append(ICONST_0));
+        truec.setTarget(il.append(NOP));
+    }
+
+    /**
+     * Expects a real on the stack and pushes a truncated integer value
+     *
+     * @see     com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type#translateTo
+     */
+    public void translateTo(ClassGenerator classGen, MethodGenerator methodGen,
+                            IntType type) {
+        final ConstantPoolGen cpg = classGen.getConstantPool();
+        final InstructionList il = methodGen.getInstructionList();
+        il.append(new INVOKESTATIC(cpg.addMethodref(BASIS_LIBRARY_CLASS,
+                                                    "realToInt","(D)I")));
+    }
+
+    /**
+     * Translates a real into a non-synthesized boolean. It does not push a
+     * 0 or a 1 but instead returns branchhandle list to be appended to the
+     * false list. A NaN must be converted to "false".
+     *
+     * @see     com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type#translateToDesynthesized
+     */
+    public FlowList translateToDesynthesized(ClassGenerator classGen,
+                                             MethodGenerator methodGen,
+                                             BooleanType type) {
+        LocalVariableGen local;
+        final FlowList flowlist = new FlowList();
+        final ConstantPoolGen cpg = classGen.getConstantPool();
+        final InstructionList il = methodGen.getInstructionList();
+
+        // Store real into a local variable
+        il.append(DUP2);
+        local = methodGen.addLocalVariable("real_to_boolean_tmp",
+                                           com.sun.org.apache.bcel.internal.generic.Type.DOUBLE,
+                                           null, null);
+        local.setStart(il.append(new DSTORE(local.getIndex())));
+
+        // Compare it to 0.0
+        il.append(DCONST_0);
+        il.append(DCMPG);
+        flowlist.add(il.append(new IFEQ(null)));
+
+        //!!! call isNaN
+        // Compare it to itself to see if NaN
+        il.append(new DLOAD(local.getIndex()));
+        local.setEnd(il.append(new DLOAD(local.getIndex())));
+        il.append(DCMPG);
+        flowlist.add(il.append(new IFNE(null)));        // NaN != NaN
+        return flowlist;
+    }
+
+    /**
+     * Expects a double on the stack and pushes a boxed double. Boxed
+     * double are represented by an instance of <code>java.lang.Double</code>.
+     *
+     * @see     com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type#translateTo
+     */
+    public void translateTo(ClassGenerator classGen, MethodGenerator methodGen,
+                            ReferenceType type) {
+        final ConstantPoolGen cpg = classGen.getConstantPool();
+        final InstructionList il = methodGen.getInstructionList();
+        il.append(new NEW(cpg.addClass(DOUBLE_CLASS)));
+        il.append(DUP_X2);
+        il.append(DUP_X2);
+        il.append(POP);
+        il.append(new INVOKESPECIAL(cpg.addMethodref(DOUBLE_CLASS,
+                                                     "<init>", "(D)V")));
+    }
+
+    /**
+     * Translates a real into the Java type denoted by <code>clazz</code>.
+     * Expects a real on the stack and pushes a number of the appropriate
+     * type after coercion.
+     */
+    public void translateTo(ClassGenerator classGen, MethodGenerator methodGen,
+                            final Class clazz) {
+        final InstructionList il = methodGen.getInstructionList();
+        if (clazz == Character.TYPE) {
+            il.append(D2I);
+            il.append(I2C);
+        }
+        else if (clazz == Byte.TYPE) {
+            il.append(D2I);
+            il.append(I2B);
+        }
+        else if (clazz == Short.TYPE) {
+            il.append(D2I);
+            il.append(I2S);
+        }
+        else if (clazz == Integer.TYPE) {
+            il.append(D2I);
+        }
+        else if (clazz == Long.TYPE) {
+            il.append(D2L);
+        }
+        else if (clazz == Float.TYPE) {
+            il.append(D2F);
+        }
+        else if (clazz == Double.TYPE) {
+            il.append(NOP);
+        }
+        // Is Double <: clazz? I.e. clazz in { Double, Number, Object }
+        else if (clazz.isAssignableFrom(java.lang.Double.class)) {
+            translateTo(classGen, methodGen, Type.Reference);
+        }
+        else {
+            ErrorMsg err = new ErrorMsg(ErrorMsg.DATA_CONVERSION_ERR,
+                                        toString(), clazz.getName());
+            classGen.getParser().reportError(Constants.FATAL, err);
+        }
+    }
+
+    /**
+     * Translates an external (primitive) Java type into a real. Expects a java
+     * object on the stack and pushes a real (i.e., a double).
+     */
+    public void translateFrom(ClassGenerator classGen, MethodGenerator methodGen,
+                              Class clazz) {
+        InstructionList il = methodGen.getInstructionList();
+
+        if (clazz == Character.TYPE || clazz == Byte.TYPE ||
+            clazz == Short.TYPE || clazz == Integer.TYPE) {
+            il.append(I2D);
+        }
+        else if (clazz == Long.TYPE) {
+            il.append(L2D);
+        }
+        else if (clazz == Float.TYPE) {
+            il.append(F2D);
+        }
+        else if (clazz == Double.TYPE) {
+            il.append(NOP);
+        }
+        else {
+            ErrorMsg err = new ErrorMsg(ErrorMsg.DATA_CONVERSION_ERR,
+                                        toString(), clazz.getName());
+            classGen.getParser().reportError(Constants.FATAL, err);
+        }
+    }
+
+    /**
+     * Translates an object of this type to its boxed representation.
+     */
+    public void translateBox(ClassGenerator classGen,
+                             MethodGenerator methodGen) {
+        translateTo(classGen, methodGen, Type.Reference);
+    }
+
+    /**
+     * Translates an object of this type to its unboxed representation.
+     */
+    public void translateUnBox(ClassGenerator classGen,
+                               MethodGenerator methodGen) {
+        final ConstantPoolGen cpg = classGen.getConstantPool();
+        final InstructionList il = methodGen.getInstructionList();
+        il.append(new CHECKCAST(cpg.addClass(DOUBLE_CLASS)));
+        il.append(new INVOKEVIRTUAL(cpg.addMethodref(DOUBLE_CLASS,
+                                                     DOUBLE_VALUE,
+                                                     DOUBLE_VALUE_SIG)));
+    }
+
+    public Instruction ADD() {
+        return InstructionConstants.DADD;
+    }
+
+    public Instruction SUB() {
+        return InstructionConstants.DSUB;
+    }
+
+    public Instruction MUL() {
+        return InstructionConstants.DMUL;
+    }
+
+    public Instruction DIV() {
+        return InstructionConstants.DDIV;
+    }
+
+    public Instruction REM() {
+        return InstructionConstants.DREM;
+    }
+
+    public Instruction NEG() {
+        return InstructionConstants.DNEG;
+    }
+
+    public Instruction LOAD(int slot) {
+        return new DLOAD(slot);
+    }
+
+    public Instruction STORE(int slot) {
+        return new DSTORE(slot);
+    }
+
+    public Instruction POP() {
+        return POP2;
+    }
+
+    public Instruction CMP(boolean less) {
+        return less ? InstructionConstants.DCMPG : InstructionConstants.DCMPL;
+    }
+
+    public Instruction DUP() {
+        return DUP2;
+    }
+}

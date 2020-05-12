@@ -1,213 +1,207 @@
-/*     */ package javax.swing.plaf.metal;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Dimension;
-/*     */ import java.awt.FontMetrics;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Rectangle;
-/*     */ import javax.swing.AbstractButton;
-/*     */ import javax.swing.ButtonModel;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.UIManager;
-/*     */ import javax.swing.plaf.ComponentUI;
-/*     */ import javax.swing.plaf.basic.BasicButtonListener;
-/*     */ import javax.swing.plaf.basic.BasicButtonUI;
-/*     */ import sun.awt.AppContext;
-/*     */ import sun.swing.SwingUtilities2;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class MetalButtonUI
-/*     */   extends BasicButtonUI
-/*     */ {
-/*     */   protected Color focusColor;
-/*     */   protected Color selectColor;
-/*     */   protected Color disabledTextColor;
-/*  60 */   private static final Object METAL_BUTTON_UI_KEY = new Object();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static ComponentUI createUI(JComponent paramJComponent) {
-/*  66 */     AppContext appContext = AppContext.getAppContext();
-/*     */     
-/*  68 */     MetalButtonUI metalButtonUI = (MetalButtonUI)appContext.get(METAL_BUTTON_UI_KEY);
-/*  69 */     if (metalButtonUI == null) {
-/*  70 */       metalButtonUI = new MetalButtonUI();
-/*  71 */       appContext.put(METAL_BUTTON_UI_KEY, metalButtonUI);
-/*     */     } 
-/*  73 */     return metalButtonUI;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void installDefaults(AbstractButton paramAbstractButton) {
-/*  80 */     super.installDefaults(paramAbstractButton);
-/*     */   }
-/*     */   
-/*     */   public void uninstallDefaults(AbstractButton paramAbstractButton) {
-/*  84 */     super.uninstallDefaults(paramAbstractButton);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected BasicButtonListener createButtonListener(AbstractButton paramAbstractButton) {
-/*  91 */     return super.createButtonListener(paramAbstractButton);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected Color getSelectColor() {
-/*  99 */     this.selectColor = UIManager.getColor(getPropertyPrefix() + "select");
-/* 100 */     return this.selectColor;
-/*     */   }
-/*     */   
-/*     */   protected Color getDisabledTextColor() {
-/* 104 */     this.disabledTextColor = UIManager.getColor(getPropertyPrefix() + "disabledText");
-/*     */     
-/* 106 */     return this.disabledTextColor;
-/*     */   }
-/*     */   
-/*     */   protected Color getFocusColor() {
-/* 110 */     this.focusColor = UIManager.getColor(getPropertyPrefix() + "focus");
-/* 111 */     return this.focusColor;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void update(Graphics paramGraphics, JComponent paramJComponent) {
-/* 130 */     AbstractButton abstractButton = (AbstractButton)paramJComponent;
-/* 131 */     if (paramJComponent.getBackground() instanceof javax.swing.plaf.UIResource && abstractButton
-/* 132 */       .isContentAreaFilled() && paramJComponent.isEnabled()) {
-/* 133 */       ButtonModel buttonModel = abstractButton.getModel();
-/* 134 */       if (!MetalUtils.isToolBarButton(paramJComponent)) {
-/* 135 */         if (!buttonModel.isArmed() && !buttonModel.isPressed() && 
-/* 136 */           MetalUtils.drawGradient(paramJComponent, paramGraphics, "Button.gradient", 0, 0, paramJComponent
-/* 137 */             .getWidth(), paramJComponent
-/* 138 */             .getHeight(), true)) {
-/* 139 */           paint(paramGraphics, paramJComponent);
-/*     */           
-/*     */           return;
-/*     */         } 
-/* 143 */       } else if (buttonModel.isRollover() && MetalUtils.drawGradient(paramJComponent, paramGraphics, "Button.gradient", 0, 0, paramJComponent
-/* 144 */           .getWidth(), paramJComponent
-/* 145 */           .getHeight(), true)) {
-/* 146 */         paint(paramGraphics, paramJComponent);
-/*     */         return;
-/*     */       } 
-/*     */     } 
-/* 150 */     super.update(paramGraphics, paramJComponent);
-/*     */   }
-/*     */   
-/*     */   protected void paintButtonPressed(Graphics paramGraphics, AbstractButton paramAbstractButton) {
-/* 154 */     if (paramAbstractButton.isContentAreaFilled()) {
-/* 155 */       Dimension dimension = paramAbstractButton.getSize();
-/* 156 */       paramGraphics.setColor(getSelectColor());
-/* 157 */       paramGraphics.fillRect(0, 0, dimension.width, dimension.height);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void paintFocus(Graphics paramGraphics, AbstractButton paramAbstractButton, Rectangle paramRectangle1, Rectangle paramRectangle2, Rectangle paramRectangle3) {
-/* 164 */     Rectangle rectangle = new Rectangle();
-/* 165 */     String str = paramAbstractButton.getText();
-/* 166 */     boolean bool = (paramAbstractButton.getIcon() != null) ? true : false;
-/*     */ 
-/*     */     
-/* 169 */     if (str != null && !str.equals("")) {
-/* 170 */       if (!bool) {
-/* 171 */         rectangle.setBounds(paramRectangle2);
-/*     */       } else {
-/*     */         
-/* 174 */         rectangle.setBounds(paramRectangle3.union(paramRectangle2));
-/*     */       }
-/*     */     
-/*     */     }
-/* 178 */     else if (bool) {
-/* 179 */       rectangle.setBounds(paramRectangle3);
-/*     */     } 
-/*     */     
-/* 182 */     paramGraphics.setColor(getFocusColor());
-/* 183 */     paramGraphics.drawRect(rectangle.x - 1, rectangle.y - 1, rectangle.width + 1, rectangle.height + 1);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void paintText(Graphics paramGraphics, JComponent paramJComponent, Rectangle paramRectangle, String paramString) {
-/* 190 */     AbstractButton abstractButton = (AbstractButton)paramJComponent;
-/* 191 */     ButtonModel buttonModel = abstractButton.getModel();
-/* 192 */     FontMetrics fontMetrics = SwingUtilities2.getFontMetrics(paramJComponent, paramGraphics);
-/* 193 */     int i = abstractButton.getDisplayedMnemonicIndex();
-/*     */ 
-/*     */     
-/* 196 */     if (buttonModel.isEnabled()) {
-/*     */       
-/* 198 */       paramGraphics.setColor(abstractButton.getForeground());
-/*     */     }
-/*     */     else {
-/*     */       
-/* 202 */       paramGraphics.setColor(getDisabledTextColor());
-/*     */     } 
-/* 204 */     SwingUtilities2.drawStringUnderlineCharAt(paramJComponent, paramGraphics, paramString, i, paramRectangle.x, paramRectangle.y + fontMetrics
-/* 205 */         .getAscent());
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\metal\MetalButtonUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.plaf.metal;
+
+import sun.swing.SwingUtilities2;
+import sun.awt.AppContext;
+
+import javax.swing.*;
+import javax.swing.border.*;
+import javax.swing.plaf.basic.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.beans.*;
+import javax.swing.plaf.*;
+
+/**
+ * MetalButtonUI implementation
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @author Tom Santos
+ */
+public class MetalButtonUI extends BasicButtonUI {
+    // NOTE: These are not really needed, but at this point we can't pull
+    // them. Their values are updated purely for historical reasons.
+    protected Color focusColor;
+    protected Color selectColor;
+    protected Color disabledTextColor;
+
+    private static final Object METAL_BUTTON_UI_KEY = new Object();
+
+    // ********************************
+    //          Create PLAF
+    // ********************************
+    public static ComponentUI createUI(JComponent c) {
+        AppContext appContext = AppContext.getAppContext();
+        MetalButtonUI metalButtonUI =
+                (MetalButtonUI) appContext.get(METAL_BUTTON_UI_KEY);
+        if (metalButtonUI == null) {
+            metalButtonUI = new MetalButtonUI();
+            appContext.put(METAL_BUTTON_UI_KEY, metalButtonUI);
+        }
+        return metalButtonUI;
+    }
+
+    // ********************************
+    //          Install
+    // ********************************
+    public void installDefaults(AbstractButton b) {
+        super.installDefaults(b);
+    }
+
+    public void uninstallDefaults(AbstractButton b) {
+        super.uninstallDefaults(b);
+    }
+
+    // ********************************
+    //         Create Listeners
+    // ********************************
+    protected BasicButtonListener createButtonListener(AbstractButton b) {
+        return super.createButtonListener(b);
+    }
+
+
+    // ********************************
+    //         Default Accessors
+    // ********************************
+    protected Color getSelectColor() {
+        selectColor = UIManager.getColor(getPropertyPrefix() + "select");
+        return selectColor;
+    }
+
+    protected Color getDisabledTextColor() {
+        disabledTextColor = UIManager.getColor(getPropertyPrefix() +
+                                               "disabledText");
+        return disabledTextColor;
+    }
+
+    protected Color getFocusColor() {
+        focusColor = UIManager.getColor(getPropertyPrefix() + "focus");
+        return focusColor;
+    }
+
+    // ********************************
+    //          Paint
+    // ********************************
+    /**
+     * If necessary paints the background of the component, then
+     * invokes <code>paint</code>.
+     *
+     * @param g Graphics to paint to
+     * @param c JComponent painting on
+     * @throws NullPointerException if <code>g</code> or <code>c</code> is
+     *         null
+     * @see javax.swing.plaf.ComponentUI#update
+     * @see javax.swing.plaf.ComponentUI#paint
+     * @since 1.5
+     */
+    public void update(Graphics g, JComponent c) {
+        AbstractButton button = (AbstractButton)c;
+        if ((c.getBackground() instanceof UIResource) &&
+                  button.isContentAreaFilled() && c.isEnabled()) {
+            ButtonModel model = button.getModel();
+            if (!MetalUtils.isToolBarButton(c)) {
+                if (!model.isArmed() && !model.isPressed() &&
+                        MetalUtils.drawGradient(
+                        c, g, "Button.gradient", 0, 0, c.getWidth(),
+                        c.getHeight(), true)) {
+                    paint(g, c);
+                    return;
+                }
+            }
+            else if (model.isRollover() && MetalUtils.drawGradient(
+                        c, g, "Button.gradient", 0, 0, c.getWidth(),
+                        c.getHeight(), true)) {
+                paint(g, c);
+                return;
+            }
+        }
+        super.update(g, c);
+    }
+
+    protected void paintButtonPressed(Graphics g, AbstractButton b) {
+        if ( b.isContentAreaFilled() ) {
+            Dimension size = b.getSize();
+            g.setColor(getSelectColor());
+            g.fillRect(0, 0, size.width, size.height);
+        }
+    }
+
+    protected void paintFocus(Graphics g, AbstractButton b,
+                              Rectangle viewRect, Rectangle textRect, Rectangle iconRect){
+
+        Rectangle focusRect = new Rectangle();
+        String text = b.getText();
+        boolean isIcon = b.getIcon() != null;
+
+        // If there is text
+        if ( text != null && !text.equals( "" ) ) {
+            if ( !isIcon ) {
+                focusRect.setBounds( textRect );
+            }
+            else {
+                focusRect.setBounds( iconRect.union( textRect ) );
+            }
+        }
+        // If there is an icon and no text
+        else if ( isIcon ) {
+            focusRect.setBounds( iconRect );
+        }
+
+        g.setColor(getFocusColor());
+        g.drawRect((focusRect.x-1), (focusRect.y-1),
+                  focusRect.width+1, focusRect.height+1);
+
+    }
+
+
+    protected void paintText(Graphics g, JComponent c, Rectangle textRect, String text) {
+        AbstractButton b = (AbstractButton) c;
+        ButtonModel model = b.getModel();
+        FontMetrics fm = SwingUtilities2.getFontMetrics(c, g);
+        int mnemIndex = b.getDisplayedMnemonicIndex();
+
+        /* Draw the Text */
+        if(model.isEnabled()) {
+            /*** paint the text normally */
+            g.setColor(b.getForeground());
+        }
+        else {
+            /*** paint the text disabled ***/
+            g.setColor(getDisabledTextColor());
+        }
+        SwingUtilities2.drawStringUnderlineCharAt(c, g,text,mnemIndex,
+                                  textRect.x, textRect.y + fm.getAscent());
+    }
+}

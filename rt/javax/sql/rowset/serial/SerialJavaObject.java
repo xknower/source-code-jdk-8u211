@@ -1,287 +1,281 @@
-/*     */ package javax.sql.rowset.serial;
-/*     */ 
-/*     */ import java.io.IOException;
-/*     */ import java.io.ObjectInputStream;
-/*     */ import java.io.ObjectOutputStream;
-/*     */ import java.io.Serializable;
-/*     */ import java.lang.reflect.Field;
-/*     */ import java.util.Arrays;
-/*     */ import java.util.Vector;
-/*     */ import javax.sql.rowset.RowSetWarning;
-/*     */ import sun.reflect.CallerSensitive;
-/*     */ import sun.reflect.Reflection;
-/*     */ import sun.reflect.misc.ReflectUtil;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class SerialJavaObject
-/*     */   implements Serializable, Cloneable
-/*     */ {
-/*     */   private Object obj;
-/*     */   private transient Field[] fields;
-/*     */   static final long serialVersionUID = -1465795139032831023L;
-/*     */   Vector<RowSetWarning> chain;
-/*     */   
-/*     */   public SerialJavaObject(Object paramObject) throws SerialException {
-/*  85 */     Class<?> clazz = paramObject.getClass();
-/*     */ 
-/*     */     
-/*  88 */     if (!(paramObject instanceof Serializable)) {
-/*  89 */       setWarning(new RowSetWarning("Warning, the object passed to the constructor does not implement Serializable"));
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*  96 */     this.fields = clazz.getFields();
-/*     */     
-/*  98 */     if (hasStaticFields(this.fields)) {
-/*  99 */       throw new SerialException("Located static fields in object instance. Cannot serialize");
-/*     */     }
-/*     */ 
-/*     */     
-/* 103 */     this.obj = paramObject;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object getObject() throws SerialException {
-/* 115 */     return this.obj;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   @CallerSensitive
-/*     */   public Field[] getFields() throws SerialException {
-/* 136 */     if (this.fields != null) {
-/* 137 */       Class<?> clazz = this.obj.getClass();
-/* 138 */       SecurityManager securityManager = System.getSecurityManager();
-/* 139 */       if (securityManager != null) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 144 */         Class<?> clazz1 = Reflection.getCallerClass();
-/* 145 */         if (ReflectUtil.needsPackageAccessCheck(clazz1.getClassLoader(), clazz
-/* 146 */             .getClassLoader())) {
-/* 147 */           ReflectUtil.checkPackageAccess(clazz);
-/*     */         }
-/*     */       } 
-/* 150 */       return clazz.getFields();
-/*     */     } 
-/* 152 */     throw new SerialException("SerialJavaObject does not contain a serialized object instance");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean equals(Object paramObject) {
-/* 183 */     if (this == paramObject) {
-/* 184 */       return true;
-/*     */     }
-/* 186 */     if (paramObject instanceof SerialJavaObject) {
-/* 187 */       SerialJavaObject serialJavaObject = (SerialJavaObject)paramObject;
-/* 188 */       return this.obj.equals(serialJavaObject.obj);
-/*     */     } 
-/* 190 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int hashCode() {
-/* 201 */     return 31 + this.obj.hashCode();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object clone() {
-/*     */     try {
-/* 212 */       SerialJavaObject serialJavaObject = (SerialJavaObject)super.clone();
-/* 213 */       serialJavaObject.fields = Arrays.<Field>copyOf(this.fields, this.fields.length);
-/* 214 */       if (this.chain != null)
-/* 215 */         serialJavaObject.chain = new Vector<>(this.chain); 
-/* 216 */       return serialJavaObject;
-/* 217 */     } catch (CloneNotSupportedException cloneNotSupportedException) {
-/*     */       
-/* 219 */       throw new InternalError();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void setWarning(RowSetWarning paramRowSetWarning) {
-/* 227 */     if (this.chain == null) {
-/* 228 */       this.chain = new Vector<>();
-/*     */     }
-/* 230 */     this.chain.add(paramRowSetWarning);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void readObject(ObjectInputStream paramObjectInputStream) throws IOException, ClassNotFoundException {
-/* 240 */     ObjectInputStream.GetField getField = paramObjectInputStream.readFields();
-/*     */     
-/* 242 */     Vector<? extends RowSetWarning> vector = (Vector)getField.get("chain", (Object)null);
-/* 243 */     if (vector != null) {
-/* 244 */       this.chain = new Vector<>(vector);
-/*     */     }
-/* 246 */     this.obj = getField.get("obj", (Object)null);
-/* 247 */     if (this.obj != null) {
-/* 248 */       this.fields = this.obj.getClass().getFields();
-/* 249 */       if (hasStaticFields(this.fields)) {
-/* 250 */         throw new IOException("Located static fields in object instance. Cannot serialize");
-/*     */       }
-/*     */     } else {
-/* 253 */       throw new IOException("Object cannot be null!");
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void writeObject(ObjectOutputStream paramObjectOutputStream) throws IOException {
-/* 264 */     ObjectOutputStream.PutField putField = paramObjectOutputStream.putFields();
-/* 265 */     putField.put("obj", this.obj);
-/* 266 */     putField.put("chain", this.chain);
-/* 267 */     paramObjectOutputStream.writeFields();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static boolean hasStaticFields(Field[] paramArrayOfField) {
-/* 274 */     for (Field field : paramArrayOfField) {
-/* 275 */       if (field.getModifiers() == 8) {
-/* 276 */         return true;
-/*     */       }
-/*     */     } 
-/* 279 */     return false;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\sql\rowset\serial\SerialJavaObject.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.sql.rowset.serial;
+
+import java.io.*;
+import java.lang.reflect.*;
+import java.util.Arrays;
+import java.util.Vector;
+import javax.sql.rowset.RowSetWarning;
+import sun.reflect.CallerSensitive;
+import sun.reflect.Reflection;
+import sun.reflect.misc.ReflectUtil;
+
+/**
+ * A serializable mapping in the Java programming language of an SQL
+ * <code>JAVA_OBJECT</code> value. Assuming the Java object
+ * implements the <code>Serializable</code> interface, this class simply wraps the
+ * serialization process.
+ * <P>
+ * If however, the serialization is not possible because
+ * the Java object is not immediately serializable, this class will
+ * attempt to serialize all non-static members to permit the object
+ * state to be serialized.
+ * Static or transient fields cannot be serialized; an attempt to serialize
+ * them will result in a <code>SerialException</code> object being thrown.
+ *
+ * <h3> Thread safety </h3>
+ *
+ * A SerialJavaObject is not safe for use by multiple concurrent threads.  If a
+ * SerialJavaObject is to be used by more than one thread then access to the
+ * SerialJavaObject should be controlled by appropriate synchronization.
+ *
+ * @author Jonathan Bruce
+ */
+public class SerialJavaObject implements Serializable, Cloneable {
+
+    /**
+     * Placeholder for object to be serialized.
+     */
+    private Object obj;
+
+
+   /**
+    * Placeholder for all fields in the <code>JavaObject</code> being serialized.
+    */
+    private transient Field[] fields;
+
+    /**
+     * Constructor for <code>SerialJavaObject</code> helper class.
+     * <p>
+     *
+     * @param obj the Java <code>Object</code> to be serialized
+     * @throws SerialException if the object is found not to be serializable
+     */
+    public SerialJavaObject(Object obj) throws SerialException {
+
+        // if any static fields are found, an exception
+        // should be thrown
+
+
+        // get Class. Object instance should always be available
+        Class<?> c = obj.getClass();
+
+        // determine if object implements Serializable i/f
+        if (!(obj instanceof java.io.Serializable)) {
+            setWarning(new RowSetWarning("Warning, the object passed to the constructor does not implement Serializable"));
+        }
+
+        // can only determine public fields (obviously). If
+        // any of these are static, this should invalidate
+        // the action of attempting to persist these fields
+        // in a serialized form
+        fields = c.getFields();
+
+        if (hasStaticFields(fields)) {
+            throw new SerialException("Located static fields in " +
+                "object instance. Cannot serialize");
+        }
+
+        this.obj = obj;
+    }
+
+    /**
+     * Returns an <code>Object</code> that is a copy of this <code>SerialJavaObject</code>
+     * object.
+     *
+     * @return a copy of this <code>SerialJavaObject</code> object as an
+     *         <code>Object</code> in the Java programming language
+     * @throws SerialException if the instance is corrupt
+     */
+    public Object getObject() throws SerialException {
+        return this.obj;
+    }
+
+    /**
+     * Returns an array of <code>Field</code> objects that contains each
+     * field of the object that this helper class is serializing.
+     *
+     * @return an array of <code>Field</code> objects
+     * @throws SerialException if an error is encountered accessing
+     * the serialized object
+     * @throws  SecurityException  If a security manager, <i>s</i>, is present
+     * and the caller's class loader is not the same as or an
+     * ancestor of the class loader for the class of the
+     * {@linkplain #getObject object} being serialized
+     * and invocation of {@link SecurityManager#checkPackageAccess
+     * s.checkPackageAccess()} denies access to the package
+     * of that class.
+     * @see Class#getFields
+     */
+    @CallerSensitive
+    public Field[] getFields() throws SerialException {
+        if (fields != null) {
+            Class<?> c = this.obj.getClass();
+            SecurityManager sm = System.getSecurityManager();
+            if (sm != null) {
+                /*
+                 * Check if the caller is allowed to access the specified class's package.
+                 * If access is denied, throw a SecurityException.
+                 */
+                Class<?> caller = sun.reflect.Reflection.getCallerClass();
+                if (ReflectUtil.needsPackageAccessCheck(caller.getClassLoader(),
+                                                        c.getClassLoader())) {
+                    ReflectUtil.checkPackageAccess(c);
+                }
+            }
+            return c.getFields();
+        } else {
+            throw new SerialException("SerialJavaObject does not contain" +
+                " a serialized object instance");
+        }
+    }
+
+    /**
+     * The identifier that assists in the serialization of this
+     * <code>SerialJavaObject</code> object.
+     */
+    static final long serialVersionUID = -1465795139032831023L;
+
+    /**
+     * A container for the warnings issued on this <code>SerialJavaObject</code>
+     * object. When there are multiple warnings, each warning is chained to the
+     * previous warning.
+     */
+    Vector<RowSetWarning> chain;
+
+    /**
+     * Compares this SerialJavaObject to the specified object.
+     * The result is {@code true} if and only if the argument
+     * is not {@code null} and is a {@code SerialJavaObject}
+     * object that is identical to this object
+     *
+     * @param  o The object to compare this {@code SerialJavaObject} against
+     *
+     * @return  {@code true} if the given object represents a {@code SerialJavaObject}
+     *          equivalent to this SerialJavaObject, {@code false} otherwise
+     *
+     */
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o instanceof SerialJavaObject) {
+            SerialJavaObject sjo = (SerialJavaObject) o;
+            return obj.equals(sjo.obj);
+        }
+        return false;
+    }
+
+    /**
+     * Returns a hash code for this SerialJavaObject. The hash code for a
+     * {@code SerialJavaObject} object is taken as the hash code of
+     * the {@code Object} it stores
+     *
+     * @return  a hash code value for this object.
+     */
+    public int hashCode() {
+        return 31 + obj.hashCode();
+    }
+
+    /**
+     * Returns a clone of this {@code SerialJavaObject}.
+     *
+     * @return  a clone of this SerialJavaObject
+     */
+
+    public Object clone() {
+        try {
+            SerialJavaObject sjo = (SerialJavaObject) super.clone();
+            sjo.fields = Arrays.copyOf(fields, fields.length);
+            if (chain != null)
+                sjo.chain = new Vector<>(chain);
+            return sjo;
+        } catch (CloneNotSupportedException ex) {
+            // this shouldn't happen, since we are Cloneable
+            throw new InternalError();
+        }
+    }
+
+    /**
+     * Registers the given warning.
+     */
+    private void setWarning(RowSetWarning e) {
+        if (chain == null) {
+            chain = new Vector<>();
+        }
+        chain.add(e);
+    }
+
+    /**
+     * readObject is called to restore the state of the {@code SerialJavaObject}
+     * from a stream.
+     */
+    private void readObject(ObjectInputStream s)
+            throws IOException, ClassNotFoundException {
+
+        ObjectInputStream.GetField fields1 = s.readFields();
+        @SuppressWarnings("unchecked")
+        Vector<RowSetWarning> tmp = (Vector<RowSetWarning>)fields1.get("chain", null);
+        if (tmp != null)
+            chain = new Vector<>(tmp);
+
+        obj = fields1.get("obj", null);
+        if (obj != null) {
+            fields = obj.getClass().getFields();
+            if(hasStaticFields(fields))
+                throw new IOException("Located static fields in " +
+                "object instance. Cannot serialize");
+        } else {
+            throw new IOException("Object cannot be null!");
+        }
+
+    }
+
+    /**
+     * writeObject is called to save the state of the {@code SerialJavaObject}
+     * to a stream.
+     */
+    private void writeObject(ObjectOutputStream s)
+            throws IOException {
+        ObjectOutputStream.PutField fields = s.putFields();
+        fields.put("obj", obj);
+        fields.put("chain", chain);
+        s.writeFields();
+    }
+
+    /*
+     * Check to see if there are any Static Fields in this object
+     */
+    private static boolean hasStaticFields(Field[] fields) {
+        for (Field field : fields) {
+            if ( field.getModifiers() == Modifier.STATIC) {
+                return true;
+            }
+        }
+        return false;
+    }
+}

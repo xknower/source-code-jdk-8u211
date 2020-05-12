@@ -1,250 +1,244 @@
-/*     */ package javax.xml.crypto.dom;
-/*     */ 
-/*     */ import java.net.URI;
-/*     */ import java.util.Collections;
-/*     */ import java.util.HashMap;
-/*     */ import java.util.Iterator;
-/*     */ import javax.xml.crypto.KeySelector;
-/*     */ import javax.xml.crypto.URIDereferencer;
-/*     */ import javax.xml.crypto.XMLCryptoContext;
-/*     */ import org.w3c.dom.Element;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class DOMCryptoContext
-/*     */   implements XMLCryptoContext
-/*     */ {
-/*  50 */   private HashMap<String, String> nsMap = new HashMap<>();
-/*  51 */   private HashMap<String, Element> idMap = new HashMap<>();
-/*  52 */   private HashMap<Object, Object> objMap = new HashMap<>();
-/*     */   private String baseURI;
-/*     */   private KeySelector ks;
-/*     */   private URIDereferencer dereferencer;
-/*  56 */   private HashMap<String, Object> propMap = new HashMap<>();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private String defaultPrefix;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getNamespacePrefix(String paramString1, String paramString2) {
-/*  73 */     if (paramString1 == null) {
-/*  74 */       throw new NullPointerException("namespaceURI cannot be null");
-/*     */     }
-/*  76 */     String str = this.nsMap.get(paramString1);
-/*  77 */     return (str != null) ? str : paramString2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String putNamespacePrefix(String paramString1, String paramString2) {
-/*  87 */     if (paramString1 == null) {
-/*  88 */       throw new NullPointerException("namespaceURI is null");
-/*     */     }
-/*  90 */     return this.nsMap.put(paramString1, paramString2);
-/*     */   }
-/*     */   
-/*     */   public String getDefaultNamespacePrefix() {
-/*  94 */     return this.defaultPrefix;
-/*     */   }
-/*     */   
-/*     */   public void setDefaultNamespacePrefix(String paramString) {
-/*  98 */     this.defaultPrefix = paramString;
-/*     */   }
-/*     */   
-/*     */   public String getBaseURI() {
-/* 102 */     return this.baseURI;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setBaseURI(String paramString) {
-/* 109 */     if (paramString != null) {
-/* 110 */       URI.create(paramString);
-/*     */     }
-/* 112 */     this.baseURI = paramString;
-/*     */   }
-/*     */   
-/*     */   public URIDereferencer getURIDereferencer() {
-/* 116 */     return this.dereferencer;
-/*     */   }
-/*     */   
-/*     */   public void setURIDereferencer(URIDereferencer paramURIDereferencer) {
-/* 120 */     this.dereferencer = paramURIDereferencer;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object getProperty(String paramString) {
-/* 130 */     if (paramString == null) {
-/* 131 */       throw new NullPointerException("name is null");
-/*     */     }
-/* 133 */     return this.propMap.get(paramString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object setProperty(String paramString, Object paramObject) {
-/* 143 */     if (paramString == null) {
-/* 144 */       throw new NullPointerException("name is null");
-/*     */     }
-/* 146 */     return this.propMap.put(paramString, paramObject);
-/*     */   }
-/*     */   
-/*     */   public KeySelector getKeySelector() {
-/* 150 */     return this.ks;
-/*     */   }
-/*     */   
-/*     */   public void setKeySelector(KeySelector paramKeySelector) {
-/* 154 */     this.ks = paramKeySelector;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Element getElementById(String paramString) {
-/* 170 */     if (paramString == null) {
-/* 171 */       throw new NullPointerException("idValue is null");
-/*     */     }
-/* 173 */     return this.idMap.get(paramString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setIdAttributeNS(Element paramElement, String paramString1, String paramString2) {
-/* 196 */     if (paramElement == null) {
-/* 197 */       throw new NullPointerException("element is null");
-/*     */     }
-/* 199 */     if (paramString2 == null) {
-/* 200 */       throw new NullPointerException("localName is null");
-/*     */     }
-/* 202 */     String str = paramElement.getAttributeNS(paramString1, paramString2);
-/* 203 */     if (str == null || str.length() == 0) {
-/* 204 */       throw new IllegalArgumentException(paramString2 + " is not an attribute");
-/*     */     }
-/*     */     
-/* 207 */     this.idMap.put(str, paramElement);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Iterator iterator() {
-/* 224 */     return Collections.<String, Element>unmodifiableMap(this.idMap).entrySet().iterator();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object get(Object paramObject) {
-/* 232 */     return this.objMap.get(paramObject);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object put(Object paramObject1, Object paramObject2) {
-/* 242 */     return this.objMap.put(paramObject1, paramObject2);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\xml\crypto\dom\DOMCryptoContext.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2005, 2011, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+/*
+ * $Id: DOMCryptoContext.java,v 1.3 2005/05/09 18:33:26 mullan Exp $
+ */
+package javax.xml.crypto.dom;
+
+import javax.xml.crypto.KeySelector;
+import javax.xml.crypto.URIDereferencer;
+import javax.xml.crypto.XMLCryptoContext;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import org.w3c.dom.Element;
+
+/**
+ * This class provides a DOM-specific implementation of the
+ * {@link XMLCryptoContext} interface. It also includes additional
+ * methods that are specific to a DOM-based implementation for registering
+ * and retrieving elements that contain attributes of type ID.
+ *
+ * @author Sean Mullan
+ * @author JSR 105 Expert Group
+ * @since 1.6
+ */
+public class DOMCryptoContext implements XMLCryptoContext {
+
+    private HashMap<String,String> nsMap = new HashMap<>();
+    private HashMap<String,Element> idMap = new HashMap<>();
+    private HashMap<Object,Object> objMap = new HashMap<>();
+    private String baseURI;
+    private KeySelector ks;
+    private URIDereferencer dereferencer;
+    private HashMap<String,Object> propMap = new HashMap<>();
+    private String defaultPrefix;
+
+    /**
+     * Default constructor. (For invocation by subclass constructors).
+     */
+    protected DOMCryptoContext() {}
+
+    /**
+     * This implementation uses an internal {@link HashMap} to get the prefix
+     * that the specified URI maps to. It returns the <code>defaultPrefix</code>
+     * if it maps to <code>null</code>.
+     *
+     * @throws NullPointerException {@inheritDoc}
+     */
+    public String getNamespacePrefix(String namespaceURI,
+        String defaultPrefix) {
+        if (namespaceURI == null) {
+            throw new NullPointerException("namespaceURI cannot be null");
+        }
+        String prefix = nsMap.get(namespaceURI);
+        return (prefix != null ? prefix : defaultPrefix);
+    }
+
+    /**
+     * This implementation uses an internal {@link HashMap} to map the URI
+     * to the specified prefix.
+     *
+     * @throws NullPointerException {@inheritDoc}
+     */
+    public String putNamespacePrefix(String namespaceURI, String prefix) {
+        if (namespaceURI == null) {
+            throw new NullPointerException("namespaceURI is null");
+        }
+        return nsMap.put(namespaceURI, prefix);
+    }
+
+    public String getDefaultNamespacePrefix() {
+        return defaultPrefix;
+    }
+
+    public void setDefaultNamespacePrefix(String defaultPrefix) {
+        this.defaultPrefix = defaultPrefix;
+    }
+
+    public String getBaseURI() {
+        return baseURI;
+    }
+
+    /**
+     * @throws IllegalArgumentException {@inheritDoc}
+     */
+    public void setBaseURI(String baseURI) {
+        if (baseURI != null) {
+            java.net.URI.create(baseURI);
+        }
+        this.baseURI = baseURI;
+    }
+
+    public URIDereferencer getURIDereferencer() {
+        return dereferencer;
+    }
+
+    public void setURIDereferencer(URIDereferencer dereferencer) {
+        this.dereferencer = dereferencer;
+    }
+
+    /**
+     * This implementation uses an internal {@link HashMap} to get the object
+     * that the specified name maps to.
+     *
+     * @throws NullPointerException {@inheritDoc}
+     */
+    public Object getProperty(String name) {
+        if (name == null) {
+            throw new NullPointerException("name is null");
+        }
+        return propMap.get(name);
+    }
+
+    /**
+     * This implementation uses an internal {@link HashMap} to map the name
+     * to the specified object.
+     *
+     * @throws NullPointerException {@inheritDoc}
+     */
+    public Object setProperty(String name, Object value) {
+        if (name == null) {
+            throw new NullPointerException("name is null");
+        }
+        return propMap.put(name, value);
+    }
+
+    public KeySelector getKeySelector() {
+        return ks;
+    }
+
+    public void setKeySelector(KeySelector ks) {
+        this.ks = ks;
+    }
+
+    /**
+     * Returns the <code>Element</code> with the specified ID attribute value.
+     *
+     * <p>This implementation uses an internal {@link HashMap} to get the
+     * element that the specified attribute value maps to.
+     *
+     * @param idValue the value of the ID
+     * @return the <code>Element</code> with the specified ID attribute value,
+     *    or <code>null</code> if none.
+     * @throws NullPointerException if <code>idValue</code> is <code>null</code>
+     * @see #setIdAttributeNS
+     */
+    public Element getElementById(String idValue) {
+        if (idValue == null) {
+            throw new NullPointerException("idValue is null");
+        }
+        return idMap.get(idValue);
+    }
+
+    /**
+     * Registers the element's attribute specified by the namespace URI and
+     * local name to be of type ID. The attribute must have a non-empty value.
+     *
+     * <p>This implementation uses an internal {@link HashMap} to map the
+     * attribute's value to the specified element.
+     *
+     * @param element the element
+     * @param namespaceURI the namespace URI of the attribute (specify
+     *    <code>null</code> if not applicable)
+     * @param localName the local name of the attribute
+     * @throws IllegalArgumentException if <code>localName</code> is not an
+     *    attribute of the specified element or it does not contain a specific
+     *    value
+     * @throws NullPointerException if <code>element</code> or
+     *    <code>localName</code> is <code>null</code>
+     * @see #getElementById
+     */
+    public void setIdAttributeNS(Element element, String namespaceURI,
+        String localName) {
+        if (element == null) {
+            throw new NullPointerException("element is null");
+        }
+        if (localName == null) {
+            throw new NullPointerException("localName is null");
+        }
+        String idValue = element.getAttributeNS(namespaceURI, localName);
+        if (idValue == null || idValue.length() == 0) {
+            throw new IllegalArgumentException(localName + " is not an " +
+                "attribute");
+        }
+        idMap.put(idValue, element);
+    }
+
+    /**
+     * Returns a read-only iterator over the set of Id/Element mappings of
+     * this <code>DOMCryptoContext</code>. Attempts to modify the set via the
+     * {@link Iterator#remove} method throw an
+     * <code>UnsupportedOperationException</code>. The mappings are returned
+     * in no particular order. Each element in the iteration is represented as a
+     * {@link java.util.Map.Entry}. If the <code>DOMCryptoContext</code> is
+     * modified while an iteration is in progress, the results of the
+     * iteration are undefined.
+     *
+     * @return a read-only iterator over the set of mappings
+     */
+    @SuppressWarnings("rawtypes")
+    public Iterator iterator() {
+        return Collections.unmodifiableMap(idMap).entrySet().iterator();
+    }
+
+    /**
+     * This implementation uses an internal {@link HashMap} to get the object
+     * that the specified key maps to.
+     */
+    public Object get(Object key) {
+        return objMap.get(key);
+    }
+
+    /**
+     * This implementation uses an internal {@link HashMap} to map the key
+     * to the specified object.
+     *
+     * @throws IllegalArgumentException {@inheritDoc}
+     */
+    public Object put(Object key, Object value) {
+        return objMap.put(key, value);
+    }
+}

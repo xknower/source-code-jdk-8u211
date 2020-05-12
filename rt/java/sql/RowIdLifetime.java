@@ -1,73 +1,67 @@
-/*    */ package java.sql;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public enum RowIdLifetime
-/*    */ {
-/* 41 */   ROWID_UNSUPPORTED,
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/* 48 */   ROWID_VALID_OTHER,
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/* 54 */   ROWID_VALID_SESSION,
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/* 60 */   ROWID_VALID_TRANSACTION,
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/* 66 */   ROWID_VALID_FOREVER;
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\sql\RowIdLifetime.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2005, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.sql;
+
+import java.util.*;
+
+/**
+ * Enumeration for RowId life-time values.
+ *
+ * @since 1.6
+ */
+
+public enum RowIdLifetime {
+
+    /**
+     * Indicates that this data source does not support the ROWID type.
+     */
+    ROWID_UNSUPPORTED,
+
+    /**
+     * Indicates that the lifetime of a RowId from this data source is indeterminate;
+     * but not one of ROWID_VALID_TRANSACTION, ROWID_VALID_SESSION, or,
+     * ROWID_VALID_FOREVER.
+     */
+    ROWID_VALID_OTHER,
+
+    /**
+     * Indicates that the lifetime of a RowId from this data source is at least the
+     * containing session.
+     */
+    ROWID_VALID_SESSION,
+
+    /**
+     * Indicates that the lifetime of a RowId from this data source is at least the
+     * containing transaction.
+     */
+    ROWID_VALID_TRANSACTION,
+
+    /**
+     * Indicates that the lifetime of a RowId from this data source is, effectively,
+     * unlimited.
+     */
+    ROWID_VALID_FOREVER
+}

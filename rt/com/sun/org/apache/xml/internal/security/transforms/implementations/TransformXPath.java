@@ -1,169 +1,164 @@
-/*     */ package com.sun.org.apache.xml.internal.security.transforms.implementations;
-/*     */ 
-/*     */ import com.sun.org.apache.xml.internal.security.exceptions.XMLSecurityRuntimeException;
-/*     */ import com.sun.org.apache.xml.internal.security.signature.NodeFilter;
-/*     */ import com.sun.org.apache.xml.internal.security.signature.XMLSignatureInput;
-/*     */ import com.sun.org.apache.xml.internal.security.transforms.Transform;
-/*     */ import com.sun.org.apache.xml.internal.security.transforms.TransformSpi;
-/*     */ import com.sun.org.apache.xml.internal.security.transforms.TransformationException;
-/*     */ import com.sun.org.apache.xml.internal.security.utils.XMLUtils;
-/*     */ import com.sun.org.apache.xml.internal.security.utils.XPathAPI;
-/*     */ import com.sun.org.apache.xml.internal.security.utils.XPathFactory;
-/*     */ import java.io.OutputStream;
-/*     */ import javax.xml.transform.TransformerException;
-/*     */ import org.w3c.dom.DOMException;
-/*     */ import org.w3c.dom.Element;
-/*     */ import org.w3c.dom.Node;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class TransformXPath
-/*     */   extends TransformSpi
-/*     */ {
-/*     */   public static final String implementedTransformURI = "http://www.w3.org/TR/1999/REC-xpath-19991116";
-/*     */   
-/*     */   protected String engineGetURI() {
-/*  65 */     return "http://www.w3.org/TR/1999/REC-xpath-19991116";
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected XMLSignatureInput enginePerformTransform(XMLSignatureInput paramXMLSignatureInput, OutputStream paramOutputStream, Transform paramTransform) throws TransformationException {
-/*     */     try {
-/*  91 */       Element element = XMLUtils.selectDsNode(paramTransform
-/*  92 */           .getElement().getFirstChild(), "XPath", 0);
-/*     */       
-/*  94 */       if (element == null) {
-/*  95 */         Object[] arrayOfObject = { "ds:XPath", "Transform" };
-/*     */         
-/*  97 */         throw new TransformationException("xml.WrongContent", arrayOfObject);
-/*     */       } 
-/*  99 */       Node node = element.getChildNodes().item(0);
-/* 100 */       String str = XMLUtils.getStrFromNode(node);
-/* 101 */       paramXMLSignatureInput.setNeedsToBeExpanded(needsCircumvent(str));
-/* 102 */       if (node == null) {
-/* 103 */         throw new DOMException((short)3, "Text must be in ds:Xpath");
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */       
-/* 108 */       XPathFactory xPathFactory = XPathFactory.newInstance();
-/* 109 */       XPathAPI xPathAPI = xPathFactory.newXPathAPI();
-/* 110 */       paramXMLSignatureInput.addNodeFilter(new XPathNodeFilter(element, node, str, xPathAPI));
-/* 111 */       paramXMLSignatureInput.setNodeSet(true);
-/* 112 */       return paramXMLSignatureInput;
-/* 113 */     } catch (DOMException dOMException) {
-/* 114 */       throw new TransformationException("empty", dOMException);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean needsCircumvent(String paramString) {
-/* 123 */     return (paramString.indexOf("namespace") != -1 || paramString.indexOf("name()") != -1);
-/*     */   }
-/*     */   
-/*     */   static class XPathNodeFilter
-/*     */     implements NodeFilter {
-/*     */     XPathAPI xPathAPI;
-/*     */     Node xpathnode;
-/*     */     Element xpathElement;
-/*     */     String str;
-/*     */     
-/*     */     XPathNodeFilter(Element param1Element, Node param1Node, String param1String, XPathAPI param1XPathAPI) {
-/* 134 */       this.xpathnode = param1Node;
-/* 135 */       this.str = param1String;
-/* 136 */       this.xpathElement = param1Element;
-/* 137 */       this.xPathAPI = param1XPathAPI;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public int isNodeInclude(Node param1Node) {
-/*     */       try {
-/* 145 */         boolean bool = this.xPathAPI.evaluate(param1Node, this.xpathnode, this.str, this.xpathElement);
-/* 146 */         if (bool) {
-/* 147 */           return 1;
-/*     */         }
-/* 149 */         return 0;
-/* 150 */       } catch (TransformerException transformerException) {
-/* 151 */         Object[] arrayOfObject = { param1Node };
-/* 152 */         throw new XMLSecurityRuntimeException("signature.Transform.node", arrayOfObject, transformerException);
-/* 153 */       } catch (Exception exception) {
-/* 154 */         Object[] arrayOfObject = { param1Node, Short.valueOf(param1Node.getNodeType()) };
-/* 155 */         throw new XMLSecurityRuntimeException("signature.Transform.nodeAndType", arrayOfObject, exception);
-/*     */       } 
-/*     */     }
-/*     */     
-/*     */     public int isNodeIncludeDO(Node param1Node, int param1Int) {
-/* 160 */       return isNodeInclude(param1Node);
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\internal\security\transforms\implementations\TransformXPath.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package com.sun.org.apache.xml.internal.security.transforms.implementations;
+
+import java.io.OutputStream;
+
+import javax.xml.transform.TransformerException;
+
+import com.sun.org.apache.xml.internal.security.exceptions.XMLSecurityRuntimeException;
+import com.sun.org.apache.xml.internal.security.signature.NodeFilter;
+import com.sun.org.apache.xml.internal.security.signature.XMLSignatureInput;
+import com.sun.org.apache.xml.internal.security.transforms.Transform;
+import com.sun.org.apache.xml.internal.security.transforms.TransformSpi;
+import com.sun.org.apache.xml.internal.security.transforms.TransformationException;
+import com.sun.org.apache.xml.internal.security.transforms.Transforms;
+import com.sun.org.apache.xml.internal.security.utils.Constants;
+import com.sun.org.apache.xml.internal.security.utils.XMLUtils;
+import com.sun.org.apache.xml.internal.security.utils.XPathAPI;
+import com.sun.org.apache.xml.internal.security.utils.XPathFactory;
+import org.w3c.dom.DOMException;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+
+/**
+ * Class TransformXPath
+ *
+ * Implements the <CODE>http://www.w3.org/TR/1999/REC-xpath-19991116</CODE>
+ * transform.
+ *
+ * @author Christian Geuer-Pollmann
+ * @see <a href="http://www.w3.org/TR/1999/REC-xpath-19991116">XPath</a>
+ *
+ */
+public class TransformXPath extends TransformSpi {
+
+    /** Field implementedTransformURI */
+    public static final String implementedTransformURI = Transforms.TRANSFORM_XPATH;
+
+    /**
+     * Method engineGetURI
+     *
+     * @inheritDoc
+     */
+    protected String engineGetURI() {
+        return implementedTransformURI;
+    }
+
+    /**
+     * Method enginePerformTransform
+     * @inheritDoc
+     * @param input
+     *
+     * @throws TransformationException
+     */
+    protected XMLSignatureInput enginePerformTransform(
+        XMLSignatureInput input, OutputStream os, Transform transformObject
+    ) throws TransformationException {
+        try {
+            /**
+             * If the actual input is an octet stream, then the application MUST
+             * convert the octet stream to an XPath node-set suitable for use by
+             * Canonical XML with Comments. (A subsequent application of the
+             * REQUIRED Canonical XML algorithm would strip away these comments.)
+             *
+             * ...
+             *
+             * The evaluation of this expression includes all of the document's nodes
+             * (including comments) in the node-set representing the octet stream.
+             */
+            Element xpathElement =
+                XMLUtils.selectDsNode(
+                    transformObject.getElement().getFirstChild(), Constants._TAG_XPATH, 0);
+
+            if (xpathElement == null) {
+                Object exArgs[] = { "ds:XPath", "Transform" };
+
+                throw new TransformationException("xml.WrongContent", exArgs);
+            }
+            Node xpathnode = xpathElement.getChildNodes().item(0);
+            String str = XMLUtils.getStrFromNode(xpathnode);
+            input.setNeedsToBeExpanded(needsCircumvent(str));
+            if (xpathnode == null) {
+                throw new DOMException(
+                    DOMException.HIERARCHY_REQUEST_ERR, "Text must be in ds:Xpath"
+                );
+            }
+
+            XPathFactory xpathFactory = XPathFactory.newInstance();
+            XPathAPI xpathAPIInstance = xpathFactory.newXPathAPI();
+            input.addNodeFilter(new XPathNodeFilter(xpathElement, xpathnode, str, xpathAPIInstance));
+            input.setNodeSet(true);
+            return input;
+        } catch (DOMException ex) {
+            throw new TransformationException("empty", ex);
+        }
+    }
+
+    /**
+     * @param str
+     * @return true if needs to be circumvent for bug.
+     */
+    private boolean needsCircumvent(String str) {
+        return (str.indexOf("namespace") != -1) || (str.indexOf("name()") != -1);
+    }
+
+    static class XPathNodeFilter implements NodeFilter {
+
+        XPathAPI xPathAPI;
+        Node xpathnode;
+        Element xpathElement;
+        String str;
+
+        XPathNodeFilter(Element xpathElement, Node xpathnode, String str, XPathAPI xPathAPI) {
+            this.xpathnode = xpathnode;
+            this.str = str;
+            this.xpathElement = xpathElement;
+            this.xPathAPI = xPathAPI;
+        }
+
+        /**
+         * @see com.sun.org.apache.xml.internal.security.signature.NodeFilter#isNodeInclude(org.w3c.dom.Node)
+         */
+        public int isNodeInclude(Node currentNode) {
+            try {
+                boolean include = xPathAPI.evaluate(currentNode, xpathnode, str, xpathElement);
+                if (include) {
+                    return 1;
+                }
+                return 0;
+            } catch (TransformerException e) {
+                Object[] eArgs = {currentNode};
+                throw new XMLSecurityRuntimeException("signature.Transform.node", eArgs, e);
+            } catch (Exception e) {
+                Object[] eArgs = {currentNode, Short.valueOf(currentNode.getNodeType())};
+                throw new XMLSecurityRuntimeException("signature.Transform.nodeAndType",eArgs, e);
+            }
+        }
+
+        public int isNodeIncludeDO(Node n, int level) {
+            return isNodeInclude(n);
+        }
+
+    }
+}

@@ -1,44 +1,38 @@
-/*    */ package javax.security.auth.kerberos;
-/*    */ 
-/*    */ import sun.security.krb5.JavaxSecurityAuthKerberosAccess;
-/*    */ import sun.security.krb5.internal.ktab.KeyTab;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ class JavaxSecurityAuthKerberosAccessImpl
-/*    */   implements JavaxSecurityAuthKerberosAccess
-/*    */ {
-/*    */   public KeyTab keyTabTakeSnapshot(KeyTab paramKeyTab) {
-/* 36 */     return paramKeyTab.takeSnapshot();
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\security\auth\kerberos\JavaxSecurityAuthKerberosAccessImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2011, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.security.auth.kerberos;
+
+import sun.security.krb5.JavaxSecurityAuthKerberosAccess;
+import sun.security.krb5.EncryptionKey;
+import sun.security.krb5.PrincipalName;
+
+class JavaxSecurityAuthKerberosAccessImpl
+        implements JavaxSecurityAuthKerberosAccess {
+    public sun.security.krb5.internal.ktab.KeyTab keyTabTakeSnapshot(
+            KeyTab ktab) {
+        return ktab.takeSnapshot();
+    }
+}

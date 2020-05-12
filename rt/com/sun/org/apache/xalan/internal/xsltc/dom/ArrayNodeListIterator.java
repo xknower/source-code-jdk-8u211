@@ -1,96 +1,91 @@
-/*    */ package com.sun.org.apache.xalan.internal.xsltc.dom;
-/*    */ 
-/*    */ import com.sun.org.apache.xml.internal.dtm.DTMAxisIterator;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class ArrayNodeListIterator
-/*    */   implements DTMAxisIterator
-/*    */ {
-/* 30 */   private int _pos = 0;
-/*    */   
-/* 32 */   private int _mark = 0;
-/*    */   
-/*    */   private int[] _nodes;
-/*    */   
-/* 36 */   private static final int[] EMPTY = new int[0];
-/*    */   
-/*    */   public ArrayNodeListIterator(int[] nodes) {
-/* 39 */     this._nodes = nodes;
-/*    */   }
-/*    */   
-/*    */   public int next() {
-/* 43 */     return (this._pos < this._nodes.length) ? this._nodes[this._pos++] : -1;
-/*    */   }
-/*    */   
-/*    */   public DTMAxisIterator reset() {
-/* 47 */     this._pos = 0;
-/* 48 */     return this;
-/*    */   }
-/*    */   
-/*    */   public int getLast() {
-/* 52 */     return this._nodes.length;
-/*    */   }
-/*    */   
-/*    */   public int getPosition() {
-/* 56 */     return this._pos;
-/*    */   }
-/*    */   
-/*    */   public void setMark() {
-/* 60 */     this._mark = this._pos;
-/*    */   }
-/*    */   
-/*    */   public void gotoMark() {
-/* 64 */     this._pos = this._mark;
-/*    */   }
-/*    */   
-/*    */   public DTMAxisIterator setStartNode(int node) {
-/* 68 */     if (node == -1) this._nodes = EMPTY; 
-/* 69 */     return this;
-/*    */   }
-/*    */   
-/*    */   public int getStartNode() {
-/* 73 */     return -1;
-/*    */   }
-/*    */   
-/*    */   public boolean isReverse() {
-/* 77 */     return false;
-/*    */   }
-/*    */   
-/*    */   public DTMAxisIterator cloneIterator() {
-/* 81 */     return new ArrayNodeListIterator(this._nodes);
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public void setRestartable(boolean isRestartable) {}
-/*    */   
-/*    */   public int getNodeByPosition(int position) {
-/* 88 */     return this._nodes[position - 1];
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\dom\ArrayNodeListIterator.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+ * $Id: ArrayNodeListIterator.java,v 1.0 2009-11-25 04:34:24 joehw Exp $
+ */
+package com.sun.org.apache.xalan.internal.xsltc.dom;
+
+import com.sun.org.apache.xml.internal.dtm.DTMAxisIterator;
+
+public class ArrayNodeListIterator implements DTMAxisIterator  {
+
+    private int _pos = 0;
+
+    private int _mark = 0;
+
+    private int _nodes[];
+
+    private static final int[] EMPTY = { };
+
+    public ArrayNodeListIterator(int[] nodes) {
+        _nodes = nodes;
+    }
+
+    public int next() {
+        return _pos < _nodes.length ? _nodes[_pos++] : END;
+    }
+
+    public DTMAxisIterator reset() {
+        _pos = 0;
+        return this;
+    }
+
+    public int getLast() {
+        return _nodes.length;
+    }
+
+    public int getPosition() {
+        return _pos;
+    }
+
+    public void setMark() {
+        _mark = _pos;
+    }
+
+    public void gotoMark() {
+        _pos = _mark;
+    }
+
+    public DTMAxisIterator setStartNode(int node) {
+        if (node == END) _nodes = EMPTY;
+        return this;
+    }
+
+    public int getStartNode() {
+        return END;
+    }
+
+    public boolean isReverse() {
+        return false;
+    }
+
+    public DTMAxisIterator cloneIterator() {
+        return new ArrayNodeListIterator(_nodes);
+    }
+
+    public void setRestartable(boolean isRestartable) {
+    }
+
+    public int getNodeByPosition(int position) {
+        return _nodes[position - 1];
+    }
+
+}

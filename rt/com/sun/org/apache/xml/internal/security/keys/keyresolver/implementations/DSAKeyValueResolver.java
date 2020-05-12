@@ -1,108 +1,102 @@
-/*     */ package com.sun.org.apache.xml.internal.security.keys.keyresolver.implementations;
-/*     */ 
-/*     */ import com.sun.org.apache.xml.internal.security.exceptions.XMLSecurityException;
-/*     */ import com.sun.org.apache.xml.internal.security.keys.content.keyvalues.DSAKeyValue;
-/*     */ import com.sun.org.apache.xml.internal.security.keys.keyresolver.KeyResolverSpi;
-/*     */ import com.sun.org.apache.xml.internal.security.keys.storage.StorageResolver;
-/*     */ import com.sun.org.apache.xml.internal.security.utils.XMLUtils;
-/*     */ import java.security.PublicKey;
-/*     */ import java.security.cert.X509Certificate;
-/*     */ import java.util.logging.Level;
-/*     */ import java.util.logging.Logger;
-/*     */ import javax.crypto.SecretKey;
-/*     */ import org.w3c.dom.Element;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class DSAKeyValueResolver
-/*     */   extends KeyResolverSpi
-/*     */ {
-/*  40 */   private static Logger log = Logger.getLogger(DSAKeyValueResolver.class.getName());
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public PublicKey engineLookupAndResolvePublicKey(Element paramElement, String paramString, StorageResolver paramStorageResolver) {
-/*  54 */     if (paramElement == null) {
-/*  55 */       return null;
-/*     */     }
-/*  57 */     Element element = null;
-/*     */     
-/*  59 */     boolean bool = XMLUtils.elementIsInSignatureSpace(paramElement, "KeyValue");
-/*  60 */     if (bool) {
-/*     */       
-/*  62 */       element = XMLUtils.selectDsNode(paramElement.getFirstChild(), "DSAKeyValue", 0);
-/*  63 */     } else if (XMLUtils.elementIsInSignatureSpace(paramElement, "DSAKeyValue")) {
-/*     */ 
-/*     */       
-/*  66 */       element = paramElement;
-/*     */     } 
-/*     */     
-/*  69 */     if (element == null) {
-/*  70 */       return null;
-/*     */     }
-/*     */     
-/*     */     try {
-/*  74 */       DSAKeyValue dSAKeyValue = new DSAKeyValue(element, paramString);
-/*  75 */       return dSAKeyValue.getPublicKey();
-/*     */     
-/*     */     }
-/*  78 */     catch (XMLSecurityException xMLSecurityException) {
-/*  79 */       if (log.isLoggable(Level.FINE)) {
-/*  80 */         log.log(Level.FINE, xMLSecurityException.getMessage(), xMLSecurityException);
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */       
-/*  85 */       return null;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public X509Certificate engineLookupResolveX509Certificate(Element paramElement, String paramString, StorageResolver paramStorageResolver) {
-/*  93 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SecretKey engineLookupAndResolveSecretKey(Element paramElement, String paramString, StorageResolver paramStorageResolver) {
-/* 100 */     return null;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\internal\security\keys\keyresolver\implementations\DSAKeyValueResolver.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package com.sun.org.apache.xml.internal.security.keys.keyresolver.implementations;
+
+import java.security.PublicKey;
+import java.security.cert.X509Certificate;
+
+import com.sun.org.apache.xml.internal.security.exceptions.XMLSecurityException;
+import com.sun.org.apache.xml.internal.security.keys.content.keyvalues.DSAKeyValue;
+import com.sun.org.apache.xml.internal.security.keys.keyresolver.KeyResolverSpi;
+import com.sun.org.apache.xml.internal.security.keys.storage.StorageResolver;
+import com.sun.org.apache.xml.internal.security.utils.Constants;
+import com.sun.org.apache.xml.internal.security.utils.XMLUtils;
+import org.w3c.dom.Element;
+
+public class DSAKeyValueResolver extends KeyResolverSpi {
+
+    /** {@link org.apache.commons.logging} logging facility */
+    private static java.util.logging.Logger log =
+        java.util.logging.Logger.getLogger(DSAKeyValueResolver.class.getName());
+
+
+    /**
+     * Method engineResolvePublicKey
+     *
+     * @param element
+     * @param BaseURI
+     * @param storage
+     * @return null if no {@link PublicKey} could be obtained
+     */
+    public PublicKey engineLookupAndResolvePublicKey(
+        Element element, String BaseURI, StorageResolver storage
+    ) {
+        if (element == null) {
+            return null;
+        }
+        Element dsaKeyElement = null;
+        boolean isKeyValue =
+            XMLUtils.elementIsInSignatureSpace(element, Constants._TAG_KEYVALUE);
+        if (isKeyValue) {
+            dsaKeyElement =
+                XMLUtils.selectDsNode(element.getFirstChild(), Constants._TAG_DSAKEYVALUE, 0);
+        } else if (XMLUtils.elementIsInSignatureSpace(element, Constants._TAG_DSAKEYVALUE)) {
+            // this trick is needed to allow the RetrievalMethodResolver to eat a
+            // ds:DSAKeyValue directly (without KeyValue)
+            dsaKeyElement = element;
+        }
+
+        if (dsaKeyElement == null) {
+            return null;
+        }
+
+        try {
+            DSAKeyValue dsaKeyValue = new DSAKeyValue(dsaKeyElement, BaseURI);
+            PublicKey pk = dsaKeyValue.getPublicKey();
+
+            return pk;
+        } catch (XMLSecurityException ex) {
+            if (log.isLoggable(java.util.logging.Level.FINE)) {
+                log.log(java.util.logging.Level.FINE, ex.getMessage(), ex);
+            }
+            //do nothing
+        }
+
+        return null;
+    }
+
+
+    /** @inheritDoc */
+    public X509Certificate engineLookupResolveX509Certificate(
+        Element element, String BaseURI, StorageResolver storage
+    ) {
+        return null;
+    }
+
+    /** @inheritDoc */
+    public javax.crypto.SecretKey engineLookupAndResolveSecretKey(
+        Element element, String BaseURI, StorageResolver storage
+    ) {
+        return null;
+    }
+}

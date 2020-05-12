@@ -1,209 +1,204 @@
-/*     */ package com.sun.org.apache.xml.internal.utils;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class BoolStack
-/*     */   implements Cloneable
-/*     */ {
-/*     */   private boolean[] m_values;
-/*     */   private int m_allocatedSize;
-/*     */   private int m_index;
-/*     */   
-/*     */   public BoolStack() {
-/*  48 */     this(32);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public BoolStack(int size) {
-/*  59 */     this.m_allocatedSize = size;
-/*  60 */     this.m_values = new boolean[size];
-/*  61 */     this.m_index = -1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final int size() {
-/*  71 */     return this.m_index + 1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final void clear() {
-/*  80 */     this.m_index = -1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final boolean push(boolean val) {
-/*  93 */     if (this.m_index == this.m_allocatedSize - 1) {
-/*  94 */       grow();
-/*     */     }
-/*  96 */     this.m_values[++this.m_index] = val; return val;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final boolean pop() {
-/* 108 */     return this.m_values[this.m_index--];
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final boolean popAndTop() {
-/* 121 */     this.m_index--;
-/*     */     
-/* 123 */     return (this.m_index >= 0) ? this.m_values[this.m_index] : false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final void setTop(boolean b) {
-/* 134 */     this.m_values[this.m_index] = b;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final boolean peek() {
-/* 146 */     return this.m_values[this.m_index];
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final boolean peekOrFalse() {
-/* 157 */     return (this.m_index > -1) ? this.m_values[this.m_index] : false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final boolean peekOrTrue() {
-/* 168 */     return (this.m_index > -1) ? this.m_values[this.m_index] : true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isEmpty() {
-/* 179 */     return (this.m_index == -1);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void grow() {
-/* 189 */     this.m_allocatedSize *= 2;
-/*     */     
-/* 191 */     boolean[] newVector = new boolean[this.m_allocatedSize];
-/*     */     
-/* 193 */     System.arraycopy(this.m_values, 0, newVector, 0, this.m_index + 1);
-/*     */     
-/* 195 */     this.m_values = newVector;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object clone() throws CloneNotSupportedException {
-/* 201 */     return super.clone();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\interna\\utils\BoolStack.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: BoolStack.java,v 1.2.4.1 2005/09/15 08:15:35 suresh_emailid Exp $
+ */
+package com.sun.org.apache.xml.internal.utils;
+
+
+/**
+ * Simple stack for boolean values.
+ * @xsl.usage internal
+ */
+public final class BoolStack implements Cloneable
+{
+
+  /** Array of boolean values          */
+  private boolean m_values[];
+
+  /** Array size allocated           */
+  private int m_allocatedSize;
+
+  /** Index into the array of booleans          */
+  private int m_index;
+
+  /**
+   * Default constructor.  Note that the default
+   * block size is very small, for small lists.
+   */
+  public BoolStack()
+  {
+    this(32);
+  }
+
+  /**
+   * Construct a IntVector, using the given block size.
+   *
+   * @param size array size to allocate
+   */
+  public BoolStack(int size)
+  {
+
+    m_allocatedSize = size;
+    m_values = new boolean[size];
+    m_index = -1;
+  }
+
+  /**
+   * Get the length of the list.
+   *
+   * @return Current length of the list
+   */
+  public final int size()
+  {
+    return m_index + 1;
+  }
+
+  /**
+   * Clears the stack.
+   *
+   */
+  public final void clear()
+  {
+        m_index = -1;
+  }
+
+  /**
+   * Pushes an item onto the top of this stack.
+   *
+   *
+   * @param val the boolean to be pushed onto this stack.
+   * @return  the <code>item</code> argument.
+   */
+  public final boolean push(boolean val)
+  {
+
+    if (m_index == m_allocatedSize - 1)
+      grow();
+
+    return (m_values[++m_index] = val);
+  }
+
+  /**
+   * Removes the object at the top of this stack and returns that
+   * object as the value of this function.
+   *
+   * @return     The object at the top of this stack.
+   * @throws  EmptyStackException  if this stack is empty.
+   */
+  public final boolean pop()
+  {
+    return m_values[m_index--];
+  }
+
+  /**
+   * Removes the object at the top of this stack and returns the
+   * next object at the top as the value of this function.
+   *
+   *
+   * @return Next object to the top or false if none there
+   */
+  public final boolean popAndTop()
+  {
+
+    m_index--;
+
+    return (m_index >= 0) ? m_values[m_index] : false;
+  }
+
+  /**
+   * Set the item at the top of this stack
+   *
+   *
+   * @param b Object to set at the top of this stack
+   */
+  public final void setTop(boolean b)
+  {
+    m_values[m_index] = b;
+  }
+
+  /**
+   * Looks at the object at the top of this stack without removing it
+   * from the stack.
+   *
+   * @return     the object at the top of this stack.
+   * @throws  EmptyStackException  if this stack is empty.
+   */
+  public final boolean peek()
+  {
+    return m_values[m_index];
+  }
+
+  /**
+   * Looks at the object at the top of this stack without removing it
+   * from the stack.  If the stack is empty, it returns false.
+   *
+   * @return     the object at the top of this stack.
+   */
+  public final boolean peekOrFalse()
+  {
+    return (m_index > -1) ? m_values[m_index] : false;
+  }
+
+  /**
+   * Looks at the object at the top of this stack without removing it
+   * from the stack.  If the stack is empty, it returns true.
+   *
+   * @return     the object at the top of this stack.
+   */
+  public final boolean peekOrTrue()
+  {
+    return (m_index > -1) ? m_values[m_index] : true;
+  }
+
+  /**
+   * Tests if this stack is empty.
+   *
+   * @return  <code>true</code> if this stack is empty;
+   *          <code>false</code> otherwise.
+   */
+  public boolean isEmpty()
+  {
+    return (m_index == -1);
+  }
+
+  /**
+   * Grows the size of the stack
+   *
+   */
+  private void grow()
+  {
+
+    m_allocatedSize *= 2;
+
+    boolean newVector[] = new boolean[m_allocatedSize];
+
+    System.arraycopy(m_values, 0, newVector, 0, m_index + 1);
+
+    m_values = newVector;
+  }
+
+  public Object clone()
+    throws CloneNotSupportedException
+  {
+    return super.clone();
+  }
+
+}

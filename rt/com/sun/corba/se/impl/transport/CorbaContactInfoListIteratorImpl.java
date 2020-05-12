@@ -1,263 +1,259 @@
-/*     */ package com.sun.corba.se.impl.transport;
-/*     */ 
-/*     */ import com.sun.corba.se.impl.logging.ORBUtilSystemException;
-/*     */ import com.sun.corba.se.impl.protocol.CorbaInvocationInfo;
-/*     */ import com.sun.corba.se.pept.transport.ContactInfo;
-/*     */ import com.sun.corba.se.pept.transport.ContactInfoList;
-/*     */ import com.sun.corba.se.spi.ior.IOR;
-/*     */ import com.sun.corba.se.spi.orb.ORB;
-/*     */ import com.sun.corba.se.spi.transport.CorbaContactInfo;
-/*     */ import com.sun.corba.se.spi.transport.CorbaContactInfoList;
-/*     */ import com.sun.corba.se.spi.transport.CorbaContactInfoListIterator;
-/*     */ import com.sun.corba.se.spi.transport.IIOPPrimaryToContactInfo;
-/*     */ import java.util.Iterator;
-/*     */ import java.util.List;
-/*     */ import org.omg.CORBA.CompletionStatus;
-/*     */ import org.omg.CORBA.SystemException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class CorbaContactInfoListIteratorImpl
-/*     */   implements CorbaContactInfoListIterator
-/*     */ {
-/*     */   protected ORB orb;
-/*     */   protected CorbaContactInfoList contactInfoList;
-/*     */   protected CorbaContactInfo successContactInfo;
-/*     */   protected CorbaContactInfo failureContactInfo;
-/*     */   protected RuntimeException failureException;
-/*     */   protected Iterator effectiveTargetIORIterator;
-/*     */   protected CorbaContactInfo previousContactInfo;
-/*     */   protected boolean isAddrDispositionRetry;
-/*     */   protected IIOPPrimaryToContactInfo primaryToContactInfo;
-/*     */   protected ContactInfo primaryContactInfo;
-/*     */   protected List listOfContactInfos;
-/*     */   
-/*     */   public CorbaContactInfoListIteratorImpl(ORB paramORB, CorbaContactInfoList paramCorbaContactInfoList, ContactInfo paramContactInfo, List paramList) {
-/*  77 */     this.orb = paramORB;
-/*  78 */     this.contactInfoList = paramCorbaContactInfoList;
-/*  79 */     this.primaryContactInfo = paramContactInfo;
-/*  80 */     if (paramList != null)
-/*     */     {
-/*     */       
-/*  83 */       this.effectiveTargetIORIterator = paramList.iterator();
-/*     */     }
-/*     */     
-/*  86 */     this.listOfContactInfos = paramList;
-/*     */     
-/*  88 */     this.previousContactInfo = null;
-/*  89 */     this.isAddrDispositionRetry = false;
-/*     */     
-/*  91 */     this.successContactInfo = null;
-/*  92 */     this.failureContactInfo = null;
-/*  93 */     this.failureException = null;
-/*     */     
-/*  95 */     this.primaryToContactInfo = paramORB.getORBData().getIIOPPrimaryToContactInfo();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean hasNext() {
-/*     */     boolean bool;
-/* 109 */     if (this.isAddrDispositionRetry) {
-/* 110 */       return true;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 115 */     if (this.primaryToContactInfo != null) {
-/* 116 */       bool = this.primaryToContactInfo.hasNext(this.primaryContactInfo, this.previousContactInfo, this.listOfContactInfos);
-/*     */     }
-/*     */     else {
-/*     */       
-/* 120 */       bool = this.effectiveTargetIORIterator.hasNext();
-/*     */     } 
-/*     */     
-/* 123 */     return bool;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public Object next() {
-/* 128 */     if (this.isAddrDispositionRetry) {
-/* 129 */       this.isAddrDispositionRetry = false;
-/* 130 */       return this.previousContactInfo;
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 138 */     if (this.primaryToContactInfo != null) {
-/* 139 */       this
-/* 140 */         .previousContactInfo = (CorbaContactInfo)this.primaryToContactInfo.next(this.primaryContactInfo, this.previousContactInfo, this.listOfContactInfos);
-/*     */     }
-/*     */     else {
-/*     */       
-/* 144 */       this
-/* 145 */         .previousContactInfo = this.effectiveTargetIORIterator.next();
-/*     */     } 
-/*     */     
-/* 148 */     return this.previousContactInfo;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void remove() {
-/* 153 */     throw new UnsupportedOperationException();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ContactInfoList getContactInfoList() {
-/* 163 */     return this.contactInfoList;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void reportSuccess(ContactInfo paramContactInfo) {
-/* 168 */     this.successContactInfo = (CorbaContactInfo)paramContactInfo;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean reportException(ContactInfo paramContactInfo, RuntimeException paramRuntimeException) {
-/* 174 */     this.failureContactInfo = (CorbaContactInfo)paramContactInfo;
-/* 175 */     this.failureException = paramRuntimeException;
-/* 176 */     if (paramRuntimeException instanceof org.omg.CORBA.COMM_FAILURE) {
-/* 177 */       SystemException systemException = (SystemException)paramRuntimeException;
-/* 178 */       if (systemException.completed == CompletionStatus.COMPLETED_NO) {
-/* 179 */         if (hasNext()) {
-/* 180 */           return true;
-/*     */         }
-/* 182 */         if (this.contactInfoList.getEffectiveTargetIOR() != this.contactInfoList
-/* 183 */           .getTargetIOR()) {
-/*     */ 
-/*     */           
-/* 186 */           updateEffectiveTargetIOR(this.contactInfoList.getTargetIOR());
-/* 187 */           return true;
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/* 191 */     return false;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public RuntimeException getFailureException() {
-/* 196 */     if (this.failureException == null) {
-/* 197 */       return 
-/* 198 */         ORBUtilSystemException.get(this.orb, "rpc.transport")
-/*     */         
-/* 200 */         .invalidContactInfoListIteratorFailureException();
-/*     */     }
-/* 202 */     return this.failureException;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void reportAddrDispositionRetry(CorbaContactInfo paramCorbaContactInfo, short paramShort) {
-/* 214 */     this.previousContactInfo.setAddressingDisposition(paramShort);
-/* 215 */     this.isAddrDispositionRetry = true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void reportRedirect(CorbaContactInfo paramCorbaContactInfo, IOR paramIOR) {
-/* 221 */     updateEffectiveTargetIOR(paramIOR);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void updateEffectiveTargetIOR(IOR paramIOR) {
-/* 245 */     this.contactInfoList.setEffectiveTargetIOR(paramIOR);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 254 */     ((CorbaInvocationInfo)this.orb.getInvocationInfo())
-/* 255 */       .setContactInfoListIterator(this.contactInfoList.iterator());
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\transport\CorbaContactInfoListIteratorImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.transport;
+
+import java.util.Iterator;
+import java.util.List;
+
+import org.omg.CORBA.COMM_FAILURE;
+import org.omg.CORBA.CompletionStatus;
+import org.omg.CORBA.INTERNAL;
+import org.omg.CORBA.SystemException;
+
+import com.sun.corba.se.pept.transport.ContactInfo ;
+import com.sun.corba.se.pept.transport.ContactInfoList ;
+
+import com.sun.corba.se.spi.ior.IOR ;
+import com.sun.corba.se.spi.logging.CORBALogDomains;
+import com.sun.corba.se.spi.orb.ORB ;
+import com.sun.corba.se.spi.transport.CorbaContactInfo;
+import com.sun.corba.se.spi.transport.CorbaContactInfoList;
+import com.sun.corba.se.spi.transport.CorbaContactInfoListIterator;
+import com.sun.corba.se.spi.transport.IIOPPrimaryToContactInfo;
+
+import com.sun.corba.se.impl.logging.ORBUtilSystemException;
+import com.sun.corba.se.impl.protocol.CorbaInvocationInfo;
+
+// REVISIT: create a unit test for this class.
+
+public class CorbaContactInfoListIteratorImpl
+    implements
+        CorbaContactInfoListIterator
+{
+    protected ORB orb;
+    protected CorbaContactInfoList contactInfoList;
+    protected CorbaContactInfo successContactInfo;
+    protected CorbaContactInfo failureContactInfo;
+    protected RuntimeException failureException;
+
+    // ITERATOR state
+    protected Iterator effectiveTargetIORIterator;
+    protected CorbaContactInfo previousContactInfo;
+    protected boolean isAddrDispositionRetry;
+    protected IIOPPrimaryToContactInfo primaryToContactInfo;
+    protected ContactInfo primaryContactInfo;
+    protected List listOfContactInfos;
+    // End ITERATOR state
+
+    public CorbaContactInfoListIteratorImpl(
+        ORB orb,
+        CorbaContactInfoList corbaContactInfoList,
+        ContactInfo primaryContactInfo,
+        List listOfContactInfos)
+    {
+        this.orb = orb;
+        this.contactInfoList = corbaContactInfoList;
+        this.primaryContactInfo = primaryContactInfo;
+        if (listOfContactInfos != null) {
+            // listOfContactInfos is null when used by the legacy
+            // socket factory.  In that case this iterator is NOT used.
+            this.effectiveTargetIORIterator = listOfContactInfos.iterator();
+        }
+        // List is immutable so no need to synchronize access.
+        this.listOfContactInfos = listOfContactInfos;
+
+        this.previousContactInfo = null;
+        this.isAddrDispositionRetry = false;
+
+        this.successContactInfo = null;
+        this.failureContactInfo = null;
+        this.failureException = null;
+
+        primaryToContactInfo = orb.getORBData().getIIOPPrimaryToContactInfo();
+    }
+
+    ////////////////////////////////////////////////////
+    //
+    // java.util.Iterator
+    //
+
+    public boolean hasNext()
+    {
+        // REVISIT: Implement as internal closure iterator which would
+        // wraps sticky or default.  Then hasNext and next just call
+        // the closure.
+
+        if (isAddrDispositionRetry) {
+            return true;
+        }
+
+        boolean result;
+
+        if (primaryToContactInfo != null) {
+            result = primaryToContactInfo.hasNext(primaryContactInfo,
+                                                  previousContactInfo,
+                                                  listOfContactInfos);
+        } else {
+            result = effectiveTargetIORIterator.hasNext();
+        }
+
+        return result;
+    }
+
+    public Object next()
+    {
+        if (isAddrDispositionRetry) {
+            isAddrDispositionRetry = false;
+            return previousContactInfo;
+        }
+
+        // We hold onto the last in case we get an addressing
+        // disposition retry.  Then we use it again.
+
+        // We also hold onto it for the sticky manager.
+
+        if (primaryToContactInfo != null) {
+            previousContactInfo = (CorbaContactInfo)
+                primaryToContactInfo.next(primaryContactInfo,
+                                          previousContactInfo,
+                                          listOfContactInfos);
+        } else {
+            previousContactInfo = (CorbaContactInfo)
+                effectiveTargetIORIterator.next();
+        }
+
+        return previousContactInfo;
+    }
+
+    public void remove()
+    {
+        throw new UnsupportedOperationException();
+    }
+
+    ////////////////////////////////////////////////////
+    //
+    // com.sun.corba.se.pept.transport.ContactInfoListIterator
+    //
+
+    public ContactInfoList getContactInfoList()
+    {
+        return contactInfoList;
+    }
+
+    public void reportSuccess(ContactInfo contactInfo)
+    {
+        this.successContactInfo = (CorbaContactInfo)contactInfo;
+    }
+
+    public boolean reportException(ContactInfo contactInfo,
+                                   RuntimeException ex)
+    {
+        this.failureContactInfo = (CorbaContactInfo)contactInfo;
+        this.failureException = ex;
+        if (ex instanceof COMM_FAILURE) {
+            SystemException se = (SystemException) ex;
+            if (se.completed == CompletionStatus.COMPLETED_NO) {
+                if (hasNext()) {
+                    return true;
+                }
+                if (contactInfoList.getEffectiveTargetIOR() !=
+                    contactInfoList.getTargetIOR())
+                {
+                    // retry from root ior
+                    updateEffectiveTargetIOR(contactInfoList.getTargetIOR());
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public RuntimeException getFailureException()
+    {
+        if (failureException == null) {
+            return
+                ORBUtilSystemException.get( orb,
+                                            CORBALogDomains.RPC_TRANSPORT )
+                    .invalidContactInfoListIteratorFailureException();
+        } else {
+            return failureException;
+        }
+    }
+
+    ////////////////////////////////////////////////////
+    //
+    // spi.CorbaContactInfoListIterator
+    //
+
+    public void reportAddrDispositionRetry(CorbaContactInfo contactInfo,
+                                           short disposition)
+    {
+        previousContactInfo.setAddressingDisposition(disposition);
+        isAddrDispositionRetry = true;
+    }
+
+    public void reportRedirect(CorbaContactInfo contactInfo,
+                               IOR forwardedIOR)
+    {
+        updateEffectiveTargetIOR(forwardedIOR);
+    }
+
+    ////////////////////////////////////////////////////
+    //
+    // Implementation.
+    //
+
+    //
+    // REVISIT:
+    //
+    // The normal operation for a standard iterator is to throw
+    // ConcurrentModificationException whenever the underlying collection
+    // changes.  This is implemented by keeping a modification counter (the
+    // timestamp may fail because the granularity is too coarse).
+    // Essentially what you need to do is whenever the iterator fails this
+    // way, go back to ContactInfoList and get a new iterator.
+    //
+    // Need to update CorbaClientRequestDispatchImpl to catch and use
+    // that exception.
+    //
+
+    public void updateEffectiveTargetIOR(IOR newIOR)
+    {
+        contactInfoList.setEffectiveTargetIOR(newIOR);
+        // If we report the exception in _request (i.e., beginRequest
+        // we cannot throw RemarshalException to the stub because _request
+        // does not declare that exception.
+        // To keep the two-level dispatching (first level chooses ContactInfo,
+        // second level is specific to that ContactInfo/EPT) we need to
+        // ensure that the request dispatchers get their iterator from the
+        // InvocationStack (i.e., ThreadLocal). That way if the list iterator
+        // needs a complete update it happens right here.
+        ((CorbaInvocationInfo)orb.getInvocationInfo())
+            .setContactInfoListIterator(contactInfoList.iterator());
+    }
+}
+
+// End of file.

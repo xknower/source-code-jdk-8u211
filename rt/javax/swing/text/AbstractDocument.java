@@ -1,3152 +1,3116 @@
-/*      */ package javax.swing.text;
-/*      */ 
-/*      */ import java.awt.font.TextAttribute;
-/*      */ import java.io.IOException;
-/*      */ import java.io.ObjectInputStream;
-/*      */ import java.io.ObjectInputValidation;
-/*      */ import java.io.ObjectOutputStream;
-/*      */ import java.io.OutputStreamWriter;
-/*      */ import java.io.PrintStream;
-/*      */ import java.io.PrintWriter;
-/*      */ import java.io.Serializable;
-/*      */ import java.io.UnsupportedEncodingException;
-/*      */ import java.security.AccessController;
-/*      */ import java.security.PrivilegedAction;
-/*      */ import java.text.Bidi;
-/*      */ import java.util.Dictionary;
-/*      */ import java.util.Enumeration;
-/*      */ import java.util.Hashtable;
-/*      */ import java.util.Vector;
-/*      */ import javax.swing.UIManager;
-/*      */ import javax.swing.event.DocumentEvent;
-/*      */ import javax.swing.event.DocumentListener;
-/*      */ import javax.swing.event.EventListenerList;
-/*      */ import javax.swing.event.UndoableEditEvent;
-/*      */ import javax.swing.event.UndoableEditListener;
-/*      */ import javax.swing.tree.TreeNode;
-/*      */ import javax.swing.undo.AbstractUndoableEdit;
-/*      */ import javax.swing.undo.CannotRedoException;
-/*      */ import javax.swing.undo.CannotUndoException;
-/*      */ import javax.swing.undo.CompoundEdit;
-/*      */ import javax.swing.undo.UndoableEdit;
-/*      */ import sun.font.BidiUtils;
-/*      */ import sun.swing.SwingUtilities2;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public abstract class AbstractDocument
-/*      */   implements Document, Serializable
-/*      */ {
-/*      */   private transient int numReaders;
-/*      */   private transient Thread currWriter;
-/*      */   private transient int numWriters;
-/*      */   private transient boolean notifyingListeners;
-/*      */   private static Boolean defaultI18NProperty;
-/*      */   private Dictionary<Object, Object> documentProperties;
-/*      */   protected EventListenerList listenerList;
-/*      */   private Content data;
-/*      */   private AttributeContext context;
-/*      */   private transient BranchElement bidiRoot;
-/*      */   private DocumentFilter documentFilter;
-/*      */   private transient DocumentFilter.FilterBypass filterBypass;
-/*      */   private static final String BAD_LOCK_STATE = "document lock failure";
-/*      */   protected static final String BAD_LOCATION = "document location failure";
-/*      */   public static final String ParagraphElementName = "paragraph";
-/*      */   public static final String ContentElementName = "content";
-/*      */   public static final String SectionElementName = "section";
-/*      */   public static final String BidiElementName = "bidi level";
-/*      */   public static final String ElementNameAttribute = "$ename";
-/*      */   static final String I18NProperty = "i18n";
-/*      */   
-/*      */   protected AbstractDocument(Content paramContent) {
-/*  108 */     this(paramContent, StyleContext.getDefaultStyleContext());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Dictionary<Object, Object> getDocumentProperties() {
-/*      */     if (this.documentProperties == null) {
-/*      */       this.documentProperties = new Hashtable<>(2);
-/*      */     }
-/*      */     return this.documentProperties;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setDocumentProperties(Dictionary<Object, Object> paramDictionary) {
-/*      */     this.documentProperties = paramDictionary;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void fireInsertUpdate(DocumentEvent paramDocumentEvent) {
-/*      */     this.notifyingListeners = true;
-/*      */     try {
-/*      */       Object[] arrayOfObject = this.listenerList.getListenerList();
-/*      */       for (int i = arrayOfObject.length - 2; i >= 0; i -= 2) {
-/*      */         if (arrayOfObject[i] == DocumentListener.class) {
-/*      */           ((DocumentListener)arrayOfObject[i + 1]).insertUpdate(paramDocumentEvent);
-/*      */         }
-/*      */       } 
-/*      */     } finally {
-/*      */       this.notifyingListeners = false;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void fireChangedUpdate(DocumentEvent paramDocumentEvent) {
-/*      */     this.notifyingListeners = true;
-/*      */     try {
-/*      */       Object[] arrayOfObject = this.listenerList.getListenerList();
-/*      */       for (int i = arrayOfObject.length - 2; i >= 0; i -= 2) {
-/*      */         if (arrayOfObject[i] == DocumentListener.class) {
-/*      */           ((DocumentListener)arrayOfObject[i + 1]).changedUpdate(paramDocumentEvent);
-/*      */         }
-/*      */       } 
-/*      */     } finally {
-/*      */       this.notifyingListeners = false;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void fireRemoveUpdate(DocumentEvent paramDocumentEvent) {
-/*      */     this.notifyingListeners = true;
-/*      */     try {
-/*      */       Object[] arrayOfObject = this.listenerList.getListenerList();
-/*      */       for (int i = arrayOfObject.length - 2; i >= 0; i -= 2) {
-/*      */         if (arrayOfObject[i] == DocumentListener.class) {
-/*      */           ((DocumentListener)arrayOfObject[i + 1]).removeUpdate(paramDocumentEvent);
-/*      */         }
-/*      */       } 
-/*      */     } finally {
-/*      */       this.notifyingListeners = false;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void fireUndoableEditUpdate(UndoableEditEvent paramUndoableEditEvent) {
-/*      */     Object[] arrayOfObject = this.listenerList.getListenerList();
-/*      */     for (int i = arrayOfObject.length - 2; i >= 0; i -= 2) {
-/*      */       if (arrayOfObject[i] == UndoableEditListener.class) {
-/*      */         ((UndoableEditListener)arrayOfObject[i + 1]).undoableEditHappened(paramUndoableEditEvent);
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public <T extends java.util.EventListener> T[] getListeners(Class<T> paramClass) {
-/*      */     return this.listenerList.getListeners(paramClass);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getAsynchronousLoadPriority() {
-/*      */     Integer integer = (Integer)getProperty("load priority");
-/*      */     if (integer != null) {
-/*      */       return integer.intValue();
-/*      */     }
-/*      */     return -1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setAsynchronousLoadPriority(int paramInt) {
-/*      */     Integer integer = (paramInt >= 0) ? Integer.valueOf(paramInt) : null;
-/*      */     putProperty("load priority", integer);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setDocumentFilter(DocumentFilter paramDocumentFilter) {
-/*      */     this.documentFilter = paramDocumentFilter;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public DocumentFilter getDocumentFilter() {
-/*      */     return this.documentFilter;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void render(Runnable paramRunnable) {
-/*      */     readLock();
-/*      */     try {
-/*      */       paramRunnable.run();
-/*      */     } finally {
-/*      */       readUnlock();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getLength() {
-/*      */     return this.data.length() - 1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected AbstractDocument(Content paramContent, AttributeContext paramAttributeContext) {
-/* 1484 */     this.documentProperties = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1489 */     this.listenerList = new EventListenerList(); this.data = paramContent; this.context = paramAttributeContext; this.bidiRoot = new BidiRootElement(); if (defaultI18NProperty == null) {
-/*      */       String str = AccessController.<String>doPrivileged(new PrivilegedAction<String>() { public String run() { return System.getProperty("i18n"); } }
-/*      */         ); if (str != null) {
-/*      */         defaultI18NProperty = Boolean.valueOf(str);
-/*      */       } else {
-/*      */         defaultI18NProperty = Boolean.FALSE;
-/*      */       } 
-/*      */     }  putProperty("i18n", defaultI18NProperty); writeLock(); try {
-/*      */       Element[] arrayOfElement = new Element[1]; arrayOfElement[0] = new BidiElement(this.bidiRoot, 0, 1, 0); this.bidiRoot.replace(0, 0, arrayOfElement);
-/*      */     } finally {
-/*      */       writeUnlock();
-/*      */     } 
-/*      */   } public void addDocumentListener(DocumentListener paramDocumentListener) { this.listenerList.add(DocumentListener.class, paramDocumentListener); } public void removeDocumentListener(DocumentListener paramDocumentListener) { this.listenerList.remove(DocumentListener.class, paramDocumentListener); }
-/*      */   public DocumentListener[] getDocumentListeners() { return this.listenerList.<DocumentListener>getListeners(DocumentListener.class); }
-/*      */   public void addUndoableEditListener(UndoableEditListener paramUndoableEditListener) { this.listenerList.add(UndoableEditListener.class, paramUndoableEditListener); }
-/*      */   public void removeUndoableEditListener(UndoableEditListener paramUndoableEditListener) { this.listenerList.remove(UndoableEditListener.class, paramUndoableEditListener); }
-/*      */   public UndoableEditListener[] getUndoableEditListeners() { return this.listenerList.<UndoableEditListener>getListeners(UndoableEditListener.class); }
-/*      */   public final Object getProperty(Object paramObject) { return getDocumentProperties().get(paramObject); }
-/*      */   public final void putProperty(Object paramObject1, Object paramObject2) { if (paramObject2 != null) {
-/*      */       getDocumentProperties().put(paramObject1, paramObject2);
-/*      */     } else {
-/*      */       getDocumentProperties().remove(paramObject1);
-/*      */     }  if (paramObject1 == TextAttribute.RUN_DIRECTION && Boolean.TRUE.equals(getProperty("i18n"))) {
-/*      */       writeLock(); try {
-/*      */         DefaultDocumentEvent defaultDocumentEvent = new DefaultDocumentEvent(0, getLength(), DocumentEvent.EventType.INSERT); updateBidi(defaultDocumentEvent);
-/*      */       } finally {
-/*      */         writeUnlock();
-/*      */       } 
-/*      */     }  }
-/*      */   public void remove(int paramInt1, int paramInt2) throws BadLocationException { DocumentFilter documentFilter = getDocumentFilter(); writeLock(); try {
-/*      */       if (documentFilter != null) {
-/*      */         documentFilter.remove(getFilterBypass(), paramInt1, paramInt2);
-/*      */       } else {
-/*      */         handleRemove(paramInt1, paramInt2);
-/*      */       } 
-/*      */     } finally {
-/*      */       writeUnlock();
-/*      */     }  }
-/*      */   void handleRemove(int paramInt1, int paramInt2) throws BadLocationException { if (paramInt2 > 0) {
-/*      */       if (paramInt1 < 0 || paramInt1 + paramInt2 > getLength())
-/*      */         throw new BadLocationException("Invalid remove", getLength() + 1); 
-/*      */       DefaultDocumentEvent defaultDocumentEvent = new DefaultDocumentEvent(paramInt1, paramInt2, DocumentEvent.EventType.REMOVE);
-/*      */       boolean bool = Utilities.isComposedTextElement(this, paramInt1);
-/*      */       removeUpdate(defaultDocumentEvent);
-/*      */       UndoableEdit undoableEdit = this.data.remove(paramInt1, paramInt2);
-/*      */       if (undoableEdit != null)
-/*      */         defaultDocumentEvent.addEdit(undoableEdit); 
-/*      */       postRemoveUpdate(defaultDocumentEvent);
-/*      */       defaultDocumentEvent.end();
-/*      */       fireRemoveUpdate(defaultDocumentEvent);
-/*      */       if (undoableEdit != null && !bool)
-/*      */         fireUndoableEditUpdate(new UndoableEditEvent(this, defaultDocumentEvent)); 
-/*      */     }  }
-/*      */   public void replace(int paramInt1, int paramInt2, String paramString, AttributeSet paramAttributeSet) throws BadLocationException { if (paramInt2 == 0 && (paramString == null || paramString.length() == 0))
-/*      */       return; 
-/*      */     DocumentFilter documentFilter = getDocumentFilter();
-/*      */     writeLock();
-/*      */     try {
-/*      */       if (documentFilter != null) {
-/*      */         documentFilter.replace(getFilterBypass(), paramInt1, paramInt2, paramString, paramAttributeSet);
-/*      */       } else {
-/*      */         if (paramInt2 > 0)
-/*      */           remove(paramInt1, paramInt2); 
-/*      */         if (paramString != null && paramString.length() > 0)
-/*      */           insertString(paramInt1, paramString, paramAttributeSet); 
-/*      */       } 
-/*      */     } finally {
-/*      */       writeUnlock();
-/*      */     }  }
-/*      */   public void insertString(int paramInt, String paramString, AttributeSet paramAttributeSet) throws BadLocationException { if (paramString == null || paramString.length() == 0)
-/*      */       return; 
-/*      */     DocumentFilter documentFilter = getDocumentFilter();
-/*      */     writeLock();
-/*      */     try {
-/*      */       if (documentFilter != null) {
-/*      */         documentFilter.insertString(getFilterBypass(), paramInt, paramString, paramAttributeSet);
-/*      */       } else {
-/*      */         handleInsertString(paramInt, paramString, paramAttributeSet);
-/*      */       } 
-/*      */     } finally {
-/*      */       writeUnlock();
-/*      */     }  }
-/* 1571 */   static final Object MultiByteProperty = "multiByte";
-/*      */   private void handleInsertString(int paramInt, String paramString, AttributeSet paramAttributeSet) throws BadLocationException { if (paramString == null || paramString.length() == 0)
-/*      */       return;  UndoableEdit undoableEdit = this.data.insertString(paramInt, paramString); DefaultDocumentEvent defaultDocumentEvent = new DefaultDocumentEvent(paramInt, paramString.length(), DocumentEvent.EventType.INSERT); if (undoableEdit != null)
-/*      */       defaultDocumentEvent.addEdit(undoableEdit);  if (getProperty("i18n").equals(Boolean.FALSE)) {
-/*      */       Object object = getProperty(TextAttribute.RUN_DIRECTION); if (object != null && object.equals(TextAttribute.RUN_DIRECTION_RTL)) {
-/*      */         putProperty("i18n", Boolean.TRUE);
-/*      */       } else {
-/*      */         char[] arrayOfChar = paramString.toCharArray(); if (SwingUtilities2.isComplexLayout(arrayOfChar, 0, arrayOfChar.length))
-/*      */           putProperty("i18n", Boolean.TRUE); 
-/*      */       } 
-/*      */     }  insertUpdate(defaultDocumentEvent, paramAttributeSet); defaultDocumentEvent.end(); fireInsertUpdate(defaultDocumentEvent); if (undoableEdit != null && (paramAttributeSet == null || !paramAttributeSet.isDefined(StyleConstants.ComposedTextAttribute)))
-/*      */       fireUndoableEditUpdate(new UndoableEditEvent(this, defaultDocumentEvent));  }
-/*      */   public String getText(int paramInt1, int paramInt2) throws BadLocationException { if (paramInt2 < 0)
-/*      */       throw new BadLocationException("Length must be positive", paramInt2);  return this.data.getString(paramInt1, paramInt2); }
-/*      */   public void getText(int paramInt1, int paramInt2, Segment paramSegment) throws BadLocationException { if (paramInt2 < 0)
-/*      */       throw new BadLocationException("Length must be positive", paramInt2);  this.data.getChars(paramInt1, paramInt2, paramSegment); }
-/*      */   public synchronized Position createPosition(int paramInt) throws BadLocationException { return this.data.createPosition(paramInt); }
-/*      */   public final Position getStartPosition() { Position position; try {
-/*      */       position = createPosition(0);
-/*      */     } catch (BadLocationException badLocationException) {
-/*      */       position = null;
-/*      */     }  return position; }
-/*      */   public final Position getEndPosition() { Position position; try {
-/*      */       position = createPosition(this.data.length());
-/*      */     } catch (BadLocationException badLocationException) {
-/*      */       position = null;
-/*      */     }  return position; }
-/*      */   public Element[] getRootElements() { Element[] arrayOfElement = new Element[2]; arrayOfElement[0] = getDefaultRootElement(); arrayOfElement[1] = getBidiRootElement(); return arrayOfElement; }
-/*      */   private DocumentFilter.FilterBypass getFilterBypass() { if (this.filterBypass == null)
-/*      */       this.filterBypass = new DefaultFilterBypass();  return this.filterBypass; }
-/*      */   public Element getBidiRootElement() { return this.bidiRoot; }
-/*      */   static boolean isLeftToRight(Document paramDocument, int paramInt1, int paramInt2) { if (Boolean.TRUE.equals(paramDocument.getProperty("i18n")) && paramDocument instanceof AbstractDocument) {
-/*      */       AbstractDocument abstractDocument = (AbstractDocument)paramDocument; Element element1 = abstractDocument.getBidiRootElement(); int i = element1.getElementIndex(paramInt1); Element element2 = element1.getElement(i); if (element2.getEndOffset() >= paramInt2) {
-/*      */         AttributeSet attributeSet = element2.getAttributes(); return (StyleConstants.getBidiLevel(attributeSet) % 2 == 0);
-/*      */       } 
-/*      */     }  return true; }
-/*      */   protected final AttributeContext getAttributeContext() { return this.context; }
-/*      */   protected void insertUpdate(DefaultDocumentEvent paramDefaultDocumentEvent, AttributeSet paramAttributeSet) { if (getProperty("i18n").equals(Boolean.TRUE))
-/*      */       updateBidi(paramDefaultDocumentEvent);  if (paramDefaultDocumentEvent.type == DocumentEvent.EventType.INSERT && paramDefaultDocumentEvent.getLength() > 0 && !Boolean.TRUE.equals(getProperty(MultiByteProperty))) {
-/*      */       Segment segment = SegmentCache.getSharedSegment(); try {
-/*      */         getText(paramDefaultDocumentEvent.getOffset(), paramDefaultDocumentEvent.getLength(), segment); segment.first(); do {
-/*      */           if (segment.current() > 'ÿ') {
-/*      */             putProperty(MultiByteProperty, Boolean.TRUE); break;
-/*      */           } 
-/*      */         } while (segment.next() != Character.MAX_VALUE);
-/*      */       } catch (BadLocationException badLocationException) {} SegmentCache.releaseSharedSegment(segment);
-/*      */     }  }
-/*      */   protected void removeUpdate(DefaultDocumentEvent paramDefaultDocumentEvent) {}
-/*      */   protected void postRemoveUpdate(DefaultDocumentEvent paramDefaultDocumentEvent) { if (getProperty("i18n").equals(Boolean.TRUE))
-/*      */       updateBidi(paramDefaultDocumentEvent);  }
-/*      */   void updateBidi(DefaultDocumentEvent paramDefaultDocumentEvent) { int i, j; if (paramDefaultDocumentEvent.type == DocumentEvent.EventType.INSERT || paramDefaultDocumentEvent.type == DocumentEvent.EventType.CHANGE) {
-/*      */       int i4 = paramDefaultDocumentEvent.getOffset(); int i5 = i4 + paramDefaultDocumentEvent.getLength(); i = getParagraphElement(i4).getStartOffset(); j = getParagraphElement(i5).getEndOffset();
-/*      */     } else if (paramDefaultDocumentEvent.type == DocumentEvent.EventType.REMOVE) {
-/*      */       Element element = getParagraphElement(paramDefaultDocumentEvent.getOffset()); i = element.getStartOffset(); j = element.getEndOffset();
-/*      */     } else {
-/*      */       throw new Error("Internal error: unknown event type.");
-/*      */     }  byte[] arrayOfByte = calculateBidiLevels(i, j); Vector<BidiElement> vector = new Vector(); int k = i; int m = 0; if (k > 0) {
-/*      */       int i4 = this.bidiRoot.getElementIndex(i - 1); m = i4; Element element = this.bidiRoot.getElement(i4); int i5 = StyleConstants.getBidiLevel(element.getAttributes()); if (i5 == arrayOfByte[0]) {
-/*      */         k = element.getStartOffset();
-/*      */       } else if (element.getEndOffset() > i) {
-/*      */         vector.addElement(new BidiElement(this.bidiRoot, element.getStartOffset(), i, i5));
-/*      */       } else {
-/*      */         m++;
-/*      */       } 
-/*      */     }  byte b1 = 0; while (b1 < arrayOfByte.length && arrayOfByte[b1] == arrayOfByte[0])
-/*      */       b1++;  int n = j; BidiElement bidiElement = null; int i1 = this.bidiRoot.getElementCount() - 1; if (n <= getLength()) {
-/*      */       int i4 = this.bidiRoot.getElementIndex(j); i1 = i4;
-/*      */       Element element = this.bidiRoot.getElement(i4);
-/*      */       int i5 = StyleConstants.getBidiLevel(element.getAttributes());
-/*      */       if (i5 == arrayOfByte[arrayOfByte.length - 1]) {
-/*      */         n = element.getEndOffset();
-/*      */       } else if (element.getStartOffset() < j) {
-/*      */         bidiElement = new BidiElement(this.bidiRoot, j, element.getEndOffset(), i5);
-/*      */       } else {
-/*      */         i1--;
-/*      */       } 
-/*      */     } 
-/*      */     int i2 = arrayOfByte.length;
-/*      */     while (i2 > b1 && arrayOfByte[i2 - 1] == arrayOfByte[arrayOfByte.length - 1])
-/*      */       i2--; 
-/*      */     if (b1 == i2 && arrayOfByte[0] == arrayOfByte[arrayOfByte.length - 1]) {
-/*      */       vector.addElement(new BidiElement(this.bidiRoot, k, n, arrayOfByte[0]));
-/*      */     } else {
-/*      */       vector.addElement(new BidiElement(this.bidiRoot, k, b1 + i, arrayOfByte[0]));
-/*      */       byte b;
-/*      */       for (b = b1; b < i2; ) {
-/*      */         byte b3;
-/*      */         for (b3 = b; b3 < arrayOfByte.length && arrayOfByte[b3] == arrayOfByte[b]; b3++);
-/*      */         vector.addElement(new BidiElement(this.bidiRoot, i + b, i + b3, arrayOfByte[b]));
-/*      */         b = b3;
-/*      */       } 
-/*      */       vector.addElement(new BidiElement(this.bidiRoot, i2 + i, n, arrayOfByte[arrayOfByte.length - 1]));
-/*      */     } 
-/*      */     if (bidiElement != null)
-/*      */       vector.addElement(bidiElement); 
-/*      */     int i3 = 0;
-/*      */     if (this.bidiRoot.getElementCount() > 0)
-/*      */       i3 = i1 - m + 1; 
-/*      */     Element[] arrayOfElement1 = new Element[i3];
-/*      */     for (byte b2 = 0; b2 < i3; b2++)
-/*      */       arrayOfElement1[b2] = this.bidiRoot.getElement(m + b2); 
-/*      */     Element[] arrayOfElement2 = new Element[vector.size()];
-/*      */     vector.copyInto((Object[])arrayOfElement2);
-/*      */     ElementEdit elementEdit = new ElementEdit(this.bidiRoot, m, arrayOfElement1, arrayOfElement2);
-/*      */     paramDefaultDocumentEvent.addEdit(elementEdit);
-/*      */     this.bidiRoot.replace(m, arrayOfElement1.length, arrayOfElement2); }
-/*      */   private byte[] calculateBidiLevels(int paramInt1, int paramInt2) { byte[] arrayOfByte = new byte[paramInt2 - paramInt1];
-/*      */     int i = 0;
-/*      */     Boolean bool = null;
-/*      */     Object object = getProperty(TextAttribute.RUN_DIRECTION);
-/*      */     if (object instanceof Boolean)
-/*      */       bool = (Boolean)object; 
-/*      */     for (int j = paramInt1; j < paramInt2; ) {
-/*      */       Element element = getParagraphElement(j);
-/*      */       int k = element.getStartOffset();
-/*      */       int m = element.getEndOffset();
-/*      */       Boolean bool1 = bool;
-/*      */       object = element.getAttributes().getAttribute(TextAttribute.RUN_DIRECTION);
-/*      */       if (object instanceof Boolean)
-/*      */         bool1 = (Boolean)object; 
-/*      */       Segment segment = SegmentCache.getSharedSegment();
-/*      */       try {
-/*      */         getText(k, m - k, segment);
-/*      */       } catch (BadLocationException badLocationException) {
-/*      */         throw new Error("Internal error: " + badLocationException.toString());
-/*      */       } 
-/*      */       byte b = -2;
-/*      */       if (bool1 != null)
-/*      */         if (TextAttribute.RUN_DIRECTION_LTR.equals(bool1)) {
-/*      */           b = 0;
-/*      */         } else {
-/*      */           b = 1;
-/*      */         }  
-/*      */       Bidi bidi = new Bidi(segment.array, segment.offset, null, 0, segment.count, b);
-/*      */       BidiUtils.getLevels(bidi, arrayOfByte, i);
-/*      */       i += bidi.getLength();
-/*      */       j = element.getEndOffset();
-/*      */       SegmentCache.releaseSharedSegment(segment);
-/*      */     } 
-/*      */     if (i != arrayOfByte.length)
-/*      */       throw new Error("levelsEnd assertion failed."); 
-/*      */     return arrayOfByte; }
-/*      */   public void dump(PrintStream paramPrintStream) { Element element = getDefaultRootElement();
-/*      */     if (element instanceof AbstractElement)
-/*      */       ((AbstractElement)element).dump(paramPrintStream, 0); 
-/*      */     this.bidiRoot.dump(paramPrintStream, 0); }
-/*      */   protected final Content getContent() { return this.data; }
-/*      */   protected Element createLeafElement(Element paramElement, AttributeSet paramAttributeSet, int paramInt1, int paramInt2) { return new LeafElement(paramElement, paramAttributeSet, paramInt1, paramInt2); }
-/*      */   protected Element createBranchElement(Element paramElement, AttributeSet paramAttributeSet) { return new BranchElement(paramElement, paramAttributeSet); }
-/*      */   protected final synchronized Thread getCurrentWriter() { return this.currWriter; }
-/*      */   protected final synchronized void writeLock() { try {
-/*      */       while (this.numReaders > 0 || this.currWriter != null) {
-/*      */         if (Thread.currentThread() == this.currWriter) {
-/*      */           if (this.notifyingListeners)
-/*      */             throw new IllegalStateException("Attempt to mutate in notification"); 
-/*      */           this.numWriters++;
-/*      */           return;
-/*      */         } 
-/*      */         wait();
-/*      */       } 
-/*      */       this.currWriter = Thread.currentThread();
-/*      */       this.numWriters = 1;
-/*      */     } catch (InterruptedException interruptedException) {
-/*      */       throw new Error("Interrupted attempt to acquire write lock");
-/*      */     }  } protected final synchronized void writeUnlock() { if (--this.numWriters <= 0) {
-/*      */       this.numWriters = 0;
-/*      */       this.currWriter = null;
-/*      */       notifyAll();
-/*      */     }  } public final synchronized void readLock() { try {
-/*      */       while (this.currWriter != null) {
-/*      */         if (this.currWriter == Thread.currentThread())
-/*      */           return; 
-/*      */         wait();
-/*      */       } 
-/*      */       this.numReaders++;
-/*      */     } catch (InterruptedException interruptedException) {
-/*      */       throw new Error("Interrupted attempt to acquire read lock");
-/*      */     }  } public final synchronized void readUnlock() { if (this.currWriter == Thread.currentThread())
-/*      */       return; 
-/*      */     if (this.numReaders <= 0)
-/*      */       throw new StateInvariantError("document lock failure"); 
-/*      */     this.numReaders--;
-/*      */     notify(); } private void readObject(ObjectInputStream paramObjectInputStream) throws ClassNotFoundException, IOException { paramObjectInputStream.defaultReadObject();
-/*      */     this.listenerList = new EventListenerList();
-/*      */     this.bidiRoot = new BidiRootElement();
-/*      */     try {
-/*      */       writeLock();
-/*      */       Element[] arrayOfElement = new Element[1];
-/*      */       arrayOfElement[0] = new BidiElement(this.bidiRoot, 0, 1, 0);
-/*      */       this.bidiRoot.replace(0, 0, arrayOfElement);
-/*      */     } finally {
-/*      */       writeUnlock();
-/*      */     } 
-/*      */     paramObjectInputStream.registerValidation(new ObjectInputValidation() {
-/*      */           public void validateObject() { try {
-/*      */               AbstractDocument.this.writeLock();
-/*      */               AbstractDocument.DefaultDocumentEvent defaultDocumentEvent = new AbstractDocument.DefaultDocumentEvent(0, AbstractDocument.this.getLength(), DocumentEvent.EventType.INSERT);
-/*      */               AbstractDocument.this.updateBidi(defaultDocumentEvent);
-/*      */             } finally {
-/*      */               AbstractDocument.this.writeUnlock();
-/*      */             }  }
-/*      */         }0); } static final String AsyncLoadPriority = "load priority"; public abstract Element getDefaultRootElement(); public abstract Element getParagraphElement(int paramInt); public abstract class AbstractElement implements Element, MutableAttributeSet, Serializable, TreeNode
-/*      */   {
-/* 1774 */     private Element parent; public AbstractElement(Element param1Element, AttributeSet param1AttributeSet) { this.parent = param1Element;
-/* 1775 */       this.attributes = AbstractDocument.this.getAttributeContext().getEmptySet();
-/* 1776 */       if (param1AttributeSet != null)
-/* 1777 */         addAttributes(param1AttributeSet);  }
-/*      */     
-/*      */     private transient AttributeSet attributes;
-/*      */     
-/*      */     private final void indent(PrintWriter param1PrintWriter, int param1Int) {
-/* 1782 */       for (byte b = 0; b < param1Int; b++) {
-/* 1783 */         param1PrintWriter.print("  ");
-/*      */       }
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void dump(PrintStream param1PrintStream, int param1Int) {
-/*      */       PrintWriter printWriter;
-/*      */       try {
-/* 1796 */         printWriter = new PrintWriter(new OutputStreamWriter(param1PrintStream, "JavaEsc"), true);
-/*      */       }
-/* 1798 */       catch (UnsupportedEncodingException unsupportedEncodingException) {
-/* 1799 */         printWriter = new PrintWriter(param1PrintStream, true);
-/*      */       } 
-/* 1801 */       indent(printWriter, param1Int);
-/* 1802 */       if (getName() == null) {
-/* 1803 */         printWriter.print("<??");
-/*      */       } else {
-/* 1805 */         printWriter.print("<" + getName());
-/*      */       } 
-/* 1807 */       if (getAttributeCount() > 0) {
-/* 1808 */         printWriter.println("");
-/*      */         
-/* 1810 */         Enumeration<?> enumeration = this.attributes.getAttributeNames();
-/* 1811 */         while (enumeration.hasMoreElements()) {
-/* 1812 */           Object object = enumeration.nextElement();
-/* 1813 */           indent(printWriter, param1Int + 1);
-/* 1814 */           printWriter.println(object + "=" + getAttribute(object));
-/*      */         } 
-/* 1816 */         indent(printWriter, param1Int);
-/*      */       } 
-/* 1818 */       printWriter.println(">");
-/*      */       
-/* 1820 */       if (isLeaf()) {
-/* 1821 */         indent(printWriter, param1Int + 1);
-/* 1822 */         printWriter.print("[" + getStartOffset() + "," + getEndOffset() + "]");
-/* 1823 */         AbstractDocument.Content content = AbstractDocument.this.getContent();
-/*      */         try {
-/* 1825 */           String str = content.getString(getStartOffset(), 
-/* 1826 */               getEndOffset() - getStartOffset());
-/* 1827 */           if (str.length() > 40) {
-/* 1828 */             str = str.substring(0, 40) + "...";
-/*      */           }
-/* 1830 */           printWriter.println("[" + str + "]");
-/* 1831 */         } catch (BadLocationException badLocationException) {}
-/*      */       }
-/*      */       else {
-/*      */         
-/* 1835 */         int i = getElementCount();
-/* 1836 */         for (byte b = 0; b < i; b++) {
-/* 1837 */           AbstractElement abstractElement = (AbstractElement)getElement(b);
-/* 1838 */           abstractElement.dump(param1PrintStream, param1Int + 1);
-/*      */         } 
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getAttributeCount() {
-/* 1853 */       return this.attributes.getAttributeCount();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public boolean isDefined(Object param1Object) {
-/* 1864 */       return this.attributes.isDefined(param1Object);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public boolean isEqual(AttributeSet param1AttributeSet) {
-/* 1875 */       return this.attributes.isEqual(param1AttributeSet);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public AttributeSet copyAttributes() {
-/* 1885 */       return this.attributes.copyAttributes();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Object getAttribute(Object param1Object) {
-/* 1896 */       Object object = this.attributes.getAttribute(param1Object);
-/* 1897 */       if (object == null) {
-/*      */ 
-/*      */ 
-/*      */         
-/* 1901 */         AttributeSet attributeSet = (this.parent != null) ? this.parent.getAttributes() : null;
-/* 1902 */         if (attributeSet != null) {
-/* 1903 */           object = attributeSet.getAttribute(param1Object);
-/*      */         }
-/*      */       } 
-/* 1906 */       return object;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Enumeration<?> getAttributeNames() {
-/* 1916 */       return this.attributes.getAttributeNames();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public boolean containsAttribute(Object param1Object1, Object param1Object2) {
-/* 1928 */       return this.attributes.containsAttribute(param1Object1, param1Object2);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public boolean containsAttributes(AttributeSet param1AttributeSet) {
-/* 1940 */       return this.attributes.containsAttributes(param1AttributeSet);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public AttributeSet getResolveParent() {
-/* 1952 */       AttributeSet attributeSet = this.attributes.getResolveParent();
-/* 1953 */       if (attributeSet == null && this.parent != null) {
-/* 1954 */         attributeSet = this.parent.getAttributes();
-/*      */       }
-/* 1956 */       return attributeSet;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void addAttribute(Object param1Object1, Object param1Object2) {
-/* 1971 */       checkForIllegalCast();
-/* 1972 */       AbstractDocument.AttributeContext attributeContext = AbstractDocument.this.getAttributeContext();
-/* 1973 */       this.attributes = attributeContext.addAttribute(this.attributes, param1Object1, param1Object2);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void addAttributes(AttributeSet param1AttributeSet) {
-/* 1983 */       checkForIllegalCast();
-/* 1984 */       AbstractDocument.AttributeContext attributeContext = AbstractDocument.this.getAttributeContext();
-/* 1985 */       this.attributes = attributeContext.addAttributes(this.attributes, param1AttributeSet);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void removeAttribute(Object param1Object) {
-/* 1995 */       checkForIllegalCast();
-/* 1996 */       AbstractDocument.AttributeContext attributeContext = AbstractDocument.this.getAttributeContext();
-/* 1997 */       this.attributes = attributeContext.removeAttribute(this.attributes, param1Object);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void removeAttributes(Enumeration<?> param1Enumeration) {
-/* 2007 */       checkForIllegalCast();
-/* 2008 */       AbstractDocument.AttributeContext attributeContext = AbstractDocument.this.getAttributeContext();
-/* 2009 */       this.attributes = attributeContext.removeAttributes(this.attributes, param1Enumeration);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void removeAttributes(AttributeSet param1AttributeSet) {
-/* 2019 */       checkForIllegalCast();
-/* 2020 */       AbstractDocument.AttributeContext attributeContext = AbstractDocument.this.getAttributeContext();
-/* 2021 */       if (param1AttributeSet == this) {
-/* 2022 */         this.attributes = attributeContext.getEmptySet();
-/*      */       } else {
-/* 2024 */         this.attributes = attributeContext.removeAttributes(this.attributes, param1AttributeSet);
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void setResolveParent(AttributeSet param1AttributeSet) {
-/* 2035 */       checkForIllegalCast();
-/* 2036 */       AbstractDocument.AttributeContext attributeContext = AbstractDocument.this.getAttributeContext();
-/* 2037 */       if (param1AttributeSet != null) {
-/* 2038 */         this
-/* 2039 */           .attributes = attributeContext.addAttribute(this.attributes, StyleConstants.ResolveAttribute, param1AttributeSet);
-/*      */       } else {
-/*      */         
-/* 2042 */         this
-/* 2043 */           .attributes = attributeContext.removeAttribute(this.attributes, StyleConstants.ResolveAttribute);
-/*      */       } 
-/*      */     }
-/*      */     
-/*      */     private final void checkForIllegalCast() {
-/* 2048 */       Thread thread = AbstractDocument.this.getCurrentWriter();
-/* 2049 */       if (thread == null || thread != Thread.currentThread()) {
-/* 2050 */         throw new StateInvariantError("Illegal cast to MutableAttributeSet");
-/*      */       }
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Document getDocument() {
-/* 2062 */       return AbstractDocument.this;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Element getParentElement() {
-/* 2071 */       return this.parent;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public AttributeSet getAttributes() {
-/* 2080 */       return this;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public String getName() {
-/* 2089 */       if (this.attributes.isDefined("$ename")) {
-/* 2090 */         return (String)this.attributes.getAttribute("$ename");
-/*      */       }
-/* 2092 */       return null;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public abstract int getStartOffset();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public abstract int getEndOffset();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public abstract Element getElement(int param1Int);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public abstract int getElementCount();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public abstract int getElementIndex(int param1Int);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public abstract boolean isLeaf();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public TreeNode getChildAt(int param1Int) {
-/* 2146 */       return (TreeNode)getElement(param1Int);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getChildCount() {
-/* 2156 */       return getElementCount();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public TreeNode getParent() {
-/* 2164 */       return (TreeNode)getParentElement();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getIndex(TreeNode param1TreeNode) {
-/* 2176 */       for (int i = getChildCount() - 1; i >= 0; i--) {
-/* 2177 */         if (getChildAt(i) == param1TreeNode)
-/* 2178 */           return i; 
-/* 2179 */       }  return -1;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public abstract boolean getAllowsChildren();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public abstract Enumeration children();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private void writeObject(ObjectOutputStream param1ObjectOutputStream) throws IOException {
-/* 2200 */       param1ObjectOutputStream.defaultWriteObject();
-/* 2201 */       StyleContext.writeAttributeSet(param1ObjectOutputStream, this.attributes);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private void readObject(ObjectInputStream param1ObjectInputStream) throws ClassNotFoundException, IOException {
-/* 2207 */       param1ObjectInputStream.defaultReadObject();
-/* 2208 */       SimpleAttributeSet simpleAttributeSet = new SimpleAttributeSet();
-/* 2209 */       StyleContext.readAttributeSet(param1ObjectInputStream, simpleAttributeSet);
-/* 2210 */       AbstractDocument.AttributeContext attributeContext = AbstractDocument.this.getAttributeContext();
-/* 2211 */       this.attributes = attributeContext.addAttributes(SimpleAttributeSet.EMPTY, simpleAttributeSet);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public class BranchElement
-/*      */     extends AbstractElement
-/*      */   {
-/*      */     private AbstractDocument.AbstractElement[] children;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private int nchildren;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private int lastIndex;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public BranchElement(Element param1Element, AttributeSet param1AttributeSet) {
-/* 2244 */       super(param1Element, param1AttributeSet);
-/* 2245 */       this.children = new AbstractDocument.AbstractElement[1];
-/* 2246 */       this.nchildren = 0;
-/* 2247 */       this.lastIndex = -1;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Element positionToElement(int param1Int) {
-/* 2258 */       int i = getElementIndex(param1Int);
-/* 2259 */       AbstractDocument.AbstractElement abstractElement = this.children[i];
-/* 2260 */       int j = abstractElement.getStartOffset();
-/* 2261 */       int k = abstractElement.getEndOffset();
-/* 2262 */       if (param1Int >= j && param1Int < k) {
-/* 2263 */         return abstractElement;
-/*      */       }
-/* 2265 */       return null;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void replace(int param1Int1, int param1Int2, Element[] param1ArrayOfElement) {
-/* 2276 */       int i = param1ArrayOfElement.length - param1Int2;
-/* 2277 */       int j = param1Int1 + param1Int2;
-/* 2278 */       int k = this.nchildren - j;
-/* 2279 */       int m = j + i;
-/* 2280 */       if (this.nchildren + i >= this.children.length) {
-/*      */         
-/* 2282 */         int n = Math.max(2 * this.children.length, this.nchildren + i);
-/* 2283 */         AbstractDocument.AbstractElement[] arrayOfAbstractElement = new AbstractDocument.AbstractElement[n];
-/* 2284 */         System.arraycopy(this.children, 0, arrayOfAbstractElement, 0, param1Int1);
-/* 2285 */         System.arraycopy(param1ArrayOfElement, 0, arrayOfAbstractElement, param1Int1, param1ArrayOfElement.length);
-/* 2286 */         System.arraycopy(this.children, j, arrayOfAbstractElement, m, k);
-/* 2287 */         this.children = arrayOfAbstractElement;
-/*      */       } else {
-/*      */         
-/* 2290 */         System.arraycopy(this.children, j, this.children, m, k);
-/* 2291 */         System.arraycopy(param1ArrayOfElement, 0, this.children, param1Int1, param1ArrayOfElement.length);
-/*      */       } 
-/* 2293 */       this.nchildren += i;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public String toString() {
-/* 2302 */       return "BranchElement(" + getName() + ") " + getStartOffset() + "," + 
-/* 2303 */         getEndOffset() + "\n";
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public String getName() {
-/* 2314 */       String str = super.getName();
-/* 2315 */       if (str == null) {
-/* 2316 */         str = "paragraph";
-/*      */       }
-/* 2318 */       return str;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getStartOffset() {
-/* 2327 */       return this.children[0].getStartOffset();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getEndOffset() {
-/* 2337 */       AbstractDocument.AbstractElement abstractElement = (this.nchildren > 0) ? this.children[this.nchildren - 1] : this.children[0];
-/*      */       
-/* 2339 */       return abstractElement.getEndOffset();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Element getElement(int param1Int) {
-/* 2349 */       if (param1Int < this.nchildren) {
-/* 2350 */         return this.children[param1Int];
-/*      */       }
-/* 2352 */       return null;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getElementCount() {
-/* 2361 */       return this.nchildren;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getElementIndex(int param1Int) {
-/* 2372 */       int i, j = 0;
-/* 2373 */       int k = this.nchildren - 1;
-/* 2374 */       int m = 0;
-/* 2375 */       int n = getStartOffset();
-/*      */ 
-/*      */       
-/* 2378 */       if (this.nchildren == 0) {
-/* 2379 */         return 0;
-/*      */       }
-/* 2381 */       if (param1Int >= getEndOffset()) {
-/* 2382 */         return this.nchildren - 1;
-/*      */       }
-/*      */ 
-/*      */       
-/* 2386 */       if (this.lastIndex >= j && this.lastIndex <= k) {
-/* 2387 */         AbstractDocument.AbstractElement abstractElement = this.children[this.lastIndex];
-/* 2388 */         n = abstractElement.getStartOffset();
-/* 2389 */         int i1 = abstractElement.getEndOffset();
-/* 2390 */         if (param1Int >= n && param1Int < i1) {
-/* 2391 */           return this.lastIndex;
-/*      */         }
-/*      */ 
-/*      */ 
-/*      */         
-/* 2396 */         if (param1Int < n) {
-/* 2397 */           k = this.lastIndex;
-/*      */         } else {
-/* 2399 */           j = this.lastIndex;
-/*      */         } 
-/*      */       } 
-/*      */       
-/* 2403 */       while (j <= k) {
-/* 2404 */         m = j + (k - j) / 2;
-/* 2405 */         AbstractDocument.AbstractElement abstractElement = this.children[m];
-/* 2406 */         n = abstractElement.getStartOffset();
-/* 2407 */         int i1 = abstractElement.getEndOffset();
-/* 2408 */         if (param1Int >= n && param1Int < i1) {
-/*      */           
-/* 2410 */           i = m;
-/* 2411 */           this.lastIndex = i;
-/* 2412 */           return i;
-/* 2413 */         }  if (param1Int < n) {
-/* 2414 */           k = m - 1; continue;
-/*      */         } 
-/* 2416 */         j = m + 1;
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2421 */       if (param1Int < n) {
-/* 2422 */         i = m;
-/*      */       } else {
-/* 2424 */         i = m + 1;
-/*      */       } 
-/* 2426 */       this.lastIndex = i;
-/* 2427 */       return i;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public boolean isLeaf() {
-/* 2436 */       return false;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public boolean getAllowsChildren() {
-/* 2447 */       return true;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Enumeration children() {
-/* 2457 */       if (this.nchildren == 0) {
-/* 2458 */         return null;
-/*      */       }
-/* 2460 */       Vector<AbstractDocument.AbstractElement> vector = new Vector(this.nchildren);
-/*      */       
-/* 2462 */       for (byte b = 0; b < this.nchildren; b++)
-/* 2463 */         vector.addElement(this.children[b]); 
-/* 2464 */       return vector.elements();
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public class LeafElement
-/*      */     extends AbstractElement
-/*      */   {
-/*      */     private transient Position p0;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private transient Position p1;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public LeafElement(Element param1Element, AttributeSet param1AttributeSet, int param1Int1, int param1Int2) {
-/* 2502 */       super(param1Element, param1AttributeSet);
-/*      */       try {
-/* 2504 */         this.p0 = AbstractDocument.this.createPosition(param1Int1);
-/* 2505 */         this.p1 = AbstractDocument.this.createPosition(param1Int2);
-/* 2506 */       } catch (BadLocationException badLocationException) {
-/* 2507 */         this.p0 = null;
-/* 2508 */         this.p1 = null;
-/* 2509 */         throw new StateInvariantError("Can't create Position references");
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public String toString() {
-/* 2519 */       return "LeafElement(" + getName() + ") " + this.p0 + "," + this.p1 + "\n";
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getStartOffset() {
-/* 2530 */       return this.p0.getOffset();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getEndOffset() {
-/* 2539 */       return this.p1.getOffset();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public String getName() {
-/* 2548 */       String str = super.getName();
-/* 2549 */       if (str == null) {
-/* 2550 */         str = "content";
-/*      */       }
-/* 2552 */       return str;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getElementIndex(int param1Int) {
-/* 2562 */       return -1;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Element getElement(int param1Int) {
-/* 2572 */       return null;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getElementCount() {
-/* 2581 */       return 0;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public boolean isLeaf() {
-/* 2590 */       return true;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public boolean getAllowsChildren() {
-/* 2600 */       return false;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Enumeration children() {
-/* 2610 */       return null;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private void writeObject(ObjectOutputStream param1ObjectOutputStream) throws IOException {
-/* 2616 */       param1ObjectOutputStream.defaultWriteObject();
-/* 2617 */       param1ObjectOutputStream.writeInt(this.p0.getOffset());
-/* 2618 */       param1ObjectOutputStream.writeInt(this.p1.getOffset());
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private void readObject(ObjectInputStream param1ObjectInputStream) throws ClassNotFoundException, IOException {
-/* 2624 */       param1ObjectInputStream.defaultReadObject();
-/*      */ 
-/*      */       
-/* 2627 */       int i = param1ObjectInputStream.readInt();
-/* 2628 */       int j = param1ObjectInputStream.readInt();
-/*      */       try {
-/* 2630 */         this.p0 = AbstractDocument.this.createPosition(i);
-/* 2631 */         this.p1 = AbstractDocument.this.createPosition(j);
-/* 2632 */       } catch (BadLocationException badLocationException) {
-/* 2633 */         this.p0 = null;
-/* 2634 */         this.p1 = null;
-/* 2635 */         throw new IOException("Can't restore Position references");
-/*      */       } 
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   class BidiRootElement
-/*      */     extends BranchElement
-/*      */   {
-/*      */     BidiRootElement() {
-/* 2653 */       super(null, null);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public String getName() {
-/* 2661 */       return "bidi root";
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   class BidiElement
-/*      */     extends LeafElement
-/*      */   {
-/*      */     BidiElement(Element param1Element, int param1Int1, int param1Int2, int param1Int3) {
-/* 2674 */       super(param1Element, new SimpleAttributeSet(), param1Int1, param1Int2);
-/* 2675 */       addAttribute(StyleConstants.BidiLevel, Integer.valueOf(param1Int3));
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public String getName() {
-/* 2685 */       return "bidi level";
-/*      */     }
-/*      */     
-/*      */     int getLevel() {
-/* 2689 */       Integer integer = (Integer)getAttribute(StyleConstants.BidiLevel);
-/* 2690 */       if (integer != null) {
-/* 2691 */         return integer.intValue();
-/*      */       }
-/* 2693 */       return 0;
-/*      */     }
-/*      */     
-/*      */     boolean isLeftToRight() {
-/* 2697 */       return (getLevel() % 2 == 0);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public class DefaultDocumentEvent
-/*      */     extends CompoundEdit
-/*      */     implements DocumentEvent
-/*      */   {
-/*      */     private int offset;
-/*      */ 
-/*      */     
-/*      */     private int length;
-/*      */ 
-/*      */     
-/*      */     private Hashtable<Element, DocumentEvent.ElementChange> changeLookup;
-/*      */ 
-/*      */     
-/*      */     private DocumentEvent.EventType type;
-/*      */ 
-/*      */     
-/*      */     public DefaultDocumentEvent(int param1Int1, int param1Int2, DocumentEvent.EventType param1EventType) {
-/* 2720 */       this.offset = param1Int1;
-/* 2721 */       this.length = param1Int2;
-/* 2722 */       this.type = param1EventType;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public String toString() {
-/* 2731 */       return this.edits.toString();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public boolean addEdit(UndoableEdit param1UndoableEdit) {
-/* 2748 */       if (this.changeLookup == null && this.edits.size() > 10) {
-/* 2749 */         this.changeLookup = new Hashtable<>();
-/* 2750 */         int i = this.edits.size();
-/* 2751 */         for (byte b = 0; b < i; b++) {
-/* 2752 */           DocumentEvent.ElementChange elementChange = (DocumentEvent.ElementChange)this.edits.elementAt(b);
-/* 2753 */           if (elementChange instanceof DocumentEvent.ElementChange) {
-/* 2754 */             DocumentEvent.ElementChange elementChange1 = elementChange;
-/* 2755 */             this.changeLookup.put(elementChange1.getElement(), elementChange1);
-/*      */           } 
-/*      */         } 
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2762 */       if (this.changeLookup != null && param1UndoableEdit instanceof DocumentEvent.ElementChange) {
-/* 2763 */         DocumentEvent.ElementChange elementChange = (DocumentEvent.ElementChange)param1UndoableEdit;
-/* 2764 */         this.changeLookup.put(elementChange.getElement(), elementChange);
-/*      */       } 
-/* 2766 */       return super.addEdit(param1UndoableEdit);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void redo() throws CannotRedoException {
-/* 2775 */       AbstractDocument.this.writeLock();
-/*      */       
-/*      */       try {
-/* 2778 */         super.redo();
-/*      */         
-/* 2780 */         AbstractDocument.UndoRedoDocumentEvent undoRedoDocumentEvent = new AbstractDocument.UndoRedoDocumentEvent(this, false);
-/* 2781 */         if (this.type == DocumentEvent.EventType.INSERT) {
-/* 2782 */           AbstractDocument.this.fireInsertUpdate(undoRedoDocumentEvent);
-/* 2783 */         } else if (this.type == DocumentEvent.EventType.REMOVE) {
-/* 2784 */           AbstractDocument.this.fireRemoveUpdate(undoRedoDocumentEvent);
-/*      */         } else {
-/* 2786 */           AbstractDocument.this.fireChangedUpdate(undoRedoDocumentEvent);
-/*      */         } 
-/*      */       } finally {
-/* 2789 */         AbstractDocument.this.writeUnlock();
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void undo() throws CannotUndoException {
-/* 2799 */       AbstractDocument.this.writeLock();
-/*      */       
-/*      */       try {
-/* 2802 */         super.undo();
-/*      */         
-/* 2804 */         AbstractDocument.UndoRedoDocumentEvent undoRedoDocumentEvent = new AbstractDocument.UndoRedoDocumentEvent(this, true);
-/* 2805 */         if (this.type == DocumentEvent.EventType.REMOVE) {
-/* 2806 */           AbstractDocument.this.fireInsertUpdate(undoRedoDocumentEvent);
-/* 2807 */         } else if (this.type == DocumentEvent.EventType.INSERT) {
-/* 2808 */           AbstractDocument.this.fireRemoveUpdate(undoRedoDocumentEvent);
-/*      */         } else {
-/* 2810 */           AbstractDocument.this.fireChangedUpdate(undoRedoDocumentEvent);
-/*      */         } 
-/*      */       } finally {
-/* 2813 */         AbstractDocument.this.writeUnlock();
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public boolean isSignificant() {
-/* 2825 */       return true;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public String getPresentationName() {
-/* 2836 */       DocumentEvent.EventType eventType = getType();
-/* 2837 */       if (eventType == DocumentEvent.EventType.INSERT)
-/* 2838 */         return UIManager.getString("AbstractDocument.additionText"); 
-/* 2839 */       if (eventType == DocumentEvent.EventType.REMOVE)
-/* 2840 */         return UIManager.getString("AbstractDocument.deletionText"); 
-/* 2841 */       return UIManager.getString("AbstractDocument.styleChangeText");
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public String getUndoPresentationName() {
-/* 2852 */       return UIManager.getString("AbstractDocument.undoText") + " " + 
-/* 2853 */         getPresentationName();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public String getRedoPresentationName() {
-/* 2864 */       return UIManager.getString("AbstractDocument.redoText") + " " + 
-/* 2865 */         getPresentationName();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public DocumentEvent.EventType getType() {
-/* 2877 */       return this.type;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getOffset() {
-/* 2887 */       return this.offset;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getLength() {
-/* 2897 */       return this.length;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Document getDocument() {
-/* 2907 */       return AbstractDocument.this;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public DocumentEvent.ElementChange getChange(Element param1Element) {
-/* 2917 */       if (this.changeLookup != null) {
-/* 2918 */         return this.changeLookup.get(param1Element);
-/*      */       }
-/* 2920 */       int i = this.edits.size();
-/* 2921 */       for (byte b = 0; b < i; b++) {
-/* 2922 */         DocumentEvent.ElementChange elementChange = (DocumentEvent.ElementChange)this.edits.elementAt(b);
-/* 2923 */         if (elementChange instanceof DocumentEvent.ElementChange) {
-/* 2924 */           DocumentEvent.ElementChange elementChange1 = elementChange;
-/* 2925 */           if (param1Element.equals(elementChange1.getElement())) {
-/* 2926 */             return elementChange1;
-/*      */           }
-/*      */         } 
-/*      */       } 
-/* 2930 */       return null;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   class UndoRedoDocumentEvent
-/*      */     implements DocumentEvent
-/*      */   {
-/* 2949 */     private AbstractDocument.DefaultDocumentEvent src = null;
-/* 2950 */     private DocumentEvent.EventType type = null;
-/*      */     
-/*      */     public UndoRedoDocumentEvent(AbstractDocument.DefaultDocumentEvent param1DefaultDocumentEvent, boolean param1Boolean) {
-/* 2953 */       this.src = param1DefaultDocumentEvent;
-/* 2954 */       if (param1Boolean) {
-/* 2955 */         if (param1DefaultDocumentEvent.getType().equals(DocumentEvent.EventType.INSERT)) {
-/* 2956 */           this.type = DocumentEvent.EventType.REMOVE;
-/* 2957 */         } else if (param1DefaultDocumentEvent.getType().equals(DocumentEvent.EventType.REMOVE)) {
-/* 2958 */           this.type = DocumentEvent.EventType.INSERT;
-/*      */         } else {
-/* 2960 */           this.type = param1DefaultDocumentEvent.getType();
-/*      */         } 
-/*      */       } else {
-/* 2963 */         this.type = param1DefaultDocumentEvent.getType();
-/*      */       } 
-/*      */     }
-/*      */     
-/*      */     public AbstractDocument.DefaultDocumentEvent getSource() {
-/* 2968 */       return this.src;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getOffset() {
-/* 2974 */       return this.src.getOffset();
-/*      */     }
-/*      */     
-/*      */     public int getLength() {
-/* 2978 */       return this.src.getLength();
-/*      */     }
-/*      */     
-/*      */     public Document getDocument() {
-/* 2982 */       return this.src.getDocument();
-/*      */     }
-/*      */     
-/*      */     public DocumentEvent.EventType getType() {
-/* 2986 */       return this.type;
-/*      */     }
-/*      */     
-/*      */     public DocumentEvent.ElementChange getChange(Element param1Element) {
-/* 2990 */       return this.src.getChange(param1Element);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static class ElementEdit
-/*      */     extends AbstractUndoableEdit
-/*      */     implements DocumentEvent.ElementChange
-/*      */   {
-/*      */     private Element e;
-/*      */ 
-/*      */     
-/*      */     private int index;
-/*      */ 
-/*      */     
-/*      */     private Element[] removed;
-/*      */     
-/*      */     private Element[] added;
-/*      */ 
-/*      */     
-/*      */     public ElementEdit(Element param1Element, int param1Int, Element[] param1ArrayOfElement1, Element[] param1ArrayOfElement2) {
-/* 3012 */       this.e = param1Element;
-/* 3013 */       this.index = param1Int;
-/* 3014 */       this.removed = param1ArrayOfElement1;
-/* 3015 */       this.added = param1ArrayOfElement2;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Element getElement() {
-/* 3024 */       return this.e;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getIndex() {
-/* 3033 */       return this.index;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Element[] getChildrenRemoved() {
-/* 3042 */       return this.removed;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Element[] getChildrenAdded() {
-/* 3051 */       return this.added;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void redo() throws CannotRedoException {
-/* 3060 */       super.redo();
-/*      */ 
-/*      */       
-/* 3063 */       Element[] arrayOfElement = this.removed;
-/* 3064 */       this.removed = this.added;
-/* 3065 */       this.added = arrayOfElement;
-/*      */ 
-/*      */       
-/* 3068 */       ((AbstractDocument.BranchElement)this.e).replace(this.index, this.removed.length, this.added);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void undo() throws CannotUndoException {
-/* 3077 */       super.undo();
-/*      */       
-/* 3079 */       ((AbstractDocument.BranchElement)this.e).replace(this.index, this.added.length, this.removed);
-/*      */ 
-/*      */       
-/* 3082 */       Element[] arrayOfElement = this.removed;
-/* 3083 */       this.removed = this.added;
-/* 3084 */       this.added = arrayOfElement;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private class DefaultFilterBypass
-/*      */     extends DocumentFilter.FilterBypass
-/*      */   {
-/*      */     private DefaultFilterBypass() {}
-/*      */ 
-/*      */     
-/*      */     public Document getDocument() {
-/* 3096 */       return AbstractDocument.this;
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public void remove(int param1Int1, int param1Int2) throws BadLocationException {
-/* 3101 */       AbstractDocument.this.handleRemove(param1Int1, param1Int2);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void insertString(int param1Int, String param1String, AttributeSet param1AttributeSet) throws BadLocationException {
-/* 3107 */       AbstractDocument.this.handleInsertString(param1Int, param1String, param1AttributeSet);
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public void replace(int param1Int1, int param1Int2, String param1String, AttributeSet param1AttributeSet) throws BadLocationException {
-/* 3112 */       AbstractDocument.this.handleRemove(param1Int1, param1Int2);
-/* 3113 */       AbstractDocument.this.handleInsertString(param1Int1, param1String, param1AttributeSet);
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   public static interface AttributeContext {
-/*      */     AttributeSet addAttribute(AttributeSet param1AttributeSet, Object param1Object1, Object param1Object2);
-/*      */     
-/*      */     AttributeSet addAttributes(AttributeSet param1AttributeSet1, AttributeSet param1AttributeSet2);
-/*      */     
-/*      */     AttributeSet removeAttribute(AttributeSet param1AttributeSet, Object param1Object);
-/*      */     
-/*      */     AttributeSet removeAttributes(AttributeSet param1AttributeSet, Enumeration<?> param1Enumeration);
-/*      */     
-/*      */     AttributeSet removeAttributes(AttributeSet param1AttributeSet1, AttributeSet param1AttributeSet2);
-/*      */     
-/*      */     AttributeSet getEmptySet();
-/*      */     
-/*      */     void reclaim(AttributeSet param1AttributeSet);
-/*      */   }
-/*      */   
-/*      */   public static interface Content {
-/*      */     Position createPosition(int param1Int) throws BadLocationException;
-/*      */     
-/*      */     int length();
-/*      */     
-/*      */     UndoableEdit insertString(int param1Int, String param1String) throws BadLocationException;
-/*      */     
-/*      */     UndoableEdit remove(int param1Int1, int param1Int2) throws BadLocationException;
-/*      */     
-/*      */     String getString(int param1Int1, int param1Int2) throws BadLocationException;
-/*      */     
-/*      */     void getChars(int param1Int1, int param1Int2, Segment param1Segment) throws BadLocationException;
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\text\AbstractDocument.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.text;
+
+import java.util.*;
+import java.io.*;
+import java.awt.font.TextAttribute;
+import java.text.Bidi;
+
+import javax.swing.UIManager;
+import javax.swing.undo.*;
+import javax.swing.event.*;
+import javax.swing.tree.TreeNode;
+
+import sun.font.BidiUtils;
+import sun.swing.SwingUtilities2;
+
+/**
+ * An implementation of the document interface to serve as a
+ * basis for implementing various kinds of documents.  At this
+ * level there is very little policy, so there is a corresponding
+ * increase in difficulty of use.
+ * <p>
+ * This class implements a locking mechanism for the document.  It
+ * allows multiple readers or one writer, and writers must wait until
+ * all observers of the document have been notified of a previous
+ * change before beginning another mutation to the document.  The
+ * read lock is acquired and released using the <code>render</code>
+ * method.  A write lock is acquired by the methods that mutate the
+ * document, and are held for the duration of the method call.
+ * Notification is done on the thread that produced the mutation,
+ * and the thread has full read access to the document for the
+ * duration of the notification, but other readers are kept out
+ * until the notification has finished.  The notification is a
+ * beans event notification which does not allow any further
+ * mutations until all listeners have been notified.
+ * <p>
+ * Any models subclassed from this class and used in conjunction
+ * with a text component that has a look and feel implementation
+ * that is derived from BasicTextUI may be safely updated
+ * asynchronously, because all access to the View hierarchy
+ * is serialized by BasicTextUI if the document is of type
+ * <code>AbstractDocument</code>.  The locking assumes that an
+ * independent thread will access the View hierarchy only from
+ * the DocumentListener methods, and that there will be only
+ * one event thread active at a time.
+ * <p>
+ * If concurrency support is desired, there are the following
+ * additional implications.  The code path for any DocumentListener
+ * implementation and any UndoListener implementation must be threadsafe,
+ * and not access the component lock if trying to be safe from deadlocks.
+ * The <code>repaint</code> and <code>revalidate</code> methods
+ * on JComponent are safe.
+ * <p>
+ * AbstractDocument models an implied break at the end of the document.
+ * Among other things this allows you to position the caret after the last
+ * character. As a result of this, <code>getLength</code> returns one less
+ * than the length of the Content. If you create your own Content, be
+ * sure and initialize it to have an additional character. Refer to
+ * StringContent and GapContent for examples of this. Another implication
+ * of this is that Elements that model the implied end character will have
+ * an endOffset == (getLength() + 1). For example, in DefaultStyledDocument
+ * <code>getParagraphElement(getLength()).getEndOffset() == getLength() + 1
+ * </code>.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @author  Timothy Prinzing
+ */
+public abstract class AbstractDocument implements Document, Serializable {
+
+    /**
+     * Constructs a new <code>AbstractDocument</code>, wrapped around some
+     * specified content storage mechanism.
+     *
+     * @param data the content
+     */
+    protected AbstractDocument(Content data) {
+        this(data, StyleContext.getDefaultStyleContext());
+    }
+
+    /**
+     * Constructs a new <code>AbstractDocument</code>, wrapped around some
+     * specified content storage mechanism.
+     *
+     * @param data the content
+     * @param context the attribute context
+     */
+    protected AbstractDocument(Content data, AttributeContext context) {
+        this.data = data;
+        this.context = context;
+        bidiRoot = new BidiRootElement();
+
+        if (defaultI18NProperty == null) {
+            // determine default setting for i18n support
+            String o = java.security.AccessController.doPrivileged(
+                new java.security.PrivilegedAction<String>() {
+                    public String run() {
+                        return System.getProperty(I18NProperty);
+                    }
+                }
+            );
+            if (o != null) {
+                defaultI18NProperty = Boolean.valueOf(o);
+            } else {
+                defaultI18NProperty = Boolean.FALSE;
+            }
+        }
+        putProperty( I18NProperty, defaultI18NProperty);
+
+        //REMIND(bcb) This creates an initial bidi element to account for
+        //the \n that exists by default in the content.  Doing it this way
+        //seems to expose a little too much knowledge of the content given
+        //to us by the sub-class.  Consider having the sub-class' constructor
+        //make an initial call to insertUpdate.
+        writeLock();
+        try {
+            Element[] p = new Element[1];
+            p[0] = new BidiElement( bidiRoot, 0, 1, 0 );
+            bidiRoot.replace(0,0,p);
+        } finally {
+            writeUnlock();
+        }
+    }
+
+    /**
+     * Supports managing a set of properties. Callers
+     * can use the <code>documentProperties</code> dictionary
+     * to annotate the document with document-wide properties.
+     *
+     * @return a non-<code>null</code> <code>Dictionary</code>
+     * @see #setDocumentProperties
+     */
+    public Dictionary<Object,Object> getDocumentProperties() {
+        if (documentProperties == null) {
+            documentProperties = new Hashtable<Object, Object>(2);
+        }
+        return documentProperties;
+    }
+
+    /**
+     * Replaces the document properties dictionary for this document.
+     *
+     * @param x the new dictionary
+     * @see #getDocumentProperties
+     */
+    public void setDocumentProperties(Dictionary<Object,Object> x) {
+        documentProperties = x;
+    }
+
+    /**
+     * Notifies all listeners that have registered interest for
+     * notification on this event type.  The event instance
+     * is lazily created using the parameters passed into
+     * the fire method.
+     *
+     * @param e the event
+     * @see EventListenerList
+     */
+    protected void fireInsertUpdate(DocumentEvent e) {
+        notifyingListeners = true;
+        try {
+            // Guaranteed to return a non-null array
+            Object[] listeners = listenerList.getListenerList();
+            // Process the listeners last to first, notifying
+            // those that are interested in this event
+            for (int i = listeners.length-2; i>=0; i-=2) {
+                if (listeners[i]==DocumentListener.class) {
+                    // Lazily create the event:
+                    // if (e == null)
+                    // e = new ListSelectionEvent(this, firstIndex, lastIndex);
+                    ((DocumentListener)listeners[i+1]).insertUpdate(e);
+                }
+            }
+        } finally {
+            notifyingListeners = false;
+        }
+    }
+
+    /**
+     * Notifies all listeners that have registered interest for
+     * notification on this event type.  The event instance
+     * is lazily created using the parameters passed into
+     * the fire method.
+     *
+     * @param e the event
+     * @see EventListenerList
+     */
+    protected void fireChangedUpdate(DocumentEvent e) {
+        notifyingListeners = true;
+        try {
+            // Guaranteed to return a non-null array
+            Object[] listeners = listenerList.getListenerList();
+            // Process the listeners last to first, notifying
+            // those that are interested in this event
+            for (int i = listeners.length-2; i>=0; i-=2) {
+                if (listeners[i]==DocumentListener.class) {
+                    // Lazily create the event:
+                    // if (e == null)
+                    // e = new ListSelectionEvent(this, firstIndex, lastIndex);
+                    ((DocumentListener)listeners[i+1]).changedUpdate(e);
+                }
+            }
+        } finally {
+            notifyingListeners = false;
+        }
+    }
+
+    /**
+     * Notifies all listeners that have registered interest for
+     * notification on this event type.  The event instance
+     * is lazily created using the parameters passed into
+     * the fire method.
+     *
+     * @param e the event
+     * @see EventListenerList
+     */
+    protected void fireRemoveUpdate(DocumentEvent e) {
+        notifyingListeners = true;
+        try {
+            // Guaranteed to return a non-null array
+            Object[] listeners = listenerList.getListenerList();
+            // Process the listeners last to first, notifying
+            // those that are interested in this event
+            for (int i = listeners.length-2; i>=0; i-=2) {
+                if (listeners[i]==DocumentListener.class) {
+                    // Lazily create the event:
+                    // if (e == null)
+                    // e = new ListSelectionEvent(this, firstIndex, lastIndex);
+                    ((DocumentListener)listeners[i+1]).removeUpdate(e);
+                }
+            }
+        } finally {
+            notifyingListeners = false;
+        }
+    }
+
+    /**
+     * Notifies all listeners that have registered interest for
+     * notification on this event type.  The event instance
+     * is lazily created using the parameters passed into
+     * the fire method.
+     *
+     * @param e the event
+     * @see EventListenerList
+     */
+    protected void fireUndoableEditUpdate(UndoableEditEvent e) {
+        // Guaranteed to return a non-null array
+        Object[] listeners = listenerList.getListenerList();
+        // Process the listeners last to first, notifying
+        // those that are interested in this event
+        for (int i = listeners.length-2; i>=0; i-=2) {
+            if (listeners[i]==UndoableEditListener.class) {
+                // Lazily create the event:
+                // if (e == null)
+                // e = new ListSelectionEvent(this, firstIndex, lastIndex);
+                ((UndoableEditListener)listeners[i+1]).undoableEditHappened(e);
+            }
+        }
+    }
+
+    /**
+     * Returns an array of all the objects currently registered
+     * as <code><em>Foo</em>Listener</code>s
+     * upon this document.
+     * <code><em>Foo</em>Listener</code>s are registered using the
+     * <code>add<em>Foo</em>Listener</code> method.
+     *
+     * <p>
+     * You can specify the <code>listenerType</code> argument
+     * with a class literal, such as
+     * <code><em>Foo</em>Listener.class</code>.
+     * For example, you can query a
+     * document <code>d</code>
+     * for its document listeners with the following code:
+     *
+     * <pre>DocumentListener[] mls = (DocumentListener[])(d.getListeners(DocumentListener.class));</pre>
+     *
+     * If no such listeners exist, this method returns an empty array.
+     *
+     * @param listenerType the type of listeners requested; this parameter
+     *          should specify an interface that descends from
+     *          <code>java.util.EventListener</code>
+     * @return an array of all objects registered as
+     *          <code><em>Foo</em>Listener</code>s on this component,
+     *          or an empty array if no such
+     *          listeners have been added
+     * @exception ClassCastException if <code>listenerType</code>
+     *          doesn't specify a class or interface that implements
+     *          <code>java.util.EventListener</code>
+     *
+     * @see #getDocumentListeners
+     * @see #getUndoableEditListeners
+     *
+     * @since 1.3
+     */
+    public <T extends EventListener> T[] getListeners(Class<T> listenerType) {
+        return listenerList.getListeners(listenerType);
+    }
+
+    /**
+     * Gets the asynchronous loading priority.  If less than zero,
+     * the document should not be loaded asynchronously.
+     *
+     * @return the asynchronous loading priority, or <code>-1</code>
+     *   if the document should not be loaded asynchronously
+     */
+    public int getAsynchronousLoadPriority() {
+        Integer loadPriority = (Integer)
+            getProperty(AbstractDocument.AsyncLoadPriority);
+        if (loadPriority != null) {
+            return loadPriority.intValue();
+        }
+        return -1;
+    }
+
+    /**
+     * Sets the asynchronous loading priority.
+     * @param p the new asynchronous loading priority; a value
+     *   less than zero indicates that the document should not be
+     *   loaded asynchronously
+     */
+    public void setAsynchronousLoadPriority(int p) {
+        Integer loadPriority = (p >= 0) ? Integer.valueOf(p) : null;
+        putProperty(AbstractDocument.AsyncLoadPriority, loadPriority);
+    }
+
+    /**
+     * Sets the <code>DocumentFilter</code>. The <code>DocumentFilter</code>
+     * is passed <code>insert</code> and <code>remove</code> to conditionally
+     * allow inserting/deleting of the text.  A <code>null</code> value
+     * indicates that no filtering will occur.
+     *
+     * @param filter the <code>DocumentFilter</code> used to constrain text
+     * @see #getDocumentFilter
+     * @since 1.4
+     */
+    public void setDocumentFilter(DocumentFilter filter) {
+        documentFilter = filter;
+    }
+
+    /**
+     * Returns the <code>DocumentFilter</code> that is responsible for
+     * filtering of insertion/removal. A <code>null</code> return value
+     * implies no filtering is to occur.
+     *
+     * @since 1.4
+     * @see #setDocumentFilter
+     * @return the DocumentFilter
+     */
+    public DocumentFilter getDocumentFilter() {
+        return documentFilter;
+    }
+
+    // --- Document methods -----------------------------------------
+
+    /**
+     * This allows the model to be safely rendered in the presence
+     * of currency, if the model supports being updated asynchronously.
+     * The given runnable will be executed in a way that allows it
+     * to safely read the model with no changes while the runnable
+     * is being executed.  The runnable itself may <em>not</em>
+     * make any mutations.
+     * <p>
+     * This is implemented to acquire a read lock for the duration
+     * of the runnables execution.  There may be multiple runnables
+     * executing at the same time, and all writers will be blocked
+     * while there are active rendering runnables.  If the runnable
+     * throws an exception, its lock will be safely released.
+     * There is no protection against a runnable that never exits,
+     * which will effectively leave the document locked for it's
+     * lifetime.
+     * <p>
+     * If the given runnable attempts to make any mutations in
+     * this implementation, a deadlock will occur.  There is
+     * no tracking of individual rendering threads to enable
+     * detecting this situation, but a subclass could incur
+     * the overhead of tracking them and throwing an error.
+     * <p>
+     * This method is thread safe, although most Swing methods
+     * are not. Please see
+     * <A HREF="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/index.html">Concurrency
+     * in Swing</A> for more information.
+     *
+     * @param r the renderer to execute
+     */
+    public void render(Runnable r) {
+        readLock();
+        try {
+            r.run();
+        } finally {
+            readUnlock();
+        }
+    }
+
+    /**
+     * Returns the length of the data.  This is the number of
+     * characters of content that represents the users data.
+     *
+     * @return the length &gt;= 0
+     * @see Document#getLength
+     */
+    public int getLength() {
+        return data.length() - 1;
+    }
+
+    /**
+     * Adds a document listener for notification of any changes.
+     *
+     * @param listener the <code>DocumentListener</code> to add
+     * @see Document#addDocumentListener
+     */
+    public void addDocumentListener(DocumentListener listener) {
+        listenerList.add(DocumentListener.class, listener);
+    }
+
+    /**
+     * Removes a document listener.
+     *
+     * @param listener the <code>DocumentListener</code> to remove
+     * @see Document#removeDocumentListener
+     */
+    public void removeDocumentListener(DocumentListener listener) {
+        listenerList.remove(DocumentListener.class, listener);
+    }
+
+    /**
+     * Returns an array of all the document listeners
+     * registered on this document.
+     *
+     * @return all of this document's <code>DocumentListener</code>s
+     *         or an empty array if no document listeners are
+     *         currently registered
+     *
+     * @see #addDocumentListener
+     * @see #removeDocumentListener
+     * @since 1.4
+     */
+    public DocumentListener[] getDocumentListeners() {
+        return listenerList.getListeners(DocumentListener.class);
+    }
+
+    /**
+     * Adds an undo listener for notification of any changes.
+     * Undo/Redo operations performed on the <code>UndoableEdit</code>
+     * will cause the appropriate DocumentEvent to be fired to keep
+     * the view(s) in sync with the model.
+     *
+     * @param listener the <code>UndoableEditListener</code> to add
+     * @see Document#addUndoableEditListener
+     */
+    public void addUndoableEditListener(UndoableEditListener listener) {
+        listenerList.add(UndoableEditListener.class, listener);
+    }
+
+    /**
+     * Removes an undo listener.
+     *
+     * @param listener the <code>UndoableEditListener</code> to remove
+     * @see Document#removeDocumentListener
+     */
+    public void removeUndoableEditListener(UndoableEditListener listener) {
+        listenerList.remove(UndoableEditListener.class, listener);
+    }
+
+    /**
+     * Returns an array of all the undoable edit listeners
+     * registered on this document.
+     *
+     * @return all of this document's <code>UndoableEditListener</code>s
+     *         or an empty array if no undoable edit listeners are
+     *         currently registered
+     *
+     * @see #addUndoableEditListener
+     * @see #removeUndoableEditListener
+     *
+     * @since 1.4
+     */
+    public UndoableEditListener[] getUndoableEditListeners() {
+        return listenerList.getListeners(UndoableEditListener.class);
+    }
+
+    /**
+     * A convenience method for looking up a property value. It is
+     * equivalent to:
+     * <pre>
+     * getDocumentProperties().get(key);
+     * </pre>
+     *
+     * @param key the non-<code>null</code> property key
+     * @return the value of this property or <code>null</code>
+     * @see #getDocumentProperties
+     */
+    public final Object getProperty(Object key) {
+        return getDocumentProperties().get(key);
+    }
+
+
+    /**
+     * A convenience method for storing up a property value.  It is
+     * equivalent to:
+     * <pre>
+     * getDocumentProperties().put(key, value);
+     * </pre>
+     * If <code>value</code> is <code>null</code> this method will
+     * remove the property.
+     *
+     * @param key the non-<code>null</code> key
+     * @param value the property value
+     * @see #getDocumentProperties
+     */
+    public final void putProperty(Object key, Object value) {
+        if (value != null) {
+            getDocumentProperties().put(key, value);
+        } else {
+            getDocumentProperties().remove(key);
+        }
+        if( key == TextAttribute.RUN_DIRECTION
+            && Boolean.TRUE.equals(getProperty(I18NProperty)) )
+        {
+            //REMIND - this needs to flip on the i18n property if run dir
+            //is rtl and the i18n property is not already on.
+            writeLock();
+            try {
+                DefaultDocumentEvent e
+                    = new DefaultDocumentEvent(0, getLength(),
+                                               DocumentEvent.EventType.INSERT);
+                updateBidi( e );
+            } finally {
+                writeUnlock();
+            }
+        }
+    }
+
+    /**
+     * Removes some content from the document.
+     * Removing content causes a write lock to be held while the
+     * actual changes are taking place.  Observers are notified
+     * of the change on the thread that called this method.
+     * <p>
+     * This method is thread safe, although most Swing methods
+     * are not. Please see
+     * <A HREF="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/index.html">Concurrency
+     * in Swing</A> for more information.
+     *
+     * @param offs the starting offset &gt;= 0
+     * @param len the number of characters to remove &gt;= 0
+     * @exception BadLocationException  the given remove position is not a valid
+     *   position within the document
+     * @see Document#remove
+     */
+    public void remove(int offs, int len) throws BadLocationException {
+        DocumentFilter filter = getDocumentFilter();
+
+        writeLock();
+        try {
+            if (filter != null) {
+                filter.remove(getFilterBypass(), offs, len);
+            }
+            else {
+                handleRemove(offs, len);
+            }
+        } finally {
+            writeUnlock();
+        }
+    }
+
+    /**
+     * Performs the actual work of the remove. It is assumed the caller
+     * will have obtained a <code>writeLock</code> before invoking this.
+     */
+    void handleRemove(int offs, int len) throws BadLocationException {
+        if (len > 0) {
+            if (offs < 0 || (offs + len) > getLength()) {
+                throw new BadLocationException("Invalid remove",
+                                               getLength() + 1);
+            }
+            DefaultDocumentEvent chng =
+                    new DefaultDocumentEvent(offs, len, DocumentEvent.EventType.REMOVE);
+
+            boolean isComposedTextElement;
+            // Check whether the position of interest is the composed text
+            isComposedTextElement = Utilities.isComposedTextElement(this, offs);
+
+            removeUpdate(chng);
+            UndoableEdit u = data.remove(offs, len);
+            if (u != null) {
+                chng.addEdit(u);
+            }
+            postRemoveUpdate(chng);
+            // Mark the edit as done.
+            chng.end();
+            fireRemoveUpdate(chng);
+            // only fire undo if Content implementation supports it
+            // undo for the composed text is not supported for now
+            if ((u != null) && !isComposedTextElement) {
+                fireUndoableEditUpdate(new UndoableEditEvent(this, chng));
+            }
+        }
+    }
+
+    /**
+     * Deletes the region of text from <code>offset</code> to
+     * <code>offset + length</code>, and replaces it with <code>text</code>.
+     * It is up to the implementation as to how this is implemented, some
+     * implementations may treat this as two distinct operations: a remove
+     * followed by an insert, others may treat the replace as one atomic
+     * operation.
+     *
+     * @param offset index of child element
+     * @param length length of text to delete, may be 0 indicating don't
+     *               delete anything
+     * @param text text to insert, <code>null</code> indicates no text to insert
+     * @param attrs AttributeSet indicating attributes of inserted text,
+     *              <code>null</code>
+     *              is legal, and typically treated as an empty attributeset,
+     *              but exact interpretation is left to the subclass
+     * @exception BadLocationException the given position is not a valid
+     *            position within the document
+     * @since 1.4
+     */
+    public void replace(int offset, int length, String text,
+                        AttributeSet attrs) throws BadLocationException {
+        if (length == 0 && (text == null || text.length() == 0)) {
+            return;
+        }
+        DocumentFilter filter = getDocumentFilter();
+
+        writeLock();
+        try {
+            if (filter != null) {
+                filter.replace(getFilterBypass(), offset, length, text,
+                               attrs);
+            }
+            else {
+                if (length > 0) {
+                    remove(offset, length);
+                }
+                if (text != null && text.length() > 0) {
+                    insertString(offset, text, attrs);
+                }
+            }
+        } finally {
+            writeUnlock();
+        }
+    }
+
+    /**
+     * Inserts some content into the document.
+     * Inserting content causes a write lock to be held while the
+     * actual changes are taking place, followed by notification
+     * to the observers on the thread that grabbed the write lock.
+     * <p>
+     * This method is thread safe, although most Swing methods
+     * are not. Please see
+     * <A HREF="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/index.html">Concurrency
+     * in Swing</A> for more information.
+     *
+     * @param offs the starting offset &gt;= 0
+     * @param str the string to insert; does nothing with null/empty strings
+     * @param a the attributes for the inserted content
+     * @exception BadLocationException  the given insert position is not a valid
+     *   position within the document
+     * @see Document#insertString
+     */
+    public void insertString(int offs, String str, AttributeSet a) throws BadLocationException {
+        if ((str == null) || (str.length() == 0)) {
+            return;
+        }
+        DocumentFilter filter = getDocumentFilter();
+
+        writeLock();
+
+        try {
+            if (filter != null) {
+                filter.insertString(getFilterBypass(), offs, str, a);
+            } else {
+                handleInsertString(offs, str, a);
+            }
+        } finally {
+            writeUnlock();
+        }
+    }
+
+    /**
+     * Performs the actual work of inserting the text; it is assumed the
+     * caller has obtained a write lock before invoking this.
+     */
+    private void handleInsertString(int offs, String str, AttributeSet a)
+            throws BadLocationException {
+        if ((str == null) || (str.length() == 0)) {
+            return;
+        }
+        UndoableEdit u = data.insertString(offs, str);
+        DefaultDocumentEvent e =
+            new DefaultDocumentEvent(offs, str.length(), DocumentEvent.EventType.INSERT);
+        if (u != null) {
+            e.addEdit(u);
+        }
+
+        // see if complex glyph layout support is needed
+        if( getProperty(I18NProperty).equals( Boolean.FALSE ) ) {
+            // if a default direction of right-to-left has been specified,
+            // we want complex layout even if the text is all left to right.
+            Object d = getProperty(TextAttribute.RUN_DIRECTION);
+            if ((d != null) && (d.equals(TextAttribute.RUN_DIRECTION_RTL))) {
+                putProperty( I18NProperty, Boolean.TRUE);
+            } else {
+                char[] chars = str.toCharArray();
+                if (SwingUtilities2.isComplexLayout(chars, 0, chars.length)) {
+                    putProperty( I18NProperty, Boolean.TRUE);
+                }
+            }
+        }
+
+        insertUpdate(e, a);
+        // Mark the edit as done.
+        e.end();
+        fireInsertUpdate(e);
+        // only fire undo if Content implementation supports it
+        // undo for the composed text is not supported for now
+        if (u != null && (a == null || !a.isDefined(StyleConstants.ComposedTextAttribute))) {
+            fireUndoableEditUpdate(new UndoableEditEvent(this, e));
+        }
+    }
+
+    /**
+     * Gets a sequence of text from the document.
+     *
+     * @param offset the starting offset &gt;= 0
+     * @param length the number of characters to retrieve &gt;= 0
+     * @return the text
+     * @exception BadLocationException  the range given includes a position
+     *   that is not a valid position within the document
+     * @see Document#getText
+     */
+    public String getText(int offset, int length) throws BadLocationException {
+        if (length < 0) {
+            throw new BadLocationException("Length must be positive", length);
+        }
+        String str = data.getString(offset, length);
+        return str;
+    }
+
+    /**
+     * Fetches the text contained within the given portion
+     * of the document.
+     * <p>
+     * If the partialReturn property on the txt parameter is false, the
+     * data returned in the Segment will be the entire length requested and
+     * may or may not be a copy depending upon how the data was stored.
+     * If the partialReturn property is true, only the amount of text that
+     * can be returned without creating a copy is returned.  Using partial
+     * returns will give better performance for situations where large
+     * parts of the document are being scanned.  The following is an example
+     * of using the partial return to access the entire document:
+     *
+     * <pre>
+     * &nbsp; int nleft = doc.getDocumentLength();
+     * &nbsp; Segment text = new Segment();
+     * &nbsp; int offs = 0;
+     * &nbsp; text.setPartialReturn(true);
+     * &nbsp; while (nleft &gt; 0) {
+     * &nbsp;     doc.getText(offs, nleft, text);
+     * &nbsp;     // do something with text
+     * &nbsp;     nleft -= text.count;
+     * &nbsp;     offs += text.count;
+     * &nbsp; }
+     * </pre>
+     *
+     * @param offset the starting offset &gt;= 0
+     * @param length the number of characters to retrieve &gt;= 0
+     * @param txt the Segment object to retrieve the text into
+     * @exception BadLocationException  the range given includes a position
+     *   that is not a valid position within the document
+     */
+    public void getText(int offset, int length, Segment txt) throws BadLocationException {
+        if (length < 0) {
+            throw new BadLocationException("Length must be positive", length);
+        }
+        data.getChars(offset, length, txt);
+    }
+
+    /**
+     * Returns a position that will track change as the document
+     * is altered.
+     * <p>
+     * This method is thread safe, although most Swing methods
+     * are not. Please see
+     * <A HREF="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/index.html">Concurrency
+     * in Swing</A> for more information.
+     *
+     * @param offs the position in the model &gt;= 0
+     * @return the position
+     * @exception BadLocationException  if the given position does not
+     *   represent a valid location in the associated document
+     * @see Document#createPosition
+     */
+    public synchronized Position createPosition(int offs) throws BadLocationException {
+        return data.createPosition(offs);
+    }
+
+    /**
+     * Returns a position that represents the start of the document.  The
+     * position returned can be counted on to track change and stay
+     * located at the beginning of the document.
+     *
+     * @return the position
+     */
+    public final Position getStartPosition() {
+        Position p;
+        try {
+            p = createPosition(0);
+        } catch (BadLocationException bl) {
+            p = null;
+        }
+        return p;
+    }
+
+    /**
+     * Returns a position that represents the end of the document.  The
+     * position returned can be counted on to track change and stay
+     * located at the end of the document.
+     *
+     * @return the position
+     */
+    public final Position getEndPosition() {
+        Position p;
+        try {
+            p = createPosition(data.length());
+        } catch (BadLocationException bl) {
+            p = null;
+        }
+        return p;
+    }
+
+    /**
+     * Gets all root elements defined.  Typically, there
+     * will only be one so the default implementation
+     * is to return the default root element.
+     *
+     * @return the root element
+     */
+    public Element[] getRootElements() {
+        Element[] elems = new Element[2];
+        elems[0] = getDefaultRootElement();
+        elems[1] = getBidiRootElement();
+        return elems;
+    }
+
+    /**
+     * Returns the root element that views should be based upon
+     * unless some other mechanism for assigning views to element
+     * structures is provided.
+     *
+     * @return the root element
+     * @see Document#getDefaultRootElement
+     */
+    public abstract Element getDefaultRootElement();
+
+    // ---- local methods -----------------------------------------
+
+    /**
+     * Returns the <code>FilterBypass</code>. This will create one if one
+     * does not yet exist.
+     */
+    private DocumentFilter.FilterBypass getFilterBypass() {
+        if (filterBypass == null) {
+            filterBypass = new DefaultFilterBypass();
+        }
+        return filterBypass;
+    }
+
+    /**
+     * Returns the root element of the bidirectional structure for this
+     * document.  Its children represent character runs with a given
+     * Unicode bidi level.
+     */
+    public Element getBidiRootElement() {
+        return bidiRoot;
+    }
+
+    /**
+     * Returns true if the text in the range <code>p0</code> to
+     * <code>p1</code> is left to right.
+     */
+    static boolean isLeftToRight(Document doc, int p0, int p1) {
+        if (Boolean.TRUE.equals(doc.getProperty(I18NProperty))) {
+            if (doc instanceof AbstractDocument) {
+                AbstractDocument adoc = (AbstractDocument) doc;
+                Element bidiRoot = adoc.getBidiRootElement();
+                int index = bidiRoot.getElementIndex(p0);
+                Element bidiElem = bidiRoot.getElement(index);
+                if (bidiElem.getEndOffset() >= p1) {
+                    AttributeSet bidiAttrs = bidiElem.getAttributes();
+                    return ((StyleConstants.getBidiLevel(bidiAttrs) % 2) == 0);
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Get the paragraph element containing the given position.  Sub-classes
+     * must define for themselves what exactly constitutes a paragraph.  They
+     * should keep in mind however that a paragraph should at least be the
+     * unit of text over which to run the Unicode bidirectional algorithm.
+     *
+     * @param pos the starting offset &gt;= 0
+     * @return the element */
+    public abstract Element getParagraphElement(int pos);
+
+
+    /**
+     * Fetches the context for managing attributes.  This
+     * method effectively establishes the strategy used
+     * for compressing AttributeSet information.
+     *
+     * @return the context
+     */
+    protected final AttributeContext getAttributeContext() {
+        return context;
+    }
+
+    /**
+     * Updates document structure as a result of text insertion.  This
+     * will happen within a write lock.  If a subclass of
+     * this class reimplements this method, it should delegate to the
+     * superclass as well.
+     *
+     * @param chng a description of the change
+     * @param attr the attributes for the change
+     */
+    protected void insertUpdate(DefaultDocumentEvent chng, AttributeSet attr) {
+        if( getProperty(I18NProperty).equals( Boolean.TRUE ) )
+            updateBidi( chng );
+
+        // Check if a multi byte is encountered in the inserted text.
+        if (chng.type == DocumentEvent.EventType.INSERT &&
+                        chng.getLength() > 0 &&
+                        !Boolean.TRUE.equals(getProperty(MultiByteProperty))) {
+            Segment segment = SegmentCache.getSharedSegment();
+            try {
+                getText(chng.getOffset(), chng.getLength(), segment);
+                segment.first();
+                do {
+                    if ((int)segment.current() > 255) {
+                        putProperty(MultiByteProperty, Boolean.TRUE);
+                        break;
+                    }
+                } while (segment.next() != Segment.DONE);
+            } catch (BadLocationException ble) {
+                // Should never happen
+            }
+            SegmentCache.releaseSharedSegment(segment);
+        }
+    }
+
+    /**
+     * Updates any document structure as a result of text removal.  This
+     * method is called before the text is actually removed from the Content.
+     * This will happen within a write lock. If a subclass
+     * of this class reimplements this method, it should delegate to the
+     * superclass as well.
+     *
+     * @param chng a description of the change
+     */
+    protected void removeUpdate(DefaultDocumentEvent chng) {
+    }
+
+    /**
+     * Updates any document structure as a result of text removal.  This
+     * method is called after the text has been removed from the Content.
+     * This will happen within a write lock. If a subclass
+     * of this class reimplements this method, it should delegate to the
+     * superclass as well.
+     *
+     * @param chng a description of the change
+     */
+    protected void postRemoveUpdate(DefaultDocumentEvent chng) {
+        if( getProperty(I18NProperty).equals( Boolean.TRUE ) )
+            updateBidi( chng );
+    }
+
+
+    /**
+     * Update the bidi element structure as a result of the given change
+     * to the document.  The given change will be updated to reflect the
+     * changes made to the bidi structure.
+     *
+     * This method assumes that every offset in the model is contained in
+     * exactly one paragraph.  This method also assumes that it is called
+     * after the change is made to the default element structure.
+     */
+    void updateBidi( DefaultDocumentEvent chng ) {
+
+        // Calculate the range of paragraphs affected by the change.
+        int firstPStart;
+        int lastPEnd;
+        if( chng.type == DocumentEvent.EventType.INSERT
+            || chng.type == DocumentEvent.EventType.CHANGE )
+        {
+            int chngStart = chng.getOffset();
+            int chngEnd =  chngStart + chng.getLength();
+            firstPStart = getParagraphElement(chngStart).getStartOffset();
+            lastPEnd = getParagraphElement(chngEnd).getEndOffset();
+        } else if( chng.type == DocumentEvent.EventType.REMOVE ) {
+            Element paragraph = getParagraphElement( chng.getOffset() );
+            firstPStart = paragraph.getStartOffset();
+            lastPEnd = paragraph.getEndOffset();
+        } else {
+            throw new Error("Internal error: unknown event type.");
+        }
+        //System.out.println("updateBidi: firstPStart = " + firstPStart + " lastPEnd = " + lastPEnd );
+
+
+        // Calculate the bidi levels for the affected range of paragraphs.  The
+        // levels array will contain a bidi level for each character in the
+        // affected text.
+        byte levels[] = calculateBidiLevels( firstPStart, lastPEnd );
+
+
+        Vector<Element> newElements = new Vector<Element>();
+
+        // Calculate the first span of characters in the affected range with
+        // the same bidi level.  If this level is the same as the level of the
+        // previous bidi element (the existing bidi element containing
+        // firstPStart-1), then merge in the previous element.  If not, but
+        // the previous element overlaps the affected range, truncate the
+        // previous element at firstPStart.
+        int firstSpanStart = firstPStart;
+        int removeFromIndex = 0;
+        if( firstSpanStart > 0 ) {
+            int prevElemIndex = bidiRoot.getElementIndex(firstPStart-1);
+            removeFromIndex = prevElemIndex;
+            Element prevElem = bidiRoot.getElement(prevElemIndex);
+            int prevLevel=StyleConstants.getBidiLevel(prevElem.getAttributes());
+            //System.out.println("createbidiElements: prevElem= " + prevElem  + " prevLevel= " + prevLevel + "level[0] = " + levels[0]);
+            if( prevLevel==levels[0] ) {
+                firstSpanStart = prevElem.getStartOffset();
+            } else if( prevElem.getEndOffset() > firstPStart ) {
+                newElements.addElement(new BidiElement(bidiRoot,
+                                                       prevElem.getStartOffset(),
+                                                       firstPStart, prevLevel));
+            } else {
+                removeFromIndex++;
+            }
+        }
+
+        int firstSpanEnd = 0;
+        while((firstSpanEnd<levels.length) && (levels[firstSpanEnd]==levels[0]))
+            firstSpanEnd++;
+
+
+        // Calculate the last span of characters in the affected range with
+        // the same bidi level.  If this level is the same as the level of the
+        // next bidi element (the existing bidi element containing lastPEnd),
+        // then merge in the next element.  If not, but the next element
+        // overlaps the affected range, adjust the next element to start at
+        // lastPEnd.
+        int lastSpanEnd = lastPEnd;
+        Element newNextElem = null;
+        int removeToIndex = bidiRoot.getElementCount() - 1;
+        if( lastSpanEnd <= getLength() ) {
+            int nextElemIndex = bidiRoot.getElementIndex( lastPEnd );
+            removeToIndex = nextElemIndex;
+            Element nextElem = bidiRoot.getElement( nextElemIndex );
+            int nextLevel = StyleConstants.getBidiLevel(nextElem.getAttributes());
+            if( nextLevel == levels[levels.length-1] ) {
+                lastSpanEnd = nextElem.getEndOffset();
+            } else if( nextElem.getStartOffset() < lastPEnd ) {
+                newNextElem = new BidiElement(bidiRoot, lastPEnd,
+                                              nextElem.getEndOffset(),
+                                              nextLevel);
+            } else {
+                removeToIndex--;
+            }
+        }
+
+        int lastSpanStart = levels.length;
+        while( (lastSpanStart>firstSpanEnd)
+               && (levels[lastSpanStart-1]==levels[levels.length-1]) )
+            lastSpanStart--;
+
+
+        // If the first and last spans are contiguous and have the same level,
+        // merge them and create a single new element for the entire span.
+        // Otherwise, create elements for the first and last spans as well as
+        // any spans in between.
+        if((firstSpanEnd==lastSpanStart)&&(levels[0]==levels[levels.length-1])){
+            newElements.addElement(new BidiElement(bidiRoot, firstSpanStart,
+                                                   lastSpanEnd, levels[0]));
+        } else {
+            // Create an element for the first span.
+            newElements.addElement(new BidiElement(bidiRoot, firstSpanStart,
+                                                   firstSpanEnd+firstPStart,
+                                                   levels[0]));
+            // Create elements for the spans in between the first and last
+            for( int i=firstSpanEnd; i<lastSpanStart; ) {
+                //System.out.println("executed line 872");
+                int j;
+                for( j=i;  (j<levels.length) && (levels[j] == levels[i]); j++ );
+                newElements.addElement(new BidiElement(bidiRoot, firstPStart+i,
+                                                       firstPStart+j,
+                                                       (int)levels[i]));
+                i=j;
+            }
+            // Create an element for the last span.
+            newElements.addElement(new BidiElement(bidiRoot,
+                                                   lastSpanStart+firstPStart,
+                                                   lastSpanEnd,
+                                                   levels[levels.length-1]));
+        }
+
+        if( newNextElem != null )
+            newElements.addElement( newNextElem );
+
+
+        // Calculate the set of existing bidi elements which must be
+        // removed.
+        int removedElemCount = 0;
+        if( bidiRoot.getElementCount() > 0 ) {
+            removedElemCount = removeToIndex - removeFromIndex + 1;
+        }
+        Element[] removedElems = new Element[removedElemCount];
+        for( int i=0; i<removedElemCount; i++ ) {
+            removedElems[i] = bidiRoot.getElement(removeFromIndex+i);
+        }
+
+        Element[] addedElems = new Element[ newElements.size() ];
+        newElements.copyInto( addedElems );
+
+        // Update the change record.
+        ElementEdit ee = new ElementEdit( bidiRoot, removeFromIndex,
+                                          removedElems, addedElems );
+        chng.addEdit( ee );
+
+        // Update the bidi element structure.
+        bidiRoot.replace( removeFromIndex, removedElems.length, addedElems );
+    }
+
+
+    /**
+     * Calculate the levels array for a range of paragraphs.
+     */
+    private byte[] calculateBidiLevels( int firstPStart, int lastPEnd ) {
+
+        byte levels[] = new byte[ lastPEnd - firstPStart ];
+        int  levelsEnd = 0;
+        Boolean defaultDirection = null;
+        Object d = getProperty(TextAttribute.RUN_DIRECTION);
+        if (d instanceof Boolean) {
+            defaultDirection = (Boolean) d;
+        }
+
+        // For each paragraph in the given range of paragraphs, get its
+        // levels array and add it to the levels array for the entire span.
+        for(int o=firstPStart; o<lastPEnd; ) {
+            Element p = getParagraphElement( o );
+            int pStart = p.getStartOffset();
+            int pEnd = p.getEndOffset();
+
+            // default run direction for the paragraph.  This will be
+            // null if there is no direction override specified (i.e.
+            // the direction will be determined from the content).
+            Boolean direction = defaultDirection;
+            d = p.getAttributes().getAttribute(TextAttribute.RUN_DIRECTION);
+            if (d instanceof Boolean) {
+                direction = (Boolean) d;
+            }
+
+            //System.out.println("updateBidi: paragraph start = " + pStart + " paragraph end = " + pEnd);
+
+            // Create a Bidi over this paragraph then get the level
+            // array.
+            Segment seg = SegmentCache.getSharedSegment();
+            try {
+                getText(pStart, pEnd-pStart, seg);
+            } catch (BadLocationException e ) {
+                throw new Error("Internal error: " + e.toString());
+            }
+            // REMIND(bcb) we should really be using a Segment here.
+            Bidi bidiAnalyzer;
+            int bidiflag = Bidi.DIRECTION_DEFAULT_LEFT_TO_RIGHT;
+            if (direction != null) {
+                if (TextAttribute.RUN_DIRECTION_LTR.equals(direction)) {
+                    bidiflag = Bidi.DIRECTION_LEFT_TO_RIGHT;
+                } else {
+                    bidiflag = Bidi.DIRECTION_RIGHT_TO_LEFT;
+                }
+            }
+            bidiAnalyzer = new Bidi(seg.array, seg.offset, null, 0, seg.count,
+                    bidiflag);
+            BidiUtils.getLevels(bidiAnalyzer, levels, levelsEnd);
+            levelsEnd += bidiAnalyzer.getLength();
+
+            o =  p.getEndOffset();
+            SegmentCache.releaseSharedSegment(seg);
+        }
+
+        // REMIND(bcb) remove this code when debugging is done.
+        if( levelsEnd != levels.length )
+            throw new Error("levelsEnd assertion failed.");
+
+        return levels;
+    }
+
+    /**
+     * Gives a diagnostic dump.
+     *
+     * @param out the output stream
+     */
+    public void dump(PrintStream out) {
+        Element root = getDefaultRootElement();
+        if (root instanceof AbstractElement) {
+            ((AbstractElement)root).dump(out, 0);
+        }
+        bidiRoot.dump(out,0);
+    }
+
+    /**
+     * Gets the content for the document.
+     *
+     * @return the content
+     */
+    protected final Content getContent() {
+        return data;
+    }
+
+    /**
+     * Creates a document leaf element.
+     * Hook through which elements are created to represent the
+     * document structure.  Because this implementation keeps
+     * structure and content separate, elements grow automatically
+     * when content is extended so splits of existing elements
+     * follow.  The document itself gets to decide how to generate
+     * elements to give flexibility in the type of elements used.
+     *
+     * @param parent the parent element
+     * @param a the attributes for the element
+     * @param p0 the beginning of the range &gt;= 0
+     * @param p1 the end of the range &gt;= p0
+     * @return the new element
+     */
+    protected Element createLeafElement(Element parent, AttributeSet a, int p0, int p1) {
+        return new LeafElement(parent, a, p0, p1);
+    }
+
+    /**
+     * Creates a document branch element, that can contain other elements.
+     *
+     * @param parent the parent element
+     * @param a the attributes
+     * @return the element
+     */
+    protected Element createBranchElement(Element parent, AttributeSet a) {
+        return new BranchElement(parent, a);
+    }
+
+    // --- Document locking ----------------------------------
+
+    /**
+     * Fetches the current writing thread if there is one.
+     * This can be used to distinguish whether a method is
+     * being called as part of an existing modification or
+     * if a lock needs to be acquired and a new transaction
+     * started.
+     *
+     * @return the thread actively modifying the document
+     *  or <code>null</code> if there are no modifications in progress
+     */
+    protected synchronized final Thread getCurrentWriter() {
+        return currWriter;
+    }
+
+    /**
+     * Acquires a lock to begin mutating the document this lock
+     * protects.  There can be no writing, notification of changes, or
+     * reading going on in order to gain the lock.  Additionally a thread is
+     * allowed to gain more than one <code>writeLock</code>,
+     * as long as it doesn't attempt to gain additional <code>writeLock</code>s
+     * from within document notification.  Attempting to gain a
+     * <code>writeLock</code> from within a DocumentListener notification will
+     * result in an <code>IllegalStateException</code>.  The ability
+     * to obtain more than one <code>writeLock</code> per thread allows
+     * subclasses to gain a writeLock, perform a number of operations, then
+     * release the lock.
+     * <p>
+     * Calls to <code>writeLock</code>
+     * must be balanced with calls to <code>writeUnlock</code>, else the
+     * <code>Document</code> will be left in a locked state so that no
+     * reading or writing can be done.
+     *
+     * @exception IllegalStateException thrown on illegal lock
+     *  attempt.  If the document is implemented properly, this can
+     *  only happen if a document listener attempts to mutate the
+     *  document.  This situation violates the bean event model
+     *  where order of delivery is not guaranteed and all listeners
+     *  should be notified before further mutations are allowed.
+     */
+    protected synchronized final void writeLock() {
+        try {
+            while ((numReaders > 0) || (currWriter != null)) {
+                if (Thread.currentThread() == currWriter) {
+                    if (notifyingListeners) {
+                        // Assuming one doesn't do something wrong in a
+                        // subclass this should only happen if a
+                        // DocumentListener tries to mutate the document.
+                        throw new IllegalStateException(
+                                      "Attempt to mutate in notification");
+                    }
+                    numWriters++;
+                    return;
+                }
+                wait();
+            }
+            currWriter = Thread.currentThread();
+            numWriters = 1;
+        } catch (InterruptedException e) {
+            throw new Error("Interrupted attempt to acquire write lock");
+        }
+    }
+
+    /**
+     * Releases a write lock previously obtained via <code>writeLock</code>.
+     * After decrementing the lock count if there are no outstanding locks
+     * this will allow a new writer, or readers.
+     *
+     * @see #writeLock
+     */
+    protected synchronized final void writeUnlock() {
+        if (--numWriters <= 0) {
+            numWriters = 0;
+            currWriter = null;
+            notifyAll();
+        }
+    }
+
+    /**
+     * Acquires a lock to begin reading some state from the
+     * document.  There can be multiple readers at the same time.
+     * Writing blocks the readers until notification of the change
+     * to the listeners has been completed.  This method should
+     * be used very carefully to avoid unintended compromise
+     * of the document.  It should always be balanced with a
+     * <code>readUnlock</code>.
+     *
+     * @see #readUnlock
+     */
+    public synchronized final void readLock() {
+        try {
+            while (currWriter != null) {
+                if (currWriter == Thread.currentThread()) {
+                    // writer has full read access.... may try to acquire
+                    // lock in notification
+                    return;
+                }
+                wait();
+            }
+            numReaders += 1;
+        } catch (InterruptedException e) {
+            throw new Error("Interrupted attempt to acquire read lock");
+        }
+    }
+
+    /**
+     * Does a read unlock.  This signals that one
+     * of the readers is done.  If there are no more readers
+     * then writing can begin again.  This should be balanced
+     * with a readLock, and should occur in a finally statement
+     * so that the balance is guaranteed.  The following is an
+     * example.
+     * <pre><code>
+     * &nbsp;   readLock();
+     * &nbsp;   try {
+     * &nbsp;       // do something
+     * &nbsp;   } finally {
+     * &nbsp;       readUnlock();
+     * &nbsp;   }
+     * </code></pre>
+     *
+     * @see #readLock
+     */
+    public synchronized final void readUnlock() {
+        if (currWriter == Thread.currentThread()) {
+            // writer has full read access.... may try to acquire
+            // lock in notification
+            return;
+        }
+        if (numReaders <= 0) {
+            throw new StateInvariantError(BAD_LOCK_STATE);
+        }
+        numReaders -= 1;
+        notify();
+    }
+
+    // --- serialization ---------------------------------------------
+
+    private void readObject(ObjectInputStream s)
+      throws ClassNotFoundException, IOException
+    {
+        s.defaultReadObject();
+        listenerList = new EventListenerList();
+
+        // Restore bidi structure
+        //REMIND(bcb) This creates an initial bidi element to account for
+        //the \n that exists by default in the content.
+        bidiRoot = new BidiRootElement();
+        try {
+            writeLock();
+            Element[] p = new Element[1];
+            p[0] = new BidiElement( bidiRoot, 0, 1, 0 );
+            bidiRoot.replace(0,0,p);
+        } finally {
+            writeUnlock();
+        }
+        // At this point bidi root is only partially correct. To fully
+        // restore it we need access to getDefaultRootElement. But, this
+        // is created by the subclass and at this point will be null. We
+        // thus use registerValidation.
+        s.registerValidation(new ObjectInputValidation() {
+            public void validateObject() {
+                try {
+                    writeLock();
+                    DefaultDocumentEvent e = new DefaultDocumentEvent
+                                   (0, getLength(),
+                                    DocumentEvent.EventType.INSERT);
+                    updateBidi( e );
+                }
+                finally {
+                    writeUnlock();
+                }
+            }
+        }, 0);
+    }
+
+    // ----- member variables ------------------------------------------
+
+    private transient int numReaders;
+    private transient Thread currWriter;
+    /**
+     * The number of writers, all obtained from <code>currWriter</code>.
+     */
+    private transient int numWriters;
+    /**
+     * True will notifying listeners.
+     */
+    private transient boolean notifyingListeners;
+
+    private static Boolean defaultI18NProperty;
+
+    /**
+     * Storage for document-wide properties.
+     */
+    private Dictionary<Object,Object> documentProperties = null;
+
+    /**
+     * The event listener list for the document.
+     */
+    protected EventListenerList listenerList = new EventListenerList();
+
+    /**
+     * Where the text is actually stored, and a set of marks
+     * that track change as the document is edited are managed.
+     */
+    private Content data;
+
+    /**
+     * Factory for the attributes.  This is the strategy for
+     * attribute compression and control of the lifetime of
+     * a set of attributes as a collection.  This may be shared
+     * with other documents.
+     */
+    private AttributeContext context;
+
+    /**
+     * The root of the bidirectional structure for this document.  Its children
+     * represent character runs with the same Unicode bidi level.
+     */
+    private transient BranchElement bidiRoot;
+
+    /**
+     * Filter for inserting/removing of text.
+     */
+    private DocumentFilter documentFilter;
+
+    /**
+     * Used by DocumentFilter to do actual insert/remove.
+     */
+    private transient DocumentFilter.FilterBypass filterBypass;
+
+    private static final String BAD_LOCK_STATE = "document lock failure";
+
+    /**
+     * Error message to indicate a bad location.
+     */
+    protected static final String BAD_LOCATION = "document location failure";
+
+    /**
+     * Name of elements used to represent paragraphs
+     */
+    public static final String ParagraphElementName = "paragraph";
+
+    /**
+     * Name of elements used to represent content
+     */
+    public static final String ContentElementName = "content";
+
+    /**
+     * Name of elements used to hold sections (lines/paragraphs).
+     */
+    public static final String SectionElementName = "section";
+
+    /**
+     * Name of elements used to hold a unidirectional run
+     */
+    public static final String BidiElementName = "bidi level";
+
+    /**
+     * Name of the attribute used to specify element
+     * names.
+     */
+    public static final String ElementNameAttribute = "$ename";
+
+    /**
+     * Document property that indicates whether internationalization
+     * functions such as text reordering or reshaping should be
+     * performed. This property should not be publicly exposed,
+     * since it is used for implementation convenience only.  As a
+     * side effect, copies of this property may be in its subclasses
+     * that live in different packages (e.g. HTMLDocument as of now),
+     * so those copies should also be taken care of when this property
+     * needs to be modified.
+     */
+    static final String I18NProperty = "i18n";
+
+    /**
+     * Document property that indicates if a character has been inserted
+     * into the document that is more than one byte long.  GlyphView uses
+     * this to determine if it should use BreakIterator.
+     */
+    static final Object MultiByteProperty = "multiByte";
+
+    /**
+     * Document property that indicates asynchronous loading is
+     * desired, with the thread priority given as the value.
+     */
+    static final String AsyncLoadPriority = "load priority";
+
+    /**
+     * Interface to describe a sequence of character content that
+     * can be edited.  Implementations may or may not support a
+     * history mechanism which will be reflected by whether or not
+     * mutations return an UndoableEdit implementation.
+     * @see AbstractDocument
+     */
+    public interface Content {
+
+        /**
+         * Creates a position within the content that will
+         * track change as the content is mutated.
+         *
+         * @param offset the offset in the content &gt;= 0
+         * @return a Position
+         * @exception BadLocationException for an invalid offset
+         */
+        public Position createPosition(int offset) throws BadLocationException;
+
+        /**
+         * Current length of the sequence of character content.
+         *
+         * @return the length &gt;= 0
+         */
+        public int length();
+
+        /**
+         * Inserts a string of characters into the sequence.
+         *
+         * @param where   offset into the sequence to make the insertion &gt;= 0
+         * @param str     string to insert
+         * @return  if the implementation supports a history mechanism,
+         *    a reference to an <code>Edit</code> implementation will be returned,
+         *    otherwise returns <code>null</code>
+         * @exception BadLocationException  thrown if the area covered by
+         *   the arguments is not contained in the character sequence
+         */
+        public UndoableEdit insertString(int where, String str) throws BadLocationException;
+
+        /**
+         * Removes some portion of the sequence.
+         *
+         * @param where   The offset into the sequence to make the
+         *   insertion &gt;= 0.
+         * @param nitems  The number of items in the sequence to remove &gt;= 0.
+         * @return  If the implementation supports a history mechanism,
+         *    a reference to an Edit implementation will be returned,
+         *    otherwise null.
+         * @exception BadLocationException  Thrown if the area covered by
+         *   the arguments is not contained in the character sequence.
+         */
+        public UndoableEdit remove(int where, int nitems) throws BadLocationException;
+
+        /**
+         * Fetches a string of characters contained in the sequence.
+         *
+         * @param where   Offset into the sequence to fetch &gt;= 0.
+         * @param len     number of characters to copy &gt;= 0.
+         * @return the string
+         * @exception BadLocationException  Thrown if the area covered by
+         *   the arguments is not contained in the character sequence.
+         */
+        public String getString(int where, int len) throws BadLocationException;
+
+        /**
+         * Gets a sequence of characters and copies them into a Segment.
+         *
+         * @param where the starting offset &gt;= 0
+         * @param len the number of characters &gt;= 0
+         * @param txt the target location to copy into
+         * @exception BadLocationException  Thrown if the area covered by
+         *   the arguments is not contained in the character sequence.
+         */
+        public void getChars(int where, int len, Segment txt) throws BadLocationException;
+    }
+
+    /**
+     * An interface that can be used to allow MutableAttributeSet
+     * implementations to use pluggable attribute compression
+     * techniques.  Each mutation of the attribute set can be
+     * used to exchange a previous AttributeSet instance with
+     * another, preserving the possibility of the AttributeSet
+     * remaining immutable.  An implementation is provided by
+     * the StyleContext class.
+     *
+     * The Element implementations provided by this class use
+     * this interface to provide their MutableAttributeSet
+     * implementations, so that different AttributeSet compression
+     * techniques can be employed.  The method
+     * <code>getAttributeContext</code> should be implemented to
+     * return the object responsible for implementing the desired
+     * compression technique.
+     *
+     * @see StyleContext
+     */
+    public interface AttributeContext {
+
+        /**
+         * Adds an attribute to the given set, and returns
+         * the new representative set.
+         *
+         * @param old the old attribute set
+         * @param name the non-null attribute name
+         * @param value the attribute value
+         * @return the updated attribute set
+         * @see MutableAttributeSet#addAttribute
+         */
+        public AttributeSet addAttribute(AttributeSet old, Object name, Object value);
+
+        /**
+         * Adds a set of attributes to the element.
+         *
+         * @param old the old attribute set
+         * @param attr the attributes to add
+         * @return the updated attribute set
+         * @see MutableAttributeSet#addAttribute
+         */
+        public AttributeSet addAttributes(AttributeSet old, AttributeSet attr);
+
+        /**
+         * Removes an attribute from the set.
+         *
+         * @param old the old attribute set
+         * @param name the non-null attribute name
+         * @return the updated attribute set
+         * @see MutableAttributeSet#removeAttribute
+         */
+        public AttributeSet removeAttribute(AttributeSet old, Object name);
+
+        /**
+         * Removes a set of attributes for the element.
+         *
+         * @param old the old attribute set
+         * @param names the attribute names
+         * @return the updated attribute set
+         * @see MutableAttributeSet#removeAttributes
+         */
+        public AttributeSet removeAttributes(AttributeSet old, Enumeration<?> names);
+
+        /**
+         * Removes a set of attributes for the element.
+         *
+         * @param old the old attribute set
+         * @param attrs the attributes
+         * @return the updated attribute set
+         * @see MutableAttributeSet#removeAttributes
+         */
+        public AttributeSet removeAttributes(AttributeSet old, AttributeSet attrs);
+
+        /**
+         * Fetches an empty AttributeSet.
+         *
+         * @return the attribute set
+         */
+        public AttributeSet getEmptySet();
+
+        /**
+         * Reclaims an attribute set.
+         * This is a way for a MutableAttributeSet to mark that it no
+         * longer need a particular immutable set.  This is only necessary
+         * in 1.1 where there are no weak references.  A 1.1 implementation
+         * would call this in its finalize method.
+         *
+         * @param a the attribute set to reclaim
+         */
+        public void reclaim(AttributeSet a);
+    }
+
+    /**
+     * Implements the abstract part of an element.  By default elements
+     * support attributes by having a field that represents the immutable
+     * part of the current attribute set for the element.  The element itself
+     * implements MutableAttributeSet which can be used to modify the set
+     * by fetching a new immutable set.  The immutable sets are provided
+     * by the AttributeContext associated with the document.
+     * <p>
+     * <strong>Warning:</strong>
+     * Serialized objects of this class will not be compatible with
+     * future Swing releases. The current serialization support is
+     * appropriate for short term storage or RMI between applications running
+     * the same version of Swing.  As of 1.4, support for long term storage
+     * of all JavaBeans&trade;
+     * has been added to the <code>java.beans</code> package.
+     * Please see {@link java.beans.XMLEncoder}.
+     */
+    public abstract class AbstractElement implements Element, MutableAttributeSet, Serializable, TreeNode {
+
+        /**
+         * Creates a new AbstractElement.
+         *
+         * @param parent the parent element
+         * @param a the attributes for the element
+         * @since 1.4
+         */
+        public AbstractElement(Element parent, AttributeSet a) {
+            this.parent = parent;
+            attributes = getAttributeContext().getEmptySet();
+            if (a != null) {
+                addAttributes(a);
+            }
+        }
+
+        private final void indent(PrintWriter out, int n) {
+            for (int i = 0; i < n; i++) {
+                out.print("  ");
+            }
+        }
+
+        /**
+         * Dumps a debugging representation of the element hierarchy.
+         *
+         * @param psOut the output stream
+         * @param indentAmount the indentation level &gt;= 0
+         */
+        public void dump(PrintStream psOut, int indentAmount) {
+            PrintWriter out;
+            try {
+                out = new PrintWriter(new OutputStreamWriter(psOut,"JavaEsc"),
+                                      true);
+            } catch (UnsupportedEncodingException e){
+                out = new PrintWriter(psOut,true);
+            }
+            indent(out, indentAmount);
+            if (getName() == null) {
+                out.print("<??");
+            } else {
+                out.print("<" + getName());
+            }
+            if (getAttributeCount() > 0) {
+                out.println("");
+                // dump the attributes
+                Enumeration names = attributes.getAttributeNames();
+                while (names.hasMoreElements()) {
+                    Object name = names.nextElement();
+                    indent(out, indentAmount + 1);
+                    out.println(name + "=" + getAttribute(name));
+                }
+                indent(out, indentAmount);
+            }
+            out.println(">");
+
+            if (isLeaf()) {
+                indent(out, indentAmount+1);
+                out.print("[" + getStartOffset() + "," + getEndOffset() + "]");
+                Content c = getContent();
+                try {
+                    String contentStr = c.getString(getStartOffset(),
+                                                    getEndOffset() - getStartOffset())/*.trim()*/;
+                    if (contentStr.length() > 40) {
+                        contentStr = contentStr.substring(0, 40) + "...";
+                    }
+                    out.println("["+contentStr+"]");
+                } catch (BadLocationException e) {
+                }
+
+            } else {
+                int n = getElementCount();
+                for (int i = 0; i < n; i++) {
+                    AbstractElement e = (AbstractElement) getElement(i);
+                    e.dump(psOut, indentAmount+1);
+                }
+            }
+        }
+
+        // --- AttributeSet ----------------------------
+        // delegated to the immutable field "attributes"
+
+        /**
+         * Gets the number of attributes that are defined.
+         *
+         * @return the number of attributes &gt;= 0
+         * @see AttributeSet#getAttributeCount
+         */
+        public int getAttributeCount() {
+            return attributes.getAttributeCount();
+        }
+
+        /**
+         * Checks whether a given attribute is defined.
+         *
+         * @param attrName the non-null attribute name
+         * @return true if the attribute is defined
+         * @see AttributeSet#isDefined
+         */
+        public boolean isDefined(Object attrName) {
+            return attributes.isDefined(attrName);
+        }
+
+        /**
+         * Checks whether two attribute sets are equal.
+         *
+         * @param attr the attribute set to check against
+         * @return true if the same
+         * @see AttributeSet#isEqual
+         */
+        public boolean isEqual(AttributeSet attr) {
+            return attributes.isEqual(attr);
+        }
+
+        /**
+         * Copies a set of attributes.
+         *
+         * @return the copy
+         * @see AttributeSet#copyAttributes
+         */
+        public AttributeSet copyAttributes() {
+            return attributes.copyAttributes();
+        }
+
+        /**
+         * Gets the value of an attribute.
+         *
+         * @param attrName the non-null attribute name
+         * @return the attribute value
+         * @see AttributeSet#getAttribute
+         */
+        public Object getAttribute(Object attrName) {
+            Object value = attributes.getAttribute(attrName);
+            if (value == null) {
+                // The delegate nor it's resolvers had a match,
+                // so we'll try to resolve through the parent
+                // element.
+                AttributeSet a = (parent != null) ? parent.getAttributes() : null;
+                if (a != null) {
+                    value = a.getAttribute(attrName);
+                }
+            }
+            return value;
+        }
+
+        /**
+         * Gets the names of all attributes.
+         *
+         * @return the attribute names as an enumeration
+         * @see AttributeSet#getAttributeNames
+         */
+        public Enumeration<?> getAttributeNames() {
+            return attributes.getAttributeNames();
+        }
+
+        /**
+         * Checks whether a given attribute name/value is defined.
+         *
+         * @param name the non-null attribute name
+         * @param value the attribute value
+         * @return true if the name/value is defined
+         * @see AttributeSet#containsAttribute
+         */
+        public boolean containsAttribute(Object name, Object value) {
+            return attributes.containsAttribute(name, value);
+        }
+
+
+        /**
+         * Checks whether the element contains all the attributes.
+         *
+         * @param attrs the attributes to check
+         * @return true if the element contains all the attributes
+         * @see AttributeSet#containsAttributes
+         */
+        public boolean containsAttributes(AttributeSet attrs) {
+            return attributes.containsAttributes(attrs);
+        }
+
+        /**
+         * Gets the resolving parent.
+         * If not overridden, the resolving parent defaults to
+         * the parent element.
+         *
+         * @return the attributes from the parent, <code>null</code> if none
+         * @see AttributeSet#getResolveParent
+         */
+        public AttributeSet getResolveParent() {
+            AttributeSet a = attributes.getResolveParent();
+            if ((a == null) && (parent != null)) {
+                a = parent.getAttributes();
+            }
+            return a;
+        }
+
+        // --- MutableAttributeSet ----------------------------------
+        // should fetch a new immutable record for the field
+        // "attributes".
+
+        /**
+         * Adds an attribute to the element.
+         *
+         * @param name the non-null attribute name
+         * @param value the attribute value
+         * @see MutableAttributeSet#addAttribute
+         */
+        public void addAttribute(Object name, Object value) {
+            checkForIllegalCast();
+            AttributeContext context = getAttributeContext();
+            attributes = context.addAttribute(attributes, name, value);
+        }
+
+        /**
+         * Adds a set of attributes to the element.
+         *
+         * @param attr the attributes to add
+         * @see MutableAttributeSet#addAttribute
+         */
+        public void addAttributes(AttributeSet attr) {
+            checkForIllegalCast();
+            AttributeContext context = getAttributeContext();
+            attributes = context.addAttributes(attributes, attr);
+        }
+
+        /**
+         * Removes an attribute from the set.
+         *
+         * @param name the non-null attribute name
+         * @see MutableAttributeSet#removeAttribute
+         */
+        public void removeAttribute(Object name) {
+            checkForIllegalCast();
+            AttributeContext context = getAttributeContext();
+            attributes = context.removeAttribute(attributes, name);
+        }
+
+        /**
+         * Removes a set of attributes for the element.
+         *
+         * @param names the attribute names
+         * @see MutableAttributeSet#removeAttributes
+         */
+        public void removeAttributes(Enumeration<?> names) {
+            checkForIllegalCast();
+            AttributeContext context = getAttributeContext();
+            attributes = context.removeAttributes(attributes, names);
+        }
+
+        /**
+         * Removes a set of attributes for the element.
+         *
+         * @param attrs the attributes
+         * @see MutableAttributeSet#removeAttributes
+         */
+        public void removeAttributes(AttributeSet attrs) {
+            checkForIllegalCast();
+            AttributeContext context = getAttributeContext();
+            if (attrs == this) {
+                attributes = context.getEmptySet();
+            } else {
+                attributes = context.removeAttributes(attributes, attrs);
+            }
+        }
+
+        /**
+         * Sets the resolving parent.
+         *
+         * @param parent the parent, null if none
+         * @see MutableAttributeSet#setResolveParent
+         */
+        public void setResolveParent(AttributeSet parent) {
+            checkForIllegalCast();
+            AttributeContext context = getAttributeContext();
+            if (parent != null) {
+                attributes =
+                    context.addAttribute(attributes, StyleConstants.ResolveAttribute,
+                                         parent);
+            } else {
+                attributes =
+                    context.removeAttribute(attributes, StyleConstants.ResolveAttribute);
+            }
+        }
+
+        private final void checkForIllegalCast() {
+            Thread t = getCurrentWriter();
+            if ((t == null) || (t != Thread.currentThread())) {
+                throw new StateInvariantError("Illegal cast to MutableAttributeSet");
+            }
+        }
+
+        // --- Element methods -------------------------------------
+
+        /**
+         * Retrieves the underlying model.
+         *
+         * @return the model
+         */
+        public Document getDocument() {
+            return AbstractDocument.this;
+        }
+
+        /**
+         * Gets the parent of the element.
+         *
+         * @return the parent
+         */
+        public Element getParentElement() {
+            return parent;
+        }
+
+        /**
+         * Gets the attributes for the element.
+         *
+         * @return the attribute set
+         */
+        public AttributeSet getAttributes() {
+            return this;
+        }
+
+        /**
+         * Gets the name of the element.
+         *
+         * @return the name, null if none
+         */
+        public String getName() {
+            if (attributes.isDefined(ElementNameAttribute)) {
+                return (String) attributes.getAttribute(ElementNameAttribute);
+            }
+            return null;
+        }
+
+        /**
+         * Gets the starting offset in the model for the element.
+         *
+         * @return the offset &gt;= 0
+         */
+        public abstract int getStartOffset();
+
+        /**
+         * Gets the ending offset in the model for the element.
+         *
+         * @return the offset &gt;= 0
+         */
+        public abstract int getEndOffset();
+
+        /**
+         * Gets a child element.
+         *
+         * @param index the child index, &gt;= 0 &amp;&amp; &lt; getElementCount()
+         * @return the child element
+         */
+        public abstract Element getElement(int index);
+
+        /**
+         * Gets the number of children for the element.
+         *
+         * @return the number of children &gt;= 0
+         */
+        public abstract int getElementCount();
+
+        /**
+         * Gets the child element index closest to the given model offset.
+         *
+         * @param offset the offset &gt;= 0
+         * @return the element index &gt;= 0
+         */
+        public abstract int getElementIndex(int offset);
+
+        /**
+         * Checks whether the element is a leaf.
+         *
+         * @return true if a leaf
+         */
+        public abstract boolean isLeaf();
+
+        // --- TreeNode methods -------------------------------------
+
+        /**
+         * Returns the child <code>TreeNode</code> at index
+         * <code>childIndex</code>.
+         */
+        public TreeNode getChildAt(int childIndex) {
+            return (TreeNode)getElement(childIndex);
+        }
+
+        /**
+         * Returns the number of children <code>TreeNode</code>'s
+         * receiver contains.
+         * @return the number of children <code>TreeNodews</code>'s
+         * receiver contains
+         */
+        public int getChildCount() {
+            return getElementCount();
+        }
+
+        /**
+         * Returns the parent <code>TreeNode</code> of the receiver.
+         * @return the parent <code>TreeNode</code> of the receiver
+         */
+        public TreeNode getParent() {
+            return (TreeNode)getParentElement();
+        }
+
+        /**
+         * Returns the index of <code>node</code> in the receivers children.
+         * If the receiver does not contain <code>node</code>, -1 will be
+         * returned.
+         * @param node the location of interest
+         * @return the index of <code>node</code> in the receiver's
+         * children, or -1 if absent
+         */
+        public int getIndex(TreeNode node) {
+            for(int counter = getChildCount() - 1; counter >= 0; counter--)
+                if(getChildAt(counter) == node)
+                    return counter;
+            return -1;
+        }
+
+        /**
+         * Returns true if the receiver allows children.
+         * @return true if the receiver allows children, otherwise false
+         */
+        public abstract boolean getAllowsChildren();
+
+
+        /**
+         * Returns the children of the receiver as an
+         * <code>Enumeration</code>.
+         * @return the children of the receiver as an <code>Enumeration</code>
+         */
+        public abstract Enumeration children();
+
+
+        // --- serialization ---------------------------------------------
+
+        private void writeObject(ObjectOutputStream s) throws IOException {
+            s.defaultWriteObject();
+            StyleContext.writeAttributeSet(s, attributes);
+        }
+
+        private void readObject(ObjectInputStream s)
+            throws ClassNotFoundException, IOException
+        {
+            s.defaultReadObject();
+            MutableAttributeSet attr = new SimpleAttributeSet();
+            StyleContext.readAttributeSet(s, attr);
+            AttributeContext context = getAttributeContext();
+            attributes = context.addAttributes(SimpleAttributeSet.EMPTY, attr);
+        }
+
+        // ---- variables -----------------------------------------------------
+
+        private Element parent;
+        private transient AttributeSet attributes;
+
+    }
+
+    /**
+     * Implements a composite element that contains other elements.
+     * <p>
+     * <strong>Warning:</strong>
+     * Serialized objects of this class will not be compatible with
+     * future Swing releases. The current serialization support is
+     * appropriate for short term storage or RMI between applications running
+     * the same version of Swing.  As of 1.4, support for long term storage
+     * of all JavaBeans&trade;
+     * has been added to the <code>java.beans</code> package.
+     * Please see {@link java.beans.XMLEncoder}.
+     */
+    public class BranchElement extends AbstractElement {
+
+        /**
+         * Constructs a composite element that initially contains
+         * no children.
+         *
+         * @param parent  The parent element
+         * @param a the attributes for the element
+         * @since 1.4
+         */
+        public BranchElement(Element parent, AttributeSet a) {
+            super(parent, a);
+            children = new AbstractElement[1];
+            nchildren = 0;
+            lastIndex = -1;
+        }
+
+        /**
+         * Gets the child element that contains
+         * the given model position.
+         *
+         * @param pos the position &gt;= 0
+         * @return the element, null if none
+         */
+        public Element positionToElement(int pos) {
+            int index = getElementIndex(pos);
+            Element child = children[index];
+            int p0 = child.getStartOffset();
+            int p1 = child.getEndOffset();
+            if ((pos >= p0) && (pos < p1)) {
+                return child;
+            }
+            return null;
+        }
+
+        /**
+         * Replaces content with a new set of elements.
+         *
+         * @param offset the starting offset &gt;= 0
+         * @param length the length to replace &gt;= 0
+         * @param elems the new elements
+         */
+        public void replace(int offset, int length, Element[] elems) {
+            int delta = elems.length - length;
+            int src = offset + length;
+            int nmove = nchildren - src;
+            int dest = src + delta;
+            if ((nchildren + delta) >= children.length) {
+                // need to grow the array
+                int newLength = Math.max(2*children.length, nchildren + delta);
+                AbstractElement[] newChildren = new AbstractElement[newLength];
+                System.arraycopy(children, 0, newChildren, 0, offset);
+                System.arraycopy(elems, 0, newChildren, offset, elems.length);
+                System.arraycopy(children, src, newChildren, dest, nmove);
+                children = newChildren;
+            } else {
+                // patch the existing array
+                System.arraycopy(children, src, children, dest, nmove);
+                System.arraycopy(elems, 0, children, offset, elems.length);
+            }
+            nchildren = nchildren + delta;
+        }
+
+        /**
+         * Converts the element to a string.
+         *
+         * @return the string
+         */
+        public String toString() {
+            return "BranchElement(" + getName() + ") " + getStartOffset() + "," +
+                getEndOffset() + "\n";
+        }
+
+        // --- Element methods -----------------------------------
+
+        /**
+         * Gets the element name.
+         *
+         * @return the element name
+         */
+        public String getName() {
+            String nm = super.getName();
+            if (nm == null) {
+                nm = ParagraphElementName;
+            }
+            return nm;
+        }
+
+        /**
+         * Gets the starting offset in the model for the element.
+         *
+         * @return the offset &gt;= 0
+         */
+        public int getStartOffset() {
+            return children[0].getStartOffset();
+        }
+
+        /**
+         * Gets the ending offset in the model for the element.
+         * @throws NullPointerException if this element has no children
+         *
+         * @return the offset &gt;= 0
+         */
+        public int getEndOffset() {
+            Element child =
+                (nchildren > 0) ? children[nchildren - 1] : children[0];
+            return child.getEndOffset();
+        }
+
+        /**
+         * Gets a child element.
+         *
+         * @param index the child index, &gt;= 0 &amp;&amp; &lt; getElementCount()
+         * @return the child element, null if none
+         */
+        public Element getElement(int index) {
+            if (index < nchildren) {
+                return children[index];
+            }
+            return null;
+        }
+
+        /**
+         * Gets the number of children for the element.
+         *
+         * @return the number of children &gt;= 0
+         */
+        public int getElementCount()  {
+            return nchildren;
+        }
+
+        /**
+         * Gets the child element index closest to the given model offset.
+         *
+         * @param offset the offset &gt;= 0
+         * @return the element index &gt;= 0
+         */
+        public int getElementIndex(int offset) {
+            int index;
+            int lower = 0;
+            int upper = nchildren - 1;
+            int mid = 0;
+            int p0 = getStartOffset();
+            int p1;
+
+            if (nchildren == 0) {
+                return 0;
+            }
+            if (offset >= getEndOffset()) {
+                return nchildren - 1;
+            }
+
+            // see if the last index can be used.
+            if ((lastIndex >= lower) && (lastIndex <= upper)) {
+                Element lastHit = children[lastIndex];
+                p0 = lastHit.getStartOffset();
+                p1 = lastHit.getEndOffset();
+                if ((offset >= p0) && (offset < p1)) {
+                    return lastIndex;
+                }
+
+                // last index wasn't a hit, but it does give useful info about
+                // where a hit (if any) would be.
+                if (offset < p0) {
+                    upper = lastIndex;
+                } else  {
+                    lower = lastIndex;
+                }
+            }
+
+            while (lower <= upper) {
+                mid = lower + ((upper - lower) / 2);
+                Element elem = children[mid];
+                p0 = elem.getStartOffset();
+                p1 = elem.getEndOffset();
+                if ((offset >= p0) && (offset < p1)) {
+                    // found the location
+                    index = mid;
+                    lastIndex = index;
+                    return index;
+                } else if (offset < p0) {
+                    upper = mid - 1;
+                } else {
+                    lower = mid + 1;
+                }
+            }
+
+            // didn't find it, but we indicate the index of where it would belong
+            if (offset < p0) {
+                index = mid;
+            } else {
+                index = mid + 1;
+            }
+            lastIndex = index;
+            return index;
+        }
+
+        /**
+         * Checks whether the element is a leaf.
+         *
+         * @return true if a leaf
+         */
+        public boolean isLeaf() {
+            return false;
+        }
+
+
+        // ------ TreeNode ----------------------------------------------
+
+        /**
+         * Returns true if the receiver allows children.
+         * @return true if the receiver allows children, otherwise false
+         */
+        public boolean getAllowsChildren() {
+            return true;
+        }
+
+
+        /**
+         * Returns the children of the receiver as an
+         * <code>Enumeration</code>.
+         * @return the children of the receiver
+         */
+        public Enumeration children() {
+            if(nchildren == 0)
+                return null;
+
+            Vector<AbstractElement> tempVector = new Vector<AbstractElement>(nchildren);
+
+            for(int counter = 0; counter < nchildren; counter++)
+                tempVector.addElement(children[counter]);
+            return tempVector.elements();
+        }
+
+        // ------ members ----------------------------------------------
+
+        private AbstractElement[] children;
+        private int nchildren;
+        private int lastIndex;
+    }
+
+    /**
+     * Implements an element that directly represents content of
+     * some kind.
+     * <p>
+     * <strong>Warning:</strong>
+     * Serialized objects of this class will not be compatible with
+     * future Swing releases. The current serialization support is
+     * appropriate for short term storage or RMI between applications running
+     * the same version of Swing.  As of 1.4, support for long term storage
+     * of all JavaBeans&trade;
+     * has been added to the <code>java.beans</code> package.
+     * Please see {@link java.beans.XMLEncoder}.
+     *
+     * @see     Element
+     */
+    public class LeafElement extends AbstractElement {
+
+        /**
+         * Constructs an element that represents content within the
+         * document (has no children).
+         *
+         * @param parent  The parent element
+         * @param a       The element attributes
+         * @param offs0   The start offset &gt;= 0
+         * @param offs1   The end offset &gt;= offs0
+         * @since 1.4
+         */
+        public LeafElement(Element parent, AttributeSet a, int offs0, int offs1) {
+            super(parent, a);
+            try {
+                p0 = createPosition(offs0);
+                p1 = createPosition(offs1);
+            } catch (BadLocationException e) {
+                p0 = null;
+                p1 = null;
+                throw new StateInvariantError("Can't create Position references");
+            }
+        }
+
+        /**
+         * Converts the element to a string.
+         *
+         * @return the string
+         */
+        public String toString() {
+            return "LeafElement(" + getName() + ") " + p0 + "," + p1 + "\n";
+        }
+
+        // --- Element methods ---------------------------------------------
+
+        /**
+         * Gets the starting offset in the model for the element.
+         *
+         * @return the offset &gt;= 0
+         */
+        public int getStartOffset() {
+            return p0.getOffset();
+        }
+
+        /**
+         * Gets the ending offset in the model for the element.
+         *
+         * @return the offset &gt;= 0
+         */
+        public int getEndOffset() {
+            return p1.getOffset();
+        }
+
+        /**
+         * Gets the element name.
+         *
+         * @return the name
+         */
+        public String getName() {
+            String nm = super.getName();
+            if (nm == null) {
+                nm = ContentElementName;
+            }
+            return nm;
+        }
+
+        /**
+         * Gets the child element index closest to the given model offset.
+         *
+         * @param pos the offset &gt;= 0
+         * @return the element index &gt;= 0
+         */
+        public int getElementIndex(int pos) {
+            return -1;
+        }
+
+        /**
+         * Gets a child element.
+         *
+         * @param index the child index, &gt;= 0 &amp;&amp; &lt; getElementCount()
+         * @return the child element
+         */
+        public Element getElement(int index) {
+            return null;
+        }
+
+        /**
+         * Returns the number of child elements.
+         *
+         * @return the number of children &gt;= 0
+         */
+        public int getElementCount()  {
+            return 0;
+        }
+
+        /**
+         * Checks whether the element is a leaf.
+         *
+         * @return true if a leaf
+         */
+        public boolean isLeaf() {
+            return true;
+        }
+
+        // ------ TreeNode ----------------------------------------------
+
+        /**
+         * Returns true if the receiver allows children.
+         * @return true if the receiver allows children, otherwise false
+         */
+        public boolean getAllowsChildren() {
+            return false;
+        }
+
+
+        /**
+         * Returns the children of the receiver as an
+         * <code>Enumeration</code>.
+         * @return the children of the receiver
+         */
+        public Enumeration children() {
+            return null;
+        }
+
+        // --- serialization ---------------------------------------------
+
+        private void writeObject(ObjectOutputStream s) throws IOException {
+            s.defaultWriteObject();
+            s.writeInt(p0.getOffset());
+            s.writeInt(p1.getOffset());
+        }
+
+        private void readObject(ObjectInputStream s)
+            throws ClassNotFoundException, IOException
+        {
+            s.defaultReadObject();
+
+            // set the range with positions that track change
+            int off0 = s.readInt();
+            int off1 = s.readInt();
+            try {
+                p0 = createPosition(off0);
+                p1 = createPosition(off1);
+            } catch (BadLocationException e) {
+                p0 = null;
+                p1 = null;
+                throw new IOException("Can't restore Position references");
+            }
+        }
+
+        // ---- members -----------------------------------------------------
+
+        private transient Position p0;
+        private transient Position p1;
+    }
+
+    /**
+     * Represents the root element of the bidirectional element structure.
+     * The root element is the only element in the bidi element structure
+     * which contains children.
+     */
+    class BidiRootElement extends BranchElement {
+
+        BidiRootElement() {
+            super( null, null );
+        }
+
+        /**
+         * Gets the name of the element.
+         * @return the name
+         */
+        public String getName() {
+            return "bidi root";
+        }
+    }
+
+    /**
+     * Represents an element of the bidirectional element structure.
+     */
+    class BidiElement extends LeafElement {
+
+        /**
+         * Creates a new BidiElement.
+         */
+        BidiElement(Element parent, int start, int end, int level) {
+            super(parent, new SimpleAttributeSet(), start, end);
+            addAttribute(StyleConstants.BidiLevel, Integer.valueOf(level));
+            //System.out.println("BidiElement: start = " + start
+            //                   + " end = " + end + " level = " + level );
+        }
+
+        /**
+         * Gets the name of the element.
+         * @return the name
+         */
+        public String getName() {
+            return BidiElementName;
+        }
+
+        int getLevel() {
+            Integer o = (Integer) getAttribute(StyleConstants.BidiLevel);
+            if (o != null) {
+                return o.intValue();
+            }
+            return 0;  // Level 0 is base level (non-embedded) left-to-right
+        }
+
+        boolean isLeftToRight() {
+            return ((getLevel() % 2) == 0);
+        }
+    }
+
+    /**
+     * Stores document changes as the document is being
+     * modified.  Can subsequently be used for change notification
+     * when done with the document modification transaction.
+     * This is used by the AbstractDocument class and its extensions
+     * for broadcasting change information to the document listeners.
+     */
+    public class DefaultDocumentEvent extends CompoundEdit implements DocumentEvent {
+
+        /**
+         * Constructs a change record.
+         *
+         * @param offs the offset into the document of the change &gt;= 0
+         * @param len  the length of the change &gt;= 0
+         * @param type the type of event (DocumentEvent.EventType)
+         * @since 1.4
+         */
+        public DefaultDocumentEvent(int offs, int len, DocumentEvent.EventType type) {
+            super();
+            offset = offs;
+            length = len;
+            this.type = type;
+        }
+
+        /**
+         * Returns a string description of the change event.
+         *
+         * @return a string
+         */
+        public String toString() {
+            return edits.toString();
+        }
+
+        // --- CompoundEdit methods --------------------------
+
+        /**
+         * Adds a document edit.  If the number of edits crosses
+         * a threshold, this switches on a hashtable lookup for
+         * ElementChange implementations since access of these
+         * needs to be relatively quick.
+         *
+         * @param anEdit a document edit record
+         * @return true if the edit was added
+         */
+        public boolean addEdit(UndoableEdit anEdit) {
+            // if the number of changes gets too great, start using
+            // a hashtable for to locate the change for a given element.
+            if ((changeLookup == null) && (edits.size() > 10)) {
+                changeLookup = new Hashtable<Element, ElementChange>();
+                int n = edits.size();
+                for (int i = 0; i < n; i++) {
+                    Object o = edits.elementAt(i);
+                    if (o instanceof DocumentEvent.ElementChange) {
+                        DocumentEvent.ElementChange ec = (DocumentEvent.ElementChange) o;
+                        changeLookup.put(ec.getElement(), ec);
+                    }
+                }
+            }
+
+            // if we have a hashtable... add the entry if it's
+            // an ElementChange.
+            if ((changeLookup != null) && (anEdit instanceof DocumentEvent.ElementChange)) {
+                DocumentEvent.ElementChange ec = (DocumentEvent.ElementChange) anEdit;
+                changeLookup.put(ec.getElement(), ec);
+            }
+            return super.addEdit(anEdit);
+        }
+
+        /**
+         * Redoes a change.
+         *
+         * @exception CannotRedoException if the change cannot be redone
+         */
+        public void redo() throws CannotRedoException {
+            writeLock();
+            try {
+                // change the state
+                super.redo();
+                // fire a DocumentEvent to notify the view(s)
+                UndoRedoDocumentEvent ev = new UndoRedoDocumentEvent(this, false);
+                if (type == DocumentEvent.EventType.INSERT) {
+                    fireInsertUpdate(ev);
+                } else if (type == DocumentEvent.EventType.REMOVE) {
+                    fireRemoveUpdate(ev);
+                } else {
+                    fireChangedUpdate(ev);
+                }
+            } finally {
+                writeUnlock();
+            }
+        }
+
+        /**
+         * Undoes a change.
+         *
+         * @exception CannotUndoException if the change cannot be undone
+         */
+        public void undo() throws CannotUndoException {
+            writeLock();
+            try {
+                // change the state
+                super.undo();
+                // fire a DocumentEvent to notify the view(s)
+                UndoRedoDocumentEvent ev = new UndoRedoDocumentEvent(this, true);
+                if (type == DocumentEvent.EventType.REMOVE) {
+                    fireInsertUpdate(ev);
+                } else if (type == DocumentEvent.EventType.INSERT) {
+                    fireRemoveUpdate(ev);
+                } else {
+                    fireChangedUpdate(ev);
+                }
+            } finally {
+                writeUnlock();
+            }
+        }
+
+        /**
+         * DefaultDocument events are significant.  If you wish to aggregate
+         * DefaultDocumentEvents to present them as a single edit to the user
+         * place them into a CompoundEdit.
+         *
+         * @return whether the event is significant for edit undo purposes
+         */
+        public boolean isSignificant() {
+            return true;
+        }
+
+
+        /**
+         * Provides a localized, human readable description of this edit
+         * suitable for use in, say, a change log.
+         *
+         * @return the description
+         */
+        public String getPresentationName() {
+            DocumentEvent.EventType type = getType();
+            if(type == DocumentEvent.EventType.INSERT)
+                return UIManager.getString("AbstractDocument.additionText");
+            if(type == DocumentEvent.EventType.REMOVE)
+                return UIManager.getString("AbstractDocument.deletionText");
+            return UIManager.getString("AbstractDocument.styleChangeText");
+        }
+
+        /**
+         * Provides a localized, human readable description of the undoable
+         * form of this edit, e.g. for use as an Undo menu item. Typically
+         * derived from getDescription();
+         *
+         * @return the description
+         */
+        public String getUndoPresentationName() {
+            return UIManager.getString("AbstractDocument.undoText") + " " +
+                getPresentationName();
+        }
+
+        /**
+         * Provides a localized, human readable description of the redoable
+         * form of this edit, e.g. for use as a Redo menu item. Typically
+         * derived from getPresentationName();
+         *
+         * @return the description
+         */
+        public String getRedoPresentationName() {
+            return UIManager.getString("AbstractDocument.redoText") + " " +
+                getPresentationName();
+        }
+
+        // --- DocumentEvent methods --------------------------
+
+        /**
+         * Returns the type of event.
+         *
+         * @return the event type as a DocumentEvent.EventType
+         * @see DocumentEvent#getType
+         */
+        public DocumentEvent.EventType getType() {
+            return type;
+        }
+
+        /**
+         * Returns the offset within the document of the start of the change.
+         *
+         * @return the offset &gt;= 0
+         * @see DocumentEvent#getOffset
+         */
+        public int getOffset() {
+            return offset;
+        }
+
+        /**
+         * Returns the length of the change.
+         *
+         * @return the length &gt;= 0
+         * @see DocumentEvent#getLength
+         */
+        public int getLength() {
+            return length;
+        }
+
+        /**
+         * Gets the document that sourced the change event.
+         *
+         * @return the document
+         * @see DocumentEvent#getDocument
+         */
+        public Document getDocument() {
+            return AbstractDocument.this;
+        }
+
+        /**
+         * Gets the changes for an element.
+         *
+         * @param elem the element
+         * @return the changes
+         */
+        public DocumentEvent.ElementChange getChange(Element elem) {
+            if (changeLookup != null) {
+                return changeLookup.get(elem);
+            }
+            int n = edits.size();
+            for (int i = 0; i < n; i++) {
+                Object o = edits.elementAt(i);
+                if (o instanceof DocumentEvent.ElementChange) {
+                    DocumentEvent.ElementChange c = (DocumentEvent.ElementChange) o;
+                    if (elem.equals(c.getElement())) {
+                        return c;
+                    }
+                }
+            }
+            return null;
+        }
+
+        // --- member variables ------------------------------------
+
+        private int offset;
+        private int length;
+        private Hashtable<Element, ElementChange> changeLookup;
+        private DocumentEvent.EventType type;
+
+    }
+
+    /**
+     * This event used when firing document changes while Undo/Redo
+     * operations. It just wraps DefaultDocumentEvent and delegates
+     * all calls to it except getType() which depends on operation
+     * (Undo or Redo).
+     */
+    class UndoRedoDocumentEvent implements DocumentEvent {
+        private DefaultDocumentEvent src = null;
+        private EventType type = null;
+
+        public UndoRedoDocumentEvent(DefaultDocumentEvent src, boolean isUndo) {
+            this.src = src;
+            if(isUndo) {
+                if(src.getType().equals(EventType.INSERT)) {
+                    type = EventType.REMOVE;
+                } else if(src.getType().equals(EventType.REMOVE)) {
+                    type = EventType.INSERT;
+                } else {
+                    type = src.getType();
+                }
+            } else {
+                type = src.getType();
+            }
+        }
+
+        public DefaultDocumentEvent getSource() {
+            return src;
+        }
+
+        // DocumentEvent methods delegated to DefaultDocumentEvent source
+        // except getType() which depends on operation (Undo or Redo).
+        public int getOffset() {
+            return src.getOffset();
+        }
+
+        public int getLength() {
+            return src.getLength();
+        }
+
+        public Document getDocument() {
+            return src.getDocument();
+        }
+
+        public DocumentEvent.EventType getType() {
+            return type;
+        }
+
+        public DocumentEvent.ElementChange getChange(Element elem) {
+            return src.getChange(elem);
+        }
+    }
+
+    /**
+     * An implementation of ElementChange that can be added to the document
+     * event.
+     */
+    public static class ElementEdit extends AbstractUndoableEdit implements DocumentEvent.ElementChange {
+
+        /**
+         * Constructs an edit record.  This does not modify the element
+         * so it can safely be used to <em>catch up</em> a view to the
+         * current model state for views that just attached to a model.
+         *
+         * @param e the element
+         * @param index the index into the model &gt;= 0
+         * @param removed a set of elements that were removed
+         * @param added a set of elements that were added
+         */
+        public ElementEdit(Element e, int index, Element[] removed, Element[] added) {
+            super();
+            this.e = e;
+            this.index = index;
+            this.removed = removed;
+            this.added = added;
+        }
+
+        /**
+         * Returns the underlying element.
+         *
+         * @return the element
+         */
+        public Element getElement() {
+            return e;
+        }
+
+        /**
+         * Returns the index into the list of elements.
+         *
+         * @return the index &gt;= 0
+         */
+        public int getIndex() {
+            return index;
+        }
+
+        /**
+         * Gets a list of children that were removed.
+         *
+         * @return the list
+         */
+        public Element[] getChildrenRemoved() {
+            return removed;
+        }
+
+        /**
+         * Gets a list of children that were added.
+         *
+         * @return the list
+         */
+        public Element[] getChildrenAdded() {
+            return added;
+        }
+
+        /**
+         * Redoes a change.
+         *
+         * @exception CannotRedoException if the change cannot be redone
+         */
+        public void redo() throws CannotRedoException {
+            super.redo();
+
+            // Since this event will be reused, switch around added/removed.
+            Element[] tmp = removed;
+            removed = added;
+            added = tmp;
+
+            // PENDING(prinz) need MutableElement interface, canRedo() should check
+            ((AbstractDocument.BranchElement)e).replace(index, removed.length, added);
+        }
+
+        /**
+         * Undoes a change.
+         *
+         * @exception CannotUndoException if the change cannot be undone
+         */
+        public void undo() throws CannotUndoException {
+            super.undo();
+            // PENDING(prinz) need MutableElement interface, canUndo() should check
+            ((AbstractDocument.BranchElement)e).replace(index, added.length, removed);
+
+            // Since this event will be reused, switch around added/removed.
+            Element[] tmp = removed;
+            removed = added;
+            added = tmp;
+        }
+
+        private Element e;
+        private int index;
+        private Element[] removed;
+        private Element[] added;
+    }
+
+
+    private class DefaultFilterBypass extends DocumentFilter.FilterBypass {
+        public Document getDocument() {
+            return AbstractDocument.this;
+        }
+
+        public void remove(int offset, int length) throws
+            BadLocationException {
+            handleRemove(offset, length);
+        }
+
+        public void insertString(int offset, String string,
+                                 AttributeSet attr) throws
+                                        BadLocationException {
+            handleInsertString(offset, string, attr);
+        }
+
+        public void replace(int offset, int length, String text,
+                            AttributeSet attrs) throws BadLocationException {
+            handleRemove(offset, length);
+            handleInsertString(offset, text, attrs);
+        }
+    }
+}

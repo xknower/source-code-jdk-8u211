@@ -1,1432 +1,1428 @@
-/*      */ package javax.swing.text;
-/*      */ 
-/*      */ import java.awt.Container;
-/*      */ import java.awt.Graphics;
-/*      */ import java.awt.Rectangle;
-/*      */ import java.awt.Shape;
-/*      */ import java.util.ArrayList;
-/*      */ import java.util.List;
-/*      */ import javax.swing.event.DocumentEvent;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class AsyncBoxView
-/*      */   extends View
-/*      */ {
-/*      */   int axis;
-/*      */   List<ChildState> stats;
-/*      */   float majorSpan;
-/*      */   boolean estimatedMajorSpan;
-/*      */   float minorSpan;
-/*      */   protected ChildLocator locator;
-/*      */   float topInset;
-/*      */   float bottomInset;
-/*      */   float leftInset;
-/*      */   float rightInset;
-/*      */   ChildState minRequest;
-/*      */   ChildState prefRequest;
-/*      */   boolean majorChanged;
-/*      */   boolean minorChanged;
-/*      */   Runnable flushTask;
-/*      */   ChildState changing;
-/*      */   
-/*      */   public AsyncBoxView(Element paramElement, int paramInt) {
-/*   61 */     super(paramElement);
-/*   62 */     this.stats = new ArrayList<>();
-/*   63 */     this.axis = paramInt;
-/*   64 */     this.locator = new ChildLocator();
-/*   65 */     this.flushTask = new FlushTask();
-/*   66 */     this.minorSpan = 32767.0F;
-/*   67 */     this.estimatedMajorSpan = false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getMajorAxis() {
-/*   76 */     return this.axis;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getMinorAxis() {
-/*   85 */     return (this.axis == 0) ? 1 : 0;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public float getTopInset() {
-/*   92 */     return this.topInset;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setTopInset(float paramFloat) {
-/*  101 */     this.topInset = paramFloat;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public float getBottomInset() {
-/*  108 */     return this.bottomInset;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setBottomInset(float paramFloat) {
-/*  117 */     this.bottomInset = paramFloat;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public float getLeftInset() {
-/*  124 */     return this.leftInset;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setLeftInset(float paramFloat) {
-/*  133 */     this.leftInset = paramFloat;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public float getRightInset() {
-/*  140 */     return this.rightInset;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setRightInset(float paramFloat) {
-/*  149 */     this.rightInset = paramFloat;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected float getInsetSpan(int paramInt) {
-/*  160 */     return (paramInt == 0) ? (
-/*  161 */       getLeftInset() + getRightInset()) : (getTopInset() + getBottomInset());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void setEstimatedMajorSpan(boolean paramBoolean) {
-/*  179 */     this.estimatedMajorSpan = paramBoolean;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected boolean getEstimatedMajorSpan() {
-/*  188 */     return this.estimatedMajorSpan;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected ChildState getChildState(int paramInt) {
-/*  199 */     synchronized (this.stats) {
-/*  200 */       if (paramInt >= 0 && paramInt < this.stats.size()) {
-/*  201 */         return this.stats.get(paramInt);
-/*      */       }
-/*  203 */       return null;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected LayoutQueue getLayoutQueue() {
-/*  211 */     return LayoutQueue.getDefaultQueue();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected ChildState createChildState(View paramView) {
-/*  220 */     return new ChildState(paramView);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected synchronized void majorRequirementChange(ChildState paramChildState, float paramFloat) {
-/*  242 */     if (!this.estimatedMajorSpan) {
-/*  243 */       this.majorSpan += paramFloat;
-/*      */     }
-/*  245 */     this.majorChanged = true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected synchronized void minorRequirementChange(ChildState paramChildState) {
-/*  259 */     this.minorChanged = true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void flushRequirementChanges() {
-/*  267 */     AbstractDocument abstractDocument = (AbstractDocument)getDocument();
-/*      */     try {
-/*  269 */       abstractDocument.readLock();
-/*      */       
-/*  271 */       View view = null;
-/*  272 */       boolean bool1 = false;
-/*  273 */       boolean bool2 = false;
-/*      */       
-/*  275 */       synchronized (this) {
-/*      */ 
-/*      */         
-/*  278 */         synchronized (this.stats) {
-/*  279 */           int i = getViewCount();
-/*  280 */           if (i > 0 && (this.minorChanged || this.estimatedMajorSpan)) {
-/*  281 */             LayoutQueue layoutQueue = getLayoutQueue();
-/*  282 */             ChildState childState1 = getChildState(0);
-/*  283 */             ChildState childState2 = getChildState(0);
-/*  284 */             float f = 0.0F;
-/*  285 */             for (byte b = 1; b < i; b++) {
-/*  286 */               ChildState childState = getChildState(b);
-/*  287 */               if (this.minorChanged) {
-/*  288 */                 if (childState.min > childState1.min) {
-/*  289 */                   childState1 = childState;
-/*      */                 }
-/*  291 */                 if (childState.pref > childState2.pref) {
-/*  292 */                   childState2 = childState;
-/*      */                 }
-/*      */               } 
-/*  295 */               if (this.estimatedMajorSpan) {
-/*  296 */                 f += childState.getMajorSpan();
-/*      */               }
-/*      */             } 
-/*      */             
-/*  300 */             if (this.minorChanged) {
-/*  301 */               this.minRequest = childState1;
-/*  302 */               this.prefRequest = childState2;
-/*      */             } 
-/*  304 */             if (this.estimatedMajorSpan) {
-/*  305 */               this.majorSpan = f;
-/*  306 */               this.estimatedMajorSpan = false;
-/*  307 */               this.majorChanged = true;
-/*      */             } 
-/*      */           } 
-/*      */         } 
-/*      */ 
-/*      */         
-/*  313 */         if (this.majorChanged || this.minorChanged) {
-/*  314 */           view = getParent();
-/*  315 */           if (view != null) {
-/*  316 */             if (this.axis == 0) {
-/*  317 */               bool1 = this.majorChanged;
-/*  318 */               bool2 = this.minorChanged;
-/*      */             } else {
-/*  320 */               bool2 = this.majorChanged;
-/*  321 */               bool1 = this.minorChanged;
-/*      */             } 
-/*      */           }
-/*  324 */           this.majorChanged = false;
-/*  325 */           this.minorChanged = false;
-/*      */         } 
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */       
-/*  331 */       if (view != null) {
-/*  332 */         view.preferenceChanged(this, bool1, bool2);
-/*      */ 
-/*      */         
-/*  335 */         Container container = getContainer();
-/*  336 */         if (container != null) {
-/*  337 */           container.repaint();
-/*      */         }
-/*      */       } 
-/*      */     } finally {
-/*  341 */       abstractDocument.readUnlock();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void replace(int paramInt1, int paramInt2, View[] paramArrayOfView) {
-/*  358 */     synchronized (this.stats) {
-/*      */       
-/*  360 */       for (byte b = 0; b < paramInt2; b++) {
-/*  361 */         ChildState childState = this.stats.remove(paramInt1);
-/*  362 */         float f = childState.getMajorSpan();
-/*      */         
-/*  364 */         childState.getChildView().setParent(null);
-/*  365 */         if (f != 0.0F) {
-/*  366 */           majorRequirementChange(childState, -f);
-/*      */         }
-/*      */       } 
-/*      */ 
-/*      */       
-/*  371 */       LayoutQueue layoutQueue = getLayoutQueue();
-/*  372 */       if (paramArrayOfView != null) {
-/*  373 */         for (byte b1 = 0; b1 < paramArrayOfView.length; b1++) {
-/*  374 */           ChildState childState = createChildState(paramArrayOfView[b1]);
-/*  375 */           this.stats.add(paramInt1 + b1, childState);
-/*  376 */           layoutQueue.addTask(childState);
-/*      */         } 
-/*      */       }
-/*      */ 
-/*      */       
-/*  381 */       layoutQueue.addTask(this.flushTask);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void loadChildren(ViewFactory paramViewFactory) {
-/*  404 */     Element element = getElement();
-/*  405 */     int i = element.getElementCount();
-/*  406 */     if (i > 0) {
-/*  407 */       View[] arrayOfView = new View[i];
-/*  408 */       for (byte b = 0; b < i; b++) {
-/*  409 */         arrayOfView[b] = paramViewFactory.create(element.getElement(b));
-/*      */       }
-/*  411 */       replace(0, 0, arrayOfView);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected synchronized int getViewIndexAtPosition(int paramInt, Position.Bias paramBias) {
-/*  425 */     boolean bool = (paramBias == Position.Bias.Backward) ? true : false;
-/*  426 */     paramInt = bool ? Math.max(0, paramInt - 1) : paramInt;
-/*  427 */     Element element = getElement();
-/*  428 */     return element.getElementIndex(paramInt);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void updateLayout(DocumentEvent.ElementChange paramElementChange, DocumentEvent paramDocumentEvent, Shape paramShape) {
-/*  447 */     if (paramElementChange != null) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  452 */       int i = Math.max(paramElementChange.getIndex() - 1, 0);
-/*  453 */       ChildState childState = getChildState(i);
-/*  454 */       this.locator.childChanged(childState);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setParent(View paramView) {
-/*  476 */     super.setParent(paramView);
-/*  477 */     if (paramView != null && getViewCount() == 0) {
-/*  478 */       ViewFactory viewFactory = getViewFactory();
-/*  479 */       loadChildren(viewFactory);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public synchronized void preferenceChanged(View paramView, boolean paramBoolean1, boolean paramBoolean2) {
-/*  496 */     if (paramView == null) {
-/*  497 */       getParent().preferenceChanged(this, paramBoolean1, paramBoolean2);
-/*      */     } else {
-/*  499 */       if (this.changing != null) {
-/*  500 */         View view = this.changing.getChildView();
-/*  501 */         if (view == paramView) {
-/*      */ 
-/*      */           
-/*  504 */           this.changing.preferenceChanged(paramBoolean1, paramBoolean2);
-/*      */           return;
-/*      */         } 
-/*      */       } 
-/*  508 */       int i = getViewIndex(paramView.getStartOffset(), Position.Bias.Forward);
-/*      */       
-/*  510 */       ChildState childState = getChildState(i);
-/*  511 */       childState.preferenceChanged(paramBoolean1, paramBoolean2);
-/*  512 */       LayoutQueue layoutQueue = getLayoutQueue();
-/*  513 */       layoutQueue.addTask(childState);
-/*  514 */       layoutQueue.addTask(this.flushTask);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setSize(float paramFloat1, float paramFloat2) {
-/*  532 */     setSpanOnAxis(0, paramFloat1);
-/*  533 */     setSpanOnAxis(1, paramFloat2);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   float getSpanOnAxis(int paramInt) {
-/*  544 */     if (paramInt == getMajorAxis()) {
-/*  545 */       return this.majorSpan;
-/*      */     }
-/*  547 */     return this.minorSpan;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void setSpanOnAxis(int paramInt, float paramFloat) {
-/*  562 */     float f = getInsetSpan(paramInt);
-/*  563 */     if (paramInt == getMinorAxis()) {
-/*  564 */       float f1 = paramFloat - f;
-/*  565 */       if (f1 != this.minorSpan) {
-/*  566 */         this.minorSpan = f1;
-/*      */ 
-/*      */ 
-/*      */         
-/*  570 */         int i = getViewCount();
-/*  571 */         if (i != 0) {
-/*  572 */           LayoutQueue layoutQueue = getLayoutQueue();
-/*  573 */           for (byte b = 0; b < i; b++) {
-/*  574 */             ChildState childState = getChildState(b);
-/*  575 */             childState.childSizeValid = false;
-/*  576 */             layoutQueue.addTask(childState);
-/*      */           } 
-/*  578 */           layoutQueue.addTask(this.flushTask);
-/*      */         
-/*      */         }
-/*      */       
-/*      */       }
-/*      */     
-/*      */     }
-/*  585 */     else if (this.estimatedMajorSpan) {
-/*  586 */       this.majorSpan = paramFloat - f;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paint(Graphics paramGraphics, Shape paramShape) {
-/*  610 */     synchronized (this.locator) {
-/*  611 */       this.locator.setAllocation(paramShape);
-/*  612 */       this.locator.paintChildren(paramGraphics);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public float getPreferredSpan(int paramInt) {
-/*  628 */     float f = getInsetSpan(paramInt);
-/*  629 */     if (paramInt == this.axis) {
-/*  630 */       return this.majorSpan + f;
-/*      */     }
-/*  632 */     if (this.prefRequest != null) {
-/*  633 */       View view = this.prefRequest.getChildView();
-/*  634 */       return view.getPreferredSpan(paramInt) + f;
-/*      */     } 
-/*      */ 
-/*      */     
-/*  638 */     return f + 30.0F;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public float getMinimumSpan(int paramInt) {
-/*  653 */     if (paramInt == this.axis) {
-/*  654 */       return getPreferredSpan(paramInt);
-/*      */     }
-/*  656 */     if (this.minRequest != null) {
-/*  657 */       View view = this.minRequest.getChildView();
-/*  658 */       return view.getMinimumSpan(paramInt);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  662 */     if (paramInt == 0) {
-/*  663 */       return getLeftInset() + getRightInset() + 5.0F;
-/*      */     }
-/*  665 */     return getTopInset() + getBottomInset() + 5.0F;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public float getMaximumSpan(int paramInt) {
-/*  681 */     if (paramInt == this.axis) {
-/*  682 */       return getPreferredSpan(paramInt);
-/*      */     }
-/*  684 */     return 2.14748365E9F;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getViewCount() {
-/*  697 */     synchronized (this.stats) {
-/*  698 */       return this.stats.size();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public View getView(int paramInt) {
-/*  710 */     ChildState childState = getChildState(paramInt);
-/*  711 */     if (childState != null) {
-/*  712 */       return childState.getChildView();
-/*      */     }
-/*  714 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Shape getChildAllocation(int paramInt, Shape paramShape) {
-/*  729 */     return this.locator.getChildAllocation(paramInt, paramShape);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getViewIndex(int paramInt, Position.Bias paramBias) {
-/*  745 */     return getViewIndexAtPosition(paramInt, paramBias);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Shape modelToView(int paramInt, Shape paramShape, Position.Bias paramBias) throws BadLocationException {
-/*  764 */     int i = getViewIndex(paramInt, paramBias);
-/*  765 */     Shape shape = this.locator.getChildAllocation(i, paramShape);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  770 */     ChildState childState = getChildState(i);
-/*  771 */     synchronized (childState) {
-/*  772 */       View view = childState.getChildView();
-/*  773 */       return view.modelToView(paramInt, shape, paramBias);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int viewToModel(float paramFloat1, float paramFloat2, Shape paramShape, Position.Bias[] paramArrayOfBias) {
-/*      */     int i, j;
-/*      */     Shape shape;
-/*  809 */     synchronized (this.locator) {
-/*  810 */       j = this.locator.getViewIndexAtPoint(paramFloat1, paramFloat2, paramShape);
-/*  811 */       shape = this.locator.getChildAllocation(j, paramShape);
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  817 */     ChildState childState = getChildState(j);
-/*  818 */     synchronized (childState) {
-/*  819 */       View view = childState.getChildView();
-/*  820 */       i = view.viewToModel(paramFloat1, paramFloat2, shape, paramArrayOfBias);
-/*      */     } 
-/*  822 */     return i;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getNextVisualPositionFrom(int paramInt1, Position.Bias paramBias, Shape paramShape, int paramInt2, Position.Bias[] paramArrayOfBias) throws BadLocationException {
-/*  857 */     if (paramInt1 < -1) {
-/*  858 */       throw new BadLocationException("invalid position", paramInt1);
-/*      */     }
-/*  860 */     return Utilities.getNextVisualPositionFrom(this, paramInt1, paramBias, paramShape, paramInt2, paramArrayOfBias);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public class ChildLocator
-/*      */   {
-/*      */     protected AsyncBoxView.ChildState lastValidOffset;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  939 */     protected Rectangle lastAlloc = new Rectangle();
-/*  940 */     protected Rectangle childAlloc = new Rectangle();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public synchronized void childChanged(AsyncBoxView.ChildState param1ChildState) {
-/*  951 */       if (this.lastValidOffset == null) {
-/*  952 */         this.lastValidOffset = param1ChildState;
-/*  953 */       } else if (param1ChildState.getChildView().getStartOffset() < this.lastValidOffset
-/*  954 */         .getChildView().getStartOffset()) {
-/*  955 */         this.lastValidOffset = param1ChildState;
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public synchronized void paintChildren(Graphics param1Graphics) {
-/*  963 */       Rectangle rectangle = param1Graphics.getClipBounds();
-/*  964 */       float f1 = (AsyncBoxView.this.axis == 0) ? (rectangle.x - this.lastAlloc.x) : (rectangle.y - this.lastAlloc.y);
-/*      */       
-/*  966 */       int i = getViewIndexAtVisualOffset(f1);
-/*  967 */       int j = AsyncBoxView.this.getViewCount();
-/*  968 */       float f2 = AsyncBoxView.this.getChildState(i).getMajorOffset();
-/*  969 */       for (int k = i; k < j; ) {
-/*  970 */         AsyncBoxView.ChildState childState = AsyncBoxView.this.getChildState(k);
-/*  971 */         childState.setMajorOffset(f2);
-/*  972 */         Shape shape = getChildAllocation(k);
-/*  973 */         if (intersectsClip(shape, rectangle)) {
-/*  974 */           synchronized (childState) {
-/*  975 */             View view = childState.getChildView();
-/*  976 */             view.paint(param1Graphics, shape);
-/*      */           } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*  982 */           f2 += childState.getMajorSpan();
-/*      */           k++;
-/*      */         } 
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public synchronized Shape getChildAllocation(int param1Int, Shape param1Shape) {
-/*  992 */       if (param1Shape == null) {
-/*  993 */         return null;
-/*      */       }
-/*  995 */       setAllocation(param1Shape);
-/*  996 */       AsyncBoxView.ChildState childState = AsyncBoxView.this.getChildState(param1Int);
-/*  997 */       if (this.lastValidOffset == null) {
-/*  998 */         this.lastValidOffset = AsyncBoxView.this.getChildState(0);
-/*      */       }
-/* 1000 */       if (childState.getChildView().getStartOffset() > this.lastValidOffset
-/* 1001 */         .getChildView().getStartOffset())
-/*      */       {
-/* 1003 */         updateChildOffsetsToIndex(param1Int);
-/*      */       }
-/* 1005 */       return getChildAllocation(param1Int);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getViewIndexAtPoint(float param1Float1, float param1Float2, Shape param1Shape) {
-/* 1024 */       setAllocation(param1Shape);
-/* 1025 */       float f = (AsyncBoxView.this.axis == 0) ? (param1Float1 - this.lastAlloc.x) : (param1Float2 - this.lastAlloc.y);
-/* 1026 */       return getViewIndexAtVisualOffset(f);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected Shape getChildAllocation(int param1Int) {
-/* 1036 */       AsyncBoxView.ChildState childState = AsyncBoxView.this.getChildState(param1Int);
-/* 1037 */       if (!childState.isLayoutValid()) {
-/* 1038 */         childState.run();
-/*      */       }
-/* 1040 */       if (AsyncBoxView.this.axis == 0) {
-/* 1041 */         this.lastAlloc.x += (int)childState.getMajorOffset();
-/* 1042 */         this.lastAlloc.y += (int)childState.getMinorOffset();
-/* 1043 */         this.childAlloc.width = (int)childState.getMajorSpan();
-/* 1044 */         this.childAlloc.height = (int)childState.getMinorSpan();
-/*      */       } else {
-/* 1046 */         this.lastAlloc.y += (int)childState.getMajorOffset();
-/* 1047 */         this.lastAlloc.x += (int)childState.getMinorOffset();
-/* 1048 */         this.childAlloc.height = (int)childState.getMajorSpan();
-/* 1049 */         this.childAlloc.width = (int)childState.getMinorSpan();
-/*      */       } 
-/* 1051 */       this.childAlloc.x += (int)AsyncBoxView.this.getLeftInset();
-/* 1052 */       this.childAlloc.y += (int)AsyncBoxView.this.getRightInset();
-/* 1053 */       return this.childAlloc;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected void setAllocation(Shape param1Shape) {
-/* 1062 */       if (param1Shape instanceof Rectangle) {
-/* 1063 */         this.lastAlloc.setBounds((Rectangle)param1Shape);
-/*      */       } else {
-/* 1065 */         this.lastAlloc.setBounds(param1Shape.getBounds());
-/*      */       } 
-/* 1067 */       AsyncBoxView.this.setSize(this.lastAlloc.width, this.lastAlloc.height);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected int getViewIndexAtVisualOffset(float param1Float) {
-/* 1081 */       int i = AsyncBoxView.this.getViewCount();
-/* 1082 */       if (i > 0) {
-/* 1083 */         boolean bool = (this.lastValidOffset != null) ? true : false;
-/*      */         
-/* 1085 */         if (this.lastValidOffset == null) {
-/* 1086 */           this.lastValidOffset = AsyncBoxView.this.getChildState(0);
-/*      */         }
-/* 1088 */         if (param1Float > AsyncBoxView.this.majorSpan) {
-/*      */           
-/* 1090 */           if (!bool) {
-/* 1091 */             return 0;
-/*      */           }
-/* 1093 */           int j = this.lastValidOffset.getChildView().getStartOffset();
-/* 1094 */           return AsyncBoxView.this.getViewIndex(j, Position.Bias.Forward);
-/*      */         } 
-/* 1096 */         if (param1Float > this.lastValidOffset.getMajorOffset())
-/*      */         {
-/* 1098 */           return updateChildOffsets(param1Float);
-/*      */         }
-/*      */ 
-/*      */         
-/* 1102 */         float f = 0.0F;
-/* 1103 */         for (byte b = 0; b < i; b++) {
-/* 1104 */           AsyncBoxView.ChildState childState = AsyncBoxView.this.getChildState(b);
-/* 1105 */           float f1 = f + childState.getMajorSpan();
-/* 1106 */           if (param1Float < f1) {
-/* 1107 */             return b;
-/*      */           }
-/* 1109 */           f = f1;
-/*      */         } 
-/*      */       } 
-/*      */       
-/* 1113 */       return i - 1;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     int updateChildOffsets(float param1Float) {
-/* 1121 */       int i = AsyncBoxView.this.getViewCount();
-/* 1122 */       int j = i - 1;
-/* 1123 */       int k = this.lastValidOffset.getChildView().getStartOffset();
-/* 1124 */       int m = AsyncBoxView.this.getViewIndex(k, Position.Bias.Forward);
-/* 1125 */       float f1 = this.lastValidOffset.getMajorOffset();
-/* 1126 */       float f2 = f1;
-/* 1127 */       for (int n = m; n < i; n++) {
-/* 1128 */         AsyncBoxView.ChildState childState = AsyncBoxView.this.getChildState(n);
-/* 1129 */         childState.setMajorOffset(f2);
-/* 1130 */         f2 += childState.getMajorSpan();
-/* 1131 */         if (param1Float < f2) {
-/* 1132 */           j = n;
-/* 1133 */           this.lastValidOffset = childState;
-/*      */           
-/*      */           break;
-/*      */         } 
-/*      */       } 
-/* 1138 */       return j;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     void updateChildOffsetsToIndex(int param1Int) {
-/* 1146 */       int i = this.lastValidOffset.getChildView().getStartOffset();
-/* 1147 */       int j = AsyncBoxView.this.getViewIndex(i, Position.Bias.Forward);
-/* 1148 */       float f = this.lastValidOffset.getMajorOffset();
-/* 1149 */       for (int k = j; k <= param1Int; k++) {
-/* 1150 */         AsyncBoxView.ChildState childState = AsyncBoxView.this.getChildState(k);
-/* 1151 */         childState.setMajorOffset(f);
-/* 1152 */         f += childState.getMajorSpan();
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     boolean intersectsClip(Shape param1Shape, Rectangle param1Rectangle) {
-/* 1158 */       Rectangle rectangle = (param1Shape instanceof Rectangle) ? (Rectangle)param1Shape : param1Shape.getBounds();
-/* 1159 */       if (rectangle.intersects(param1Rectangle))
-/*      */       {
-/*      */         
-/* 1162 */         return this.lastAlloc.intersects(rectangle);
-/*      */       }
-/* 1164 */       return false;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public class ChildState
-/*      */     implements Runnable
-/*      */   {
-/*      */     private float min;
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private float pref;
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private float max;
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private boolean minorValid;
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private float span;
-/*      */ 
-/*      */     
-/*      */     private float offset;
-/*      */ 
-/*      */     
-/*      */     private boolean majorValid;
-/*      */ 
-/*      */     
-/*      */     private View child;
-/*      */ 
-/*      */     
-/*      */     private boolean childSizeValid;
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public ChildState(View param1View) {
-/* 1207 */       this.child = param1View;
-/* 1208 */       this.minorValid = false;
-/* 1209 */       this.majorValid = false;
-/* 1210 */       this.childSizeValid = false;
-/* 1211 */       this.child.setParent(AsyncBoxView.this);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public View getChildView() {
-/* 1218 */       return this.child;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void run() {
-/* 1243 */       AbstractDocument abstractDocument = (AbstractDocument)AsyncBoxView.this.getDocument();
-/*      */       try {
-/* 1245 */         abstractDocument.readLock();
-/* 1246 */         if (this.minorValid && this.majorValid && this.childSizeValid) {
-/*      */           return;
-/*      */         }
-/*      */         
-/* 1250 */         if (this.child.getParent() == AsyncBoxView.this) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/* 1255 */           synchronized (AsyncBoxView.this) {
-/* 1256 */             AsyncBoxView.this.changing = this;
-/*      */           } 
-/* 1258 */           updateChild();
-/* 1259 */           synchronized (AsyncBoxView.this) {
-/* 1260 */             AsyncBoxView.this.changing = null;
-/*      */           } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/* 1266 */           updateChild();
-/*      */         } 
-/*      */       } finally {
-/* 1269 */         abstractDocument.readUnlock();
-/*      */       } 
-/*      */     }
-/*      */     
-/*      */     void updateChild() {
-/* 1274 */       boolean bool1 = false;
-/* 1275 */       synchronized (this) {
-/* 1276 */         if (!this.minorValid) {
-/* 1277 */           int i = AsyncBoxView.this.getMinorAxis();
-/* 1278 */           this.min = this.child.getMinimumSpan(i);
-/* 1279 */           this.pref = this.child.getPreferredSpan(i);
-/* 1280 */           this.max = this.child.getMaximumSpan(i);
-/* 1281 */           this.minorValid = true;
-/* 1282 */           bool1 = true;
-/*      */         } 
-/*      */       } 
-/* 1285 */       if (bool1) {
-/* 1286 */         AsyncBoxView.this.minorRequirementChange(this);
-/*      */       }
-/*      */       
-/* 1289 */       boolean bool2 = false;
-/* 1290 */       float f = 0.0F;
-/* 1291 */       synchronized (this) {
-/* 1292 */         if (!this.majorValid) {
-/* 1293 */           float f1 = this.span;
-/* 1294 */           this.span = this.child.getPreferredSpan(AsyncBoxView.this.axis);
-/* 1295 */           f = this.span - f1;
-/* 1296 */           this.majorValid = true;
-/* 1297 */           bool2 = true;
-/*      */         } 
-/*      */       } 
-/* 1300 */       if (bool2) {
-/* 1301 */         AsyncBoxView.this.majorRequirementChange(this, f);
-/* 1302 */         AsyncBoxView.this.locator.childChanged(this);
-/*      */       } 
-/*      */       
-/* 1305 */       synchronized (this) {
-/* 1306 */         if (!this.childSizeValid) {
-/*      */           float f1, f2;
-/*      */           
-/* 1309 */           if (AsyncBoxView.this.axis == 0) {
-/* 1310 */             f1 = this.span;
-/* 1311 */             f2 = getMinorSpan();
-/*      */           } else {
-/* 1313 */             f1 = getMinorSpan();
-/* 1314 */             f2 = this.span;
-/*      */           } 
-/* 1316 */           this.childSizeValid = true;
-/* 1317 */           this.child.setSize(f1, f2);
-/*      */         } 
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public float getMinorSpan() {
-/* 1327 */       if (this.max < AsyncBoxView.this.minorSpan) {
-/* 1328 */         return this.max;
-/*      */       }
-/*      */       
-/* 1331 */       return Math.max(this.min, AsyncBoxView.this.minorSpan);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public float getMinorOffset() {
-/* 1338 */       if (this.max < AsyncBoxView.this.minorSpan) {
-/*      */         
-/* 1340 */         float f = this.child.getAlignment(AsyncBoxView.this.getMinorAxis());
-/* 1341 */         return (AsyncBoxView.this.minorSpan - this.max) * f;
-/*      */       } 
-/* 1343 */       return 0.0F;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public float getMajorSpan() {
-/* 1350 */       return this.span;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public float getMajorOffset() {
-/* 1357 */       return this.offset;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void setMajorOffset(float param1Float) {
-/* 1366 */       this.offset = param1Float;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void preferenceChanged(boolean param1Boolean1, boolean param1Boolean2) {
-/* 1377 */       if (AsyncBoxView.this.axis == 0) {
-/* 1378 */         if (param1Boolean1) {
-/* 1379 */           this.majorValid = false;
-/*      */         }
-/* 1381 */         if (param1Boolean2) {
-/* 1382 */           this.minorValid = false;
-/*      */         }
-/*      */       } else {
-/* 1385 */         if (param1Boolean1) {
-/* 1386 */           this.minorValid = false;
-/*      */         }
-/* 1388 */         if (param1Boolean2) {
-/* 1389 */           this.majorValid = false;
-/*      */         }
-/*      */       } 
-/* 1392 */       this.childSizeValid = false;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public boolean isLayoutValid() {
-/* 1399 */       return (this.minorValid && this.majorValid && this.childSizeValid);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   class FlushTask
-/*      */     implements Runnable
-/*      */   {
-/*      */     public void run() {
-/* 1423 */       AsyncBoxView.this.flushRequirementChanges();
-/*      */     }
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\text\AsyncBoxView.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.text;
+
+import java.util.*;
+import java.util.List;
+import java.awt.*;
+import javax.swing.SwingUtilities;
+import javax.swing.event.DocumentEvent;
+
+/**
+ * A box that does layout asynchronously.  This
+ * is useful to keep the GUI event thread moving by
+ * not doing any layout on it.  The layout is done
+ * on a granularity of operations on the child views.
+ * After each child view is accessed for some part
+ * of layout (a potentially time consuming operation)
+ * the remaining tasks can be abandoned or a new higher
+ * priority task (i.e. to service a synchronous request
+ * or a visible area) can be taken on.
+ * <p>
+ * While the child view is being accessed
+ * a read lock is acquired on the associated document
+ * so that the model is stable while being accessed.
+ *
+ * @author  Timothy Prinzing
+ * @since   1.3
+ */
+public class AsyncBoxView extends View {
+
+    /**
+     * Construct a box view that does asynchronous layout.
+     *
+     * @param elem the element of the model to represent
+     * @param axis the axis to tile along.  This can be
+     *  either X_AXIS or Y_AXIS.
+     */
+    public AsyncBoxView(Element elem, int axis) {
+        super(elem);
+        stats = new ArrayList<ChildState>();
+        this.axis = axis;
+        locator = new ChildLocator();
+        flushTask = new FlushTask();
+        minorSpan = Short.MAX_VALUE;
+        estimatedMajorSpan = false;
+    }
+
+    /**
+     * Fetch the major axis (the axis the children
+     * are tiled along).  This will have a value of
+     * either X_AXIS or Y_AXIS.
+     */
+    public int getMajorAxis() {
+        return axis;
+    }
+
+    /**
+     * Fetch the minor axis (the axis orthogonal
+     * to the tiled axis).  This will have a value of
+     * either X_AXIS or Y_AXIS.
+     */
+    public int getMinorAxis() {
+        return (axis == X_AXIS) ? Y_AXIS : X_AXIS;
+    }
+
+    /**
+     * Get the top part of the margin around the view.
+     */
+    public float getTopInset() {
+        return topInset;
+    }
+
+    /**
+     * Set the top part of the margin around the view.
+     *
+     * @param i the value of the inset
+     */
+    public void setTopInset(float i) {
+        topInset = i;
+    }
+
+    /**
+     * Get the bottom part of the margin around the view.
+     */
+    public float getBottomInset() {
+        return bottomInset;
+    }
+
+    /**
+     * Set the bottom part of the margin around the view.
+     *
+     * @param i the value of the inset
+     */
+    public void setBottomInset(float i) {
+        bottomInset = i;
+    }
+
+    /**
+     * Get the left part of the margin around the view.
+     */
+    public float getLeftInset() {
+        return leftInset;
+    }
+
+    /**
+     * Set the left part of the margin around the view.
+     *
+     * @param i the value of the inset
+     */
+    public void setLeftInset(float i) {
+        leftInset = i;
+    }
+
+    /**
+     * Get the right part of the margin around the view.
+     */
+    public float getRightInset() {
+        return rightInset;
+    }
+
+    /**
+     * Set the right part of the margin around the view.
+     *
+     * @param i the value of the inset
+     */
+    public void setRightInset(float i) {
+        rightInset = i;
+    }
+
+    /**
+     * Fetch the span along an axis that is taken up by the insets.
+     *
+     * @param axis the axis to determine the total insets along,
+     *  either X_AXIS or Y_AXIS.
+     * @since 1.4
+     */
+    protected float getInsetSpan(int axis) {
+        float margin = (axis == X_AXIS) ?
+            getLeftInset() + getRightInset() : getTopInset() + getBottomInset();
+        return margin;
+    }
+
+    /**
+     * Set the estimatedMajorSpan property that determines if the
+     * major span should be treated as being estimated.  If this
+     * property is true, the value of setSize along the major axis
+     * will change the requirements along the major axis and incremental
+     * changes will be ignored until all of the children have been updated
+     * (which will cause the property to automatically be set to false).
+     * If the property is false the value of the majorSpan will be
+     * considered to be accurate and incremental changes will be
+     * added into the total as they are calculated.
+     *
+     * @since 1.4
+     */
+    protected void setEstimatedMajorSpan(boolean isEstimated) {
+        estimatedMajorSpan = isEstimated;
+    }
+
+    /**
+     * Is the major span currently estimated?
+     *
+     * @since 1.4
+     */
+    protected boolean getEstimatedMajorSpan() {
+        return estimatedMajorSpan;
+    }
+
+    /**
+     * Fetch the object representing the layout state of
+     * of the child at the given index.
+     *
+     * @param index the child index.  This should be a
+     *   value &gt;= 0 and &lt; getViewCount().
+     */
+    protected ChildState getChildState(int index) {
+        synchronized(stats) {
+            if ((index >= 0) && (index < stats.size())) {
+                return stats.get(index);
+            }
+            return null;
+        }
+    }
+
+    /**
+     * Fetch the queue to use for layout.
+     */
+    protected LayoutQueue getLayoutQueue() {
+        return LayoutQueue.getDefaultQueue();
+    }
+
+    /**
+     * New ChildState records are created through
+     * this method to allow subclasses the extend
+     * the ChildState records to do/hold more
+     */
+    protected ChildState createChildState(View v) {
+        return new ChildState(v);
+    }
+
+    /**
+     * Requirements changed along the major axis.
+     * This is called by the thread doing layout for
+     * the given ChildState object when it has completed
+     * fetching the child views new preferences.
+     * Typically this would be the layout thread, but
+     * might be the event thread if it is trying to update
+     * something immediately (such as to perform a
+     * model/view translation).
+     * <p>
+     * This is implemented to mark the major axis as having
+     * changed so that a future check to see if the requirements
+     * need to be published to the parent view will consider
+     * the major axis.  If the span along the major axis is
+     * not estimated, it is updated by the given delta to reflect
+     * the incremental change.  The delta is ignored if the
+     * major span is estimated.
+     */
+    protected synchronized void majorRequirementChange(ChildState cs, float delta) {
+        if (estimatedMajorSpan == false) {
+            majorSpan += delta;
+        }
+        majorChanged = true;
+    }
+
+    /**
+     * Requirements changed along the minor axis.
+     * This is called by the thread doing layout for
+     * the given ChildState object when it has completed
+     * fetching the child views new preferences.
+     * Typically this would be the layout thread, but
+     * might be the GUI thread if it is trying to update
+     * something immediately (such as to perform a
+     * model/view translation).
+     */
+    protected synchronized void minorRequirementChange(ChildState cs) {
+        minorChanged = true;
+    }
+
+    /**
+     * Publish the changes in preferences upward to the parent
+     * view.  This is normally called by the layout thread.
+     */
+    protected void flushRequirementChanges() {
+        AbstractDocument doc = (AbstractDocument) getDocument();
+        try {
+            doc.readLock();
+
+            View parent = null;
+            boolean horizontal = false;
+            boolean vertical = false;
+
+            synchronized(this) {
+                // perform tasks that iterate over the children while
+                // preventing the collection from changing.
+                synchronized(stats) {
+                    int n = getViewCount();
+                    if ((n > 0) && (minorChanged || estimatedMajorSpan)) {
+                        LayoutQueue q = getLayoutQueue();
+                        ChildState min = getChildState(0);
+                        ChildState pref = getChildState(0);
+                        float span = 0f;
+                        for (int i = 1; i < n; i++) {
+                            ChildState cs = getChildState(i);
+                            if (minorChanged) {
+                                if (cs.min > min.min) {
+                                    min = cs;
+                                }
+                                if (cs.pref > pref.pref) {
+                                    pref = cs;
+                                }
+                            }
+                            if (estimatedMajorSpan) {
+                                span += cs.getMajorSpan();
+                            }
+                        }
+
+                        if (minorChanged) {
+                            minRequest = min;
+                            prefRequest = pref;
+                        }
+                        if (estimatedMajorSpan) {
+                            majorSpan = span;
+                            estimatedMajorSpan = false;
+                            majorChanged = true;
+                        }
+                    }
+                }
+
+                // message preferenceChanged
+                if (majorChanged || minorChanged) {
+                    parent = getParent();
+                    if (parent != null) {
+                        if (axis == X_AXIS) {
+                            horizontal = majorChanged;
+                            vertical = minorChanged;
+                        } else {
+                            vertical = majorChanged;
+                            horizontal = minorChanged;
+                        }
+                    }
+                    majorChanged = false;
+                    minorChanged = false;
+                }
+            }
+
+            // propagate a preferenceChanged, using the
+            // layout thread.
+            if (parent != null) {
+                parent.preferenceChanged(this, horizontal, vertical);
+
+                // probably want to change this to be more exact.
+                Component c = getContainer();
+                if (c != null) {
+                    c.repaint();
+                }
+            }
+        } finally {
+            doc.readUnlock();
+        }
+    }
+
+    /**
+     * Calls the superclass to update the child views, and
+     * updates the status records for the children.  This
+     * is expected to be called while a write lock is held
+     * on the model so that interaction with the layout
+     * thread will not happen (i.e. the layout thread
+     * acquires a read lock before doing anything).
+     *
+     * @param offset the starting offset into the child views &gt;= 0
+     * @param length the number of existing views to replace &gt;= 0
+     * @param views the child views to insert
+     */
+    public void replace(int offset, int length, View[] views) {
+        synchronized(stats) {
+            // remove the replaced state records
+            for (int i = 0; i < length; i++) {
+                ChildState cs = stats.remove(offset);
+                float csSpan = cs.getMajorSpan();
+
+                cs.getChildView().setParent(null);
+                if (csSpan != 0) {
+                    majorRequirementChange(cs, -csSpan);
+                }
+            }
+
+            // insert the state records for the new children
+            LayoutQueue q = getLayoutQueue();
+            if (views != null) {
+                for (int i = 0; i < views.length; i++) {
+                    ChildState s = createChildState(views[i]);
+                    stats.add(offset + i, s);
+                    q.addTask(s);
+                }
+            }
+
+            // notify that the size changed
+            q.addTask(flushTask);
+        }
+    }
+
+    /**
+     * Loads all of the children to initialize the view.
+     * This is called by the {@link #setParent setParent}
+     * method.  Subclasses can reimplement this to initialize
+     * their child views in a different manner.  The default
+     * implementation creates a child view for each
+     * child element.
+     * <p>
+     * Normally a write-lock is held on the Document while
+     * the children are being changed, which keeps the rendering
+     * and layout threads safe.  The exception to this is when
+     * the view is initialized to represent an existing element
+     * (via this method), so it is synchronized to exclude
+     * preferenceChanged while we are initializing.
+     *
+     * @param f the view factory
+     * @see #setParent
+     */
+    protected void loadChildren(ViewFactory f) {
+        Element e = getElement();
+        int n = e.getElementCount();
+        if (n > 0) {
+            View[] added = new View[n];
+            for (int i = 0; i < n; i++) {
+                added[i] = f.create(e.getElement(i));
+            }
+            replace(0, 0, added);
+        }
+    }
+
+    /**
+     * Fetches the child view index representing the given position in
+     * the model.  This is implemented to fetch the view in the case
+     * where there is a child view for each child element.
+     *
+     * @param pos the position &gt;= 0
+     * @return  index of the view representing the given position, or
+     *   -1 if no view represents that position
+     */
+    protected synchronized int getViewIndexAtPosition(int pos, Position.Bias b) {
+        boolean isBackward = (b == Position.Bias.Backward);
+        pos = (isBackward) ? Math.max(0, pos - 1) : pos;
+        Element elem = getElement();
+        return elem.getElementIndex(pos);
+    }
+
+    /**
+     * Update the layout in response to receiving notification of
+     * change from the model.  This is implemented to note the
+     * change on the ChildLocator so that offsets of the children
+     * will be correctly computed.
+     *
+     * @param ec changes to the element this view is responsible
+     *  for (may be null if there were no changes).
+     * @param e the change information from the associated document
+     * @param a the current allocation of the view
+     * @see #insertUpdate
+     * @see #removeUpdate
+     * @see #changedUpdate
+     */
+    protected void updateLayout(DocumentEvent.ElementChange ec,
+                                    DocumentEvent e, Shape a) {
+        if (ec != null) {
+            // the newly inserted children don't have a valid
+            // offset so the child locator needs to be messaged
+            // that the child prior to the new children has
+            // changed size.
+            int index = Math.max(ec.getIndex() - 1, 0);
+            ChildState cs = getChildState(index);
+            locator.childChanged(cs);
+        }
+    }
+
+    // --- View methods ------------------------------------
+
+    /**
+     * Sets the parent of the view.
+     * This is reimplemented to provide the superclass
+     * behavior as well as calling the <code>loadChildren</code>
+     * method if this view does not already have children.
+     * The children should not be loaded in the
+     * constructor because the act of setting the parent
+     * may cause them to try to search up the hierarchy
+     * (to get the hosting Container for example).
+     * If this view has children (the view is being moved
+     * from one place in the view hierarchy to another),
+     * the <code>loadChildren</code> method will not be called.
+     *
+     * @param parent the parent of the view, null if none
+     */
+    public void setParent(View parent) {
+        super.setParent(parent);
+        if ((parent != null) && (getViewCount() == 0)) {
+            ViewFactory f = getViewFactory();
+            loadChildren(f);
+        }
+    }
+
+    /**
+     * Child views can call this on the parent to indicate that
+     * the preference has changed and should be reconsidered
+     * for layout.  This is reimplemented to queue new work
+     * on the layout thread.  This method gets messaged from
+     * multiple threads via the children.
+     *
+     * @param child the child view
+     * @param width true if the width preference has changed
+     * @param height true if the height preference has changed
+     * @see javax.swing.JComponent#revalidate
+     */
+    public synchronized void preferenceChanged(View child, boolean width, boolean height) {
+        if (child == null) {
+            getParent().preferenceChanged(this, width, height);
+        } else {
+            if (changing != null) {
+                View cv = changing.getChildView();
+                if (cv == child) {
+                    // size was being changed on the child, no need to
+                    // queue work for it.
+                    changing.preferenceChanged(width, height);
+                    return;
+                }
+            }
+            int index = getViewIndex(child.getStartOffset(),
+                                     Position.Bias.Forward);
+            ChildState cs = getChildState(index);
+            cs.preferenceChanged(width, height);
+            LayoutQueue q = getLayoutQueue();
+            q.addTask(cs);
+            q.addTask(flushTask);
+        }
+    }
+
+    /**
+     * Sets the size of the view.  This should cause
+     * layout of the view if the view caches any layout
+     * information.
+     * <p>
+     * Since the major axis is updated asynchronously and should be
+     * the sum of the tiled children the call is ignored for the major
+     * axis.  Since the minor axis is flexible, work is queued to resize
+     * the children if the minor span changes.
+     *
+     * @param width the width &gt;= 0
+     * @param height the height &gt;= 0
+     */
+    public void setSize(float width, float height) {
+        setSpanOnAxis(X_AXIS, width);
+        setSpanOnAxis(Y_AXIS, height);
+    }
+
+    /**
+     * Retrieves the size of the view along an axis.
+     *
+     * @param axis may be either <code>View.X_AXIS</code> or
+     *          <code>View.Y_AXIS</code>
+     * @return the current span of the view along the given axis, >= 0
+     */
+    float getSpanOnAxis(int axis) {
+        if (axis == getMajorAxis()) {
+            return majorSpan;
+        }
+        return minorSpan;
+    }
+
+    /**
+     * Sets the size of the view along an axis.  Since the major
+     * axis is updated asynchronously and should be the sum of the
+     * tiled children the call is ignored for the major axis.  Since
+     * the minor axis is flexible, work is queued to resize the
+     * children if the minor span changes.
+     *
+     * @param axis may be either <code>View.X_AXIS</code> or
+     *          <code>View.Y_AXIS</code>
+     * @param span the span to layout to >= 0
+     */
+    void setSpanOnAxis(int axis, float span) {
+        float margin = getInsetSpan(axis);
+        if (axis == getMinorAxis()) {
+            float targetSpan = span - margin;
+            if (targetSpan != minorSpan) {
+                minorSpan = targetSpan;
+
+                // mark all of the ChildState instances as needing to
+                // resize the child, and queue up work to fix them.
+                int n = getViewCount();
+                if (n != 0) {
+                    LayoutQueue q = getLayoutQueue();
+                    for (int i = 0; i < n; i++) {
+                        ChildState cs = getChildState(i);
+                        cs.childSizeValid = false;
+                        q.addTask(cs);
+                    }
+                    q.addTask(flushTask);
+                }
+            }
+        } else {
+            // along the major axis the value is ignored
+            // unless the estimatedMajorSpan property is
+            // true.
+            if (estimatedMajorSpan) {
+                majorSpan = span - margin;
+            }
+        }
+    }
+
+    /**
+     * Render the view using the given allocation and
+     * rendering surface.
+     * <p>
+     * This is implemented to determine whether or not the
+     * desired region to be rendered (i.e. the unclipped
+     * area) is up to date or not.  If up-to-date the children
+     * are rendered.  If not up-to-date, a task to build
+     * the desired area is placed on the layout queue as
+     * a high priority task.  This keeps by event thread
+     * moving by rendering if ready, and postponing until
+     * a later time if not ready (since paint requests
+     * can be rescheduled).
+     *
+     * @param g the rendering surface to use
+     * @param alloc the allocated region to render into
+     * @see View#paint
+     */
+    public void paint(Graphics g, Shape alloc) {
+        synchronized (locator) {
+            locator.setAllocation(alloc);
+            locator.paintChildren(g);
+        }
+    }
+
+    /**
+     * Determines the preferred span for this view along an
+     * axis.
+     *
+     * @param axis may be either View.X_AXIS or View.Y_AXIS
+     * @return   the span the view would like to be rendered into &gt;= 0.
+     *           Typically the view is told to render into the span
+     *           that is returned, although there is no guarantee.
+     *           The parent may choose to resize or break the view.
+     * @exception IllegalArgumentException for an invalid axis type
+     */
+    public float getPreferredSpan(int axis) {
+        float margin = getInsetSpan(axis);
+        if (axis == this.axis) {
+            return majorSpan + margin;
+        }
+        if (prefRequest != null) {
+            View child = prefRequest.getChildView();
+            return child.getPreferredSpan(axis) + margin;
+        }
+
+        // nothing is known about the children yet
+        return margin + 30;
+    }
+
+    /**
+     * Determines the minimum span for this view along an
+     * axis.
+     *
+     * @param axis may be either View.X_AXIS or View.Y_AXIS
+     * @return  the span the view would like to be rendered into &gt;= 0.
+     *           Typically the view is told to render into the span
+     *           that is returned, although there is no guarantee.
+     *           The parent may choose to resize or break the view.
+     * @exception IllegalArgumentException for an invalid axis type
+     */
+    public float getMinimumSpan(int axis) {
+        if (axis == this.axis) {
+            return getPreferredSpan(axis);
+        }
+        if (minRequest != null) {
+            View child = minRequest.getChildView();
+            return child.getMinimumSpan(axis);
+        }
+
+        // nothing is known about the children yet
+        if (axis == X_AXIS) {
+            return getLeftInset() + getRightInset() + 5;
+        } else {
+            return getTopInset() + getBottomInset() + 5;
+        }
+    }
+
+    /**
+     * Determines the maximum span for this view along an
+     * axis.
+     *
+     * @param axis may be either View.X_AXIS or View.Y_AXIS
+     * @return   the span the view would like to be rendered into &gt;= 0.
+     *           Typically the view is told to render into the span
+     *           that is returned, although there is no guarantee.
+     *           The parent may choose to resize or break the view.
+     * @exception IllegalArgumentException for an invalid axis type
+     */
+    public float getMaximumSpan(int axis) {
+        if (axis == this.axis) {
+            return getPreferredSpan(axis);
+        }
+        return Integer.MAX_VALUE;
+    }
+
+
+    /**
+     * Returns the number of views in this view.  Since
+     * the default is to not be a composite view this
+     * returns 0.
+     *
+     * @return the number of views &gt;= 0
+     * @see View#getViewCount
+     */
+    public int getViewCount() {
+        synchronized(stats) {
+            return stats.size();
+        }
+    }
+
+    /**
+     * Gets the nth child view.  Since there are no
+     * children by default, this returns null.
+     *
+     * @param n the number of the view to get, &gt;= 0 &amp;&amp; &lt; getViewCount()
+     * @return the view
+     */
+    public View getView(int n) {
+        ChildState cs = getChildState(n);
+        if (cs != null) {
+            return cs.getChildView();
+        }
+        return null;
+    }
+
+    /**
+     * Fetches the allocation for the given child view.
+     * This enables finding out where various views
+     * are located, without assuming the views store
+     * their location.  This returns null since the
+     * default is to not have any child views.
+     *
+     * @param index the index of the child, &gt;= 0 &amp;&amp; &lt; getViewCount()
+     * @param a  the allocation to this view.
+     * @return the allocation to the child
+     */
+    public Shape getChildAllocation(int index, Shape a) {
+        Shape ca = locator.getChildAllocation(index, a);
+        return ca;
+    }
+
+    /**
+     * Returns the child view index representing the given position in
+     * the model.  By default a view has no children so this is implemented
+     * to return -1 to indicate there is no valid child index for any
+     * position.
+     *
+     * @param pos the position &gt;= 0
+     * @return  index of the view representing the given position, or
+     *   -1 if no view represents that position
+     * @since 1.3
+     */
+    public int getViewIndex(int pos, Position.Bias b) {
+        return getViewIndexAtPosition(pos, b);
+    }
+
+    /**
+     * Provides a mapping from the document model coordinate space
+     * to the coordinate space of the view mapped to it.
+     *
+     * @param pos the position to convert &gt;= 0
+     * @param a the allocated region to render into
+     * @param b the bias toward the previous character or the
+     *  next character represented by the offset, in case the
+     *  position is a boundary of two views.
+     * @return the bounding box of the given position is returned
+     * @exception BadLocationException  if the given position does
+     *   not represent a valid location in the associated document
+     * @exception IllegalArgumentException for an invalid bias argument
+     * @see View#viewToModel
+     */
+    public Shape modelToView(int pos, Shape a, Position.Bias b) throws BadLocationException {
+        int index = getViewIndex(pos, b);
+        Shape ca = locator.getChildAllocation(index, a);
+
+        // forward to the child view, and make sure we don't
+        // interact with the layout thread by synchronizing
+        // on the child state.
+        ChildState cs = getChildState(index);
+        synchronized (cs) {
+            View cv = cs.getChildView();
+            Shape v = cv.modelToView(pos, ca, b);
+            return v;
+        }
+    }
+
+    /**
+     * Provides a mapping from the view coordinate space to the logical
+     * coordinate space of the model.  The biasReturn argument will be
+     * filled in to indicate that the point given is closer to the next
+     * character in the model or the previous character in the model.
+     * <p>
+     * This is expected to be called by the GUI thread, holding a
+     * read-lock on the associated model.  It is implemented to
+     * locate the child view and determine it's allocation with a
+     * lock on the ChildLocator object, and to call viewToModel
+     * on the child view with a lock on the ChildState object
+     * to avoid interaction with the layout thread.
+     *
+     * @param x the X coordinate &gt;= 0
+     * @param y the Y coordinate &gt;= 0
+     * @param a the allocated region to render into
+     * @return the location within the model that best represents the
+     *  given point in the view &gt;= 0.  The biasReturn argument will be
+     * filled in to indicate that the point given is closer to the next
+     * character in the model or the previous character in the model.
+     */
+    public int viewToModel(float x, float y, Shape a, Position.Bias[] biasReturn) {
+        int pos;    // return position
+        int index;  // child index to forward to
+        Shape ca;   // child allocation
+
+        // locate the child view and it's allocation so that
+        // we can forward to it.  Make sure the layout thread
+        // doesn't change anything by trying to flush changes
+        // to the parent while the GUI thread is trying to
+        // find the child and it's allocation.
+        synchronized (locator) {
+            index = locator.getViewIndexAtPoint(x, y, a);
+            ca = locator.getChildAllocation(index, a);
+        }
+
+        // forward to the child view, and make sure we don't
+        // interact with the layout thread by synchronizing
+        // on the child state.
+        ChildState cs = getChildState(index);
+        synchronized (cs) {
+            View v = cs.getChildView();
+            pos = v.viewToModel(x, y, ca, biasReturn);
+        }
+        return pos;
+    }
+
+    /**
+     * Provides a way to determine the next visually represented model
+     * location that one might place a caret.  Some views may not be visible,
+     * they might not be in the same order found in the model, or they just
+     * might not allow access to some of the locations in the model.
+     * This method enables specifying a position to convert
+     * within the range of &gt;=0.  If the value is -1, a position
+     * will be calculated automatically.  If the value &lt; -1,
+     * the {@code BadLocationException} will be thrown.
+     *
+     * @param pos the position to convert
+     * @param a the allocated region to render into
+     * @param direction the direction from the current position that can
+     *  be thought of as the arrow keys typically found on a keyboard;
+     *  this may be one of the following:
+     *  <ul style="list-style-type:none">
+     *  <li><code>SwingConstants.WEST</code></li>
+     *  <li><code>SwingConstants.EAST</code></li>
+     *  <li><code>SwingConstants.NORTH</code></li>
+     *  <li><code>SwingConstants.SOUTH</code></li>
+     *  </ul>
+     * @param biasRet an array contain the bias that was checked
+     * @return the location within the model that best represents the next
+     *  location visual position
+     * @exception BadLocationException the given position is not a valid
+     *                                 position within the document
+     * @exception IllegalArgumentException if <code>direction</code> is invalid
+     */
+    public int getNextVisualPositionFrom(int pos, Position.Bias b, Shape a,
+                                         int direction,
+                                         Position.Bias[] biasRet)
+                                                  throws BadLocationException {
+        if (pos < -1) {
+            throw new BadLocationException("invalid position", pos);
+        }
+        return Utilities.getNextVisualPositionFrom(
+                            this, pos, b, a, direction, biasRet);
+    }
+
+    // --- variables -----------------------------------------
+
+    /**
+     * The major axis against which the children are
+     * tiled.
+     */
+    int axis;
+
+    /**
+     * The children and their layout statistics.
+     */
+    List<ChildState> stats;
+
+    /**
+     * Current span along the major axis.  This
+     * is also the value returned by getMinimumSize,
+     * getPreferredSize, and getMaximumSize along
+     * the major axis.
+     */
+    float majorSpan;
+
+    /**
+     * Is the span along the major axis estimated?
+     */
+    boolean estimatedMajorSpan;
+
+    /**
+     * Current span along the minor axis.  This
+     * is what layout was done against (i.e. things
+     * are flexible in this direction).
+     */
+    float minorSpan;
+
+    /**
+     * Object that manages the offsets of the
+     * children.  All locking for management of
+     * child locations is on this object.
+     */
+    protected ChildLocator locator;
+
+    float topInset;
+    float bottomInset;
+    float leftInset;
+    float rightInset;
+
+    ChildState minRequest;
+    ChildState prefRequest;
+    boolean majorChanged;
+    boolean minorChanged;
+    Runnable flushTask;
+
+    /**
+     * Child that is actively changing size.  This often
+     * causes a preferenceChanged, so this is a cache to
+     * possibly speed up the marking the state.  It also
+     * helps flag an opportunity to avoid adding to flush
+     * task to the layout queue.
+     */
+    ChildState changing;
+
+    /**
+     * A class to manage the effective position of the
+     * child views in a localized area while changes are
+     * being made around the localized area.  The AsyncBoxView
+     * may be continuously changing, but the visible area
+     * needs to remain fairly stable until the layout thread
+     * decides to publish an update to the parent.
+     * @since 1.3
+     */
+    public class ChildLocator {
+
+        /**
+         * construct a child locator.
+         */
+        public ChildLocator() {
+            lastAlloc = new Rectangle();
+            childAlloc = new Rectangle();
+        }
+
+        /**
+         * Notification that a child changed.  This can effect
+         * whether or not new offset calculations are needed.
+         * This is called by a ChildState object that has
+         * changed it's major span.  This can therefore be
+         * called by multiple threads.
+         */
+        public synchronized void childChanged(ChildState cs) {
+            if (lastValidOffset == null) {
+                lastValidOffset = cs;
+            } else if (cs.getChildView().getStartOffset() <
+                       lastValidOffset.getChildView().getStartOffset()) {
+                lastValidOffset = cs;
+            }
+        }
+
+        /**
+         * Paint the children that intersect the clip area.
+         */
+        public synchronized void paintChildren(Graphics g) {
+            Rectangle clip = g.getClipBounds();
+            float targetOffset = (axis == X_AXIS) ?
+                clip.x - lastAlloc.x : clip.y - lastAlloc.y;
+            int index = getViewIndexAtVisualOffset(targetOffset);
+            int n = getViewCount();
+            float offs = getChildState(index).getMajorOffset();
+            for (int i = index; i < n; i++) {
+                ChildState cs = getChildState(i);
+                cs.setMajorOffset(offs);
+                Shape ca = getChildAllocation(i);
+                if (intersectsClip(ca, clip)) {
+                    synchronized (cs) {
+                        View v = cs.getChildView();
+                        v.paint(g, ca);
+                    }
+                } else {
+                    // done painting intersection
+                    break;
+                }
+                offs += cs.getMajorSpan();
+            }
+        }
+
+        /**
+         * Fetch the allocation to use for a child view.
+         * This will update the offsets for all children
+         * not yet updated before the given index.
+         */
+        public synchronized Shape getChildAllocation(int index, Shape a) {
+            if (a == null) {
+                return null;
+            }
+            setAllocation(a);
+            ChildState cs = getChildState(index);
+            if (lastValidOffset == null) {
+                lastValidOffset = getChildState(0);
+            }
+            if (cs.getChildView().getStartOffset() >
+                lastValidOffset.getChildView().getStartOffset()) {
+                // offsets need to be updated
+                updateChildOffsetsToIndex(index);
+            }
+            Shape ca = getChildAllocation(index);
+            return ca;
+        }
+
+        /**
+         * Fetches the child view index at the given point.
+         * This is called by the various View methods that
+         * need to calculate which child to forward a message
+         * to.  This should be called by a block synchronized
+         * on this object, and would typically be followed
+         * with one or more calls to getChildAllocation that
+         * should also be in the synchronized block.
+         *
+         * @param x the X coordinate &gt;= 0
+         * @param y the Y coordinate &gt;= 0
+         * @param a the allocation to the View
+         * @return the nearest child index
+         */
+        public int getViewIndexAtPoint(float x, float y, Shape a) {
+            setAllocation(a);
+            float targetOffset = (axis == X_AXIS) ? x - lastAlloc.x : y - lastAlloc.y;
+            int index = getViewIndexAtVisualOffset(targetOffset);
+            return index;
+        }
+
+        /**
+         * Fetch the allocation to use for a child view.
+         * <em>This does not update the offsets in the ChildState
+         * records.</em>
+         */
+        protected Shape getChildAllocation(int index) {
+            ChildState cs = getChildState(index);
+            if (! cs.isLayoutValid()) {
+                cs.run();
+            }
+            if (axis == X_AXIS) {
+                childAlloc.x = lastAlloc.x + (int) cs.getMajorOffset();
+                childAlloc.y = lastAlloc.y + (int) cs.getMinorOffset();
+                childAlloc.width = (int) cs.getMajorSpan();
+                childAlloc.height = (int) cs.getMinorSpan();
+            } else {
+                childAlloc.y = lastAlloc.y + (int) cs.getMajorOffset();
+                childAlloc.x = lastAlloc.x + (int) cs.getMinorOffset();
+                childAlloc.height = (int) cs.getMajorSpan();
+                childAlloc.width = (int) cs.getMinorSpan();
+            }
+            childAlloc.x += (int)getLeftInset();
+            childAlloc.y += (int)getRightInset();
+            return childAlloc;
+        }
+
+        /**
+         * Copy the currently allocated shape into the Rectangle
+         * used to store the current allocation.  This would be
+         * a floating point rectangle in a Java2D-specific implementation.
+         */
+        protected void setAllocation(Shape a) {
+            if (a instanceof Rectangle) {
+                lastAlloc.setBounds((Rectangle) a);
+            } else {
+                lastAlloc.setBounds(a.getBounds());
+            }
+            setSize(lastAlloc.width, lastAlloc.height);
+        }
+
+        /**
+         * Locate the view responsible for an offset into the box
+         * along the major axis.  Make sure that offsets are set
+         * on the ChildState objects up to the given target span
+         * past the desired offset.
+         *
+         * @return   index of the view representing the given visual
+         *   location (targetOffset), or -1 if no view represents
+         *   that location
+         */
+        protected int getViewIndexAtVisualOffset(float targetOffset) {
+            int n = getViewCount();
+            if (n > 0) {
+                boolean lastValid = (lastValidOffset != null);
+
+                if (lastValidOffset == null) {
+                    lastValidOffset = getChildState(0);
+                }
+                if (targetOffset > majorSpan) {
+                    // should only get here on the first time display.
+                    if (!lastValid) {
+                        return 0;
+                    }
+                    int pos = lastValidOffset.getChildView().getStartOffset();
+                    int index = getViewIndex(pos, Position.Bias.Forward);
+                    return index;
+                } else if (targetOffset > lastValidOffset.getMajorOffset()) {
+                    // roll offset calculations forward
+                    return updateChildOffsets(targetOffset);
+                } else {
+                    // no changes prior to the needed offset
+                    // this should be a binary search
+                    float offs = 0f;
+                    for (int i = 0; i < n; i++) {
+                        ChildState cs = getChildState(i);
+                        float nextOffs = offs + cs.getMajorSpan();
+                        if (targetOffset < nextOffs) {
+                            return i;
+                        }
+                        offs = nextOffs;
+                    }
+                }
+            }
+            return n - 1;
+        }
+
+        /**
+         * Move the location of the last offset calculation forward
+         * to the desired offset.
+         */
+        int updateChildOffsets(float targetOffset) {
+            int n = getViewCount();
+            int targetIndex = n - 1;
+            int pos = lastValidOffset.getChildView().getStartOffset();
+            int startIndex = getViewIndex(pos, Position.Bias.Forward);
+            float start = lastValidOffset.getMajorOffset();
+            float lastOffset = start;
+            for (int i = startIndex; i < n; i++) {
+                ChildState cs = getChildState(i);
+                cs.setMajorOffset(lastOffset);
+                lastOffset += cs.getMajorSpan();
+                if (targetOffset < lastOffset) {
+                    targetIndex = i;
+                    lastValidOffset = cs;
+                    break;
+                }
+            }
+
+            return targetIndex;
+        }
+
+        /**
+         * Move the location of the last offset calculation forward
+         * to the desired index.
+         */
+        void updateChildOffsetsToIndex(int index) {
+            int pos = lastValidOffset.getChildView().getStartOffset();
+            int startIndex = getViewIndex(pos, Position.Bias.Forward);
+            float lastOffset = lastValidOffset.getMajorOffset();
+            for (int i = startIndex; i <= index; i++) {
+                ChildState cs = getChildState(i);
+                cs.setMajorOffset(lastOffset);
+                lastOffset += cs.getMajorSpan();
+            }
+        }
+
+        boolean intersectsClip(Shape childAlloc, Rectangle clip) {
+            Rectangle cs = (childAlloc instanceof Rectangle) ?
+                (Rectangle) childAlloc : childAlloc.getBounds();
+            if (cs.intersects(clip)) {
+                // Make sure that lastAlloc also contains childAlloc,
+                // this will be false if haven't yet flushed changes.
+                return lastAlloc.intersects(cs);
+            }
+            return false;
+        }
+
+        /**
+         * The location of the last offset calculation
+         * that is valid.
+         */
+        protected ChildState lastValidOffset;
+
+        /**
+         * The last seen allocation (for repainting when changes
+         * are flushed upward).
+         */
+        protected Rectangle lastAlloc;
+
+        /**
+         * A shape to use for the child allocation to avoid
+         * creating a lot of garbage.
+         */
+        protected Rectangle childAlloc;
+    }
+
+    /**
+     * A record representing the layout state of a
+     * child view.  It is runnable as a task on another
+     * thread.  All access to the child view that is
+     * based upon a read-lock on the model should synchronize
+     * on this object (i.e. The layout thread and the GUI
+     * thread can both have a read lock on the model at the
+     * same time and are not protected from each other).
+     * Access to a child view hierarchy is serialized via
+     * synchronization on the ChildState instance.
+     * @since 1.3
+     */
+    public class ChildState implements Runnable {
+
+        /**
+         * Construct a child status.  This needs to start
+         * out as fairly large so we don't falsely begin with
+         * the idea that all of the children are visible.
+         * @since 1.4
+         */
+        public ChildState(View v) {
+            child = v;
+            minorValid = false;
+            majorValid = false;
+            childSizeValid = false;
+            child.setParent(AsyncBoxView.this);
+        }
+
+        /**
+         * Fetch the child view this record represents
+         */
+        public View getChildView() {
+            return child;
+        }
+
+        /**
+         * Update the child state.  This should be
+         * called by the thread that desires to spend
+         * time updating the child state (intended to
+         * be the layout thread).
+         * <p>
+         * This acquires a read lock on the associated
+         * document for the duration of the update to
+         * ensure the model is not changed while it is
+         * operating.  The first thing to do would be
+         * to see if any work actually needs to be done.
+         * The following could have conceivably happened
+         * while the state was waiting to be updated:
+         * <ol>
+         * <li>The child may have been removed from the
+         * view hierarchy.
+         * <li>The child may have been updated by a
+         * higher priority operation (i.e. the child
+         * may have become visible).
+         * </ol>
+         */
+        public void run () {
+            AbstractDocument doc = (AbstractDocument) getDocument();
+            try {
+                doc.readLock();
+                if (minorValid && majorValid && childSizeValid) {
+                    // nothing to do
+                    return;
+                }
+                if (child.getParent() == AsyncBoxView.this) {
+                    // this may overwrite anothers threads cached
+                    // value for actively changing... but that just
+                    // means it won't use the cache if there is an
+                    // overwrite.
+                    synchronized(AsyncBoxView.this) {
+                        changing = this;
+                    }
+                    updateChild();
+                    synchronized(AsyncBoxView.this) {
+                        changing = null;
+                    }
+
+                    // setting the child size on the minor axis
+                    // may have caused it to change it's preference
+                    // along the major axis.
+                    updateChild();
+                }
+            } finally {
+                doc.readUnlock();
+            }
+        }
+
+        void updateChild() {
+            boolean minorUpdated = false;
+            synchronized(this) {
+                if (! minorValid) {
+                    int minorAxis = getMinorAxis();
+                    min = child.getMinimumSpan(minorAxis);
+                    pref = child.getPreferredSpan(minorAxis);
+                    max = child.getMaximumSpan(minorAxis);
+                    minorValid = true;
+                    minorUpdated = true;
+                }
+            }
+            if (minorUpdated) {
+                minorRequirementChange(this);
+            }
+
+            boolean majorUpdated = false;
+            float delta = 0.0f;
+            synchronized(this) {
+                if (! majorValid) {
+                    float old = span;
+                    span = child.getPreferredSpan(axis);
+                    delta = span - old;
+                    majorValid = true;
+                    majorUpdated = true;
+                }
+            }
+            if (majorUpdated) {
+                majorRequirementChange(this, delta);
+                locator.childChanged(this);
+            }
+
+            synchronized(this) {
+                if (! childSizeValid) {
+                    float w;
+                    float h;
+                    if (axis == X_AXIS) {
+                        w = span;
+                        h = getMinorSpan();
+                    } else {
+                        w = getMinorSpan();
+                        h = span;
+                    }
+                    childSizeValid = true;
+                    child.setSize(w, h);
+                }
+            }
+
+        }
+
+        /**
+         * What is the span along the minor axis.
+         */
+        public float getMinorSpan() {
+            if (max < minorSpan) {
+                return max;
+            }
+            // make it the target width, or as small as it can get.
+            return Math.max(min, minorSpan);
+        }
+
+        /**
+         * What is the offset along the minor axis
+         */
+        public float getMinorOffset() {
+            if (max < minorSpan) {
+                // can't make the child this wide, align it
+                float align = child.getAlignment(getMinorAxis());
+                return ((minorSpan - max) * align);
+            }
+            return 0f;
+        }
+
+        /**
+         * What is the span along the major axis.
+         */
+        public float getMajorSpan() {
+            return span;
+        }
+
+        /**
+         * Get the offset along the major axis
+         */
+        public float getMajorOffset() {
+            return offset;
+        }
+
+        /**
+         * This method should only be called by the ChildLocator,
+         * it is simply a convenient place to hold the cached
+         * location.
+         */
+        public void setMajorOffset(float offs) {
+            offset = offs;
+        }
+
+        /**
+         * Mark preferences changed for this child.
+         *
+         * @param width true if the width preference has changed
+         * @param height true if the height preference has changed
+         * @see javax.swing.JComponent#revalidate
+         */
+        public void preferenceChanged(boolean width, boolean height) {
+            if (axis == X_AXIS) {
+                if (width) {
+                    majorValid = false;
+                }
+                if (height) {
+                    minorValid = false;
+                }
+            } else {
+                if (width) {
+                    minorValid = false;
+                }
+                if (height) {
+                    majorValid = false;
+                }
+            }
+            childSizeValid = false;
+        }
+
+        /**
+         * Has the child view been laid out.
+         */
+        public boolean isLayoutValid() {
+            return (minorValid && majorValid && childSizeValid);
+        }
+
+        // minor axis
+        private float min;
+        private float pref;
+        private float max;
+        private boolean minorValid;
+
+        // major axis
+        private float span;
+        private float offset;
+        private boolean majorValid;
+
+        private View child;
+        private boolean childSizeValid;
+    }
+
+    /**
+     * Task to flush requirement changes upward
+     */
+    class FlushTask implements Runnable {
+
+        public void run() {
+            flushRequirementChanges();
+        }
+
+    }
+
+}

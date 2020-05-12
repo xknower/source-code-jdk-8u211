@@ -1,3027 +1,3017 @@
-/*      */ package java.util;
-/*      */ 
-/*      */ import java.io.IOException;
-/*      */ import java.io.InputStream;
-/*      */ import java.lang.ref.Reference;
-/*      */ import java.lang.ref.ReferenceQueue;
-/*      */ import java.lang.ref.SoftReference;
-/*      */ import java.lang.ref.WeakReference;
-/*      */ import java.net.JarURLConnection;
-/*      */ import java.net.URL;
-/*      */ import java.net.URLConnection;
-/*      */ import java.security.AccessController;
-/*      */ import java.security.PrivilegedAction;
-/*      */ import java.security.PrivilegedActionException;
-/*      */ import java.security.PrivilegedExceptionAction;
-/*      */ import java.util.concurrent.ConcurrentHashMap;
-/*      */ import java.util.concurrent.ConcurrentMap;
-/*      */ import java.util.jar.JarEntry;
-/*      */ import java.util.spi.ResourceBundleControlProvider;
-/*      */ import sun.reflect.CallerSensitive;
-/*      */ import sun.reflect.Reflection;
-/*      */ import sun.util.locale.BaseLocale;
-/*      */ import sun.util.locale.LocaleObjectCache;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public abstract class ResourceBundle
-/*      */ {
-/*      */   private static final int INITIAL_CACHE_SIZE = 32;
-/*      */   
-/*  293 */   private static final ResourceBundle NONEXISTENT_BUNDLE = new ResourceBundle() {
-/*  294 */       public Enumeration<String> getKeys() { return null; }
-/*  295 */       protected Object handleGetObject(String param1String) { return null; } public String toString() {
-/*  296 */         return "NONEXISTENT_BUNDLE";
-/*      */       }
-/*      */     };
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  312 */   private static final ConcurrentMap<CacheKey, BundleReference> cacheList = new ConcurrentHashMap<>(32);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  318 */   private static final ReferenceQueue<Object> referenceQueue = new ReferenceQueue();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getBaseBundleName() {
-/*  335 */     return this.name;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  343 */   protected ResourceBundle parent = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  348 */   private Locale locale = null;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private String name;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private volatile boolean expired;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private volatile CacheKey cacheKey;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private volatile Set<String> keySet;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static final List<ResourceBundleControlProvider> providers;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static {
-/*  374 */     ArrayList<ResourceBundleControlProvider> arrayList = null;
-/*      */     
-/*  376 */     ServiceLoader<ResourceBundleControlProvider> serviceLoader = ServiceLoader.loadInstalled(ResourceBundleControlProvider.class);
-/*  377 */     for (ResourceBundleControlProvider resourceBundleControlProvider : serviceLoader) {
-/*  378 */       if (arrayList == null) {
-/*  379 */         arrayList = new ArrayList();
-/*      */       }
-/*  381 */       arrayList.add(resourceBundleControlProvider);
-/*      */     } 
-/*  383 */     providers = arrayList;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final String getString(String paramString) {
-/*  407 */     return (String)getObject(paramString);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final String[] getStringArray(String paramString) {
-/*  424 */     return (String[])getObject(paramString);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final Object getObject(String paramString) {
-/*  441 */     Object object = handleGetObject(paramString);
-/*  442 */     if (object == null) {
-/*  443 */       if (this.parent != null) {
-/*  444 */         object = this.parent.getObject(paramString);
-/*      */       }
-/*  446 */       if (object == null) {
-/*  447 */         throw new MissingResourceException("Can't find resource for bundle " + 
-/*  448 */             getClass().getName() + ", key " + paramString, 
-/*      */             
-/*  450 */             getClass().getName(), paramString);
-/*      */       }
-/*      */     } 
-/*      */     
-/*  454 */     return object;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Locale getLocale() {
-/*  465 */     return this.locale;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static ClassLoader getLoader(Class<?> paramClass) {
-/*  473 */     ClassLoader classLoader = (paramClass == null) ? null : paramClass.getClassLoader();
-/*  474 */     if (classLoader == null)
-/*      */     {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  482 */       classLoader = RBClassLoader.INSTANCE;
-/*      */     }
-/*  484 */     return classLoader;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private static class RBClassLoader
-/*      */     extends ClassLoader
-/*      */   {
-/*  491 */     private static final RBClassLoader INSTANCE = AccessController.<RBClassLoader>doPrivileged(new PrivilegedAction<RBClassLoader>()
-/*      */         {
-/*      */           public ResourceBundle.RBClassLoader run() {
-/*  494 */             return new ResourceBundle.RBClassLoader();
-/*      */           }
-/*      */         });
-/*      */     private static final ClassLoader loader;
-/*      */     
-/*      */     static {
-/*  500 */       ClassLoader classLoader1 = ClassLoader.getSystemClassLoader();
-/*      */       ClassLoader classLoader2;
-/*  502 */       while ((classLoader2 = classLoader1.getParent()) != null) {
-/*  503 */         classLoader1 = classLoader2;
-/*      */       }
-/*  505 */       loader = classLoader1;
-/*      */     }
-/*      */     
-/*      */     private RBClassLoader() {}
-/*      */     
-/*      */     public Class<?> loadClass(String param1String) throws ClassNotFoundException {
-/*  511 */       if (loader != null) {
-/*  512 */         return loader.loadClass(param1String);
-/*      */       }
-/*  514 */       return Class.forName(param1String);
-/*      */     }
-/*      */     public URL getResource(String param1String) {
-/*  517 */       if (loader != null) {
-/*  518 */         return loader.getResource(param1String);
-/*      */       }
-/*  520 */       return ClassLoader.getSystemResource(param1String);
-/*      */     }
-/*      */     public InputStream getResourceAsStream(String param1String) {
-/*  523 */       if (loader != null) {
-/*  524 */         return loader.getResourceAsStream(param1String);
-/*      */       }
-/*  526 */       return ClassLoader.getSystemResourceAsStream(param1String);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void setParent(ResourceBundle paramResourceBundle) {
-/*  538 */     assert paramResourceBundle != NONEXISTENT_BUNDLE;
-/*  539 */     this.parent = paramResourceBundle;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static class CacheKey
-/*      */     implements Cloneable
-/*      */   {
-/*      */     private String name;
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private Locale locale;
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private ResourceBundle.LoaderReference loaderRef;
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private String format;
-/*      */ 
-/*      */     
-/*      */     private volatile long loadTime;
-/*      */ 
-/*      */     
-/*      */     private volatile long expirationTime;
-/*      */ 
-/*      */     
-/*      */     private Throwable cause;
-/*      */ 
-/*      */     
-/*      */     private int hashCodeCache;
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     CacheKey(String param1String, Locale param1Locale, ClassLoader param1ClassLoader) {
-/*  577 */       this.name = param1String;
-/*  578 */       this.locale = param1Locale;
-/*  579 */       if (param1ClassLoader == null) {
-/*  580 */         this.loaderRef = null;
-/*      */       } else {
-/*  582 */         this.loaderRef = new ResourceBundle.LoaderReference(param1ClassLoader, ResourceBundle.referenceQueue, this);
-/*      */       } 
-/*  584 */       calculateHashCode();
-/*      */     }
-/*      */     
-/*      */     String getName() {
-/*  588 */       return this.name;
-/*      */     }
-/*      */     
-/*      */     CacheKey setName(String param1String) {
-/*  592 */       if (!this.name.equals(param1String)) {
-/*  593 */         this.name = param1String;
-/*  594 */         calculateHashCode();
-/*      */       } 
-/*  596 */       return this;
-/*      */     }
-/*      */     
-/*      */     Locale getLocale() {
-/*  600 */       return this.locale;
-/*      */     }
-/*      */     
-/*      */     CacheKey setLocale(Locale param1Locale) {
-/*  604 */       if (!this.locale.equals(param1Locale)) {
-/*  605 */         this.locale = param1Locale;
-/*  606 */         calculateHashCode();
-/*      */       } 
-/*  608 */       return this;
-/*      */     }
-/*      */     
-/*      */     ClassLoader getLoader() {
-/*  612 */       return (this.loaderRef != null) ? this.loaderRef.get() : null;
-/*      */     }
-/*      */     
-/*      */     public boolean equals(Object param1Object) {
-/*  616 */       if (this == param1Object) {
-/*  617 */         return true;
-/*      */       }
-/*      */       try {
-/*  620 */         CacheKey cacheKey = (CacheKey)param1Object;
-/*      */         
-/*  622 */         if (this.hashCodeCache != cacheKey.hashCodeCache) {
-/*  623 */           return false;
-/*      */         }
-/*      */         
-/*  626 */         if (!this.name.equals(cacheKey.name)) {
-/*  627 */           return false;
-/*      */         }
-/*      */         
-/*  630 */         if (!this.locale.equals(cacheKey.locale)) {
-/*  631 */           return false;
-/*      */         }
-/*      */         
-/*  634 */         if (this.loaderRef == null) {
-/*  635 */           return (cacheKey.loaderRef == null);
-/*      */         }
-/*  637 */         ClassLoader classLoader = this.loaderRef.get();
-/*  638 */         return (cacheKey.loaderRef != null && classLoader != null && classLoader == cacheKey.loaderRef
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*  643 */           .get());
-/*  644 */       } catch (NullPointerException|ClassCastException nullPointerException) {
-/*      */         
-/*  646 */         return false;
-/*      */       } 
-/*      */     }
-/*      */     public int hashCode() {
-/*  650 */       return this.hashCodeCache;
-/*      */     }
-/*      */     
-/*      */     private void calculateHashCode() {
-/*  654 */       this.hashCodeCache = this.name.hashCode() << 3;
-/*  655 */       this.hashCodeCache ^= this.locale.hashCode();
-/*  656 */       ClassLoader classLoader = getLoader();
-/*  657 */       if (classLoader != null) {
-/*  658 */         this.hashCodeCache ^= classLoader.hashCode();
-/*      */       }
-/*      */     }
-/*      */     
-/*      */     public Object clone() {
-/*      */       try {
-/*  664 */         CacheKey cacheKey = (CacheKey)super.clone();
-/*  665 */         if (this.loaderRef != null) {
-/*  666 */           cacheKey
-/*  667 */             .loaderRef = new ResourceBundle.LoaderReference(this.loaderRef.get(), ResourceBundle.referenceQueue, cacheKey);
-/*      */         }
-/*      */         
-/*  670 */         cacheKey.cause = null;
-/*  671 */         return cacheKey;
-/*  672 */       } catch (CloneNotSupportedException cloneNotSupportedException) {
-/*      */         
-/*  674 */         throw new InternalError(cloneNotSupportedException);
-/*      */       } 
-/*      */     }
-/*      */     
-/*      */     String getFormat() {
-/*  679 */       return this.format;
-/*      */     }
-/*      */     
-/*      */     void setFormat(String param1String) {
-/*  683 */       this.format = param1String;
-/*      */     }
-/*      */     
-/*      */     private void setCause(Throwable param1Throwable) {
-/*  687 */       if (this.cause == null) {
-/*  688 */         this.cause = param1Throwable;
-/*      */ 
-/*      */       
-/*      */       }
-/*  692 */       else if (this.cause instanceof ClassNotFoundException) {
-/*  693 */         this.cause = param1Throwable;
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     private Throwable getCause() {
-/*  699 */       return this.cause;
-/*      */     }
-/*      */     
-/*      */     public String toString() {
-/*  703 */       String str = this.locale.toString();
-/*  704 */       if (str.length() == 0) {
-/*  705 */         if (this.locale.getVariant().length() != 0) {
-/*  706 */           str = "__" + this.locale.getVariant();
-/*      */         } else {
-/*  708 */           str = "\"\"";
-/*      */         } 
-/*      */       }
-/*  711 */       return "CacheKey[" + this.name + ", lc=" + str + ", ldr=" + getLoader() + "(format=" + this.format + ")]";
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static class LoaderReference
-/*      */     extends WeakReference<ClassLoader>
-/*      */     implements CacheKeyReference
-/*      */   {
-/*      */     private ResourceBundle.CacheKey cacheKey;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     LoaderReference(ClassLoader param1ClassLoader, ReferenceQueue<Object> param1ReferenceQueue, ResourceBundle.CacheKey param1CacheKey) {
-/*  734 */       super(param1ClassLoader, param1ReferenceQueue);
-/*  735 */       this.cacheKey = param1CacheKey;
-/*      */     }
-/*      */     
-/*      */     public ResourceBundle.CacheKey getCacheKey() {
-/*  739 */       return this.cacheKey;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private static class BundleReference
-/*      */     extends SoftReference<ResourceBundle>
-/*      */     implements CacheKeyReference
-/*      */   {
-/*      */     private ResourceBundle.CacheKey cacheKey;
-/*      */ 
-/*      */     
-/*      */     BundleReference(ResourceBundle param1ResourceBundle, ReferenceQueue<Object> param1ReferenceQueue, ResourceBundle.CacheKey param1CacheKey) {
-/*  752 */       super(param1ResourceBundle, param1ReferenceQueue);
-/*  753 */       this.cacheKey = param1CacheKey;
-/*      */     }
-/*      */     
-/*      */     public ResourceBundle.CacheKey getCacheKey() {
-/*  757 */       return this.cacheKey;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   @CallerSensitive
-/*      */   public static final ResourceBundle getBundle(String paramString) {
-/*  782 */     return getBundleImpl(paramString, Locale.getDefault(), 
-/*  783 */         getLoader(Reflection.getCallerClass()), 
-/*  784 */         getDefaultControl(paramString));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   @CallerSensitive
-/*      */   public static final ResourceBundle getBundle(String paramString, Control paramControl) {
-/*  824 */     return getBundleImpl(paramString, Locale.getDefault(), 
-/*  825 */         getLoader(Reflection.getCallerClass()), paramControl);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   @CallerSensitive
-/*      */   public static final ResourceBundle getBundle(String paramString, Locale paramLocale) {
-/*  854 */     return getBundleImpl(paramString, paramLocale, 
-/*  855 */         getLoader(Reflection.getCallerClass()), 
-/*  856 */         getDefaultControl(paramString));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   @CallerSensitive
-/*      */   public static final ResourceBundle getBundle(String paramString, Locale paramLocale, Control paramControl) {
-/*  899 */     return getBundleImpl(paramString, paramLocale, 
-/*  900 */         getLoader(Reflection.getCallerClass()), paramControl);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static ResourceBundle getBundle(String paramString, Locale paramLocale, ClassLoader paramClassLoader) {
-/* 1088 */     if (paramClassLoader == null) {
-/* 1089 */       throw new NullPointerException();
-/*      */     }
-/* 1091 */     return getBundleImpl(paramString, paramLocale, paramClassLoader, getDefaultControl(paramString));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static ResourceBundle getBundle(String paramString, Locale paramLocale, ClassLoader paramClassLoader, Control paramControl) {
-/* 1305 */     if (paramClassLoader == null || paramControl == null) {
-/* 1306 */       throw new NullPointerException();
-/*      */     }
-/* 1308 */     return getBundleImpl(paramString, paramLocale, paramClassLoader, paramControl);
-/*      */   }
-/*      */   
-/*      */   private static Control getDefaultControl(String paramString) {
-/* 1312 */     if (providers != null) {
-/* 1313 */       for (ResourceBundleControlProvider resourceBundleControlProvider : providers) {
-/* 1314 */         Control control = resourceBundleControlProvider.getControl(paramString);
-/* 1315 */         if (control != null) {
-/* 1316 */           return control;
-/*      */         }
-/*      */       } 
-/*      */     }
-/* 1320 */     return Control.INSTANCE;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private static ResourceBundle getBundleImpl(String paramString, Locale paramLocale, ClassLoader paramClassLoader, Control paramControl) {
-/* 1325 */     if (paramLocale == null || paramControl == null) {
-/* 1326 */       throw new NullPointerException();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1333 */     CacheKey cacheKey = new CacheKey(paramString, paramLocale, paramClassLoader);
-/* 1334 */     ResourceBundle resourceBundle1 = null;
-/*      */ 
-/*      */     
-/* 1337 */     BundleReference bundleReference = cacheList.get(cacheKey);
-/* 1338 */     if (bundleReference != null) {
-/* 1339 */       resourceBundle1 = bundleReference.get();
-/* 1340 */       bundleReference = null;
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1347 */     if (isValidBundle(resourceBundle1) && hasValidParentChain(resourceBundle1)) {
-/* 1348 */       return resourceBundle1;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1354 */     boolean bool = (paramControl == Control.INSTANCE || paramControl instanceof SingleFormatControl) ? true : false;
-/*      */     
-/* 1356 */     List<String> list = paramControl.getFormats(paramString);
-/* 1357 */     if (!bool && !checkList(list)) {
-/* 1358 */       throw new IllegalArgumentException("Invalid Control: getFormats");
-/*      */     }
-/*      */     
-/* 1361 */     ResourceBundle resourceBundle2 = null;
-/* 1362 */     Locale locale = paramLocale;
-/* 1363 */     for (; locale != null; 
-/* 1364 */       locale = paramControl.getFallbackLocale(paramString, locale)) {
-/* 1365 */       List<Locale> list1 = paramControl.getCandidateLocales(paramString, locale);
-/* 1366 */       if (!bool && !checkList(list1)) {
-/* 1367 */         throw new IllegalArgumentException("Invalid Control: getCandidateLocales");
-/*      */       }
-/*      */       
-/* 1370 */       resourceBundle1 = findBundle(cacheKey, list1, list, 0, paramControl, resourceBundle2);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1377 */       if (isValidBundle(resourceBundle1)) {
-/* 1378 */         boolean bool1 = Locale.ROOT.equals(resourceBundle1.locale);
-/* 1379 */         if (!bool1 || resourceBundle1.locale.equals(paramLocale) || (list1
-/* 1380 */           .size() == 1 && resourceBundle1.locale
-/* 1381 */           .equals(list1.get(0)))) {
-/*      */           break;
-/*      */         }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1388 */         if (bool1 && resourceBundle2 == null) {
-/* 1389 */           resourceBundle2 = resourceBundle1;
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*      */     
-/* 1394 */     if (resourceBundle1 == null) {
-/* 1395 */       if (resourceBundle2 == null) {
-/* 1396 */         throwMissingResourceException(paramString, paramLocale, cacheKey.getCause());
-/*      */       }
-/* 1398 */       resourceBundle1 = resourceBundle2;
-/*      */     } 
-/*      */     
-/* 1401 */     keepAlive(paramClassLoader);
-/* 1402 */     return resourceBundle1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static void keepAlive(ClassLoader paramClassLoader) {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static boolean checkList(List<?> paramList) {
-/* 1417 */     boolean bool = (paramList != null && !paramList.isEmpty()) ? true : false;
-/* 1418 */     if (bool) {
-/* 1419 */       int i = paramList.size();
-/* 1420 */       for (byte b = 0; bool && b < i; b++) {
-/* 1421 */         bool = (paramList.get(b) != null) ? true : false;
-/*      */       }
-/*      */     } 
-/* 1424 */     return bool;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static ResourceBundle findBundle(CacheKey paramCacheKey, List<Locale> paramList, List<String> paramList1, int paramInt, Control paramControl, ResourceBundle paramResourceBundle) {
-/* 1433 */     Locale locale = paramList.get(paramInt);
-/* 1434 */     ResourceBundle resourceBundle1 = null;
-/* 1435 */     if (paramInt != paramList.size() - 1) {
-/* 1436 */       resourceBundle1 = findBundle(paramCacheKey, paramList, paramList1, paramInt + 1, paramControl, paramResourceBundle);
-/*      */     }
-/* 1438 */     else if (paramResourceBundle != null && Locale.ROOT.equals(locale)) {
-/* 1439 */       return paramResourceBundle;
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     Reference<?> reference;
-/*      */ 
-/*      */     
-/* 1447 */     while ((reference = referenceQueue.poll()) != null) {
-/* 1448 */       cacheList.remove(((CacheKeyReference)reference).getCacheKey());
-/*      */     }
-/*      */ 
-/*      */     
-/* 1452 */     boolean bool = false;
-/*      */ 
-/*      */ 
-/*      */     
-/* 1456 */     paramCacheKey.setLocale(locale);
-/* 1457 */     ResourceBundle resourceBundle2 = findBundleInCache(paramCacheKey, paramControl);
-/* 1458 */     if (isValidBundle(resourceBundle2)) {
-/* 1459 */       bool = resourceBundle2.expired;
-/* 1460 */       if (!bool) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1466 */         if (resourceBundle2.parent == resourceBundle1) {
-/* 1467 */           return resourceBundle2;
-/*      */         }
-/*      */ 
-/*      */         
-/* 1471 */         BundleReference bundleReference = cacheList.get(paramCacheKey);
-/* 1472 */         if (bundleReference != null && bundleReference.get() == resourceBundle2) {
-/* 1473 */           cacheList.remove(paramCacheKey, bundleReference);
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*      */     
-/* 1478 */     if (resourceBundle2 != NONEXISTENT_BUNDLE) {
-/* 1479 */       CacheKey cacheKey = (CacheKey)paramCacheKey.clone();
-/*      */       
-/*      */       try {
-/* 1482 */         resourceBundle2 = loadBundle(paramCacheKey, paramList1, paramControl, bool);
-/* 1483 */         if (resourceBundle2 != null) {
-/* 1484 */           if (resourceBundle2.parent == null) {
-/* 1485 */             resourceBundle2.setParent(resourceBundle1);
-/*      */           }
-/* 1487 */           resourceBundle2.locale = locale;
-/* 1488 */           resourceBundle2 = putBundleInCache(paramCacheKey, resourceBundle2, paramControl);
-/* 1489 */           return resourceBundle2;
-/*      */         } 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1494 */         putBundleInCache(paramCacheKey, NONEXISTENT_BUNDLE, paramControl);
-/*      */       } finally {
-/* 1496 */         if (cacheKey.getCause() instanceof InterruptedException) {
-/* 1497 */           Thread.currentThread().interrupt();
-/*      */         }
-/*      */       } 
-/*      */     } 
-/* 1501 */     return resourceBundle1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static ResourceBundle loadBundle(CacheKey paramCacheKey, List<String> paramList, Control paramControl, boolean paramBoolean) {
-/* 1511 */     Locale locale = paramCacheKey.getLocale();
-/*      */     
-/* 1513 */     ResourceBundle resourceBundle = null;
-/* 1514 */     int i = paramList.size();
-/* 1515 */     for (byte b = 0; b < i; b++) {
-/* 1516 */       String str = paramList.get(b);
-/*      */       try {
-/* 1518 */         resourceBundle = paramControl.newBundle(paramCacheKey.getName(), locale, str, paramCacheKey
-/* 1519 */             .getLoader(), paramBoolean);
-/* 1520 */       } catch (LinkageError linkageError) {
-/*      */ 
-/*      */ 
-/*      */         
-/* 1524 */         paramCacheKey.setCause(linkageError);
-/* 1525 */       } catch (Exception exception) {
-/* 1526 */         paramCacheKey.setCause(exception);
-/*      */       } 
-/* 1528 */       if (resourceBundle != null) {
-/*      */ 
-/*      */         
-/* 1531 */         paramCacheKey.setFormat(str);
-/* 1532 */         resourceBundle.name = paramCacheKey.getName();
-/* 1533 */         resourceBundle.locale = locale;
-/*      */ 
-/*      */         
-/* 1536 */         resourceBundle.expired = false;
-/*      */         
-/*      */         break;
-/*      */       } 
-/*      */     } 
-/* 1541 */     return resourceBundle;
-/*      */   }
-/*      */   
-/*      */   private static boolean isValidBundle(ResourceBundle paramResourceBundle) {
-/* 1545 */     return (paramResourceBundle != null && paramResourceBundle != NONEXISTENT_BUNDLE);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static boolean hasValidParentChain(ResourceBundle paramResourceBundle) {
-/* 1553 */     long l = System.currentTimeMillis();
-/* 1554 */     while (paramResourceBundle != null) {
-/* 1555 */       if (paramResourceBundle.expired) {
-/* 1556 */         return false;
-/*      */       }
-/* 1558 */       CacheKey cacheKey = paramResourceBundle.cacheKey;
-/* 1559 */       if (cacheKey != null) {
-/* 1560 */         long l1 = cacheKey.expirationTime;
-/* 1561 */         if (l1 >= 0L && l1 <= l) {
-/* 1562 */           return false;
-/*      */         }
-/*      */       } 
-/* 1565 */       paramResourceBundle = paramResourceBundle.parent;
-/*      */     } 
-/* 1567 */     return true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static void throwMissingResourceException(String paramString, Locale paramLocale, Throwable paramThrowable) {
-/* 1578 */     if (paramThrowable instanceof MissingResourceException) {
-/* 1579 */       paramThrowable = null;
-/*      */     }
-/* 1581 */     throw new MissingResourceException("Can't find bundle for base name " + paramString + ", locale " + paramLocale, paramString + "_" + paramLocale, "", paramThrowable);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static ResourceBundle findBundleInCache(CacheKey paramCacheKey, Control paramControl) {
-/* 1600 */     BundleReference bundleReference = cacheList.get(paramCacheKey);
-/* 1601 */     if (bundleReference == null) {
-/* 1602 */       return null;
-/*      */     }
-/* 1604 */     ResourceBundle resourceBundle1 = bundleReference.get();
-/* 1605 */     if (resourceBundle1 == null) {
-/* 1606 */       return null;
-/*      */     }
-/* 1608 */     ResourceBundle resourceBundle2 = resourceBundle1.parent;
-/* 1609 */     assert resourceBundle2 != NONEXISTENT_BUNDLE;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1643 */     if (resourceBundle2 != null && resourceBundle2.expired) {
-/* 1644 */       assert resourceBundle1 != NONEXISTENT_BUNDLE;
-/* 1645 */       resourceBundle1.expired = true;
-/* 1646 */       resourceBundle1.cacheKey = null;
-/* 1647 */       cacheList.remove(paramCacheKey, bundleReference);
-/* 1648 */       resourceBundle1 = null;
-/*      */     } else {
-/* 1650 */       CacheKey cacheKey = bundleReference.getCacheKey();
-/* 1651 */       long l = cacheKey.expirationTime;
-/* 1652 */       if (!resourceBundle1.expired && l >= 0L && l <= 
-/* 1653 */         System.currentTimeMillis())
-/*      */       {
-/* 1655 */         if (resourceBundle1 != NONEXISTENT_BUNDLE) {
-/*      */ 
-/*      */           
-/* 1658 */           synchronized (resourceBundle1) {
-/* 1659 */             l = cacheKey.expirationTime;
-/* 1660 */             if (!resourceBundle1.expired && l >= 0L && l <= 
-/* 1661 */               System.currentTimeMillis()) {
-/*      */               try {
-/* 1663 */                 resourceBundle1.expired = paramControl.needsReload(cacheKey.getName(), cacheKey
-/* 1664 */                     .getLocale(), cacheKey
-/* 1665 */                     .getFormat(), cacheKey
-/* 1666 */                     .getLoader(), resourceBundle1, cacheKey
-/*      */                     
-/* 1668 */                     .loadTime);
-/* 1669 */               } catch (Exception exception) {
-/* 1670 */                 paramCacheKey.setCause(exception);
-/*      */               } 
-/* 1672 */               if (resourceBundle1.expired) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */                 
-/* 1677 */                 resourceBundle1.cacheKey = null;
-/* 1678 */                 cacheList.remove(paramCacheKey, bundleReference);
-/*      */               }
-/*      */               else {
-/*      */                 
-/* 1682 */                 setExpirationTime(cacheKey, paramControl);
-/*      */               } 
-/*      */             } 
-/*      */           } 
-/*      */         } else {
-/*      */           
-/* 1688 */           cacheList.remove(paramCacheKey, bundleReference);
-/* 1689 */           resourceBundle1 = null;
-/*      */         } 
-/*      */       }
-/*      */     } 
-/* 1693 */     return resourceBundle1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static ResourceBundle putBundleInCache(CacheKey paramCacheKey, ResourceBundle paramResourceBundle, Control paramControl) {
-/* 1708 */     setExpirationTime(paramCacheKey, paramControl);
-/* 1709 */     if (paramCacheKey.expirationTime != -1L) {
-/* 1710 */       CacheKey cacheKey = (CacheKey)paramCacheKey.clone();
-/* 1711 */       BundleReference bundleReference1 = new BundleReference(paramResourceBundle, referenceQueue, cacheKey);
-/* 1712 */       paramResourceBundle.cacheKey = cacheKey;
-/*      */ 
-/*      */       
-/* 1715 */       BundleReference bundleReference2 = cacheList.putIfAbsent(cacheKey, bundleReference1);
-/*      */ 
-/*      */ 
-/*      */       
-/* 1719 */       if (bundleReference2 != null) {
-/* 1720 */         ResourceBundle resourceBundle = bundleReference2.get();
-/* 1721 */         if (resourceBundle != null && !resourceBundle.expired) {
-/*      */           
-/* 1723 */           paramResourceBundle.cacheKey = null;
-/* 1724 */           paramResourceBundle = resourceBundle;
-/*      */ 
-/*      */           
-/* 1727 */           bundleReference1.clear();
-/*      */         }
-/*      */         else {
-/*      */           
-/* 1731 */           cacheList.put(cacheKey, bundleReference1);
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/* 1735 */     return paramResourceBundle;
-/*      */   }
-/*      */   
-/*      */   private static void setExpirationTime(CacheKey paramCacheKey, Control paramControl) {
-/* 1739 */     long l = paramControl.getTimeToLive(paramCacheKey.getName(), paramCacheKey
-/* 1740 */         .getLocale());
-/* 1741 */     if (l >= 0L) {
-/*      */ 
-/*      */       
-/* 1744 */       long l1 = System.currentTimeMillis();
-/* 1745 */       paramCacheKey.loadTime = l1;
-/* 1746 */       paramCacheKey.expirationTime = l1 + l;
-/* 1747 */     } else if (l >= -2L) {
-/* 1748 */       paramCacheKey.expirationTime = l;
-/*      */     } else {
-/* 1750 */       throw new IllegalArgumentException("Invalid Control: TTL=" + l);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   @CallerSensitive
-/*      */   public static final void clearCache() {
-/* 1763 */     clearCache(getLoader(Reflection.getCallerClass()));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final void clearCache(ClassLoader paramClassLoader) {
-/* 1776 */     if (paramClassLoader == null) {
-/* 1777 */       throw new NullPointerException();
-/*      */     }
-/* 1779 */     Set<CacheKey> set = cacheList.keySet();
-/* 1780 */     for (CacheKey cacheKey : set) {
-/* 1781 */       if (cacheKey.getLoader() == paramClassLoader) {
-/* 1782 */         set.remove(cacheKey);
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean containsKey(String paramString) {
-/* 1820 */     if (paramString == null) {
-/* 1821 */       throw new NullPointerException();
-/*      */     }
-/* 1823 */     for (ResourceBundle resourceBundle = this; resourceBundle != null; resourceBundle = resourceBundle.parent) {
-/* 1824 */       if (resourceBundle.handleKeySet().contains(paramString)) {
-/* 1825 */         return true;
-/*      */       }
-/*      */     } 
-/* 1828 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Set<String> keySet() {
-/* 1840 */     HashSet<String> hashSet = new HashSet();
-/* 1841 */     for (ResourceBundle resourceBundle = this; resourceBundle != null; resourceBundle = resourceBundle.parent) {
-/* 1842 */       hashSet.addAll(resourceBundle.handleKeySet());
-/*      */     }
-/* 1844 */     return hashSet;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected Set<String> handleKeySet() {
-/* 1865 */     if (this.keySet == null) {
-/* 1866 */       synchronized (this) {
-/* 1867 */         if (this.keySet == null) {
-/* 1868 */           HashSet<String> hashSet = new HashSet();
-/* 1869 */           Enumeration<String> enumeration = getKeys();
-/* 1870 */           while (enumeration.hasMoreElements()) {
-/* 1871 */             String str = enumeration.nextElement();
-/* 1872 */             if (handleGetObject(str) != null) {
-/* 1873 */               hashSet.add(str);
-/*      */             }
-/*      */           } 
-/* 1876 */           this.keySet = hashSet;
-/*      */         } 
-/*      */       } 
-/*      */     }
-/* 1880 */     return this.keySet;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected abstract Object handleGetObject(String paramString);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public abstract Enumeration<String> getKeys();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static class Control
-/*      */   {
-/* 2042 */     public static final List<String> FORMAT_DEFAULT = Collections.unmodifiableList(Arrays.asList(new String[] { "java.class", "java.properties" }));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2053 */     public static final List<String> FORMAT_CLASS = Collections.unmodifiableList(Arrays.asList(new String[] { "java.class" }));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2063 */     public static final List<String> FORMAT_PROPERTIES = Collections.unmodifiableList(Arrays.asList(new String[] { "java.properties" }));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public static final long TTL_DONT_CACHE = -1L;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public static final long TTL_NO_EXPIRATION_CONTROL = -2L;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2081 */     private static final Control INSTANCE = new Control();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public static final Control getControl(List<String> param1List) {
-/* 2114 */       if (param1List.equals(FORMAT_PROPERTIES)) {
-/* 2115 */         return ResourceBundle.SingleFormatControl.PROPERTIES_ONLY;
-/*      */       }
-/* 2117 */       if (param1List.equals(FORMAT_CLASS)) {
-/* 2118 */         return ResourceBundle.SingleFormatControl.CLASS_ONLY;
-/*      */       }
-/* 2120 */       if (param1List.equals(FORMAT_DEFAULT)) {
-/* 2121 */         return INSTANCE;
-/*      */       }
-/* 2123 */       throw new IllegalArgumentException();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public static final Control getNoFallbackControl(List<String> param1List) {
-/* 2149 */       if (param1List.equals(FORMAT_DEFAULT)) {
-/* 2150 */         return ResourceBundle.NoFallbackControl.NO_FALLBACK;
-/*      */       }
-/* 2152 */       if (param1List.equals(FORMAT_PROPERTIES)) {
-/* 2153 */         return ResourceBundle.NoFallbackControl.PROPERTIES_ONLY_NO_FALLBACK;
-/*      */       }
-/* 2155 */       if (param1List.equals(FORMAT_CLASS)) {
-/* 2156 */         return ResourceBundle.NoFallbackControl.CLASS_ONLY_NO_FALLBACK;
-/*      */       }
-/* 2158 */       throw new IllegalArgumentException();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public List<String> getFormats(String param1String) {
-/* 2196 */       if (param1String == null) {
-/* 2197 */         throw new NullPointerException();
-/*      */       }
-/* 2199 */       return FORMAT_DEFAULT;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public List<Locale> getCandidateLocales(String param1String, Locale param1Locale) {
-/* 2381 */       if (param1String == null) {
-/* 2382 */         throw new NullPointerException();
-/*      */       }
-/* 2384 */       return new ArrayList<>(CANDIDATES_CACHE.get(param1Locale.getBaseLocale()));
-/*      */     }
-/*      */     
-/* 2387 */     private static final CandidateListCache CANDIDATES_CACHE = new CandidateListCache();
-/*      */     private static class CandidateListCache extends LocaleObjectCache<BaseLocale, List<Locale>> { private CandidateListCache() {}
-/*      */       
-/*      */       protected List<Locale> createObject(BaseLocale param2BaseLocale) {
-/* 2391 */         String str1 = param2BaseLocale.getLanguage();
-/* 2392 */         String str2 = param2BaseLocale.getScript();
-/* 2393 */         String str3 = param2BaseLocale.getRegion();
-/* 2394 */         String str4 = param2BaseLocale.getVariant();
-/*      */ 
-/*      */         
-/* 2397 */         boolean bool1 = false;
-/* 2398 */         boolean bool2 = false;
-/* 2399 */         if (str1.equals("no")) {
-/* 2400 */           if (str3.equals("NO") && str4.equals("NY")) {
-/* 2401 */             str4 = "";
-/* 2402 */             bool2 = true;
-/*      */           } else {
-/* 2404 */             bool1 = true;
-/*      */           } 
-/*      */         }
-/* 2407 */         if (str1.equals("nb") || bool1) {
-/* 2408 */           List<Locale> list = getDefaultList("nb", str2, str3, str4);
-/*      */           
-/* 2410 */           LinkedList<Locale> linkedList = new LinkedList();
-/* 2411 */           for (Locale locale : list) {
-/* 2412 */             linkedList.add(locale);
-/* 2413 */             if (locale.getLanguage().length() == 0) {
-/*      */               break;
-/*      */             }
-/* 2416 */             linkedList.add(Locale.getInstance("no", locale.getScript(), locale.getCountry(), locale
-/* 2417 */                   .getVariant(), null));
-/*      */           } 
-/* 2419 */           return linkedList;
-/* 2420 */         }  if (str1.equals("nn") || bool2) {
-/*      */           
-/* 2422 */           List<Locale> list = getDefaultList("nn", str2, str3, str4);
-/* 2423 */           int i = list.size() - 1;
-/* 2424 */           list.add(i++, Locale.getInstance("no", "NO", "NY"));
-/* 2425 */           list.add(i++, Locale.getInstance("no", "NO", ""));
-/* 2426 */           list.add(i++, Locale.getInstance("no", "", ""));
-/* 2427 */           return list;
-/*      */         } 
-/*      */         
-/* 2430 */         if (str1.equals("zh")) {
-/* 2431 */           if (str2.length() == 0 && str3.length() > 0) {
-/*      */ 
-/*      */             
-/* 2434 */             switch (str3) {
-/*      */               case "TW":
-/*      */               case "HK":
-/*      */               case "MO":
-/* 2438 */                 str2 = "Hant";
-/*      */                 break;
-/*      */               case "CN":
-/*      */               case "SG":
-/* 2442 */                 str2 = "Hans";
-/*      */                 break;
-/*      */             } 
-/* 2445 */           } else if (str2.length() > 0 && str3.length() == 0) {
-/*      */ 
-/*      */             
-/* 2448 */             switch (str2) {
-/*      */               case "Hans":
-/* 2450 */                 str3 = "CN";
-/*      */                 break;
-/*      */               case "Hant":
-/* 2453 */                 str3 = "TW";
-/*      */                 break;
-/*      */             } 
-/*      */           
-/*      */           } 
-/*      */         }
-/* 2459 */         return getDefaultList(str1, str2, str3, str4);
-/*      */       }
-/*      */       
-/*      */       private static List<Locale> getDefaultList(String param2String1, String param2String2, String param2String3, String param2String4) {
-/* 2463 */         LinkedList<String> linkedList = null;
-/*      */         
-/* 2465 */         if (param2String4.length() > 0) {
-/* 2466 */           linkedList = new LinkedList();
-/* 2467 */           int i = param2String4.length();
-/* 2468 */           while (i != -1) {
-/* 2469 */             linkedList.add(param2String4.substring(0, i));
-/* 2470 */             i = param2String4.lastIndexOf('_', --i);
-/*      */           } 
-/*      */         } 
-/*      */         
-/* 2474 */         LinkedList<Locale> linkedList1 = new LinkedList();
-/*      */         
-/* 2476 */         if (linkedList != null) {
-/* 2477 */           for (String str : linkedList) {
-/* 2478 */             linkedList1.add(Locale.getInstance(param2String1, param2String2, param2String3, str, null));
-/*      */           }
-/*      */         }
-/* 2481 */         if (param2String3.length() > 0) {
-/* 2482 */           linkedList1.add(Locale.getInstance(param2String1, param2String2, param2String3, "", null));
-/*      */         }
-/* 2484 */         if (param2String2.length() > 0) {
-/* 2485 */           linkedList1.add(Locale.getInstance(param2String1, param2String2, "", "", null));
-/*      */ 
-/*      */ 
-/*      */           
-/* 2489 */           if (linkedList != null) {
-/* 2490 */             for (String str : linkedList) {
-/* 2491 */               linkedList1.add(Locale.getInstance(param2String1, "", param2String3, str, null));
-/*      */             }
-/*      */           }
-/* 2494 */           if (param2String3.length() > 0) {
-/* 2495 */             linkedList1.add(Locale.getInstance(param2String1, "", param2String3, "", null));
-/*      */           }
-/*      */         } 
-/* 2498 */         if (param2String1.length() > 0) {
-/* 2499 */           linkedList1.add(Locale.getInstance(param2String1, "", "", "", null));
-/*      */         }
-/*      */         
-/* 2502 */         linkedList1.add(Locale.ROOT);
-/*      */         
-/* 2504 */         return linkedList1;
-/*      */       } }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Locale getFallbackLocale(String param1String, Locale param1Locale) {
-/* 2545 */       if (param1String == null) {
-/* 2546 */         throw new NullPointerException();
-/*      */       }
-/* 2548 */       Locale locale = Locale.getDefault();
-/* 2549 */       return param1Locale.equals(locale) ? null : locale;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public ResourceBundle newBundle(String param1String1, Locale param1Locale, String param1String2, ClassLoader param1ClassLoader, boolean param1Boolean) throws IllegalAccessException, InstantiationException, IOException {
-/* 2651 */       String str = toBundleName(param1String1, param1Locale);
-/* 2652 */       ResourceBundle resourceBundle = null;
-/* 2653 */       if (param1String2.equals("java.class")) {
-/*      */ 
-/*      */         
-/*      */         try {
-/* 2657 */           Class<?> clazz = param1ClassLoader.loadClass(str);
-/*      */ 
-/*      */ 
-/*      */           
-/* 2661 */           if (ResourceBundle.class.isAssignableFrom(clazz)) {
-/* 2662 */             resourceBundle = (ResourceBundle)clazz.newInstance();
-/*      */           } else {
-/* 2664 */             throw new ClassCastException(clazz.getName() + " cannot be cast to ResourceBundle");
-/*      */           }
-/*      */         
-/* 2667 */         } catch (ClassNotFoundException classNotFoundException) {}
-/*      */       }
-/* 2669 */       else if (param1String2.equals("java.properties")) {
-/* 2670 */         final String resourceName = toResourceName0(str, "properties");
-/* 2671 */         if (str1 == null) {
-/* 2672 */           return resourceBundle;
-/*      */         }
-/* 2674 */         final ClassLoader classLoader = param1ClassLoader;
-/* 2675 */         final boolean reloadFlag = param1Boolean;
-/* 2676 */         InputStream inputStream = null;
-/*      */         try {
-/* 2678 */           inputStream = AccessController.<InputStream>doPrivileged(new PrivilegedExceptionAction<InputStream>()
-/*      */               {
-/*      */                 public InputStream run() throws IOException {
-/* 2681 */                   InputStream inputStream = null;
-/* 2682 */                   if (reloadFlag) {
-/* 2683 */                     URL uRL = classLoader.getResource(resourceName);
-/* 2684 */                     if (uRL != null) {
-/* 2685 */                       URLConnection uRLConnection = uRL.openConnection();
-/* 2686 */                       if (uRLConnection != null) {
-/*      */ 
-/*      */                         
-/* 2689 */                         uRLConnection.setUseCaches(false);
-/* 2690 */                         inputStream = uRLConnection.getInputStream();
-/*      */                       } 
-/*      */                     } 
-/*      */                   } else {
-/* 2694 */                     inputStream = classLoader.getResourceAsStream(resourceName);
-/*      */                   } 
-/* 2696 */                   return inputStream;
-/*      */                 }
-/*      */               });
-/* 2699 */         } catch (PrivilegedActionException privilegedActionException) {
-/* 2700 */           throw (IOException)privilegedActionException.getException();
-/*      */         } 
-/* 2702 */         if (inputStream != null) {
-/*      */           try {
-/* 2704 */             resourceBundle = new PropertyResourceBundle(inputStream);
-/*      */           } finally {
-/* 2706 */             inputStream.close();
-/*      */           } 
-/*      */         }
-/*      */       } else {
-/* 2710 */         throw new IllegalArgumentException("unknown format: " + param1String2);
-/*      */       } 
-/* 2712 */       return resourceBundle;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public long getTimeToLive(String param1String, Locale param1Locale) {
-/* 2762 */       if (param1String == null || param1Locale == null) {
-/* 2763 */         throw new NullPointerException();
-/*      */       }
-/* 2765 */       return -2L;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public boolean needsReload(String param1String1, Locale param1Locale, String param1String2, ClassLoader param1ClassLoader, ResourceBundle param1ResourceBundle, long param1Long) {
-/* 2819 */       if (param1ResourceBundle == null) {
-/* 2820 */         throw new NullPointerException();
-/*      */       }
-/* 2822 */       if (param1String2.equals("java.class") || param1String2.equals("java.properties")) {
-/* 2823 */         param1String2 = param1String2.substring(5);
-/*      */       }
-/* 2825 */       boolean bool = false;
-/*      */       try {
-/* 2827 */         String str = toResourceName0(toBundleName(param1String1, param1Locale), param1String2);
-/* 2828 */         if (str == null) {
-/* 2829 */           return bool;
-/*      */         }
-/* 2831 */         URL uRL = param1ClassLoader.getResource(str);
-/* 2832 */         if (uRL != null) {
-/* 2833 */           long l = 0L;
-/* 2834 */           URLConnection uRLConnection = uRL.openConnection();
-/* 2835 */           if (uRLConnection != null) {
-/*      */             
-/* 2837 */             uRLConnection.setUseCaches(false);
-/* 2838 */             if (uRLConnection instanceof JarURLConnection) {
-/* 2839 */               JarEntry jarEntry = ((JarURLConnection)uRLConnection).getJarEntry();
-/* 2840 */               if (jarEntry != null) {
-/* 2841 */                 l = jarEntry.getTime();
-/* 2842 */                 if (l == -1L) {
-/* 2843 */                   l = 0L;
-/*      */                 }
-/*      */               } 
-/*      */             } else {
-/* 2847 */               l = uRLConnection.getLastModified();
-/*      */             } 
-/*      */           } 
-/* 2850 */           bool = (l >= param1Long) ? true : false;
-/*      */         } 
-/* 2852 */       } catch (NullPointerException nullPointerException) {
-/* 2853 */         throw nullPointerException;
-/* 2854 */       } catch (Exception exception) {}
-/*      */ 
-/*      */       
-/* 2857 */       return bool;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public String toBundleName(String param1String, Locale param1Locale) {
-/* 2903 */       if (param1Locale == Locale.ROOT) {
-/* 2904 */         return param1String;
-/*      */       }
-/*      */       
-/* 2907 */       String str1 = param1Locale.getLanguage();
-/* 2908 */       String str2 = param1Locale.getScript();
-/* 2909 */       String str3 = param1Locale.getCountry();
-/* 2910 */       String str4 = param1Locale.getVariant();
-/*      */       
-/* 2912 */       if (str1 == "" && str3 == "" && str4 == "") {
-/* 2913 */         return param1String;
-/*      */       }
-/*      */       
-/* 2916 */       StringBuilder stringBuilder = new StringBuilder(param1String);
-/* 2917 */       stringBuilder.append('_');
-/* 2918 */       if (str2 != "") {
-/* 2919 */         if (str4 != "") {
-/* 2920 */           stringBuilder.append(str1).append('_').append(str2).append('_').append(str3).append('_').append(str4);
-/* 2921 */         } else if (str3 != "") {
-/* 2922 */           stringBuilder.append(str1).append('_').append(str2).append('_').append(str3);
-/*      */         } else {
-/* 2924 */           stringBuilder.append(str1).append('_').append(str2);
-/*      */         }
-/*      */       
-/* 2927 */       } else if (str4 != "") {
-/* 2928 */         stringBuilder.append(str1).append('_').append(str3).append('_').append(str4);
-/* 2929 */       } else if (str3 != "") {
-/* 2930 */         stringBuilder.append(str1).append('_').append(str3);
-/*      */       } else {
-/* 2932 */         stringBuilder.append(str1);
-/*      */       } 
-/*      */       
-/* 2935 */       return stringBuilder.toString();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public final String toResourceName(String param1String1, String param1String2) {
-/* 2960 */       StringBuilder stringBuilder = new StringBuilder(param1String1.length() + 1 + param1String2.length());
-/* 2961 */       stringBuilder.append(param1String1.replace('.', '/')).append('.').append(param1String2);
-/* 2962 */       return stringBuilder.toString();
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     private String toResourceName0(String param1String1, String param1String2) {
-/* 2967 */       if (param1String1.contains("://")) {
-/* 2968 */         return null;
-/*      */       }
-/* 2970 */       return toResourceName(param1String1, param1String2);
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   private static class SingleFormatControl
-/*      */     extends Control {
-/* 2976 */     private static final ResourceBundle.Control PROPERTIES_ONLY = new SingleFormatControl(FORMAT_PROPERTIES);
-/*      */ 
-/*      */     
-/* 2979 */     private static final ResourceBundle.Control CLASS_ONLY = new SingleFormatControl(FORMAT_CLASS);
-/*      */     
-/*      */     private final List<String> formats;
-/*      */ 
-/*      */     
-/*      */     protected SingleFormatControl(List<String> param1List) {
-/* 2985 */       this.formats = param1List;
-/*      */     }
-/*      */     
-/*      */     public List<String> getFormats(String param1String) {
-/* 2989 */       if (param1String == null) {
-/* 2990 */         throw new NullPointerException();
-/*      */       }
-/* 2992 */       return this.formats;
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   private static final class NoFallbackControl extends SingleFormatControl {
-/* 2997 */     private static final ResourceBundle.Control NO_FALLBACK = new NoFallbackControl(FORMAT_DEFAULT);
-/*      */ 
-/*      */     
-/* 3000 */     private static final ResourceBundle.Control PROPERTIES_ONLY_NO_FALLBACK = new NoFallbackControl(FORMAT_PROPERTIES);
-/*      */ 
-/*      */     
-/* 3003 */     private static final ResourceBundle.Control CLASS_ONLY_NO_FALLBACK = new NoFallbackControl(FORMAT_CLASS);
-/*      */ 
-/*      */     
-/*      */     protected NoFallbackControl(List<String> param1List) {
-/* 3007 */       super(param1List);
-/*      */     }
-/*      */     
-/*      */     public Locale getFallbackLocale(String param1String, Locale param1Locale) {
-/* 3011 */       if (param1String == null || param1Locale == null) {
-/* 3012 */         throw new NullPointerException();
-/*      */       }
-/* 3014 */       return null;
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   private static interface CacheKeyReference {
-/*      */     ResourceBundle.CacheKey getCacheKey();
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\ResourceBundle.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1996, 2017, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+/*
+ * (C) Copyright Taligent, Inc. 1996, 1997 - All Rights Reserved
+ * (C) Copyright IBM Corp. 1996 - 1999 - All Rights Reserved
+ *
+ * The original version of this source code and documentation
+ * is copyrighted and owned by Taligent, Inc., a wholly-owned
+ * subsidiary of IBM. These materials are provided under terms
+ * of a License Agreement between Taligent and Sun. This technology
+ * is protected by multiple US and International patents.
+ *
+ * This notice and attribution to Taligent may not be removed.
+ * Taligent is a registered trademark of Taligent, Inc.
+ *
+ */
+
+package java.util;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.SoftReference;
+import java.lang.ref.WeakReference;
+import java.net.JarURLConnection;
+import java.net.URL;
+import java.net.URLConnection;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.jar.JarEntry;
+import java.util.spi.ResourceBundleControlProvider;
+
+import sun.reflect.CallerSensitive;
+import sun.reflect.Reflection;
+import sun.util.locale.BaseLocale;
+import sun.util.locale.LocaleObjectCache;
+
+
+/**
+ *
+ * Resource bundles contain locale-specific objects.  When your program needs a
+ * locale-specific resource, a <code>String</code> for example, your program can
+ * load it from the resource bundle that is appropriate for the current user's
+ * locale. In this way, you can write program code that is largely independent
+ * of the user's locale isolating most, if not all, of the locale-specific
+ * information in resource bundles.
+ *
+ * <p>
+ * This allows you to write programs that can:
+ * <UL>
+ * <LI> be easily localized, or translated, into different languages
+ * <LI> handle multiple locales at once
+ * <LI> be easily modified later to support even more locales
+ * </UL>
+ *
+ * <P>
+ * Resource bundles belong to families whose members share a common base
+ * name, but whose names also have additional components that identify
+ * their locales. For example, the base name of a family of resource
+ * bundles might be "MyResources". The family should have a default
+ * resource bundle which simply has the same name as its family -
+ * "MyResources" - and will be used as the bundle of last resort if a
+ * specific locale is not supported. The family can then provide as
+ * many locale-specific members as needed, for example a German one
+ * named "MyResources_de".
+ *
+ * <P>
+ * Each resource bundle in a family contains the same items, but the items have
+ * been translated for the locale represented by that resource bundle.
+ * For example, both "MyResources" and "MyResources_de" may have a
+ * <code>String</code> that's used on a button for canceling operations.
+ * In "MyResources" the <code>String</code> may contain "Cancel" and in
+ * "MyResources_de" it may contain "Abbrechen".
+ *
+ * <P>
+ * If there are different resources for different countries, you
+ * can make specializations: for example, "MyResources_de_CH" contains objects for
+ * the German language (de) in Switzerland (CH). If you want to only
+ * modify some of the resources
+ * in the specialization, you can do so.
+ *
+ * <P>
+ * When your program needs a locale-specific object, it loads
+ * the <code>ResourceBundle</code> class using the
+ * {@link #getBundle(java.lang.String, java.util.Locale) getBundle}
+ * method:
+ * <blockquote>
+ * <pre>
+ * ResourceBundle myResources =
+ *      ResourceBundle.getBundle("MyResources", currentLocale);
+ * </pre>
+ * </blockquote>
+ *
+ * <P>
+ * Resource bundles contain key/value pairs. The keys uniquely
+ * identify a locale-specific object in the bundle. Here's an
+ * example of a <code>ListResourceBundle</code> that contains
+ * two key/value pairs:
+ * <blockquote>
+ * <pre>
+ * public class MyResources extends ListResourceBundle {
+ *     protected Object[][] getContents() {
+ *         return new Object[][] {
+ *             // LOCALIZE THE SECOND STRING OF EACH ARRAY (e.g., "OK")
+ *             {"OkKey", "OK"},
+ *             {"CancelKey", "Cancel"},
+ *             // END OF MATERIAL TO LOCALIZE
+ *        };
+ *     }
+ * }
+ * </pre>
+ * </blockquote>
+ * Keys are always <code>String</code>s.
+ * In this example, the keys are "OkKey" and "CancelKey".
+ * In the above example, the values
+ * are also <code>String</code>s--"OK" and "Cancel"--but
+ * they don't have to be. The values can be any type of object.
+ *
+ * <P>
+ * You retrieve an object from resource bundle using the appropriate
+ * getter method. Because "OkKey" and "CancelKey"
+ * are both strings, you would use <code>getString</code> to retrieve them:
+ * <blockquote>
+ * <pre>
+ * button1 = new Button(myResources.getString("OkKey"));
+ * button2 = new Button(myResources.getString("CancelKey"));
+ * </pre>
+ * </blockquote>
+ * The getter methods all require the key as an argument and return
+ * the object if found. If the object is not found, the getter method
+ * throws a <code>MissingResourceException</code>.
+ *
+ * <P>
+ * Besides <code>getString</code>, <code>ResourceBundle</code> also provides
+ * a method for getting string arrays, <code>getStringArray</code>,
+ * as well as a generic <code>getObject</code> method for any other
+ * type of object. When using <code>getObject</code>, you'll
+ * have to cast the result to the appropriate type. For example:
+ * <blockquote>
+ * <pre>
+ * int[] myIntegers = (int[]) myResources.getObject("intList");
+ * </pre>
+ * </blockquote>
+ *
+ * <P>
+ * The Java Platform provides two subclasses of <code>ResourceBundle</code>,
+ * <code>ListResourceBundle</code> and <code>PropertyResourceBundle</code>,
+ * that provide a fairly simple way to create resources.
+ * As you saw briefly in a previous example, <code>ListResourceBundle</code>
+ * manages its resource as a list of key/value pairs.
+ * <code>PropertyResourceBundle</code> uses a properties file to manage
+ * its resources.
+ *
+ * <p>
+ * If <code>ListResourceBundle</code> or <code>PropertyResourceBundle</code>
+ * do not suit your needs, you can write your own <code>ResourceBundle</code>
+ * subclass.  Your subclasses must override two methods: <code>handleGetObject</code>
+ * and <code>getKeys()</code>.
+ *
+ * <p>
+ * The implementation of a {@code ResourceBundle} subclass must be thread-safe
+ * if it's simultaneously used by multiple threads. The default implementations
+ * of the non-abstract methods in this class, and the methods in the direct
+ * known concrete subclasses {@code ListResourceBundle} and
+ * {@code PropertyResourceBundle} are thread-safe.
+ *
+ * <h3>ResourceBundle.Control</h3>
+ *
+ * The {@link ResourceBundle.Control} class provides information necessary
+ * to perform the bundle loading process by the <code>getBundle</code>
+ * factory methods that take a <code>ResourceBundle.Control</code>
+ * instance. You can implement your own subclass in order to enable
+ * non-standard resource bundle formats, change the search strategy, or
+ * define caching parameters. Refer to the descriptions of the class and the
+ * {@link #getBundle(String, Locale, ClassLoader, Control) getBundle}
+ * factory method for details.
+ *
+ * <p><a name="modify_default_behavior">For the {@code getBundle} factory</a>
+ * methods that take no {@link Control} instance, their <a
+ * href="#default_behavior"> default behavior</a> of resource bundle loading
+ * can be modified with <em>installed</em> {@link
+ * ResourceBundleControlProvider} implementations. Any installed providers are
+ * detected at the {@code ResourceBundle} class loading time. If any of the
+ * providers provides a {@link Control} for the given base name, that {@link
+ * Control} will be used instead of the default {@link Control}. If there is
+ * more than one service provider installed for supporting the same base name,
+ * the first one returned from {@link ServiceLoader} will be used.
+ *
+ * <h3>Cache Management</h3>
+ *
+ * Resource bundle instances created by the <code>getBundle</code> factory
+ * methods are cached by default, and the factory methods return the same
+ * resource bundle instance multiple times if it has been
+ * cached. <code>getBundle</code> clients may clear the cache, manage the
+ * lifetime of cached resource bundle instances using time-to-live values,
+ * or specify not to cache resource bundle instances. Refer to the
+ * descriptions of the {@linkplain #getBundle(String, Locale, ClassLoader,
+ * Control) <code>getBundle</code> factory method}, {@link
+ * #clearCache(ClassLoader) clearCache}, {@link
+ * Control#getTimeToLive(String, Locale)
+ * ResourceBundle.Control.getTimeToLive}, and {@link
+ * Control#needsReload(String, Locale, String, ClassLoader, ResourceBundle,
+ * long) ResourceBundle.Control.needsReload} for details.
+ *
+ * <h3>Example</h3>
+ *
+ * The following is a very simple example of a <code>ResourceBundle</code>
+ * subclass, <code>MyResources</code>, that manages two resources (for a larger number of
+ * resources you would probably use a <code>Map</code>).
+ * Notice that you don't need to supply a value if
+ * a "parent-level" <code>ResourceBundle</code> handles the same
+ * key with the same value (as for the okKey below).
+ * <blockquote>
+ * <pre>
+ * // default (English language, United States)
+ * public class MyResources extends ResourceBundle {
+ *     public Object handleGetObject(String key) {
+ *         if (key.equals("okKey")) return "Ok";
+ *         if (key.equals("cancelKey")) return "Cancel";
+ *         return null;
+ *     }
+ *
+ *     public Enumeration&lt;String&gt; getKeys() {
+ *         return Collections.enumeration(keySet());
+ *     }
+ *
+ *     // Overrides handleKeySet() so that the getKeys() implementation
+ *     // can rely on the keySet() value.
+ *     protected Set&lt;String&gt; handleKeySet() {
+ *         return new HashSet&lt;String&gt;(Arrays.asList("okKey", "cancelKey"));
+ *     }
+ * }
+ *
+ * // German language
+ * public class MyResources_de extends MyResources {
+ *     public Object handleGetObject(String key) {
+ *         // don't need okKey, since parent level handles it.
+ *         if (key.equals("cancelKey")) return "Abbrechen";
+ *         return null;
+ *     }
+ *
+ *     protected Set&lt;String&gt; handleKeySet() {
+ *         return new HashSet&lt;String&gt;(Arrays.asList("cancelKey"));
+ *     }
+ * }
+ * </pre>
+ * </blockquote>
+ * You do not have to restrict yourself to using a single family of
+ * <code>ResourceBundle</code>s. For example, you could have a set of bundles for
+ * exception messages, <code>ExceptionResources</code>
+ * (<code>ExceptionResources_fr</code>, <code>ExceptionResources_de</code>, ...),
+ * and one for widgets, <code>WidgetResource</code> (<code>WidgetResources_fr</code>,
+ * <code>WidgetResources_de</code>, ...); breaking up the resources however you like.
+ *
+ * @see ListResourceBundle
+ * @see PropertyResourceBundle
+ * @see MissingResourceException
+ * @since JDK1.1
+ */
+public abstract class ResourceBundle {
+
+    /** initial size of the bundle cache */
+    private static final int INITIAL_CACHE_SIZE = 32;
+
+    /** constant indicating that no resource bundle exists */
+    private static final ResourceBundle NONEXISTENT_BUNDLE = new ResourceBundle() {
+            public Enumeration<String> getKeys() { return null; }
+            protected Object handleGetObject(String key) { return null; }
+            public String toString() { return "NONEXISTENT_BUNDLE"; }
+        };
+
+
+    /**
+     * The cache is a map from cache keys (with bundle base name, locale, and
+     * class loader) to either a resource bundle or NONEXISTENT_BUNDLE wrapped by a
+     * BundleReference.
+     *
+     * The cache is a ConcurrentMap, allowing the cache to be searched
+     * concurrently by multiple threads.  This will also allow the cache keys
+     * to be reclaimed along with the ClassLoaders they reference.
+     *
+     * This variable would be better named "cache", but we keep the old
+     * name for compatibility with some workarounds for bug 4212439.
+     */
+    private static final ConcurrentMap<CacheKey, BundleReference> cacheList
+        = new ConcurrentHashMap<>(INITIAL_CACHE_SIZE);
+
+    /**
+     * Queue for reference objects referring to class loaders or bundles.
+     */
+    private static final ReferenceQueue<Object> referenceQueue = new ReferenceQueue<>();
+
+    /**
+     * Returns the base name of this bundle, if known, or {@code null} if unknown.
+     *
+     * If not null, then this is the value of the {@code baseName} parameter
+     * that was passed to the {@code ResourceBundle.getBundle(...)} method
+     * when the resource bundle was loaded.
+     *
+     * @return The base name of the resource bundle, as provided to and expected
+     * by the {@code ResourceBundle.getBundle(...)} methods.
+     *
+     * @see #getBundle(java.lang.String, java.util.Locale, java.lang.ClassLoader)
+     *
+     * @since 1.8
+     */
+    public String getBaseBundleName() {
+        return name;
+    }
+
+    /**
+     * The parent bundle of this bundle.
+     * The parent bundle is searched by {@link #getObject getObject}
+     * when this bundle does not contain a particular resource.
+     */
+    protected ResourceBundle parent = null;
+
+    /**
+     * The locale for this bundle.
+     */
+    private Locale locale = null;
+
+    /**
+     * The base bundle name for this bundle.
+     */
+    private String name;
+
+    /**
+     * The flag indicating this bundle has expired in the cache.
+     */
+    private volatile boolean expired;
+
+    /**
+     * The back link to the cache key. null if this bundle isn't in
+     * the cache (yet) or has expired.
+     */
+    private volatile CacheKey cacheKey;
+
+    /**
+     * A Set of the keys contained only in this ResourceBundle.
+     */
+    private volatile Set<String> keySet;
+
+    private static final List<ResourceBundleControlProvider> providers;
+
+    static {
+        List<ResourceBundleControlProvider> list = null;
+        ServiceLoader<ResourceBundleControlProvider> serviceLoaders
+                = ServiceLoader.loadInstalled(ResourceBundleControlProvider.class);
+        for (ResourceBundleControlProvider provider : serviceLoaders) {
+            if (list == null) {
+                list = new ArrayList<>();
+            }
+            list.add(provider);
+        }
+        providers = list;
+    }
+
+    /**
+     * Sole constructor.  (For invocation by subclass constructors, typically
+     * implicit.)
+     */
+    public ResourceBundle() {
+    }
+
+    /**
+     * Gets a string for the given key from this resource bundle or one of its parents.
+     * Calling this method is equivalent to calling
+     * <blockquote>
+     * <code>(String) {@link #getObject(java.lang.String) getObject}(key)</code>.
+     * </blockquote>
+     *
+     * @param key the key for the desired string
+     * @exception NullPointerException if <code>key</code> is <code>null</code>
+     * @exception MissingResourceException if no object for the given key can be found
+     * @exception ClassCastException if the object found for the given key is not a string
+     * @return the string for the given key
+     */
+    public final String getString(String key) {
+        return (String) getObject(key);
+    }
+
+    /**
+     * Gets a string array for the given key from this resource bundle or one of its parents.
+     * Calling this method is equivalent to calling
+     * <blockquote>
+     * <code>(String[]) {@link #getObject(java.lang.String) getObject}(key)</code>.
+     * </blockquote>
+     *
+     * @param key the key for the desired string array
+     * @exception NullPointerException if <code>key</code> is <code>null</code>
+     * @exception MissingResourceException if no object for the given key can be found
+     * @exception ClassCastException if the object found for the given key is not a string array
+     * @return the string array for the given key
+     */
+    public final String[] getStringArray(String key) {
+        return (String[]) getObject(key);
+    }
+
+    /**
+     * Gets an object for the given key from this resource bundle or one of its parents.
+     * This method first tries to obtain the object from this resource bundle using
+     * {@link #handleGetObject(java.lang.String) handleGetObject}.
+     * If not successful, and the parent resource bundle is not null,
+     * it calls the parent's <code>getObject</code> method.
+     * If still not successful, it throws a MissingResourceException.
+     *
+     * @param key the key for the desired object
+     * @exception NullPointerException if <code>key</code> is <code>null</code>
+     * @exception MissingResourceException if no object for the given key can be found
+     * @return the object for the given key
+     */
+    public final Object getObject(String key) {
+        Object obj = handleGetObject(key);
+        if (obj == null) {
+            if (parent != null) {
+                obj = parent.getObject(key);
+            }
+            if (obj == null) {
+                throw new MissingResourceException("Can't find resource for bundle "
+                                                   +this.getClass().getName()
+                                                   +", key "+key,
+                                                   this.getClass().getName(),
+                                                   key);
+            }
+        }
+        return obj;
+    }
+
+    /**
+     * Returns the locale of this resource bundle. This method can be used after a
+     * call to getBundle() to determine whether the resource bundle returned really
+     * corresponds to the requested locale or is a fallback.
+     *
+     * @return the locale of this resource bundle
+     */
+    public Locale getLocale() {
+        return locale;
+    }
+
+    /*
+     * Automatic determination of the ClassLoader to be used to load
+     * resources on behalf of the client.
+     */
+    private static ClassLoader getLoader(Class<?> caller) {
+        ClassLoader cl = caller == null ? null : caller.getClassLoader();
+        if (cl == null) {
+            // When the caller's loader is the boot class loader, cl is null
+            // here. In that case, ClassLoader.getSystemClassLoader() may
+            // return the same class loader that the application is
+            // using. We therefore use a wrapper ClassLoader to create a
+            // separate scope for bundles loaded on behalf of the Java
+            // runtime so that these bundles cannot be returned from the
+            // cache to the application (5048280).
+            cl = RBClassLoader.INSTANCE;
+        }
+        return cl;
+    }
+
+    /**
+     * A wrapper of Extension Class Loader
+     */
+    private static class RBClassLoader extends ClassLoader {
+        private static final RBClassLoader INSTANCE = AccessController.doPrivileged(
+                    new PrivilegedAction<RBClassLoader>() {
+                        public RBClassLoader run() {
+                            return new RBClassLoader();
+                        }
+                    });
+        private static final ClassLoader loader;
+        static {
+            // Find the extension class loader.
+            ClassLoader ld = ClassLoader.getSystemClassLoader();
+            ClassLoader parent;
+            while ((parent = ld.getParent()) != null) {
+                ld = parent;
+            }
+            loader = ld;
+        }
+
+        private RBClassLoader() {
+        }
+        public Class<?> loadClass(String name) throws ClassNotFoundException {
+            if (loader != null) {
+                return loader.loadClass(name);
+            }
+            return Class.forName(name);
+        }
+        public URL getResource(String name) {
+            if (loader != null) {
+                return loader.getResource(name);
+            }
+            return ClassLoader.getSystemResource(name);
+        }
+        public InputStream getResourceAsStream(String name) {
+            if (loader != null) {
+                return loader.getResourceAsStream(name);
+            }
+            return ClassLoader.getSystemResourceAsStream(name);
+        }
+    }
+
+    /**
+     * Sets the parent bundle of this bundle.
+     * The parent bundle is searched by {@link #getObject getObject}
+     * when this bundle does not contain a particular resource.
+     *
+     * @param parent this bundle's parent bundle.
+     */
+    protected void setParent(ResourceBundle parent) {
+        assert parent != NONEXISTENT_BUNDLE;
+        this.parent = parent;
+    }
+
+    /**
+     * Key used for cached resource bundles.  The key checks the base
+     * name, the locale, and the class loader to determine if the
+     * resource is a match to the requested one. The loader may be
+     * null, but the base name and the locale must have a non-null
+     * value.
+     */
+    private static class CacheKey implements Cloneable {
+        // These three are the actual keys for lookup in Map.
+        private String name;
+        private Locale locale;
+        private LoaderReference loaderRef;
+
+        // bundle format which is necessary for calling
+        // Control.needsReload().
+        private String format;
+
+        // These time values are in CacheKey so that NONEXISTENT_BUNDLE
+        // doesn't need to be cloned for caching.
+
+        // The time when the bundle has been loaded
+        private volatile long loadTime;
+
+        // The time when the bundle expires in the cache, or either
+        // Control.TTL_DONT_CACHE or Control.TTL_NO_EXPIRATION_CONTROL.
+        private volatile long expirationTime;
+
+        // Placeholder for an error report by a Throwable
+        private Throwable cause;
+
+        // Hash code value cache to avoid recalculating the hash code
+        // of this instance.
+        private int hashCodeCache;
+
+        CacheKey(String baseName, Locale locale, ClassLoader loader) {
+            this.name = baseName;
+            this.locale = locale;
+            if (loader == null) {
+                this.loaderRef = null;
+            } else {
+                loaderRef = new LoaderReference(loader, referenceQueue, this);
+            }
+            calculateHashCode();
+        }
+
+        String getName() {
+            return name;
+        }
+
+        CacheKey setName(String baseName) {
+            if (!this.name.equals(baseName)) {
+                this.name = baseName;
+                calculateHashCode();
+            }
+            return this;
+        }
+
+        Locale getLocale() {
+            return locale;
+        }
+
+        CacheKey setLocale(Locale locale) {
+            if (!this.locale.equals(locale)) {
+                this.locale = locale;
+                calculateHashCode();
+            }
+            return this;
+        }
+
+        ClassLoader getLoader() {
+            return (loaderRef != null) ? loaderRef.get() : null;
+        }
+
+        public boolean equals(Object other) {
+            if (this == other) {
+                return true;
+            }
+            try {
+                final CacheKey otherEntry = (CacheKey)other;
+                //quick check to see if they are not equal
+                if (hashCodeCache != otherEntry.hashCodeCache) {
+                    return false;
+                }
+                //are the names the same?
+                if (!name.equals(otherEntry.name)) {
+                    return false;
+                }
+                // are the locales the same?
+                if (!locale.equals(otherEntry.locale)) {
+                    return false;
+                }
+                //are refs (both non-null) or (both null)?
+                if (loaderRef == null) {
+                    return otherEntry.loaderRef == null;
+                }
+                ClassLoader loader = loaderRef.get();
+                return (otherEntry.loaderRef != null)
+                        // with a null reference we can no longer find
+                        // out which class loader was referenced; so
+                        // treat it as unequal
+                        && (loader != null)
+                        && (loader == otherEntry.loaderRef.get());
+            } catch (    NullPointerException | ClassCastException e) {
+            }
+            return false;
+        }
+
+        public int hashCode() {
+            return hashCodeCache;
+        }
+
+        private void calculateHashCode() {
+            hashCodeCache = name.hashCode() << 3;
+            hashCodeCache ^= locale.hashCode();
+            ClassLoader loader = getLoader();
+            if (loader != null) {
+                hashCodeCache ^= loader.hashCode();
+            }
+        }
+
+        public Object clone() {
+            try {
+                CacheKey clone = (CacheKey) super.clone();
+                if (loaderRef != null) {
+                    clone.loaderRef = new LoaderReference(loaderRef.get(),
+                                                          referenceQueue, clone);
+                }
+                // Clear the reference to a Throwable
+                clone.cause = null;
+                return clone;
+            } catch (CloneNotSupportedException e) {
+                //this should never happen
+                throw new InternalError(e);
+            }
+        }
+
+        String getFormat() {
+            return format;
+        }
+
+        void setFormat(String format) {
+            this.format = format;
+        }
+
+        private void setCause(Throwable cause) {
+            if (this.cause == null) {
+                this.cause = cause;
+            } else {
+                // Override the cause if the previous one is
+                // ClassNotFoundException.
+                if (this.cause instanceof ClassNotFoundException) {
+                    this.cause = cause;
+                }
+            }
+        }
+
+        private Throwable getCause() {
+            return cause;
+        }
+
+        public String toString() {
+            String l = locale.toString();
+            if (l.length() == 0) {
+                if (locale.getVariant().length() != 0) {
+                    l = "__" + locale.getVariant();
+                } else {
+                    l = "\"\"";
+                }
+            }
+            return "CacheKey[" + name + ", lc=" + l + ", ldr=" + getLoader()
+                + "(format=" + format + ")]";
+        }
+    }
+
+    /**
+     * The common interface to get a CacheKey in LoaderReference and
+     * BundleReference.
+     */
+    private static interface CacheKeyReference {
+        public CacheKey getCacheKey();
+    }
+
+    /**
+     * References to class loaders are weak references, so that they can be
+     * garbage collected when nobody else is using them. The ResourceBundle
+     * class has no reason to keep class loaders alive.
+     */
+    private static class LoaderReference extends WeakReference<ClassLoader>
+                                         implements CacheKeyReference {
+        private CacheKey cacheKey;
+
+        LoaderReference(ClassLoader referent, ReferenceQueue<Object> q, CacheKey key) {
+            super(referent, q);
+            cacheKey = key;
+        }
+
+        public CacheKey getCacheKey() {
+            return cacheKey;
+        }
+    }
+
+    /**
+     * References to bundles are soft references so that they can be garbage
+     * collected when they have no hard references.
+     */
+    private static class BundleReference extends SoftReference<ResourceBundle>
+                                         implements CacheKeyReference {
+        private CacheKey cacheKey;
+
+        BundleReference(ResourceBundle referent, ReferenceQueue<Object> q, CacheKey key) {
+            super(referent, q);
+            cacheKey = key;
+        }
+
+        public CacheKey getCacheKey() {
+            return cacheKey;
+        }
+    }
+
+    /**
+     * Gets a resource bundle using the specified base name, the default locale,
+     * and the caller's class loader. Calling this method is equivalent to calling
+     * <blockquote>
+     * <code>getBundle(baseName, Locale.getDefault(), this.getClass().getClassLoader())</code>,
+     * </blockquote>
+     * except that <code>getClassLoader()</code> is run with the security
+     * privileges of <code>ResourceBundle</code>.
+     * See {@link #getBundle(String, Locale, ClassLoader) getBundle}
+     * for a complete description of the search and instantiation strategy.
+     *
+     * @param baseName the base name of the resource bundle, a fully qualified class name
+     * @exception java.lang.NullPointerException
+     *     if <code>baseName</code> is <code>null</code>
+     * @exception MissingResourceException
+     *     if no resource bundle for the specified base name can be found
+     * @return a resource bundle for the given base name and the default locale
+     */
+    @CallerSensitive
+    public static final ResourceBundle getBundle(String baseName)
+    {
+        return getBundleImpl(baseName, Locale.getDefault(),
+                             getLoader(Reflection.getCallerClass()),
+                             getDefaultControl(baseName));
+    }
+
+    /**
+     * Returns a resource bundle using the specified base name, the
+     * default locale and the specified control. Calling this method
+     * is equivalent to calling
+     * <pre>
+     * getBundle(baseName, Locale.getDefault(),
+     *           this.getClass().getClassLoader(), control),
+     * </pre>
+     * except that <code>getClassLoader()</code> is run with the security
+     * privileges of <code>ResourceBundle</code>.  See {@link
+     * #getBundle(String, Locale, ClassLoader, Control) getBundle} for the
+     * complete description of the resource bundle loading process with a
+     * <code>ResourceBundle.Control</code>.
+     *
+     * @param baseName
+     *        the base name of the resource bundle, a fully qualified class
+     *        name
+     * @param control
+     *        the control which gives information for the resource bundle
+     *        loading process
+     * @return a resource bundle for the given base name and the default
+     *        locale
+     * @exception NullPointerException
+     *        if <code>baseName</code> or <code>control</code> is
+     *        <code>null</code>
+     * @exception MissingResourceException
+     *        if no resource bundle for the specified base name can be found
+     * @exception IllegalArgumentException
+     *        if the given <code>control</code> doesn't perform properly
+     *        (e.g., <code>control.getCandidateLocales</code> returns null.)
+     *        Note that validation of <code>control</code> is performed as
+     *        needed.
+     * @since 1.6
+     */
+    @CallerSensitive
+    public static final ResourceBundle getBundle(String baseName,
+                                                 Control control) {
+        return getBundleImpl(baseName, Locale.getDefault(),
+                             getLoader(Reflection.getCallerClass()),
+                             control);
+    }
+
+    /**
+     * Gets a resource bundle using the specified base name and locale,
+     * and the caller's class loader. Calling this method is equivalent to calling
+     * <blockquote>
+     * <code>getBundle(baseName, locale, this.getClass().getClassLoader())</code>,
+     * </blockquote>
+     * except that <code>getClassLoader()</code> is run with the security
+     * privileges of <code>ResourceBundle</code>.
+     * See {@link #getBundle(String, Locale, ClassLoader) getBundle}
+     * for a complete description of the search and instantiation strategy.
+     *
+     * @param baseName
+     *        the base name of the resource bundle, a fully qualified class name
+     * @param locale
+     *        the locale for which a resource bundle is desired
+     * @exception NullPointerException
+     *        if <code>baseName</code> or <code>locale</code> is <code>null</code>
+     * @exception MissingResourceException
+     *        if no resource bundle for the specified base name can be found
+     * @return a resource bundle for the given base name and locale
+     */
+    @CallerSensitive
+    public static final ResourceBundle getBundle(String baseName,
+                                                 Locale locale)
+    {
+        return getBundleImpl(baseName, locale,
+                             getLoader(Reflection.getCallerClass()),
+                             getDefaultControl(baseName));
+    }
+
+    /**
+     * Returns a resource bundle using the specified base name, target
+     * locale and control, and the caller's class loader. Calling this
+     * method is equivalent to calling
+     * <pre>
+     * getBundle(baseName, targetLocale, this.getClass().getClassLoader(),
+     *           control),
+     * </pre>
+     * except that <code>getClassLoader()</code> is run with the security
+     * privileges of <code>ResourceBundle</code>.  See {@link
+     * #getBundle(String, Locale, ClassLoader, Control) getBundle} for the
+     * complete description of the resource bundle loading process with a
+     * <code>ResourceBundle.Control</code>.
+     *
+     * @param baseName
+     *        the base name of the resource bundle, a fully qualified
+     *        class name
+     * @param targetLocale
+     *        the locale for which a resource bundle is desired
+     * @param control
+     *        the control which gives information for the resource
+     *        bundle loading process
+     * @return a resource bundle for the given base name and a
+     *        <code>Locale</code> in <code>locales</code>
+     * @exception NullPointerException
+     *        if <code>baseName</code>, <code>locales</code> or
+     *        <code>control</code> is <code>null</code>
+     * @exception MissingResourceException
+     *        if no resource bundle for the specified base name in any
+     *        of the <code>locales</code> can be found.
+     * @exception IllegalArgumentException
+     *        if the given <code>control</code> doesn't perform properly
+     *        (e.g., <code>control.getCandidateLocales</code> returns null.)
+     *        Note that validation of <code>control</code> is performed as
+     *        needed.
+     * @since 1.6
+     */
+    @CallerSensitive
+    public static final ResourceBundle getBundle(String baseName, Locale targetLocale,
+                                                 Control control) {
+        return getBundleImpl(baseName, targetLocale,
+                             getLoader(Reflection.getCallerClass()),
+                             control);
+    }
+
+    /**
+     * Gets a resource bundle using the specified base name, locale, and class
+     * loader.
+     *
+     * <p>This method behaves the same as calling
+     * {@link #getBundle(String, Locale, ClassLoader, Control)} passing a
+     * default instance of {@link Control} unless another {@link Control} is
+     * provided with the {@link ResourceBundleControlProvider} SPI. Refer to the
+     * description of <a href="#modify_default_behavior">modifying the default
+     * behavior</a>.
+     *
+     * <p><a name="default_behavior">The following describes the default
+     * behavior</a>.
+     *
+     * <p><code>getBundle</code> uses the base name, the specified locale, and
+     * the default locale (obtained from {@link java.util.Locale#getDefault()
+     * Locale.getDefault}) to generate a sequence of <a
+     * name="candidates"><em>candidate bundle names</em></a>.  If the specified
+     * locale's language, script, country, and variant are all empty strings,
+     * then the base name is the only candidate bundle name.  Otherwise, a list
+     * of candidate locales is generated from the attribute values of the
+     * specified locale (language, script, country and variant) and appended to
+     * the base name.  Typically, this will look like the following:
+     *
+     * <pre>
+     *     baseName + "_" + language + "_" + script + "_" + country + "_" + variant
+     *     baseName + "_" + language + "_" + script + "_" + country
+     *     baseName + "_" + language + "_" + script
+     *     baseName + "_" + language + "_" + country + "_" + variant
+     *     baseName + "_" + language + "_" + country
+     *     baseName + "_" + language
+     * </pre>
+     *
+     * <p>Candidate bundle names where the final component is an empty string
+     * are omitted, along with the underscore.  For example, if country is an
+     * empty string, the second and the fifth candidate bundle names above
+     * would be omitted.  Also, if script is an empty string, the candidate names
+     * including script are omitted.  For example, a locale with language "de"
+     * and variant "JAVA" will produce candidate names with base name
+     * "MyResource" below.
+     *
+     * <pre>
+     *     MyResource_de__JAVA
+     *     MyResource_de
+     * </pre>
+     *
+     * In the case that the variant contains one or more underscores ('_'), a
+     * sequence of bundle names generated by truncating the last underscore and
+     * the part following it is inserted after a candidate bundle name with the
+     * original variant.  For example, for a locale with language "en", script
+     * "Latn, country "US" and variant "WINDOWS_VISTA", and bundle base name
+     * "MyResource", the list of candidate bundle names below is generated:
+     *
+     * <pre>
+     * MyResource_en_Latn_US_WINDOWS_VISTA
+     * MyResource_en_Latn_US_WINDOWS
+     * MyResource_en_Latn_US
+     * MyResource_en_Latn
+     * MyResource_en_US_WINDOWS_VISTA
+     * MyResource_en_US_WINDOWS
+     * MyResource_en_US
+     * MyResource_en
+     * </pre>
+     *
+     * <blockquote><b>Note:</b> For some <code>Locale</code>s, the list of
+     * candidate bundle names contains extra names, or the order of bundle names
+     * is slightly modified.  See the description of the default implementation
+     * of {@link Control#getCandidateLocales(String, Locale)
+     * getCandidateLocales} for details.</blockquote>
+     *
+     * <p><code>getBundle</code> then iterates over the candidate bundle names
+     * to find the first one for which it can <em>instantiate</em> an actual
+     * resource bundle. It uses the default controls' {@link Control#getFormats
+     * getFormats} method, which generates two bundle names for each generated
+     * name, the first a class name and the second a properties file name. For
+     * each candidate bundle name, it attempts to create a resource bundle:
+     *
+     * <ul><li>First, it attempts to load a class using the generated class name.
+     * If such a class can be found and loaded using the specified class
+     * loader, is assignment compatible with ResourceBundle, is accessible from
+     * ResourceBundle, and can be instantiated, <code>getBundle</code> creates a
+     * new instance of this class and uses it as the <em>result resource
+     * bundle</em>.
+     *
+     * <li>Otherwise, <code>getBundle</code> attempts to locate a property
+     * resource file using the generated properties file name.  It generates a
+     * path name from the candidate bundle name by replacing all "." characters
+     * with "/" and appending the string ".properties".  It attempts to find a
+     * "resource" with this name using {@link
+     * java.lang.ClassLoader#getResource(java.lang.String)
+     * ClassLoader.getResource}.  (Note that a "resource" in the sense of
+     * <code>getResource</code> has nothing to do with the contents of a
+     * resource bundle, it is just a container of data, such as a file.)  If it
+     * finds a "resource", it attempts to create a new {@link
+     * PropertyResourceBundle} instance from its contents.  If successful, this
+     * instance becomes the <em>result resource bundle</em>.  </ul>
+     *
+     * <p>This continues until a result resource bundle is instantiated or the
+     * list of candidate bundle names is exhausted.  If no matching resource
+     * bundle is found, the default control's {@link Control#getFallbackLocale
+     * getFallbackLocale} method is called, which returns the current default
+     * locale.  A new sequence of candidate locale names is generated using this
+     * locale and and searched again, as above.
+     *
+     * <p>If still no result bundle is found, the base name alone is looked up. If
+     * this still fails, a <code>MissingResourceException</code> is thrown.
+     *
+     * <p><a name="parent_chain"> Once a result resource bundle has been found,
+     * its <em>parent chain</em> is instantiated</a>.  If the result bundle already
+     * has a parent (perhaps because it was returned from a cache) the chain is
+     * complete.
+     *
+     * <p>Otherwise, <code>getBundle</code> examines the remainder of the
+     * candidate locale list that was used during the pass that generated the
+     * result resource bundle.  (As before, candidate bundle names where the
+     * final component is an empty string are omitted.)  When it comes to the
+     * end of the candidate list, it tries the plain bundle name.  With each of the
+     * candidate bundle names it attempts to instantiate a resource bundle (first
+     * looking for a class and then a properties file, as described above).
+     *
+     * <p>Whenever it succeeds, it calls the previously instantiated resource
+     * bundle's {@link #setParent(java.util.ResourceBundle) setParent} method
+     * with the new resource bundle.  This continues until the list of names
+     * is exhausted or the current bundle already has a non-null parent.
+     *
+     * <p>Once the parent chain is complete, the bundle is returned.
+     *
+     * <p><b>Note:</b> <code>getBundle</code> caches instantiated resource
+     * bundles and might return the same resource bundle instance multiple times.
+     *
+     * <p><b>Note:</b>The <code>baseName</code> argument should be a fully
+     * qualified class name. However, for compatibility with earlier versions,
+     * Sun's Java SE Runtime Environments do not verify this, and so it is
+     * possible to access <code>PropertyResourceBundle</code>s by specifying a
+     * path name (using "/") instead of a fully qualified class name (using
+     * ".").
+     *
+     * <p><a name="default_behavior_example">
+     * <strong>Example:</strong></a>
+     * <p>
+     * The following class and property files are provided:
+     * <pre>
+     *     MyResources.class
+     *     MyResources.properties
+     *     MyResources_fr.properties
+     *     MyResources_fr_CH.class
+     *     MyResources_fr_CH.properties
+     *     MyResources_en.properties
+     *     MyResources_es_ES.class
+     * </pre>
+     *
+     * The contents of all files are valid (that is, public non-abstract
+     * subclasses of <code>ResourceBundle</code> for the ".class" files,
+     * syntactically correct ".properties" files).  The default locale is
+     * <code>Locale("en", "GB")</code>.
+     *
+     * <p>Calling <code>getBundle</code> with the locale arguments below will
+     * instantiate resource bundles as follows:
+     *
+     * <table summary="getBundle() locale to resource bundle mapping">
+     * <tr><td>Locale("fr", "CH")</td><td>MyResources_fr_CH.class, parent MyResources_fr.properties, parent MyResources.class</td></tr>
+     * <tr><td>Locale("fr", "FR")</td><td>MyResources_fr.properties, parent MyResources.class</td></tr>
+     * <tr><td>Locale("de", "DE")</td><td>MyResources_en.properties, parent MyResources.class</td></tr>
+     * <tr><td>Locale("en", "US")</td><td>MyResources_en.properties, parent MyResources.class</td></tr>
+     * <tr><td>Locale("es", "ES")</td><td>MyResources_es_ES.class, parent MyResources.class</td></tr>
+     * </table>
+     *
+     * <p>The file MyResources_fr_CH.properties is never used because it is
+     * hidden by the MyResources_fr_CH.class. Likewise, MyResources.properties
+     * is also hidden by MyResources.class.
+     *
+     * @param baseName the base name of the resource bundle, a fully qualified class name
+     * @param locale the locale for which a resource bundle is desired
+     * @param loader the class loader from which to load the resource bundle
+     * @return a resource bundle for the given base name and locale
+     * @exception java.lang.NullPointerException
+     *        if <code>baseName</code>, <code>locale</code>, or <code>loader</code> is <code>null</code>
+     * @exception MissingResourceException
+     *        if no resource bundle for the specified base name can be found
+     * @since 1.2
+     */
+    public static ResourceBundle getBundle(String baseName, Locale locale,
+                                           ClassLoader loader)
+    {
+        if (loader == null) {
+            throw new NullPointerException();
+        }
+        return getBundleImpl(baseName, locale, loader, getDefaultControl(baseName));
+    }
+
+    /**
+     * Returns a resource bundle using the specified base name, target
+     * locale, class loader and control. Unlike the {@linkplain
+     * #getBundle(String, Locale, ClassLoader) <code>getBundle</code>
+     * factory methods with no <code>control</code> argument}, the given
+     * <code>control</code> specifies how to locate and instantiate resource
+     * bundles. Conceptually, the bundle loading process with the given
+     * <code>control</code> is performed in the following steps.
+     *
+     * <ol>
+     * <li>This factory method looks up the resource bundle in the cache for
+     * the specified <code>baseName</code>, <code>targetLocale</code> and
+     * <code>loader</code>.  If the requested resource bundle instance is
+     * found in the cache and the time-to-live periods of the instance and
+     * all of its parent instances have not expired, the instance is returned
+     * to the caller. Otherwise, this factory method proceeds with the
+     * loading process below.</li>
+     *
+     * <li>The {@link ResourceBundle.Control#getFormats(String)
+     * control.getFormats} method is called to get resource bundle formats
+     * to produce bundle or resource names. The strings
+     * <code>"java.class"</code> and <code>"java.properties"</code>
+     * designate class-based and {@linkplain PropertyResourceBundle
+     * property}-based resource bundles, respectively. Other strings
+     * starting with <code>"java."</code> are reserved for future extensions
+     * and must not be used for application-defined formats. Other strings
+     * designate application-defined formats.</li>
+     *
+     * <li>The {@link ResourceBundle.Control#getCandidateLocales(String,
+     * Locale) control.getCandidateLocales} method is called with the target
+     * locale to get a list of <em>candidate <code>Locale</code>s</em> for
+     * which resource bundles are searched.</li>
+     *
+     * <li>The {@link ResourceBundle.Control#newBundle(String, Locale,
+     * String, ClassLoader, boolean) control.newBundle} method is called to
+     * instantiate a <code>ResourceBundle</code> for the base bundle name, a
+     * candidate locale, and a format. (Refer to the note on the cache
+     * lookup below.) This step is iterated over all combinations of the
+     * candidate locales and formats until the <code>newBundle</code> method
+     * returns a <code>ResourceBundle</code> instance or the iteration has
+     * used up all the combinations. For example, if the candidate locales
+     * are <code>Locale("de", "DE")</code>, <code>Locale("de")</code> and
+     * <code>Locale("")</code> and the formats are <code>"java.class"</code>
+     * and <code>"java.properties"</code>, then the following is the
+     * sequence of locale-format combinations to be used to call
+     * <code>control.newBundle</code>.
+     *
+     * <table style="width: 50%; text-align: left; margin-left: 40px;"
+     *  border="0" cellpadding="2" cellspacing="2" summary="locale-format combinations for newBundle">
+     * <tbody>
+     * <tr>
+     * <td
+     * style="vertical-align: top; text-align: left; font-weight: bold; width: 50%;"><code>Locale</code><br>
+     * </td>
+     * <td
+     * style="vertical-align: top; text-align: left; font-weight: bold; width: 50%;"><code>format</code><br>
+     * </td>
+     * </tr>
+     * <tr>
+     * <td style="vertical-align: top; width: 50%;"><code>Locale("de", "DE")</code><br>
+     * </td>
+     * <td style="vertical-align: top; width: 50%;"><code>java.class</code><br>
+     * </td>
+     * </tr>
+     * <tr>
+     * <td style="vertical-align: top; width: 50%;"><code>Locale("de", "DE")</code></td>
+     * <td style="vertical-align: top; width: 50%;"><code>java.properties</code><br>
+     * </td>
+     * </tr>
+     * <tr>
+     * <td style="vertical-align: top; width: 50%;"><code>Locale("de")</code></td>
+     * <td style="vertical-align: top; width: 50%;"><code>java.class</code></td>
+     * </tr>
+     * <tr>
+     * <td style="vertical-align: top; width: 50%;"><code>Locale("de")</code></td>
+     * <td style="vertical-align: top; width: 50%;"><code>java.properties</code></td>
+     * </tr>
+     * <tr>
+     * <td style="vertical-align: top; width: 50%;"><code>Locale("")</code><br>
+     * </td>
+     * <td style="vertical-align: top; width: 50%;"><code>java.class</code></td>
+     * </tr>
+     * <tr>
+     * <td style="vertical-align: top; width: 50%;"><code>Locale("")</code></td>
+     * <td style="vertical-align: top; width: 50%;"><code>java.properties</code></td>
+     * </tr>
+     * </tbody>
+     * </table>
+     * </li>
+     *
+     * <li>If the previous step has found no resource bundle, proceed to
+     * Step 6. If a bundle has been found that is a base bundle (a bundle
+     * for <code>Locale("")</code>), and the candidate locale list only contained
+     * <code>Locale("")</code>, return the bundle to the caller. If a bundle
+     * has been found that is a base bundle, but the candidate locale list
+     * contained locales other than Locale(""), put the bundle on hold and
+     * proceed to Step 6. If a bundle has been found that is not a base
+     * bundle, proceed to Step 7.</li>
+     *
+     * <li>The {@link ResourceBundle.Control#getFallbackLocale(String,
+     * Locale) control.getFallbackLocale} method is called to get a fallback
+     * locale (alternative to the current target locale) to try further
+     * finding a resource bundle. If the method returns a non-null locale,
+     * it becomes the next target locale and the loading process starts over
+     * from Step 3. Otherwise, if a base bundle was found and put on hold in
+     * a previous Step 5, it is returned to the caller now. Otherwise, a
+     * MissingResourceException is thrown.</li>
+     *
+     * <li>At this point, we have found a resource bundle that's not the
+     * base bundle. If this bundle set its parent during its instantiation,
+     * it is returned to the caller. Otherwise, its <a
+     * href="./ResourceBundle.html#parent_chain">parent chain</a> is
+     * instantiated based on the list of candidate locales from which it was
+     * found. Finally, the bundle is returned to the caller.</li>
+     * </ol>
+     *
+     * <p>During the resource bundle loading process above, this factory
+     * method looks up the cache before calling the {@link
+     * Control#newBundle(String, Locale, String, ClassLoader, boolean)
+     * control.newBundle} method.  If the time-to-live period of the
+     * resource bundle found in the cache has expired, the factory method
+     * calls the {@link ResourceBundle.Control#needsReload(String, Locale,
+     * String, ClassLoader, ResourceBundle, long) control.needsReload}
+     * method to determine whether the resource bundle needs to be reloaded.
+     * If reloading is required, the factory method calls
+     * <code>control.newBundle</code> to reload the resource bundle.  If
+     * <code>control.newBundle</code> returns <code>null</code>, the factory
+     * method puts a dummy resource bundle in the cache as a mark of
+     * nonexistent resource bundles in order to avoid lookup overhead for
+     * subsequent requests. Such dummy resource bundles are under the same
+     * expiration control as specified by <code>control</code>.
+     *
+     * <p>All resource bundles loaded are cached by default. Refer to
+     * {@link Control#getTimeToLive(String,Locale)
+     * control.getTimeToLive} for details.
+     *
+     * <p>The following is an example of the bundle loading process with the
+     * default <code>ResourceBundle.Control</code> implementation.
+     *
+     * <p>Conditions:
+     * <ul>
+     * <li>Base bundle name: <code>foo.bar.Messages</code>
+     * <li>Requested <code>Locale</code>: {@link Locale#ITALY}</li>
+     * <li>Default <code>Locale</code>: {@link Locale#FRENCH}</li>
+     * <li>Available resource bundles:
+     * <code>foo/bar/Messages_fr.properties</code> and
+     * <code>foo/bar/Messages.properties</code></li>
+     * </ul>
+     *
+     * <p>First, <code>getBundle</code> tries loading a resource bundle in
+     * the following sequence.
+     *
+     * <ul>
+     * <li>class <code>foo.bar.Messages_it_IT</code>
+     * <li>file <code>foo/bar/Messages_it_IT.properties</code>
+     * <li>class <code>foo.bar.Messages_it</code></li>
+     * <li>file <code>foo/bar/Messages_it.properties</code></li>
+     * <li>class <code>foo.bar.Messages</code></li>
+     * <li>file <code>foo/bar/Messages.properties</code></li>
+     * </ul>
+     *
+     * <p>At this point, <code>getBundle</code> finds
+     * <code>foo/bar/Messages.properties</code>, which is put on hold
+     * because it's the base bundle.  <code>getBundle</code> calls {@link
+     * Control#getFallbackLocale(String, Locale)
+     * control.getFallbackLocale("foo.bar.Messages", Locale.ITALY)} which
+     * returns <code>Locale.FRENCH</code>. Next, <code>getBundle</code>
+     * tries loading a bundle in the following sequence.
+     *
+     * <ul>
+     * <li>class <code>foo.bar.Messages_fr</code></li>
+     * <li>file <code>foo/bar/Messages_fr.properties</code></li>
+     * <li>class <code>foo.bar.Messages</code></li>
+     * <li>file <code>foo/bar/Messages.properties</code></li>
+     * </ul>
+     *
+     * <p><code>getBundle</code> finds
+     * <code>foo/bar/Messages_fr.properties</code> and creates a
+     * <code>ResourceBundle</code> instance. Then, <code>getBundle</code>
+     * sets up its parent chain from the list of the candidate locales.  Only
+     * <code>foo/bar/Messages.properties</code> is found in the list and
+     * <code>getBundle</code> creates a <code>ResourceBundle</code> instance
+     * that becomes the parent of the instance for
+     * <code>foo/bar/Messages_fr.properties</code>.
+     *
+     * @param baseName
+     *        the base name of the resource bundle, a fully qualified
+     *        class name
+     * @param targetLocale
+     *        the locale for which a resource bundle is desired
+     * @param loader
+     *        the class loader from which to load the resource bundle
+     * @param control
+     *        the control which gives information for the resource
+     *        bundle loading process
+     * @return a resource bundle for the given base name and locale
+     * @exception NullPointerException
+     *        if <code>baseName</code>, <code>targetLocale</code>,
+     *        <code>loader</code>, or <code>control</code> is
+     *        <code>null</code>
+     * @exception MissingResourceException
+     *        if no resource bundle for the specified base name can be found
+     * @exception IllegalArgumentException
+     *        if the given <code>control</code> doesn't perform properly
+     *        (e.g., <code>control.getCandidateLocales</code> returns null.)
+     *        Note that validation of <code>control</code> is performed as
+     *        needed.
+     * @since 1.6
+     */
+    public static ResourceBundle getBundle(String baseName, Locale targetLocale,
+                                           ClassLoader loader, Control control) {
+        if (loader == null || control == null) {
+            throw new NullPointerException();
+        }
+        return getBundleImpl(baseName, targetLocale, loader, control);
+    }
+
+    private static Control getDefaultControl(String baseName) {
+        if (providers != null) {
+            for (ResourceBundleControlProvider provider : providers) {
+                Control control = provider.getControl(baseName);
+                if (control != null) {
+                    return control;
+                }
+            }
+        }
+        return Control.INSTANCE;
+    }
+
+    private static ResourceBundle getBundleImpl(String baseName, Locale locale,
+                                                ClassLoader loader, Control control) {
+        if (locale == null || control == null) {
+            throw new NullPointerException();
+        }
+
+        // We create a CacheKey here for use by this call. The base
+        // name and loader will never change during the bundle loading
+        // process. We have to make sure that the locale is set before
+        // using it as a cache key.
+        CacheKey cacheKey = new CacheKey(baseName, locale, loader);
+        ResourceBundle bundle = null;
+
+        // Quick lookup of the cache.
+        BundleReference bundleRef = cacheList.get(cacheKey);
+        if (bundleRef != null) {
+            bundle = bundleRef.get();
+            bundleRef = null;
+        }
+
+        // If this bundle and all of its parents are valid (not expired),
+        // then return this bundle. If any of the bundles is expired, we
+        // don't call control.needsReload here but instead drop into the
+        // complete loading process below.
+        if (isValidBundle(bundle) && hasValidParentChain(bundle)) {
+            return bundle;
+        }
+
+        // No valid bundle was found in the cache, so we need to load the
+        // resource bundle and its parents.
+
+        boolean isKnownControl = (control == Control.INSTANCE) ||
+                                   (control instanceof SingleFormatControl);
+        List<String> formats = control.getFormats(baseName);
+        if (!isKnownControl && !checkList(formats)) {
+            throw new IllegalArgumentException("Invalid Control: getFormats");
+        }
+
+        ResourceBundle baseBundle = null;
+        for (Locale targetLocale = locale;
+             targetLocale != null;
+             targetLocale = control.getFallbackLocale(baseName, targetLocale)) {
+            List<Locale> candidateLocales = control.getCandidateLocales(baseName, targetLocale);
+            if (!isKnownControl && !checkList(candidateLocales)) {
+                throw new IllegalArgumentException("Invalid Control: getCandidateLocales");
+            }
+
+            bundle = findBundle(cacheKey, candidateLocales, formats, 0, control, baseBundle);
+
+            // If the loaded bundle is the base bundle and exactly for the
+            // requested locale or the only candidate locale, then take the
+            // bundle as the resulting one. If the loaded bundle is the base
+            // bundle, it's put on hold until we finish processing all
+            // fallback locales.
+            if (isValidBundle(bundle)) {
+                boolean isBaseBundle = Locale.ROOT.equals(bundle.locale);
+                if (!isBaseBundle || bundle.locale.equals(locale)
+                    || (candidateLocales.size() == 1
+                        && bundle.locale.equals(candidateLocales.get(0)))) {
+                    break;
+                }
+
+                // If the base bundle has been loaded, keep the reference in
+                // baseBundle so that we can avoid any redundant loading in case
+                // the control specify not to cache bundles.
+                if (isBaseBundle && baseBundle == null) {
+                    baseBundle = bundle;
+                }
+            }
+        }
+
+        if (bundle == null) {
+            if (baseBundle == null) {
+                throwMissingResourceException(baseName, locale, cacheKey.getCause());
+            }
+            bundle = baseBundle;
+        }
+
+        keepAlive(loader);
+        return bundle;
+    }
+
+    /**
+     * Keeps the argument ClassLoader alive.
+     */
+    private static void keepAlive(ClassLoader loader){
+        // Do nothing.
+    }
+
+    /**
+     * Checks if the given <code>List</code> is not null, not empty,
+     * not having null in its elements.
+     */
+    private static boolean checkList(List<?> a) {
+        boolean valid = (a != null && !a.isEmpty());
+        if (valid) {
+            int size = a.size();
+            for (int i = 0; valid && i < size; i++) {
+                valid = (a.get(i) != null);
+            }
+        }
+        return valid;
+    }
+
+    private static ResourceBundle findBundle(CacheKey cacheKey,
+                                             List<Locale> candidateLocales,
+                                             List<String> formats,
+                                             int index,
+                                             Control control,
+                                             ResourceBundle baseBundle) {
+        Locale targetLocale = candidateLocales.get(index);
+        ResourceBundle parent = null;
+        if (index != candidateLocales.size() - 1) {
+            parent = findBundle(cacheKey, candidateLocales, formats, index + 1,
+                                control, baseBundle);
+        } else if (baseBundle != null && Locale.ROOT.equals(targetLocale)) {
+            return baseBundle;
+        }
+
+        // Before we do the real loading work, see whether we need to
+        // do some housekeeping: If references to class loaders or
+        // resource bundles have been nulled out, remove all related
+        // information from the cache.
+        Object ref;
+        while ((ref = referenceQueue.poll()) != null) {
+            cacheList.remove(((CacheKeyReference)ref).getCacheKey());
+        }
+
+        // flag indicating the resource bundle has expired in the cache
+        boolean expiredBundle = false;
+
+        // First, look up the cache to see if it's in the cache, without
+        // attempting to load bundle.
+        cacheKey.setLocale(targetLocale);
+        ResourceBundle bundle = findBundleInCache(cacheKey, control);
+        if (isValidBundle(bundle)) {
+            expiredBundle = bundle.expired;
+            if (!expiredBundle) {
+                // If its parent is the one asked for by the candidate
+                // locales (the runtime lookup path), we can take the cached
+                // one. (If it's not identical, then we'd have to check the
+                // parent's parents to be consistent with what's been
+                // requested.)
+                if (bundle.parent == parent) {
+                    return bundle;
+                }
+                // Otherwise, remove the cached one since we can't keep
+                // the same bundles having different parents.
+                BundleReference bundleRef = cacheList.get(cacheKey);
+                if (bundleRef != null && bundleRef.get() == bundle) {
+                    cacheList.remove(cacheKey, bundleRef);
+                }
+            }
+        }
+
+        if (bundle != NONEXISTENT_BUNDLE) {
+            CacheKey constKey = (CacheKey) cacheKey.clone();
+
+            try {
+                bundle = loadBundle(cacheKey, formats, control, expiredBundle);
+                if (bundle != null) {
+                    if (bundle.parent == null) {
+                        bundle.setParent(parent);
+                    }
+                    bundle.locale = targetLocale;
+                    bundle = putBundleInCache(cacheKey, bundle, control);
+                    return bundle;
+                }
+
+                // Put NONEXISTENT_BUNDLE in the cache as a mark that there's no bundle
+                // instance for the locale.
+                putBundleInCache(cacheKey, NONEXISTENT_BUNDLE, control);
+            } finally {
+                if (constKey.getCause() instanceof InterruptedException) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }
+        return parent;
+    }
+
+    private static ResourceBundle loadBundle(CacheKey cacheKey,
+                                             List<String> formats,
+                                             Control control,
+                                             boolean reload) {
+
+        // Here we actually load the bundle in the order of formats
+        // specified by the getFormats() value.
+        Locale targetLocale = cacheKey.getLocale();
+
+        ResourceBundle bundle = null;
+        int size = formats.size();
+        for (int i = 0; i < size; i++) {
+            String format = formats.get(i);
+            try {
+                bundle = control.newBundle(cacheKey.getName(), targetLocale, format,
+                                           cacheKey.getLoader(), reload);
+            } catch (LinkageError error) {
+                // We need to handle the LinkageError case due to
+                // inconsistent case-sensitivity in ClassLoader.
+                // See 6572242 for details.
+                cacheKey.setCause(error);
+            } catch (Exception cause) {
+                cacheKey.setCause(cause);
+            }
+            if (bundle != null) {
+                // Set the format in the cache key so that it can be
+                // used when calling needsReload later.
+                cacheKey.setFormat(format);
+                bundle.name = cacheKey.getName();
+                bundle.locale = targetLocale;
+                // Bundle provider might reuse instances. So we should make
+                // sure to clear the expired flag here.
+                bundle.expired = false;
+                break;
+            }
+        }
+
+        return bundle;
+    }
+
+    private static boolean isValidBundle(ResourceBundle bundle) {
+        return bundle != null && bundle != NONEXISTENT_BUNDLE;
+    }
+
+    /**
+     * Determines whether any of resource bundles in the parent chain,
+     * including the leaf, have expired.
+     */
+    private static boolean hasValidParentChain(ResourceBundle bundle) {
+        long now = System.currentTimeMillis();
+        while (bundle != null) {
+            if (bundle.expired) {
+                return false;
+            }
+            CacheKey key = bundle.cacheKey;
+            if (key != null) {
+                long expirationTime = key.expirationTime;
+                if (expirationTime >= 0 && expirationTime <= now) {
+                    return false;
+                }
+            }
+            bundle = bundle.parent;
+        }
+        return true;
+    }
+
+    /**
+     * Throw a MissingResourceException with proper message
+     */
+    private static void throwMissingResourceException(String baseName,
+                                                      Locale locale,
+                                                      Throwable cause) {
+        // If the cause is a MissingResourceException, avoid creating
+        // a long chain. (6355009)
+        if (cause instanceof MissingResourceException) {
+            cause = null;
+        }
+        throw new MissingResourceException("Can't find bundle for base name "
+                                           + baseName + ", locale " + locale,
+                                           baseName + "_" + locale, // className
+                                           "",                      // key
+                                           cause);
+    }
+
+    /**
+     * Finds a bundle in the cache. Any expired bundles are marked as
+     * `expired' and removed from the cache upon return.
+     *
+     * @param cacheKey the key to look up the cache
+     * @param control the Control to be used for the expiration control
+     * @return the cached bundle, or null if the bundle is not found in the
+     * cache or its parent has expired. <code>bundle.expire</code> is true
+     * upon return if the bundle in the cache has expired.
+     */
+    private static ResourceBundle findBundleInCache(CacheKey cacheKey,
+                                                    Control control) {
+        BundleReference bundleRef = cacheList.get(cacheKey);
+        if (bundleRef == null) {
+            return null;
+        }
+        ResourceBundle bundle = bundleRef.get();
+        if (bundle == null) {
+            return null;
+        }
+        ResourceBundle p = bundle.parent;
+        assert p != NONEXISTENT_BUNDLE;
+        // If the parent has expired, then this one must also expire. We
+        // check only the immediate parent because the actual loading is
+        // done from the root (base) to leaf (child) and the purpose of
+        // checking is to propagate expiration towards the leaf. For
+        // example, if the requested locale is ja_JP_JP and there are
+        // bundles for all of the candidates in the cache, we have a list,
+        //
+        // base <- ja <- ja_JP <- ja_JP_JP
+        //
+        // If ja has expired, then it will reload ja and the list becomes a
+        // tree.
+        //
+        // base <- ja (new)
+        //  "   <- ja (expired) <- ja_JP <- ja_JP_JP
+        //
+        // When looking up ja_JP in the cache, it finds ja_JP in the cache
+        // which references to the expired ja. Then, ja_JP is marked as
+        // expired and removed from the cache. This will be propagated to
+        // ja_JP_JP.
+        //
+        // Now, it's possible, for example, that while loading new ja_JP,
+        // someone else has started loading the same bundle and finds the
+        // base bundle has expired. Then, what we get from the first
+        // getBundle call includes the expired base bundle. However, if
+        // someone else didn't start its loading, we wouldn't know if the
+        // base bundle has expired at the end of the loading process. The
+        // expiration control doesn't guarantee that the returned bundle and
+        // its parents haven't expired.
+        //
+        // We could check the entire parent chain to see if there's any in
+        // the chain that has expired. But this process may never end. An
+        // extreme case would be that getTimeToLive returns 0 and
+        // needsReload always returns true.
+        if (p != null && p.expired) {
+            assert bundle != NONEXISTENT_BUNDLE;
+            bundle.expired = true;
+            bundle.cacheKey = null;
+            cacheList.remove(cacheKey, bundleRef);
+            bundle = null;
+        } else {
+            CacheKey key = bundleRef.getCacheKey();
+            long expirationTime = key.expirationTime;
+            if (!bundle.expired && expirationTime >= 0 &&
+                expirationTime <= System.currentTimeMillis()) {
+                // its TTL period has expired.
+                if (bundle != NONEXISTENT_BUNDLE) {
+                    // Synchronize here to call needsReload to avoid
+                    // redundant concurrent calls for the same bundle.
+                    synchronized (bundle) {
+                        expirationTime = key.expirationTime;
+                        if (!bundle.expired && expirationTime >= 0 &&
+                            expirationTime <= System.currentTimeMillis()) {
+                            try {
+                                bundle.expired = control.needsReload(key.getName(),
+                                                                     key.getLocale(),
+                                                                     key.getFormat(),
+                                                                     key.getLoader(),
+                                                                     bundle,
+                                                                     key.loadTime);
+                            } catch (Exception e) {
+                                cacheKey.setCause(e);
+                            }
+                            if (bundle.expired) {
+                                // If the bundle needs to be reloaded, then
+                                // remove the bundle from the cache, but
+                                // return the bundle with the expired flag
+                                // on.
+                                bundle.cacheKey = null;
+                                cacheList.remove(cacheKey, bundleRef);
+                            } else {
+                                // Update the expiration control info. and reuse
+                                // the same bundle instance
+                                setExpirationTime(key, control);
+                            }
+                        }
+                    }
+                } else {
+                    // We just remove NONEXISTENT_BUNDLE from the cache.
+                    cacheList.remove(cacheKey, bundleRef);
+                    bundle = null;
+                }
+            }
+        }
+        return bundle;
+    }
+
+    /**
+     * Put a new bundle in the cache.
+     *
+     * @param cacheKey the key for the resource bundle
+     * @param bundle the resource bundle to be put in the cache
+     * @return the ResourceBundle for the cacheKey; if someone has put
+     * the bundle before this call, the one found in the cache is
+     * returned.
+     */
+    private static ResourceBundle putBundleInCache(CacheKey cacheKey,
+                                                   ResourceBundle bundle,
+                                                   Control control) {
+        setExpirationTime(cacheKey, control);
+        if (cacheKey.expirationTime != Control.TTL_DONT_CACHE) {
+            CacheKey key = (CacheKey) cacheKey.clone();
+            BundleReference bundleRef = new BundleReference(bundle, referenceQueue, key);
+            bundle.cacheKey = key;
+
+            // Put the bundle in the cache if it's not been in the cache.
+            BundleReference result = cacheList.putIfAbsent(key, bundleRef);
+
+            // If someone else has put the same bundle in the cache before
+            // us and it has not expired, we should use the one in the cache.
+            if (result != null) {
+                ResourceBundle rb = result.get();
+                if (rb != null && !rb.expired) {
+                    // Clear the back link to the cache key
+                    bundle.cacheKey = null;
+                    bundle = rb;
+                    // Clear the reference in the BundleReference so that
+                    // it won't be enqueued.
+                    bundleRef.clear();
+                } else {
+                    // Replace the invalid (garbage collected or expired)
+                    // instance with the valid one.
+                    cacheList.put(key, bundleRef);
+                }
+            }
+        }
+        return bundle;
+    }
+
+    private static void setExpirationTime(CacheKey cacheKey, Control control) {
+        long ttl = control.getTimeToLive(cacheKey.getName(),
+                                         cacheKey.getLocale());
+        if (ttl >= 0) {
+            // If any expiration time is specified, set the time to be
+            // expired in the cache.
+            long now = System.currentTimeMillis();
+            cacheKey.loadTime = now;
+            cacheKey.expirationTime = now + ttl;
+        } else if (ttl >= Control.TTL_NO_EXPIRATION_CONTROL) {
+            cacheKey.expirationTime = ttl;
+        } else {
+            throw new IllegalArgumentException("Invalid Control: TTL=" + ttl);
+        }
+    }
+
+    /**
+     * Removes all resource bundles from the cache that have been loaded
+     * using the caller's class loader.
+     *
+     * @since 1.6
+     * @see ResourceBundle.Control#getTimeToLive(String,Locale)
+     */
+    @CallerSensitive
+    public static final void clearCache() {
+        clearCache(getLoader(Reflection.getCallerClass()));
+    }
+
+    /**
+     * Removes all resource bundles from the cache that have been loaded
+     * using the given class loader.
+     *
+     * @param loader the class loader
+     * @exception NullPointerException if <code>loader</code> is null
+     * @since 1.6
+     * @see ResourceBundle.Control#getTimeToLive(String,Locale)
+     */
+    public static final void clearCache(ClassLoader loader) {
+        if (loader == null) {
+            throw new NullPointerException();
+        }
+        Set<CacheKey> set = cacheList.keySet();
+        for (CacheKey key : set) {
+            if (key.getLoader() == loader) {
+                set.remove(key);
+            }
+        }
+    }
+
+    /**
+     * Gets an object for the given key from this resource bundle.
+     * Returns null if this resource bundle does not contain an
+     * object for the given key.
+     *
+     * @param key the key for the desired object
+     * @exception NullPointerException if <code>key</code> is <code>null</code>
+     * @return the object for the given key, or null
+     */
+    protected abstract Object handleGetObject(String key);
+
+    /**
+     * Returns an enumeration of the keys.
+     *
+     * @return an <code>Enumeration</code> of the keys contained in
+     *         this <code>ResourceBundle</code> and its parent bundles.
+     */
+    public abstract Enumeration<String> getKeys();
+
+    /**
+     * Determines whether the given <code>key</code> is contained in
+     * this <code>ResourceBundle</code> or its parent bundles.
+     *
+     * @param key
+     *        the resource <code>key</code>
+     * @return <code>true</code> if the given <code>key</code> is
+     *        contained in this <code>ResourceBundle</code> or its
+     *        parent bundles; <code>false</code> otherwise.
+     * @exception NullPointerException
+     *         if <code>key</code> is <code>null</code>
+     * @since 1.6
+     */
+    public boolean containsKey(String key) {
+        if (key == null) {
+            throw new NullPointerException();
+        }
+        for (ResourceBundle rb = this; rb != null; rb = rb.parent) {
+            if (rb.handleKeySet().contains(key)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Returns a <code>Set</code> of all keys contained in this
+     * <code>ResourceBundle</code> and its parent bundles.
+     *
+     * @return a <code>Set</code> of all keys contained in this
+     *         <code>ResourceBundle</code> and its parent bundles.
+     * @since 1.6
+     */
+    public Set<String> keySet() {
+        Set<String> keys = new HashSet<>();
+        for (ResourceBundle rb = this; rb != null; rb = rb.parent) {
+            keys.addAll(rb.handleKeySet());
+        }
+        return keys;
+    }
+
+    /**
+     * Returns a <code>Set</code> of the keys contained <em>only</em>
+     * in this <code>ResourceBundle</code>.
+     *
+     * <p>The default implementation returns a <code>Set</code> of the
+     * keys returned by the {@link #getKeys() getKeys} method except
+     * for the ones for which the {@link #handleGetObject(String)
+     * handleGetObject} method returns <code>null</code>. Once the
+     * <code>Set</code> has been created, the value is kept in this
+     * <code>ResourceBundle</code> in order to avoid producing the
+     * same <code>Set</code> in subsequent calls. Subclasses can
+     * override this method for faster handling.
+     *
+     * @return a <code>Set</code> of the keys contained only in this
+     *        <code>ResourceBundle</code>
+     * @since 1.6
+     */
+    protected Set<String> handleKeySet() {
+        if (keySet == null) {
+            synchronized (this) {
+                if (keySet == null) {
+                    Set<String> keys = new HashSet<>();
+                    Enumeration<String> enumKeys = getKeys();
+                    while (enumKeys.hasMoreElements()) {
+                        String key = enumKeys.nextElement();
+                        if (handleGetObject(key) != null) {
+                            keys.add(key);
+                        }
+                    }
+                    keySet = keys;
+                }
+            }
+        }
+        return keySet;
+    }
+
+
+
+    /**
+     * <code>ResourceBundle.Control</code> defines a set of callback methods
+     * that are invoked by the {@link ResourceBundle#getBundle(String,
+     * Locale, ClassLoader, Control) ResourceBundle.getBundle} factory
+     * methods during the bundle loading process. In other words, a
+     * <code>ResourceBundle.Control</code> collaborates with the factory
+     * methods for loading resource bundles. The default implementation of
+     * the callback methods provides the information necessary for the
+     * factory methods to perform the <a
+     * href="./ResourceBundle.html#default_behavior">default behavior</a>.
+     *
+     * <p>In addition to the callback methods, the {@link
+     * #toBundleName(String, Locale) toBundleName} and {@link
+     * #toResourceName(String, String) toResourceName} methods are defined
+     * primarily for convenience in implementing the callback
+     * methods. However, the <code>toBundleName</code> method could be
+     * overridden to provide different conventions in the organization and
+     * packaging of localized resources.  The <code>toResourceName</code>
+     * method is <code>final</code> to avoid use of wrong resource and class
+     * name separators.
+     *
+     * <p>Two factory methods, {@link #getControl(List)} and {@link
+     * #getNoFallbackControl(List)}, provide
+     * <code>ResourceBundle.Control</code> instances that implement common
+     * variations of the default bundle loading process.
+     *
+     * <p>The formats returned by the {@link Control#getFormats(String)
+     * getFormats} method and candidate locales returned by the {@link
+     * ResourceBundle.Control#getCandidateLocales(String, Locale)
+     * getCandidateLocales} method must be consistent in all
+     * <code>ResourceBundle.getBundle</code> invocations for the same base
+     * bundle. Otherwise, the <code>ResourceBundle.getBundle</code> methods
+     * may return unintended bundles. For example, if only
+     * <code>"java.class"</code> is returned by the <code>getFormats</code>
+     * method for the first call to <code>ResourceBundle.getBundle</code>
+     * and only <code>"java.properties"</code> for the second call, then the
+     * second call will return the class-based one that has been cached
+     * during the first call.
+     *
+     * <p>A <code>ResourceBundle.Control</code> instance must be thread-safe
+     * if it's simultaneously used by multiple threads.
+     * <code>ResourceBundle.getBundle</code> does not synchronize to call
+     * the <code>ResourceBundle.Control</code> methods. The default
+     * implementations of the methods are thread-safe.
+     *
+     * <p>Applications can specify <code>ResourceBundle.Control</code>
+     * instances returned by the <code>getControl</code> factory methods or
+     * created from a subclass of <code>ResourceBundle.Control</code> to
+     * customize the bundle loading process. The following are examples of
+     * changing the default bundle loading process.
+     *
+     * <p><b>Example 1</b>
+     *
+     * <p>The following code lets <code>ResourceBundle.getBundle</code> look
+     * up only properties-based resources.
+     *
+     * <pre>
+     * import java.util.*;
+     * import static java.util.ResourceBundle.Control.*;
+     * ...
+     * ResourceBundle bundle =
+     *   ResourceBundle.getBundle("MyResources", new Locale("fr", "CH"),
+     *                            ResourceBundle.Control.getControl(FORMAT_PROPERTIES));
+     * </pre>
+     *
+     * Given the resource bundles in the <a
+     * href="./ResourceBundle.html#default_behavior_example">example</a> in
+     * the <code>ResourceBundle.getBundle</code> description, this
+     * <code>ResourceBundle.getBundle</code> call loads
+     * <code>MyResources_fr_CH.properties</code> whose parent is
+     * <code>MyResources_fr.properties</code> whose parent is
+     * <code>MyResources.properties</code>. (<code>MyResources_fr_CH.properties</code>
+     * is not hidden, but <code>MyResources_fr_CH.class</code> is.)
+     *
+     * <p><b>Example 2</b>
+     *
+     * <p>The following is an example of loading XML-based bundles
+     * using {@link Properties#loadFromXML(java.io.InputStream)
+     * Properties.loadFromXML}.
+     *
+     * <pre>
+     * ResourceBundle rb = ResourceBundle.getBundle("Messages",
+     *     new ResourceBundle.Control() {
+     *         public List&lt;String&gt; getFormats(String baseName) {
+     *             if (baseName == null)
+     *                 throw new NullPointerException();
+     *             return Arrays.asList("xml");
+     *         }
+     *         public ResourceBundle newBundle(String baseName,
+     *                                         Locale locale,
+     *                                         String format,
+     *                                         ClassLoader loader,
+     *                                         boolean reload)
+     *                          throws IllegalAccessException,
+     *                                 InstantiationException,
+     *                                 IOException {
+     *             if (baseName == null || locale == null
+     *                   || format == null || loader == null)
+     *                 throw new NullPointerException();
+     *             ResourceBundle bundle = null;
+     *             if (format.equals("xml")) {
+     *                 String bundleName = toBundleName(baseName, locale);
+     *                 String resourceName = toResourceName(bundleName, format);
+     *                 InputStream stream = null;
+     *                 if (reload) {
+     *                     URL url = loader.getResource(resourceName);
+     *                     if (url != null) {
+     *                         URLConnection connection = url.openConnection();
+     *                         if (connection != null) {
+     *                             // Disable caches to get fresh data for
+     *                             // reloading.
+     *                             connection.setUseCaches(false);
+     *                             stream = connection.getInputStream();
+     *                         }
+     *                     }
+     *                 } else {
+     *                     stream = loader.getResourceAsStream(resourceName);
+     *                 }
+     *                 if (stream != null) {
+     *                     BufferedInputStream bis = new BufferedInputStream(stream);
+     *                     bundle = new XMLResourceBundle(bis);
+     *                     bis.close();
+     *                 }
+     *             }
+     *             return bundle;
+     *         }
+     *     });
+     *
+     * ...
+     *
+     * private static class XMLResourceBundle extends ResourceBundle {
+     *     private Properties props;
+     *     XMLResourceBundle(InputStream stream) throws IOException {
+     *         props = new Properties();
+     *         props.loadFromXML(stream);
+     *     }
+     *     protected Object handleGetObject(String key) {
+     *         return props.getProperty(key);
+     *     }
+     *     public Enumeration&lt;String&gt; getKeys() {
+     *         ...
+     *     }
+     * }
+     * </pre>
+     *
+     * @since 1.6
+     */
+    public static class Control {
+        /**
+         * The default format <code>List</code>, which contains the strings
+         * <code>"java.class"</code> and <code>"java.properties"</code>, in
+         * this order. This <code>List</code> is {@linkplain
+         * Collections#unmodifiableList(List) unmodifiable}.
+         *
+         * @see #getFormats(String)
+         */
+        public static final List<String> FORMAT_DEFAULT
+            = Collections.unmodifiableList(Arrays.asList("java.class",
+                                                         "java.properties"));
+
+        /**
+         * The class-only format <code>List</code> containing
+         * <code>"java.class"</code>. This <code>List</code> is {@linkplain
+         * Collections#unmodifiableList(List) unmodifiable}.
+         *
+         * @see #getFormats(String)
+         */
+        public static final List<String> FORMAT_CLASS
+            = Collections.unmodifiableList(Arrays.asList("java.class"));
+
+        /**
+         * The properties-only format <code>List</code> containing
+         * <code>"java.properties"</code>. This <code>List</code> is
+         * {@linkplain Collections#unmodifiableList(List) unmodifiable}.
+         *
+         * @see #getFormats(String)
+         */
+        public static final List<String> FORMAT_PROPERTIES
+            = Collections.unmodifiableList(Arrays.asList("java.properties"));
+
+        /**
+         * The time-to-live constant for not caching loaded resource bundle
+         * instances.
+         *
+         * @see #getTimeToLive(String, Locale)
+         */
+        public static final long TTL_DONT_CACHE = -1;
+
+        /**
+         * The time-to-live constant for disabling the expiration control
+         * for loaded resource bundle instances in the cache.
+         *
+         * @see #getTimeToLive(String, Locale)
+         */
+        public static final long TTL_NO_EXPIRATION_CONTROL = -2;
+
+        private static final Control INSTANCE = new Control();
+
+        /**
+         * Sole constructor. (For invocation by subclass constructors,
+         * typically implicit.)
+         */
+        protected Control() {
+        }
+
+        /**
+         * Returns a <code>ResourceBundle.Control</code> in which the {@link
+         * #getFormats(String) getFormats} method returns the specified
+         * <code>formats</code>. The <code>formats</code> must be equal to
+         * one of {@link Control#FORMAT_PROPERTIES}, {@link
+         * Control#FORMAT_CLASS} or {@link
+         * Control#FORMAT_DEFAULT}. <code>ResourceBundle.Control</code>
+         * instances returned by this method are singletons and thread-safe.
+         *
+         * <p>Specifying {@link Control#FORMAT_DEFAULT} is equivalent to
+         * instantiating the <code>ResourceBundle.Control</code> class,
+         * except that this method returns a singleton.
+         *
+         * @param formats
+         *        the formats to be returned by the
+         *        <code>ResourceBundle.Control.getFormats</code> method
+         * @return a <code>ResourceBundle.Control</code> supporting the
+         *        specified <code>formats</code>
+         * @exception NullPointerException
+         *        if <code>formats</code> is <code>null</code>
+         * @exception IllegalArgumentException
+         *        if <code>formats</code> is unknown
+         */
+        public static final Control getControl(List<String> formats) {
+            if (formats.equals(Control.FORMAT_PROPERTIES)) {
+                return SingleFormatControl.PROPERTIES_ONLY;
+            }
+            if (formats.equals(Control.FORMAT_CLASS)) {
+                return SingleFormatControl.CLASS_ONLY;
+            }
+            if (formats.equals(Control.FORMAT_DEFAULT)) {
+                return Control.INSTANCE;
+            }
+            throw new IllegalArgumentException();
+        }
+
+        /**
+         * Returns a <code>ResourceBundle.Control</code> in which the {@link
+         * #getFormats(String) getFormats} method returns the specified
+         * <code>formats</code> and the {@link
+         * Control#getFallbackLocale(String, Locale) getFallbackLocale}
+         * method returns <code>null</code>. The <code>formats</code> must
+         * be equal to one of {@link Control#FORMAT_PROPERTIES}, {@link
+         * Control#FORMAT_CLASS} or {@link Control#FORMAT_DEFAULT}.
+         * <code>ResourceBundle.Control</code> instances returned by this
+         * method are singletons and thread-safe.
+         *
+         * @param formats
+         *        the formats to be returned by the
+         *        <code>ResourceBundle.Control.getFormats</code> method
+         * @return a <code>ResourceBundle.Control</code> supporting the
+         *        specified <code>formats</code> with no fallback
+         *        <code>Locale</code> support
+         * @exception NullPointerException
+         *        if <code>formats</code> is <code>null</code>
+         * @exception IllegalArgumentException
+         *        if <code>formats</code> is unknown
+         */
+        public static final Control getNoFallbackControl(List<String> formats) {
+            if (formats.equals(Control.FORMAT_DEFAULT)) {
+                return NoFallbackControl.NO_FALLBACK;
+            }
+            if (formats.equals(Control.FORMAT_PROPERTIES)) {
+                return NoFallbackControl.PROPERTIES_ONLY_NO_FALLBACK;
+            }
+            if (formats.equals(Control.FORMAT_CLASS)) {
+                return NoFallbackControl.CLASS_ONLY_NO_FALLBACK;
+            }
+            throw new IllegalArgumentException();
+        }
+
+        /**
+         * Returns a <code>List</code> of <code>String</code>s containing
+         * formats to be used to load resource bundles for the given
+         * <code>baseName</code>. The <code>ResourceBundle.getBundle</code>
+         * factory method tries to load resource bundles with formats in the
+         * order specified by the list. The list returned by this method
+         * must have at least one <code>String</code>. The predefined
+         * formats are <code>"java.class"</code> for class-based resource
+         * bundles and <code>"java.properties"</code> for {@linkplain
+         * PropertyResourceBundle properties-based} ones. Strings starting
+         * with <code>"java."</code> are reserved for future extensions and
+         * must not be used by application-defined formats.
+         *
+         * <p>It is not a requirement to return an immutable (unmodifiable)
+         * <code>List</code>.  However, the returned <code>List</code> must
+         * not be mutated after it has been returned by
+         * <code>getFormats</code>.
+         *
+         * <p>The default implementation returns {@link #FORMAT_DEFAULT} so
+         * that the <code>ResourceBundle.getBundle</code> factory method
+         * looks up first class-based resource bundles, then
+         * properties-based ones.
+         *
+         * @param baseName
+         *        the base name of the resource bundle, a fully qualified class
+         *        name
+         * @return a <code>List</code> of <code>String</code>s containing
+         *        formats for loading resource bundles.
+         * @exception NullPointerException
+         *        if <code>baseName</code> is null
+         * @see #FORMAT_DEFAULT
+         * @see #FORMAT_CLASS
+         * @see #FORMAT_PROPERTIES
+         */
+        public List<String> getFormats(String baseName) {
+            if (baseName == null) {
+                throw new NullPointerException();
+            }
+            return FORMAT_DEFAULT;
+        }
+
+        /**
+         * Returns a <code>List</code> of <code>Locale</code>s as candidate
+         * locales for <code>baseName</code> and <code>locale</code>. This
+         * method is called by the <code>ResourceBundle.getBundle</code>
+         * factory method each time the factory method tries finding a
+         * resource bundle for a target <code>Locale</code>.
+         *
+         * <p>The sequence of the candidate locales also corresponds to the
+         * runtime resource lookup path (also known as the <I>parent
+         * chain</I>), if the corresponding resource bundles for the
+         * candidate locales exist and their parents are not defined by
+         * loaded resource bundles themselves.  The last element of the list
+         * must be a {@linkplain Locale#ROOT root locale} if it is desired to
+         * have the base bundle as the terminal of the parent chain.
+         *
+         * <p>If the given locale is equal to <code>Locale.ROOT</code> (the
+         * root locale), a <code>List</code> containing only the root
+         * <code>Locale</code> must be returned. In this case, the
+         * <code>ResourceBundle.getBundle</code> factory method loads only
+         * the base bundle as the resulting resource bundle.
+         *
+         * <p>It is not a requirement to return an immutable (unmodifiable)
+         * <code>List</code>. However, the returned <code>List</code> must not
+         * be mutated after it has been returned by
+         * <code>getCandidateLocales</code>.
+         *
+         * <p>The default implementation returns a <code>List</code> containing
+         * <code>Locale</code>s using the rules described below.  In the
+         * description below, <em>L</em>, <em>S</em>, <em>C</em> and <em>V</em>
+         * respectively represent non-empty language, script, country, and
+         * variant.  For example, [<em>L</em>, <em>C</em>] represents a
+         * <code>Locale</code> that has non-empty values only for language and
+         * country.  The form <em>L</em>("xx") represents the (non-empty)
+         * language value is "xx".  For all cases, <code>Locale</code>s whose
+         * final component values are empty strings are omitted.
+         *
+         * <ol><li>For an input <code>Locale</code> with an empty script value,
+         * append candidate <code>Locale</code>s by omitting the final component
+         * one by one as below:
+         *
+         * <ul>
+         * <li> [<em>L</em>, <em>C</em>, <em>V</em>] </li>
+         * <li> [<em>L</em>, <em>C</em>] </li>
+         * <li> [<em>L</em>] </li>
+         * <li> <code>Locale.ROOT</code> </li>
+         * </ul></li>
+         *
+         * <li>For an input <code>Locale</code> with a non-empty script value,
+         * append candidate <code>Locale</code>s by omitting the final component
+         * up to language, then append candidates generated from the
+         * <code>Locale</code> with country and variant restored:
+         *
+         * <ul>
+         * <li> [<em>L</em>, <em>S</em>, <em>C</em>, <em>V</em>]</li>
+         * <li> [<em>L</em>, <em>S</em>, <em>C</em>]</li>
+         * <li> [<em>L</em>, <em>S</em>]</li>
+         * <li> [<em>L</em>, <em>C</em>, <em>V</em>]</li>
+         * <li> [<em>L</em>, <em>C</em>]</li>
+         * <li> [<em>L</em>]</li>
+         * <li> <code>Locale.ROOT</code></li>
+         * </ul></li>
+         *
+         * <li>For an input <code>Locale</code> with a variant value consisting
+         * of multiple subtags separated by underscore, generate candidate
+         * <code>Locale</code>s by omitting the variant subtags one by one, then
+         * insert them after every occurrence of <code> Locale</code>s with the
+         * full variant value in the original list.  For example, if the
+         * the variant consists of two subtags <em>V1</em> and <em>V2</em>:
+         *
+         * <ul>
+         * <li> [<em>L</em>, <em>S</em>, <em>C</em>, <em>V1</em>, <em>V2</em>]</li>
+         * <li> [<em>L</em>, <em>S</em>, <em>C</em>, <em>V1</em>]</li>
+         * <li> [<em>L</em>, <em>S</em>, <em>C</em>]</li>
+         * <li> [<em>L</em>, <em>S</em>]</li>
+         * <li> [<em>L</em>, <em>C</em>, <em>V1</em>, <em>V2</em>]</li>
+         * <li> [<em>L</em>, <em>C</em>, <em>V1</em>]</li>
+         * <li> [<em>L</em>, <em>C</em>]</li>
+         * <li> [<em>L</em>]</li>
+         * <li> <code>Locale.ROOT</code></li>
+         * </ul></li>
+         *
+         * <li>Special cases for Chinese.  When an input <code>Locale</code> has the
+         * language "zh" (Chinese) and an empty script value, either "Hans" (Simplified) or
+         * "Hant" (Traditional) might be supplied, depending on the country.
+         * When the country is "CN" (China) or "SG" (Singapore), "Hans" is supplied.
+         * When the country is "HK" (Hong Kong SAR China), "MO" (Macau SAR China),
+         * or "TW" (Taiwan), "Hant" is supplied.  For all other countries or when the country
+         * is empty, no script is supplied.  For example, for <code>Locale("zh", "CN")
+         * </code>, the candidate list will be:
+         * <ul>
+         * <li> [<em>L</em>("zh"), <em>S</em>("Hans"), <em>C</em>("CN")]</li>
+         * <li> [<em>L</em>("zh"), <em>S</em>("Hans")]</li>
+         * <li> [<em>L</em>("zh"), <em>C</em>("CN")]</li>
+         * <li> [<em>L</em>("zh")]</li>
+         * <li> <code>Locale.ROOT</code></li>
+         * </ul>
+         *
+         * For <code>Locale("zh", "TW")</code>, the candidate list will be:
+         * <ul>
+         * <li> [<em>L</em>("zh"), <em>S</em>("Hant"), <em>C</em>("TW")]</li>
+         * <li> [<em>L</em>("zh"), <em>S</em>("Hant")]</li>
+         * <li> [<em>L</em>("zh"), <em>C</em>("TW")]</li>
+         * <li> [<em>L</em>("zh")]</li>
+         * <li> <code>Locale.ROOT</code></li>
+         * </ul></li>
+         *
+         * <li>Special cases for Norwegian.  Both <code>Locale("no", "NO",
+         * "NY")</code> and <code>Locale("nn", "NO")</code> represent Norwegian
+         * Nynorsk.  When a locale's language is "nn", the standard candidate
+         * list is generated up to [<em>L</em>("nn")], and then the following
+         * candidates are added:
+         *
+         * <ul><li> [<em>L</em>("no"), <em>C</em>("NO"), <em>V</em>("NY")]</li>
+         * <li> [<em>L</em>("no"), <em>C</em>("NO")]</li>
+         * <li> [<em>L</em>("no")]</li>
+         * <li> <code>Locale.ROOT</code></li>
+         * </ul>
+         *
+         * If the locale is exactly <code>Locale("no", "NO", "NY")</code>, it is first
+         * converted to <code>Locale("nn", "NO")</code> and then the above procedure is
+         * followed.
+         *
+         * <p>Also, Java treats the language "no" as a synonym of Norwegian
+         * Bokm&#xE5;l "nb".  Except for the single case <code>Locale("no",
+         * "NO", "NY")</code> (handled above), when an input <code>Locale</code>
+         * has language "no" or "nb", candidate <code>Locale</code>s with
+         * language code "no" and "nb" are interleaved, first using the
+         * requested language, then using its synonym. For example,
+         * <code>Locale("nb", "NO", "POSIX")</code> generates the following
+         * candidate list:
+         *
+         * <ul>
+         * <li> [<em>L</em>("nb"), <em>C</em>("NO"), <em>V</em>("POSIX")]</li>
+         * <li> [<em>L</em>("no"), <em>C</em>("NO"), <em>V</em>("POSIX")]</li>
+         * <li> [<em>L</em>("nb"), <em>C</em>("NO")]</li>
+         * <li> [<em>L</em>("no"), <em>C</em>("NO")]</li>
+         * <li> [<em>L</em>("nb")]</li>
+         * <li> [<em>L</em>("no")]</li>
+         * <li> <code>Locale.ROOT</code></li>
+         * </ul>
+         *
+         * <code>Locale("no", "NO", "POSIX")</code> would generate the same list
+         * except that locales with "no" would appear before the corresponding
+         * locales with "nb".</li>
+         * </ol>
+         *
+         * <p>The default implementation uses an {@link ArrayList} that
+         * overriding implementations may modify before returning it to the
+         * caller. However, a subclass must not modify it after it has
+         * been returned by <code>getCandidateLocales</code>.
+         *
+         * <p>For example, if the given <code>baseName</code> is "Messages"
+         * and the given <code>locale</code> is
+         * <code>Locale("ja",&nbsp;"",&nbsp;"XX")</code>, then a
+         * <code>List</code> of <code>Locale</code>s:
+         * <pre>
+         *     Locale("ja", "", "XX")
+         *     Locale("ja")
+         *     Locale.ROOT
+         * </pre>
+         * is returned. And if the resource bundles for the "ja" and
+         * "" <code>Locale</code>s are found, then the runtime resource
+         * lookup path (parent chain) is:
+         * <pre>{@code
+         *     Messages_ja -> Messages
+         * }</pre>
+         *
+         * @param baseName
+         *        the base name of the resource bundle, a fully
+         *        qualified class name
+         * @param locale
+         *        the locale for which a resource bundle is desired
+         * @return a <code>List</code> of candidate
+         *        <code>Locale</code>s for the given <code>locale</code>
+         * @exception NullPointerException
+         *        if <code>baseName</code> or <code>locale</code> is
+         *        <code>null</code>
+         */
+        public List<Locale> getCandidateLocales(String baseName, Locale locale) {
+            if (baseName == null) {
+                throw new NullPointerException();
+            }
+            return new ArrayList<>(CANDIDATES_CACHE.get(locale.getBaseLocale()));
+        }
+
+        private static final CandidateListCache CANDIDATES_CACHE = new CandidateListCache();
+
+        private static class CandidateListCache extends LocaleObjectCache<BaseLocale, List<Locale>> {
+            protected List<Locale> createObject(BaseLocale base) {
+                String language = base.getLanguage();
+                String script = base.getScript();
+                String region = base.getRegion();
+                String variant = base.getVariant();
+
+                // Special handling for Norwegian
+                boolean isNorwegianBokmal = false;
+                boolean isNorwegianNynorsk = false;
+                if (language.equals("no")) {
+                    if (region.equals("NO") && variant.equals("NY")) {
+                        variant = "";
+                        isNorwegianNynorsk = true;
+                    } else {
+                        isNorwegianBokmal = true;
+                    }
+                }
+                if (language.equals("nb") || isNorwegianBokmal) {
+                    List<Locale> tmpList = getDefaultList("nb", script, region, variant);
+                    // Insert a locale replacing "nb" with "no" for every list entry
+                    List<Locale> bokmalList = new LinkedList<>();
+                    for (Locale l : tmpList) {
+                        bokmalList.add(l);
+                        if (l.getLanguage().length() == 0) {
+                            break;
+                        }
+                        bokmalList.add(Locale.getInstance("no", l.getScript(), l.getCountry(),
+                                l.getVariant(), null));
+                    }
+                    return bokmalList;
+                } else if (language.equals("nn") || isNorwegianNynorsk) {
+                    // Insert no_NO_NY, no_NO, no after nn
+                    List<Locale> nynorskList = getDefaultList("nn", script, region, variant);
+                    int idx = nynorskList.size() - 1;
+                    nynorskList.add(idx++, Locale.getInstance("no", "NO", "NY"));
+                    nynorskList.add(idx++, Locale.getInstance("no", "NO", ""));
+                    nynorskList.add(idx++, Locale.getInstance("no", "", ""));
+                    return nynorskList;
+                }
+                // Special handling for Chinese
+                else if (language.equals("zh")) {
+                    if (script.length() == 0 && region.length() > 0) {
+                        // Supply script for users who want to use zh_Hans/zh_Hant
+                        // as bundle names (recommended for Java7+)
+                        switch (region) {
+                        case "TW":
+                        case "HK":
+                        case "MO":
+                            script = "Hant";
+                            break;
+                        case "CN":
+                        case "SG":
+                            script = "Hans";
+                            break;
+                        }
+                    } else if (script.length() > 0 && region.length() == 0) {
+                        // Supply region(country) for users who still package Chinese
+                        // bundles using old convension.
+                        switch (script) {
+                        case "Hans":
+                            region = "CN";
+                            break;
+                        case "Hant":
+                            region = "TW";
+                            break;
+                        }
+                    }
+                }
+
+                return getDefaultList(language, script, region, variant);
+            }
+
+            private static List<Locale> getDefaultList(String language, String script, String region, String variant) {
+                List<String> variants = null;
+
+                if (variant.length() > 0) {
+                    variants = new LinkedList<>();
+                    int idx = variant.length();
+                    while (idx != -1) {
+                        variants.add(variant.substring(0, idx));
+                        idx = variant.lastIndexOf('_', --idx);
+                    }
+                }
+
+                List<Locale> list = new LinkedList<>();
+
+                if (variants != null) {
+                    for (String v : variants) {
+                        list.add(Locale.getInstance(language, script, region, v, null));
+                    }
+                }
+                if (region.length() > 0) {
+                    list.add(Locale.getInstance(language, script, region, "", null));
+                }
+                if (script.length() > 0) {
+                    list.add(Locale.getInstance(language, script, "", "", null));
+
+                    // With script, after truncating variant, region and script,
+                    // start over without script.
+                    if (variants != null) {
+                        for (String v : variants) {
+                            list.add(Locale.getInstance(language, "", region, v, null));
+                        }
+                    }
+                    if (region.length() > 0) {
+                        list.add(Locale.getInstance(language, "", region, "", null));
+                    }
+                }
+                if (language.length() > 0) {
+                    list.add(Locale.getInstance(language, "", "", "", null));
+                }
+                // Add root locale at the end
+                list.add(Locale.ROOT);
+
+                return list;
+            }
+        }
+
+        /**
+         * Returns a <code>Locale</code> to be used as a fallback locale for
+         * further resource bundle searches by the
+         * <code>ResourceBundle.getBundle</code> factory method. This method
+         * is called from the factory method every time when no resulting
+         * resource bundle has been found for <code>baseName</code> and
+         * <code>locale</code>, where locale is either the parameter for
+         * <code>ResourceBundle.getBundle</code> or the previous fallback
+         * locale returned by this method.
+         *
+         * <p>The method returns <code>null</code> if no further fallback
+         * search is desired.
+         *
+         * <p>The default implementation returns the {@linkplain
+         * Locale#getDefault() default <code>Locale</code>} if the given
+         * <code>locale</code> isn't the default one.  Otherwise,
+         * <code>null</code> is returned.
+         *
+         * @param baseName
+         *        the base name of the resource bundle, a fully
+         *        qualified class name for which
+         *        <code>ResourceBundle.getBundle</code> has been
+         *        unable to find any resource bundles (except for the
+         *        base bundle)
+         * @param locale
+         *        the <code>Locale</code> for which
+         *        <code>ResourceBundle.getBundle</code> has been
+         *        unable to find any resource bundles (except for the
+         *        base bundle)
+         * @return a <code>Locale</code> for the fallback search,
+         *        or <code>null</code> if no further fallback search
+         *        is desired.
+         * @exception NullPointerException
+         *        if <code>baseName</code> or <code>locale</code>
+         *        is <code>null</code>
+         */
+        public Locale getFallbackLocale(String baseName, Locale locale) {
+            if (baseName == null) {
+                throw new NullPointerException();
+            }
+            Locale defaultLocale = Locale.getDefault();
+            return locale.equals(defaultLocale) ? null : defaultLocale;
+        }
+
+        /**
+         * Instantiates a resource bundle for the given bundle name of the
+         * given format and locale, using the given class loader if
+         * necessary. This method returns <code>null</code> if there is no
+         * resource bundle available for the given parameters. If a resource
+         * bundle can't be instantiated due to an unexpected error, the
+         * error must be reported by throwing an <code>Error</code> or
+         * <code>Exception</code> rather than simply returning
+         * <code>null</code>.
+         *
+         * <p>If the <code>reload</code> flag is <code>true</code>, it
+         * indicates that this method is being called because the previously
+         * loaded resource bundle has expired.
+         *
+         * <p>The default implementation instantiates a
+         * <code>ResourceBundle</code> as follows.
+         *
+         * <ul>
+         *
+         * <li>The bundle name is obtained by calling {@link
+         * #toBundleName(String, Locale) toBundleName(baseName,
+         * locale)}.</li>
+         *
+         * <li>If <code>format</code> is <code>"java.class"</code>, the
+         * {@link Class} specified by the bundle name is loaded by calling
+         * {@link ClassLoader#loadClass(String)}. Then, a
+         * <code>ResourceBundle</code> is instantiated by calling {@link
+         * Class#newInstance()}.  Note that the <code>reload</code> flag is
+         * ignored for loading class-based resource bundles in this default
+         * implementation.</li>
+         *
+         * <li>If <code>format</code> is <code>"java.properties"</code>,
+         * {@link #toResourceName(String, String) toResourceName(bundlename,
+         * "properties")} is called to get the resource name.
+         * If <code>reload</code> is <code>true</code>, {@link
+         * ClassLoader#getResource(String) load.getResource} is called
+         * to get a {@link URL} for creating a {@link
+         * URLConnection}. This <code>URLConnection</code> is used to
+         * {@linkplain URLConnection#setUseCaches(boolean) disable the
+         * caches} of the underlying resource loading layers,
+         * and to {@linkplain URLConnection#getInputStream() get an
+         * <code>InputStream</code>}.
+         * Otherwise, {@link ClassLoader#getResourceAsStream(String)
+         * loader.getResourceAsStream} is called to get an {@link
+         * InputStream}. Then, a {@link
+         * PropertyResourceBundle} is constructed with the
+         * <code>InputStream</code>.</li>
+         *
+         * <li>If <code>format</code> is neither <code>"java.class"</code>
+         * nor <code>"java.properties"</code>, an
+         * <code>IllegalArgumentException</code> is thrown.</li>
+         *
+         * </ul>
+         *
+         * @param baseName
+         *        the base bundle name of the resource bundle, a fully
+         *        qualified class name
+         * @param locale
+         *        the locale for which the resource bundle should be
+         *        instantiated
+         * @param format
+         *        the resource bundle format to be loaded
+         * @param loader
+         *        the <code>ClassLoader</code> to use to load the bundle
+         * @param reload
+         *        the flag to indicate bundle reloading; <code>true</code>
+         *        if reloading an expired resource bundle,
+         *        <code>false</code> otherwise
+         * @return the resource bundle instance,
+         *        or <code>null</code> if none could be found.
+         * @exception NullPointerException
+         *        if <code>bundleName</code>, <code>locale</code>,
+         *        <code>format</code>, or <code>loader</code> is
+         *        <code>null</code>, or if <code>null</code> is returned by
+         *        {@link #toBundleName(String, Locale) toBundleName}
+         * @exception IllegalArgumentException
+         *        if <code>format</code> is unknown, or if the resource
+         *        found for the given parameters contains malformed data.
+         * @exception ClassCastException
+         *        if the loaded class cannot be cast to <code>ResourceBundle</code>
+         * @exception IllegalAccessException
+         *        if the class or its nullary constructor is not
+         *        accessible.
+         * @exception InstantiationException
+         *        if the instantiation of a class fails for some other
+         *        reason.
+         * @exception ExceptionInInitializerError
+         *        if the initialization provoked by this method fails.
+         * @exception SecurityException
+         *        If a security manager is present and creation of new
+         *        instances is denied. See {@link Class#newInstance()}
+         *        for details.
+         * @exception IOException
+         *        if an error occurred when reading resources using
+         *        any I/O operations
+         */
+        public ResourceBundle newBundle(String baseName, Locale locale, String format,
+                                        ClassLoader loader, boolean reload)
+                    throws IllegalAccessException, InstantiationException, IOException {
+            String bundleName = toBundleName(baseName, locale);
+            ResourceBundle bundle = null;
+            if (format.equals("java.class")) {
+                try {
+                    @SuppressWarnings("unchecked")
+                    Class<? extends ResourceBundle> bundleClass
+                        = (Class<? extends ResourceBundle>)loader.loadClass(bundleName);
+
+                    // If the class isn't a ResourceBundle subclass, throw a
+                    // ClassCastException.
+                    if (ResourceBundle.class.isAssignableFrom(bundleClass)) {
+                        bundle = bundleClass.newInstance();
+                    } else {
+                        throw new ClassCastException(bundleClass.getName()
+                                     + " cannot be cast to ResourceBundle");
+                    }
+                } catch (ClassNotFoundException e) {
+                }
+            } else if (format.equals("java.properties")) {
+                final String resourceName = toResourceName0(bundleName, "properties");
+                if (resourceName == null) {
+                    return bundle;
+                }
+                final ClassLoader classLoader = loader;
+                final boolean reloadFlag = reload;
+                InputStream stream = null;
+                try {
+                    stream = AccessController.doPrivileged(
+                        new PrivilegedExceptionAction<InputStream>() {
+                            public InputStream run() throws IOException {
+                                InputStream is = null;
+                                if (reloadFlag) {
+                                    URL url = classLoader.getResource(resourceName);
+                                    if (url != null) {
+                                        URLConnection connection = url.openConnection();
+                                        if (connection != null) {
+                                            // Disable caches to get fresh data for
+                                            // reloading.
+                                            connection.setUseCaches(false);
+                                            is = connection.getInputStream();
+                                        }
+                                    }
+                                } else {
+                                    is = classLoader.getResourceAsStream(resourceName);
+                                }
+                                return is;
+                            }
+                        });
+                } catch (PrivilegedActionException e) {
+                    throw (IOException) e.getException();
+                }
+                if (stream != null) {
+                    try {
+                        bundle = new PropertyResourceBundle(stream);
+                    } finally {
+                        stream.close();
+                    }
+                }
+            } else {
+                throw new IllegalArgumentException("unknown format: " + format);
+            }
+            return bundle;
+        }
+
+        /**
+         * Returns the time-to-live (TTL) value for resource bundles that
+         * are loaded under this
+         * <code>ResourceBundle.Control</code>. Positive time-to-live values
+         * specify the number of milliseconds a bundle can remain in the
+         * cache without being validated against the source data from which
+         * it was constructed. The value 0 indicates that a bundle must be
+         * validated each time it is retrieved from the cache. {@link
+         * #TTL_DONT_CACHE} specifies that loaded resource bundles are not
+         * put in the cache. {@link #TTL_NO_EXPIRATION_CONTROL} specifies
+         * that loaded resource bundles are put in the cache with no
+         * expiration control.
+         *
+         * <p>The expiration affects only the bundle loading process by the
+         * <code>ResourceBundle.getBundle</code> factory method.  That is,
+         * if the factory method finds a resource bundle in the cache that
+         * has expired, the factory method calls the {@link
+         * #needsReload(String, Locale, String, ClassLoader, ResourceBundle,
+         * long) needsReload} method to determine whether the resource
+         * bundle needs to be reloaded. If <code>needsReload</code> returns
+         * <code>true</code>, the cached resource bundle instance is removed
+         * from the cache. Otherwise, the instance stays in the cache,
+         * updated with the new TTL value returned by this method.
+         *
+         * <p>All cached resource bundles are subject to removal from the
+         * cache due to memory constraints of the runtime environment.
+         * Returning a large positive value doesn't mean to lock loaded
+         * resource bundles in the cache.
+         *
+         * <p>The default implementation returns {@link #TTL_NO_EXPIRATION_CONTROL}.
+         *
+         * @param baseName
+         *        the base name of the resource bundle for which the
+         *        expiration value is specified.
+         * @param locale
+         *        the locale of the resource bundle for which the
+         *        expiration value is specified.
+         * @return the time (0 or a positive millisecond offset from the
+         *        cached time) to get loaded bundles expired in the cache,
+         *        {@link #TTL_NO_EXPIRATION_CONTROL} to disable the
+         *        expiration control, or {@link #TTL_DONT_CACHE} to disable
+         *        caching.
+         * @exception NullPointerException
+         *        if <code>baseName</code> or <code>locale</code> is
+         *        <code>null</code>
+         */
+        public long getTimeToLive(String baseName, Locale locale) {
+            if (baseName == null || locale == null) {
+                throw new NullPointerException();
+            }
+            return TTL_NO_EXPIRATION_CONTROL;
+        }
+
+        /**
+         * Determines if the expired <code>bundle</code> in the cache needs
+         * to be reloaded based on the loading time given by
+         * <code>loadTime</code> or some other criteria. The method returns
+         * <code>true</code> if reloading is required; <code>false</code>
+         * otherwise. <code>loadTime</code> is a millisecond offset since
+         * the <a href="Calendar.html#Epoch"> <code>Calendar</code>
+         * Epoch</a>.
+         *
+         * The calling <code>ResourceBundle.getBundle</code> factory method
+         * calls this method on the <code>ResourceBundle.Control</code>
+         * instance used for its current invocation, not on the instance
+         * used in the invocation that originally loaded the resource
+         * bundle.
+         *
+         * <p>The default implementation compares <code>loadTime</code> and
+         * the last modified time of the source data of the resource
+         * bundle. If it's determined that the source data has been modified
+         * since <code>loadTime</code>, <code>true</code> is
+         * returned. Otherwise, <code>false</code> is returned. This
+         * implementation assumes that the given <code>format</code> is the
+         * same string as its file suffix if it's not one of the default
+         * formats, <code>"java.class"</code> or
+         * <code>"java.properties"</code>.
+         *
+         * @param baseName
+         *        the base bundle name of the resource bundle, a
+         *        fully qualified class name
+         * @param locale
+         *        the locale for which the resource bundle
+         *        should be instantiated
+         * @param format
+         *        the resource bundle format to be loaded
+         * @param loader
+         *        the <code>ClassLoader</code> to use to load the bundle
+         * @param bundle
+         *        the resource bundle instance that has been expired
+         *        in the cache
+         * @param loadTime
+         *        the time when <code>bundle</code> was loaded and put
+         *        in the cache
+         * @return <code>true</code> if the expired bundle needs to be
+         *        reloaded; <code>false</code> otherwise.
+         * @exception NullPointerException
+         *        if <code>baseName</code>, <code>locale</code>,
+         *        <code>format</code>, <code>loader</code>, or
+         *        <code>bundle</code> is <code>null</code>
+         */
+        public boolean needsReload(String baseName, Locale locale,
+                                   String format, ClassLoader loader,
+                                   ResourceBundle bundle, long loadTime) {
+            if (bundle == null) {
+                throw new NullPointerException();
+            }
+            if (format.equals("java.class") || format.equals("java.properties")) {
+                format = format.substring(5);
+            }
+            boolean result = false;
+            try {
+                String resourceName = toResourceName0(toBundleName(baseName, locale), format);
+                if (resourceName == null) {
+                    return result;
+                }
+                URL url = loader.getResource(resourceName);
+                if (url != null) {
+                    long lastModified = 0;
+                    URLConnection connection = url.openConnection();
+                    if (connection != null) {
+                        // disable caches to get the correct data
+                        connection.setUseCaches(false);
+                        if (connection instanceof JarURLConnection) {
+                            JarEntry ent = ((JarURLConnection)connection).getJarEntry();
+                            if (ent != null) {
+                                lastModified = ent.getTime();
+                                if (lastModified == -1) {
+                                    lastModified = 0;
+                                }
+                            }
+                        } else {
+                            lastModified = connection.getLastModified();
+                        }
+                    }
+                    result = lastModified >= loadTime;
+                }
+            } catch (NullPointerException npe) {
+                throw npe;
+            } catch (Exception e) {
+                // ignore other exceptions
+            }
+            return result;
+        }
+
+        /**
+         * Converts the given <code>baseName</code> and <code>locale</code>
+         * to the bundle name. This method is called from the default
+         * implementation of the {@link #newBundle(String, Locale, String,
+         * ClassLoader, boolean) newBundle} and {@link #needsReload(String,
+         * Locale, String, ClassLoader, ResourceBundle, long) needsReload}
+         * methods.
+         *
+         * <p>This implementation returns the following value:
+         * <pre>
+         *     baseName + "_" + language + "_" + script + "_" + country + "_" + variant
+         * </pre>
+         * where <code>language</code>, <code>script</code>, <code>country</code>,
+         * and <code>variant</code> are the language, script, country, and variant
+         * values of <code>locale</code>, respectively. Final component values that
+         * are empty Strings are omitted along with the preceding '_'.  When the
+         * script is empty, the script value is omitted along with the preceding '_'.
+         * If all of the values are empty strings, then <code>baseName</code>
+         * is returned.
+         *
+         * <p>For example, if <code>baseName</code> is
+         * <code>"baseName"</code> and <code>locale</code> is
+         * <code>Locale("ja",&nbsp;"",&nbsp;"XX")</code>, then
+         * <code>"baseName_ja_&thinsp;_XX"</code> is returned. If the given
+         * locale is <code>Locale("en")</code>, then
+         * <code>"baseName_en"</code> is returned.
+         *
+         * <p>Overriding this method allows applications to use different
+         * conventions in the organization and packaging of localized
+         * resources.
+         *
+         * @param baseName
+         *        the base name of the resource bundle, a fully
+         *        qualified class name
+         * @param locale
+         *        the locale for which a resource bundle should be
+         *        loaded
+         * @return the bundle name for the resource bundle
+         * @exception NullPointerException
+         *        if <code>baseName</code> or <code>locale</code>
+         *        is <code>null</code>
+         */
+        public String toBundleName(String baseName, Locale locale) {
+            if (locale == Locale.ROOT) {
+                return baseName;
+            }
+
+            String language = locale.getLanguage();
+            String script = locale.getScript();
+            String country = locale.getCountry();
+            String variant = locale.getVariant();
+
+            if (language == "" && country == "" && variant == "") {
+                return baseName;
+            }
+
+            StringBuilder sb = new StringBuilder(baseName);
+            sb.append('_');
+            if (script != "") {
+                if (variant != "") {
+                    sb.append(language).append('_').append(script).append('_').append(country).append('_').append(variant);
+                } else if (country != "") {
+                    sb.append(language).append('_').append(script).append('_').append(country);
+                } else {
+                    sb.append(language).append('_').append(script);
+                }
+            } else {
+                if (variant != "") {
+                    sb.append(language).append('_').append(country).append('_').append(variant);
+                } else if (country != "") {
+                    sb.append(language).append('_').append(country);
+                } else {
+                    sb.append(language);
+                }
+            }
+            return sb.toString();
+
+        }
+
+        /**
+         * Converts the given <code>bundleName</code> to the form required
+         * by the {@link ClassLoader#getResource ClassLoader.getResource}
+         * method by replacing all occurrences of <code>'.'</code> in
+         * <code>bundleName</code> with <code>'/'</code> and appending a
+         * <code>'.'</code> and the given file <code>suffix</code>. For
+         * example, if <code>bundleName</code> is
+         * <code>"foo.bar.MyResources_ja_JP"</code> and <code>suffix</code>
+         * is <code>"properties"</code>, then
+         * <code>"foo/bar/MyResources_ja_JP.properties"</code> is returned.
+         *
+         * @param bundleName
+         *        the bundle name
+         * @param suffix
+         *        the file type suffix
+         * @return the converted resource name
+         * @exception NullPointerException
+         *         if <code>bundleName</code> or <code>suffix</code>
+         *         is <code>null</code>
+         */
+        public final String toResourceName(String bundleName, String suffix) {
+            StringBuilder sb = new StringBuilder(bundleName.length() + 1 + suffix.length());
+            sb.append(bundleName.replace('.', '/')).append('.').append(suffix);
+            return sb.toString();
+        }
+
+        private String toResourceName0(String bundleName, String suffix) {
+            // application protocol check
+            if (bundleName.contains("://")) {
+                return null;
+            } else {
+                return toResourceName(bundleName, suffix);
+            }
+        }
+    }
+
+    private static class SingleFormatControl extends Control {
+        private static final Control PROPERTIES_ONLY
+            = new SingleFormatControl(FORMAT_PROPERTIES);
+
+        private static final Control CLASS_ONLY
+            = new SingleFormatControl(FORMAT_CLASS);
+
+        private final List<String> formats;
+
+        protected SingleFormatControl(List<String> formats) {
+            this.formats = formats;
+        }
+
+        public List<String> getFormats(String baseName) {
+            if (baseName == null) {
+                throw new NullPointerException();
+            }
+            return formats;
+        }
+    }
+
+    private static final class NoFallbackControl extends SingleFormatControl {
+        private static final Control NO_FALLBACK
+            = new NoFallbackControl(FORMAT_DEFAULT);
+
+        private static final Control PROPERTIES_ONLY_NO_FALLBACK
+            = new NoFallbackControl(FORMAT_PROPERTIES);
+
+        private static final Control CLASS_ONLY_NO_FALLBACK
+            = new NoFallbackControl(FORMAT_CLASS);
+
+        protected NoFallbackControl(List<String> formats) {
+            super(formats);
+        }
+
+        public Locale getFallbackLocale(String baseName, Locale locale) {
+            if (baseName == null || locale == null) {
+                throw new NullPointerException();
+            }
+            return null;
+        }
+    }
+}

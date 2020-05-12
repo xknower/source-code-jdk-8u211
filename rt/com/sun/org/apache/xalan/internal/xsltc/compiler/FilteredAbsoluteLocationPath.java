@@ -1,133 +1,127 @@
-/*     */ package com.sun.org.apache.xalan.internal.xsltc.compiler;
-/*     */ 
-/*     */ import com.sun.org.apache.bcel.internal.generic.ALOAD;
-/*     */ import com.sun.org.apache.bcel.internal.generic.ASTORE;
-/*     */ import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
-/*     */ import com.sun.org.apache.bcel.internal.generic.INVOKEINTERFACE;
-/*     */ import com.sun.org.apache.bcel.internal.generic.INVOKESPECIAL;
-/*     */ import com.sun.org.apache.bcel.internal.generic.InstructionList;
-/*     */ import com.sun.org.apache.bcel.internal.generic.LocalVariableGen;
-/*     */ import com.sun.org.apache.bcel.internal.generic.NEW;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Util;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class FilteredAbsoluteLocationPath
-/*     */   extends Expression
-/*     */ {
-/*     */   private Expression _path;
-/*     */   
-/*     */   public FilteredAbsoluteLocationPath() {
-/*  48 */     this._path = null;
-/*     */   }
-/*     */   
-/*     */   public FilteredAbsoluteLocationPath(Expression path) {
-/*  52 */     this._path = path;
-/*  53 */     if (path != null) {
-/*  54 */       this._path.setParent(this);
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   public void setParser(Parser parser) {
-/*  59 */     super.setParser(parser);
-/*  60 */     if (this._path != null) {
-/*  61 */       this._path.setParser(parser);
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   public Expression getPath() {
-/*  66 */     return this._path;
-/*     */   }
-/*     */   
-/*     */   public String toString() {
-/*  70 */     return "FilteredAbsoluteLocationPath(" + ((this._path != null) ? this._path
-/*  71 */       .toString() : "null") + ')';
-/*     */   }
-/*     */   
-/*     */   public Type typeCheck(SymbolTable stable) throws TypeCheckError {
-/*  75 */     if (this._path != null) {
-/*  76 */       Type ptype = this._path.typeCheck(stable);
-/*  77 */       if (ptype instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.NodeType) {
-/*  78 */         this._path = new CastExpr(this._path, Type.NodeSet);
-/*     */       }
-/*     */     } 
-/*  81 */     return this._type = Type.NodeSet;
-/*     */   }
-/*     */   
-/*     */   public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
-/*  85 */     ConstantPoolGen cpg = classGen.getConstantPool();
-/*  86 */     InstructionList il = methodGen.getInstructionList();
-/*  87 */     if (this._path != null) {
-/*  88 */       int initDFI = cpg.addMethodref("com.sun.org.apache.xalan.internal.xsltc.dom.DupFilterIterator", "<init>", "(Lcom/sun/org/apache/xml/internal/dtm/DTMAxisIterator;)V");
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 105 */       LocalVariableGen pathTemp = methodGen.addLocalVariable("filtered_absolute_location_path_tmp", 
-/* 106 */           Util.getJCRefType("Lcom/sun/org/apache/xml/internal/dtm/DTMAxisIterator;"), null, null);
-/*     */       
-/* 108 */       this._path.translate(classGen, methodGen);
-/* 109 */       pathTemp.setStart(il.append(new ASTORE(pathTemp.getIndex())));
-/*     */ 
-/*     */       
-/* 112 */       il.append(new NEW(cpg.addClass("com.sun.org.apache.xalan.internal.xsltc.dom.DupFilterIterator")));
-/* 113 */       il.append(DUP);
-/* 114 */       pathTemp.setEnd(il.append(new ALOAD(pathTemp.getIndex())));
-/*     */ 
-/*     */       
-/* 117 */       il.append(new INVOKESPECIAL(initDFI));
-/*     */     } else {
-/*     */       
-/* 120 */       int git = cpg.addInterfaceMethodref("com.sun.org.apache.xalan.internal.xsltc.DOM", "getIterator", "()Lcom/sun/org/apache/xml/internal/dtm/DTMAxisIterator;");
-/*     */ 
-/*     */       
-/* 123 */       il.append(methodGen.loadDOM());
-/* 124 */       il.append(new INVOKEINTERFACE(git, 1));
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\compiler\FilteredAbsoluteLocationPath.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2005 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: FilteredAbsoluteLocationPath.java,v 1.2.4.1 2005/09/12 10:26:50 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.compiler;
+
+import com.sun.org.apache.bcel.internal.generic.ALOAD;
+import com.sun.org.apache.bcel.internal.generic.ASTORE;
+import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
+import com.sun.org.apache.bcel.internal.generic.INVOKEINTERFACE;
+import com.sun.org.apache.bcel.internal.generic.INVOKESPECIAL;
+import com.sun.org.apache.bcel.internal.generic.InstructionList;
+import com.sun.org.apache.bcel.internal.generic.LocalVariableGen;
+import com.sun.org.apache.bcel.internal.generic.NEW;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.NodeType;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Util;
+
+/**
+ * @author G. Todd Miller
+ */
+final class FilteredAbsoluteLocationPath extends Expression {
+    private Expression _path;   // may be null
+
+    public FilteredAbsoluteLocationPath() {
+        _path = null;
+    }
+
+    public FilteredAbsoluteLocationPath(Expression path) {
+        _path = path;
+        if (path != null) {
+            _path.setParent(this);
+        }
+    }
+
+    public void setParser(Parser parser) {
+        super.setParser(parser);
+        if (_path != null) {
+            _path.setParser(parser);
+        }
+    }
+
+    public Expression getPath() {
+        return(_path);
+    }
+
+    public String toString() {
+        return "FilteredAbsoluteLocationPath(" +
+            (_path != null ? _path.toString() : "null") + ')';
+    }
+
+    public Type typeCheck(SymbolTable stable) throws TypeCheckError {
+        if (_path != null) {
+            final Type ptype = _path.typeCheck(stable);
+            if (ptype instanceof NodeType) {            // promote to node-set
+                _path = new CastExpr(_path, Type.NodeSet);
+            }
+        }
+        return _type = Type.NodeSet;
+    }
+
+    public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
+        final ConstantPoolGen cpg = classGen.getConstantPool();
+        final InstructionList il = methodGen.getInstructionList();
+        if (_path != null) {
+            final int initDFI = cpg.addMethodref(DUP_FILTERED_ITERATOR,
+                                                "<init>",
+                                                "("
+                                                + NODE_ITERATOR_SIG
+                                                + ")V");
+
+            // Backwards branches are prohibited if an uninitialized object is
+            // on the stack by section 4.9.4 of the JVM Specification, 2nd Ed.
+            // We don't know whether this code might contain backwards branches,
+            // so we mustn't create the new object until after we've created
+            // the suspect arguments to its constructor.  Instead we calculate
+            // the values of the arguments to the constructor first, store them
+            // in temporary variables, create the object and reload the
+            // arguments from the temporaries to avoid the problem.
+
+            // Compile relative path iterator(s)
+            LocalVariableGen pathTemp =
+               methodGen.addLocalVariable("filtered_absolute_location_path_tmp",
+                                          Util.getJCRefType(NODE_ITERATOR_SIG),
+                                          null, null);
+            _path.translate(classGen, methodGen);
+            pathTemp.setStart(il.append(new ASTORE(pathTemp.getIndex())));
+
+            // Create new Dup Filter Iterator
+            il.append(new NEW(cpg.addClass(DUP_FILTERED_ITERATOR)));
+            il.append(DUP);
+            pathTemp.setEnd(il.append(new ALOAD(pathTemp.getIndex())));
+
+            // Initialize Dup Filter Iterator with iterator from the stack
+            il.append(new INVOKESPECIAL(initDFI));
+        }
+        else {
+            final int git = cpg.addInterfaceMethodref(DOM_INTF,
+                                                      "getIterator",
+                                                      "()"+NODE_ITERATOR_SIG);
+            il.append(methodGen.loadDOM());
+            il.append(new INVOKEINTERFACE(git, 1));
+        }
+    }
+}

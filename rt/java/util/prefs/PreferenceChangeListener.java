@@ -1,14 +1,47 @@
+/*
+ * Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package java.util.prefs;
 
-import java.util.EventListener;
-
-@FunctionalInterface
-public interface PreferenceChangeListener extends EventListener {
-  void preferenceChange(PreferenceChangeEvent paramPreferenceChangeEvent);
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\prefs\PreferenceChangeListener.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * A listener for receiving preference change events.
+ *
+ * @author  Josh Bloch
+ * @see Preferences
+ * @see PreferenceChangeEvent
+ * @see NodeChangeListener
+ * @since   1.4
  */
+@FunctionalInterface
+public interface PreferenceChangeListener extends java.util.EventListener {
+    /**
+     * This method gets called when a preference is added, removed or when
+     * its value is changed.
+     * <p>
+     * @param evt A PreferenceChangeEvent object describing the event source
+     *          and the preference that has changed.
+     */
+    void preferenceChange(PreferenceChangeEvent evt);
+}

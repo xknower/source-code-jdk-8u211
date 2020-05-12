@@ -1,163 +1,157 @@
-/*     */ package com.sun.org.apache.xml.internal.security.keys.content;
-/*     */ 
-/*     */ import com.sun.org.apache.xml.internal.security.exceptions.XMLSecurityException;
-/*     */ import com.sun.org.apache.xml.internal.security.keys.content.keyvalues.DSAKeyValue;
-/*     */ import com.sun.org.apache.xml.internal.security.keys.content.keyvalues.RSAKeyValue;
-/*     */ import com.sun.org.apache.xml.internal.security.utils.SignatureElementProxy;
-/*     */ import com.sun.org.apache.xml.internal.security.utils.XMLUtils;
-/*     */ import java.security.PublicKey;
-/*     */ import org.w3c.dom.Document;
-/*     */ import org.w3c.dom.Element;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class KeyValue
-/*     */   extends SignatureElementProxy
-/*     */   implements KeyInfoContent
-/*     */ {
-/*     */   public KeyValue(Document paramDocument, DSAKeyValue paramDSAKeyValue) {
-/*  55 */     super(paramDocument);
-/*     */     
-/*  57 */     XMLUtils.addReturnToElement(this.constructionElement);
-/*  58 */     this.constructionElement.appendChild(paramDSAKeyValue.getElement());
-/*  59 */     XMLUtils.addReturnToElement(this.constructionElement);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public KeyValue(Document paramDocument, RSAKeyValue paramRSAKeyValue) {
-/*  69 */     super(paramDocument);
-/*     */     
-/*  71 */     XMLUtils.addReturnToElement(this.constructionElement);
-/*  72 */     this.constructionElement.appendChild(paramRSAKeyValue.getElement());
-/*  73 */     XMLUtils.addReturnToElement(this.constructionElement);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public KeyValue(Document paramDocument, Element paramElement) {
-/*  83 */     super(paramDocument);
-/*     */     
-/*  85 */     XMLUtils.addReturnToElement(this.constructionElement);
-/*  86 */     this.constructionElement.appendChild(paramElement);
-/*  87 */     XMLUtils.addReturnToElement(this.constructionElement);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public KeyValue(Document paramDocument, PublicKey paramPublicKey) {
-/*  97 */     super(paramDocument);
-/*     */     
-/*  99 */     XMLUtils.addReturnToElement(this.constructionElement);
-/*     */     
-/* 101 */     if (paramPublicKey instanceof java.security.interfaces.DSAPublicKey) {
-/* 102 */       DSAKeyValue dSAKeyValue = new DSAKeyValue(this.doc, paramPublicKey);
-/*     */       
-/* 104 */       this.constructionElement.appendChild(dSAKeyValue.getElement());
-/* 105 */       XMLUtils.addReturnToElement(this.constructionElement);
-/* 106 */     } else if (paramPublicKey instanceof java.security.interfaces.RSAPublicKey) {
-/* 107 */       RSAKeyValue rSAKeyValue = new RSAKeyValue(this.doc, paramPublicKey);
-/*     */       
-/* 109 */       this.constructionElement.appendChild(rSAKeyValue.getElement());
-/* 110 */       XMLUtils.addReturnToElement(this.constructionElement);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public KeyValue(Element paramElement, String paramString) throws XMLSecurityException {
-/* 122 */     super(paramElement, paramString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public PublicKey getPublicKey() throws XMLSecurityException {
-/* 133 */     Element element1 = XMLUtils.selectDsNode(this.constructionElement
-/* 134 */         .getFirstChild(), "RSAKeyValue", 0);
-/*     */     
-/* 136 */     if (element1 != null) {
-/* 137 */       RSAKeyValue rSAKeyValue = new RSAKeyValue(element1, this.baseURI);
-/* 138 */       return rSAKeyValue.getPublicKey();
-/*     */     } 
-/*     */ 
-/*     */     
-/* 142 */     Element element2 = XMLUtils.selectDsNode(this.constructionElement
-/* 143 */         .getFirstChild(), "DSAKeyValue", 0);
-/*     */     
-/* 145 */     if (element2 != null) {
-/* 146 */       DSAKeyValue dSAKeyValue = new DSAKeyValue(element2, this.baseURI);
-/* 147 */       return dSAKeyValue.getPublicKey();
-/*     */     } 
-/*     */     
-/* 150 */     return null;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public String getBaseLocalName() {
-/* 155 */     return "KeyValue";
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\internal\security\keys\content\KeyValue.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package com.sun.org.apache.xml.internal.security.keys.content;
+
+import java.security.PublicKey;
+
+import com.sun.org.apache.xml.internal.security.exceptions.XMLSecurityException;
+import com.sun.org.apache.xml.internal.security.keys.content.keyvalues.DSAKeyValue;
+import com.sun.org.apache.xml.internal.security.keys.content.keyvalues.RSAKeyValue;
+import com.sun.org.apache.xml.internal.security.utils.Constants;
+import com.sun.org.apache.xml.internal.security.utils.SignatureElementProxy;
+import com.sun.org.apache.xml.internal.security.utils.XMLUtils;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
+/**
+ * The KeyValue element contains a single public key that may be useful in
+ * validating the signature. Structured formats for defining DSA (REQUIRED)
+ * and RSA (RECOMMENDED) public keys are defined in Signature Algorithms
+ * (section 6.4). The KeyValue element may include externally defined public
+ * keys values represented as PCDATA or element types from an external
+ * namespace.
+ *
+ * @author $Author: coheigea $
+ */
+public class KeyValue extends SignatureElementProxy implements KeyInfoContent {
+
+    /**
+     * Constructor KeyValue
+     *
+     * @param doc
+     * @param dsaKeyValue
+     */
+    public KeyValue(Document doc, DSAKeyValue dsaKeyValue) {
+        super(doc);
+
+        XMLUtils.addReturnToElement(this.constructionElement);
+        this.constructionElement.appendChild(dsaKeyValue.getElement());
+        XMLUtils.addReturnToElement(this.constructionElement);
+    }
+
+    /**
+     * Constructor KeyValue
+     *
+     * @param doc
+     * @param rsaKeyValue
+     */
+    public KeyValue(Document doc, RSAKeyValue rsaKeyValue) {
+        super(doc);
+
+        XMLUtils.addReturnToElement(this.constructionElement);
+        this.constructionElement.appendChild(rsaKeyValue.getElement());
+        XMLUtils.addReturnToElement(this.constructionElement);
+    }
+
+    /**
+     * Constructor KeyValue
+     *
+     * @param doc
+     * @param unknownKeyValue
+     */
+    public KeyValue(Document doc, Element unknownKeyValue) {
+        super(doc);
+
+        XMLUtils.addReturnToElement(this.constructionElement);
+        this.constructionElement.appendChild(unknownKeyValue);
+        XMLUtils.addReturnToElement(this.constructionElement);
+    }
+
+    /**
+     * Constructor KeyValue
+     *
+     * @param doc
+     * @param pk
+     */
+    public KeyValue(Document doc, PublicKey pk) {
+        super(doc);
+
+        XMLUtils.addReturnToElement(this.constructionElement);
+
+        if (pk instanceof java.security.interfaces.DSAPublicKey) {
+            DSAKeyValue dsa = new DSAKeyValue(this.doc, pk);
+
+            this.constructionElement.appendChild(dsa.getElement());
+            XMLUtils.addReturnToElement(this.constructionElement);
+        } else if (pk instanceof java.security.interfaces.RSAPublicKey) {
+            RSAKeyValue rsa = new RSAKeyValue(this.doc, pk);
+
+            this.constructionElement.appendChild(rsa.getElement());
+            XMLUtils.addReturnToElement(this.constructionElement);
+        }
+    }
+
+    /**
+     * Constructor KeyValue
+     *
+     * @param element
+     * @param BaseURI
+     * @throws XMLSecurityException
+     */
+    public KeyValue(Element element, String BaseURI) throws XMLSecurityException {
+        super(element, BaseURI);
+    }
+
+    /**
+     * Method getPublicKey
+     *
+     * @return the public key
+     * @throws XMLSecurityException
+     */
+    public PublicKey getPublicKey() throws XMLSecurityException {
+        Element rsa =
+            XMLUtils.selectDsNode(
+                this.constructionElement.getFirstChild(), Constants._TAG_RSAKEYVALUE, 0);
+
+        if (rsa != null) {
+            RSAKeyValue kv = new RSAKeyValue(rsa, this.baseURI);
+            return kv.getPublicKey();
+        }
+
+        Element dsa =
+            XMLUtils.selectDsNode(
+                this.constructionElement.getFirstChild(), Constants._TAG_DSAKEYVALUE, 0);
+
+        if (dsa != null) {
+            DSAKeyValue kv = new DSAKeyValue(dsa, this.baseURI);
+            return kv.getPublicKey();
+        }
+
+        return null;
+    }
+
+    /** @inheritDoc */
+    public String getBaseLocalName() {
+        return Constants._TAG_KEYVALUE;
+    }
+}

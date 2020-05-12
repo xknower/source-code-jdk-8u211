@@ -1,87 +1,97 @@
+/*
+ * Copyright (c) 2000, 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package com.sun.corba.se.impl.protocol.giopmsgheaders;
 
-import com.sun.corba.se.spi.ior.iiop.GIOPVersion;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import org.omg.CORBA.portable.InputStream;
-import org.omg.CORBA.portable.OutputStream;
+import com.sun.corba.se.spi.ior.iiop.GIOPVersion;
+
+/**
+ * This is the base interface for different message type interfaces.
+ *
+ * @author Ram Jeyaraman 05/14/2000
+ */
 
 public interface Message {
-  public static final int defaultBufferSize = 1024;
-  
-  public static final int GIOPBigEndian = 0;
-  
-  public static final int GIOPLittleEndian = 1;
-  
-  public static final int GIOPBigMagic = 1195986768;
-  
-  public static final int GIOPLittleMagic = 1347373383;
-  
-  public static final int GIOPMessageHeaderLength = 12;
-  
-  public static final byte LITTLE_ENDIAN_BIT = 1;
-  
-  public static final byte MORE_FRAGMENTS_BIT = 2;
-  
-  public static final byte FLAG_NO_FRAG_BIG_ENDIAN = 0;
-  
-  public static final byte TRAILING_TWO_BIT_BYTE_MASK = 3;
-  
-  public static final byte THREAD_POOL_TO_USE_MASK = 63;
-  
-  public static final byte CDR_ENC_VERSION = 0;
-  
-  public static final byte JAVA_ENC_VERSION = 1;
-  
-  public static final byte GIOPRequest = 0;
-  
-  public static final byte GIOPReply = 1;
-  
-  public static final byte GIOPCancelRequest = 2;
-  
-  public static final byte GIOPLocateRequest = 3;
-  
-  public static final byte GIOPLocateReply = 4;
-  
-  public static final byte GIOPCloseConnection = 5;
-  
-  public static final byte GIOPMessageError = 6;
-  
-  public static final byte GIOPFragment = 7;
-  
-  GIOPVersion getGIOPVersion();
-  
-  byte getEncodingVersion();
-  
-  boolean isLittleEndian();
-  
-  boolean moreFragmentsToFollow();
-  
-  int getType();
-  
-  int getSize();
-  
-  ByteBuffer getByteBuffer();
-  
-  int getThreadPoolToUse();
-  
-  void read(InputStream paramInputStream);
-  
-  void write(OutputStream paramOutputStream);
-  
-  void setSize(ByteBuffer paramByteBuffer, int paramInt);
-  
-  FragmentMessage createFragmentMessage();
-  
-  void callback(MessageHandler paramMessageHandler) throws IOException;
-  
-  void setByteBuffer(ByteBuffer paramByteBuffer);
-  
-  void setEncodingVersion(byte paramByte);
+
+    // Generic constants
+
+    int defaultBufferSize = 1024;
+    int GIOPBigEndian = 0;
+    int GIOPLittleEndian = 1;
+    int GIOPBigMagic =    0x47494F50;
+    int GIOPLittleMagic = 0x504F4947;
+    int GIOPMessageHeaderLength = 12;
+
+    // Other useful constants
+
+    byte LITTLE_ENDIAN_BIT = 0x01;
+    byte MORE_FRAGMENTS_BIT = 0x02;
+    byte FLAG_NO_FRAG_BIG_ENDIAN = 0x00;
+    static final byte TRAILING_TWO_BIT_BYTE_MASK = 0x3;
+    static final byte THREAD_POOL_TO_USE_MASK = 0x3F;
+
+    // Encoding related constants
+
+    byte CDR_ENC_VERSION = 0x00;
+    byte JAVA_ENC_VERSION = 0x01;
+
+    // Message types
+
+    byte GIOPRequest = 0;
+    byte GIOPReply = 1;
+    byte GIOPCancelRequest = 2;
+    byte GIOPLocateRequest = 3;
+    byte GIOPLocateReply = 4;
+    byte GIOPCloseConnection = 5;
+    byte GIOPMessageError = 6;
+    byte GIOPFragment = 7; // 1.1 & 1.2:
+
+    // Accessor methods
+
+    GIOPVersion getGIOPVersion();
+    byte getEncodingVersion();
+    boolean isLittleEndian();
+    boolean moreFragmentsToFollow();
+    int getType();
+    int getSize();
+    ByteBuffer getByteBuffer();
+    int getThreadPoolToUse();
+
+    // Mutator methods
+
+    void read(org.omg.CORBA.portable.InputStream istream);
+    void write(org.omg.CORBA.portable.OutputStream ostream);
+
+    void setSize(ByteBuffer byteBuffer, int size);
+
+    FragmentMessage createFragmentMessage();
+
+    void callback(MessageHandler handler) throws IOException;
+
+    void setByteBuffer(ByteBuffer byteBuffer);
+    void setEncodingVersion(byte version);
 }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\protocol\giopmsgheaders\Message.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
- */

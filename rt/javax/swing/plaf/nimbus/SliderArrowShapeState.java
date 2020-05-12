@@ -1,45 +1,40 @@
-/*    */ package javax.swing.plaf.nimbus;
-/*    */ 
-/*    */ import javax.swing.JComponent;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ class SliderArrowShapeState
-/*    */   extends State
-/*    */ {
-/*    */   SliderArrowShapeState() {
-/* 33 */     super("ArrowShape");
-/*    */   }
-/*    */   
-/*    */   protected boolean isInState(JComponent paramJComponent) {
-/* 37 */     return (paramJComponent.getClientProperty("Slider.paintThumbArrowShape") == Boolean.TRUE);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\nimbus\SliderArrowShapeState.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.plaf.nimbus;
+
+import java.awt.*;
+import javax.swing.*;
+
+
+class SliderArrowShapeState extends State {
+    SliderArrowShapeState() {
+        super("ArrowShape");
+    }
+
+    @Override protected boolean isInState(JComponent c) {
+ return c.getClientProperty("Slider.paintThumbArrowShape") == Boolean.TRUE; 
+    }
+}
+

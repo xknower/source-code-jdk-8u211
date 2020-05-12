@@ -1,73 +1,68 @@
-/*    */ package java.nio.charset;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class IllegalCharsetNameException
-/*    */   extends IllegalArgumentException
-/*    */ {
-/*    */   private static final long serialVersionUID = 1457525358470002989L;
-/*    */   private String charsetName;
-/*    */   
-/*    */   public IllegalCharsetNameException(String paramString) {
-/* 55 */     super(String.valueOf(paramString));
-/* 56 */     this.charsetName = paramString;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public String getCharsetName() {
-/* 65 */     return this.charsetName;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\nio\charset\IllegalCharsetNameException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2007, Oracle and/or its affiliates. All rights reserved.
+ *
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+// -- This file was mechanically generated: Do not edit! -- //
+
+package java.nio.charset;
+
+
+/**
+ * Unchecked exception thrown when a string that is not a
+ * <a href=Charset.html#names>legal charset name</a> is used as such.
+ *
+ * @since 1.4
+ */
+
+public class IllegalCharsetNameException
+    extends IllegalArgumentException
+{
+
+    private static final long serialVersionUID = 1457525358470002989L;
+
+    private String charsetName;
+
+    /**
+     * Constructs an instance of this class.
+     *
+     * @param  charsetName
+     *         The illegal charset name
+     */
+    public IllegalCharsetNameException(String charsetName) {
+        super(String.valueOf(charsetName));
+	this.charsetName = charsetName;
+    }
+
+    /**
+     * Retrieves the illegal charset name.
+     *
+     * @return  The illegal charset name
+     */
+    public String getCharsetName() {
+        return charsetName;
+    }
+
+}

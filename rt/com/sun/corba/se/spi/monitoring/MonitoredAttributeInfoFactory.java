@@ -1,11 +1,47 @@
+/*
+ * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
 package com.sun.corba.se.spi.monitoring;
 
-public interface MonitoredAttributeInfoFactory {
-  MonitoredAttributeInfo createMonitoredAttributeInfo(String paramString, Class paramClass, boolean paramBoolean1, boolean paramBoolean2);
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\spi\monitoring\MonitoredAttributeInfoFactory.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * <p>
+ *
+ * @author Hemanth Puttaswamy
+ * </p>
+ * <p>
+ * MonitoredAttributeInfoFactory used mostly by internal classes. If the
+ * User needs to define some special MonitoredAttributes like a Character
+ * type Monitored Attribute, they can use this factory to build the meta
+ * information.
+ *
+ * </p>
  */
+
+public interface MonitoredAttributeInfoFactory {
+    /**
+     *  A Simple Factory Method to create the Monitored Attribute Info.
+     */
+    MonitoredAttributeInfo createMonitoredAttributeInfo( String description,
+        Class type, boolean isWritable, boolean isStatistic  );
+}

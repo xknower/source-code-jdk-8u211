@@ -1,99 +1,93 @@
-/*    */ package javax.management;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ class NotQueryExp
-/*    */   extends QueryEval
-/*    */   implements QueryExp
-/*    */ {
-/*    */   private static final long serialVersionUID = 5269643775896723397L;
-/*    */   private QueryExp exp;
-/*    */   
-/*    */   public NotQueryExp() {}
-/*    */   
-/*    */   public NotQueryExp(QueryExp paramQueryExp) {
-/* 58 */     this.exp = paramQueryExp;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public QueryExp getNegatedExp() {
-/* 66 */     return this.exp;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public boolean apply(ObjectName paramObjectName) throws BadStringOperationException, BadBinaryOpValueExpException, BadAttributeValueExpException, InvalidApplicationException {
-/* 83 */     return !this.exp.apply(paramObjectName);
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public String toString() {
-/* 91 */     return "not (" + this.exp + ")";
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\management\NotQueryExp.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2008, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.management;
+
+
+/**
+ * This class is used by the query-building mechanism to represent negations
+ * of relational expressions.
+ * @serial include
+ *
+ * @since 1.5
+ */
+class NotQueryExp extends QueryEval implements QueryExp {
+
+
+    /* Serial version */
+    private static final long serialVersionUID = 5269643775896723397L;
+
+    /**
+     * @serial The negated {@link QueryExp}
+     */
+    private QueryExp exp;
+
+
+    /**
+     * Basic Constructor.
+     */
+    public NotQueryExp() {
+    }
+
+    /**
+     * Creates a new NotQueryExp for negating the specified QueryExp.
+     */
+    public NotQueryExp(QueryExp q) {
+        exp = q;
+    }
+
+
+    /**
+     * Returns the negated query expression of the query.
+     */
+    public QueryExp getNegatedExp()  {
+        return exp;
+    }
+
+    /**
+     * Applies the NotQueryExp on a MBean.
+     *
+     * @param name The name of the MBean on which the NotQueryExp will be applied.
+     *
+     * @return  True if the query was successfully applied to the MBean, false otherwise.
+     *
+     * @exception BadStringOperationException
+     * @exception BadBinaryOpValueExpException
+     * @exception BadAttributeValueExpException
+     * @exception InvalidApplicationException
+     */
+    public boolean apply(ObjectName name) throws BadStringOperationException, BadBinaryOpValueExpException,
+        BadAttributeValueExpException, InvalidApplicationException  {
+        return exp.apply(name) == false;
+    }
+
+    /**
+     * Returns the string representing the object.
+     */
+    @Override
+    public String toString()  {
+        return "not (" + exp + ")";
+    }
+ }

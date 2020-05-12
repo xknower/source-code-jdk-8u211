@@ -1,341 +1,335 @@
-/*     */ package com.sun.org.apache.xerces.internal.impl.xpath.regex;
-/*     */ 
-/*     */ import java.text.CharacterIterator;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class REUtil
-/*     */ {
-/*     */   static final int CACHESIZE = 20;
-/*     */   
-/*     */   static final int composeFromSurrogates(int high, int low) {
-/*  34 */     return 65536 + (high - 55296 << 10) + low - 56320;
-/*     */   }
-/*     */   
-/*     */   static final boolean isLowSurrogate(int ch) {
-/*  38 */     return ((ch & 0xFC00) == 56320);
-/*     */   }
-/*     */   
-/*     */   static final boolean isHighSurrogate(int ch) {
-/*  42 */     return ((ch & 0xFC00) == 55296);
-/*     */   }
-/*     */   
-/*     */   static final String decomposeToSurrogates(int ch) {
-/*  46 */     char[] chs = new char[2];
-/*  47 */     ch -= 65536;
-/*  48 */     chs[0] = (char)((ch >> 10) + 55296);
-/*  49 */     chs[1] = (char)((ch & 0x3FF) + 56320);
-/*  50 */     return new String(chs);
-/*     */   }
-/*     */   
-/*     */   static final String substring(CharacterIterator iterator, int begin, int end) {
-/*  54 */     char[] src = new char[end - begin];
-/*  55 */     for (int i = 0; i < src.length; i++)
-/*  56 */       src[i] = iterator.setIndex(i + begin); 
-/*  57 */     return new String(src);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static final int getOptionValue(int ch) {
-/*  63 */     int ret = 0;
-/*  64 */     switch (ch) {
-/*     */       case 105:
-/*  66 */         ret = 2;
-/*     */         break;
-/*     */       case 109:
-/*  69 */         ret = 8;
-/*     */         break;
-/*     */       case 115:
-/*  72 */         ret = 4;
-/*     */         break;
-/*     */       case 120:
-/*  75 */         ret = 16;
-/*     */         break;
-/*     */       case 117:
-/*  78 */         ret = 32;
-/*     */         break;
-/*     */       case 119:
-/*  81 */         ret = 64;
-/*     */         break;
-/*     */       case 70:
-/*  84 */         ret = 256;
-/*     */         break;
-/*     */       case 72:
-/*  87 */         ret = 128;
-/*     */         break;
-/*     */       case 88:
-/*  90 */         ret = 512;
-/*     */         break;
-/*     */       case 44:
-/*  93 */         ret = 1024;
-/*     */         break;
-/*     */     } 
-/*     */     
-/*  97 */     return ret;
-/*     */   }
-/*     */   
-/*     */   static final int parseOptions(String opts) throws ParseException {
-/* 101 */     if (opts == null) return 0; 
-/* 102 */     int options = 0;
-/* 103 */     for (int i = 0; i < opts.length(); i++) {
-/* 104 */       int v = getOptionValue(opts.charAt(i));
-/* 105 */       if (v == 0)
-/* 106 */         throw new ParseException("Unknown Option: " + opts.substring(i), -1); 
-/* 107 */       options |= v;
-/*     */     } 
-/* 109 */     return options;
-/*     */   }
-/*     */   
-/*     */   static final String createOptionString(int options) {
-/* 113 */     StringBuffer sb = new StringBuffer(9);
-/* 114 */     if ((options & 0x100) != 0)
-/* 115 */       sb.append('F'); 
-/* 116 */     if ((options & 0x80) != 0)
-/* 117 */       sb.append('H'); 
-/* 118 */     if ((options & 0x200) != 0)
-/* 119 */       sb.append('X'); 
-/* 120 */     if ((options & 0x2) != 0)
-/* 121 */       sb.append('i'); 
-/* 122 */     if ((options & 0x8) != 0)
-/* 123 */       sb.append('m'); 
-/* 124 */     if ((options & 0x4) != 0)
-/* 125 */       sb.append('s'); 
-/* 126 */     if ((options & 0x20) != 0)
-/* 127 */       sb.append('u'); 
-/* 128 */     if ((options & 0x40) != 0)
-/* 129 */       sb.append('w'); 
-/* 130 */     if ((options & 0x10) != 0)
-/* 131 */       sb.append('x'); 
-/* 132 */     if ((options & 0x400) != 0)
-/* 133 */       sb.append(','); 
-/* 134 */     return sb.toString().intern();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static String stripExtendedComment(String regex) {
-/* 140 */     int len = regex.length();
-/* 141 */     StringBuffer buffer = new StringBuffer(len);
-/* 142 */     int offset = 0;
-/* 143 */     while (offset < len) {
-/* 144 */       int ch = regex.charAt(offset++);
-/*     */       
-/* 146 */       if (ch == 9 || ch == 10 || ch == 12 || ch == 13 || ch == 32) {
-/*     */         continue;
-/*     */       }
-/* 149 */       if (ch == 35) {
-/* 150 */         while (offset < len) {
-/* 151 */           ch = regex.charAt(offset++);
-/* 152 */           if (ch == 13 || ch == 10) {
-/*     */             break;
-/*     */           }
-/*     */         } 
-/*     */         
-/*     */         continue;
-/*     */       } 
-/* 159 */       if (ch == 92 && offset < len) {
-/* 160 */         int next; if ((next = regex.charAt(offset)) == 35 || next == 9 || next == 10 || next == 12 || next == 13 || next == 32) {
-/*     */ 
-/*     */           
-/* 163 */           buffer.append((char)next);
-/* 164 */           offset++; continue;
-/*     */         } 
-/* 166 */         buffer.append('\\');
-/* 167 */         buffer.append((char)next);
-/* 168 */         offset++;
-/*     */         continue;
-/*     */       } 
-/* 171 */       buffer.append((char)ch);
-/*     */     } 
-/* 173 */     return buffer.toString();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static void main(String[] argv) {
-/* 183 */     String pattern = null;
-/*     */     try {
-/* 185 */       String options = "";
-/* 186 */       String target = null;
-/* 187 */       if (argv.length == 0) {
-/* 188 */         System.out.println("Error:Usage: java REUtil -i|-m|-s|-u|-w|-X regularExpression String");
-/* 189 */         System.exit(0);
-/*     */       } 
-/* 191 */       for (int i = 0; i < argv.length; i++) {
-/* 192 */         if (argv[i].length() == 0 || argv[i].charAt(0) != '-') {
-/* 193 */           if (pattern == null)
-/* 194 */           { pattern = argv[i]; }
-/* 195 */           else if (target == null)
-/* 196 */           { target = argv[i]; }
-/*     */           else
-/* 198 */           { System.err.println("Unnecessary: " + argv[i]); } 
-/* 199 */         } else if (argv[i].equals("-i")) {
-/* 200 */           options = options + "i";
-/* 201 */         } else if (argv[i].equals("-m")) {
-/* 202 */           options = options + "m";
-/* 203 */         } else if (argv[i].equals("-s")) {
-/* 204 */           options = options + "s";
-/* 205 */         } else if (argv[i].equals("-u")) {
-/* 206 */           options = options + "u";
-/* 207 */         } else if (argv[i].equals("-w")) {
-/* 208 */           options = options + "w";
-/* 209 */         } else if (argv[i].equals("-X")) {
-/* 210 */           options = options + "X";
-/*     */         } else {
-/* 212 */           System.err.println("Unknown option: " + argv[i]);
-/*     */         } 
-/*     */       } 
-/* 215 */       RegularExpression reg = new RegularExpression(pattern, options);
-/* 216 */       System.out.println("RegularExpression: " + reg);
-/* 217 */       Match match = new Match();
-/* 218 */       reg.matches(target, match);
-/* 219 */       for (int j = 0; j < match.getNumberOfGroups(); j++) {
-/* 220 */         if (j == 0) { System.out.print("Matched range for the whole pattern: "); }
-/* 221 */         else { System.out.print("[" + j + "]: "); }
-/* 222 */          if (match.getBeginning(j) < 0) {
-/* 223 */           System.out.println("-1");
-/*     */         } else {
-/* 225 */           System.out.print(match.getBeginning(j) + ", " + match.getEnd(j) + ", ");
-/* 226 */           System.out.println("\"" + match.getCapturedText(j) + "\"");
-/*     */         } 
-/*     */       } 
-/* 229 */     } catch (ParseException pe) {
-/* 230 */       if (pattern == null) {
-/* 231 */         pe.printStackTrace();
-/*     */       } else {
-/* 233 */         System.err.println("com.sun.org.apache.xerces.internal.utils.regex.ParseException: " + pe.getMessage());
-/* 234 */         String indent = "        ";
-/* 235 */         System.err.println(indent + pattern);
-/* 236 */         int loc = pe.getLocation();
-/* 237 */         if (loc >= 0) {
-/* 238 */           System.err.print(indent);
-/* 239 */           for (int i = 0; i < loc; ) { System.err.print("-"); i++; }
-/* 240 */            System.err.println("^");
-/*     */         } 
-/*     */       } 
-/* 243 */     } catch (Exception e) {
-/* 244 */       e.printStackTrace();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/* 249 */   static final RegularExpression[] regexCache = new RegularExpression[20];
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static RegularExpression createRegex(String pattern, String options) throws ParseException {
-/* 258 */     RegularExpression re = null;
-/* 259 */     int intOptions = parseOptions(options);
-/* 260 */     synchronized (regexCache) {
-/*     */       int i;
-/* 262 */       for (i = 0; i < 20; i++) {
-/* 263 */         RegularExpression cached = regexCache[i];
-/* 264 */         if (cached == null) {
-/* 265 */           i = -1;
-/*     */           break;
-/*     */         } 
-/* 268 */         if (cached.equals(pattern, intOptions)) {
-/* 269 */           re = cached;
-/*     */           break;
-/*     */         } 
-/*     */       } 
-/* 273 */       if (re != null) {
-/* 274 */         if (i != 0) {
-/* 275 */           System.arraycopy(regexCache, 0, regexCache, 1, i);
-/* 276 */           regexCache[0] = re;
-/*     */         } 
-/*     */       } else {
-/* 279 */         re = new RegularExpression(pattern, options);
-/* 280 */         System.arraycopy(regexCache, 0, regexCache, 1, 19);
-/* 281 */         regexCache[0] = re;
-/*     */       } 
-/*     */     } 
-/* 284 */     return re;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static boolean matches(String regex, String target) throws ParseException {
-/* 292 */     return createRegex(regex, null).matches(target);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static boolean matches(String regex, String options, String target) throws ParseException {
-/* 300 */     return createRegex(regex, options).matches(target);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static String quoteMeta(String literal) {
-/* 309 */     int len = literal.length();
-/* 310 */     StringBuffer buffer = null;
-/* 311 */     for (int i = 0; i < len; i++) {
-/* 312 */       int ch = literal.charAt(i);
-/* 313 */       if (".*+?{[()|\\^$".indexOf(ch) >= 0) {
-/* 314 */         if (buffer == null) {
-/* 315 */           buffer = new StringBuffer(i + (len - i) * 2);
-/* 316 */           if (i > 0) buffer.append(literal.substring(0, i)); 
-/*     */         } 
-/* 318 */         buffer.append('\\');
-/* 319 */         buffer.append((char)ch);
-/* 320 */       } else if (buffer != null) {
-/* 321 */         buffer.append((char)ch);
-/*     */       } 
-/* 323 */     }  return (buffer != null) ? buffer.toString() : literal;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static void dumpString(String v) {
-/* 329 */     for (int i = 0; i < v.length(); i++) {
-/* 330 */       System.out.print(Integer.toHexString(v.charAt(i)));
-/* 331 */       System.out.print(" ");
-/*     */     } 
-/* 333 */     System.out.println();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\impl\xpath\regex\REUtil.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2002,2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.impl.xpath.regex;
+
+import java.text.CharacterIterator;
+
+/**
+ * @xerces.internal
+ *
+ */
+public final class REUtil {
+    private REUtil() {
+    }
+
+    static final int composeFromSurrogates(int high, int low) {
+        return 0x10000 + ((high-0xd800)<<10) + low-0xdc00;
+    }
+
+    static final boolean isLowSurrogate(int ch) {
+        return (ch & 0xfc00) == 0xdc00;
+    }
+
+    static final boolean isHighSurrogate(int ch) {
+        return (ch & 0xfc00) == 0xd800;
+    }
+
+    static final String decomposeToSurrogates(int ch) {
+        char[] chs = new char[2];
+        ch -= 0x10000;
+        chs[0] = (char)((ch>>10)+0xd800);
+        chs[1] = (char)((ch&0x3ff)+0xdc00);
+        return new String(chs);
+    }
+
+    static final String substring(CharacterIterator iterator, int begin, int end) {
+        char[] src = new char[end-begin];
+        for (int i = 0;  i < src.length;  i ++)
+            src[i] = iterator.setIndex(i+begin);
+        return new String(src);
+    }
+
+    // ================================================================
+
+    static final int getOptionValue(int ch) {
+        int ret = 0;
+        switch (ch) {
+          case 'i':
+            ret = RegularExpression.IGNORE_CASE;
+            break;
+          case 'm':
+            ret = RegularExpression.MULTIPLE_LINES;
+            break;
+          case 's':
+            ret = RegularExpression.SINGLE_LINE;
+            break;
+          case 'x':
+            ret = RegularExpression.EXTENDED_COMMENT;
+            break;
+          case 'u':
+            ret = RegularExpression.USE_UNICODE_CATEGORY;
+            break;
+          case 'w':
+            ret = RegularExpression.UNICODE_WORD_BOUNDARY;
+            break;
+          case 'F':
+            ret = RegularExpression.PROHIBIT_FIXED_STRING_OPTIMIZATION;
+            break;
+          case 'H':
+            ret = RegularExpression.PROHIBIT_HEAD_CHARACTER_OPTIMIZATION;
+            break;
+          case 'X':
+            ret = RegularExpression.XMLSCHEMA_MODE;
+            break;
+          case ',':
+            ret = RegularExpression.SPECIAL_COMMA;
+            break;
+          default:
+        }
+        return ret;
+    }
+
+    static final int parseOptions(String opts) throws ParseException {
+        if (opts == null)  return 0;
+        int options = 0;
+        for (int i = 0;  i < opts.length();  i ++) {
+            int v = getOptionValue(opts.charAt(i));
+            if (v == 0)
+                throw new ParseException("Unknown Option: "+opts.substring(i), -1);
+            options |= v;
+        }
+        return options;
+    }
+
+    static final String createOptionString(int options) {
+        StringBuffer sb = new StringBuffer(9);
+        if ((options & RegularExpression.PROHIBIT_FIXED_STRING_OPTIMIZATION) != 0)
+            sb.append((char)'F');
+        if ((options & RegularExpression.PROHIBIT_HEAD_CHARACTER_OPTIMIZATION) != 0)
+            sb.append((char)'H');
+        if ((options & RegularExpression.XMLSCHEMA_MODE) != 0)
+            sb.append((char)'X');
+        if ((options & RegularExpression.IGNORE_CASE) != 0)
+            sb.append((char)'i');
+        if ((options & RegularExpression.MULTIPLE_LINES) != 0)
+            sb.append((char)'m');
+        if ((options & RegularExpression.SINGLE_LINE) != 0)
+            sb.append((char)'s');
+        if ((options & RegularExpression.USE_UNICODE_CATEGORY) != 0)
+            sb.append((char)'u');
+        if ((options & RegularExpression.UNICODE_WORD_BOUNDARY) != 0)
+            sb.append((char)'w');
+        if ((options & RegularExpression.EXTENDED_COMMENT) != 0)
+            sb.append((char)'x');
+        if ((options & RegularExpression.SPECIAL_COMMA) != 0)
+            sb.append((char)',');
+        return sb.toString().intern();
+    }
+
+    // ================================================================
+
+    static String stripExtendedComment(String regex) {
+        int len = regex.length();
+        StringBuffer buffer = new StringBuffer(len);
+        int offset = 0;
+        while (offset < len) {
+            int ch = regex.charAt(offset++);
+                                                // Skips a white space.
+            if (ch == '\t' || ch == '\n' || ch == '\f' || ch == '\r' || ch == ' ')
+                continue;
+
+            if (ch == '#') {                    // Skips chracters between '#' and a line end.
+                while (offset < len) {
+                    ch = regex.charAt(offset++);
+                    if (ch == '\r' || ch == '\n')
+                        break;
+                }
+                continue;
+            }
+
+            int next;                           // Strips an escaped white space.
+            if (ch == '\\' && offset < len) {
+                if ((next = regex.charAt(offset)) == '#'
+                    || next == '\t' || next == '\n' || next == '\f'
+                    || next == '\r' || next == ' ') {
+                    buffer.append((char)next);
+                    offset ++;
+                } else {                        // Other escaped character.
+                    buffer.append((char)'\\');
+                    buffer.append((char)next);
+                    offset ++;
+                }
+            } else                              // As is.
+                buffer.append((char)ch);
+        }
+        return buffer.toString();
+    }
+
+    // ================================================================
+
+    /**
+     * Sample entry.
+     * <div>Usage: <KBD>com.sun.org.apache.xerces.internal.utils.regex.REUtil &lt;regex&gt; &lt;string&gt;</KBD></div>
+     */
+    public static void main(String[] argv) {
+        String pattern = null;
+        try {
+            String options = "";
+            String target = null;
+            if( argv.length == 0 ) {
+                System.out.println( "Error:Usage: java REUtil -i|-m|-s|-u|-w|-X regularExpression String" );
+                System.exit( 0 );
+            }
+            for (int i = 0;  i < argv.length;  i ++) {
+                if (argv[i].length() == 0 || argv[i].charAt(0) != '-') {
+                    if (pattern == null)
+                        pattern = argv[i];
+                    else if (target == null)
+                        target = argv[i];
+                    else
+                        System.err.println("Unnecessary: "+argv[i]);
+                } else if (argv[i].equals("-i")) {
+                    options += "i";
+                } else if (argv[i].equals("-m")) {
+                    options += "m";
+                } else if (argv[i].equals("-s")) {
+                    options += "s";
+                } else if (argv[i].equals("-u")) {
+                    options += "u";
+                } else if (argv[i].equals("-w")) {
+                    options += "w";
+                } else if (argv[i].equals("-X")) {
+                    options += "X";
+                } else {
+                    System.err.println("Unknown option: "+argv[i]);
+                }
+            }
+            RegularExpression reg = new RegularExpression(pattern, options);
+            System.out.println("RegularExpression: "+reg);
+            Match match = new Match();
+            reg.matches(target, match);
+            for (int i = 0;  i < match.getNumberOfGroups();  i ++) {
+                if (i == 0 )  System.out.print("Matched range for the whole pattern: ");
+                else System.out.print("["+i+"]: ");
+                if (match.getBeginning(i) < 0)
+                    System.out.println("-1");
+                else {
+                    System.out.print(match.getBeginning(i)+", "+match.getEnd(i)+", ");
+                    System.out.println("\""+match.getCapturedText(i)+"\"");
+                }
+            }
+        } catch (ParseException pe) {
+            if (pattern == null) {
+                pe.printStackTrace();
+            } else {
+                System.err.println("com.sun.org.apache.xerces.internal.utils.regex.ParseException: "+pe.getMessage());
+                String indent = "        ";
+                System.err.println(indent+pattern);
+                int loc = pe.getLocation();
+                if (loc >= 0) {
+                    System.err.print(indent);
+                    for (int i = 0;  i < loc;  i ++)  System.err.print("-");
+                    System.err.println("^");
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    static final int CACHESIZE = 20;
+    static final RegularExpression[] regexCache = new RegularExpression[CACHESIZE];
+    /**
+     * Creates a RegularExpression instance.
+     * This method caches created instances.
+     *
+     * @see RegularExpression#RegularExpression(java.lang.String, java.lang.String)
+     */
+    public static RegularExpression createRegex(String pattern, String options)
+        throws ParseException {
+        RegularExpression re = null;
+        int intOptions = REUtil.parseOptions(options);
+        synchronized (REUtil.regexCache) {
+            int i;
+            for (i = 0;  i < REUtil.CACHESIZE;  i ++) {
+                RegularExpression cached = REUtil.regexCache[i];
+                if (cached == null) {
+                    i = -1;
+                    break;
+                }
+                if (cached.equals(pattern, intOptions)) {
+                    re = cached;
+                    break;
+                }
+            }
+            if (re != null) {
+                if (i != 0) {
+                    System.arraycopy(REUtil.regexCache, 0, REUtil.regexCache, 1, i);
+                    REUtil.regexCache[0] = re;
+                }
+            } else {
+                re = new RegularExpression(pattern, options);
+                System.arraycopy(REUtil.regexCache, 0, REUtil.regexCache, 1, REUtil.CACHESIZE-1);
+                REUtil.regexCache[0] = re;
+            }
+        }
+        return re;
+    }
+
+    /**
+     *
+     * @see RegularExpression#matches(java.lang.String)
+     */
+    public static boolean matches(String regex, String target) throws ParseException {
+        return REUtil.createRegex(regex, null).matches(target);
+    }
+
+    /**
+     *
+     * @see RegularExpression#matches(java.lang.String)
+     */
+    public static boolean matches(String regex, String options, String target) throws ParseException {
+        return REUtil.createRegex(regex, options).matches(target);
+    }
+
+    // ================================================================
+
+    /**
+     *
+     */
+    public static String quoteMeta(String literal) {
+        int len = literal.length();
+        StringBuffer buffer = null;
+        for (int i = 0;  i < len;  i ++) {
+            int ch = literal.charAt(i);
+            if (".*+?{[()|\\^$".indexOf(ch) >= 0) {
+                if (buffer == null) {
+                    buffer = new StringBuffer(i+(len-i)*2);
+                    if (i > 0)  buffer.append(literal.substring(0, i));
+                }
+                buffer.append((char)'\\');
+                buffer.append((char)ch);
+            } else if (buffer != null)
+                buffer.append((char)ch);
+        }
+        return buffer != null ? buffer.toString() : literal;
+    }
+
+    // ================================================================
+
+    static void dumpString(String v) {
+        for (int i = 0;  i < v.length();  i ++) {
+            System.out.print(Integer.toHexString(v.charAt(i)));
+            System.out.print(" ");
+        }
+        System.out.println();
+    }
+}

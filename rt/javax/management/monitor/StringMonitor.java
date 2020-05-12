@@ -1,461 +1,463 @@
-/*     */ package javax.management.monitor;
-/*     */ 
-/*     */ import com.sun.jmx.defaults.JmxProperties;
-/*     */ import java.util.logging.Level;
-/*     */ import javax.management.MBeanNotificationInfo;
-/*     */ import javax.management.ObjectName;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class StringMonitor
-/*     */   extends Monitor
-/*     */   implements StringMonitorMBean
-/*     */ {
-/*     */   static class StringMonitorObservedObject
-/*     */     extends Monitor.ObservedObject
-/*     */   {
-/*     */     private int status;
-/*     */     
-/*     */     public StringMonitorObservedObject(ObjectName param1ObjectName) {
-/*  70 */       super(param1ObjectName);
-/*     */     }
-/*     */     
-/*     */     public final synchronized int getStatus() {
-/*  74 */       return this.status;
-/*     */     }
-/*     */     public final synchronized void setStatus(int param1Int) {
-/*  77 */       this.status = param1Int;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  93 */   private String stringToCompare = "";
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean notifyMatch = false;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean notifyDiffer = false;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 109 */   private static final String[] types = new String[] { "jmx.monitor.error.runtime", "jmx.monitor.error.mbean", "jmx.monitor.error.attribute", "jmx.monitor.error.type", "jmx.monitor.string.matches", "jmx.monitor.string.differs" };
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 118 */   private static final MBeanNotificationInfo[] notifsInfo = new MBeanNotificationInfo[] { new MBeanNotificationInfo(types, "javax.management.monitor.MonitorNotification", "Notifications sent by the StringMonitor MBean") };
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static final int MATCHING = 0;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static final int DIFFERING = 1;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static final int MATCHING_OR_DIFFERING = 2;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void start() {
-/* 153 */     if (isActive()) {
-/* 154 */       JmxProperties.MONITOR_LOGGER.logp(Level.FINER, StringMonitor.class.getName(), "start", "the monitor is already active");
-/*     */ 
-/*     */       
-/*     */       return;
-/*     */     } 
-/*     */     
-/* 160 */     for (Monitor.ObservedObject observedObject : this.observedObjects) {
-/* 161 */       StringMonitorObservedObject stringMonitorObservedObject = (StringMonitorObservedObject)observedObject;
-/*     */       
-/* 163 */       stringMonitorObservedObject.setStatus(2);
-/*     */     } 
-/* 165 */     doStart();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void stop() {
-/* 172 */     doStop();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized String getDerivedGauge(ObjectName paramObjectName) {
-/* 189 */     return (String)super.getDerivedGauge(paramObjectName);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized long getDerivedGaugeTimeStamp(ObjectName paramObjectName) {
-/* 205 */     return super.getDerivedGaugeTimeStamp(paramObjectName);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   @Deprecated
-/*     */   public synchronized String getDerivedGauge() {
-/* 219 */     if (this.observedObjects.isEmpty()) {
-/* 220 */       return null;
-/*     */     }
-/* 222 */     return (String)((Monitor.ObservedObject)this.observedObjects.get(0)).getDerivedGauge();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   @Deprecated
-/*     */   public synchronized long getDerivedGaugeTimeStamp() {
-/* 237 */     if (this.observedObjects.isEmpty()) {
-/* 238 */       return 0L;
-/*     */     }
-/* 240 */     return ((Monitor.ObservedObject)this.observedObjects.get(0)).getDerivedGaugeTimeStamp();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized String getStringToCompare() {
-/* 253 */     return this.stringToCompare;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void setStringToCompare(String paramString) throws IllegalArgumentException {
-/* 270 */     if (paramString == null) {
-/* 271 */       throw new IllegalArgumentException("Null string to compare");
-/*     */     }
-/*     */     
-/* 274 */     if (this.stringToCompare.equals(paramString))
-/*     */       return; 
-/* 276 */     this.stringToCompare = paramString;
-/*     */ 
-/*     */ 
-/*     */     
-/* 280 */     for (Monitor.ObservedObject observedObject : this.observedObjects) {
-/* 281 */       StringMonitorObservedObject stringMonitorObservedObject = (StringMonitorObservedObject)observedObject;
-/*     */       
-/* 283 */       stringMonitorObservedObject.setStatus(2);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized boolean getNotifyMatch() {
-/* 297 */     return this.notifyMatch;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void setNotifyMatch(boolean paramBoolean) {
-/* 309 */     if (this.notifyMatch == paramBoolean)
-/*     */       return; 
-/* 311 */     this.notifyMatch = paramBoolean;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized boolean getNotifyDiffer() {
-/* 324 */     return this.notifyDiffer;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void setNotifyDiffer(boolean paramBoolean) {
-/* 336 */     if (this.notifyDiffer == paramBoolean)
-/*     */       return; 
-/* 338 */     this.notifyDiffer = paramBoolean;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public MBeanNotificationInfo[] getNotificationInfo() {
-/* 348 */     return (MBeanNotificationInfo[])notifsInfo.clone();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   Monitor.ObservedObject createObservedObject(ObjectName paramObjectName) {
-/* 364 */     StringMonitorObservedObject stringMonitorObservedObject = new StringMonitorObservedObject(paramObjectName);
-/*     */     
-/* 366 */     stringMonitorObservedObject.setStatus(2);
-/* 367 */     return stringMonitorObservedObject;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   synchronized boolean isComparableTypeValid(ObjectName paramObjectName, String paramString, Comparable<?> paramComparable) {
-/* 380 */     if (paramComparable instanceof String) {
-/* 381 */       return true;
-/*     */     }
-/* 383 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   synchronized void onErrorNotification(MonitorNotification paramMonitorNotification) {
-/* 389 */     StringMonitorObservedObject stringMonitorObservedObject = (StringMonitorObservedObject)getObservedObject(paramMonitorNotification.getObservedObject());
-/* 390 */     if (stringMonitorObservedObject == null) {
-/*     */       return;
-/*     */     }
-/*     */ 
-/*     */     
-/* 395 */     stringMonitorObservedObject.setStatus(2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   synchronized MonitorNotification buildAlarmNotification(ObjectName paramObjectName, String paramString, Comparable<?> paramComparable) {
-/* 403 */     String str1 = null;
-/* 404 */     String str2 = null;
-/* 405 */     String str3 = null;
-/*     */ 
-/*     */     
-/* 408 */     StringMonitorObservedObject stringMonitorObservedObject = (StringMonitorObservedObject)getObservedObject(paramObjectName);
-/* 409 */     if (stringMonitorObservedObject == null) {
-/* 410 */       return null;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 415 */     if (stringMonitorObservedObject.getStatus() == 2) {
-/* 416 */       if (stringMonitorObservedObject.getDerivedGauge().equals(this.stringToCompare)) {
-/* 417 */         if (this.notifyMatch) {
-/* 418 */           str1 = "jmx.monitor.string.matches";
-/* 419 */           str2 = "";
-/* 420 */           str3 = this.stringToCompare;
-/*     */         } 
-/* 422 */         stringMonitorObservedObject.setStatus(1);
-/*     */       } else {
-/* 424 */         if (this.notifyDiffer) {
-/* 425 */           str1 = "jmx.monitor.string.differs";
-/* 426 */           str2 = "";
-/* 427 */           str3 = this.stringToCompare;
-/*     */         } 
-/* 429 */         stringMonitorObservedObject.setStatus(0);
-/*     */       }
-/*     */     
-/* 432 */     } else if (stringMonitorObservedObject.getStatus() == 0) {
-/* 433 */       if (stringMonitorObservedObject.getDerivedGauge().equals(this.stringToCompare)) {
-/* 434 */         if (this.notifyMatch) {
-/* 435 */           str1 = "jmx.monitor.string.matches";
-/* 436 */           str2 = "";
-/* 437 */           str3 = this.stringToCompare;
-/*     */         } 
-/* 439 */         stringMonitorObservedObject.setStatus(1);
-/*     */       } 
-/* 441 */     } else if (stringMonitorObservedObject.getStatus() == 1 && 
-/* 442 */       !stringMonitorObservedObject.getDerivedGauge().equals(this.stringToCompare)) {
-/* 443 */       if (this.notifyDiffer) {
-/* 444 */         str1 = "jmx.monitor.string.differs";
-/* 445 */         str2 = "";
-/* 446 */         str3 = this.stringToCompare;
-/*     */       } 
-/* 448 */       stringMonitorObservedObject.setStatus(0);
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 453 */     return new MonitorNotification(str1, this, 0L, 0L, str2, null, null, null, str3);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\management\monitor\StringMonitor.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2007, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.management.monitor;
+
+import static com.sun.jmx.defaults.JmxProperties.MONITOR_LOGGER;
+import java.util.logging.Level;
+import javax.management.ObjectName;
+import javax.management.MBeanNotificationInfo;
+import static javax.management.monitor.MonitorNotification.*;
+
+/**
+ * Defines a monitor MBean designed to observe the values of a string
+ * attribute.
+ * <P>
+ * A string monitor sends notifications as follows:
+ * <UL>
+ * <LI> if the attribute value matches the string to compare value,
+ *      a {@link MonitorNotification#STRING_TO_COMPARE_VALUE_MATCHED
+ *      match notification} is sent.
+ *      The notify match flag must be set to <CODE>true</CODE>.
+ *      <BR>Subsequent matchings of the string to compare values do not
+ *      cause further notifications unless
+ *      the attribute value differs from the string to compare value.
+ * <LI> if the attribute value differs from the string to compare value,
+ *      a {@link MonitorNotification#STRING_TO_COMPARE_VALUE_DIFFERED
+ *      differ notification} is sent.
+ *      The notify differ flag must be set to <CODE>true</CODE>.
+ *      <BR>Subsequent differences from the string to compare value do
+ *      not cause further notifications unless
+ *      the attribute value matches the string to compare value.
+ * </UL>
+ *
+ *
+ * @since 1.5
+ */
+public class StringMonitor extends Monitor implements StringMonitorMBean {
+
+    /*
+     * ------------------------------------------
+     *  PACKAGE CLASSES
+     * ------------------------------------------
+     */
+
+    static class StringMonitorObservedObject extends ObservedObject {
+
+        public StringMonitorObservedObject(ObjectName observedObject) {
+            super(observedObject);
+        }
+
+        public final synchronized int getStatus() {
+            return status;
+        }
+        public final synchronized void setStatus(int status) {
+            this.status = status;
+        }
+
+        private int status;
+    }
+
+    /*
+     * ------------------------------------------
+     *  PRIVATE VARIABLES
+     * ------------------------------------------
+     */
+
+    /**
+     * String to compare with the observed attribute.
+     * <BR>The default value is an empty character sequence.
+     */
+    private String stringToCompare = "";
+
+    /**
+     * Flag indicating if the string monitor notifies when matching
+     * the string to compare.
+     * <BR>The default value is set to <CODE>false</CODE>.
+     */
+    private boolean notifyMatch = false;
+
+    /**
+     * Flag indicating if the string monitor notifies when differing
+     * from the string to compare.
+     * <BR>The default value is set to <CODE>false</CODE>.
+     */
+    private boolean notifyDiffer = false;
+
+    private static final String[] types = {
+        RUNTIME_ERROR,
+        OBSERVED_OBJECT_ERROR,
+        OBSERVED_ATTRIBUTE_ERROR,
+        OBSERVED_ATTRIBUTE_TYPE_ERROR,
+        STRING_TO_COMPARE_VALUE_MATCHED,
+        STRING_TO_COMPARE_VALUE_DIFFERED
+    };
+
+    private static final MBeanNotificationInfo[] notifsInfo = {
+        new MBeanNotificationInfo(
+            types,
+            "javax.management.monitor.MonitorNotification",
+            "Notifications sent by the StringMonitor MBean")
+    };
+
+    // Flags needed to implement the matching/differing mechanism.
+    //
+    private static final int MATCHING                   = 0;
+    private static final int DIFFERING                  = 1;
+    private static final int MATCHING_OR_DIFFERING      = 2;
+
+    /*
+     * ------------------------------------------
+     *  CONSTRUCTORS
+     * ------------------------------------------
+     */
+
+    /**
+     * Default constructor.
+     */
+    public StringMonitor() {
+    }
+
+    /*
+     * ------------------------------------------
+     *  PUBLIC METHODS
+     * ------------------------------------------
+     */
+
+    /**
+     * Starts the string monitor.
+     */
+    public synchronized void start() {
+        if (isActive()) {
+            MONITOR_LOGGER.logp(Level.FINER, StringMonitor.class.getName(),
+                    "start", "the monitor is already active");
+            return;
+        }
+        // Reset values.
+        //
+        for (ObservedObject o : observedObjects) {
+            final StringMonitorObservedObject smo =
+                (StringMonitorObservedObject) o;
+            smo.setStatus(MATCHING_OR_DIFFERING);
+        }
+        doStart();
+    }
+
+    /**
+     * Stops the string monitor.
+     */
+    public synchronized void stop() {
+        doStop();
+    }
+
+    // GETTERS AND SETTERS
+    //--------------------
+
+    /**
+     * Gets the derived gauge of the specified object, if this object is
+     * contained in the set of observed MBeans, or <code>null</code> otherwise.
+     *
+     * @param object the name of the MBean whose derived gauge is required.
+     *
+     * @return The derived gauge of the specified object.
+     *
+     */
+    @Override
+    public synchronized String getDerivedGauge(ObjectName object) {
+        return (String) super.getDerivedGauge(object);
+    }
+
+    /**
+     * Gets the derived gauge timestamp of the specified object, if
+     * this object is contained in the set of observed MBeans, or
+     * <code>0</code> otherwise.
+     *
+     * @param object the name of the object whose derived gauge
+     * timestamp is to be returned.
+     *
+     * @return The derived gauge timestamp of the specified object.
+     *
+     */
+    @Override
+    public synchronized long getDerivedGaugeTimeStamp(ObjectName object) {
+        return super.getDerivedGaugeTimeStamp(object);
+    }
+
+    /**
+     * Returns the derived gauge of the first object in the set of
+     * observed MBeans.
+     *
+     * @return The derived gauge.
+     *
+     * @deprecated As of JMX 1.2, replaced by
+     * {@link #getDerivedGauge(ObjectName)}
+     */
+    @Deprecated
+    public synchronized String getDerivedGauge() {
+        if (observedObjects.isEmpty()) {
+            return null;
+        } else {
+            return (String) observedObjects.get(0).getDerivedGauge();
+        }
+    }
+
+    /**
+     * Gets the derived gauge timestamp of the first object in the set
+     * of observed MBeans.
+     *
+     * @return The derived gauge timestamp.
+     *
+     * @deprecated As of JMX 1.2, replaced by
+     * {@link #getDerivedGaugeTimeStamp(ObjectName)}
+     */
+    @Deprecated
+    public synchronized long getDerivedGaugeTimeStamp() {
+        if (observedObjects.isEmpty()) {
+            return 0;
+        } else {
+            return observedObjects.get(0).getDerivedGaugeTimeStamp();
+        }
+    }
+
+    /**
+     * Gets the string to compare with the observed attribute common
+     * to all observed MBeans.
+     *
+     * @return The string value.
+     *
+     * @see #setStringToCompare
+     */
+    public synchronized String getStringToCompare() {
+        return stringToCompare;
+    }
+
+    /**
+     * Sets the string to compare with the observed attribute common
+     * to all observed MBeans.
+     *
+     * @param value The string value.
+     *
+     * @exception IllegalArgumentException The specified
+     * string to compare is null.
+     *
+     * @see #getStringToCompare
+     */
+    public synchronized void setStringToCompare(String value)
+        throws IllegalArgumentException {
+
+        if (value == null) {
+            throw new IllegalArgumentException("Null string to compare");
+        }
+
+        if (stringToCompare.equals(value))
+            return;
+        stringToCompare = value;
+
+        // Reset values.
+        //
+        for (ObservedObject o : observedObjects) {
+            final StringMonitorObservedObject smo =
+                (StringMonitorObservedObject) o;
+            smo.setStatus(MATCHING_OR_DIFFERING);
+        }
+    }
+
+    /**
+     * Gets the matching notification's on/off switch value common to
+     * all observed MBeans.
+     *
+     * @return <CODE>true</CODE> if the string monitor notifies when
+     * matching the string to compare, <CODE>false</CODE> otherwise.
+     *
+     * @see #setNotifyMatch
+     */
+    public synchronized boolean getNotifyMatch() {
+        return notifyMatch;
+    }
+
+    /**
+     * Sets the matching notification's on/off switch value common to
+     * all observed MBeans.
+     *
+     * @param value The matching notification's on/off switch value.
+     *
+     * @see #getNotifyMatch
+     */
+    public synchronized void setNotifyMatch(boolean value) {
+        if (notifyMatch == value)
+            return;
+        notifyMatch = value;
+    }
+
+    /**
+     * Gets the differing notification's on/off switch value common to
+     * all observed MBeans.
+     *
+     * @return <CODE>true</CODE> if the string monitor notifies when
+     * differing from the string to compare, <CODE>false</CODE> otherwise.
+     *
+     * @see #setNotifyDiffer
+     */
+    public synchronized boolean getNotifyDiffer() {
+        return notifyDiffer;
+    }
+
+    /**
+     * Sets the differing notification's on/off switch value common to
+     * all observed MBeans.
+     *
+     * @param value The differing notification's on/off switch value.
+     *
+     * @see #getNotifyDiffer
+     */
+    public synchronized void setNotifyDiffer(boolean value) {
+        if (notifyDiffer == value)
+            return;
+        notifyDiffer = value;
+    }
+
+    /**
+     * Returns a <CODE>NotificationInfo</CODE> object containing the name of
+     * the Java class of the notification and the notification types sent by
+     * the string monitor.
+     */
+    @Override
+    public MBeanNotificationInfo[] getNotificationInfo() {
+        return notifsInfo.clone();
+    }
+
+    /*
+     * ------------------------------------------
+     *  PACKAGE METHODS
+     * ------------------------------------------
+     */
+
+    /**
+     * Factory method for ObservedObject creation.
+     *
+     * @since 1.6
+     */
+    @Override
+    ObservedObject createObservedObject(ObjectName object) {
+        final StringMonitorObservedObject smo =
+            new StringMonitorObservedObject(object);
+        smo.setStatus(MATCHING_OR_DIFFERING);
+        return smo;
+    }
+
+    /**
+     * Check that the type of the supplied observed attribute
+     * value is one of the value types supported by this monitor.
+     */
+    @Override
+    synchronized boolean isComparableTypeValid(ObjectName object,
+                                               String attribute,
+                                               Comparable<?> value) {
+        // Check that the observed attribute is of type "String".
+        //
+        if (value instanceof String) {
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    synchronized void onErrorNotification(MonitorNotification notification) {
+        final StringMonitorObservedObject o = (StringMonitorObservedObject)
+            getObservedObject(notification.getObservedObject());
+        if (o == null)
+            return;
+
+        // Reset values.
+        //
+        o.setStatus(MATCHING_OR_DIFFERING);
+    }
+
+    @Override
+    synchronized MonitorNotification buildAlarmNotification(
+                                               ObjectName object,
+                                               String attribute,
+                                               Comparable<?> value) {
+        String type = null;
+        String msg = null;
+        Object trigger = null;
+
+        final StringMonitorObservedObject o =
+            (StringMonitorObservedObject) getObservedObject(object);
+        if (o == null)
+            return null;
+
+        // Send matching notification if notifyMatch is true.
+        // Send differing notification if notifyDiffer is true.
+        //
+        if (o.getStatus() == MATCHING_OR_DIFFERING) {
+            if (o.getDerivedGauge().equals(stringToCompare)) {
+                if (notifyMatch) {
+                    type = STRING_TO_COMPARE_VALUE_MATCHED;
+                    msg = "";
+                    trigger = stringToCompare;
+                }
+                o.setStatus(DIFFERING);
+            } else {
+                if (notifyDiffer) {
+                    type = STRING_TO_COMPARE_VALUE_DIFFERED;
+                    msg = "";
+                    trigger = stringToCompare;
+                }
+                o.setStatus(MATCHING);
+            }
+        } else {
+            if (o.getStatus() == MATCHING) {
+                if (o.getDerivedGauge().equals(stringToCompare)) {
+                    if (notifyMatch) {
+                        type = STRING_TO_COMPARE_VALUE_MATCHED;
+                        msg = "";
+                        trigger = stringToCompare;
+                    }
+                    o.setStatus(DIFFERING);
+                }
+            } else if (o.getStatus() == DIFFERING) {
+                if (!o.getDerivedGauge().equals(stringToCompare)) {
+                    if (notifyDiffer) {
+                        type = STRING_TO_COMPARE_VALUE_DIFFERED;
+                        msg = "";
+                        trigger = stringToCompare;
+                    }
+                    o.setStatus(MATCHING);
+                }
+            }
+        }
+
+        return new MonitorNotification(type,
+                                       this,
+                                       0,
+                                       0,
+                                       msg,
+                                       null,
+                                       null,
+                                       null,
+                                       trigger);
+    }
+}

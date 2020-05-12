@@ -1,111 +1,105 @@
-/*     */ package com.sun.corba.se.impl.activation;
-/*     */ 
-/*     */ import java.util.ConcurrentModificationException;
-/*     */ import java.util.HashMap;
-/*     */ import java.util.Iterator;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class ProcessMonitorThread
-/*     */   extends Thread
-/*     */ {
-/*     */   private HashMap serverTable;
-/*     */   private int sleepTime;
-/*  42 */   private static ProcessMonitorThread instance = null;
-/*     */   
-/*     */   private ProcessMonitorThread(HashMap paramHashMap, int paramInt) {
-/*  45 */     this.serverTable = paramHashMap;
-/*  46 */     this.sleepTime = paramInt;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void run() {
-/*     */     while (true) {
-/*     */       Iterator iterator;
-/*     */       try {
-/*  55 */         Thread.sleep(this.sleepTime);
-/*  56 */       } catch (InterruptedException interruptedException) {
-/*     */         break;
-/*     */       } 
-/*     */       
-/*  60 */       synchronized (this.serverTable) {
-/*     */ 
-/*     */         
-/*  63 */         iterator = this.serverTable.values().iterator();
-/*     */       } 
-/*     */       try {
-/*  66 */         checkServerHealth(iterator);
-/*  67 */       } catch (ConcurrentModificationException concurrentModificationException) {
-/*     */         break;
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   private void checkServerHealth(Iterator<ServerTableEntry> paramIterator) {
-/*  74 */     if (paramIterator == null)
-/*  75 */       return;  while (paramIterator.hasNext()) {
-/*  76 */       ServerTableEntry serverTableEntry = paramIterator.next();
-/*  77 */       serverTableEntry.checkProcessHealth();
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   static void start(HashMap paramHashMap) {
-/*  82 */     int i = 1000;
-/*     */     
-/*  84 */     String str = System.getProperties().getProperty("com.sun.CORBA.activation.ServerPollingTime");
-/*     */ 
-/*     */     
-/*  87 */     if (str != null) {
-/*     */       try {
-/*  89 */         i = Integer.parseInt(str);
-/*  90 */       } catch (Exception exception) {}
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*  96 */     instance = new ProcessMonitorThread(paramHashMap, i);
-/*     */     
-/*  98 */     instance.setDaemon(true);
-/*  99 */     instance.start();
-/*     */   }
-/*     */   
-/*     */   static void interruptThread() {
-/* 103 */     instance.interrupt();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\activation\ProcessMonitorThread.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2001, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.activation;
+
+import java.util.*;
+import com.sun.corba.se.impl.orbutil.ORBConstants;
+
+/** ProcessMonitorThread is started when ServerManager is instantiated. The
+  * thread wakes up every minute (This can be changed by setting sleepTime) and
+  * makes sure that all the processes (Servers) registered with the ServerTool
+  * are healthy. If not the state in ServerTableEntry will be changed to
+  * De-Activated.
+  * Note: This thread can be killed from the main thread by calling
+  *       interrupThread()
+  */
+public class ProcessMonitorThread extends java.lang.Thread {
+    private HashMap serverTable;
+    private int sleepTime;
+    private static ProcessMonitorThread instance = null;
+
+    private ProcessMonitorThread( HashMap ServerTable, int SleepTime ) {
+        serverTable = ServerTable;
+        sleepTime = SleepTime;
+    }
+
+    public void run( ) {
+        while( true ) {
+            try {
+                // Sleep's for a specified time, before checking
+                // the Servers health. This will repeat as long as
+                // the ServerManager (ORBD) is up and running.
+                Thread.sleep( sleepTime );
+            } catch( java.lang.InterruptedException e ) {
+                break;
+            }
+            Iterator serverList;
+            synchronized ( serverTable ) {
+                // Check each ServerTableEntry to make sure that they
+                // are in the right state.
+                serverList = serverTable.values().iterator();
+            }
+            try {
+                checkServerHealth( serverList );
+            } catch( ConcurrentModificationException e ) {
+                break;
+            }
+        }
+    }
+
+    private void checkServerHealth( Iterator serverList ) {
+        if( serverList == null ) return;
+        while (serverList.hasNext( ) ) {
+            ServerTableEntry entry = (ServerTableEntry) serverList.next();
+            entry.checkProcessHealth( );
+        }
+    }
+
+    static void start( HashMap serverTable ) {
+        int sleepTime = ORBConstants.DEFAULT_SERVER_POLLING_TIME;
+
+        String pollingTime = System.getProperties().getProperty(
+            ORBConstants.SERVER_POLLING_TIME );
+
+        if ( pollingTime != null ) {
+            try {
+                sleepTime = Integer.parseInt( pollingTime );
+            } catch (Exception e ) {
+                // Too late to complain, Just use the default
+                // sleepTime
+            }
+        }
+
+        instance = new ProcessMonitorThread( serverTable,
+            sleepTime );
+        instance.setDaemon( true );
+        instance.start();
+    }
+
+    static void interruptThread( ) {
+        instance.interrupt();
+    }
+}

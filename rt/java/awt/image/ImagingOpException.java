@@ -1,51 +1,45 @@
-/*    */ package java.awt.image;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class ImagingOpException
-/*    */   extends RuntimeException
-/*    */ {
-/*    */   public ImagingOpException(String paramString) {
-/* 43 */     super(paramString);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\awt\image\ImagingOpException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 1998, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.awt.image;
+
+
+/**
+ * The <code>ImagingOpException</code> is thrown if one of the
+ * {@link BufferedImageOp} or {@link RasterOp} filter methods cannot
+ * process the image.
+ */
+public class ImagingOpException extends java.lang.RuntimeException {
+
+    /**
+     * Constructs an <code>ImagingOpException</code> object with the
+     * specified message.
+     * @param s the message to generate when a
+     * <code>ImagingOpException</code> is thrown
+     */
+    public ImagingOpException(String s) {
+        super (s);
+    }
+}

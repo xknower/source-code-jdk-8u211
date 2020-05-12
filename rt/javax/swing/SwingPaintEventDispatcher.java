@@ -1,100 +1,94 @@
-/*    */ package javax.swing;
-/*    */ 
-/*    */ import java.awt.Component;
-/*    */ import java.awt.Container;
-/*    */ import java.awt.Rectangle;
-/*    */ import java.awt.event.PaintEvent;
-/*    */ import java.security.AccessController;
-/*    */ import sun.awt.AppContext;
-/*    */ import sun.awt.PaintEventDispatcher;
-/*    */ import sun.awt.SunToolkit;
-/*    */ import sun.awt.event.IgnorePaintEvent;
-/*    */ import sun.security.action.GetBooleanAction;
-/*    */ import sun.security.action.GetPropertyAction;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ class SwingPaintEventDispatcher
-/*    */   extends PaintEventDispatcher
-/*    */ {
-/* 49 */   private static final boolean SHOW_FROM_DOUBLE_BUFFER = "true".equals(AccessController.doPrivileged(new GetPropertyAction("swing.showFromDoubleBuffer", "true")));
-/*    */   
-/* 51 */   private static final boolean ERASE_BACKGROUND = ((Boolean)AccessController.<Boolean>doPrivileged(new GetBooleanAction("swing.nativeErase"))).booleanValue();
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public PaintEvent createPaintEvent(Component paramComponent, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/* 57 */     if (paramComponent instanceof RootPaneContainer) {
-/* 58 */       AppContext appContext = SunToolkit.targetToAppContext(paramComponent);
-/* 59 */       RepaintManager repaintManager = RepaintManager.currentManager(appContext);
-/* 60 */       if (!SHOW_FROM_DOUBLE_BUFFER || 
-/* 61 */         !repaintManager.show((Container)paramComponent, paramInt1, paramInt2, paramInt3, paramInt4)) {
-/* 62 */         repaintManager.nativeAddDirtyRegion(appContext, (Container)paramComponent, paramInt1, paramInt2, paramInt3, paramInt4);
-/*    */       }
-/*    */ 
-/*    */ 
-/*    */       
-/* 67 */       return new IgnorePaintEvent(paramComponent, 800, new Rectangle(paramInt1, paramInt2, paramInt3, paramInt4));
-/*    */     } 
-/*    */     
-/* 70 */     if (paramComponent instanceof SwingHeavyWeight) {
-/* 71 */       AppContext appContext = SunToolkit.targetToAppContext(paramComponent);
-/* 72 */       RepaintManager repaintManager = RepaintManager.currentManager(appContext);
-/* 73 */       repaintManager.nativeAddDirtyRegion(appContext, (Container)paramComponent, paramInt1, paramInt2, paramInt3, paramInt4);
-/*    */       
-/* 75 */       return new IgnorePaintEvent(paramComponent, 800, new Rectangle(paramInt1, paramInt2, paramInt3, paramInt4));
-/*    */     } 
-/*    */     
-/* 78 */     return super.createPaintEvent(paramComponent, paramInt1, paramInt2, paramInt3, paramInt4);
-/*    */   }
-/*    */   
-/*    */   public boolean shouldDoNativeBackgroundErase(Component paramComponent) {
-/* 82 */     return (ERASE_BACKGROUND || !(paramComponent instanceof RootPaneContainer));
-/*    */   }
-/*    */   
-/*    */   public boolean queueSurfaceDataReplacing(Component paramComponent, Runnable paramRunnable) {
-/* 86 */     if (paramComponent instanceof RootPaneContainer) {
-/* 87 */       AppContext appContext = SunToolkit.targetToAppContext(paramComponent);
-/* 88 */       RepaintManager.currentManager(appContext)
-/* 89 */         .nativeQueueSurfaceDataRunnable(appContext, paramComponent, paramRunnable);
-/* 90 */       return true;
-/*    */     } 
-/* 92 */     return super.queueSurfaceDataReplacing(paramComponent, paramRunnable);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\SwingPaintEventDispatcher.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2005, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing;
+
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Rectangle;
+import java.awt.event.PaintEvent;
+import java.security.AccessController;
+import sun.awt.AppContext;
+import sun.awt.SunToolkit;
+import sun.awt.event.IgnorePaintEvent;
+import sun.security.action.GetBooleanAction;
+import sun.security.action.GetPropertyAction;
+
+/**
+ * Swing's PaintEventDispatcher.  If the component specified by the PaintEvent
+ * is a top level Swing component (JFrame, JWindow, JDialog, JApplet), this
+ * will forward the request to the RepaintManager for eventual painting.
+ *
+ */
+class SwingPaintEventDispatcher extends sun.awt.PaintEventDispatcher {
+    private static final boolean SHOW_FROM_DOUBLE_BUFFER;
+    private static final boolean ERASE_BACKGROUND;
+
+    static {
+        SHOW_FROM_DOUBLE_BUFFER = "true".equals(AccessController.doPrivileged(
+              new GetPropertyAction("swing.showFromDoubleBuffer", "true")));
+        ERASE_BACKGROUND = AccessController.doPrivileged(
+                                 new GetBooleanAction("swing.nativeErase"));
+    }
+
+    public PaintEvent createPaintEvent(Component component, int x, int y,
+                                         int w, int h) {
+        if (component instanceof RootPaneContainer) {
+            AppContext appContext = SunToolkit.targetToAppContext(component);
+            RepaintManager rm = RepaintManager.currentManager(appContext);
+            if (!SHOW_FROM_DOUBLE_BUFFER ||
+                  !rm.show((Container)component, x, y, w, h)) {
+                rm.nativeAddDirtyRegion(appContext, (Container)component,
+                                        x, y, w, h);
+            }
+            // For backward compatibility generate an empty paint
+            // event.  Not doing this broke parts of Netbeans.
+            return new IgnorePaintEvent(component, PaintEvent.PAINT,
+                                        new Rectangle(x, y, w, h));
+        }
+        else if (component instanceof SwingHeavyWeight) {
+            AppContext appContext = SunToolkit.targetToAppContext(component);
+            RepaintManager rm = RepaintManager.currentManager(appContext);
+            rm.nativeAddDirtyRegion(appContext, (Container)component,
+                                    x, y, w, h);
+            return new IgnorePaintEvent(component, PaintEvent.PAINT,
+                                        new Rectangle(x, y, w, h));
+        }
+        return super.createPaintEvent(component, x, y, w, h);
+    }
+
+    public boolean shouldDoNativeBackgroundErase(Component c) {
+        return ERASE_BACKGROUND || !(c instanceof RootPaneContainer);
+    }
+
+    public boolean queueSurfaceDataReplacing(Component c, Runnable r) {
+        if (c instanceof RootPaneContainer) {
+            AppContext appContext = SunToolkit.targetToAppContext(c);
+            RepaintManager.currentManager(appContext).
+                    nativeQueueSurfaceDataRunnable(appContext, c, r);
+            return true;
+        }
+        return super.queueSurfaceDataReplacing(c, r);
+    }
+}

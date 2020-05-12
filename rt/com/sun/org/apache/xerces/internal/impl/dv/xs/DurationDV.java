@@ -1,396 +1,390 @@
-/*     */ package com.sun.org.apache.xerces.internal.impl.dv.xs;
-/*     */ 
-/*     */ import com.sun.org.apache.xerces.internal.impl.dv.InvalidDatatypeValueException;
-/*     */ import com.sun.org.apache.xerces.internal.impl.dv.ValidationContext;
-/*     */ import java.math.BigDecimal;
-/*     */ import java.math.BigInteger;
-/*     */ import javax.xml.datatype.Duration;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class DurationDV
-/*     */   extends AbstractDateTimeDV
-/*     */ {
-/*     */   public static final int DURATION_TYPE = 0;
-/*     */   public static final int YEARMONTHDURATION_TYPE = 1;
-/*     */   public static final int DAYTIMEDURATION_TYPE = 2;
-/*  52 */   private static final AbstractDateTimeDV.DateTimeData[] DATETIMES = new AbstractDateTimeDV.DateTimeData[] { new AbstractDateTimeDV.DateTimeData(1696, 9, 1, 0, 0, 0.0D, 90, null, true, null), new AbstractDateTimeDV.DateTimeData(1697, 2, 1, 0, 0, 0.0D, 90, null, true, null), new AbstractDateTimeDV.DateTimeData(1903, 3, 1, 0, 0, 0.0D, 90, null, true, null), new AbstractDateTimeDV.DateTimeData(1903, 7, 1, 0, 0, 0.0D, 90, null, true, null) };
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object getActualValue(String content, ValidationContext context) throws InvalidDatatypeValueException {
-/*     */     try {
-/*  60 */       return parse(content, 0);
-/*  61 */     } catch (Exception ex) {
-/*  62 */       throw new InvalidDatatypeValueException("cvc-datatype-valid.1.2.1", new Object[] { content, "duration" });
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected AbstractDateTimeDV.DateTimeData parse(String str, int durationType) throws SchemaDateTimeException {
-/*  75 */     int len = str.length();
-/*  76 */     AbstractDateTimeDV.DateTimeData date = new AbstractDateTimeDV.DateTimeData(str, this);
-/*     */     
-/*  78 */     int start = 0;
-/*  79 */     char c = str.charAt(start++);
-/*  80 */     if (c != 'P' && c != '-') {
-/*  81 */       throw new SchemaDateTimeException();
-/*     */     }
-/*     */     
-/*  84 */     date.utc = (c == '-') ? 45 : 0;
-/*  85 */     if (c == '-' && str.charAt(start++) != 'P') {
-/*  86 */       throw new SchemaDateTimeException();
-/*     */     }
-/*     */ 
-/*     */     
-/*  90 */     int negate = 1;
-/*     */     
-/*  92 */     if (date.utc == 45) {
-/*  93 */       negate = -1;
-/*     */     }
-/*     */ 
-/*     */     
-/*  97 */     boolean designator = false;
-/*     */     
-/*  99 */     int endDate = indexOf(str, start, len, 'T');
-/* 100 */     if (endDate == -1) {
-/* 101 */       endDate = len;
-/*     */     }
-/* 103 */     else if (durationType == 1) {
-/* 104 */       throw new SchemaDateTimeException();
-/*     */     } 
-/*     */ 
-/*     */     
-/* 108 */     int end = indexOf(str, start, endDate, 'Y');
-/* 109 */     if (end != -1) {
-/*     */       
-/* 111 */       if (durationType == 2) {
-/* 112 */         throw new SchemaDateTimeException();
-/*     */       }
-/*     */ 
-/*     */       
-/* 116 */       date.year = negate * parseInt(str, start, end);
-/* 117 */       start = end + 1;
-/* 118 */       designator = true;
-/*     */     } 
-/*     */     
-/* 121 */     end = indexOf(str, start, endDate, 'M');
-/* 122 */     if (end != -1) {
-/*     */       
-/* 124 */       if (durationType == 2) {
-/* 125 */         throw new SchemaDateTimeException();
-/*     */       }
-/*     */ 
-/*     */       
-/* 129 */       date.month = negate * parseInt(str, start, end);
-/* 130 */       start = end + 1;
-/* 131 */       designator = true;
-/*     */     } 
-/*     */     
-/* 134 */     end = indexOf(str, start, endDate, 'D');
-/* 135 */     if (end != -1) {
-/*     */       
-/* 137 */       if (durationType == 1) {
-/* 138 */         throw new SchemaDateTimeException();
-/*     */       }
-/*     */ 
-/*     */       
-/* 142 */       date.day = negate * parseInt(str, start, end);
-/* 143 */       start = end + 1;
-/* 144 */       designator = true;
-/*     */     } 
-/*     */     
-/* 147 */     if (len == endDate && start != len) {
-/* 148 */       throw new SchemaDateTimeException();
-/*     */     }
-/* 150 */     if (len != endDate) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 156 */       end = indexOf(str, ++start, len, 'H');
-/* 157 */       if (end != -1) {
-/*     */         
-/* 159 */         date.hour = negate * parseInt(str, start, end);
-/* 160 */         start = end + 1;
-/* 161 */         designator = true;
-/*     */       } 
-/*     */       
-/* 164 */       end = indexOf(str, start, len, 'M');
-/* 165 */       if (end != -1) {
-/*     */         
-/* 167 */         date.minute = negate * parseInt(str, start, end);
-/* 168 */         start = end + 1;
-/* 169 */         designator = true;
-/*     */       } 
-/*     */       
-/* 172 */       end = indexOf(str, start, len, 'S');
-/* 173 */       if (end != -1) {
-/*     */         
-/* 175 */         date.second = negate * parseSecond(str, start, end);
-/* 176 */         start = end + 1;
-/* 177 */         designator = true;
-/*     */       } 
-/*     */ 
-/*     */       
-/* 181 */       if (start != len || str.charAt(--start) == 'T') {
-/* 182 */         throw new SchemaDateTimeException();
-/*     */       }
-/*     */     } 
-/*     */     
-/* 186 */     if (!designator) {
-/* 187 */       throw new SchemaDateTimeException();
-/*     */     }
-/*     */     
-/* 190 */     return date;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected short compareDates(AbstractDateTimeDV.DateTimeData date1, AbstractDateTimeDV.DateTimeData date2, boolean strict) {
-/* 214 */     short resultB = 2;
-/*     */     
-/* 216 */     short resultA = compareOrder(date1, date2);
-/* 217 */     if (resultA == 0) {
-/* 218 */       return 0;
-/*     */     }
-/*     */     
-/* 221 */     AbstractDateTimeDV.DateTimeData[] result = new AbstractDateTimeDV.DateTimeData[2];
-/* 222 */     result[0] = new AbstractDateTimeDV.DateTimeData(null, this);
-/* 223 */     result[1] = new AbstractDateTimeDV.DateTimeData(null, this);
-/*     */ 
-/*     */     
-/* 226 */     AbstractDateTimeDV.DateTimeData tempA = addDuration(date1, DATETIMES[0], result[0]);
-/* 227 */     AbstractDateTimeDV.DateTimeData tempB = addDuration(date2, DATETIMES[0], result[1]);
-/* 228 */     resultA = compareOrder(tempA, tempB);
-/* 229 */     if (resultA == 2) {
-/* 230 */       return 2;
-/*     */     }
-/*     */     
-/* 233 */     tempA = addDuration(date1, DATETIMES[1], result[0]);
-/* 234 */     tempB = addDuration(date2, DATETIMES[1], result[1]);
-/* 235 */     resultB = compareOrder(tempA, tempB);
-/* 236 */     resultA = compareResults(resultA, resultB, strict);
-/* 237 */     if (resultA == 2) {
-/* 238 */       return 2;
-/*     */     }
-/*     */     
-/* 241 */     tempA = addDuration(date1, DATETIMES[2], result[0]);
-/* 242 */     tempB = addDuration(date2, DATETIMES[2], result[1]);
-/* 243 */     resultB = compareOrder(tempA, tempB);
-/* 244 */     resultA = compareResults(resultA, resultB, strict);
-/* 245 */     if (resultA == 2) {
-/* 246 */       return 2;
-/*     */     }
-/*     */     
-/* 249 */     tempA = addDuration(date1, DATETIMES[3], result[0]);
-/* 250 */     tempB = addDuration(date2, DATETIMES[3], result[1]);
-/* 251 */     resultB = compareOrder(tempA, tempB);
-/* 252 */     resultA = compareResults(resultA, resultB, strict);
-/*     */     
-/* 254 */     return resultA;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private short compareResults(short resultA, short resultB, boolean strict) {
-/* 259 */     if (resultB == 2) {
-/* 260 */       return 2;
-/*     */     }
-/* 262 */     if (resultA != resultB && strict) {
-/* 263 */       return 2;
-/*     */     }
-/* 265 */     if (resultA != resultB && !strict) {
-/* 266 */       if (resultA != 0 && resultB != 0) {
-/* 267 */         return 2;
-/*     */       }
-/*     */       
-/* 270 */       return (resultA != 0) ? resultA : resultB;
-/*     */     } 
-/*     */     
-/* 273 */     return resultA;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private AbstractDateTimeDV.DateTimeData addDuration(AbstractDateTimeDV.DateTimeData date, AbstractDateTimeDV.DateTimeData addto, AbstractDateTimeDV.DateTimeData duration) {
-/* 282 */     resetDateObj(duration);
-/*     */     
-/* 284 */     int temp = addto.month + date.month;
-/* 285 */     duration.month = modulo(temp, 1, 13);
-/* 286 */     int carry = fQuotient(temp, 1, 13);
-/*     */ 
-/*     */     
-/* 289 */     duration.year = addto.year + date.year + carry;
-/*     */ 
-/*     */     
-/* 292 */     double dtemp = addto.second + date.second;
-/* 293 */     carry = (int)Math.floor(dtemp / 60.0D);
-/* 294 */     duration.second = dtemp - (carry * 60);
-/*     */ 
-/*     */     
-/* 297 */     temp = addto.minute + date.minute + carry;
-/* 298 */     carry = fQuotient(temp, 60);
-/* 299 */     duration.minute = mod(temp, 60, carry);
-/*     */ 
-/*     */     
-/* 302 */     temp = addto.hour + date.hour + carry;
-/* 303 */     carry = fQuotient(temp, 24);
-/* 304 */     duration.hour = mod(temp, 24, carry);
-/*     */ 
-/*     */     
-/* 307 */     duration.day = addto.day + date.day + carry;
-/*     */ 
-/*     */     
-/*     */     while (true) {
-/* 311 */       temp = maxDayInMonthFor(duration.year, duration.month);
-/* 312 */       if (duration.day < 1) {
-/* 313 */         duration.day += maxDayInMonthFor(duration.year, duration.month - 1);
-/* 314 */         carry = -1;
-/*     */       }
-/* 316 */       else if (duration.day > temp) {
-/* 317 */         duration.day -= temp;
-/* 318 */         carry = 1;
-/*     */       } else {
-/*     */         break;
-/*     */       } 
-/*     */       
-/* 323 */       temp = duration.month + carry;
-/* 324 */       duration.month = modulo(temp, 1, 13);
-/* 325 */       duration.year += fQuotient(temp, 1, 13);
-/*     */     } 
-/*     */     
-/* 328 */     duration.utc = 90;
-/* 329 */     return duration;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected double parseSecond(String buffer, int start, int end) throws NumberFormatException {
-/* 334 */     int dot = -1;
-/* 335 */     for (int i = start; i < end; i++) {
-/* 336 */       char ch = buffer.charAt(i);
-/* 337 */       if (ch == '.') {
-/* 338 */         dot = i;
-/* 339 */       } else if (ch > '9' || ch < '0') {
-/* 340 */         throw new NumberFormatException("'" + buffer + "' has wrong format");
-/*     */       } 
-/* 342 */     }  if (dot + 1 == end) {
-/* 343 */       throw new NumberFormatException("'" + buffer + "' has wrong format");
-/*     */     }
-/* 345 */     double value = Double.parseDouble(buffer.substring(start, end));
-/* 346 */     if (value == Double.POSITIVE_INFINITY) {
-/* 347 */       throw new NumberFormatException("'" + buffer + "' has wrong format");
-/*     */     }
-/* 349 */     return value;
-/*     */   }
-/*     */   
-/*     */   protected String dateToString(AbstractDateTimeDV.DateTimeData date) {
-/* 353 */     StringBuffer message = new StringBuffer(30);
-/* 354 */     if (date.year < 0 || date.month < 0 || date.day < 0 || date.hour < 0 || date.minute < 0 || date.second < 0.0D)
-/*     */     {
-/* 356 */       message.append('-');
-/*     */     }
-/* 358 */     message.append('P');
-/* 359 */     message.append(((date.year < 0) ? -1 : 1) * date.year);
-/* 360 */     message.append('Y');
-/* 361 */     message.append(((date.month < 0) ? -1 : 1) * date.month);
-/* 362 */     message.append('M');
-/* 363 */     message.append(((date.day < 0) ? -1 : 1) * date.day);
-/* 364 */     message.append('D');
-/* 365 */     message.append('T');
-/* 366 */     message.append(((date.hour < 0) ? -1 : 1) * date.hour);
-/* 367 */     message.append('H');
-/* 368 */     message.append(((date.minute < 0) ? -1 : 1) * date.minute);
-/* 369 */     message.append('M');
-/* 370 */     append2(message, ((date.second < 0.0D) ? -1 : true) * date.second);
-/* 371 */     message.append('S');
-/*     */     
-/* 373 */     return message.toString();
-/*     */   }
-/*     */   
-/*     */   protected Duration getDuration(AbstractDateTimeDV.DateTimeData date) {
-/* 377 */     int sign = 1;
-/* 378 */     if (date.year < 0 || date.month < 0 || date.day < 0 || date.hour < 0 || date.minute < 0 || date.second < 0.0D)
-/*     */     {
-/* 380 */       sign = -1;
-/*     */     }
-/* 382 */     return datatypeFactory.newDuration((sign == 1), (date.year != Integer.MIN_VALUE) ? 
-/* 383 */         BigInteger.valueOf((sign * date.year)) : null, (date.month != Integer.MIN_VALUE) ? 
-/* 384 */         BigInteger.valueOf((sign * date.month)) : null, (date.day != Integer.MIN_VALUE) ? 
-/* 385 */         BigInteger.valueOf((sign * date.day)) : null, (date.hour != Integer.MIN_VALUE) ? 
-/* 386 */         BigInteger.valueOf((sign * date.hour)) : null, (date.minute != Integer.MIN_VALUE) ? 
-/* 387 */         BigInteger.valueOf((sign * date.minute)) : null, (date.second != -2.147483648E9D) ? new BigDecimal(
-/* 388 */           String.valueOf(sign * date.second)) : null);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\impl\dv\xs\DurationDV.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2002,2004,2005 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.impl.dv.xs;
+
+import java.math.BigDecimal;
+import java.math.BigInteger;
+
+import javax.xml.datatype.DatatypeConstants;
+import javax.xml.datatype.Duration;
+
+import com.sun.org.apache.xerces.internal.impl.dv.InvalidDatatypeValueException;
+import com.sun.org.apache.xerces.internal.impl.dv.ValidationContext;
+
+/**
+ * Validator for &lt;duration&gt; datatype (W3C Schema Datatypes)
+ *
+ * @xerces.internal
+ *
+ * @author Elena Litani
+ * @author Gopal Sharma, SUN Microsystem Inc.
+ * @version $Id: DurationDV.java,v 1.7 2010-11-01 04:39:47 joehw Exp $
+ */
+public class DurationDV extends AbstractDateTimeDV {
+
+        public static final int DURATION_TYPE = 0;
+        public static final int YEARMONTHDURATION_TYPE = 1;
+        public static final int DAYTIMEDURATION_TYPE = 2;
+    // order-relation on duration is a partial order. The dates below are used to
+    // for comparison of 2 durations, based on the fact that
+    // duration x and y is x<=y iff s+x<=s+y
+    // see 3.2.6 duration W3C schema datatype specs
+    //
+    // the dates are in format: {CCYY,MM,DD, H, S, M, MS, timezone}
+    private final static DateTimeData[] DATETIMES= {
+        new DateTimeData(1696, 9, 1, 0, 0, 0, 'Z', null, true, null),
+        new DateTimeData(1697, 2, 1, 0, 0, 0, 'Z', null, true, null),
+        new DateTimeData(1903, 3, 1, 0, 0, 0, 'Z', null, true, null),
+        new DateTimeData(1903, 7, 1, 0, 0, 0, 'Z', null, true, null)};
+
+    public Object getActualValue(String content, ValidationContext context) throws InvalidDatatypeValueException{
+        try{
+            return parse(content, DURATION_TYPE);
+        } catch (Exception ex) {
+            throw new InvalidDatatypeValueException("cvc-datatype-valid.1.2.1", new Object[]{content, "duration"});
+        }
+    }
+
+    /**
+     * Parses, validates and computes normalized version of duration object
+     *
+     * @param str    The lexical representation of duration object PnYn MnDTnH nMnS
+     * @param durationType
+     * @return normalized date representation
+     * @exception SchemaDateTimeException Invalid lexical representation
+     */
+    protected DateTimeData parse(String str, int durationType) throws SchemaDateTimeException{
+        int len = str.length();
+        DateTimeData date= new DateTimeData(str, this);
+
+        int start = 0;
+        char c=str.charAt(start++);
+        if ( c!='P' && c!='-' ) {
+            throw new SchemaDateTimeException();
+        }
+        else {
+            date.utc=(c=='-')?'-':0;
+            if ( c=='-' && str.charAt(start++)!='P' ) {
+                throw new SchemaDateTimeException();
+            }
+        }
+
+        int negate = 1;
+        //negative duration
+        if ( date.utc=='-' ) {
+            negate = -1;
+
+        }
+        //at least one number and designator must be seen after P
+        boolean designator = false;
+
+        int endDate = indexOf (str, start, len, 'T');
+        if ( endDate == -1 ) {
+            endDate = len;
+        }
+        else if (durationType == YEARMONTHDURATION_TYPE) {
+            throw new SchemaDateTimeException();
+        }
+
+        //find 'Y'
+        int end = indexOf (str, start, endDate, 'Y');
+        if ( end!=-1 ) {
+
+            if (durationType == DAYTIMEDURATION_TYPE) {
+                throw new SchemaDateTimeException();
+            }
+
+            //scan year
+            date.year=negate * parseInt(str,start,end);
+            start = end+1;
+            designator = true;
+        }
+
+        end = indexOf (str, start, endDate, 'M');
+        if ( end!=-1 ) {
+
+            if (durationType == DAYTIMEDURATION_TYPE) {
+                throw new SchemaDateTimeException();
+            }
+
+            //scan month
+            date.month=negate * parseInt(str,start,end);
+            start = end+1;
+            designator = true;
+        }
+
+        end = indexOf (str, start, endDate, 'D');
+        if ( end!=-1 ) {
+
+            if(durationType == YEARMONTHDURATION_TYPE) {
+                throw new SchemaDateTimeException();
+            }
+
+            //scan day
+            date.day=negate * parseInt(str,start,end);
+            start = end+1;
+            designator = true;
+        }
+
+        if ( len == endDate && start!=len ) {
+            throw new SchemaDateTimeException();
+        }
+        if ( len !=endDate ) {
+
+            //scan hours, minutes, seconds
+            //REVISIT: can any item include a decimal fraction or only seconds?
+            //
+
+            end = indexOf (str, ++start, len, 'H');
+            if ( end!=-1 ) {
+                //scan hours
+                date.hour=negate * parseInt(str,start,end);
+                start=end+1;
+                designator = true;
+            }
+
+            end = indexOf (str, start, len, 'M');
+            if ( end!=-1 ) {
+                //scan min
+                date.minute=negate * parseInt(str,start,end);
+                start=end+1;
+                designator = true;
+            }
+
+            end = indexOf (str, start, len, 'S');
+            if ( end!=-1 ) {
+                //scan seconds
+                date.second = negate * parseSecond(str, start, end);
+                start=end+1;
+                designator = true;
+            }
+            // no additional data shouls appear after last item
+            // P1Y1M1DT is illigal value as well
+            if ( start != len || str.charAt(--start)=='T' ) {
+                throw new SchemaDateTimeException();
+            }
+        }
+
+        if ( !designator ) {
+            throw new SchemaDateTimeException();
+        }
+
+        return date;
+    }
+
+    /**
+     * Compares 2 given durations. (refer to W3C Schema Datatypes "3.2.6 duration")
+     *
+     * @param date1  Unnormalized duration
+     * @param date2  Unnormalized duration
+     * @param strict (min/max)Exclusive strict == true ( LESS_THAN ) or ( GREATER_THAN )
+     *               (min/max)Inclusive strict == false (LESS_EQUAL) or (GREATER_EQUAL)
+     * @return INDETERMINATE if the order relationship between date1 and date2 is indeterminate.
+     * EQUAL if the order relation between date1 and date2 is EQUAL.
+     * If the strict parameter is true, return LESS_THAN if date1 is less than date2 and
+     * return GREATER_THAN if date1 is greater than date2.
+     * If the strict parameter is false, return LESS_THAN if date1 is less than OR equal to date2 and
+     * return GREATER_THAN if date1 is greater than OR equal to date2
+     */
+    protected  short compareDates(DateTimeData date1, DateTimeData date2, boolean strict) {
+
+        //REVISIT: this is unoptimazed vs of comparing 2 durations
+        //         Algorithm is described in 3.2.6.2 W3C Schema Datatype specs
+        //
+
+        //add constA to both durations
+        short resultA, resultB= INDETERMINATE;
+        //try and see if the objects are equal
+        resultA = compareOrder (date1, date2);
+        if ( resultA == 0 ) {
+            return 0;
+        }
+
+        DateTimeData[] result = new DateTimeData[2];
+        result[0] = new DateTimeData(null, this);
+        result[1] = new DateTimeData(null, this);
+
+        //long comparison algorithm is required
+        DateTimeData tempA = addDuration (date1, DATETIMES[0], result[0]);
+        DateTimeData tempB = addDuration (date2, DATETIMES[0], result[1]);
+        resultA =  compareOrder(tempA, tempB);
+        if ( resultA == INDETERMINATE ) {
+            return INDETERMINATE;
+        }
+
+        tempA = addDuration(date1, DATETIMES[1], result[0]);
+        tempB = addDuration(date2, DATETIMES[1], result[1]);
+        resultB = compareOrder(tempA, tempB);
+        resultA = compareResults(resultA, resultB, strict);
+        if (resultA == INDETERMINATE) {
+            return INDETERMINATE;
+        }
+
+        tempA = addDuration(date1, DATETIMES[2], result[0]);
+        tempB = addDuration(date2, DATETIMES[2], result[1]);
+        resultB = compareOrder(tempA, tempB);
+        resultA = compareResults(resultA, resultB, strict);
+        if (resultA == INDETERMINATE) {
+            return INDETERMINATE;
+        }
+
+        tempA = addDuration(date1, DATETIMES[3], result[0]);
+        tempB = addDuration(date2, DATETIMES[3], result[1]);
+        resultB = compareOrder(tempA, tempB);
+        resultA = compareResults(resultA, resultB, strict);
+
+        return resultA;
+    }
+
+    private short compareResults(short resultA, short resultB, boolean strict){
+
+      if ( resultB == INDETERMINATE ) {
+            return INDETERMINATE;
+        }
+        else if ( resultA!=resultB && strict ) {
+            return INDETERMINATE;
+        }
+        else if ( resultA!=resultB && !strict ) {
+            if ( resultA!=0 && resultB!=0 ) {
+                return INDETERMINATE;
+            }
+            else {
+                return (resultA!=0)?resultA:resultB;
+            }
+        }
+        return resultA;
+    }
+
+    private DateTimeData addDuration(DateTimeData date, DateTimeData addto, DateTimeData duration) {
+
+        //REVISIT: some code could be shared between normalize() and this method,
+        //         however is it worth moving it? The structures are different...
+        //
+
+        resetDateObj(duration);
+        //add months (may be modified additionaly below)
+        int temp = addto.month + date.month;
+        duration.month = modulo (temp, 1, 13);
+        int carry = fQuotient (temp, 1, 13);
+
+        //add years (may be modified additionaly below)
+        duration.year=addto.year + date.year + carry;
+
+        //add seconds
+        double dtemp = addto.second + date.second;
+        carry = (int)Math.floor(dtemp/60);
+        duration.second = dtemp - carry*60;
+
+        //add minutes
+        temp = addto.minute +date.minute + carry;
+        carry = fQuotient (temp, 60);
+        duration.minute= mod(temp, 60, carry);
+
+        //add hours
+        temp = addto.hour + date.hour + carry;
+        carry = fQuotient(temp, 24);
+        duration.hour = mod(temp, 24, carry);
+
+
+        duration.day=addto.day + date.day + carry;
+
+        while ( true ) {
+
+            temp=maxDayInMonthFor(duration.year, duration.month);
+            if ( duration.day < 1 ) { //original duration was negative
+                duration.day = duration.day + maxDayInMonthFor(duration.year, duration.month-1);
+                carry=-1;
+            }
+            else if ( duration.day > temp ) {
+                duration.day = duration.day - temp;
+                carry=1;
+            }
+            else {
+                break;
+            }
+            temp = duration.month+carry;
+            duration.month = modulo(temp, 1, 13);
+            duration.year = duration.year+fQuotient(temp, 1, 13);
+        }
+
+        duration.utc='Z';
+        return duration;
+    }
+
+    protected double parseSecond(String buffer, int start, int end)
+        throws NumberFormatException {
+        int dot = -1;
+        for (int i = start; i < end; i++) {
+            char ch = buffer.charAt(i);
+            if (ch == '.')
+                dot = i;
+            else if (ch > '9' || ch < '0')
+                throw new NumberFormatException("'" + buffer + "' has wrong format");
+        }
+        if (dot+1 == end) {
+            throw new NumberFormatException("'" + buffer + "' has wrong format");
+        }
+        double value = Double.parseDouble(buffer.substring(start, end));
+        if (value == Double.POSITIVE_INFINITY) {
+            throw new NumberFormatException("'" + buffer + "' has wrong format");
+        }
+        return value;
+    }
+
+    protected String dateToString(DateTimeData date) {
+        StringBuffer message = new StringBuffer(30);
+        if ( date.year<0 || date.month<0 || date.day<0
+                || date.hour<0 || date.minute<0 || date.second<0) {
+            message.append('-');
+        }
+        message.append('P');
+        message.append((date.year < 0?-1:1) * date.year);
+        message.append('Y');
+        message.append((date.month < 0?-1:1) * date.month);
+        message.append('M');
+        message.append((date.day < 0?-1:1) * date.day);
+        message.append('D');
+        message.append('T');
+        message.append((date.hour < 0?-1:1) * date.hour);
+        message.append('H');
+        message.append((date.minute < 0?-1:1) * date.minute);
+        message.append('M');
+        append2(message, (date.second < 0?-1:1) * date.second);
+        message.append('S');
+
+        return message.toString();
+    }
+
+    protected Duration getDuration(DateTimeData date) {
+        int sign = 1;
+        if ( date.year<0 || date.month<0 || date.day<0
+                || date.hour<0 || date.minute<0 || date.second<0) {
+            sign = -1;
+        }
+        return datatypeFactory.newDuration(sign == 1,
+                date.year != DatatypeConstants.FIELD_UNDEFINED?BigInteger.valueOf(sign*date.year):null,
+                date.month != DatatypeConstants.FIELD_UNDEFINED?BigInteger.valueOf(sign*date.month):null,
+                date.day != DatatypeConstants.FIELD_UNDEFINED?BigInteger.valueOf(sign*date.day):null,
+                date.hour != DatatypeConstants.FIELD_UNDEFINED?BigInteger.valueOf(sign*date.hour):null,
+                date.minute != DatatypeConstants.FIELD_UNDEFINED?BigInteger.valueOf(sign*date.minute):null,
+                date.second != DatatypeConstants.FIELD_UNDEFINED?new BigDecimal(String.valueOf(sign*date.second)):null);
+    }
+}

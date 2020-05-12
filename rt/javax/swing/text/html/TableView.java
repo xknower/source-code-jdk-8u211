@@ -1,1805 +1,1801 @@
-/*      */ package javax.swing.text.html;
-/*      */ 
-/*      */ import java.awt.Container;
-/*      */ import java.awt.Graphics;
-/*      */ import java.awt.Rectangle;
-/*      */ import java.awt.Shape;
-/*      */ import java.util.Arrays;
-/*      */ import java.util.BitSet;
-/*      */ import java.util.Vector;
-/*      */ import javax.swing.SizeRequirements;
-/*      */ import javax.swing.event.DocumentEvent;
-/*      */ import javax.swing.text.AttributeSet;
-/*      */ import javax.swing.text.BoxView;
-/*      */ import javax.swing.text.Element;
-/*      */ import javax.swing.text.JTextComponent;
-/*      */ import javax.swing.text.StyleConstants;
-/*      */ import javax.swing.text.View;
-/*      */ import javax.swing.text.ViewFactory;
-/*      */ 
-/*      */ 
-/*      */ class TableView
-/*      */   extends BoxView
-/*      */   implements ViewFactory
-/*      */ {
-/*      */   private AttributeSet attr;
-/*      */   private StyleSheet.BoxPainter painter;
-/*      */   private int cellSpacing;
-/*      */   private int borderWidth;
-/*      */   private int captionIndex;
-/*      */   private boolean relativeCells;
-/*      */   private boolean multiRowCells;
-/*      */   int[] columnSpans;
-/*      */   int[] columnOffsets;
-/*      */   SizeRequirements totalColumnRequirements;
-/*      */   SizeRequirements[] columnRequirements;
-/*      */   RowIterator rowIterator;
-/*      */   ColumnIterator colIterator;
-/*      */   Vector<RowView> rows;
-/*      */   boolean skipComments;
-/*      */   boolean gridValid;
-/*      */   
-/*      */   protected RowView createTableRow(Element paramElement) {
-/*      */     Object object = paramElement.getAttributes().getAttribute(StyleConstants.NameAttribute);
-/*      */     if (object == HTML.Tag.TR)
-/*      */       return new RowView(paramElement); 
-/*      */     return null;
-/*      */   }
-/*      */   
-/*      */   public TableView(Element paramElement) {
-/*   50 */     super(paramElement, 1);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  990 */     this.rowIterator = new RowIterator();
-/*  991 */     this.colIterator = new ColumnIterator();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  996 */     this.skipComments = false; this.rows = new Vector<>(); this.gridValid = false; this.captionIndex = -1; this.totalColumnRequirements = new SizeRequirements();
-/*      */   }
-/*      */   public int getColumnCount() { return this.columnSpans.length; }
-/*  999 */   public int getColumnSpan(int paramInt) { if (paramInt < this.columnSpans.length) return this.columnSpans[paramInt];  return 0; } public int getRowCount() { return this.rows.size(); } public int getMultiRowSpan(int paramInt1, int paramInt2) { RowView rowView1 = getRow(paramInt1); RowView rowView2 = getRow(paramInt2); if (rowView1 != null && rowView2 != null) { int i = rowView1.viewIndex; int j = rowView2.viewIndex; return getOffset(1, j) - getOffset(1, i) + getSpan(1, j); }  return 0; } public int getRowSpan(int paramInt) { RowView rowView = getRow(paramInt); if (rowView != null) return getSpan(1, rowView.viewIndex);  return 0; } RowView getRow(int paramInt) { if (paramInt < this.rows.size()) return this.rows.elementAt(paramInt);  return null; } protected View getViewAtPoint(int paramInt1, int paramInt2, Rectangle paramRectangle) { int i = getViewCount(); Rectangle rectangle = new Rectangle(); for (byte b = 0; b < i; b++) { rectangle.setBounds(paramRectangle); childAllocation(b, rectangle); View view = getView(b); if (view instanceof RowView) { view = ((RowView)view).findViewAtPoint(paramInt1, paramInt2, rectangle); if (view != null) { paramRectangle.setBounds(rectangle); return view; }  }  }  return super.getViewAtPoint(paramInt1, paramInt2, paramRectangle); } protected int getColumnsOccupied(View paramView) { AttributeSet attributeSet = paramView.getElement().getAttributes(); if (attributeSet.isDefined(HTML.Attribute.COLSPAN)) { String str = (String)attributeSet.getAttribute(HTML.Attribute.COLSPAN); if (str != null) try { return Integer.parseInt(str); } catch (NumberFormatException numberFormatException) {}  }  return 1; } protected int getRowsOccupied(View paramView) { AttributeSet attributeSet = paramView.getElement().getAttributes(); if (attributeSet.isDefined(HTML.Attribute.ROWSPAN)) { String str = (String)attributeSet.getAttribute(HTML.Attribute.ROWSPAN); if (str != null) try { return Integer.parseInt(str); } catch (NumberFormatException numberFormatException) {}  }  return 1; } protected void invalidateGrid() { this.gridValid = false; } protected StyleSheet getStyleSheet() { HTMLDocument hTMLDocument = (HTMLDocument)getDocument(); return hTMLDocument.getStyleSheet(); } void updateInsets() { short s1 = (short)(int)this.painter.getInset(1, this); short s2 = (short)(int)this.painter.getInset(3, this); if (this.captionIndex != -1) { View view = getView(this.captionIndex); short s = (short)(int)view.getPreferredSpan(1); AttributeSet attributeSet = view.getAttributes(); Object object = attributeSet.getAttribute(CSS.Attribute.CAPTION_SIDE); if (object != null && object.equals("bottom")) { s2 = (short)(s2 + s); } else { s1 = (short)(s1 + s); }  }  setInsets(s1, (short)(int)this.painter.getInset(2, this), s2, (short)(int)this.painter.getInset(4, this)); } protected void setPropertiesFromAttributes() { StyleSheet styleSheet = getStyleSheet(); this.attr = styleSheet.getViewAttributes(this); this.painter = styleSheet.getBoxPainter(this.attr); if (this.attr != null) { setInsets((short)(int)this.painter.getInset(1, this), (short)(int)this.painter.getInset(2, this), (short)(int)this.painter.getInset(3, this), (short)(int)this.painter.getInset(4, this)); CSS.LengthValue lengthValue = (CSS.LengthValue)this.attr.getAttribute(CSS.Attribute.BORDER_SPACING); if (lengthValue != null) { this.cellSpacing = (int)lengthValue.getValue(); } else { this.cellSpacing = 2; }  lengthValue = (CSS.LengthValue)this.attr.getAttribute(CSS.Attribute.BORDER_TOP_WIDTH); if (lengthValue != null) { this.borderWidth = (int)lengthValue.getValue(); } else { this.borderWidth = 0; }  }  } void updateGrid() { if (!this.gridValid) { this.relativeCells = false; this.multiRowCells = false; this.captionIndex = -1; this.rows.removeAllElements(); int i = getViewCount(); int j; for (j = 0; j < i; j++) { View view = getView(j); if (view instanceof RowView) { this.rows.addElement((RowView)view); RowView rowView = (RowView)view; rowView.clearFilledColumns(); rowView.rowIndex = this.rows.size() - 1; rowView.viewIndex = j; } else { Object object = view.getElement().getAttributes().getAttribute(StyleConstants.NameAttribute); if (object instanceof HTML.Tag) { HTML.Tag tag = (HTML.Tag)object; if (tag == HTML.Tag.CAPTION) this.captionIndex = j;  }  }  }  j = 0; int k = this.rows.size(); byte b; for (b = 0; b < k; b++) { RowView rowView = getRow(b); int m = 0; for (byte b1 = 0; b1 < rowView.getViewCount(); b1++, m++) { View view = rowView.getView(b1); if (!this.relativeCells) { AttributeSet attributeSet = view.getAttributes(); CSS.LengthValue lengthValue = (CSS.LengthValue)attributeSet.getAttribute(CSS.Attribute.WIDTH); if (lengthValue != null && lengthValue.isPercentage()) this.relativeCells = true;  }  for (; rowView.isFilled(m); m++); int n = getRowsOccupied(view); if (n > 1) this.multiRowCells = true;  int i1 = getColumnsOccupied(view); if (i1 > 1 || n > 1) { int i2 = b + n; int i3 = m + i1; for (byte b2 = b; b2 < i2; b2++) { for (int i4 = m; i4 < i3; i4++) { if (b2 != b || i4 != m) addFill(b2, i4);  }  }  if (i1 > 1) m += i1 - 1;  }  }  j = Math.max(j, m); }  this.columnSpans = new int[j]; this.columnOffsets = new int[j]; this.columnRequirements = new SizeRequirements[j]; for (b = 0; b < j; b++) { this.columnRequirements[b] = new SizeRequirements(); (this.columnRequirements[b]).maximum = Integer.MAX_VALUE; }  this.gridValid = true; }  } void addFill(int paramInt1, int paramInt2) { RowView rowView = getRow(paramInt1); if (rowView != null) rowView.fillColumn(paramInt2);  } protected void layoutColumns(int paramInt, int[] paramArrayOfint1, int[] paramArrayOfint2, SizeRequirements[] paramArrayOfSizeRequirements) { Arrays.fill(paramArrayOfint1, 0); Arrays.fill(paramArrayOfint2, 0); this.colIterator.setLayoutArrays(paramArrayOfint1, paramArrayOfint2, paramInt); CSS.calculateTiledLayout(this.colIterator, paramInt); } void calculateColumnRequirements(int paramInt) { for (SizeRequirements sizeRequirements : this.columnRequirements) { sizeRequirements.minimum = 0; sizeRequirements.preferred = 0; sizeRequirements.maximum = Integer.MAX_VALUE; }  Container container = getContainer(); if (container != null) if (container instanceof JTextComponent) { this.skipComments = !((JTextComponent)container).isEditable(); } else { this.skipComments = true; }   boolean bool = false; int i = getRowCount(); byte b; for (b = 0; b < i; b++) { RowView rowView = getRow(b); int j = 0; int k = rowView.getViewCount(); for (byte b1 = 0; b1 < k; b1++) { View view = rowView.getView(b1); if (!this.skipComments || view instanceof CellView) { for (; rowView.isFilled(j); j++); int m = getRowsOccupied(view); int n = getColumnsOccupied(view); if (n == 1) { checkSingleColumnCell(paramInt, j, view); } else { bool = true; j += n - 1; }  j++; }  }  }  if (bool) for (b = 0; b < i; b++) { RowView rowView = getRow(b); int j = 0; int k = rowView.getViewCount(); for (byte b1 = 0; b1 < k; b1++) { View view = rowView.getView(b1); if (!this.skipComments || view instanceof CellView) { for (; rowView.isFilled(j); j++); int m = getColumnsOccupied(view); if (m > 1) { checkMultiColumnCell(paramInt, j, m, view); j += m - 1; }  j++; }  }  }   } void checkSingleColumnCell(int paramInt1, int paramInt2, View paramView) { SizeRequirements sizeRequirements = this.columnRequirements[paramInt2]; sizeRequirements.minimum = Math.max((int)paramView.getMinimumSpan(paramInt1), sizeRequirements.minimum); sizeRequirements.preferred = Math.max((int)paramView.getPreferredSpan(paramInt1), sizeRequirements.preferred); } void checkMultiColumnCell(int paramInt1, int paramInt2, int paramInt3, View paramView) { long l1 = 0L; long l2 = 0L; long l3 = 0L; int i; for (i = 0; i < paramInt3; i++) { SizeRequirements sizeRequirements = this.columnRequirements[paramInt2 + i]; l1 += sizeRequirements.minimum; l2 += sizeRequirements.preferred; l3 += sizeRequirements.maximum; }  i = (int)paramView.getMinimumSpan(paramInt1); if (i > l1) { SizeRequirements[] arrayOfSizeRequirements = new SizeRequirements[paramInt3]; for (byte b1 = 0; b1 < paramInt3; b1++) arrayOfSizeRequirements[b1] = this.columnRequirements[paramInt2 + b1];  int[] arrayOfInt1 = new int[paramInt3]; int[] arrayOfInt2 = new int[paramInt3]; SizeRequirements.calculateTiledPositions(i, null, arrayOfSizeRequirements, arrayOfInt2, arrayOfInt1); for (byte b2 = 0; b2 < paramInt3; b2++) { SizeRequirements sizeRequirements = arrayOfSizeRequirements[b2]; sizeRequirements.minimum = Math.max(arrayOfInt1[b2], sizeRequirements.minimum); sizeRequirements.preferred = Math.max(sizeRequirements.minimum, sizeRequirements.preferred); sizeRequirements.maximum = Math.max(sizeRequirements.preferred, sizeRequirements.maximum); }  }  int j = (int)paramView.getPreferredSpan(paramInt1); if (j > l2) { SizeRequirements[] arrayOfSizeRequirements = new SizeRequirements[paramInt3]; for (byte b1 = 0; b1 < paramInt3; b1++) arrayOfSizeRequirements[b1] = this.columnRequirements[paramInt2 + b1];  int[] arrayOfInt1 = new int[paramInt3]; int[] arrayOfInt2 = new int[paramInt3]; SizeRequirements.calculateTiledPositions(j, null, arrayOfSizeRequirements, arrayOfInt2, arrayOfInt1); for (byte b2 = 0; b2 < paramInt3; b2++) { SizeRequirements sizeRequirements = arrayOfSizeRequirements[b2]; sizeRequirements.preferred = Math.max(arrayOfInt1[b2], sizeRequirements.preferred); sizeRequirements.maximum = Math.max(sizeRequirements.preferred, sizeRequirements.maximum); }  }  } protected SizeRequirements calculateMinorAxisRequirements(int paramInt, SizeRequirements paramSizeRequirements) { updateGrid(); calculateColumnRequirements(paramInt); if (paramSizeRequirements == null) paramSizeRequirements = new SizeRequirements();  long l1 = 0L; long l2 = 0L; int i = this.columnRequirements.length; int j; for (j = 0; j < i; j++) { SizeRequirements sizeRequirements = this.columnRequirements[j]; l1 += sizeRequirements.minimum; l2 += sizeRequirements.preferred; }  j = (i + 1) * this.cellSpacing + 2 * this.borderWidth; l1 += j; l2 += j; paramSizeRequirements.minimum = (int)l1; paramSizeRequirements.preferred = (int)l2; paramSizeRequirements.maximum = (int)l2; AttributeSet attributeSet = getAttributes(); CSS.LengthValue lengthValue = (CSS.LengthValue)attributeSet.getAttribute(CSS.Attribute.WIDTH); if (BlockView.spanSetFromAttributes(paramInt, paramSizeRequirements, lengthValue, (CSS.LengthValue)null) && paramSizeRequirements.minimum < (int)l1) paramSizeRequirements.maximum = paramSizeRequirements.minimum = paramSizeRequirements.preferred = (int)l1;  this.totalColumnRequirements.minimum = paramSizeRequirements.minimum; this.totalColumnRequirements.preferred = paramSizeRequirements.preferred; this.totalColumnRequirements.maximum = paramSizeRequirements.maximum; Object object = attributeSet.getAttribute(CSS.Attribute.TEXT_ALIGN); if (object != null) { String str = object.toString(); if (str.equals("left")) { paramSizeRequirements.alignment = 0.0F; } else if (str.equals("center")) { paramSizeRequirements.alignment = 0.5F; } else if (str.equals("right")) { paramSizeRequirements.alignment = 1.0F; } else { paramSizeRequirements.alignment = 0.0F; }  } else { paramSizeRequirements.alignment = 0.0F; }  return paramSizeRequirements; } protected SizeRequirements calculateMajorAxisRequirements(int paramInt, SizeRequirements paramSizeRequirements) { updateInsets(); this.rowIterator.updateAdjustments(); paramSizeRequirements = CSS.calculateTiledRequirements(this.rowIterator, paramSizeRequirements); paramSizeRequirements.maximum = paramSizeRequirements.preferred; return paramSizeRequirements; } protected void layoutMinorAxis(int paramInt1, int paramInt2, int[] paramArrayOfint1, int[] paramArrayOfint2) { updateGrid(); int i = getRowCount(); for (byte b = 0; b < i; b++) { RowView rowView = getRow(b); rowView.layoutChanged(paramInt2); }  layoutColumns(paramInt1, this.columnOffsets, this.columnSpans, this.columnRequirements); super.layoutMinorAxis(paramInt1, paramInt2, paramArrayOfint1, paramArrayOfint2); } protected void layoutMajorAxis(int paramInt1, int paramInt2, int[] paramArrayOfint1, int[] paramArrayOfint2) { this.rowIterator.setLayoutArrays(paramArrayOfint1, paramArrayOfint2); CSS.calculateTiledLayout(this.rowIterator, paramInt1); if (this.captionIndex != -1) { View view = getView(this.captionIndex); int i = (int)view.getPreferredSpan(1); paramArrayOfint2[this.captionIndex] = i; short s = (short)(int)this.painter.getInset(3, this); if (s != getBottomInset()) { paramArrayOfint1[this.captionIndex] = paramInt1 + s; } else { paramArrayOfint1[this.captionIndex] = -getTopInset(); }  }  } protected View getViewAtPosition(int paramInt, Rectangle paramRectangle) { int i = getViewCount(); for (byte b = 0; b < i; b++) { View view = getView(b); int j = view.getStartOffset(); int k = view.getEndOffset(); if (paramInt >= j && paramInt < k) { if (paramRectangle != null) childAllocation(b, paramRectangle);  return view; }  }  if (paramInt == getEndOffset()) { View view = getView(i - 1); if (paramRectangle != null) childAllocation(i - 1, paramRectangle);  return view; }  return null; } public AttributeSet getAttributes() { if (this.attr == null) { StyleSheet styleSheet = getStyleSheet(); this.attr = styleSheet.getViewAttributes(this); }  return this.attr; } public void paint(Graphics paramGraphics, Shape paramShape) { Rectangle rectangle = paramShape.getBounds(); setSize(rectangle.width, rectangle.height); if (this.captionIndex != -1) { short s1 = (short)(int)this.painter.getInset(1, this); short s2 = (short)(int)this.painter.getInset(3, this); if (s1 != getTopInset()) { int j = getTopInset() - s1; rectangle.y += j; rectangle.height -= j; } else { rectangle.height -= getBottomInset() - s2; }  }  this.painter.paint(paramGraphics, rectangle.x, rectangle.y, rectangle.width, rectangle.height, this); int i = getViewCount(); for (byte b = 0; b < i; b++) { View view = getView(b); view.paint(paramGraphics, getChildAllocation(b, paramShape)); }  } public void setParent(View paramView) { super.setParent(paramView); if (paramView != null) setPropertiesFromAttributes();  } public ViewFactory getViewFactory() { return this; } public void insertUpdate(DocumentEvent paramDocumentEvent, Shape paramShape, ViewFactory paramViewFactory) { super.insertUpdate(paramDocumentEvent, paramShape, this); } public void removeUpdate(DocumentEvent paramDocumentEvent, Shape paramShape, ViewFactory paramViewFactory) { super.removeUpdate(paramDocumentEvent, paramShape, this); } public void changedUpdate(DocumentEvent paramDocumentEvent, Shape paramShape, ViewFactory paramViewFactory) { super.changedUpdate(paramDocumentEvent, paramShape, this); } protected void forwardUpdate(DocumentEvent.ElementChange paramElementChange, DocumentEvent paramDocumentEvent, Shape paramShape, ViewFactory paramViewFactory) { super.forwardUpdate(paramElementChange, paramDocumentEvent, paramShape, paramViewFactory); if (paramShape != null) { Container container = getContainer(); if (container != null) { Rectangle rectangle = (paramShape instanceof Rectangle) ? (Rectangle)paramShape : paramShape.getBounds(); container.repaint(rectangle.x, rectangle.y, rectangle.width, rectangle.height); }  }  } public void replace(int paramInt1, int paramInt2, View[] paramArrayOfView) { super.replace(paramInt1, paramInt2, paramArrayOfView); invalidateGrid(); } public View create(Element paramElement) { Object object = paramElement.getAttributes().getAttribute(StyleConstants.NameAttribute); if (object instanceof HTML.Tag) { HTML.Tag tag = (HTML.Tag)object; if (tag == HTML.Tag.TR) return createTableRow(paramElement);  if (tag == HTML.Tag.TD || tag == HTML.Tag.TH) return new CellView(paramElement);  if (tag == HTML.Tag.CAPTION) return new ParagraphView(paramElement);  }  View view = getParent(); if (view != null) { ViewFactory viewFactory = view.getViewFactory(); if (viewFactory != null) return viewFactory.create(paramElement);  }  return null; } private static final BitSet EMPTY = new BitSet();
-/*      */   
-/*      */   class ColumnIterator implements CSS.LayoutIterator { private int col;
-/*      */     private int[] percentages;
-/*      */     private int[] adjustmentWeights;
-/*      */     private int[] offsets;
-/*      */     private int[] spans;
-/*      */     
-/*      */     void disablePercentages() {
-/* 1008 */       this.percentages = null;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private void updatePercentagesAndAdjustmentWeights(int param1Int) {
-/* 1015 */       this.adjustmentWeights = new int[TableView.this.columnRequirements.length]; int i;
-/* 1016 */       for (i = 0; i < TableView.this.columnRequirements.length; i++) {
-/* 1017 */         this.adjustmentWeights[i] = 0;
-/*      */       }
-/* 1019 */       if (TableView.this.relativeCells) {
-/* 1020 */         this.percentages = new int[TableView.this.columnRequirements.length];
-/*      */       } else {
-/* 1022 */         this.percentages = null;
-/*      */       } 
-/* 1024 */       i = TableView.this.getRowCount();
-/* 1025 */       for (byte b = 0; b < i; b++) {
-/* 1026 */         TableView.RowView rowView = TableView.this.getRow(b);
-/* 1027 */         int j = 0;
-/* 1028 */         int k = rowView.getViewCount();
-/* 1029 */         for (byte b1 = 0; b1 < k; b1++, j++) {
-/* 1030 */           View view = rowView.getView(b1);
-/* 1031 */           for (; rowView.isFilled(j); j++);
-/* 1032 */           int m = TableView.this.getRowsOccupied(view);
-/* 1033 */           int n = TableView.this.getColumnsOccupied(view);
-/* 1034 */           AttributeSet attributeSet = view.getAttributes();
-/*      */           
-/* 1036 */           CSS.LengthValue lengthValue = (CSS.LengthValue)attributeSet.getAttribute(CSS.Attribute.WIDTH);
-/* 1037 */           if (lengthValue != null) {
-/* 1038 */             int i1 = (int)(lengthValue.getValue(param1Int) / n + 0.5F);
-/* 1039 */             for (byte b2 = 0; b2 < n; b2++) {
-/* 1040 */               if (lengthValue.isPercentage()) {
-/*      */                 
-/* 1042 */                 this.percentages[j + b2] = Math.max(this.percentages[j + b2], i1);
-/* 1043 */                 this.adjustmentWeights[j + b2] = Math.max(this.adjustmentWeights[j + b2], 2);
-/*      */               } else {
-/* 1045 */                 this.adjustmentWeights[j + b2] = Math.max(this.adjustmentWeights[j + b2], 1);
-/*      */               } 
-/*      */             } 
-/*      */           } 
-/* 1049 */           j += n - 1;
-/*      */         } 
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void setLayoutArrays(int[] param1ArrayOfint1, int[] param1ArrayOfint2, int param1Int) {
-/* 1058 */       this.offsets = param1ArrayOfint1;
-/* 1059 */       this.spans = param1ArrayOfint2;
-/* 1060 */       updatePercentagesAndAdjustmentWeights(param1Int);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getCount() {
-/* 1066 */       return TableView.this.columnRequirements.length;
-/*      */     }
-/*      */     
-/*      */     public void setIndex(int param1Int) {
-/* 1070 */       this.col = param1Int;
-/*      */     }
-/*      */     
-/*      */     public void setOffset(int param1Int) {
-/* 1074 */       this.offsets[this.col] = param1Int;
-/*      */     }
-/*      */     
-/*      */     public int getOffset() {
-/* 1078 */       return this.offsets[this.col];
-/*      */     }
-/*      */     
-/*      */     public void setSpan(int param1Int) {
-/* 1082 */       this.spans[this.col] = param1Int;
-/*      */     }
-/*      */     
-/*      */     public int getSpan() {
-/* 1086 */       return this.spans[this.col];
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public float getMinimumSpan(float param1Float) {
-/* 1093 */       return (TableView.this.columnRequirements[this.col]).minimum;
-/*      */     }
-/*      */     
-/*      */     public float getPreferredSpan(float param1Float) {
-/* 1097 */       if (this.percentages != null && this.percentages[this.col] != 0) {
-/* 1098 */         return Math.max(this.percentages[this.col], (TableView.this.columnRequirements[this.col]).minimum);
-/*      */       }
-/* 1100 */       return (TableView.this.columnRequirements[this.col]).preferred;
-/*      */     }
-/*      */     
-/*      */     public float getMaximumSpan(float param1Float) {
-/* 1104 */       return (TableView.this.columnRequirements[this.col]).maximum;
-/*      */     }
-/*      */     
-/*      */     public float getBorderWidth() {
-/* 1108 */       return TableView.this.borderWidth;
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public float getLeadingCollapseSpan() {
-/* 1113 */       return TableView.this.cellSpacing;
-/*      */     }
-/*      */     
-/*      */     public float getTrailingCollapseSpan() {
-/* 1117 */       return TableView.this.cellSpacing;
-/*      */     }
-/*      */     
-/*      */     public int getAdjustmentWeight() {
-/* 1121 */       return this.adjustmentWeights[this.col];
-/*      */     } }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   class RowIterator
-/*      */     implements CSS.LayoutIterator
-/*      */   {
-/*      */     private int row;
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private int[] adjustments;
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private int[] offsets;
-/*      */ 
-/*      */     
-/*      */     private int[] spans;
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     void updateAdjustments() {
-/* 1147 */       boolean bool = true;
-/* 1148 */       if (TableView.this.multiRowCells) {
-/*      */         
-/* 1150 */         int i = TableView.this.getRowCount();
-/* 1151 */         this.adjustments = new int[i];
-/* 1152 */         for (byte b = 0; b < i; b++) {
-/* 1153 */           TableView.RowView rowView = TableView.this.getRow(b);
-/* 1154 */           if (rowView.multiRowCells == true) {
-/* 1155 */             int j = rowView.getViewCount();
-/* 1156 */             for (byte b1 = 0; b1 < j; b1++) {
-/* 1157 */               View view = rowView.getView(b1);
-/* 1158 */               int k = TableView.this.getRowsOccupied(view);
-/* 1159 */               if (k > 1) {
-/* 1160 */                 int m = (int)view.getPreferredSpan(bool);
-/* 1161 */                 adjustMultiRowSpan(m, k, b);
-/*      */               } 
-/*      */             } 
-/*      */           } 
-/*      */         } 
-/*      */       } else {
-/* 1167 */         this.adjustments = null;
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     void adjustMultiRowSpan(int param1Int1, int param1Int2, int param1Int3) {
-/* 1178 */       if (param1Int3 + param1Int2 > getCount()) {
-/*      */ 
-/*      */ 
-/*      */         
-/* 1182 */         param1Int2 = getCount() - param1Int3;
-/* 1183 */         if (param1Int2 < 1) {
-/*      */           return;
-/*      */         }
-/*      */       } 
-/* 1187 */       int i = 0; int j;
-/* 1188 */       for (j = 0; j < param1Int2; j++) {
-/* 1189 */         TableView.RowView rowView = TableView.this.getRow(param1Int3 + j);
-/* 1190 */         i = (int)(i + rowView.getPreferredSpan(1));
-/*      */       } 
-/* 1192 */       if (param1Int1 > i) {
-/* 1193 */         j = param1Int1 - i;
-/* 1194 */         int k = j / param1Int2;
-/* 1195 */         int m = k + j - k * param1Int2;
-/* 1196 */         TableView.RowView rowView = TableView.this.getRow(param1Int3);
-/* 1197 */         this.adjustments[param1Int3] = Math.max(this.adjustments[param1Int3], m);
-/*      */         
-/* 1199 */         for (byte b = 1; b < param1Int2; b++) {
-/* 1200 */           this.adjustments[param1Int3 + b] = Math.max(this.adjustments[param1Int3 + b], k);
-/*      */         }
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     void setLayoutArrays(int[] param1ArrayOfint1, int[] param1ArrayOfint2) {
-/* 1207 */       this.offsets = param1ArrayOfint1;
-/* 1208 */       this.spans = param1ArrayOfint2;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void setOffset(int param1Int) {
-/* 1214 */       TableView.RowView rowView = TableView.this.getRow(this.row);
-/* 1215 */       if (rowView != null) {
-/* 1216 */         this.offsets[rowView.viewIndex] = param1Int;
-/*      */       }
-/*      */     }
-/*      */     
-/*      */     public int getOffset() {
-/* 1221 */       TableView.RowView rowView = TableView.this.getRow(this.row);
-/* 1222 */       if (rowView != null) {
-/* 1223 */         return this.offsets[rowView.viewIndex];
-/*      */       }
-/* 1225 */       return 0;
-/*      */     }
-/*      */     
-/*      */     public void setSpan(int param1Int) {
-/* 1229 */       TableView.RowView rowView = TableView.this.getRow(this.row);
-/* 1230 */       if (rowView != null) {
-/* 1231 */         this.spans[rowView.viewIndex] = param1Int;
-/*      */       }
-/*      */     }
-/*      */     
-/*      */     public int getSpan() {
-/* 1236 */       TableView.RowView rowView = TableView.this.getRow(this.row);
-/* 1237 */       if (rowView != null) {
-/* 1238 */         return this.spans[rowView.viewIndex];
-/*      */       }
-/* 1240 */       return 0;
-/*      */     }
-/*      */     
-/*      */     public int getCount() {
-/* 1244 */       return TableView.this.rows.size();
-/*      */     }
-/*      */     
-/*      */     public void setIndex(int param1Int) {
-/* 1248 */       this.row = param1Int;
-/*      */     }
-/*      */     
-/*      */     public float getMinimumSpan(float param1Float) {
-/* 1252 */       return getPreferredSpan(param1Float);
-/*      */     }
-/*      */     
-/*      */     public float getPreferredSpan(float param1Float) {
-/* 1256 */       TableView.RowView rowView = TableView.this.getRow(this.row);
-/* 1257 */       if (rowView != null) {
-/* 1258 */         boolean bool = (this.adjustments != null) ? this.adjustments[this.row] : false;
-/* 1259 */         return rowView.getPreferredSpan(TableView.this.getAxis()) + bool;
-/*      */       } 
-/* 1261 */       return 0.0F;
-/*      */     }
-/*      */     
-/*      */     public float getMaximumSpan(float param1Float) {
-/* 1265 */       return getPreferredSpan(param1Float);
-/*      */     }
-/*      */     
-/*      */     public float getBorderWidth() {
-/* 1269 */       return TableView.this.borderWidth;
-/*      */     }
-/*      */     
-/*      */     public float getLeadingCollapseSpan() {
-/* 1273 */       return TableView.this.cellSpacing;
-/*      */     }
-/*      */     
-/*      */     public float getTrailingCollapseSpan() {
-/* 1277 */       return TableView.this.cellSpacing;
-/*      */     }
-/*      */     
-/*      */     public int getAdjustmentWeight() {
-/* 1281 */       return 0;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public class RowView
-/*      */     extends BoxView
-/*      */   {
-/*      */     private StyleSheet.BoxPainter painter;
-/*      */ 
-/*      */     
-/*      */     private AttributeSet attr;
-/*      */ 
-/*      */     
-/*      */     BitSet fillColumns;
-/*      */ 
-/*      */     
-/*      */     int rowIndex;
-/*      */ 
-/*      */     
-/*      */     int viewIndex;
-/*      */ 
-/*      */     
-/*      */     boolean multiRowCells;
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public RowView(Element param1Element) {
-/* 1310 */       super(param1Element, 0);
-/* 1311 */       this.fillColumns = new BitSet();
-/* 1312 */       setPropertiesFromAttributes();
-/*      */     }
-/*      */     
-/*      */     void clearFilledColumns() {
-/* 1316 */       this.fillColumns.and(TableView.EMPTY);
-/*      */     }
-/*      */     
-/*      */     void fillColumn(int param1Int) {
-/* 1320 */       this.fillColumns.set(param1Int);
-/*      */     }
-/*      */     
-/*      */     boolean isFilled(int param1Int) {
-/* 1324 */       return this.fillColumns.get(param1Int);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     int getColumnCount() {
-/* 1331 */       byte b1 = 0;
-/* 1332 */       int i = this.fillColumns.size();
-/* 1333 */       for (byte b2 = 0; b2 < i; b2++) {
-/* 1334 */         if (this.fillColumns.get(b2)) {
-/* 1335 */           b1++;
-/*      */         }
-/*      */       } 
-/* 1338 */       return getViewCount() + b1;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public AttributeSet getAttributes() {
-/* 1347 */       return this.attr;
-/*      */     }
-/*      */     
-/*      */     View findViewAtPoint(int param1Int1, int param1Int2, Rectangle param1Rectangle) {
-/* 1351 */       int i = getViewCount();
-/* 1352 */       for (byte b = 0; b < i; b++) {
-/* 1353 */         if (getChildAllocation(b, param1Rectangle).contains(param1Int1, param1Int2)) {
-/* 1354 */           childAllocation(b, param1Rectangle);
-/* 1355 */           return getView(b);
-/*      */         } 
-/*      */       } 
-/* 1358 */       return null;
-/*      */     }
-/*      */     
-/*      */     protected StyleSheet getStyleSheet() {
-/* 1362 */       HTMLDocument hTMLDocument = (HTMLDocument)getDocument();
-/* 1363 */       return hTMLDocument.getStyleSheet();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void preferenceChanged(View param1View, boolean param1Boolean1, boolean param1Boolean2) {
-/* 1380 */       super.preferenceChanged(param1View, param1Boolean1, param1Boolean2);
-/* 1381 */       if (TableView.this.multiRowCells && param1Boolean2) {
-/* 1382 */         for (int i = this.rowIndex - 1; i >= 0; i--) {
-/* 1383 */           RowView rowView = TableView.this.getRow(i);
-/* 1384 */           if (rowView.multiRowCells) {
-/* 1385 */             rowView.preferenceChanged((View)null, false, true);
-/*      */             break;
-/*      */           } 
-/*      */         } 
-/*      */       }
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected SizeRequirements calculateMajorAxisRequirements(int param1Int, SizeRequirements param1SizeRequirements) {
-/* 1396 */       SizeRequirements sizeRequirements = new SizeRequirements();
-/* 1397 */       sizeRequirements.minimum = TableView.this.totalColumnRequirements.minimum;
-/* 1398 */       sizeRequirements.maximum = TableView.this.totalColumnRequirements.maximum;
-/* 1399 */       sizeRequirements.preferred = TableView.this.totalColumnRequirements.preferred;
-/* 1400 */       sizeRequirements.alignment = 0.0F;
-/* 1401 */       return sizeRequirements;
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public float getMinimumSpan(int param1Int) {
-/*      */       float f;
-/* 1407 */       if (param1Int == 0) {
-/*      */         
-/* 1409 */         f = (TableView.this.totalColumnRequirements.minimum + getLeftInset() + getRightInset());
-/*      */       } else {
-/*      */         
-/* 1412 */         f = super.getMinimumSpan(param1Int);
-/*      */       } 
-/* 1414 */       return f;
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public float getMaximumSpan(int param1Int) {
-/*      */       float f;
-/* 1420 */       if (param1Int == 0) {
-/*      */         
-/* 1422 */         f = 2.14748365E9F;
-/*      */       } else {
-/*      */         
-/* 1425 */         f = super.getMaximumSpan(param1Int);
-/*      */       } 
-/* 1427 */       return f;
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public float getPreferredSpan(int param1Int) {
-/*      */       float f;
-/* 1433 */       if (param1Int == 0) {
-/*      */         
-/* 1435 */         f = (TableView.this.totalColumnRequirements.preferred + getLeftInset() + getRightInset());
-/*      */       } else {
-/*      */         
-/* 1438 */         f = super.getPreferredSpan(param1Int);
-/*      */       } 
-/* 1440 */       return f;
-/*      */     }
-/*      */     
-/*      */     public void changedUpdate(DocumentEvent param1DocumentEvent, Shape param1Shape, ViewFactory param1ViewFactory) {
-/* 1444 */       super.changedUpdate(param1DocumentEvent, param1Shape, param1ViewFactory);
-/* 1445 */       int i = param1DocumentEvent.getOffset();
-/* 1446 */       if (i <= getStartOffset() && i + param1DocumentEvent.getLength() >= 
-/* 1447 */         getEndOffset()) {
-/* 1448 */         setPropertiesFromAttributes();
-/*      */       }
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void paint(Graphics param1Graphics, Shape param1Shape) {
-/* 1463 */       Rectangle rectangle = (Rectangle)param1Shape;
-/* 1464 */       this.painter.paint(param1Graphics, rectangle.x, rectangle.y, rectangle.width, rectangle.height, this);
-/* 1465 */       super.paint(param1Graphics, rectangle);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void replace(int param1Int1, int param1Int2, View[] param1ArrayOfView) {
-/* 1474 */       super.replace(param1Int1, param1Int2, param1ArrayOfView);
-/* 1475 */       TableView.this.invalidateGrid();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected SizeRequirements calculateMinorAxisRequirements(int param1Int, SizeRequirements param1SizeRequirements) {
-/* 1488 */       long l1 = 0L;
-/* 1489 */       long l2 = 0L;
-/* 1490 */       long l3 = 0L;
-/* 1491 */       this.multiRowCells = false;
-/* 1492 */       int i = getViewCount();
-/* 1493 */       for (byte b = 0; b < i; b++) {
-/* 1494 */         View view = getView(b);
-/* 1495 */         if (TableView.this.getRowsOccupied(view) > 1) {
-/* 1496 */           this.multiRowCells = true;
-/* 1497 */           l3 = Math.max((int)view.getMaximumSpan(param1Int), l3);
-/*      */         } else {
-/* 1499 */           l1 = Math.max((int)view.getMinimumSpan(param1Int), l1);
-/* 1500 */           l2 = Math.max((int)view.getPreferredSpan(param1Int), l2);
-/* 1501 */           l3 = Math.max((int)view.getMaximumSpan(param1Int), l3);
-/*      */         } 
-/*      */       } 
-/*      */       
-/* 1505 */       if (param1SizeRequirements == null) {
-/* 1506 */         param1SizeRequirements = new SizeRequirements();
-/* 1507 */         param1SizeRequirements.alignment = 0.5F;
-/*      */       } 
-/* 1509 */       param1SizeRequirements.preferred = (int)l2;
-/* 1510 */       param1SizeRequirements.minimum = (int)l1;
-/* 1511 */       param1SizeRequirements.maximum = (int)l3;
-/* 1512 */       return param1SizeRequirements;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected void layoutMajorAxis(int param1Int1, int param1Int2, int[] param1ArrayOfint1, int[] param1ArrayOfint2) {
-/* 1537 */       int i = 0;
-/* 1538 */       int j = getViewCount();
-/* 1539 */       for (byte b = 0; b < j; b++) {
-/* 1540 */         View view = getView(b);
-/* 1541 */         if (!TableView.this.skipComments || view instanceof TableView.CellView) {
-/*      */ 
-/*      */           
-/* 1544 */           for (; isFilled(i); i++);
-/* 1545 */           int k = TableView.this.getColumnsOccupied(view);
-/* 1546 */           param1ArrayOfint2[b] = TableView.this.columnSpans[i];
-/* 1547 */           param1ArrayOfint1[b] = TableView.this.columnOffsets[i];
-/* 1548 */           if (k > 1) {
-/* 1549 */             int m = TableView.this.columnSpans.length;
-/* 1550 */             for (byte b1 = 1; b1 < k; b1++) {
-/*      */ 
-/*      */ 
-/*      */               
-/* 1554 */               if (i + b1 < m) {
-/* 1555 */                 param1ArrayOfint2[b] = param1ArrayOfint2[b] + TableView.this.columnSpans[i + b1];
-/* 1556 */                 param1ArrayOfint2[b] = param1ArrayOfint2[b] + TableView.this.cellSpacing;
-/*      */               } 
-/*      */             } 
-/* 1559 */             i += k - 1;
-/*      */           } 
-/* 1561 */           i++;
-/*      */         } 
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected void layoutMinorAxis(int param1Int1, int param1Int2, int[] param1ArrayOfint1, int[] param1ArrayOfint2) {
-/* 1588 */       super.layoutMinorAxis(param1Int1, param1Int2, param1ArrayOfint1, param1ArrayOfint2);
-/* 1589 */       int i = 0;
-/* 1590 */       int j = getViewCount();
-/* 1591 */       for (byte b = 0; b < j; b++, i++) {
-/* 1592 */         View view = getView(b);
-/* 1593 */         for (; isFilled(i); i++);
-/* 1594 */         int k = TableView.this.getColumnsOccupied(view);
-/* 1595 */         int m = TableView.this.getRowsOccupied(view);
-/* 1596 */         if (m > 1) {
-/*      */           
-/* 1598 */           int n = this.rowIndex;
-/* 1599 */           int i1 = Math.min(this.rowIndex + m - 1, TableView.this.getRowCount() - 1);
-/* 1600 */           param1ArrayOfint2[b] = TableView.this.getMultiRowSpan(n, i1);
-/*      */         } 
-/* 1602 */         if (k > 1) {
-/* 1603 */           i += k - 1;
-/*      */         }
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getResizeWeight(int param1Int) {
-/* 1617 */       return 1;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected View getViewAtPosition(int param1Int, Rectangle param1Rectangle) {
-/* 1634 */       int i = getViewCount();
-/* 1635 */       for (byte b = 0; b < i; b++) {
-/* 1636 */         View view = getView(b);
-/* 1637 */         int j = view.getStartOffset();
-/* 1638 */         int k = view.getEndOffset();
-/* 1639 */         if (param1Int >= j && param1Int < k) {
-/*      */           
-/* 1641 */           if (param1Rectangle != null) {
-/* 1642 */             childAllocation(b, param1Rectangle);
-/*      */           }
-/* 1644 */           return view;
-/*      */         } 
-/*      */       } 
-/* 1647 */       if (param1Int == getEndOffset()) {
-/* 1648 */         View view = getView(i - 1);
-/* 1649 */         if (param1Rectangle != null) {
-/* 1650 */           childAllocation(i - 1, param1Rectangle);
-/*      */         }
-/* 1652 */         return view;
-/*      */       } 
-/* 1654 */       return null;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     void setPropertiesFromAttributes() {
-/* 1661 */       StyleSheet styleSheet = getStyleSheet();
-/* 1662 */       this.attr = styleSheet.getViewAttributes(this);
-/* 1663 */       this.painter = styleSheet.getBoxPainter(this.attr);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   class CellView
-/*      */     extends BlockView
-/*      */   {
-/*      */     public CellView(Element param1Element) {
-/* 1702 */       super(param1Element, 1);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected void layoutMajorAxis(int param1Int1, int param1Int2, int[] param1ArrayOfint1, int[] param1ArrayOfint2) {
-/* 1730 */       super.layoutMajorAxis(param1Int1, param1Int2, param1ArrayOfint1, param1ArrayOfint2);
-/*      */       
-/* 1732 */       int i = 0;
-/* 1733 */       int j = param1ArrayOfint2.length; int k;
-/* 1734 */       for (k = 0; k < j; k++) {
-/* 1735 */         i += param1ArrayOfint2[k];
-/*      */       }
-/*      */ 
-/*      */       
-/* 1739 */       k = 0;
-/* 1740 */       if (i < param1Int1) {
-/*      */         
-/* 1742 */         String str = (String)getElement().getAttributes().getAttribute(HTML.Attribute.VALIGN);
-/*      */         
-/* 1744 */         if (str == null) {
-/* 1745 */           AttributeSet attributeSet = getElement().getParentElement().getAttributes();
-/* 1746 */           str = (String)attributeSet.getAttribute(HTML.Attribute.VALIGN);
-/*      */         } 
-/* 1748 */         if (str == null || str.equals("middle")) {
-/* 1749 */           k = (param1Int1 - i) / 2;
-/* 1750 */         } else if (str.equals("bottom")) {
-/* 1751 */           k = param1Int1 - i;
-/*      */         } 
-/*      */       } 
-/*      */ 
-/*      */       
-/* 1756 */       if (k != 0) {
-/* 1757 */         for (byte b = 0; b < j; b++) {
-/* 1758 */           param1ArrayOfint1[b] = param1ArrayOfint1[b] + k;
-/*      */         }
-/*      */       }
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected SizeRequirements calculateMajorAxisRequirements(int param1Int, SizeRequirements param1SizeRequirements) {
-/* 1779 */       SizeRequirements sizeRequirements = super.calculateMajorAxisRequirements(param1Int, param1SizeRequirements);
-/* 1780 */       sizeRequirements.maximum = Integer.MAX_VALUE;
-/* 1781 */       return sizeRequirements;
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     protected SizeRequirements calculateMinorAxisRequirements(int param1Int, SizeRequirements param1SizeRequirements) {
-/* 1786 */       SizeRequirements sizeRequirements = super.calculateMinorAxisRequirements(param1Int, param1SizeRequirements);
-/*      */ 
-/*      */       
-/* 1789 */       int i = getViewCount();
-/* 1790 */       int j = 0;
-/* 1791 */       for (byte b = 0; b < i; b++) {
-/* 1792 */         View view = getView(b);
-/* 1793 */         j = Math.max((int)view.getMinimumSpan(param1Int), j);
-/*      */       } 
-/* 1795 */       sizeRequirements.minimum = Math.min(sizeRequirements.minimum, j);
-/* 1796 */       return sizeRequirements;
-/*      */     }
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\text\html\TableView.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.text.html;
+
+import java.awt.*;
+import java.util.BitSet;
+import java.util.Vector;
+import java.util.Arrays;
+import javax.swing.SizeRequirements;
+import javax.swing.event.DocumentEvent;
+
+import javax.swing.text.*;
+
+/**
+ * HTML table view.
+ *
+ * @author  Timothy Prinzing
+ * @see     View
+ */
+/*public*/ class TableView extends BoxView implements ViewFactory {
+
+    /**
+     * Constructs a TableView for the given element.
+     *
+     * @param elem the element that this view is responsible for
+     */
+    public TableView(Element elem) {
+        super(elem, View.Y_AXIS);
+        rows = new Vector<RowView>();
+        gridValid = false;
+        captionIndex = -1;
+        totalColumnRequirements = new SizeRequirements();
+    }
+
+    /**
+     * Creates a new table row.
+     *
+     * @param elem an element
+     * @return the row
+     */
+    protected RowView createTableRow(Element elem) {
+        // PENDING(prinz) need to add support for some of the other
+        // elements, but for now just ignore anything that is not
+        // a TR.
+        Object o = elem.getAttributes().getAttribute(StyleConstants.NameAttribute);
+        if (o == HTML.Tag.TR) {
+            return new RowView(elem);
+        }
+        return null;
+    }
+
+    /**
+     * The number of columns in the table.
+     */
+    public int getColumnCount() {
+        return columnSpans.length;
+    }
+
+    /**
+     * Fetches the span (width) of the given column.
+     * This is used by the nested cells to query the
+     * sizes of grid locations outside of themselves.
+     */
+    public int getColumnSpan(int col) {
+        if (col < columnSpans.length) {
+            return columnSpans[col];
+        }
+        return 0;
+    }
+
+    /**
+     * The number of rows in the table.
+     */
+    public int getRowCount() {
+        return rows.size();
+    }
+
+    /**
+     * Fetch the span of multiple rows.  This includes
+     * the border area.
+     */
+    public int getMultiRowSpan(int row0, int row1) {
+        RowView rv0 = getRow(row0);
+        RowView rv1 = getRow(row1);
+        if ((rv0 != null) && (rv1 != null)) {
+            int index0 = rv0.viewIndex;
+            int index1 = rv1.viewIndex;
+            int span = getOffset(Y_AXIS, index1) - getOffset(Y_AXIS, index0) +
+                getSpan(Y_AXIS, index1);
+            return span;
+        }
+        return 0;
+    }
+
+    /**
+     * Fetches the span (height) of the given row.
+     */
+    public int getRowSpan(int row) {
+        RowView rv = getRow(row);
+        if (rv != null) {
+            return getSpan(Y_AXIS, rv.viewIndex);
+        }
+        return 0;
+    }
+
+    RowView getRow(int row) {
+        if (row < rows.size()) {
+            return rows.elementAt(row);
+        }
+        return null;
+    }
+
+    protected View getViewAtPoint(int x, int y, Rectangle alloc) {
+        int n = getViewCount();
+        View v;
+        Rectangle allocation = new Rectangle();
+        for (int i = 0; i < n; i++) {
+            allocation.setBounds(alloc);
+            childAllocation(i, allocation);
+            v = getView(i);
+            if (v instanceof RowView) {
+                v = ((RowView)v).findViewAtPoint(x, y, allocation);
+                if (v != null) {
+                    alloc.setBounds(allocation);
+                    return v;
+                }
+            }
+        }
+        return super.getViewAtPoint(x, y, alloc);
+    }
+
+    /**
+     * Determines the number of columns occupied by
+     * the table cell represented by given element.
+     */
+    protected int getColumnsOccupied(View v) {
+        AttributeSet a = v.getElement().getAttributes();
+
+        if (a.isDefined(HTML.Attribute.COLSPAN)) {
+            String s = (String) a.getAttribute(HTML.Attribute.COLSPAN);
+            if (s != null) {
+                try {
+                    return Integer.parseInt(s);
+                } catch (NumberFormatException nfe) {
+                    // fall through to one column
+                }
+            }
+        }
+
+        return 1;
+    }
+
+    /**
+     * Determines the number of rows occupied by
+     * the table cell represented by given element.
+     */
+    protected int getRowsOccupied(View v) {
+        AttributeSet a = v.getElement().getAttributes();
+
+        if (a.isDefined(HTML.Attribute.ROWSPAN)) {
+            String s = (String) a.getAttribute(HTML.Attribute.ROWSPAN);
+            if (s != null) {
+                try {
+                    return Integer.parseInt(s);
+                } catch (NumberFormatException nfe) {
+                    // fall through to one row
+                }
+            }
+        }
+
+        return 1;
+    }
+
+    protected void invalidateGrid() {
+        gridValid = false;
+    }
+
+    protected StyleSheet getStyleSheet() {
+        HTMLDocument doc = (HTMLDocument) getDocument();
+        return doc.getStyleSheet();
+    }
+
+    /**
+     * Update the insets, which contain the caption if there
+     * is a caption.
+     */
+    void updateInsets() {
+        short top = (short) painter.getInset(TOP, this);
+        short bottom = (short) painter.getInset(BOTTOM, this);
+        if (captionIndex != -1) {
+            View caption = getView(captionIndex);
+            short h = (short) caption.getPreferredSpan(Y_AXIS);
+            AttributeSet a = caption.getAttributes();
+            Object align = a.getAttribute(CSS.Attribute.CAPTION_SIDE);
+            if ((align != null) && (align.equals("bottom"))) {
+                bottom += h;
+            } else {
+                top += h;
+            }
+        }
+        setInsets(top, (short) painter.getInset(LEFT, this),
+                  bottom, (short) painter.getInset(RIGHT, this));
+    }
+
+    /**
+     * Update any cached values that come from attributes.
+     */
+    protected void setPropertiesFromAttributes() {
+        StyleSheet sheet = getStyleSheet();
+        attr = sheet.getViewAttributes(this);
+        painter = sheet.getBoxPainter(attr);
+        if (attr != null) {
+            setInsets((short) painter.getInset(TOP, this),
+                      (short) painter.getInset(LEFT, this),
+                          (short) painter.getInset(BOTTOM, this),
+                      (short) painter.getInset(RIGHT, this));
+
+            CSS.LengthValue lv = (CSS.LengthValue)
+                attr.getAttribute(CSS.Attribute.BORDER_SPACING);
+            if (lv != null) {
+                cellSpacing = (int) lv.getValue();
+            } else {
+                // Default cell spacing equals 2
+                cellSpacing = 2;
+            }
+            lv = (CSS.LengthValue)
+                    attr.getAttribute(CSS.Attribute.BORDER_TOP_WIDTH);
+            if (lv != null) {
+                    borderWidth = (int) lv.getValue();
+            } else {
+                    borderWidth = 0;
+            }
+        }
+    }
+
+    /**
+     * Fill in the grid locations that are placeholders
+     * for multi-column, multi-row, and missing grid
+     * locations.
+     */
+    void updateGrid() {
+        if (! gridValid) {
+            relativeCells = false;
+            multiRowCells = false;
+
+            // determine which views are table rows and clear out
+            // grid points marked filled.
+            captionIndex = -1;
+            rows.removeAllElements();
+            int n = getViewCount();
+            for (int i = 0; i < n; i++) {
+                View v = getView(i);
+                if (v instanceof RowView) {
+                    rows.addElement((RowView) v);
+                    RowView rv = (RowView) v;
+                    rv.clearFilledColumns();
+                    rv.rowIndex = rows.size() - 1;
+                    rv.viewIndex = i;
+                } else {
+                    Object o = v.getElement().getAttributes().getAttribute(StyleConstants.NameAttribute);
+                    if (o instanceof HTML.Tag) {
+                        HTML.Tag kind = (HTML.Tag) o;
+                        if (kind == HTML.Tag.CAPTION) {
+                            captionIndex = i;
+                        }
+                    }
+                }
+            }
+
+            int maxColumns = 0;
+            int nrows = rows.size();
+            for (int row = 0; row < nrows; row++) {
+                RowView rv = getRow(row);
+                int col = 0;
+                for (int cell = 0; cell < rv.getViewCount(); cell++, col++) {
+                    View cv = rv.getView(cell);
+                    if (! relativeCells) {
+                        AttributeSet a = cv.getAttributes();
+                        CSS.LengthValue lv = (CSS.LengthValue)
+                            a.getAttribute(CSS.Attribute.WIDTH);
+                        if ((lv != null) && (lv.isPercentage())) {
+                            relativeCells = true;
+                        }
+                    }
+                    // advance to a free column
+                    for (; rv.isFilled(col); col++);
+                    int rowSpan = getRowsOccupied(cv);
+                    if (rowSpan > 1) {
+                        multiRowCells = true;
+                    }
+                    int colSpan = getColumnsOccupied(cv);
+                    if ((colSpan > 1) || (rowSpan > 1)) {
+                        // fill in the overflow entries for this cell
+                        int rowLimit = row + rowSpan;
+                        int colLimit = col + colSpan;
+                        for (int i = row; i < rowLimit; i++) {
+                            for (int j = col; j < colLimit; j++) {
+                                if (i != row || j != col) {
+                                    addFill(i, j);
+                                }
+                            }
+                        }
+                        if (colSpan > 1) {
+                            col += colSpan - 1;
+                        }
+                    }
+                }
+                maxColumns = Math.max(maxColumns, col);
+            }
+
+            // setup the column layout/requirements
+            columnSpans = new int[maxColumns];
+            columnOffsets = new int[maxColumns];
+            columnRequirements = new SizeRequirements[maxColumns];
+            for (int i = 0; i < maxColumns; i++) {
+                columnRequirements[i] = new SizeRequirements();
+                columnRequirements[i].maximum = Integer.MAX_VALUE;
+            }
+            gridValid = true;
+        }
+    }
+
+    /**
+     * Mark a grid location as filled in for a cells overflow.
+     */
+    void addFill(int row, int col) {
+        RowView rv = getRow(row);
+        if (rv != null) {
+            rv.fillColumn(col);
+        }
+    }
+
+    /**
+     * Layout the columns to fit within the given target span.
+     *
+     * @param targetSpan the given span for total of all the table
+     *  columns
+     * @param reqs the requirements desired for each column.  This
+     *  is the column maximum of the cells minimum, preferred, and
+     *  maximum requested span
+     * @param spans the return value of how much to allocated to
+     *  each column
+     * @param offsets the return value of the offset from the
+     *  origin for each column
+     * @return the offset from the origin and the span for each column
+     *  in the offsets and spans parameters
+     */
+    protected void layoutColumns(int targetSpan, int[] offsets, int[] spans,
+                                 SizeRequirements[] reqs) {
+        //clean offsets and spans
+        Arrays.fill(offsets, 0);
+        Arrays.fill(spans, 0);
+        colIterator.setLayoutArrays(offsets, spans, targetSpan);
+        CSS.calculateTiledLayout(colIterator, targetSpan);
+    }
+
+    /**
+     * Calculate the requirements for each column.  The calculation
+     * is done as two passes over the table.  The table cells that
+     * occupy a single column are scanned first to determine the
+     * maximum of minimum, preferred, and maximum spans along the
+     * give axis.  Table cells that span multiple columns are excluded
+     * from the first pass.  A second pass is made to determine if
+     * the cells that span multiple columns are satisfied.  If the
+     * column requirements are not satisified, the needs of the
+     * multi-column cell is mixed into the existing column requirements.
+     * The calculation of the multi-column distribution is based upon
+     * the proportions of the existing column requirements and taking
+     * into consideration any constraining maximums.
+     */
+    void calculateColumnRequirements(int axis) {
+        // clean columnRequirements
+        for (SizeRequirements req : columnRequirements) {
+            req.minimum = 0;
+            req.preferred = 0;
+            req.maximum = Integer.MAX_VALUE;
+        }
+        Container host = getContainer();
+        if (host != null) {
+            if (host instanceof JTextComponent) {
+                skipComments = !((JTextComponent)host).isEditable();
+            } else {
+                skipComments = true;
+            }
+        }
+        // pass 1 - single column cells
+        boolean hasMultiColumn = false;
+        int nrows = getRowCount();
+        for (int i = 0; i < nrows; i++) {
+            RowView row = getRow(i);
+            int col = 0;
+            int ncells = row.getViewCount();
+            for (int cell = 0; cell < ncells; cell++) {
+                View cv = row.getView(cell);
+                if (skipComments && !(cv instanceof CellView)) {
+                    continue;
+                }
+                for (; row.isFilled(col); col++); // advance to a free column
+                int rowSpan = getRowsOccupied(cv);
+                int colSpan = getColumnsOccupied(cv);
+                if (colSpan == 1) {
+                    checkSingleColumnCell(axis, col, cv);
+                } else {
+                    hasMultiColumn = true;
+                    col += colSpan - 1;
+                }
+                col++;
+            }
+        }
+
+        // pass 2 - multi-column cells
+        if (hasMultiColumn) {
+            for (int i = 0; i < nrows; i++) {
+                RowView row = getRow(i);
+                int col = 0;
+                int ncells = row.getViewCount();
+                for (int cell = 0; cell < ncells; cell++) {
+                    View cv = row.getView(cell);
+                    if (skipComments && !(cv instanceof CellView)) {
+                        continue;
+                    }
+                    for (; row.isFilled(col); col++); // advance to a free column
+                    int colSpan = getColumnsOccupied(cv);
+                    if (colSpan > 1) {
+                        checkMultiColumnCell(axis, col, colSpan, cv);
+                        col += colSpan - 1;
+                    }
+                    col++;
+                }
+            }
+        }
+    }
+
+    /**
+     * check the requirements of a table cell that spans a single column.
+     */
+    void checkSingleColumnCell(int axis, int col, View v) {
+        SizeRequirements req = columnRequirements[col];
+        req.minimum = Math.max((int) v.getMinimumSpan(axis), req.minimum);
+        req.preferred = Math.max((int) v.getPreferredSpan(axis), req.preferred);
+    }
+
+    /**
+     * check the requirements of a table cell that spans multiple
+     * columns.
+     */
+    void checkMultiColumnCell(int axis, int col, int ncols, View v) {
+        // calculate the totals
+        long min = 0;
+        long pref = 0;
+        long max = 0;
+        for (int i = 0; i < ncols; i++) {
+            SizeRequirements req = columnRequirements[col + i];
+            min += req.minimum;
+            pref += req.preferred;
+            max += req.maximum;
+        }
+
+        // check if the minimum size needs adjustment.
+        int cmin = (int) v.getMinimumSpan(axis);
+        if (cmin > min) {
+            /*
+             * the columns that this cell spans need adjustment to fit
+             * this table cell.... calculate the adjustments.
+             */
+            SizeRequirements[] reqs = new SizeRequirements[ncols];
+            for (int i = 0; i < ncols; i++) {
+                reqs[i] = columnRequirements[col + i];
+            }
+            int[] spans = new int[ncols];
+            int[] offsets = new int[ncols];
+            SizeRequirements.calculateTiledPositions(cmin, null, reqs,
+                                                     offsets, spans);
+            // apply the adjustments
+            for (int i = 0; i < ncols; i++) {
+                SizeRequirements req = reqs[i];
+                req.minimum = Math.max(spans[i], req.minimum);
+                req.preferred = Math.max(req.minimum, req.preferred);
+                req.maximum = Math.max(req.preferred, req.maximum);
+            }
+        }
+
+        // check if the preferred size needs adjustment.
+        int cpref = (int) v.getPreferredSpan(axis);
+        if (cpref > pref) {
+            /*
+             * the columns that this cell spans need adjustment to fit
+             * this table cell.... calculate the adjustments.
+             */
+            SizeRequirements[] reqs = new SizeRequirements[ncols];
+            for (int i = 0; i < ncols; i++) {
+                reqs[i] = columnRequirements[col + i];
+            }
+            int[] spans = new int[ncols];
+            int[] offsets = new int[ncols];
+            SizeRequirements.calculateTiledPositions(cpref, null, reqs,
+                                                     offsets, spans);
+            // apply the adjustments
+            for (int i = 0; i < ncols; i++) {
+                SizeRequirements req = reqs[i];
+                req.preferred = Math.max(spans[i], req.preferred);
+                req.maximum = Math.max(req.preferred, req.maximum);
+            }
+        }
+
+    }
+
+    // --- BoxView methods -----------------------------------------
+
+    /**
+     * Calculate the requirements for the minor axis.  This is called by
+     * the superclass whenever the requirements need to be updated (i.e.
+     * a preferenceChanged was messaged through this view).
+     * <p>
+     * This is implemented to calculate the requirements as the sum of the
+     * requirements of the columns and then adjust it if the
+     * CSS width or height attribute is specified and applicable to
+     * the axis.
+     */
+    protected SizeRequirements calculateMinorAxisRequirements(int axis, SizeRequirements r) {
+        updateGrid();
+
+        // calculate column requirements for each column
+        calculateColumnRequirements(axis);
+
+
+        // the requirements are the sum of the columns.
+        if (r == null) {
+            r = new SizeRequirements();
+        }
+        long min = 0;
+        long pref = 0;
+        int n = columnRequirements.length;
+        for (int i = 0; i < n; i++) {
+            SizeRequirements req = columnRequirements[i];
+            min += req.minimum;
+            pref += req.preferred;
+        }
+        int adjust = (n + 1) * cellSpacing + 2 * borderWidth;
+        min += adjust;
+        pref += adjust;
+        r.minimum = (int) min;
+        r.preferred = (int) pref;
+        r.maximum = (int) pref;
+
+
+        AttributeSet attr = getAttributes();
+        CSS.LengthValue cssWidth = (CSS.LengthValue)attr.getAttribute(
+                                                    CSS.Attribute.WIDTH);
+
+        if (BlockView.spanSetFromAttributes(axis, r, cssWidth, null)) {
+            if (r.minimum < (int)min) {
+                // The user has requested a smaller size than is needed to
+                // show the table, override it.
+                r.maximum = r.minimum = r.preferred = (int) min;
+            }
+        }
+        totalColumnRequirements.minimum = r.minimum;
+        totalColumnRequirements.preferred = r.preferred;
+        totalColumnRequirements.maximum = r.maximum;
+
+        // set the alignment
+        Object o = attr.getAttribute(CSS.Attribute.TEXT_ALIGN);
+        if (o != null) {
+            // set horizontal alignment
+            String ta = o.toString();
+            if (ta.equals("left")) {
+                r.alignment = 0;
+            } else if (ta.equals("center")) {
+                r.alignment = 0.5f;
+            } else if (ta.equals("right")) {
+                r.alignment = 1;
+            } else {
+                r.alignment = 0;
+            }
+        } else {
+            r.alignment = 0;
+        }
+
+        return r;
+    }
+
+    /**
+     * Calculate the requirements for the major axis.  This is called by
+     * the superclass whenever the requirements need to be updated (i.e.
+     * a preferenceChanged was messaged through this view).
+     * <p>
+     * This is implemented to provide the superclass behavior adjusted for
+     * multi-row table cells.
+     */
+    protected SizeRequirements calculateMajorAxisRequirements(int axis, SizeRequirements r) {
+        updateInsets();
+        rowIterator.updateAdjustments();
+        r = CSS.calculateTiledRequirements(rowIterator, r);
+        r.maximum = r.preferred;
+        return r;
+    }
+
+    /**
+     * Perform layout for the minor axis of the box (i.e. the
+     * axis orthogonal to the axis that it represents).  The results
+     * of the layout should be placed in the given arrays which represent
+     * the allocations to the children along the minor axis.  This
+     * is called by the superclass whenever the layout needs to be
+     * updated along the minor axis.
+     * <p>
+     * This is implemented to call the
+     * <a href="#layoutColumns">layoutColumns</a> method, and then
+     * forward to the superclass to actually carry out the layout
+     * of the tables rows.
+     *
+     * @param targetSpan the total span given to the view, which
+     *  would be used to layout the children
+     * @param axis the axis being layed out
+     * @param offsets the offsets from the origin of the view for
+     *  each of the child views.  This is a return value and is
+     *  filled in by the implementation of this method
+     * @param spans the span of each child view;  this is a return
+     *  value and is filled in by the implementation of this method
+     * @return the offset and span for each child view in the
+     *  offsets and spans parameters
+     */
+    protected void layoutMinorAxis(int targetSpan, int axis, int[] offsets, int[] spans) {
+        // make grid is properly represented
+        updateGrid();
+
+        // all of the row layouts are invalid, so mark them that way
+        int n = getRowCount();
+        for (int i = 0; i < n; i++) {
+            RowView row = getRow(i);
+            row.layoutChanged(axis);
+        }
+
+        // calculate column spans
+        layoutColumns(targetSpan, columnOffsets, columnSpans, columnRequirements);
+
+        // continue normal layout
+        super.layoutMinorAxis(targetSpan, axis, offsets, spans);
+    }
+
+
+    /**
+     * Perform layout for the major axis of the box (i.e. the
+     * axis that it represents).  The results
+     * of the layout should be placed in the given arrays which represent
+     * the allocations to the children along the minor axis.  This
+     * is called by the superclass whenever the layout needs to be
+     * updated along the minor axis.
+     * <p>
+     * This method is where the layout of the table rows within the
+     * table takes place.  This method is implemented to call the use
+     * the RowIterator and the CSS collapsing tile to layout
+     * with border spacing and border collapsing capabilities.
+     *
+     * @param targetSpan the total span given to the view, which
+     *  would be used to layout the children
+     * @param axis the axis being layed out
+     * @param offsets the offsets from the origin of the view for
+     *  each of the child views; this is a return value and is
+     *  filled in by the implementation of this method
+     * @param spans the span of each child view; this is a return
+     *  value and is filled in by the implementation of this method
+     * @return the offset and span for each child view in the
+     *  offsets and spans parameters
+     */
+    protected void layoutMajorAxis(int targetSpan, int axis, int[] offsets, int[] spans) {
+        rowIterator.setLayoutArrays(offsets, spans);
+        CSS.calculateTiledLayout(rowIterator, targetSpan);
+
+        if (captionIndex != -1) {
+            // place the caption
+            View caption = getView(captionIndex);
+            int h = (int) caption.getPreferredSpan(Y_AXIS);
+            spans[captionIndex] = h;
+            short boxBottom = (short) painter.getInset(BOTTOM, this);
+            if (boxBottom != getBottomInset()) {
+                offsets[captionIndex] = targetSpan + boxBottom;
+            } else {
+                offsets[captionIndex] = - getTopInset();
+            }
+        }
+    }
+
+    /**
+     * Fetches the child view that represents the given position in
+     * the model.  This is implemented to walk through the children
+     * looking for a range that contains the given position.  In this
+     * view the children do not necessarily have a one to one mapping
+     * with the child elements.
+     *
+     * @param pos  the search position >= 0
+     * @param a  the allocation to the table on entry, and the
+     *   allocation of the view containing the position on exit
+     * @return  the view representing the given position, or
+     *   null if there isn't one
+     */
+    protected View getViewAtPosition(int pos, Rectangle a) {
+        int n = getViewCount();
+        for (int i = 0; i < n; i++) {
+            View v = getView(i);
+            int p0 = v.getStartOffset();
+            int p1 = v.getEndOffset();
+            if ((pos >= p0) && (pos < p1)) {
+                // it's in this view.
+                if (a != null) {
+                    childAllocation(i, a);
+                }
+                return v;
+            }
+        }
+        if (pos == getEndOffset()) {
+            View v = getView(n - 1);
+            if (a != null) {
+                this.childAllocation(n - 1, a);
+            }
+            return v;
+        }
+        return null;
+    }
+
+    // --- View methods ---------------------------------------------
+
+    /**
+     * Fetches the attributes to use when rendering.  This is
+     * implemented to multiplex the attributes specified in the
+     * model with a StyleSheet.
+     */
+    public AttributeSet getAttributes() {
+        if (attr == null) {
+            StyleSheet sheet = getStyleSheet();
+            attr = sheet.getViewAttributes(this);
+        }
+        return attr;
+    }
+
+    /**
+     * Renders using the given rendering surface and area on that
+     * surface.  This is implemented to delegate to the css box
+     * painter to paint the border and background prior to the
+     * interior.  The superclass culls rendering the children
+     * that don't directly intersect the clip and the row may
+     * have cells hanging from a row above in it.  The table
+     * does not use the superclass rendering behavior and instead
+     * paints all of the rows and lets the rows cull those
+     * cells not intersecting the clip region.
+     *
+     * @param g the rendering surface to use
+     * @param allocation the allocated region to render into
+     * @see View#paint
+     */
+    public void paint(Graphics g, Shape allocation) {
+        // paint the border
+        Rectangle a = allocation.getBounds();
+        setSize(a.width, a.height);
+        if (captionIndex != -1) {
+            // adjust the border for the caption
+            short top = (short) painter.getInset(TOP, this);
+            short bottom = (short) painter.getInset(BOTTOM, this);
+            if (top != getTopInset()) {
+                int h = getTopInset() - top;
+                a.y += h;
+                a.height -= h;
+            } else {
+                a.height -= getBottomInset() - bottom;
+            }
+        }
+        painter.paint(g, a.x, a.y, a.width, a.height, this);
+        // paint interior
+        int n = getViewCount();
+        for (int i = 0; i < n; i++) {
+            View v = getView(i);
+            v.paint(g, getChildAllocation(i, allocation));
+        }
+        //super.paint(g, a);
+    }
+
+    /**
+     * Establishes the parent view for this view.  This is
+     * guaranteed to be called before any other methods if the
+     * parent view is functioning properly.
+     * <p>
+     * This is implemented
+     * to forward to the superclass as well as call the
+     * <a href="#setPropertiesFromAttributes">setPropertiesFromAttributes</a>
+     * method to set the paragraph properties from the css
+     * attributes.  The call is made at this time to ensure
+     * the ability to resolve upward through the parents
+     * view attributes.
+     *
+     * @param parent the new parent, or null if the view is
+     *  being removed from a parent it was previously added
+     *  to
+     */
+    public void setParent(View parent) {
+        super.setParent(parent);
+        if (parent != null) {
+            setPropertiesFromAttributes();
+        }
+    }
+
+    /**
+     * Fetches the ViewFactory implementation that is feeding
+     * the view hierarchy.
+     * This replaces the ViewFactory with an implementation that
+     * calls through to the createTableRow and createTableCell
+     * methods.   If the element given to the factory isn't a
+     * table row or cell, the request is delegated to the factory
+     * produced by the superclass behavior.
+     *
+     * @return the factory, null if none
+     */
+    public ViewFactory getViewFactory() {
+        return this;
+    }
+
+    /**
+     * Gives notification that something was inserted into
+     * the document in a location that this view is responsible for.
+     * This replaces the ViewFactory with an implementation that
+     * calls through to the createTableRow and createTableCell
+     * methods.   If the element given to the factory isn't a
+     * table row or cell, the request is delegated to the factory
+     * passed as an argument.
+     *
+     * @param e the change information from the associated document
+     * @param a the current allocation of the view
+     * @param f the factory to use to rebuild if the view has children
+     * @see View#insertUpdate
+     */
+    public void insertUpdate(DocumentEvent e, Shape a, ViewFactory f) {
+        super.insertUpdate(e, a, this);
+    }
+
+    /**
+     * Gives notification that something was removed from the document
+     * in a location that this view is responsible for.
+     * This replaces the ViewFactory with an implementation that
+     * calls through to the createTableRow and createTableCell
+     * methods.   If the element given to the factory isn't a
+     * table row or cell, the request is delegated to the factory
+     * passed as an argument.
+     *
+     * @param e the change information from the associated document
+     * @param a the current allocation of the view
+     * @param f the factory to use to rebuild if the view has children
+     * @see View#removeUpdate
+     */
+    public void removeUpdate(DocumentEvent e, Shape a, ViewFactory f) {
+        super.removeUpdate(e, a, this);
+    }
+
+    /**
+     * Gives notification from the document that attributes were changed
+     * in a location that this view is responsible for.
+     * This replaces the ViewFactory with an implementation that
+     * calls through to the createTableRow and createTableCell
+     * methods.   If the element given to the factory isn't a
+     * table row or cell, the request is delegated to the factory
+     * passed as an argument.
+     *
+     * @param e the change information from the associated document
+     * @param a the current allocation of the view
+     * @param f the factory to use to rebuild if the view has children
+     * @see View#changedUpdate
+     */
+    public void changedUpdate(DocumentEvent e, Shape a, ViewFactory f) {
+        super.changedUpdate(e, a, this);
+    }
+
+    protected void forwardUpdate(DocumentEvent.ElementChange ec,
+                                 DocumentEvent e, Shape a, ViewFactory f) {
+        super.forwardUpdate(ec, e, a, f);
+        // A change in any of the table cells usually effects the whole table,
+        // so redraw it all!
+        if (a != null) {
+            Component c = getContainer();
+            if (c != null) {
+                Rectangle alloc = (a instanceof Rectangle) ? (Rectangle)a :
+                                   a.getBounds();
+                c.repaint(alloc.x, alloc.y, alloc.width, alloc.height);
+            }
+        }
+    }
+
+    /**
+     * Change the child views.  This is implemented to
+     * provide the superclass behavior and invalidate the
+     * grid so that rows and columns will be recalculated.
+     */
+    public void replace(int offset, int length, View[] views) {
+        super.replace(offset, length, views);
+        invalidateGrid();
+    }
+
+    // --- ViewFactory methods ------------------------------------------
+
+    /**
+     * The table itself acts as a factory for the various
+     * views that actually represent pieces of the table.
+     * All other factory activity is delegated to the factory
+     * returned by the parent of the table.
+     */
+    public View create(Element elem) {
+        Object o = elem.getAttributes().getAttribute(StyleConstants.NameAttribute);
+        if (o instanceof HTML.Tag) {
+            HTML.Tag kind = (HTML.Tag) o;
+            if (kind == HTML.Tag.TR) {
+                return createTableRow(elem);
+            } else if ((kind == HTML.Tag.TD) || (kind == HTML.Tag.TH)) {
+                return new CellView(elem);
+            } else if (kind == HTML.Tag.CAPTION) {
+                return new javax.swing.text.html.ParagraphView(elem);
+            }
+        }
+        // default is to delegate to the normal factory
+        View p = getParent();
+        if (p != null) {
+            ViewFactory f = p.getViewFactory();
+            if (f != null) {
+                return f.create(elem);
+            }
+        }
+        return null;
+    }
+
+    // ---- variables ----------------------------------------------------
+
+    private AttributeSet attr;
+    private StyleSheet.BoxPainter painter;
+
+    private int cellSpacing;
+    private int borderWidth;
+
+    /**
+     * The index of the caption view if there is a caption.
+     * This has a value of -1 if there is no caption.  The
+     * caption lives in the inset area of the table, and is
+     * updated with each time the grid is recalculated.
+     */
+    private int captionIndex;
+
+    /**
+     * Do any of the table cells contain a relative size
+     * specification?  This is updated with each call to
+     * updateGrid().  If this is true, the ColumnIterator
+     * will do extra work to calculate relative cell
+     * specifications.
+     */
+    private boolean relativeCells;
+
+    /**
+     * Do any of the table cells span multiple rows?  If
+     * true, the RowRequirementIterator will do additional
+     * work to adjust the requirements of rows spanned by
+     * a single table cell.  This is updated with each call to
+     * updateGrid().
+     */
+    private boolean multiRowCells;
+
+    int[] columnSpans;
+    int[] columnOffsets;
+    /**
+     * SizeRequirements for all the columns.
+     */
+    SizeRequirements totalColumnRequirements;
+    SizeRequirements[] columnRequirements;
+
+    RowIterator rowIterator = new RowIterator();
+    ColumnIterator colIterator = new ColumnIterator();
+
+    Vector<RowView> rows;
+
+    // whether to display comments inside table or not.
+    boolean skipComments = false;
+
+    boolean gridValid;
+    static final private BitSet EMPTY = new BitSet();
+
+    class ColumnIterator implements CSS.LayoutIterator {
+
+        /**
+         * Disable percentage adjustments which should only apply
+         * when calculating layout, not requirements.
+         */
+        void disablePercentages() {
+            percentages = null;
+        }
+
+        /**
+         * Update percentage adjustments if they are needed.
+         */
+        private void updatePercentagesAndAdjustmentWeights(int span) {
+            adjustmentWeights = new int[columnRequirements.length];
+            for (int i = 0; i < columnRequirements.length; i++) {
+                adjustmentWeights[i] = 0;
+            }
+            if (relativeCells) {
+                percentages = new int[columnRequirements.length];
+            } else {
+                percentages = null;
+            }
+            int nrows = getRowCount();
+            for (int rowIndex = 0; rowIndex < nrows; rowIndex++) {
+                RowView row = getRow(rowIndex);
+                int col = 0;
+                int ncells = row.getViewCount();
+                for (int cell = 0; cell < ncells; cell++, col++) {
+                    View cv = row.getView(cell);
+                    for (; row.isFilled(col); col++); // advance to a free column
+                    int rowSpan = getRowsOccupied(cv);
+                    int colSpan = getColumnsOccupied(cv);
+                    AttributeSet a = cv.getAttributes();
+                    CSS.LengthValue lv = (CSS.LengthValue)
+                        a.getAttribute(CSS.Attribute.WIDTH);
+                    if ( lv != null ) {
+                        int len = (int) (lv.getValue(span) / colSpan + 0.5f);
+                        for (int i = 0; i < colSpan; i++) {
+                            if (lv.isPercentage()) {
+                                // add a percentage requirement
+                                percentages[col+i] = Math.max(percentages[col+i], len);
+                                adjustmentWeights[col + i] = Math.max(adjustmentWeights[col + i], WorstAdjustmentWeight);
+                            } else {
+                                adjustmentWeights[col + i] = Math.max(adjustmentWeights[col + i], WorstAdjustmentWeight - 1);
+                            }
+                        }
+                    }
+                    col += colSpan - 1;
+                }
+            }
+        }
+
+        /**
+         * Set the layout arrays to use for holding layout results
+         */
+        public void setLayoutArrays(int offsets[], int spans[], int targetSpan) {
+            this.offsets = offsets;
+            this.spans = spans;
+            updatePercentagesAndAdjustmentWeights(targetSpan);
+        }
+
+        // --- RequirementIterator methods -------------------
+
+        public int getCount() {
+            return columnRequirements.length;
+        }
+
+        public void setIndex(int i) {
+            col = i;
+        }
+
+        public void setOffset(int offs) {
+            offsets[col] = offs;
+        }
+
+        public int getOffset() {
+            return offsets[col];
+        }
+
+        public void setSpan(int span) {
+            spans[col] = span;
+        }
+
+        public int getSpan() {
+            return spans[col];
+        }
+
+        public float getMinimumSpan(float parentSpan) {
+            // do not care for percentages, since min span can't
+            // be less than columnRequirements[col].minimum,
+            // but can be less than percentage value.
+            return columnRequirements[col].minimum;
+        }
+
+        public float getPreferredSpan(float parentSpan) {
+            if ((percentages != null) && (percentages[col] != 0)) {
+                return Math.max(percentages[col], columnRequirements[col].minimum);
+            }
+            return columnRequirements[col].preferred;
+        }
+
+        public float getMaximumSpan(float parentSpan) {
+            return columnRequirements[col].maximum;
+        }
+
+        public float getBorderWidth() {
+            return borderWidth;
+        }
+
+
+        public float getLeadingCollapseSpan() {
+            return cellSpacing;
+        }
+
+        public float getTrailingCollapseSpan() {
+            return cellSpacing;
+        }
+
+        public int getAdjustmentWeight() {
+            return adjustmentWeights[col];
+        }
+
+        /**
+         * Current column index
+         */
+        private int col;
+
+        /**
+         * percentage values (may be null since there
+         * might not be any).
+         */
+        private int[] percentages;
+
+        private int[] adjustmentWeights;
+
+        private int[] offsets;
+        private int[] spans;
+    }
+
+    class RowIterator implements CSS.LayoutIterator {
+
+        RowIterator() {
+        }
+
+        void updateAdjustments() {
+            int axis = Y_AXIS;
+            if (multiRowCells) {
+                // adjust requirements of multi-row cells
+                int n = getRowCount();
+                adjustments = new int[n];
+                for (int i = 0; i < n; i++) {
+                    RowView rv = getRow(i);
+                    if (rv.multiRowCells == true) {
+                        int ncells = rv.getViewCount();
+                        for (int j = 0; j < ncells; j++) {
+                            View v = rv.getView(j);
+                            int nrows = getRowsOccupied(v);
+                            if (nrows > 1) {
+                                int spanNeeded = (int) v.getPreferredSpan(axis);
+                                adjustMultiRowSpan(spanNeeded, nrows, i);
+                            }
+                        }
+                    }
+                }
+            } else {
+                adjustments = null;
+            }
+        }
+
+        /**
+         * Fixup preferences to accommodate a multi-row table cell
+         * if not already covered by existing preferences.  This is
+         * a no-op if not all of the rows needed (to do this check/fixup)
+         * have arrived yet.
+         */
+        void adjustMultiRowSpan(int spanNeeded, int nrows, int rowIndex) {
+            if ((rowIndex + nrows) > getCount()) {
+                // rows are missing (could be a bad rowspan specification)
+                // or not all the rows have arrived.  Do the best we can with
+                // the current set of rows.
+                nrows = getCount() - rowIndex;
+                if (nrows < 1) {
+                    return;
+                }
+            }
+            int span = 0;
+            for (int i = 0; i < nrows; i++) {
+                RowView rv = getRow(rowIndex + i);
+                span += rv.getPreferredSpan(Y_AXIS);
+            }
+            if (spanNeeded > span) {
+                int adjust = (spanNeeded - span);
+                int rowAdjust = adjust / nrows;
+                int firstAdjust = rowAdjust + (adjust - (rowAdjust * nrows));
+                RowView rv = getRow(rowIndex);
+                adjustments[rowIndex] = Math.max(adjustments[rowIndex],
+                                                 firstAdjust);
+                for (int i = 1; i < nrows; i++) {
+                    adjustments[rowIndex + i] = Math.max(
+                        adjustments[rowIndex + i], rowAdjust);
+                }
+            }
+        }
+
+        void setLayoutArrays(int[] offsets, int[] spans) {
+            this.offsets = offsets;
+            this.spans = spans;
+        }
+
+        // --- RequirementIterator methods -------------------
+
+        public void setOffset(int offs) {
+            RowView rv = getRow(row);
+            if (rv != null) {
+                offsets[rv.viewIndex] = offs;
+            }
+        }
+
+        public int getOffset() {
+            RowView rv = getRow(row);
+            if (rv != null) {
+                return offsets[rv.viewIndex];
+            }
+            return 0;
+        }
+
+        public void setSpan(int span) {
+            RowView rv = getRow(row);
+            if (rv != null) {
+                spans[rv.viewIndex] = span;
+            }
+        }
+
+        public int getSpan() {
+            RowView rv = getRow(row);
+            if (rv != null) {
+                return spans[rv.viewIndex];
+            }
+            return 0;
+        }
+
+        public int getCount() {
+            return rows.size();
+        }
+
+        public void setIndex(int i) {
+            row = i;
+        }
+
+        public float getMinimumSpan(float parentSpan) {
+            return getPreferredSpan(parentSpan);
+        }
+
+        public float getPreferredSpan(float parentSpan) {
+            RowView rv = getRow(row);
+            if (rv != null) {
+                int adjust = (adjustments != null) ? adjustments[row] : 0;
+                return rv.getPreferredSpan(TableView.this.getAxis()) + adjust;
+            }
+            return 0;
+        }
+
+        public float getMaximumSpan(float parentSpan) {
+            return getPreferredSpan(parentSpan);
+        }
+
+        public float getBorderWidth() {
+            return borderWidth;
+        }
+
+        public float getLeadingCollapseSpan() {
+            return cellSpacing;
+        }
+
+        public float getTrailingCollapseSpan() {
+            return cellSpacing;
+        }
+
+        public int getAdjustmentWeight() {
+            return 0;
+        }
+
+        /**
+         * Current row index
+         */
+        private int row;
+
+        /**
+         * Adjustments to the row requirements to handle multi-row
+         * table cells.
+         */
+        private int[] adjustments;
+
+        private int[] offsets;
+        private int[] spans;
+    }
+
+    /**
+     * View of a row in a row-centric table.
+     */
+    public class RowView extends BoxView {
+
+        /**
+         * Constructs a TableView for the given element.
+         *
+         * @param elem the element that this view is responsible for
+         */
+        public RowView(Element elem) {
+            super(elem, View.X_AXIS);
+            fillColumns = new BitSet();
+            RowView.this.setPropertiesFromAttributes();
+        }
+
+        void clearFilledColumns() {
+            fillColumns.and(EMPTY);
+        }
+
+        void fillColumn(int col) {
+            fillColumns.set(col);
+        }
+
+        boolean isFilled(int col) {
+            return fillColumns.get(col);
+        }
+
+        /**
+         * The number of columns present in this row.
+         */
+        int getColumnCount() {
+            int nfill = 0;
+            int n = fillColumns.size();
+            for (int i = 0; i < n; i++) {
+                if (fillColumns.get(i)) {
+                    nfill ++;
+                }
+            }
+            return getViewCount() + nfill;
+        }
+
+        /**
+         * Fetches the attributes to use when rendering.  This is
+         * implemented to multiplex the attributes specified in the
+         * model with a StyleSheet.
+         */
+        public AttributeSet getAttributes() {
+            return attr;
+        }
+
+        View findViewAtPoint(int x, int y, Rectangle alloc) {
+            int n = getViewCount();
+            for (int i = 0; i < n; i++) {
+                if (getChildAllocation(i, alloc).contains(x, y)) {
+                    childAllocation(i, alloc);
+                    return getView(i);
+                }
+            }
+            return null;
+        }
+
+        protected StyleSheet getStyleSheet() {
+            HTMLDocument doc = (HTMLDocument) getDocument();
+            return doc.getStyleSheet();
+        }
+
+        /**
+         * This is called by a child to indicate its
+         * preferred span has changed.  This is implemented to
+         * execute the superclass behavior and well as try to
+         * determine if a row with a multi-row cell hangs across
+         * this row.  If a multi-row cell covers this row it also
+         * needs to propagate a preferenceChanged so that it will
+         * recalculate the multi-row cell.
+         *
+         * @param child the child view
+         * @param width true if the width preference should change
+         * @param height true if the height preference should change
+         */
+        public void preferenceChanged(View child, boolean width, boolean height) {
+            super.preferenceChanged(child, width, height);
+            if (TableView.this.multiRowCells && height) {
+                for (int i = rowIndex  - 1; i >= 0; i--) {
+                    RowView rv = TableView.this.getRow(i);
+                    if (rv.multiRowCells) {
+                        rv.preferenceChanged(null, false, true);
+                        break;
+                    }
+                }
+            }
+        }
+
+        // The major axis requirements for a row are dictated by the column
+        // requirements. These methods use the value calculated by
+        // TableView.
+        protected SizeRequirements calculateMajorAxisRequirements(int axis, SizeRequirements r) {
+            SizeRequirements req = new SizeRequirements();
+            req.minimum = totalColumnRequirements.minimum;
+            req.maximum = totalColumnRequirements.maximum;
+            req.preferred = totalColumnRequirements.preferred;
+            req.alignment = 0f;
+            return req;
+        }
+
+        public float getMinimumSpan(int axis) {
+            float value;
+
+            if (axis == View.X_AXIS) {
+                value = totalColumnRequirements.minimum + getLeftInset() +
+                        getRightInset();
+            }
+            else {
+                value = super.getMinimumSpan(axis);
+            }
+            return value;
+        }
+
+        public float getMaximumSpan(int axis) {
+            float value;
+
+            if (axis == View.X_AXIS) {
+                // We're flexible.
+                value = (float)Integer.MAX_VALUE;
+            }
+            else {
+                value = super.getMaximumSpan(axis);
+            }
+            return value;
+        }
+
+        public float getPreferredSpan(int axis) {
+            float value;
+
+            if (axis == View.X_AXIS) {
+                value = totalColumnRequirements.preferred + getLeftInset() +
+                        getRightInset();
+            }
+            else {
+                value = super.getPreferredSpan(axis);
+            }
+            return value;
+        }
+
+        public void changedUpdate(DocumentEvent e, Shape a, ViewFactory f) {
+            super.changedUpdate(e, a, f);
+            int pos = e.getOffset();
+            if (pos <= getStartOffset() && (pos + e.getLength()) >=
+                getEndOffset()) {
+                RowView.this.setPropertiesFromAttributes();
+            }
+        }
+
+        /**
+         * Renders using the given rendering surface and area on that
+         * surface.  This is implemented to delegate to the css box
+         * painter to paint the border and background prior to the
+         * interior.
+         *
+         * @param g the rendering surface to use
+         * @param allocation the allocated region to render into
+         * @see View#paint
+         */
+        public void paint(Graphics g, Shape allocation) {
+            Rectangle a = (Rectangle) allocation;
+            painter.paint(g, a.x, a.y, a.width, a.height, this);
+            super.paint(g, a);
+        }
+
+        /**
+         * Change the child views.  This is implemented to
+         * provide the superclass behavior and invalidate the
+         * grid so that rows and columns will be recalculated.
+         */
+        public void replace(int offset, int length, View[] views) {
+            super.replace(offset, length, views);
+            invalidateGrid();
+        }
+
+        /**
+         * Calculate the height requirements of the table row.  The
+         * requirements of multi-row cells are not considered for this
+         * calculation.  The table itself will check and adjust the row
+         * requirements for all the rows that have multi-row cells spanning
+         * them.  This method updates the multi-row flag that indicates that
+         * this row and rows below need additional consideration.
+         */
+        protected SizeRequirements calculateMinorAxisRequirements(int axis, SizeRequirements r) {
+//          return super.calculateMinorAxisRequirements(axis, r);
+            long min = 0;
+            long pref = 0;
+            long max = 0;
+            multiRowCells = false;
+            int n = getViewCount();
+            for (int i = 0; i < n; i++) {
+                View v = getView(i);
+                if (getRowsOccupied(v) > 1) {
+                    multiRowCells = true;
+                    max = Math.max((int) v.getMaximumSpan(axis), max);
+                } else {
+                    min = Math.max((int) v.getMinimumSpan(axis), min);
+                    pref = Math.max((int) v.getPreferredSpan(axis), pref);
+                    max = Math.max((int) v.getMaximumSpan(axis), max);
+                }
+            }
+
+            if (r == null) {
+                r = new SizeRequirements();
+                r.alignment = 0.5f;
+            }
+            r.preferred = (int) pref;
+            r.minimum = (int) min;
+            r.maximum = (int) max;
+            return r;
+        }
+
+        /**
+         * Perform layout for the major axis of the box (i.e. the
+         * axis that it represents).  The results of the layout should
+         * be placed in the given arrays which represent the allocations
+         * to the children along the major axis.
+         * <p>
+         * This is re-implemented to give each child the span of the column
+         * width for the table, and to give cells that span multiple columns
+         * the multi-column span.
+         *
+         * @param targetSpan the total span given to the view, which
+         *  would be used to layout the children
+         * @param axis the axis being layed out
+         * @param offsets the offsets from the origin of the view for
+         *  each of the child views; this is a return value and is
+         *  filled in by the implementation of this method
+         * @param spans the span of each child view; this is a return
+         *  value and is filled in by the implementation of this method
+         * @return the offset and span for each child view in the
+         *  offsets and spans parameters
+         */
+        protected void layoutMajorAxis(int targetSpan, int axis, int[] offsets, int[] spans) {
+            int col = 0;
+            int ncells = getViewCount();
+            for (int cell = 0; cell < ncells; cell++) {
+                View cv = getView(cell);
+                if (skipComments && !(cv instanceof CellView)) {
+                    continue;
+                }
+                for (; isFilled(col); col++); // advance to a free column
+                int colSpan = getColumnsOccupied(cv);
+                spans[cell] = columnSpans[col];
+                offsets[cell] = columnOffsets[col];
+                if (colSpan > 1) {
+                    int n = columnSpans.length;
+                    for (int j = 1; j < colSpan; j++) {
+                        // Because the table may be only partially formed, some
+                        // of the columns may not yet exist.  Therefore we check
+                        // the bounds.
+                        if ((col+j) < n) {
+                            spans[cell] += columnSpans[col+j];
+                            spans[cell] += cellSpacing;
+                        }
+                    }
+                    col += colSpan - 1;
+                }
+                col++;
+            }
+        }
+
+        /**
+         * Perform layout for the minor axis of the box (i.e. the
+         * axis orthogonal to the axis that it represents).  The results
+         * of the layout should be placed in the given arrays which represent
+         * the allocations to the children along the minor axis.  This
+         * is called by the superclass whenever the layout needs to be
+         * updated along the minor axis.
+         * <p>
+         * This is implemented to delegate to the superclass, then adjust
+         * the span for any cell that spans multiple rows.
+         *
+         * @param targetSpan the total span given to the view, which
+         *  would be used to layout the children
+         * @param axis the axis being layed out
+         * @param offsets the offsets from the origin of the view for
+         *  each of the child views; this is a return value and is
+         *  filled in by the implementation of this method
+         * @param spans the span of each child view; this is a return
+         *  value and is filled in by the implementation of this method
+         * @return the offset and span for each child view in the
+         *  offsets and spans parameters
+         */
+        protected void layoutMinorAxis(int targetSpan, int axis, int[] offsets, int[] spans) {
+            super.layoutMinorAxis(targetSpan, axis, offsets, spans);
+            int col = 0;
+            int ncells = getViewCount();
+            for (int cell = 0; cell < ncells; cell++, col++) {
+                View cv = getView(cell);
+                for (; isFilled(col); col++); // advance to a free column
+                int colSpan = getColumnsOccupied(cv);
+                int rowSpan = getRowsOccupied(cv);
+                if (rowSpan > 1) {
+
+                    int row0 = rowIndex;
+                    int row1 = Math.min(rowIndex + rowSpan - 1, getRowCount()-1);
+                    spans[cell] = getMultiRowSpan(row0, row1);
+                }
+                if (colSpan > 1) {
+                    col += colSpan - 1;
+                }
+            }
+        }
+
+        /**
+         * Determines the resizability of the view along the
+         * given axis.  A value of 0 or less is not resizable.
+         *
+         * @param axis may be either View.X_AXIS or View.Y_AXIS
+         * @return the resize weight
+         * @exception IllegalArgumentException for an invalid axis
+         */
+        public int getResizeWeight(int axis) {
+            return 1;
+        }
+
+        /**
+         * Fetches the child view that represents the given position in
+         * the model.  This is implemented to walk through the children
+         * looking for a range that contains the given position.  In this
+         * view the children do not necessarily have a one to one mapping
+         * with the child elements.
+         *
+         * @param pos  the search position >= 0
+         * @param a  the allocation to the table on entry, and the
+         *   allocation of the view containing the position on exit
+         * @return  the view representing the given position, or
+         *   null if there isn't one
+         */
+        protected View getViewAtPosition(int pos, Rectangle a) {
+            int n = getViewCount();
+            for (int i = 0; i < n; i++) {
+                View v = getView(i);
+                int p0 = v.getStartOffset();
+                int p1 = v.getEndOffset();
+                if ((pos >= p0) && (pos < p1)) {
+                    // it's in this view.
+                    if (a != null) {
+                        childAllocation(i, a);
+                    }
+                    return v;
+                }
+            }
+            if (pos == getEndOffset()) {
+                View v = getView(n - 1);
+                if (a != null) {
+                    this.childAllocation(n - 1, a);
+                }
+                return v;
+            }
+            return null;
+        }
+
+        /**
+         * Update any cached values that come from attributes.
+         */
+        void setPropertiesFromAttributes() {
+            StyleSheet sheet = getStyleSheet();
+            attr = sheet.getViewAttributes(this);
+            painter = sheet.getBoxPainter(attr);
+        }
+
+        private StyleSheet.BoxPainter painter;
+        private AttributeSet attr;
+
+        /** columns filled by multi-column or multi-row cells */
+        BitSet fillColumns;
+
+        /**
+         * The row index within the overall grid
+         */
+        int rowIndex;
+
+        /**
+         * The view index (for row index to view index conversion).
+         * This is set by the updateGrid method.
+         */
+        int viewIndex;
+
+        /**
+         * Does this table row have cells that span multiple rows?
+         */
+        boolean multiRowCells;
+
+    }
+
+    /**
+     * Default view of an html table cell.  This needs to be moved
+     * somewhere else.
+     */
+    class CellView extends BlockView {
+
+        /**
+         * Constructs a TableCell for the given element.
+         *
+         * @param elem the element that this view is responsible for
+         */
+        public CellView(Element elem) {
+            super(elem, Y_AXIS);
+        }
+
+        /**
+         * Perform layout for the major axis of the box (i.e. the
+         * axis that it represents).  The results of the layout should
+         * be placed in the given arrays which represent the allocations
+         * to the children along the major axis.  This is called by the
+         * superclass to recalculate the positions of the child views
+         * when the layout might have changed.
+         * <p>
+         * This is implemented to delegate to the superclass to
+         * tile the children.  If the target span is greater than
+         * was needed, the offsets are adjusted to align the children
+         * (i.e. position according to the html valign attribute).
+         *
+         * @param targetSpan the total span given to the view, which
+         *  would be used to layout the children
+         * @param axis the axis being layed out
+         * @param offsets the offsets from the origin of the view for
+         *  each of the child views; this is a return value and is
+         *  filled in by the implementation of this method
+         * @param spans the span of each child view; this is a return
+         *  value and is filled in by the implementation of this method
+         * @return the offset and span for each child view in the
+         *  offsets and spans parameters
+         */
+        protected void layoutMajorAxis(int targetSpan, int axis, int[] offsets, int[] spans) {
+            super.layoutMajorAxis(targetSpan, axis, offsets, spans);
+            // calculate usage
+            int used = 0;
+            int n = spans.length;
+            for (int i = 0; i < n; i++) {
+                used += spans[i];
+            }
+
+            // calculate adjustments
+            int adjust = 0;
+            if (used < targetSpan) {
+                // PENDING(prinz) change to use the css alignment.
+                String valign = (String) getElement().getAttributes().getAttribute(
+                    HTML.Attribute.VALIGN);
+                if (valign == null) {
+                    AttributeSet rowAttr = getElement().getParentElement().getAttributes();
+                    valign = (String) rowAttr.getAttribute(HTML.Attribute.VALIGN);
+                }
+                if ((valign == null) || valign.equals("middle")) {
+                    adjust = (targetSpan - used) / 2;
+                } else if (valign.equals("bottom")) {
+                    adjust = targetSpan - used;
+                }
+            }
+
+            // make adjustments.
+            if (adjust != 0) {
+                for (int i = 0; i < n; i++) {
+                    offsets[i] += adjust;
+                }
+            }
+        }
+
+        /**
+         * Calculate the requirements needed along the major axis.
+         * This is called by the superclass whenever the requirements
+         * need to be updated (i.e. a preferenceChanged was messaged
+         * through this view).
+         * <p>
+         * This is implemented to delegate to the superclass, but
+         * indicate the maximum size is very large (i.e. the cell
+         * is willing to expend to occupy the full height of the row).
+         *
+         * @param axis the axis being layed out.
+         * @param r the requirements to fill in.  If null, a new one
+         *  should be allocated.
+         */
+        protected SizeRequirements calculateMajorAxisRequirements(int axis,
+                                                                  SizeRequirements r) {
+            SizeRequirements req = super.calculateMajorAxisRequirements(axis, r);
+            req.maximum = Integer.MAX_VALUE;
+            return req;
+        }
+
+        @Override
+        protected SizeRequirements calculateMinorAxisRequirements(int axis, SizeRequirements r) {
+            SizeRequirements rv = super.calculateMinorAxisRequirements(axis, r);
+            //for the cell the minimum should be derived from the child views
+            //the parent behaviour is to use CSS for that
+            int n = getViewCount();
+            int min = 0;
+            for (int i = 0; i < n; i++) {
+                View v = getView(i);
+                min = Math.max((int) v.getMinimumSpan(axis), min);
+            }
+            rv.minimum = Math.min(rv.minimum, min);
+            return rv;
+        }
+    }
+
+
+}

@@ -1,362 +1,356 @@
-/*     */ package java.rmi;
-/*     */ 
-/*     */ import java.net.MalformedURLException;
-/*     */ import java.net.URI;
-/*     */ import java.net.URISyntaxException;
-/*     */ import java.rmi.registry.LocateRegistry;
-/*     */ import java.rmi.registry.Registry;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class Naming
-/*     */ {
-/*     */   public static Remote lookup(String paramString) throws NotBoundException, MalformedURLException, RemoteException {
-/*  96 */     ParsedNamingURL parsedNamingURL = parseURL(paramString);
-/*  97 */     Registry registry = getRegistry(parsedNamingURL);
-/*     */     
-/*  99 */     if (parsedNamingURL.name == null)
-/* 100 */       return registry; 
-/* 101 */     return registry.lookup(parsedNamingURL.name);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static void bind(String paramString, Remote paramRemote) throws AlreadyBoundException, MalformedURLException, RemoteException {
-/* 122 */     ParsedNamingURL parsedNamingURL = parseURL(paramString);
-/* 123 */     Registry registry = getRegistry(parsedNamingURL);
-/*     */     
-/* 125 */     if (paramRemote == null) {
-/* 126 */       throw new NullPointerException("cannot bind to null");
-/*     */     }
-/* 128 */     registry.bind(parsedNamingURL.name, paramRemote);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static void unbind(String paramString) throws RemoteException, NotBoundException, MalformedURLException {
-/* 149 */     ParsedNamingURL parsedNamingURL = parseURL(paramString);
-/* 150 */     Registry registry = getRegistry(parsedNamingURL);
-/*     */     
-/* 152 */     registry.unbind(parsedNamingURL.name);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static void rebind(String paramString, Remote paramRemote) throws RemoteException, MalformedURLException {
-/* 171 */     ParsedNamingURL parsedNamingURL = parseURL(paramString);
-/* 172 */     Registry registry = getRegistry(parsedNamingURL);
-/*     */     
-/* 174 */     if (paramRemote == null) {
-/* 175 */       throw new NullPointerException("cannot bind to null");
-/*     */     }
-/* 177 */     registry.rebind(parsedNamingURL.name, paramRemote);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static String[] list(String paramString) throws RemoteException, MalformedURLException {
-/* 198 */     ParsedNamingURL parsedNamingURL = parseURL(paramString);
-/* 199 */     Registry registry = getRegistry(parsedNamingURL);
-/*     */     
-/* 201 */     String str = "";
-/* 202 */     if (parsedNamingURL.port > 0 || !parsedNamingURL.host.equals(""))
-/* 203 */       str = str + "//" + parsedNamingURL.host; 
-/* 204 */     if (parsedNamingURL.port > 0)
-/* 205 */       str = str + ":" + parsedNamingURL.port; 
-/* 206 */     str = str + "/";
-/*     */     
-/* 208 */     String[] arrayOfString = registry.list();
-/* 209 */     for (byte b = 0; b < arrayOfString.length; b++) {
-/* 210 */       arrayOfString[b] = str + arrayOfString[b];
-/*     */     }
-/* 212 */     return arrayOfString;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static Registry getRegistry(ParsedNamingURL paramParsedNamingURL) throws RemoteException {
-/* 221 */     return LocateRegistry.getRegistry(paramParsedNamingURL.host, paramParsedNamingURL.port);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static ParsedNamingURL parseURL(String paramString) throws MalformedURLException {
-/*     */     try {
-/* 237 */       return intParseURL(paramString);
-/* 238 */     } catch (URISyntaxException uRISyntaxException) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 243 */       MalformedURLException malformedURLException = new MalformedURLException("invalid URL String: " + paramString);
-/*     */       
-/* 245 */       malformedURLException.initCause(uRISyntaxException);
-/* 246 */       int i = paramString.indexOf(':');
-/* 247 */       int j = paramString.indexOf("//:");
-/* 248 */       if (j < 0) {
-/* 249 */         throw malformedURLException;
-/*     */       }
-/* 251 */       if (j == 0 || (i > 0 && j == i + 1)) {
-/*     */ 
-/*     */         
-/* 254 */         int k = j + 2;
-/*     */ 
-/*     */         
-/* 257 */         String str = paramString.substring(0, k) + "localhost" + paramString.substring(k);
-/*     */         try {
-/* 259 */           return intParseURL(str);
-/* 260 */         } catch (URISyntaxException uRISyntaxException1) {
-/* 261 */           throw malformedURLException;
-/* 262 */         } catch (MalformedURLException malformedURLException1) {
-/* 263 */           throw malformedURLException1;
-/*     */         } 
-/*     */       } 
-/* 266 */       throw malformedURLException;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static ParsedNamingURL intParseURL(String paramString) throws MalformedURLException, URISyntaxException {
-/* 273 */     URI uRI = new URI(paramString);
-/* 274 */     if (uRI.isOpaque()) {
-/* 275 */       throw new MalformedURLException("not a hierarchical URL: " + paramString);
-/*     */     }
-/*     */     
-/* 278 */     if (uRI.getFragment() != null) {
-/* 279 */       throw new MalformedURLException("invalid character, '#', in URL name: " + paramString);
-/*     */     }
-/* 281 */     if (uRI.getQuery() != null) {
-/* 282 */       throw new MalformedURLException("invalid character, '?', in URL name: " + paramString);
-/*     */     }
-/* 284 */     if (uRI.getUserInfo() != null) {
-/* 285 */       throw new MalformedURLException("invalid character, '@', in URL host: " + paramString);
-/*     */     }
-/*     */     
-/* 288 */     String str1 = uRI.getScheme();
-/* 289 */     if (str1 != null && !str1.equals("rmi")) {
-/* 290 */       throw new MalformedURLException("invalid URL scheme: " + paramString);
-/*     */     }
-/*     */     
-/* 293 */     String str2 = uRI.getPath();
-/* 294 */     if (str2 != null) {
-/* 295 */       if (str2.startsWith("/")) {
-/* 296 */         str2 = str2.substring(1);
-/*     */       }
-/* 298 */       if (str2.length() == 0) {
-/* 299 */         str2 = null;
-/*     */       }
-/*     */     } 
-/*     */     
-/* 303 */     String str3 = uRI.getHost();
-/* 304 */     if (str3 == null) {
-/* 305 */       str3 = "";
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/*     */       try {
-/* 313 */         uRI.parseServerAuthority();
-/* 314 */       } catch (URISyntaxException uRISyntaxException) {
-/*     */         
-/* 316 */         String str = uRI.getAuthority();
-/* 317 */         if (str != null && str.startsWith(":")) {
-/*     */           
-/* 319 */           str = "localhost" + str;
-/*     */           try {
-/* 321 */             uRI = new URI(null, str, null, null, null);
-/*     */ 
-/*     */             
-/* 324 */             uRI.parseServerAuthority();
-/* 325 */           } catch (URISyntaxException uRISyntaxException1) {
-/* 326 */             throw new MalformedURLException("invalid authority: " + paramString);
-/*     */           } 
-/*     */         } else {
-/*     */           
-/* 330 */           throw new MalformedURLException("invalid authority: " + paramString);
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 335 */     int i = uRI.getPort();
-/* 336 */     if (i == -1) {
-/* 337 */       i = 1099;
-/*     */     }
-/* 339 */     return new ParsedNamingURL(str3, i, str2);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private static class ParsedNamingURL
-/*     */   {
-/*     */     String host;
-/*     */     
-/*     */     int port;
-/*     */     String name;
-/*     */     
-/*     */     ParsedNamingURL(String param1String1, int param1Int, String param1String2) {
-/* 351 */       this.host = param1String1;
-/* 352 */       this.port = param1Int;
-/* 353 */       this.name = param1String2;
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\rmi\Naming.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1996, 2005, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package java.rmi;
+
+import java.rmi.registry.*;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+
+/**
+ * The <code>Naming</code> class provides methods for storing and obtaining
+ * references to remote objects in a remote object registry.  Each method of
+ * the <code>Naming</code> class takes as one of its arguments a name that
+ * is a <code>java.lang.String</code> in URL format (without the
+ * scheme component) of the form:
+ *
+ * <PRE>
+ *    //host:port/name
+ * </PRE>
+ *
+ * <P>where <code>host</code> is the host (remote or local) where the registry
+ * is located, <code>port</code> is the port number on which the registry
+ * accepts calls, and where <code>name</code> is a simple string uninterpreted
+ * by the registry. Both <code>host</code> and <code>port</code> are optional.
+ * If <code>host</code> is omitted, the host defaults to the local host. If
+ * <code>port</code> is omitted, then the port defaults to 1099, the
+ * "well-known" port that RMI's registry, <code>rmiregistry</code>, uses.
+ *
+ * <P><em>Binding</em> a name for a remote object is associating or
+ * registering a name for a remote object that can be used at a later time to
+ * look up that remote object.  A remote object can be associated with a name
+ * using the <code>Naming</code> class's <code>bind</code> or
+ * <code>rebind</code> methods.
+ *
+ * <P>Once a remote object is registered (bound) with the RMI registry on the
+ * local host, callers on a remote (or local) host can lookup the remote
+ * object by name, obtain its reference, and then invoke remote methods on the
+ * object.  A registry may be shared by all servers running on a host or an
+ * individual server process may create and use its own registry if desired
+ * (see <code>java.rmi.registry.LocateRegistry.createRegistry</code> method
+ * for details).
+ *
+ * @author  Ann Wollrath
+ * @author  Roger Riggs
+ * @since   JDK1.1
+ * @see     java.rmi.registry.Registry
+ * @see     java.rmi.registry.LocateRegistry
+ * @see     java.rmi.registry.LocateRegistry#createRegistry(int)
+ */
+public final class Naming {
+    /**
+     * Disallow anyone from creating one of these
+     */
+    private Naming() {}
+
+    /**
+     * Returns a reference, a stub, for the remote object associated
+     * with the specified <code>name</code>.
+     *
+     * @param name a name in URL format (without the scheme component)
+     * @return a reference for a remote object
+     * @exception NotBoundException if name is not currently bound
+     * @exception RemoteException if registry could not be contacted
+     * @exception AccessException if this operation is not permitted
+     * @exception MalformedURLException if the name is not an appropriately
+     *  formatted URL
+     * @since JDK1.1
+     */
+    public static Remote lookup(String name)
+        throws NotBoundException,
+            java.net.MalformedURLException,
+            RemoteException
+    {
+        ParsedNamingURL parsed = parseURL(name);
+        Registry registry = getRegistry(parsed);
+
+        if (parsed.name == null)
+            return registry;
+        return registry.lookup(parsed.name);
+    }
+
+    /**
+     * Binds the specified <code>name</code> to a remote object.
+     *
+     * @param name a name in URL format (without the scheme component)
+     * @param obj a reference for the remote object (usually a stub)
+     * @exception AlreadyBoundException if name is already bound
+     * @exception MalformedURLException if the name is not an appropriately
+     *  formatted URL
+     * @exception RemoteException if registry could not be contacted
+     * @exception AccessException if this operation is not permitted (if
+     * originating from a non-local host, for example)
+     * @since JDK1.1
+     */
+    public static void bind(String name, Remote obj)
+        throws AlreadyBoundException,
+            java.net.MalformedURLException,
+            RemoteException
+    {
+        ParsedNamingURL parsed = parseURL(name);
+        Registry registry = getRegistry(parsed);
+
+        if (obj == null)
+            throw new NullPointerException("cannot bind to null");
+
+        registry.bind(parsed.name, obj);
+    }
+
+    /**
+     * Destroys the binding for the specified name that is associated
+     * with a remote object.
+     *
+     * @param name a name in URL format (without the scheme component)
+     * @exception NotBoundException if name is not currently bound
+     * @exception MalformedURLException if the name is not an appropriately
+     *  formatted URL
+     * @exception RemoteException if registry could not be contacted
+     * @exception AccessException if this operation is not permitted (if
+     * originating from a non-local host, for example)
+     * @since JDK1.1
+     */
+    public static void unbind(String name)
+        throws RemoteException,
+            NotBoundException,
+            java.net.MalformedURLException
+    {
+        ParsedNamingURL parsed = parseURL(name);
+        Registry registry = getRegistry(parsed);
+
+        registry.unbind(parsed.name);
+    }
+
+    /**
+     * Rebinds the specified name to a new remote object. Any existing
+     * binding for the name is replaced.
+     *
+     * @param name a name in URL format (without the scheme component)
+     * @param obj new remote object to associate with the name
+     * @exception MalformedURLException if the name is not an appropriately
+     *  formatted URL
+     * @exception RemoteException if registry could not be contacted
+     * @exception AccessException if this operation is not permitted (if
+     * originating from a non-local host, for example)
+     * @since JDK1.1
+     */
+    public static void rebind(String name, Remote obj)
+        throws RemoteException, java.net.MalformedURLException
+    {
+        ParsedNamingURL parsed = parseURL(name);
+        Registry registry = getRegistry(parsed);
+
+        if (obj == null)
+            throw new NullPointerException("cannot bind to null");
+
+        registry.rebind(parsed.name, obj);
+    }
+
+    /**
+     * Returns an array of the names bound in the registry.  The names are
+     * URL-formatted (without the scheme component) strings. The array contains
+     * a snapshot of the names present in the registry at the time of the
+     * call.
+     *
+     * @param   name a registry name in URL format (without the scheme
+     *          component)
+     * @return  an array of names (in the appropriate format) bound
+     *          in the registry
+     * @exception MalformedURLException if the name is not an appropriately
+     *  formatted URL
+     * @exception RemoteException if registry could not be contacted.
+     * @since JDK1.1
+     */
+    public static String[] list(String name)
+        throws RemoteException, java.net.MalformedURLException
+    {
+        ParsedNamingURL parsed = parseURL(name);
+        Registry registry = getRegistry(parsed);
+
+        String prefix = "";
+        if (parsed.port > 0 || !parsed.host.equals(""))
+            prefix += "//" + parsed.host;
+        if (parsed.port > 0)
+            prefix += ":" + parsed.port;
+        prefix += "/";
+
+        String[] names = registry.list();
+        for (int i = 0; i < names.length; i++) {
+            names[i] = prefix + names[i];
+        }
+        return names;
+    }
+
+    /**
+     * Returns a registry reference obtained from information in the URL.
+     */
+    private static Registry getRegistry(ParsedNamingURL parsed)
+        throws RemoteException
+    {
+        return LocateRegistry.getRegistry(parsed.host, parsed.port);
+    }
+
+    /**
+     * Dissect Naming URL strings to obtain referenced host, port and
+     * object name.
+     *
+     * @return an object which contains each of the above
+     * components.
+     *
+     * @exception MalformedURLException if given url string is malformed
+     */
+    private static ParsedNamingURL parseURL(String str)
+        throws MalformedURLException
+    {
+        try {
+            return intParseURL(str);
+        } catch (URISyntaxException ex) {
+            /* With RFC 3986 URI handling, 'rmi://:<port>' and
+             * '//:<port>' forms will result in a URI syntax exception
+             * Convert the authority to a localhost:<port> form
+             */
+            MalformedURLException mue = new MalformedURLException(
+                "invalid URL String: " + str);
+            mue.initCause(ex);
+            int indexSchemeEnd = str.indexOf(':');
+            int indexAuthorityBegin = str.indexOf("//:");
+            if (indexAuthorityBegin < 0) {
+                throw mue;
+            }
+            if ((indexAuthorityBegin == 0) ||
+                    ((indexSchemeEnd > 0) &&
+                    (indexAuthorityBegin == indexSchemeEnd + 1))) {
+                int indexHostBegin = indexAuthorityBegin + 2;
+                String newStr = str.substring(0, indexHostBegin) +
+                                "localhost" +
+                                str.substring(indexHostBegin);
+                try {
+                    return intParseURL(newStr);
+                } catch (URISyntaxException inte) {
+                    throw mue;
+                } catch (MalformedURLException inte) {
+                    throw inte;
+                }
+            }
+            throw mue;
+        }
+    }
+
+    private static ParsedNamingURL intParseURL(String str)
+        throws MalformedURLException, URISyntaxException
+    {
+        URI uri = new URI(str);
+        if (uri.isOpaque()) {
+            throw new MalformedURLException(
+                "not a hierarchical URL: " + str);
+        }
+        if (uri.getFragment() != null) {
+            throw new MalformedURLException(
+                "invalid character, '#', in URL name: " + str);
+        } else if (uri.getQuery() != null) {
+            throw new MalformedURLException(
+                "invalid character, '?', in URL name: " + str);
+        } else if (uri.getUserInfo() != null) {
+            throw new MalformedURLException(
+                "invalid character, '@', in URL host: " + str);
+        }
+        String scheme = uri.getScheme();
+        if (scheme != null && !scheme.equals("rmi")) {
+            throw new MalformedURLException("invalid URL scheme: " + str);
+        }
+
+        String name = uri.getPath();
+        if (name != null) {
+            if (name.startsWith("/")) {
+                name = name.substring(1);
+            }
+            if (name.length() == 0) {
+                name = null;
+            }
+        }
+
+        String host = uri.getHost();
+        if (host == null) {
+            host = "";
+            try {
+                /*
+                 * With 2396 URI handling, forms such as 'rmi://host:bar'
+                 * or 'rmi://:<port>' are parsed into a registry based
+                 * authority. We only want to allow server based naming
+                 * authorities.
+                 */
+                uri.parseServerAuthority();
+            } catch (URISyntaxException use) {
+                // Check if the authority is of form ':<port>'
+                String authority = uri.getAuthority();
+                if (authority != null && authority.startsWith(":")) {
+                    // Convert the authority to 'localhost:<port>' form
+                    authority = "localhost" + authority;
+                    try {
+                        uri = new URI(null, authority, null, null, null);
+                        // Make sure it now parses to a valid server based
+                        // naming authority
+                        uri.parseServerAuthority();
+                    } catch (URISyntaxException use2) {
+                        throw new
+                            MalformedURLException("invalid authority: " + str);
+                    }
+                } else {
+                    throw new
+                        MalformedURLException("invalid authority: " + str);
+                }
+            }
+        }
+        int port = uri.getPort();
+        if (port == -1) {
+            port = Registry.REGISTRY_PORT;
+        }
+        return new ParsedNamingURL(host, port, name);
+    }
+
+    /**
+     * Simple class to enable multiple URL return values.
+     */
+    private static class ParsedNamingURL {
+        String host;
+        int port;
+        String name;
+
+        ParsedNamingURL(String host, int port, String name) {
+            this.host = host;
+            this.port = port;
+            this.name = name;
+        }
+    }
+}

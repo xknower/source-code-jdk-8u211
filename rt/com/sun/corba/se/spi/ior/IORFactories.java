@@ -1,209 +1,203 @@
-/*     */ package com.sun.corba.se.spi.ior;
-/*     */ 
-/*     */ import com.sun.corba.se.impl.ior.IORImpl;
-/*     */ import com.sun.corba.se.impl.ior.IORTemplateImpl;
-/*     */ import com.sun.corba.se.impl.ior.IORTemplateListImpl;
-/*     */ import com.sun.corba.se.impl.ior.ObjectIdImpl;
-/*     */ import com.sun.corba.se.impl.ior.ObjectKeyFactoryImpl;
-/*     */ import com.sun.corba.se.impl.ior.ObjectKeyImpl;
-/*     */ import com.sun.corba.se.impl.ior.ObjectReferenceFactoryImpl;
-/*     */ import com.sun.corba.se.impl.ior.ObjectReferenceProducerBase;
-/*     */ import com.sun.corba.se.impl.ior.ObjectReferenceTemplateImpl;
-/*     */ import com.sun.corba.se.impl.orbutil.ORBUtility;
-/*     */ import com.sun.corba.se.spi.orb.ORB;
-/*     */ import java.io.Serializable;
-/*     */ import org.omg.CORBA.BAD_PARAM;
-/*     */ import org.omg.CORBA.Object;
-/*     */ import org.omg.CORBA.portable.ValueFactory;
-/*     */ import org.omg.CORBA_2_3.portable.InputStream;
-/*     */ import org.omg.PortableInterceptor.ObjectReferenceFactory;
-/*     */ import org.omg.PortableInterceptor.ObjectReferenceTemplate;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class IORFactories
-/*     */ {
-/*     */   public static ObjectId makeObjectId(byte[] paramArrayOfbyte) {
-/*  69 */     return new ObjectIdImpl(paramArrayOfbyte);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static ObjectKey makeObjectKey(ObjectKeyTemplate paramObjectKeyTemplate, ObjectId paramObjectId) {
-/*  77 */     return new ObjectKeyImpl(paramObjectKeyTemplate, paramObjectId);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static IOR makeIOR(ORB paramORB, String paramString) {
-/*  84 */     return new IORImpl(paramORB, paramString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static IOR makeIOR(ORB paramORB) {
-/*  91 */     return new IORImpl(paramORB);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static IOR makeIOR(InputStream paramInputStream) {
-/*  98 */     return new IORImpl(paramInputStream);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static IORTemplate makeIORTemplate(ObjectKeyTemplate paramObjectKeyTemplate) {
-/* 106 */     return new IORTemplateImpl(paramObjectKeyTemplate);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static IORTemplate makeIORTemplate(InputStream paramInputStream) {
-/* 113 */     return new IORTemplateImpl(paramInputStream);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public static IORTemplateList makeIORTemplateList() {
-/* 118 */     return new IORTemplateListImpl();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public static IORTemplateList makeIORTemplateList(InputStream paramInputStream) {
-/* 123 */     return new IORTemplateListImpl(paramInputStream);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public static IORFactory getIORFactory(ObjectReferenceTemplate paramObjectReferenceTemplate) {
-/* 128 */     if (paramObjectReferenceTemplate instanceof ObjectReferenceTemplateImpl) {
-/* 129 */       ObjectReferenceTemplateImpl objectReferenceTemplateImpl = (ObjectReferenceTemplateImpl)paramObjectReferenceTemplate;
-/*     */       
-/* 131 */       return objectReferenceTemplateImpl.getIORFactory();
-/*     */     } 
-/*     */     
-/* 134 */     throw new BAD_PARAM();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public static IORTemplateList getIORTemplateList(ObjectReferenceFactory paramObjectReferenceFactory) {
-/* 139 */     if (paramObjectReferenceFactory instanceof ObjectReferenceProducerBase) {
-/* 140 */       ObjectReferenceProducerBase objectReferenceProducerBase = (ObjectReferenceProducerBase)paramObjectReferenceFactory;
-/*     */       
-/* 142 */       return objectReferenceProducerBase.getIORTemplateList();
-/*     */     } 
-/*     */     
-/* 145 */     throw new BAD_PARAM();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static ObjectReferenceTemplate makeObjectReferenceTemplate(ORB paramORB, IORTemplate paramIORTemplate) {
-/* 151 */     return new ObjectReferenceTemplateImpl(paramORB, paramIORTemplate);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static ObjectReferenceFactory makeObjectReferenceFactory(ORB paramORB, IORTemplateList paramIORTemplateList) {
-/* 157 */     return new ObjectReferenceFactoryImpl(paramORB, paramIORTemplateList);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public static ObjectKeyFactory makeObjectKeyFactory(ORB paramORB) {
-/* 162 */     return new ObjectKeyFactoryImpl(paramORB);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public static IOR getIOR(Object paramObject) {
-/* 167 */     return ORBUtility.getIOR(paramObject);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public static Object makeObjectReference(IOR paramIOR) {
-/* 172 */     return ORBUtility.makeObjectReference(paramIOR);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static void registerValueFactories(ORB paramORB) {
-/* 183 */     ValueFactory valueFactory = new ValueFactory()
-/*     */       {
-/*     */         public Serializable read_value(InputStream param1InputStream) {
-/* 186 */           return new ObjectReferenceTemplateImpl(param1InputStream);
-/*     */         }
-/*     */       };
-/*     */     
-/* 190 */     paramORB.register_value_factory("IDL:com/sun/corba/se/impl/ior/ObjectReferenceTemplateImpl:1.0", valueFactory);
-/*     */ 
-/*     */ 
-/*     */     
-/* 194 */     valueFactory = new ValueFactory()
-/*     */       {
-/*     */         public Serializable read_value(InputStream param1InputStream) {
-/* 197 */           return new ObjectReferenceFactoryImpl(param1InputStream);
-/*     */         }
-/*     */       };
-/*     */     
-/* 201 */     paramORB.register_value_factory("IDL:com/sun/corba/se/impl/ior/ObjectReferenceFactoryImpl:1.0", valueFactory);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\spi\ior\IORFactories.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.spi.ior ;
+
+import java.io.Serializable ;
+
+import org.omg.CORBA_2_3.portable.InputStream ;
+
+import org.omg.CORBA.BAD_PARAM ;
+import org.omg.CORBA.portable.ValueFactory ;
+
+import org.omg.PortableInterceptor.ObjectReferenceTemplate ;
+import org.omg.PortableInterceptor.ObjectReferenceFactory ;
+
+import com.sun.corba.se.impl.ior.ObjectIdImpl ;
+import com.sun.corba.se.impl.ior.ObjectKeyImpl ;
+import com.sun.corba.se.impl.ior.IORImpl ;
+import com.sun.corba.se.impl.ior.IORTemplateImpl ;
+import com.sun.corba.se.impl.ior.IORTemplateListImpl ;
+import com.sun.corba.se.impl.ior.ObjectReferenceProducerBase ;
+import com.sun.corba.se.impl.ior.ObjectReferenceFactoryImpl ;
+import com.sun.corba.se.impl.ior.ObjectReferenceTemplateImpl ;
+import com.sun.corba.se.impl.ior.ObjectKeyFactoryImpl ;
+
+import com.sun.corba.se.impl.orbutil.ORBUtility ;
+
+import com.sun.corba.se.spi.orb.ORB ;
+
+/** This class provides a number of factory methods for creating
+ * various IOR SPI classes which are not subclassed for specific protocols.
+ * The following types must be created using this class:
+ * <ul>
+ * <li>ObjectId</li>
+ * <li>ObjectKey</li>
+ * <li>IOR</li>
+ * <li>IORTemplate</li>
+ * </ul>
+ */
+public class IORFactories {
+    private IORFactories() {}
+
+    /** Create an ObjectId for the given byte sequence.
+     */
+    public static ObjectId makeObjectId( byte[] id )
+    {
+        return new ObjectIdImpl( id ) ;
+    }
+
+    /** Create an ObjectKey for the given ObjectKeyTemplate and
+     * ObjectId.
+     */
+    public static ObjectKey makeObjectKey( ObjectKeyTemplate oktemp, ObjectId oid )
+    {
+        return new ObjectKeyImpl( oktemp, oid ) ;
+    }
+
+    /** Create an empty IOR for the given orb and typeid.  The result is mutable.
+     */
+    public static IOR makeIOR( ORB orb, String typeid )
+    {
+        return new IORImpl( orb, typeid ) ;
+    }
+
+    /** Create an empty IOR for the given orb with a null typeid.  The result is mutable.
+     */
+    public static IOR makeIOR( ORB orb )
+    {
+        return new IORImpl( orb ) ;
+    }
+
+    /** Read an IOR from an InputStream.  ObjectKeys are not shared.
+     */
+    public static IOR makeIOR( InputStream is )
+    {
+        return new IORImpl( is ) ;
+    }
+
+    /** Create an IORTemplate with the given ObjectKeyTemplate.  The result
+     * is mutable.
+     */
+    public static IORTemplate makeIORTemplate( ObjectKeyTemplate oktemp )
+    {
+        return new IORTemplateImpl( oktemp ) ;
+    }
+
+    /** Read an IORTemplate from an InputStream.
+     */
+    public static IORTemplate makeIORTemplate( InputStream is )
+    {
+        return new IORTemplateImpl( is ) ;
+    }
+
+    public static IORTemplateList makeIORTemplateList()
+    {
+        return new IORTemplateListImpl() ;
+    }
+
+    public static IORTemplateList makeIORTemplateList( InputStream is )
+    {
+        return new IORTemplateListImpl( is ) ;
+    }
+
+    public static IORFactory getIORFactory( ObjectReferenceTemplate ort )
+    {
+        if (ort instanceof ObjectReferenceTemplateImpl) {
+            ObjectReferenceTemplateImpl orti =
+                (ObjectReferenceTemplateImpl)ort ;
+            return orti.getIORFactory() ;
+        }
+
+        throw new BAD_PARAM() ;
+    }
+
+    public static IORTemplateList getIORTemplateList( ObjectReferenceFactory orf )
+    {
+        if (orf instanceof ObjectReferenceProducerBase) {
+            ObjectReferenceProducerBase base =
+                (ObjectReferenceProducerBase)orf ;
+            return base.getIORTemplateList() ;
+        }
+
+        throw new BAD_PARAM() ;
+    }
+
+    public static ObjectReferenceTemplate makeObjectReferenceTemplate( ORB orb,
+        IORTemplate iortemp )
+    {
+        return new ObjectReferenceTemplateImpl( orb, iortemp ) ;
+    }
+
+    public static ObjectReferenceFactory makeObjectReferenceFactory( ORB orb,
+        IORTemplateList iortemps )
+    {
+        return new ObjectReferenceFactoryImpl( orb, iortemps ) ;
+    }
+
+    public static ObjectKeyFactory makeObjectKeyFactory( ORB orb )
+    {
+        return new ObjectKeyFactoryImpl( orb ) ;
+    }
+
+    public static IOR getIOR( org.omg.CORBA.Object obj )
+    {
+        return ORBUtility.getIOR( obj ) ;
+    }
+
+    public static org.omg.CORBA.Object makeObjectReference( IOR ior )
+    {
+        return ORBUtility.makeObjectReference( ior ) ;
+    }
+
+    /** This method must be called in order to register the value
+     * factories for the ObjectReferenceTemplate and ObjectReferenceFactory
+     * value types.
+     */
+    public static void registerValueFactories( ORB orb )
+    {
+        // Create and register the factory for the Object Reference Template
+        // implementation.
+        ValueFactory vf = new ValueFactory() {
+            public Serializable read_value( InputStream is )
+            {
+                return new ObjectReferenceTemplateImpl( is ) ;
+            }
+        } ;
+
+        orb.register_value_factory( ObjectReferenceTemplateImpl.repositoryId, vf ) ;
+
+        // Create and register the factory for the Object Reference Factory
+        // implementation.
+        vf = new ValueFactory() {
+            public Serializable read_value( InputStream is )
+            {
+                return new ObjectReferenceFactoryImpl( is ) ;
+            }
+        } ;
+
+        orb.register_value_factory( ObjectReferenceFactoryImpl.repositoryId, vf ) ;
+    }
+}

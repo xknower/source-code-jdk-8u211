@@ -1,15 +1,53 @@
+/*
+ * Copyright (c) 1995, 1997, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package java.applet;
 
-public interface AudioClip {
-  void play();
-  
-  void loop();
-  
-  void stop();
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\applet\AudioClip.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * The <code>AudioClip</code> interface is a simple abstraction for
+ * playing a sound clip. Multiple <code>AudioClip</code> items can be
+ * playing at the same time, and the resulting sound is mixed
+ * together to produce a composite.
+ *
+ * @author      Arthur van Hoff
+ * @since       JDK1.0
  */
+public interface AudioClip {
+    /**
+     * Starts playing this audio clip. Each time this method is called,
+     * the clip is restarted from the beginning.
+     */
+    void play();
+
+    /**
+     * Starts playing this audio clip in a loop.
+     */
+    void loop();
+
+    /**
+     * Stops playing this audio clip.
+     */
+    void stop();
+}

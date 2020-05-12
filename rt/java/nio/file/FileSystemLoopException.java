@@ -1,56 +1,50 @@
-/*    */ package java.nio.file;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class FileSystemLoopException
-/*    */   extends FileSystemException
-/*    */ {
-/*    */   private static final long serialVersionUID = 4843039591949217617L;
-/*    */   
-/*    */   public FileSystemLoopException(String paramString) {
-/* 48 */     super(paramString);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\nio\file\FileSystemLoopException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.nio.file;
+
+/**
+ * Checked exception thrown when a file system loop, or cycle, is encountered.
+ *
+ * @since 1.7
+ * @see Files#walkFileTree
+ */
+
+public class FileSystemLoopException
+    extends FileSystemException
+{
+    private static final long serialVersionUID = 4843039591949217617L;
+
+    /**
+     * Constructs an instance of this class.
+     *
+     * @param   file
+     *          a string identifying the file causing the cycle or {@code null} if
+     *          not known
+     */
+    public FileSystemLoopException(String file) {
+        super(file);
+    }
+}

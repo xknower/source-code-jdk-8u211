@@ -1,1306 +1,1317 @@
-/*      */ package com.sun.imageio.plugins.gif;
-/*      */ 
-/*      */ import com.sun.imageio.plugins.common.LZWCompressor;
-/*      */ import com.sun.imageio.plugins.common.PaletteBuilder;
-/*      */ import java.awt.Dimension;
-/*      */ import java.awt.Rectangle;
-/*      */ import java.awt.image.ColorModel;
-/*      */ import java.awt.image.ComponentSampleModel;
-/*      */ import java.awt.image.DataBufferByte;
-/*      */ import java.awt.image.IndexColorModel;
-/*      */ import java.awt.image.Raster;
-/*      */ import java.awt.image.RenderedImage;
-/*      */ import java.awt.image.SampleModel;
-/*      */ import java.io.IOException;
-/*      */ import java.nio.ByteOrder;
-/*      */ import java.util.Arrays;
-/*      */ import java.util.Iterator;
-/*      */ import javax.imageio.IIOException;
-/*      */ import javax.imageio.IIOImage;
-/*      */ import javax.imageio.ImageTypeSpecifier;
-/*      */ import javax.imageio.ImageWriteParam;
-/*      */ import javax.imageio.ImageWriter;
-/*      */ import javax.imageio.metadata.IIOInvalidTreeException;
-/*      */ import javax.imageio.metadata.IIOMetadata;
-/*      */ import javax.imageio.metadata.IIOMetadataNode;
-/*      */ import javax.imageio.stream.ImageOutputStream;
-/*      */ import org.w3c.dom.Node;
-/*      */ import org.w3c.dom.NodeList;
-/*      */ import sun.awt.image.ByteComponentRaster;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class GIFImageWriter
-/*      */   extends ImageWriter
-/*      */ {
-/*      */   private static final boolean DEBUG = false;
-/*      */   static final String STANDARD_METADATA_NAME = "javax_imageio_1.0";
-/*      */   static final String STREAM_METADATA_NAME = "javax_imageio_gif_stream_1.0";
-/*      */   static final String IMAGE_METADATA_NAME = "javax_imageio_gif_image_1.0";
-/*   75 */   private ImageOutputStream stream = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean isWritingSequence = false;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean wroteSequenceHeader = false;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*   90 */   private GIFWritableStreamMetadata theStreamMetadata = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*   95 */   private int imageIndex = 0;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static int getNumBits(int paramInt) throws IOException {
-/*      */     byte b;
-/*  103 */     switch (paramInt) {
-/*      */       case 2:
-/*  105 */         b = 1;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*  132 */         return b;case 4: b = 2; return b;case 8: b = 3; return b;case 16: b = 4; return b;case 32: b = 5; return b;case 64: b = 6; return b;case 128: b = 7; return b;case 256: b = 8; return b;
-/*      */     } 
-/*      */     throw new IOException("Bad palette length: " + paramInt + "!");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static void computeRegions(Rectangle paramRectangle, Dimension paramDimension, ImageWriteParam paramImageWriteParam) {
-/*  143 */     int i = 1;
-/*  144 */     int j = 1;
-/*  145 */     if (paramImageWriteParam != null) {
-/*  146 */       int[] arrayOfInt = paramImageWriteParam.getSourceBands();
-/*  147 */       if (arrayOfInt != null && (arrayOfInt.length != 1 || arrayOfInt[0] != 0))
-/*      */       {
-/*      */         
-/*  150 */         throw new IllegalArgumentException("Cannot sub-band image!");
-/*      */       }
-/*      */ 
-/*      */       
-/*  154 */       Rectangle rectangle = paramImageWriteParam.getSourceRegion();
-/*  155 */       if (rectangle != null) {
-/*      */         
-/*  157 */         rectangle = rectangle.intersection(paramRectangle);
-/*  158 */         paramRectangle.setBounds(rectangle);
-/*      */       } 
-/*      */ 
-/*      */       
-/*  162 */       int k = paramImageWriteParam.getSubsamplingXOffset();
-/*  163 */       int m = paramImageWriteParam.getSubsamplingYOffset();
-/*  164 */       paramRectangle.x += k;
-/*  165 */       paramRectangle.y += m;
-/*  166 */       paramRectangle.width -= k;
-/*  167 */       paramRectangle.height -= m;
-/*      */ 
-/*      */       
-/*  170 */       i = paramImageWriteParam.getSourceXSubsampling();
-/*  171 */       j = paramImageWriteParam.getSourceYSubsampling();
-/*      */     } 
-/*      */ 
-/*      */     
-/*  175 */     paramDimension.setSize((paramRectangle.width + i - 1) / i, (paramRectangle.height + j - 1) / j);
-/*      */     
-/*  177 */     if (paramDimension.width <= 0 || paramDimension.height <= 0) {
-/*  178 */       throw new IllegalArgumentException("Empty source region!");
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static byte[] createColorTable(ColorModel paramColorModel, SampleModel paramSampleModel) {
-/*      */     byte[] arrayOfByte;
-/*  189 */     if (paramColorModel instanceof IndexColorModel) {
-/*  190 */       IndexColorModel indexColorModel = (IndexColorModel)paramColorModel;
-/*  191 */       int i = indexColorModel.getMapSize();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  198 */       int j = getGifPaletteSize(i);
-/*      */       
-/*  200 */       byte[] arrayOfByte1 = new byte[j];
-/*  201 */       byte[] arrayOfByte2 = new byte[j];
-/*  202 */       byte[] arrayOfByte3 = new byte[j];
-/*  203 */       indexColorModel.getReds(arrayOfByte1);
-/*  204 */       indexColorModel.getGreens(arrayOfByte2);
-/*  205 */       indexColorModel.getBlues(arrayOfByte3);
-/*      */ 
-/*      */       
-/*      */       int k;
-/*      */ 
-/*      */       
-/*  211 */       for (k = i; k < j; k++) {
-/*  212 */         arrayOfByte1[k] = arrayOfByte1[0];
-/*  213 */         arrayOfByte2[k] = arrayOfByte2[0];
-/*  214 */         arrayOfByte3[k] = arrayOfByte3[0];
-/*      */       } 
-/*      */       
-/*  217 */       arrayOfByte = new byte[3 * j];
-/*  218 */       k = 0;
-/*  219 */       for (byte b = 0; b < j; b++) {
-/*  220 */         arrayOfByte[k++] = arrayOfByte1[b];
-/*  221 */         arrayOfByte[k++] = arrayOfByte2[b];
-/*  222 */         arrayOfByte[k++] = arrayOfByte3[b];
-/*      */       } 
-/*  224 */     } else if (paramSampleModel.getNumBands() == 1) {
-/*      */       
-/*  226 */       int i = paramSampleModel.getSampleSize()[0];
-/*  227 */       if (i > 8) {
-/*  228 */         i = 8;
-/*      */       }
-/*  230 */       int j = 3 * (1 << i);
-/*  231 */       arrayOfByte = new byte[j];
-/*  232 */       for (byte b = 0; b < j; b++) {
-/*  233 */         arrayOfByte[b] = (byte)(b / 3);
-/*      */       }
-/*      */     }
-/*      */     else {
-/*      */       
-/*  238 */       arrayOfByte = null;
-/*      */     } 
-/*      */     
-/*  241 */     return arrayOfByte;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static int getGifPaletteSize(int paramInt) {
-/*  249 */     if (paramInt <= 2) {
-/*  250 */       return 2;
-/*      */     }
-/*  252 */     paramInt--;
-/*  253 */     paramInt |= paramInt >> 1;
-/*  254 */     paramInt |= paramInt >> 2;
-/*  255 */     paramInt |= paramInt >> 4;
-/*  256 */     paramInt |= paramInt >> 8;
-/*  257 */     paramInt |= paramInt >> 16;
-/*  258 */     return paramInt + 1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public GIFImageWriter(GIFImageWriterSpi paramGIFImageWriterSpi) {
-/*  264 */     super(paramGIFImageWriterSpi);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean canWriteSequence() {
-/*  271 */     return true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void convertMetadata(String paramString, IIOMetadata paramIIOMetadata1, IIOMetadata paramIIOMetadata2) {
-/*  282 */     String str1 = null;
-/*      */     
-/*  284 */     String str2 = paramIIOMetadata1.getNativeMetadataFormatName();
-/*  285 */     if (str2 != null && str2
-/*  286 */       .equals(paramString)) {
-/*  287 */       str1 = paramString;
-/*      */     } else {
-/*  289 */       String[] arrayOfString = paramIIOMetadata1.getExtraMetadataFormatNames();
-/*      */       
-/*  291 */       if (arrayOfString != null) {
-/*  292 */         for (byte b = 0; b < arrayOfString.length; b++) {
-/*  293 */           if (arrayOfString[b].equals(paramString)) {
-/*  294 */             str1 = paramString;
-/*      */             
-/*      */             break;
-/*      */           } 
-/*      */         } 
-/*      */       }
-/*      */     } 
-/*  301 */     if (str1 == null && paramIIOMetadata1
-/*  302 */       .isStandardMetadataFormatSupported()) {
-/*  303 */       str1 = "javax_imageio_1.0";
-/*      */     }
-/*      */     
-/*  306 */     if (str1 != null) {
-/*      */       try {
-/*  308 */         Node node = paramIIOMetadata1.getAsTree(str1);
-/*  309 */         paramIIOMetadata2.mergeTree(str1, node);
-/*  310 */       } catch (IIOInvalidTreeException iIOInvalidTreeException) {}
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public IIOMetadata convertStreamMetadata(IIOMetadata paramIIOMetadata, ImageWriteParam paramImageWriteParam) {
-/*  322 */     if (paramIIOMetadata == null) {
-/*  323 */       throw new IllegalArgumentException("inData == null!");
-/*      */     }
-/*      */     
-/*  326 */     IIOMetadata iIOMetadata = getDefaultStreamMetadata(paramImageWriteParam);
-/*      */     
-/*  328 */     convertMetadata("javax_imageio_gif_stream_1.0", paramIIOMetadata, iIOMetadata);
-/*      */     
-/*  330 */     return iIOMetadata;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public IIOMetadata convertImageMetadata(IIOMetadata paramIIOMetadata, ImageTypeSpecifier paramImageTypeSpecifier, ImageWriteParam paramImageWriteParam) {
-/*  340 */     if (paramIIOMetadata == null) {
-/*  341 */       throw new IllegalArgumentException("inData == null!");
-/*      */     }
-/*  343 */     if (paramImageTypeSpecifier == null) {
-/*  344 */       throw new IllegalArgumentException("imageType == null!");
-/*      */     }
-/*      */ 
-/*      */     
-/*  348 */     GIFWritableImageMetadata gIFWritableImageMetadata = (GIFWritableImageMetadata)getDefaultImageMetadata(paramImageTypeSpecifier, paramImageWriteParam);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  353 */     boolean bool = gIFWritableImageMetadata.interlaceFlag;
-/*      */     
-/*  355 */     convertMetadata("javax_imageio_gif_image_1.0", paramIIOMetadata, gIFWritableImageMetadata);
-/*      */ 
-/*      */ 
-/*      */     
-/*  359 */     if (paramImageWriteParam != null && paramImageWriteParam.canWriteProgressive() && paramImageWriteParam
-/*  360 */       .getProgressiveMode() != 3) {
-/*  361 */       gIFWritableImageMetadata.interlaceFlag = bool;
-/*      */     }
-/*      */     
-/*  364 */     return gIFWritableImageMetadata;
-/*      */   }
-/*      */   
-/*      */   public void endWriteSequence() throws IOException {
-/*  368 */     if (this.stream == null) {
-/*  369 */       throw new IllegalStateException("output == null!");
-/*      */     }
-/*  371 */     if (!this.isWritingSequence) {
-/*  372 */       throw new IllegalStateException("prepareWriteSequence() was not invoked!");
-/*      */     }
-/*  374 */     writeTrailer();
-/*  375 */     resetLocal();
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public IIOMetadata getDefaultImageMetadata(ImageTypeSpecifier paramImageTypeSpecifier, ImageWriteParam paramImageWriteParam) {
-/*  380 */     GIFWritableImageMetadata gIFWritableImageMetadata = new GIFWritableImageMetadata();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  385 */     SampleModel sampleModel = paramImageTypeSpecifier.getSampleModel();
-/*      */ 
-/*      */     
-/*  388 */     Rectangle rectangle = new Rectangle(sampleModel.getWidth(), sampleModel.getHeight());
-/*  389 */     Dimension dimension = new Dimension();
-/*  390 */     computeRegions(rectangle, dimension, paramImageWriteParam);
-/*      */     
-/*  392 */     gIFWritableImageMetadata.imageWidth = dimension.width;
-/*  393 */     gIFWritableImageMetadata.imageHeight = dimension.height;
-/*      */ 
-/*      */ 
-/*      */     
-/*  397 */     if (paramImageWriteParam != null && paramImageWriteParam.canWriteProgressive() && paramImageWriteParam
-/*  398 */       .getProgressiveMode() == 0) {
-/*  399 */       gIFWritableImageMetadata.interlaceFlag = false;
-/*      */     } else {
-/*  401 */       gIFWritableImageMetadata.interlaceFlag = true;
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/*  406 */     ColorModel colorModel = paramImageTypeSpecifier.getColorModel();
-/*      */     
-/*  408 */     gIFWritableImageMetadata
-/*  409 */       .localColorTable = createColorTable(colorModel, sampleModel);
-/*      */ 
-/*      */ 
-/*      */     
-/*  413 */     if (colorModel instanceof IndexColorModel) {
-/*      */       
-/*  415 */       int i = ((IndexColorModel)colorModel).getTransparentPixel();
-/*  416 */       if (i != -1) {
-/*  417 */         gIFWritableImageMetadata.transparentColorFlag = true;
-/*  418 */         gIFWritableImageMetadata.transparentColorIndex = i;
-/*      */       } 
-/*      */     } 
-/*      */     
-/*  422 */     return gIFWritableImageMetadata;
-/*      */   }
-/*      */   
-/*      */   public IIOMetadata getDefaultStreamMetadata(ImageWriteParam paramImageWriteParam) {
-/*  426 */     GIFWritableStreamMetadata gIFWritableStreamMetadata = new GIFWritableStreamMetadata();
-/*      */     
-/*  428 */     gIFWritableStreamMetadata.version = "89a";
-/*  429 */     return gIFWritableStreamMetadata;
-/*      */   }
-/*      */   
-/*      */   public ImageWriteParam getDefaultWriteParam() {
-/*  433 */     return new GIFImageWriteParam(getLocale());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void prepareWriteSequence(IIOMetadata paramIIOMetadata) throws IOException {
-/*  439 */     if (this.stream == null) {
-/*  440 */       throw new IllegalStateException("Output is not set.");
-/*      */     }
-/*      */     
-/*  443 */     resetLocal();
-/*      */ 
-/*      */     
-/*  446 */     if (paramIIOMetadata == null) {
-/*  447 */       this
-/*  448 */         .theStreamMetadata = (GIFWritableStreamMetadata)getDefaultStreamMetadata((ImageWriteParam)null);
-/*      */     } else {
-/*  450 */       this.theStreamMetadata = new GIFWritableStreamMetadata();
-/*  451 */       convertMetadata("javax_imageio_gif_stream_1.0", paramIIOMetadata, this.theStreamMetadata);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  455 */     this.isWritingSequence = true;
-/*      */   }
-/*      */   
-/*      */   public void reset() {
-/*  459 */     super.reset();
-/*  460 */     resetLocal();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void resetLocal() {
-/*  467 */     this.isWritingSequence = false;
-/*  468 */     this.wroteSequenceHeader = false;
-/*  469 */     this.theStreamMetadata = null;
-/*  470 */     this.imageIndex = 0;
-/*      */   }
-/*      */   
-/*      */   public void setOutput(Object paramObject) {
-/*  474 */     super.setOutput(paramObject);
-/*  475 */     if (paramObject != null) {
-/*  476 */       if (!(paramObject instanceof ImageOutputStream)) {
-/*  477 */         throw new IllegalArgumentException("output is not an ImageOutputStream");
-/*      */       }
-/*      */       
-/*  480 */       this.stream = (ImageOutputStream)paramObject;
-/*  481 */       this.stream.setByteOrder(ByteOrder.LITTLE_ENDIAN);
-/*      */     } else {
-/*  483 */       this.stream = null;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public void write(IIOMetadata paramIIOMetadata, IIOImage paramIIOImage, ImageWriteParam paramImageWriteParam) throws IOException {
-/*      */     GIFWritableStreamMetadata gIFWritableStreamMetadata;
-/*  490 */     if (this.stream == null) {
-/*  491 */       throw new IllegalStateException("output == null!");
-/*      */     }
-/*  493 */     if (paramIIOImage == null) {
-/*  494 */       throw new IllegalArgumentException("iioimage == null!");
-/*      */     }
-/*  496 */     if (paramIIOImage.hasRaster()) {
-/*  497 */       throw new UnsupportedOperationException("canWriteRasters() == false!");
-/*      */     }
-/*      */     
-/*  500 */     resetLocal();
-/*      */ 
-/*      */     
-/*  503 */     if (paramIIOMetadata == null) {
-/*      */       
-/*  505 */       gIFWritableStreamMetadata = (GIFWritableStreamMetadata)getDefaultStreamMetadata(paramImageWriteParam);
-/*      */     } else {
-/*      */       
-/*  508 */       gIFWritableStreamMetadata = (GIFWritableStreamMetadata)convertStreamMetadata(paramIIOMetadata, paramImageWriteParam);
-/*      */     } 
-/*      */     
-/*  511 */     write(true, true, gIFWritableStreamMetadata, paramIIOImage, paramImageWriteParam);
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public void writeToSequence(IIOImage paramIIOImage, ImageWriteParam paramImageWriteParam) throws IOException {
-/*  516 */     if (this.stream == null) {
-/*  517 */       throw new IllegalStateException("output == null!");
-/*      */     }
-/*  519 */     if (paramIIOImage == null) {
-/*  520 */       throw new IllegalArgumentException("image == null!");
-/*      */     }
-/*  522 */     if (paramIIOImage.hasRaster()) {
-/*  523 */       throw new UnsupportedOperationException("canWriteRasters() == false!");
-/*      */     }
-/*  525 */     if (!this.isWritingSequence) {
-/*  526 */       throw new IllegalStateException("prepareWriteSequence() was not invoked!");
-/*      */     }
-/*      */     
-/*  529 */     write(!this.wroteSequenceHeader, false, this.theStreamMetadata, paramIIOImage, paramImageWriteParam);
-/*      */ 
-/*      */     
-/*  532 */     if (!this.wroteSequenceHeader) {
-/*  533 */       this.wroteSequenceHeader = true;
-/*      */     }
-/*      */     
-/*  536 */     this.imageIndex++;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean needToCreateIndex(RenderedImage paramRenderedImage) {
-/*  542 */     SampleModel sampleModel = paramRenderedImage.getSampleModel();
-/*  543 */     ColorModel colorModel = paramRenderedImage.getColorModel();
-/*      */     
-/*  545 */     return (sampleModel.getNumBands() != 1 || sampleModel
-/*  546 */       .getSampleSize()[0] > 8 || colorModel
-/*  547 */       .getComponentSize()[0] > 8);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void write(boolean paramBoolean1, boolean paramBoolean2, IIOMetadata paramIIOMetadata, IIOImage paramIIOImage, ImageWriteParam paramImageWriteParam) throws IOException {
-/*  577 */     clearAbortRequest();
-/*      */     
-/*  579 */     RenderedImage renderedImage = paramIIOImage.getRenderedImage();
-/*      */ 
-/*      */     
-/*  582 */     if (needToCreateIndex(renderedImage)) {
-/*  583 */       renderedImage = PaletteBuilder.createIndexedImage(renderedImage);
-/*  584 */       paramIIOImage.setRenderedImage(renderedImage);
-/*      */     } 
-/*      */     
-/*  587 */     ColorModel colorModel = renderedImage.getColorModel();
-/*  588 */     SampleModel sampleModel = renderedImage.getSampleModel();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  594 */     Rectangle rectangle = new Rectangle(renderedImage.getMinX(), renderedImage.getMinY(), renderedImage.getWidth(), renderedImage.getHeight());
-/*  595 */     Dimension dimension = new Dimension();
-/*  596 */     computeRegions(rectangle, dimension, paramImageWriteParam);
-/*      */ 
-/*      */     
-/*  599 */     GIFWritableImageMetadata gIFWritableImageMetadata = null;
-/*  600 */     if (paramIIOImage.getMetadata() != null) {
-/*  601 */       gIFWritableImageMetadata = new GIFWritableImageMetadata();
-/*  602 */       convertMetadata("javax_imageio_gif_image_1.0", paramIIOImage.getMetadata(), gIFWritableImageMetadata);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  611 */       if (gIFWritableImageMetadata.localColorTable == null) {
-/*  612 */         gIFWritableImageMetadata
-/*  613 */           .localColorTable = createColorTable(colorModel, sampleModel);
-/*      */ 
-/*      */ 
-/*      */         
-/*  617 */         if (colorModel instanceof IndexColorModel) {
-/*  618 */           IndexColorModel indexColorModel = (IndexColorModel)colorModel;
-/*      */           
-/*  620 */           int i = indexColorModel.getTransparentPixel();
-/*  621 */           gIFWritableImageMetadata.transparentColorFlag = (i != -1);
-/*  622 */           if (gIFWritableImageMetadata.transparentColorFlag) {
-/*  623 */             gIFWritableImageMetadata.transparentColorIndex = i;
-/*      */           }
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  636 */     byte[] arrayOfByte = null;
-/*      */ 
-/*      */ 
-/*      */     
-/*  640 */     if (paramBoolean1) {
-/*  641 */       int i; if (paramIIOMetadata == null) {
-/*  642 */         throw new IllegalArgumentException("Cannot write null header!");
-/*      */       }
-/*      */       
-/*  645 */       GIFWritableStreamMetadata gIFWritableStreamMetadata = (GIFWritableStreamMetadata)paramIIOMetadata;
-/*      */ 
-/*      */ 
-/*      */       
-/*  649 */       if (gIFWritableStreamMetadata.version == null) {
-/*  650 */         gIFWritableStreamMetadata.version = "89a";
-/*      */       }
-/*      */ 
-/*      */       
-/*  654 */       if (gIFWritableStreamMetadata.logicalScreenWidth == -1)
-/*      */       {
-/*      */         
-/*  657 */         gIFWritableStreamMetadata.logicalScreenWidth = dimension.width;
-/*      */       }
-/*      */       
-/*  660 */       if (gIFWritableStreamMetadata.logicalScreenHeight == -1)
-/*      */       {
-/*      */         
-/*  663 */         gIFWritableStreamMetadata.logicalScreenHeight = dimension.height;
-/*      */       }
-/*      */       
-/*  666 */       if (gIFWritableStreamMetadata.colorResolution == -1)
-/*      */       {
-/*      */         
-/*  669 */         gIFWritableStreamMetadata
-/*      */           
-/*  671 */           .colorResolution = (colorModel != null) ? colorModel.getComponentSize()[0] : sampleModel.getSampleSize()[0];
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */       
-/*  676 */       if (gIFWritableStreamMetadata.globalColorTable == null) {
-/*  677 */         if (this.isWritingSequence && gIFWritableImageMetadata != null && gIFWritableImageMetadata.localColorTable != null) {
-/*      */ 
-/*      */ 
-/*      */           
-/*  681 */           gIFWritableStreamMetadata.globalColorTable = gIFWritableImageMetadata.localColorTable;
-/*      */         }
-/*  683 */         else if (gIFWritableImageMetadata == null || gIFWritableImageMetadata.localColorTable == null) {
-/*      */ 
-/*      */           
-/*  686 */           gIFWritableStreamMetadata
-/*  687 */             .globalColorTable = createColorTable(colorModel, sampleModel);
-/*      */         } 
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  700 */       arrayOfByte = gIFWritableStreamMetadata.globalColorTable;
-/*      */ 
-/*      */ 
-/*      */       
-/*  704 */       if (arrayOfByte != null) {
-/*  705 */         i = getNumBits(arrayOfByte.length / 3);
-/*  706 */       } else if (gIFWritableImageMetadata != null && gIFWritableImageMetadata.localColorTable != null) {
-/*      */ 
-/*      */         
-/*  709 */         i = getNumBits(gIFWritableImageMetadata.localColorTable.length / 3);
-/*      */       } else {
-/*  711 */         i = sampleModel.getSampleSize(0);
-/*      */       } 
-/*  713 */       writeHeader(gIFWritableStreamMetadata, i);
-/*  714 */     } else if (this.isWritingSequence) {
-/*  715 */       arrayOfByte = this.theStreamMetadata.globalColorTable;
-/*      */     } else {
-/*  717 */       throw new IllegalArgumentException("Must write header for single image!");
-/*      */     } 
-/*      */ 
-/*      */     
-/*  721 */     writeImage(paramIIOImage.getRenderedImage(), gIFWritableImageMetadata, paramImageWriteParam, arrayOfByte, rectangle, dimension);
-/*      */ 
-/*      */ 
-/*      */     
-/*  725 */     if (paramBoolean2) {
-/*  726 */       writeTrailer();
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void writeImage(RenderedImage paramRenderedImage, GIFWritableImageMetadata paramGIFWritableImageMetadata, ImageWriteParam paramImageWriteParam, byte[] paramArrayOfbyte, Rectangle paramRectangle, Dimension paramDimension) throws IOException {
-/*      */     boolean bool;
-/*  744 */     ColorModel colorModel = paramRenderedImage.getColorModel();
-/*  745 */     SampleModel sampleModel = paramRenderedImage.getSampleModel();
-/*      */ 
-/*      */     
-/*  748 */     if (paramGIFWritableImageMetadata == null) {
-/*      */       
-/*  750 */       paramGIFWritableImageMetadata = (GIFWritableImageMetadata)getDefaultImageMetadata(new ImageTypeSpecifier(paramRenderedImage), paramImageWriteParam);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  755 */       bool = paramGIFWritableImageMetadata.transparentColorFlag;
-/*      */     } else {
-/*      */       
-/*  758 */       NodeList nodeList = null;
-/*      */       
-/*      */       try {
-/*  761 */         IIOMetadataNode iIOMetadataNode = (IIOMetadataNode)paramGIFWritableImageMetadata.getAsTree("javax_imageio_gif_image_1.0");
-/*  762 */         nodeList = iIOMetadataNode.getElementsByTagName("GraphicControlExtension");
-/*  763 */       } catch (IllegalArgumentException illegalArgumentException) {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  769 */       bool = (nodeList != null && nodeList.getLength() > 0) ? true : false;
-/*      */ 
-/*      */ 
-/*      */       
-/*  773 */       if (paramImageWriteParam != null && paramImageWriteParam.canWriteProgressive()) {
-/*  774 */         if (paramImageWriteParam.getProgressiveMode() == 0) {
-/*      */           
-/*  776 */           paramGIFWritableImageMetadata.interlaceFlag = false;
-/*  777 */         } else if (paramImageWriteParam.getProgressiveMode() == 1) {
-/*      */           
-/*  779 */           paramGIFWritableImageMetadata.interlaceFlag = true;
-/*      */         } 
-/*      */       }
-/*      */     } 
-/*      */ 
-/*      */     
-/*  785 */     if (Arrays.equals(paramArrayOfbyte, paramGIFWritableImageMetadata.localColorTable)) {
-/*  786 */       paramGIFWritableImageMetadata.localColorTable = null;
-/*      */     }
-/*      */ 
-/*      */     
-/*  790 */     paramGIFWritableImageMetadata.imageWidth = paramDimension.width;
-/*  791 */     paramGIFWritableImageMetadata.imageHeight = paramDimension.height;
-/*      */ 
-/*      */     
-/*  794 */     if (bool) {
-/*  795 */       writeGraphicControlExtension(paramGIFWritableImageMetadata);
-/*      */     }
-/*      */ 
-/*      */     
-/*  799 */     writePlainTextExtension(paramGIFWritableImageMetadata);
-/*  800 */     writeApplicationExtension(paramGIFWritableImageMetadata);
-/*  801 */     writeCommentExtension(paramGIFWritableImageMetadata);
-/*      */ 
-/*      */ 
-/*      */     
-/*  805 */     int i = getNumBits((paramGIFWritableImageMetadata.localColorTable == null) ? ((paramArrayOfbyte == null) ? sampleModel
-/*      */         
-/*  807 */         .getSampleSize(0) : (paramArrayOfbyte.length / 3)) : (paramGIFWritableImageMetadata.localColorTable.length / 3));
-/*      */ 
-/*      */     
-/*  810 */     writeImageDescriptor(paramGIFWritableImageMetadata, i);
-/*      */ 
-/*      */     
-/*  813 */     writeRasterData(paramRenderedImage, paramRectangle, paramDimension, paramImageWriteParam, paramGIFWritableImageMetadata.interlaceFlag);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void writeRows(RenderedImage paramRenderedImage, LZWCompressor paramLZWCompressor, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5, int paramInt6, int paramInt7, int paramInt8, int paramInt9, int paramInt10, int paramInt11) throws IOException {
-/*  824 */     int[] arrayOfInt = new int[paramInt5];
-/*  825 */     byte[] arrayOfByte = new byte[paramInt8];
-/*      */ 
-/*      */ 
-/*      */     
-/*  829 */     Raster raster = (paramRenderedImage.getNumXTiles() == 1 && paramRenderedImage.getNumYTiles() == 1) ? paramRenderedImage.getTile(0, 0) : paramRenderedImage.getData(); int i;
-/*  830 */     for (i = paramInt6; i < paramInt9; i += paramInt7) {
-/*  831 */       if (paramInt10 % paramInt11 == 0) {
-/*  832 */         if (abortRequested()) {
-/*  833 */           processWriteAborted();
-/*      */           return;
-/*      */         } 
-/*  836 */         processImageProgress(paramInt10 * 100.0F / paramInt9);
-/*      */       } 
-/*      */       
-/*  839 */       raster.getSamples(paramInt1, paramInt3, paramInt5, 1, 0, arrayOfInt); int j;
-/*  840 */       for (byte b = 0; b < paramInt8; b++, j += paramInt2) {
-/*  841 */         arrayOfByte[b] = (byte)arrayOfInt[j];
-/*      */       }
-/*  843 */       paramLZWCompressor.compress(arrayOfByte, 0, paramInt8);
-/*  844 */       paramInt10++;
-/*  845 */       paramInt3 += paramInt4;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void writeRowsOpt(byte[] paramArrayOfbyte, int paramInt1, int paramInt2, LZWCompressor paramLZWCompressor, int paramInt3, int paramInt4, int paramInt5, int paramInt6, int paramInt7, int paramInt8) throws IOException {
-/*  856 */     paramInt1 += paramInt3 * paramInt2;
-/*  857 */     paramInt2 *= paramInt4; int i;
-/*  858 */     for (i = paramInt3; i < paramInt6; i += paramInt4) {
-/*  859 */       if (paramInt7 % paramInt8 == 0) {
-/*  860 */         if (abortRequested()) {
-/*  861 */           processWriteAborted();
-/*      */           return;
-/*      */         } 
-/*  864 */         processImageProgress(paramInt7 * 100.0F / paramInt6);
-/*      */       } 
-/*      */       
-/*  867 */       paramLZWCompressor.compress(paramArrayOfbyte, paramInt1, paramInt5);
-/*  868 */       paramInt7++;
-/*  869 */       paramInt1 += paramInt2;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void writeRasterData(RenderedImage paramRenderedImage, Rectangle paramRectangle, Dimension paramDimension, ImageWriteParam paramImageWriteParam, boolean paramBoolean) throws IOException {
-/*  879 */     int i2, i3, i = paramRectangle.x;
-/*  880 */     int j = paramRectangle.y;
-/*  881 */     int k = paramRectangle.width;
-/*  882 */     int m = paramRectangle.height;
-/*      */     
-/*  884 */     int n = paramDimension.width;
-/*  885 */     int i1 = paramDimension.height;
-/*      */ 
-/*      */ 
-/*      */     
-/*  889 */     if (paramImageWriteParam == null) {
-/*  890 */       i2 = 1;
-/*  891 */       i3 = 1;
-/*      */     } else {
-/*  893 */       i2 = paramImageWriteParam.getSourceXSubsampling();
-/*  894 */       i3 = paramImageWriteParam.getSourceYSubsampling();
-/*      */     } 
-/*      */     
-/*  897 */     SampleModel sampleModel = paramRenderedImage.getSampleModel();
-/*  898 */     int i4 = sampleModel.getSampleSize()[0];
-/*      */     
-/*  900 */     int i5 = i4;
-/*  901 */     if (i5 == 1) {
-/*  902 */       i5++;
-/*      */     }
-/*  904 */     this.stream.write(i5);
-/*      */     
-/*  906 */     LZWCompressor lZWCompressor = new LZWCompressor(this.stream, i5, false);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  921 */     boolean bool = (i2 == 1 && i3 == 1 && paramRenderedImage.getNumXTiles() == 1 && paramRenderedImage.getNumYTiles() == 1 && sampleModel instanceof ComponentSampleModel && paramRenderedImage.getTile(0, 0) instanceof ByteComponentRaster && paramRenderedImage.getTile(0, 0).getDataBuffer() instanceof DataBufferByte) ? true : false;
-/*      */     
-/*  923 */     int i6 = 0;
-/*      */     
-/*  925 */     int i7 = Math.max(i1 / 20, 1);
-/*      */     
-/*  927 */     processImageStarted(this.imageIndex);
-/*      */     
-/*  929 */     if (paramBoolean) {
-/*      */ 
-/*      */       
-/*  932 */       if (bool)
-/*      */       {
-/*  934 */         ByteComponentRaster byteComponentRaster = (ByteComponentRaster)paramRenderedImage.getTile(0, 0);
-/*  935 */         byte[] arrayOfByte = ((DataBufferByte)byteComponentRaster.getDataBuffer()).getData();
-/*      */         
-/*  937 */         ComponentSampleModel componentSampleModel = (ComponentSampleModel)byteComponentRaster.getSampleModel();
-/*  938 */         int i8 = componentSampleModel.getOffset(i, j, 0);
-/*      */         
-/*  940 */         i8 += byteComponentRaster.getDataOffset(0);
-/*  941 */         int i9 = componentSampleModel.getScanlineStride();
-/*      */         
-/*  943 */         writeRowsOpt(arrayOfByte, i8, i9, lZWCompressor, 0, 8, n, i1, i6, i7);
-/*      */ 
-/*      */ 
-/*      */         
-/*  947 */         if (abortRequested()) {
-/*      */           return;
-/*      */         }
-/*      */         
-/*  951 */         i6 += i1 / 8;
-/*      */         
-/*  953 */         writeRowsOpt(arrayOfByte, i8, i9, lZWCompressor, 4, 8, n, i1, i6, i7);
-/*      */ 
-/*      */ 
-/*      */         
-/*  957 */         if (abortRequested()) {
-/*      */           return;
-/*      */         }
-/*      */         
-/*  961 */         i6 += (i1 - 4) / 8;
-/*      */         
-/*  963 */         writeRowsOpt(arrayOfByte, i8, i9, lZWCompressor, 2, 4, n, i1, i6, i7);
-/*      */ 
-/*      */ 
-/*      */         
-/*  967 */         if (abortRequested()) {
-/*      */           return;
-/*      */         }
-/*      */         
-/*  971 */         i6 += (i1 - 2) / 4;
-/*      */         
-/*  973 */         writeRowsOpt(arrayOfByte, i8, i9, lZWCompressor, 1, 2, n, i1, i6, i7);
-/*      */       }
-/*      */       else
-/*      */       {
-/*  977 */         writeRows(paramRenderedImage, lZWCompressor, i, i2, j, 8 * i3, k, 0, 8, n, i1, i6, i7);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*  984 */         if (abortRequested()) {
-/*      */           return;
-/*      */         }
-/*      */         
-/*  988 */         i6 += i1 / 8;
-/*      */         
-/*  990 */         writeRows(paramRenderedImage, lZWCompressor, i, i2, j + 4 * i3, 8 * i3, k, 4, 8, n, i1, i6, i7);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*  996 */         if (abortRequested()) {
-/*      */           return;
-/*      */         }
-/*      */         
-/* 1000 */         i6 += (i1 - 4) / 8;
-/*      */         
-/* 1002 */         writeRows(paramRenderedImage, lZWCompressor, i, i2, j + 2 * i3, 4 * i3, k, 2, 4, n, i1, i6, i7);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1008 */         if (abortRequested()) {
-/*      */           return;
-/*      */         }
-/*      */         
-/* 1012 */         i6 += (i1 - 2) / 4;
-/*      */         
-/* 1014 */         writeRows(paramRenderedImage, lZWCompressor, i, i2, j + i3, 2 * i3, k, 1, 2, n, i1, i6, i7);
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     }
-/* 1023 */     else if (bool) {
-/* 1024 */       Raster raster = paramRenderedImage.getTile(0, 0);
-/* 1025 */       byte[] arrayOfByte = ((DataBufferByte)raster.getDataBuffer()).getData();
-/*      */       
-/* 1027 */       ComponentSampleModel componentSampleModel = (ComponentSampleModel)raster.getSampleModel();
-/* 1028 */       int i8 = componentSampleModel.getOffset(i, j, 0);
-/* 1029 */       int i9 = componentSampleModel.getScanlineStride();
-/*      */       
-/* 1031 */       writeRowsOpt(arrayOfByte, i8, i9, lZWCompressor, 0, 1, n, i1, i6, i7);
-/*      */     }
-/*      */     else {
-/*      */       
-/* 1035 */       writeRows(paramRenderedImage, lZWCompressor, i, i2, j, i3, k, 0, 1, n, i1, i6, i7);
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1044 */     if (abortRequested()) {
-/*      */       return;
-/*      */     }
-/*      */     
-/* 1048 */     processImageProgress(100.0F);
-/*      */     
-/* 1050 */     lZWCompressor.flush();
-/*      */     
-/* 1052 */     this.stream.write(0);
-/*      */     
-/* 1054 */     processImageComplete();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void writeHeader(String paramString, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5, boolean paramBoolean, int paramInt6, byte[] paramArrayOfbyte) throws IOException {
-/*      */     try {
-/* 1068 */       this.stream.writeBytes("GIF" + paramString);
-/*      */ 
-/*      */ 
-/*      */       
-/* 1072 */       this.stream.writeShort((short)paramInt1);
-/*      */ 
-/*      */       
-/* 1075 */       this.stream.writeShort((short)paramInt2);
-/*      */ 
-/*      */ 
-/*      */       
-/* 1079 */       int i = (paramArrayOfbyte != null) ? 128 : 0;
-/* 1080 */       i |= (paramInt3 - 1 & 0x7) << 4;
-/* 1081 */       if (paramBoolean) {
-/* 1082 */         i |= 0x8;
-/*      */       }
-/* 1084 */       i |= paramInt6 - 1;
-/* 1085 */       this.stream.write(i);
-/*      */ 
-/*      */       
-/* 1088 */       this.stream.write(paramInt5);
-/*      */ 
-/*      */       
-/* 1091 */       this.stream.write(paramInt4);
-/*      */ 
-/*      */       
-/* 1094 */       if (paramArrayOfbyte != null) {
-/* 1095 */         this.stream.write(paramArrayOfbyte);
-/*      */       }
-/* 1097 */     } catch (IOException iOException) {
-/* 1098 */       throw new IIOException("I/O error writing header!", iOException);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void writeHeader(IIOMetadata paramIIOMetadata, int paramInt) throws IOException {
-/*      */     GIFWritableStreamMetadata gIFWritableStreamMetadata;
-/* 1106 */     if (paramIIOMetadata instanceof GIFWritableStreamMetadata) {
-/* 1107 */       gIFWritableStreamMetadata = (GIFWritableStreamMetadata)paramIIOMetadata;
-/*      */     } else {
-/* 1109 */       gIFWritableStreamMetadata = new GIFWritableStreamMetadata();
-/*      */       
-/* 1111 */       Node node = paramIIOMetadata.getAsTree("javax_imageio_gif_stream_1.0");
-/* 1112 */       gIFWritableStreamMetadata.setFromTree("javax_imageio_gif_stream_1.0", node);
-/*      */     } 
-/*      */     
-/* 1115 */     writeHeader(gIFWritableStreamMetadata.version, gIFWritableStreamMetadata.logicalScreenWidth, gIFWritableStreamMetadata.logicalScreenHeight, gIFWritableStreamMetadata.colorResolution, gIFWritableStreamMetadata.pixelAspectRatio, gIFWritableStreamMetadata.backgroundColorIndex, gIFWritableStreamMetadata.sortFlag, paramInt, gIFWritableStreamMetadata.globalColorTable);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void writeGraphicControlExtension(int paramInt1, boolean paramBoolean1, boolean paramBoolean2, int paramInt2, int paramInt3) throws IOException {
-/*      */     try {
-/* 1133 */       this.stream.write(33);
-/* 1134 */       this.stream.write(249);
-/*      */       
-/* 1136 */       this.stream.write(4);
-/*      */       
-/* 1138 */       int i = (paramInt1 & 0x3) << 2;
-/* 1139 */       if (paramBoolean1) {
-/* 1140 */         i |= 0x2;
-/*      */       }
-/* 1142 */       if (paramBoolean2) {
-/* 1143 */         i |= 0x1;
-/*      */       }
-/* 1145 */       this.stream.write(i);
-/*      */       
-/* 1147 */       this.stream.writeShort((short)paramInt2);
-/*      */       
-/* 1149 */       this.stream.write(paramInt3);
-/* 1150 */       this.stream.write(0);
-/* 1151 */     } catch (IOException iOException) {
-/* 1152 */       throw new IIOException("I/O error writing Graphic Control Extension!", iOException);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private void writeGraphicControlExtension(GIFWritableImageMetadata paramGIFWritableImageMetadata) throws IOException {
-/* 1158 */     writeGraphicControlExtension(paramGIFWritableImageMetadata.disposalMethod, paramGIFWritableImageMetadata.userInputFlag, paramGIFWritableImageMetadata.transparentColorFlag, paramGIFWritableImageMetadata.delayTime, paramGIFWritableImageMetadata.transparentColorIndex);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void writeBlocks(byte[] paramArrayOfbyte) throws IOException {
-/* 1166 */     if (paramArrayOfbyte != null && paramArrayOfbyte.length > 0) {
-/* 1167 */       int i = 0;
-/* 1168 */       while (i < paramArrayOfbyte.length) {
-/* 1169 */         int j = Math.min(paramArrayOfbyte.length - i, 255);
-/* 1170 */         this.stream.write(j);
-/* 1171 */         this.stream.write(paramArrayOfbyte, i, j);
-/* 1172 */         i += j;
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private void writePlainTextExtension(GIFWritableImageMetadata paramGIFWritableImageMetadata) throws IOException {
-/* 1179 */     if (paramGIFWritableImageMetadata.hasPlainTextExtension) {
-/*      */       try {
-/* 1181 */         this.stream.write(33);
-/* 1182 */         this.stream.write(1);
-/*      */         
-/* 1184 */         this.stream.write(12);
-/*      */         
-/* 1186 */         this.stream.writeShort(paramGIFWritableImageMetadata.textGridLeft);
-/* 1187 */         this.stream.writeShort(paramGIFWritableImageMetadata.textGridTop);
-/* 1188 */         this.stream.writeShort(paramGIFWritableImageMetadata.textGridWidth);
-/* 1189 */         this.stream.writeShort(paramGIFWritableImageMetadata.textGridHeight);
-/* 1190 */         this.stream.write(paramGIFWritableImageMetadata.characterCellWidth);
-/* 1191 */         this.stream.write(paramGIFWritableImageMetadata.characterCellHeight);
-/* 1192 */         this.stream.write(paramGIFWritableImageMetadata.textForegroundColor);
-/* 1193 */         this.stream.write(paramGIFWritableImageMetadata.textBackgroundColor);
-/*      */         
-/* 1195 */         writeBlocks(paramGIFWritableImageMetadata.text);
-/*      */         
-/* 1197 */         this.stream.write(0);
-/* 1198 */       } catch (IOException iOException) {
-/* 1199 */         throw new IIOException("I/O error writing Plain Text Extension!", iOException);
-/*      */       } 
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private void writeApplicationExtension(GIFWritableImageMetadata paramGIFWritableImageMetadata) throws IOException {
-/* 1206 */     if (paramGIFWritableImageMetadata.applicationIDs != null) {
-/* 1207 */       Iterator<byte[]> iterator1 = paramGIFWritableImageMetadata.applicationIDs.iterator();
-/* 1208 */       Iterator<byte[]> iterator2 = paramGIFWritableImageMetadata.authenticationCodes.iterator();
-/* 1209 */       Iterator<byte[]> iterator3 = paramGIFWritableImageMetadata.applicationData.iterator();
-/*      */       
-/* 1211 */       while (iterator1.hasNext()) {
-/*      */         try {
-/* 1213 */           this.stream.write(33);
-/* 1214 */           this.stream.write(255);
-/*      */           
-/* 1216 */           this.stream.write(11);
-/* 1217 */           this.stream.write(iterator1.next(), 0, 8);
-/* 1218 */           this.stream.write(iterator2.next(), 0, 3);
-/*      */           
-/* 1220 */           writeBlocks(iterator3.next());
-/*      */           
-/* 1222 */           this.stream.write(0);
-/* 1223 */         } catch (IOException iOException) {
-/* 1224 */           throw new IIOException("I/O error writing Application Extension!", iOException);
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private void writeCommentExtension(GIFWritableImageMetadata paramGIFWritableImageMetadata) throws IOException {
-/* 1232 */     if (paramGIFWritableImageMetadata.comments != null) {
-/*      */       try {
-/* 1234 */         Iterator<byte[]> iterator = paramGIFWritableImageMetadata.comments.iterator();
-/* 1235 */         while (iterator.hasNext()) {
-/* 1236 */           this.stream.write(33);
-/* 1237 */           this.stream.write(254);
-/* 1238 */           writeBlocks(iterator.next());
-/* 1239 */           this.stream.write(0);
-/*      */         } 
-/* 1241 */       } catch (IOException iOException) {
-/* 1242 */         throw new IIOException("I/O error writing Comment Extension!", iOException);
-/*      */       } 
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void writeImageDescriptor(int paramInt1, int paramInt2, int paramInt3, int paramInt4, boolean paramBoolean1, boolean paramBoolean2, int paramInt5, byte[] paramArrayOfbyte) throws IOException {
-/*      */     try {
-/* 1258 */       this.stream.write(44);
-/*      */       
-/* 1260 */       this.stream.writeShort((short)paramInt1);
-/* 1261 */       this.stream.writeShort((short)paramInt2);
-/* 1262 */       this.stream.writeShort((short)paramInt3);
-/* 1263 */       this.stream.writeShort((short)paramInt4);
-/*      */       
-/* 1265 */       int i = (paramArrayOfbyte != null) ? 128 : 0;
-/* 1266 */       if (paramBoolean1) {
-/* 1267 */         i |= 0x40;
-/*      */       }
-/* 1269 */       if (paramBoolean2) {
-/* 1270 */         i |= 0x8;
-/*      */       }
-/* 1272 */       i |= paramInt5 - 1;
-/* 1273 */       this.stream.write(i);
-/*      */       
-/* 1275 */       if (paramArrayOfbyte != null) {
-/* 1276 */         this.stream.write(paramArrayOfbyte);
-/*      */       }
-/* 1278 */     } catch (IOException iOException) {
-/* 1279 */       throw new IIOException("I/O error writing Image Descriptor!", iOException);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void writeImageDescriptor(GIFWritableImageMetadata paramGIFWritableImageMetadata, int paramInt) throws IOException {
-/* 1287 */     writeImageDescriptor(paramGIFWritableImageMetadata.imageLeftPosition, paramGIFWritableImageMetadata.imageTopPosition, paramGIFWritableImageMetadata.imageWidth, paramGIFWritableImageMetadata.imageHeight, paramGIFWritableImageMetadata.interlaceFlag, paramGIFWritableImageMetadata.sortFlag, paramInt, paramGIFWritableImageMetadata.localColorTable);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void writeTrailer() throws IOException {
-/* 1298 */     this.stream.write(59);
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\imageio\plugins\gif\GIFImageWriter.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2005, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.imageio.plugins.gif;
+
+import java.awt.Dimension;
+import java.awt.Rectangle;
+import java.awt.image.ColorModel;
+import java.awt.image.ComponentSampleModel;
+import java.awt.image.DataBufferByte;
+import java.awt.image.IndexColorModel;
+import java.awt.image.Raster;
+import java.awt.image.RenderedImage;
+import java.awt.image.SampleModel;
+import java.awt.image.WritableRaster;
+import java.io.IOException;
+import java.nio.ByteOrder;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.Locale;
+import javax.imageio.IIOException;
+import javax.imageio.IIOImage;
+import javax.imageio.ImageTypeSpecifier;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+import javax.imageio.spi.ImageWriterSpi;
+import javax.imageio.metadata.IIOInvalidTreeException;
+import javax.imageio.metadata.IIOMetadata;
+import javax.imageio.metadata.IIOMetadataFormatImpl;
+import javax.imageio.metadata.IIOMetadataNode;
+import javax.imageio.stream.ImageOutputStream;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import com.sun.imageio.plugins.common.LZWCompressor;
+import com.sun.imageio.plugins.common.PaletteBuilder;
+import sun.awt.image.ByteComponentRaster;
+
+public class GIFImageWriter extends ImageWriter {
+    private static final boolean DEBUG = false; // XXX false for release!
+
+    static final String STANDARD_METADATA_NAME =
+    IIOMetadataFormatImpl.standardMetadataFormatName;
+
+    static final String STREAM_METADATA_NAME =
+    GIFWritableStreamMetadata.NATIVE_FORMAT_NAME;
+
+    static final String IMAGE_METADATA_NAME =
+    GIFWritableImageMetadata.NATIVE_FORMAT_NAME;
+
+    /**
+     * The <code>output</code> case to an <code>ImageOutputStream</code>.
+     */
+    private ImageOutputStream stream = null;
+
+    /**
+     * Whether a sequence is being written.
+     */
+    private boolean isWritingSequence = false;
+
+    /**
+     * Whether the header has been written.
+     */
+    private boolean wroteSequenceHeader = false;
+
+    /**
+     * The stream metadata of a sequence.
+     */
+    private GIFWritableStreamMetadata theStreamMetadata = null;
+
+    /**
+     * The index of the image being written.
+     */
+    private int imageIndex = 0;
+
+    /**
+     * The number of bits represented by the value which should be a
+     * legal length for a color table.
+     */
+    private static int getNumBits(int value) throws IOException {
+        int numBits;
+        switch(value) {
+        case 2:
+            numBits = 1;
+            break;
+        case 4:
+            numBits = 2;
+            break;
+        case 8:
+            numBits = 3;
+            break;
+        case 16:
+            numBits = 4;
+            break;
+        case 32:
+            numBits = 5;
+            break;
+        case 64:
+            numBits = 6;
+            break;
+        case 128:
+            numBits = 7;
+            break;
+        case 256:
+            numBits = 8;
+            break;
+        default:
+            throw new IOException("Bad palette length: "+value+"!");
+        }
+
+        return numBits;
+    }
+
+    /**
+     * Compute the source region and destination dimensions taking any
+     * parameter settings into account.
+     */
+    private static void computeRegions(Rectangle sourceBounds,
+                                       Dimension destSize,
+                                       ImageWriteParam p) {
+        ImageWriteParam param;
+        int periodX = 1;
+        int periodY = 1;
+        if (p != null) {
+            int[] sourceBands = p.getSourceBands();
+            if (sourceBands != null &&
+                (sourceBands.length != 1 ||
+                 sourceBands[0] != 0)) {
+                throw new IllegalArgumentException("Cannot sub-band image!");
+            }
+
+            // Get source region and subsampling factors
+            Rectangle sourceRegion = p.getSourceRegion();
+            if (sourceRegion != null) {
+                // Clip to actual image bounds
+                sourceRegion = sourceRegion.intersection(sourceBounds);
+                sourceBounds.setBounds(sourceRegion);
+            }
+
+            // Adjust for subsampling offsets
+            int gridX = p.getSubsamplingXOffset();
+            int gridY = p.getSubsamplingYOffset();
+            sourceBounds.x += gridX;
+            sourceBounds.y += gridY;
+            sourceBounds.width -= gridX;
+            sourceBounds.height -= gridY;
+
+            // Get subsampling factors
+            periodX = p.getSourceXSubsampling();
+            periodY = p.getSourceYSubsampling();
+        }
+
+        // Compute output dimensions
+        destSize.setSize((sourceBounds.width + periodX - 1)/periodX,
+                         (sourceBounds.height + periodY - 1)/periodY);
+        if (destSize.width <= 0 || destSize.height <= 0) {
+            throw new IllegalArgumentException("Empty source region!");
+        }
+    }
+
+    /**
+     * Create a color table from the image ColorModel and SampleModel.
+     */
+    private static byte[] createColorTable(ColorModel colorModel,
+                                           SampleModel sampleModel)
+    {
+        byte[] colorTable;
+        if (colorModel instanceof IndexColorModel) {
+            IndexColorModel icm = (IndexColorModel)colorModel;
+            int mapSize = icm.getMapSize();
+
+            /**
+             * The GIF image format assumes that size of image palette
+             * is power of two. We will use closest larger power of two
+             * as size of color table.
+             */
+            int ctSize = getGifPaletteSize(mapSize);
+
+            byte[] reds = new byte[ctSize];
+            byte[] greens = new byte[ctSize];
+            byte[] blues = new byte[ctSize];
+            icm.getReds(reds);
+            icm.getGreens(greens);
+            icm.getBlues(blues);
+
+            /**
+             * fill tail of color component arrays by replica of first color
+             * in order to avoid appearance of extra colors in the color table
+             */
+            for (int i = mapSize; i < ctSize; i++) {
+                reds[i] = reds[0];
+                greens[i] = greens[0];
+                blues[i] = blues[0];
+            }
+
+            colorTable = new byte[3*ctSize];
+            int idx = 0;
+            for (int i = 0; i < ctSize; i++) {
+                colorTable[idx++] = reds[i];
+                colorTable[idx++] = greens[i];
+                colorTable[idx++] = blues[i];
+            }
+        } else if (sampleModel.getNumBands() == 1) {
+            // create gray-scaled color table for single-banded images
+            int numBits = sampleModel.getSampleSize()[0];
+            if (numBits > 8) {
+                numBits = 8;
+            }
+            int colorTableLength = 3*(1 << numBits);
+            colorTable = new byte[colorTableLength];
+            for (int i = 0; i < colorTableLength; i++) {
+                colorTable[i] = (byte)(i/3);
+            }
+        } else {
+            // We do not have enough information here
+            // to create well-fit color table for RGB image.
+            colorTable = null;
+        }
+
+        return colorTable;
+    }
+
+    /**
+     * According do GIF specification size of clor table (palette here)
+     * must be in range from 2 to 256 and must be power of 2.
+     */
+    private static int getGifPaletteSize(int x) {
+        if (x <= 2) {
+            return 2;
+        }
+        x = x - 1;
+        x = x | (x >> 1);
+        x = x | (x >> 2);
+        x = x | (x >> 4);
+        x = x | (x >> 8);
+        x = x | (x >> 16);
+        return x + 1;
+    }
+
+
+
+    public GIFImageWriter(GIFImageWriterSpi originatingProvider) {
+        super(originatingProvider);
+        if (DEBUG) {
+            System.err.println("GIF Writer is created");
+        }
+    }
+
+    public boolean canWriteSequence() {
+        return true;
+    }
+
+    /**
+     * Merges <code>inData</code> into <code>outData</code>. The supplied
+     * metadata format name is attempted first and failing that the standard
+     * metadata format name is attempted.
+     */
+    private void convertMetadata(String metadataFormatName,
+                                 IIOMetadata inData,
+                                 IIOMetadata outData) {
+        String formatName = null;
+
+        String nativeFormatName = inData.getNativeMetadataFormatName();
+        if (nativeFormatName != null &&
+            nativeFormatName.equals(metadataFormatName)) {
+            formatName = metadataFormatName;
+        } else {
+            String[] extraFormatNames = inData.getExtraMetadataFormatNames();
+
+            if (extraFormatNames != null) {
+                for (int i = 0; i < extraFormatNames.length; i++) {
+                    if (extraFormatNames[i].equals(metadataFormatName)) {
+                        formatName = metadataFormatName;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (formatName == null &&
+            inData.isStandardMetadataFormatSupported()) {
+            formatName = STANDARD_METADATA_NAME;
+        }
+
+        if (formatName != null) {
+            try {
+                Node root = inData.getAsTree(formatName);
+                outData.mergeTree(formatName, root);
+            } catch(IIOInvalidTreeException e) {
+                // ignore
+            }
+        }
+    }
+
+    /**
+     * Creates a default stream metadata object and merges in the
+     * supplied metadata.
+     */
+    public IIOMetadata convertStreamMetadata(IIOMetadata inData,
+                                             ImageWriteParam param) {
+        if (inData == null) {
+            throw new IllegalArgumentException("inData == null!");
+        }
+
+        IIOMetadata sm = getDefaultStreamMetadata(param);
+
+        convertMetadata(STREAM_METADATA_NAME, inData, sm);
+
+        return sm;
+    }
+
+    /**
+     * Creates a default image metadata object and merges in the
+     * supplied metadata.
+     */
+    public IIOMetadata convertImageMetadata(IIOMetadata inData,
+                                            ImageTypeSpecifier imageType,
+                                            ImageWriteParam param) {
+        if (inData == null) {
+            throw new IllegalArgumentException("inData == null!");
+        }
+        if (imageType == null) {
+            throw new IllegalArgumentException("imageType == null!");
+        }
+
+        GIFWritableImageMetadata im =
+            (GIFWritableImageMetadata)getDefaultImageMetadata(imageType,
+                                                              param);
+
+        // Save interlace flag state.
+
+        boolean isProgressive = im.interlaceFlag;
+
+        convertMetadata(IMAGE_METADATA_NAME, inData, im);
+
+        // Undo change to interlace flag if not MODE_COPY_FROM_METADATA.
+
+        if (param != null && param.canWriteProgressive() &&
+            param.getProgressiveMode() != param.MODE_COPY_FROM_METADATA) {
+            im.interlaceFlag = isProgressive;
+        }
+
+        return im;
+    }
+
+    public void endWriteSequence() throws IOException {
+        if (stream == null) {
+            throw new IllegalStateException("output == null!");
+        }
+        if (!isWritingSequence) {
+            throw new IllegalStateException("prepareWriteSequence() was not invoked!");
+        }
+        writeTrailer();
+        resetLocal();
+    }
+
+    public IIOMetadata getDefaultImageMetadata(ImageTypeSpecifier imageType,
+                                               ImageWriteParam param) {
+        GIFWritableImageMetadata imageMetadata =
+            new GIFWritableImageMetadata();
+
+        // Image dimensions
+
+        SampleModel sampleModel = imageType.getSampleModel();
+
+        Rectangle sourceBounds = new Rectangle(sampleModel.getWidth(),
+                                               sampleModel.getHeight());
+        Dimension destSize = new Dimension();
+        computeRegions(sourceBounds, destSize, param);
+
+        imageMetadata.imageWidth = destSize.width;
+        imageMetadata.imageHeight = destSize.height;
+
+        // Interlacing
+
+        if (param != null && param.canWriteProgressive() &&
+            param.getProgressiveMode() == ImageWriteParam.MODE_DISABLED) {
+            imageMetadata.interlaceFlag = false;
+        } else {
+            imageMetadata.interlaceFlag = true;
+        }
+
+        // Local color table
+
+        ColorModel colorModel = imageType.getColorModel();
+
+        imageMetadata.localColorTable =
+            createColorTable(colorModel, sampleModel);
+
+        // Transparency
+
+        if (colorModel instanceof IndexColorModel) {
+            int transparentIndex =
+                ((IndexColorModel)colorModel).getTransparentPixel();
+            if (transparentIndex != -1) {
+                imageMetadata.transparentColorFlag = true;
+                imageMetadata.transparentColorIndex = transparentIndex;
+            }
+        }
+
+        return imageMetadata;
+    }
+
+    public IIOMetadata getDefaultStreamMetadata(ImageWriteParam param) {
+        GIFWritableStreamMetadata streamMetadata =
+            new GIFWritableStreamMetadata();
+        streamMetadata.version = "89a";
+        return streamMetadata;
+    }
+
+    public ImageWriteParam getDefaultWriteParam() {
+        return new GIFImageWriteParam(getLocale());
+    }
+
+    public void prepareWriteSequence(IIOMetadata streamMetadata)
+      throws IOException {
+
+        if (stream == null) {
+            throw new IllegalStateException("Output is not set.");
+        }
+
+        resetLocal();
+
+        // Save the possibly converted stream metadata as an instance variable.
+        if (streamMetadata == null) {
+            this.theStreamMetadata =
+                (GIFWritableStreamMetadata)getDefaultStreamMetadata(null);
+        } else {
+            this.theStreamMetadata = new GIFWritableStreamMetadata();
+            convertMetadata(STREAM_METADATA_NAME, streamMetadata,
+                            theStreamMetadata);
+        }
+
+        this.isWritingSequence = true;
+    }
+
+    public void reset() {
+        super.reset();
+        resetLocal();
+    }
+
+    /**
+     * Resets locally defined instance variables.
+     */
+    private void resetLocal() {
+        this.isWritingSequence = false;
+        this.wroteSequenceHeader = false;
+        this.theStreamMetadata = null;
+        this.imageIndex = 0;
+    }
+
+    public void setOutput(Object output) {
+        super.setOutput(output);
+        if (output != null) {
+            if (!(output instanceof ImageOutputStream)) {
+                throw new
+                    IllegalArgumentException("output is not an ImageOutputStream");
+            }
+            this.stream = (ImageOutputStream)output;
+            this.stream.setByteOrder(ByteOrder.LITTLE_ENDIAN);
+        } else {
+            this.stream = null;
+        }
+    }
+
+    public void write(IIOMetadata sm,
+                      IIOImage iioimage,
+                      ImageWriteParam p) throws IOException {
+        if (stream == null) {
+            throw new IllegalStateException("output == null!");
+        }
+        if (iioimage == null) {
+            throw new IllegalArgumentException("iioimage == null!");
+        }
+        if (iioimage.hasRaster()) {
+            throw new UnsupportedOperationException("canWriteRasters() == false!");
+        }
+
+        resetLocal();
+
+        GIFWritableStreamMetadata streamMetadata;
+        if (sm == null) {
+            streamMetadata =
+                (GIFWritableStreamMetadata)getDefaultStreamMetadata(p);
+        } else {
+            streamMetadata =
+                (GIFWritableStreamMetadata)convertStreamMetadata(sm, p);
+        }
+
+        write(true, true, streamMetadata, iioimage, p);
+    }
+
+    public void writeToSequence(IIOImage image, ImageWriteParam param)
+      throws IOException {
+        if (stream == null) {
+            throw new IllegalStateException("output == null!");
+        }
+        if (image == null) {
+            throw new IllegalArgumentException("image == null!");
+        }
+        if (image.hasRaster()) {
+            throw new UnsupportedOperationException("canWriteRasters() == false!");
+        }
+        if (!isWritingSequence) {
+            throw new IllegalStateException("prepareWriteSequence() was not invoked!");
+        }
+
+        write(!wroteSequenceHeader, false, theStreamMetadata,
+              image, param);
+
+        if (!wroteSequenceHeader) {
+            wroteSequenceHeader = true;
+        }
+
+        this.imageIndex++;
+    }
+
+
+    private boolean needToCreateIndex(RenderedImage image) {
+
+        SampleModel sampleModel = image.getSampleModel();
+        ColorModel colorModel = image.getColorModel();
+
+        return sampleModel.getNumBands() != 1 ||
+            sampleModel.getSampleSize()[0] > 8 ||
+            colorModel.getComponentSize()[0] > 8;
+    }
+
+    /**
+     * Writes any extension blocks, the Image Descriptor, the image data,
+     * and optionally the header (Signature and Logical Screen Descriptor)
+     * and trailer (Block Terminator).
+     *
+     * @param writeHeader Whether to write the header.
+     * @param writeTrailer Whether to write the trailer.
+     * @param sm The stream metadata or <code>null</code> if
+     * <code>writeHeader</code> is <code>false</code>.
+     * @param iioimage The image and image metadata.
+     * @param p The write parameters.
+     *
+     * @throws IllegalArgumentException if the number of bands is not 1.
+     * @throws IllegalArgumentException if the number of bits per sample is
+     * greater than 8.
+     * @throws IllegalArgumentException if the color component size is
+     * greater than 8.
+     * @throws IllegalArgumentException if <code>writeHeader</code> is
+     * <code>true</code> and <code>sm</code> is <code>null</code>.
+     * @throws IllegalArgumentException if <code>writeHeader</code> is
+     * <code>false</code> and a sequence is not being written.
+     */
+    private void write(boolean writeHeader,
+                       boolean writeTrailer,
+                       IIOMetadata sm,
+                       IIOImage iioimage,
+                       ImageWriteParam p) throws IOException {
+        clearAbortRequest();
+
+        RenderedImage image = iioimage.getRenderedImage();
+
+        // Check for ability to encode image.
+        if (needToCreateIndex(image)) {
+            image = PaletteBuilder.createIndexedImage(image);
+            iioimage.setRenderedImage(image);
+        }
+
+        ColorModel colorModel = image.getColorModel();
+        SampleModel sampleModel = image.getSampleModel();
+
+        // Determine source region and destination dimensions.
+        Rectangle sourceBounds = new Rectangle(image.getMinX(),
+                                               image.getMinY(),
+                                               image.getWidth(),
+                                               image.getHeight());
+        Dimension destSize = new Dimension();
+        computeRegions(sourceBounds, destSize, p);
+
+        // Convert any provided image metadata.
+        GIFWritableImageMetadata imageMetadata = null;
+        if (iioimage.getMetadata() != null) {
+            imageMetadata = new GIFWritableImageMetadata();
+            convertMetadata(IMAGE_METADATA_NAME, iioimage.getMetadata(),
+                            imageMetadata);
+            // Converted rgb image can use palette different from global.
+            // In order to avoid color artefacts we want to be sure we use
+            // appropriate palette. For this we initialize local color table
+            // from current color and sample models.
+            // At this point we can guarantee that local color table can be
+            // build because image was already converted to indexed or
+            // gray-scale representations
+            if (imageMetadata.localColorTable == null) {
+                imageMetadata.localColorTable =
+                    createColorTable(colorModel, sampleModel);
+
+                // in case of indexed image we should take care of
+                // transparent pixels
+                if (colorModel instanceof IndexColorModel) {
+                    IndexColorModel icm =
+                        (IndexColorModel)colorModel;
+                    int index = icm.getTransparentPixel();
+                    imageMetadata.transparentColorFlag = (index != -1);
+                    if (imageMetadata.transparentColorFlag) {
+                        imageMetadata.transparentColorIndex = index;
+                    }
+                    /* NB: transparentColorFlag might have not beed reset for
+                       greyscale images but explicitly reseting it here
+                       is potentially not right thing to do until we have way
+                       to find whether current value was explicitly set by
+                       the user.
+                    */
+                }
+            }
+        }
+
+        // Global color table values.
+        byte[] globalColorTable = null;
+
+        // Write the header (Signature+Logical Screen Descriptor+
+        // Global Color Table).
+        if (writeHeader) {
+            if (sm == null) {
+                throw new IllegalArgumentException("Cannot write null header!");
+            }
+
+            GIFWritableStreamMetadata streamMetadata =
+                (GIFWritableStreamMetadata)sm;
+
+            // Set the version if not set.
+            if (streamMetadata.version == null) {
+                streamMetadata.version = "89a";
+            }
+
+            // Set the Logical Screen Desriptor if not set.
+            if (streamMetadata.logicalScreenWidth ==
+                GIFMetadata.UNDEFINED_INTEGER_VALUE)
+            {
+                streamMetadata.logicalScreenWidth = destSize.width;
+            }
+
+            if (streamMetadata.logicalScreenHeight ==
+                GIFMetadata.UNDEFINED_INTEGER_VALUE)
+            {
+                streamMetadata.logicalScreenHeight = destSize.height;
+            }
+
+            if (streamMetadata.colorResolution ==
+                GIFMetadata.UNDEFINED_INTEGER_VALUE)
+            {
+                streamMetadata.colorResolution = colorModel != null ?
+                    colorModel.getComponentSize()[0] :
+                    sampleModel.getSampleSize()[0];
+            }
+
+            // Set the Global Color Table if not set, i.e., if not
+            // provided in the stream metadata.
+            if (streamMetadata.globalColorTable == null) {
+                if (isWritingSequence && imageMetadata != null &&
+                    imageMetadata.localColorTable != null) {
+                    // Writing a sequence and a local color table was
+                    // provided in the metadata of the first image: use it.
+                    streamMetadata.globalColorTable =
+                        imageMetadata.localColorTable;
+                } else if (imageMetadata == null ||
+                           imageMetadata.localColorTable == null) {
+                    // Create a color table.
+                    streamMetadata.globalColorTable =
+                        createColorTable(colorModel, sampleModel);
+                }
+            }
+
+            // Set the Global Color Table. At this point it should be
+            // A) the global color table provided in stream metadata, if any;
+            // B) the local color table of the image metadata, if any, if
+            //    writing a sequence;
+            // C) a table created on the basis of the first image ColorModel
+            //    and SampleModel if no local color table is available; or
+            // D) null if none of the foregoing conditions obtain (which
+            //    should only be if a sequence is not being written and
+            //    a local color table is provided in image metadata).
+            globalColorTable = streamMetadata.globalColorTable;
+
+            // Write the header.
+            int bitsPerPixel;
+            if (globalColorTable != null) {
+                bitsPerPixel = getNumBits(globalColorTable.length/3);
+            } else if (imageMetadata != null &&
+                       imageMetadata.localColorTable != null) {
+                bitsPerPixel =
+                    getNumBits(imageMetadata.localColorTable.length/3);
+            } else {
+                bitsPerPixel = sampleModel.getSampleSize(0);
+            }
+            writeHeader(streamMetadata, bitsPerPixel);
+        } else if (isWritingSequence) {
+            globalColorTable = theStreamMetadata.globalColorTable;
+        } else {
+            throw new IllegalArgumentException("Must write header for single image!");
+        }
+
+        // Write extension blocks, Image Descriptor, and image data.
+        writeImage(iioimage.getRenderedImage(), imageMetadata, p,
+                   globalColorTable, sourceBounds, destSize);
+
+        // Write the trailer.
+        if (writeTrailer) {
+            writeTrailer();
+        }
+    }
+
+    /**
+     * Writes any extension blocks, the Image Descriptor, and the image data
+     *
+     * @param iioimage The image and image metadata.
+     * @param param The write parameters.
+     * @param globalColorTable The Global Color Table.
+     * @param sourceBounds The source region.
+     * @param destSize The destination dimensions.
+     */
+    private void writeImage(RenderedImage image,
+                            GIFWritableImageMetadata imageMetadata,
+                            ImageWriteParam param, byte[] globalColorTable,
+                            Rectangle sourceBounds, Dimension destSize)
+      throws IOException {
+        ColorModel colorModel = image.getColorModel();
+        SampleModel sampleModel = image.getSampleModel();
+
+        boolean writeGraphicsControlExtension;
+        if (imageMetadata == null) {
+            // Create default metadata.
+            imageMetadata = (GIFWritableImageMetadata)getDefaultImageMetadata(
+                new ImageTypeSpecifier(image), param);
+
+            // Set GraphicControlExtension flag only if there is
+            // transparency.
+            writeGraphicsControlExtension = imageMetadata.transparentColorFlag;
+        } else {
+            // Check for GraphicControlExtension element.
+            NodeList list = null;
+            try {
+                IIOMetadataNode root = (IIOMetadataNode)
+                    imageMetadata.getAsTree(IMAGE_METADATA_NAME);
+                list = root.getElementsByTagName("GraphicControlExtension");
+            } catch(IllegalArgumentException iae) {
+                // Should never happen.
+            }
+
+            // Set GraphicControlExtension flag if element present.
+            writeGraphicsControlExtension =
+                list != null && list.getLength() > 0;
+
+            // If progressive mode is not MODE_COPY_FROM_METADATA, ensure
+            // the interlacing is set per the ImageWriteParam mode setting.
+            if (param != null && param.canWriteProgressive()) {
+                if (param.getProgressiveMode() ==
+                    ImageWriteParam.MODE_DISABLED) {
+                    imageMetadata.interlaceFlag = false;
+                } else if (param.getProgressiveMode() ==
+                           ImageWriteParam.MODE_DEFAULT) {
+                    imageMetadata.interlaceFlag = true;
+                }
+            }
+        }
+
+        // Unset local color table if equal to global color table.
+        if (Arrays.equals(globalColorTable, imageMetadata.localColorTable)) {
+            imageMetadata.localColorTable = null;
+        }
+
+        // Override dimensions
+        imageMetadata.imageWidth = destSize.width;
+        imageMetadata.imageHeight = destSize.height;
+
+        // Write Graphics Control Extension.
+        if (writeGraphicsControlExtension) {
+            writeGraphicControlExtension(imageMetadata);
+        }
+
+        // Write extension blocks.
+        writePlainTextExtension(imageMetadata);
+        writeApplicationExtension(imageMetadata);
+        writeCommentExtension(imageMetadata);
+
+        // Write Image Descriptor
+        int bitsPerPixel =
+            getNumBits(imageMetadata.localColorTable == null ?
+                       (globalColorTable == null ?
+                        sampleModel.getSampleSize(0) :
+                        globalColorTable.length/3) :
+                       imageMetadata.localColorTable.length/3);
+        writeImageDescriptor(imageMetadata, bitsPerPixel);
+
+        // Write image data
+        writeRasterData(image, sourceBounds, destSize,
+                        param, imageMetadata.interlaceFlag);
+    }
+
+    private void writeRows(RenderedImage image, LZWCompressor compressor,
+                           int sx, int sdx, int sy, int sdy, int sw,
+                           int dy, int ddy, int dw, int dh,
+                           int numRowsWritten, int progressReportRowPeriod)
+      throws IOException {
+        if (DEBUG) System.out.println("Writing unoptimized");
+
+        int[] sbuf = new int[sw];
+        byte[] dbuf = new byte[dw];
+
+        Raster raster =
+            image.getNumXTiles() == 1 && image.getNumYTiles() == 1 ?
+            image.getTile(0, 0) : image.getData();
+        for (int y = dy; y < dh; y += ddy) {
+            if (numRowsWritten % progressReportRowPeriod == 0) {
+                if (abortRequested()) {
+                    processWriteAborted();
+                    return;
+                }
+                processImageProgress((numRowsWritten*100.0F)/dh);
+            }
+
+            raster.getSamples(sx, sy, sw, 1, 0, sbuf);
+            for (int i = 0, j = 0; i < dw; i++, j += sdx) {
+                dbuf[i] = (byte)sbuf[j];
+            }
+            compressor.compress(dbuf, 0, dw);
+            numRowsWritten++;
+            sy += sdy;
+        }
+    }
+
+    private void writeRowsOpt(byte[] data, int offset, int lineStride,
+                              LZWCompressor compressor,
+                              int dy, int ddy, int dw, int dh,
+                              int numRowsWritten, int progressReportRowPeriod)
+      throws IOException {
+        if (DEBUG) System.out.println("Writing optimized");
+
+        offset += dy*lineStride;
+        lineStride *= ddy;
+        for (int y = dy; y < dh; y += ddy) {
+            if (numRowsWritten % progressReportRowPeriod == 0) {
+                if (abortRequested()) {
+                    processWriteAborted();
+                    return;
+                }
+                processImageProgress((numRowsWritten*100.0F)/dh);
+            }
+
+            compressor.compress(data, offset, dw);
+            numRowsWritten++;
+            offset += lineStride;
+        }
+    }
+
+    private void writeRasterData(RenderedImage image,
+                                 Rectangle sourceBounds,
+                                 Dimension destSize,
+                                 ImageWriteParam param,
+                                 boolean interlaceFlag) throws IOException {
+
+        int sourceXOffset = sourceBounds.x;
+        int sourceYOffset = sourceBounds.y;
+        int sourceWidth = sourceBounds.width;
+        int sourceHeight = sourceBounds.height;
+
+        int destWidth = destSize.width;
+        int destHeight = destSize.height;
+
+        int periodX;
+        int periodY;
+        if (param == null) {
+            periodX = 1;
+            periodY = 1;
+        } else {
+            periodX = param.getSourceXSubsampling();
+            periodY = param.getSourceYSubsampling();
+        }
+
+        SampleModel sampleModel = image.getSampleModel();
+        int bitsPerPixel = sampleModel.getSampleSize()[0];
+
+        int initCodeSize = bitsPerPixel;
+        if (initCodeSize == 1) {
+            initCodeSize++;
+        }
+        stream.write(initCodeSize);
+
+        LZWCompressor compressor =
+            new LZWCompressor(stream, initCodeSize, false);
+
+        /* At this moment we know that input image is indexed image.
+         * We can directly copy data iff:
+         *   - no subsampling required (periodX = 1, periodY = 0)
+         *   - we can access data directly (image is non-tiled,
+         *     i.e. image data are in single block)
+         *   - we can calculate offset in data buffer (next 3 lines)
+         */
+        boolean isOptimizedCase =
+            periodX == 1 && periodY == 1 &&
+            image.getNumXTiles() == 1 && image.getNumYTiles() == 1 &&
+            sampleModel instanceof ComponentSampleModel &&
+            image.getTile(0, 0) instanceof ByteComponentRaster &&
+            image.getTile(0, 0).getDataBuffer() instanceof DataBufferByte;
+
+        int numRowsWritten = 0;
+
+        int progressReportRowPeriod = Math.max(destHeight/20, 1);
+
+        processImageStarted(imageIndex);
+
+        if (interlaceFlag) {
+            if (DEBUG) System.out.println("Writing interlaced");
+
+            if (isOptimizedCase) {
+                ByteComponentRaster tile =
+                    (ByteComponentRaster)image.getTile(0, 0);
+                byte[] data = ((DataBufferByte)tile.getDataBuffer()).getData();
+                ComponentSampleModel csm =
+                    (ComponentSampleModel)tile.getSampleModel();
+                int offset = csm.getOffset(sourceXOffset, sourceYOffset, 0);
+                // take into account the raster data offset
+                offset += tile.getDataOffset(0);
+                int lineStride = csm.getScanlineStride();
+
+                writeRowsOpt(data, offset, lineStride, compressor,
+                             0, 8, destWidth, destHeight,
+                             numRowsWritten, progressReportRowPeriod);
+
+                if (abortRequested()) {
+                    return;
+                }
+
+                numRowsWritten += destHeight/8;
+
+                writeRowsOpt(data, offset, lineStride, compressor,
+                             4, 8, destWidth, destHeight,
+                             numRowsWritten, progressReportRowPeriod);
+
+                if (abortRequested()) {
+                    return;
+                }
+
+                numRowsWritten += (destHeight - 4)/8;
+
+                writeRowsOpt(data, offset, lineStride, compressor,
+                             2, 4, destWidth, destHeight,
+                             numRowsWritten, progressReportRowPeriod);
+
+                if (abortRequested()) {
+                    return;
+                }
+
+                numRowsWritten += (destHeight - 2)/4;
+
+                writeRowsOpt(data, offset, lineStride, compressor,
+                             1, 2, destWidth, destHeight,
+                             numRowsWritten, progressReportRowPeriod);
+            } else {
+                writeRows(image, compressor,
+                          sourceXOffset, periodX,
+                          sourceYOffset, 8*periodY,
+                          sourceWidth,
+                          0, 8, destWidth, destHeight,
+                          numRowsWritten, progressReportRowPeriod);
+
+                if (abortRequested()) {
+                    return;
+                }
+
+                numRowsWritten += destHeight/8;
+
+                writeRows(image, compressor, sourceXOffset, periodX,
+                          sourceYOffset + 4*periodY, 8*periodY,
+                          sourceWidth,
+                          4, 8, destWidth, destHeight,
+                          numRowsWritten, progressReportRowPeriod);
+
+                if (abortRequested()) {
+                    return;
+                }
+
+                numRowsWritten += (destHeight - 4)/8;
+
+                writeRows(image, compressor, sourceXOffset, periodX,
+                          sourceYOffset + 2*periodY, 4*periodY,
+                          sourceWidth,
+                          2, 4, destWidth, destHeight,
+                          numRowsWritten, progressReportRowPeriod);
+
+                if (abortRequested()) {
+                    return;
+                }
+
+                numRowsWritten += (destHeight - 2)/4;
+
+                writeRows(image, compressor, sourceXOffset, periodX,
+                          sourceYOffset + periodY, 2*periodY,
+                          sourceWidth,
+                          1, 2, destWidth, destHeight,
+                          numRowsWritten, progressReportRowPeriod);
+            }
+        } else {
+            if (DEBUG) System.out.println("Writing non-interlaced");
+
+            if (isOptimizedCase) {
+                Raster tile = image.getTile(0, 0);
+                byte[] data = ((DataBufferByte)tile.getDataBuffer()).getData();
+                ComponentSampleModel csm =
+                    (ComponentSampleModel)tile.getSampleModel();
+                int offset = csm.getOffset(sourceXOffset, sourceYOffset, 0);
+                int lineStride = csm.getScanlineStride();
+
+                writeRowsOpt(data, offset, lineStride, compressor,
+                             0, 1, destWidth, destHeight,
+                             numRowsWritten, progressReportRowPeriod);
+            } else {
+                writeRows(image, compressor,
+                          sourceXOffset, periodX,
+                          sourceYOffset, periodY,
+                          sourceWidth,
+                          0, 1, destWidth, destHeight,
+                          numRowsWritten, progressReportRowPeriod);
+            }
+        }
+
+        if (abortRequested()) {
+            return;
+        }
+
+        processImageProgress(100.0F);
+
+        compressor.flush();
+
+        stream.write(0x00);
+
+        processImageComplete();
+    }
+
+    private void writeHeader(String version,
+                             int logicalScreenWidth,
+                             int logicalScreenHeight,
+                             int colorResolution,
+                             int pixelAspectRatio,
+                             int backgroundColorIndex,
+                             boolean sortFlag,
+                             int bitsPerPixel,
+                             byte[] globalColorTable) throws IOException {
+        try {
+            // Signature
+            stream.writeBytes("GIF"+version);
+
+            // Screen Descriptor
+            // Width
+            stream.writeShort((short)logicalScreenWidth);
+
+            // Height
+            stream.writeShort((short)logicalScreenHeight);
+
+            // Global Color Table
+            // Packed fields
+            int packedFields = globalColorTable != null ? 0x80 : 0x00;
+            packedFields |= ((colorResolution - 1) & 0x7) << 4;
+            if (sortFlag) {
+                packedFields |= 0x8;
+            }
+            packedFields |= (bitsPerPixel - 1);
+            stream.write(packedFields);
+
+            // Background color index
+            stream.write(backgroundColorIndex);
+
+            // Pixel aspect ratio
+            stream.write(pixelAspectRatio);
+
+            // Global Color Table
+            if (globalColorTable != null) {
+                stream.write(globalColorTable);
+            }
+        } catch (IOException e) {
+            throw new IIOException("I/O error writing header!", e);
+        }
+    }
+
+    private void writeHeader(IIOMetadata streamMetadata, int bitsPerPixel)
+      throws IOException {
+
+        GIFWritableStreamMetadata sm;
+        if (streamMetadata instanceof GIFWritableStreamMetadata) {
+            sm = (GIFWritableStreamMetadata)streamMetadata;
+        } else {
+            sm = new GIFWritableStreamMetadata();
+            Node root =
+                streamMetadata.getAsTree(STREAM_METADATA_NAME);
+            sm.setFromTree(STREAM_METADATA_NAME, root);
+        }
+
+        writeHeader(sm.version,
+                    sm.logicalScreenWidth,
+                    sm.logicalScreenHeight,
+                    sm.colorResolution,
+                    sm.pixelAspectRatio,
+                    sm.backgroundColorIndex,
+                    sm.sortFlag,
+                    bitsPerPixel,
+                    sm.globalColorTable);
+    }
+
+    private void writeGraphicControlExtension(int disposalMethod,
+                                              boolean userInputFlag,
+                                              boolean transparentColorFlag,
+                                              int delayTime,
+                                              int transparentColorIndex)
+      throws IOException {
+        try {
+            stream.write(0x21);
+            stream.write(0xf9);
+
+            stream.write(4);
+
+            int packedFields = (disposalMethod & 0x3) << 2;
+            if (userInputFlag) {
+                packedFields |= 0x2;
+            }
+            if (transparentColorFlag) {
+                packedFields |= 0x1;
+            }
+            stream.write(packedFields);
+
+            stream.writeShort((short)delayTime);
+
+            stream.write(transparentColorIndex);
+            stream.write(0x00);
+        } catch (IOException e) {
+            throw new IIOException("I/O error writing Graphic Control Extension!", e);
+        }
+    }
+
+    private void writeGraphicControlExtension(GIFWritableImageMetadata im)
+      throws IOException {
+        writeGraphicControlExtension(im.disposalMethod,
+                                     im.userInputFlag,
+                                     im.transparentColorFlag,
+                                     im.delayTime,
+                                     im.transparentColorIndex);
+    }
+
+    private void writeBlocks(byte[] data) throws IOException {
+        if (data != null && data.length > 0) {
+            int offset = 0;
+            while (offset < data.length) {
+                int len = Math.min(data.length - offset, 255);
+                stream.write(len);
+                stream.write(data, offset, len);
+                offset += len;
+            }
+        }
+    }
+
+    private void writePlainTextExtension(GIFWritableImageMetadata im)
+      throws IOException {
+        if (im.hasPlainTextExtension) {
+            try {
+                stream.write(0x21);
+                stream.write(0x1);
+
+                stream.write(12);
+
+                stream.writeShort(im.textGridLeft);
+                stream.writeShort(im.textGridTop);
+                stream.writeShort(im.textGridWidth);
+                stream.writeShort(im.textGridHeight);
+                stream.write(im.characterCellWidth);
+                stream.write(im.characterCellHeight);
+                stream.write(im.textForegroundColor);
+                stream.write(im.textBackgroundColor);
+
+                writeBlocks(im.text);
+
+                stream.write(0x00);
+            } catch (IOException e) {
+                throw new IIOException("I/O error writing Plain Text Extension!", e);
+            }
+        }
+    }
+
+    private void writeApplicationExtension(GIFWritableImageMetadata im)
+      throws IOException {
+        if (im.applicationIDs != null) {
+            Iterator iterIDs = im.applicationIDs.iterator();
+            Iterator iterCodes = im.authenticationCodes.iterator();
+            Iterator iterData = im.applicationData.iterator();
+
+            while (iterIDs.hasNext()) {
+                try {
+                    stream.write(0x21);
+                    stream.write(0xff);
+
+                    stream.write(11);
+                    stream.write((byte[])iterIDs.next(), 0, 8);
+                    stream.write((byte[])iterCodes.next(), 0, 3);
+
+                    writeBlocks((byte[])iterData.next());
+
+                    stream.write(0x00);
+                } catch (IOException e) {
+                    throw new IIOException("I/O error writing Application Extension!", e);
+                }
+            }
+        }
+    }
+
+    private void writeCommentExtension(GIFWritableImageMetadata im)
+      throws IOException {
+        if (im.comments != null) {
+            try {
+                Iterator iter = im.comments.iterator();
+                while (iter.hasNext()) {
+                    stream.write(0x21);
+                    stream.write(0xfe);
+                    writeBlocks((byte[])iter.next());
+                    stream.write(0x00);
+                }
+            } catch (IOException e) {
+                throw new IIOException("I/O error writing Comment Extension!", e);
+            }
+        }
+    }
+
+    private void writeImageDescriptor(int imageLeftPosition,
+                                      int imageTopPosition,
+                                      int imageWidth,
+                                      int imageHeight,
+                                      boolean interlaceFlag,
+                                      boolean sortFlag,
+                                      int bitsPerPixel,
+                                      byte[] localColorTable)
+      throws IOException {
+
+        try {
+            stream.write(0x2c);
+
+            stream.writeShort((short)imageLeftPosition);
+            stream.writeShort((short)imageTopPosition);
+            stream.writeShort((short)imageWidth);
+            stream.writeShort((short)imageHeight);
+
+            int packedFields = localColorTable != null ? 0x80 : 0x00;
+            if (interlaceFlag) {
+                packedFields |= 0x40;
+            }
+            if (sortFlag) {
+                packedFields |= 0x8;
+            }
+            packedFields |= (bitsPerPixel - 1);
+            stream.write(packedFields);
+
+            if (localColorTable != null) {
+                stream.write(localColorTable);
+            }
+        } catch (IOException e) {
+            throw new IIOException("I/O error writing Image Descriptor!", e);
+        }
+    }
+
+    private void writeImageDescriptor(GIFWritableImageMetadata imageMetadata,
+                                      int bitsPerPixel)
+      throws IOException {
+
+        writeImageDescriptor(imageMetadata.imageLeftPosition,
+                             imageMetadata.imageTopPosition,
+                             imageMetadata.imageWidth,
+                             imageMetadata.imageHeight,
+                             imageMetadata.interlaceFlag,
+                             imageMetadata.sortFlag,
+                             bitsPerPixel,
+                             imageMetadata.localColorTable);
+    }
+
+    private void writeTrailer() throws IOException {
+        stream.write(0x3b);
+    }
+}
+
+class GIFImageWriteParam extends ImageWriteParam {
+    GIFImageWriteParam(Locale locale) {
+        super(locale);
+        this.canWriteCompressed = true;
+        this.canWriteProgressive = true;
+        this.compressionTypes = new String[] {"LZW", "lzw"};
+        this.compressionType = compressionTypes[0];
+    }
+
+    public void setCompressionMode(int mode) {
+        if (mode == MODE_DISABLED) {
+            throw new UnsupportedOperationException("MODE_DISABLED is not supported.");
+        }
+        super.setCompressionMode(mode);
+    }
+}

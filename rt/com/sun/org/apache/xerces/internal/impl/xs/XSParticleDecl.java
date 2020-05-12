@@ -1,253 +1,248 @@
-/*     */ package com.sun.org.apache.xerces.internal.impl.xs;
-/*     */ 
-/*     */ import com.sun.org.apache.xerces.internal.impl.xs.util.XSObjectListImpl;
-/*     */ import com.sun.org.apache.xerces.internal.xs.XSNamespaceItem;
-/*     */ import com.sun.org.apache.xerces.internal.xs.XSObjectList;
-/*     */ import com.sun.org.apache.xerces.internal.xs.XSParticle;
-/*     */ import com.sun.org.apache.xerces.internal.xs.XSTerm;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class XSParticleDecl
-/*     */   implements XSParticle
-/*     */ {
-/*     */   public static final short PARTICLE_EMPTY = 0;
-/*     */   public static final short PARTICLE_ELEMENT = 1;
-/*     */   public static final short PARTICLE_WILDCARD = 2;
-/*     */   public static final short PARTICLE_MODELGROUP = 3;
-/*     */   public static final short PARTICLE_ZERO_OR_MORE = 4;
-/*     */   public static final short PARTICLE_ZERO_OR_ONE = 5;
-/*     */   public static final short PARTICLE_ONE_OR_MORE = 6;
-/*  51 */   public short fType = 0;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  57 */   public XSTerm fValue = null;
-/*     */ 
-/*     */   
-/*  60 */   public int fMinOccurs = 1;
-/*     */   
-/*  62 */   public int fMaxOccurs = 1;
-/*     */   
-/*  64 */   public XSObjectList fAnnotations = null;
-/*     */ 
-/*     */   
-/*     */   public XSParticleDecl makeClone() {
-/*  68 */     XSParticleDecl particle = new XSParticleDecl();
-/*  69 */     particle.fType = this.fType;
-/*  70 */     particle.fMinOccurs = this.fMinOccurs;
-/*  71 */     particle.fMaxOccurs = this.fMaxOccurs;
-/*  72 */     particle.fDescription = this.fDescription;
-/*  73 */     particle.fValue = this.fValue;
-/*  74 */     particle.fAnnotations = this.fAnnotations;
-/*  75 */     return particle;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean emptiable() {
-/*  83 */     return (minEffectiveTotalRange() == 0);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public boolean isEmpty() {
-/*  88 */     if (this.fType == 0)
-/*  89 */       return true; 
-/*  90 */     if (this.fType == 1 || this.fType == 2) {
-/*  91 */       return false;
-/*     */     }
-/*  93 */     return ((XSModelGroupImpl)this.fValue).isEmpty();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int minEffectiveTotalRange() {
-/* 104 */     if (this.fType == 0) {
-/* 105 */       return 0;
-/*     */     }
-/* 107 */     if (this.fType == 3) {
-/* 108 */       return ((XSModelGroupImpl)this.fValue).minEffectiveTotalRange() * this.fMinOccurs;
-/*     */     }
-/* 110 */     return this.fMinOccurs;
-/*     */   }
-/*     */   
-/*     */   public int maxEffectiveTotalRange() {
-/* 114 */     if (this.fType == 0) {
-/* 115 */       return 0;
-/*     */     }
-/* 117 */     if (this.fType == 3) {
-/* 118 */       int max = ((XSModelGroupImpl)this.fValue).maxEffectiveTotalRange();
-/* 119 */       if (max == -1)
-/* 120 */         return -1; 
-/* 121 */       if (max != 0 && this.fMaxOccurs == -1)
-/* 122 */         return -1; 
-/* 123 */       return max * this.fMaxOccurs;
-/*     */     } 
-/* 125 */     return this.fMaxOccurs;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 131 */   private String fDescription = null;
-/*     */   public String toString() {
-/* 133 */     if (this.fDescription == null) {
-/* 134 */       StringBuffer buffer = new StringBuffer();
-/* 135 */       appendParticle(buffer);
-/* 136 */       if ((this.fMinOccurs != 0 || this.fMaxOccurs != 0) && (this.fMinOccurs != 1 || this.fMaxOccurs != 1)) {
-/*     */         
-/* 138 */         buffer.append('{').append(this.fMinOccurs);
-/* 139 */         if (this.fMaxOccurs == -1) {
-/* 140 */           buffer.append("-UNBOUNDED");
-/* 141 */         } else if (this.fMinOccurs != this.fMaxOccurs) {
-/* 142 */           buffer.append('-').append(this.fMaxOccurs);
-/* 143 */         }  buffer.append('}');
-/*     */       } 
-/* 145 */       this.fDescription = buffer.toString();
-/*     */     } 
-/* 147 */     return this.fDescription;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void appendParticle(StringBuffer buffer) {
-/* 155 */     switch (this.fType) {
-/*     */       case 0:
-/* 157 */         buffer.append("EMPTY");
-/*     */         break;
-/*     */       case 1:
-/* 160 */         buffer.append(this.fValue.toString());
-/*     */         break;
-/*     */       case 2:
-/* 163 */         buffer.append('(');
-/* 164 */         buffer.append(this.fValue.toString());
-/* 165 */         buffer.append(')');
-/*     */         break;
-/*     */       case 3:
-/* 168 */         buffer.append(this.fValue.toString());
-/*     */         break;
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public void reset() {
-/* 174 */     this.fType = 0;
-/* 175 */     this.fValue = null;
-/* 176 */     this.fMinOccurs = 1;
-/* 177 */     this.fMaxOccurs = 1;
-/* 178 */     this.fDescription = null;
-/* 179 */     this.fAnnotations = null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public short getType() {
-/* 186 */     return 8;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getName() {
-/* 194 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getNamespace() {
-/* 203 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getMinOccurs() {
-/* 210 */     return this.fMinOccurs;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean getMaxOccursUnbounded() {
-/* 217 */     return (this.fMaxOccurs == -1);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getMaxOccurs() {
-/* 224 */     return this.fMaxOccurs;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XSTerm getTerm() {
-/* 231 */     return this.fValue;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XSNamespaceItem getNamespaceItem() {
-/* 238 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XSObjectList getAnnotations() {
-/* 245 */     return (this.fAnnotations != null) ? this.fAnnotations : XSObjectListImpl.EMPTY_LIST;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\impl\xs\XSParticleDecl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001, 2002,2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.impl.xs;
+
+import com.sun.org.apache.xerces.internal.impl.xs.util.XSObjectListImpl;
+import com.sun.org.apache.xerces.internal.xs.XSConstants;
+import com.sun.org.apache.xerces.internal.xs.XSNamespaceItem;
+import com.sun.org.apache.xerces.internal.xs.XSObjectList;
+import com.sun.org.apache.xerces.internal.xs.XSParticle;
+import com.sun.org.apache.xerces.internal.xs.XSTerm;
+
+/**
+ * Store schema particle declaration.
+ *
+ * @xerces.internal
+ *
+ * @author Sandy Gao, IBM
+ *
+ * @version $Id: XSParticleDecl.java,v 1.7 2010-11-01 04:39:55 joehw Exp $
+ */
+public class XSParticleDecl implements XSParticle {
+
+    // types of particles
+    public static final short PARTICLE_EMPTY        = 0;
+    public static final short PARTICLE_ELEMENT      = 1;
+    public static final short PARTICLE_WILDCARD     = 2;
+    public static final short PARTICLE_MODELGROUP   = 3;
+    public static final short PARTICLE_ZERO_OR_MORE = 4;
+    public static final short PARTICLE_ZERO_OR_ONE  = 5;
+    public static final short PARTICLE_ONE_OR_MORE  = 6;
+
+    // type of the particle
+    public short fType = PARTICLE_EMPTY;
+
+    // term of the particle
+    // for PARTICLE_ELEMENT : the element decl
+    // for PARTICLE_WILDCARD: the wildcard decl
+    // for PARTICLE_MODELGROUP: the model group
+    public XSTerm fValue = null;
+
+    // minimum occurrence of this particle
+    public int fMinOccurs = 1;
+    // maximum occurrence of this particle
+    public int fMaxOccurs = 1;
+    // optional annotation
+    public XSObjectList fAnnotations = null;
+
+    // clone this decl
+    public XSParticleDecl makeClone() {
+        XSParticleDecl particle = new XSParticleDecl();
+        particle.fType = fType;
+        particle.fMinOccurs = fMinOccurs;
+        particle.fMaxOccurs = fMaxOccurs;
+        particle.fDescription = fDescription;
+        particle.fValue = fValue;
+        particle.fAnnotations = fAnnotations;
+        return particle;
+    }
+
+    /**
+     * 3.9.6 Schema Component Constraint: Particle Emptiable
+     * whether this particle is emptible
+     */
+    public boolean emptiable() {
+        return minEffectiveTotalRange() == 0;
+    }
+
+    // whether this particle contains nothing
+    public boolean isEmpty() {
+        if (fType == PARTICLE_EMPTY)
+             return true;
+        if (fType == PARTICLE_ELEMENT || fType == PARTICLE_WILDCARD)
+            return false;
+
+        return ((XSModelGroupImpl)fValue).isEmpty();
+    }
+
+    /**
+     * 3.8.6 Effective Total Range (all and sequence) and
+     *       Effective Total Range (choice)
+     * The following methods are used to return min/max range for a particle.
+     * They are not exactly the same as it's described in the spec, but all the
+     * values from the spec are retrievable by these methods.
+     */
+    public int minEffectiveTotalRange() {
+        if (fType == XSParticleDecl.PARTICLE_EMPTY) {
+            return 0;
+        }
+        if (fType == PARTICLE_MODELGROUP) {
+            return ((XSModelGroupImpl)fValue).minEffectiveTotalRange() * fMinOccurs;
+        }
+        return fMinOccurs;
+    }
+
+    public int maxEffectiveTotalRange() {
+        if (fType == XSParticleDecl.PARTICLE_EMPTY) {
+            return 0;
+        }
+        if (fType == PARTICLE_MODELGROUP) {
+            int max = ((XSModelGroupImpl)fValue).maxEffectiveTotalRange();
+            if (max == SchemaSymbols.OCCURRENCE_UNBOUNDED)
+                return SchemaSymbols.OCCURRENCE_UNBOUNDED;
+            if (max != 0 && fMaxOccurs == SchemaSymbols.OCCURRENCE_UNBOUNDED)
+                return SchemaSymbols.OCCURRENCE_UNBOUNDED;
+            return max * fMaxOccurs;
+        }
+        return fMaxOccurs;
+    }
+
+    /**
+     * get the string description of this particle
+     */
+    private String fDescription = null;
+    public String toString() {
+        if (fDescription == null) {
+            StringBuffer buffer = new StringBuffer();
+            appendParticle(buffer);
+            if (!(fMinOccurs == 0 && fMaxOccurs == 0 ||
+                  fMinOccurs == 1 && fMaxOccurs == 1)) {
+                buffer.append('{').append(fMinOccurs);
+                if (fMaxOccurs == SchemaSymbols.OCCURRENCE_UNBOUNDED)
+                    buffer.append("-UNBOUNDED");
+                else if (fMinOccurs != fMaxOccurs)
+                    buffer.append('-').append(fMaxOccurs);
+                buffer.append('}');
+            }
+            fDescription = buffer.toString();
+        }
+        return fDescription;
+    }
+
+    /**
+     * append the string description of this particle to the string buffer
+     * this is for error message.
+     */
+    void appendParticle(StringBuffer buffer) {
+        switch (fType) {
+        case PARTICLE_EMPTY:
+            buffer.append("EMPTY");
+            break;
+        case PARTICLE_ELEMENT:
+            buffer.append(fValue.toString());
+            break;
+        case PARTICLE_WILDCARD:
+            buffer.append('(');
+            buffer.append(fValue.toString());
+            buffer.append(')');
+            break;
+        case PARTICLE_MODELGROUP:
+            buffer.append(fValue.toString());
+            break;
+        }
+    }
+
+    public void reset(){
+        fType = PARTICLE_EMPTY;
+        fValue = null;
+        fMinOccurs = 1;
+        fMaxOccurs = 1;
+        fDescription = null;
+        fAnnotations = null;
+    }
+
+    /**
+     * Get the type of the object, i.e ELEMENT_DECLARATION.
+     */
+    public short getType() {
+        return XSConstants.PARTICLE;
+    }
+
+    /**
+     * The <code>name</code> of this <code>XSObject</code> depending on the
+     * <code>XSObject</code> type.
+     */
+    public String getName() {
+        return null;
+    }
+
+    /**
+     * The namespace URI of this node, or <code>null</code> if it is
+     * unspecified.  defines how a namespace URI is attached to schema
+     * components.
+     */
+    public String getNamespace() {
+        return null;
+    }
+
+    /**
+     * {min occurs} determines the minimum number of terms that can occur.
+     */
+    public int getMinOccurs() {
+        return fMinOccurs;
+    }
+
+    /**
+     * {max occurs} whether the maxOccurs value is unbounded.
+     */
+    public boolean getMaxOccursUnbounded() {
+        return fMaxOccurs == SchemaSymbols.OCCURRENCE_UNBOUNDED;
+    }
+
+    /**
+     * {max occurs} determines the maximum number of terms that can occur.
+     */
+    public int getMaxOccurs() {
+        return fMaxOccurs;
+    }
+
+    /**
+     * {term} One of a model group, a wildcard, or an element declaration.
+     */
+    public XSTerm getTerm() {
+        return fValue;
+    }
+
+        /**
+         * @see org.apache.xerces.xs.XSObject#getNamespaceItem()
+         */
+        public XSNamespaceItem getNamespaceItem() {
+                return null;
+        }
+
+    /**
+     * Optional. Annotations.
+     */
+    public XSObjectList getAnnotations() {
+        return (fAnnotations != null) ? fAnnotations : XSObjectListImpl.EMPTY_LIST;
+    }
+
+} // class XSParticleDecl

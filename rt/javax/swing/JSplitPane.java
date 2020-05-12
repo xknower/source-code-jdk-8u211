@@ -1,1259 +1,1253 @@
-/*      */ package javax.swing;
-/*      */ 
-/*      */ import java.awt.Component;
-/*      */ import java.awt.Graphics;
-/*      */ import java.awt.LayoutManager;
-/*      */ import java.beans.ConstructorProperties;
-/*      */ import java.io.IOException;
-/*      */ import java.io.ObjectOutputStream;
-/*      */ import javax.accessibility.Accessible;
-/*      */ import javax.accessibility.AccessibleContext;
-/*      */ import javax.accessibility.AccessibleRole;
-/*      */ import javax.accessibility.AccessibleState;
-/*      */ import javax.accessibility.AccessibleStateSet;
-/*      */ import javax.accessibility.AccessibleValue;
-/*      */ import javax.swing.plaf.SplitPaneUI;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class JSplitPane
-/*      */   extends JComponent
-/*      */   implements Accessible
-/*      */ {
-/*      */   private static final String uiClassID = "SplitPaneUI";
-/*      */   public static final int VERTICAL_SPLIT = 0;
-/*      */   public static final int HORIZONTAL_SPLIT = 1;
-/*      */   public static final String LEFT = "left";
-/*      */   public static final String RIGHT = "right";
-/*      */   public static final String TOP = "top";
-/*      */   public static final String BOTTOM = "bottom";
-/*      */   public static final String DIVIDER = "divider";
-/*      */   public static final String ORIENTATION_PROPERTY = "orientation";
-/*      */   public static final String CONTINUOUS_LAYOUT_PROPERTY = "continuousLayout";
-/*      */   public static final String DIVIDER_SIZE_PROPERTY = "dividerSize";
-/*      */   public static final String ONE_TOUCH_EXPANDABLE_PROPERTY = "oneTouchExpandable";
-/*      */   public static final String LAST_DIVIDER_LOCATION_PROPERTY = "lastDividerLocation";
-/*      */   public static final String DIVIDER_LOCATION_PROPERTY = "dividerLocation";
-/*      */   public static final String RESIZE_WEIGHT_PROPERTY = "resizeWeight";
-/*      */   protected int orientation;
-/*      */   protected boolean continuousLayout;
-/*      */   protected Component leftComponent;
-/*      */   protected Component rightComponent;
-/*      */   protected int dividerSize;
-/*      */   private boolean dividerSizeSet = false;
-/*      */   protected boolean oneTouchExpandable;
-/*      */   private boolean oneTouchExpandableSet;
-/*      */   protected int lastDividerLocation;
-/*      */   private double resizeWeight;
-/*      */   private int dividerLocation;
-/*      */   
-/*      */   public JSplitPane() {
-/*  248 */     this(1, 
-/*  249 */         UIManager.getBoolean("SplitPane.continuousLayout"), new JButton(
-/*  250 */           UIManager.getString("SplitPane.leftButtonText")), new JButton(
-/*  251 */           UIManager.getString("SplitPane.rightButtonText")));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   @ConstructorProperties({"orientation"})
-/*      */   public JSplitPane(int paramInt) {
-/*  266 */     this(paramInt, 
-/*  267 */         UIManager.getBoolean("SplitPane.continuousLayout"));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public JSplitPane(int paramInt, boolean paramBoolean) {
-/*  285 */     this(paramInt, paramBoolean, (Component)null, (Component)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public JSplitPane(int paramInt, Component paramComponent1, Component paramComponent2) {
-/*  309 */     this(paramInt, 
-/*  310 */         UIManager.getBoolean("SplitPane.continuousLayout"), paramComponent1, paramComponent2);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public JSplitPane(int paramInt, boolean paramBoolean, Component paramComponent1, Component paramComponent2) {
-/*  342 */     this.dividerLocation = -1;
-/*  343 */     setLayout((LayoutManager)null);
-/*  344 */     setUIProperty("opaque", Boolean.TRUE);
-/*  345 */     this.orientation = paramInt;
-/*  346 */     if (this.orientation != 1 && this.orientation != 0) {
-/*  347 */       throw new IllegalArgumentException("cannot create JSplitPane, orientation must be one of JSplitPane.HORIZONTAL_SPLIT or JSplitPane.VERTICAL_SPLIT");
-/*      */     }
-/*      */ 
-/*      */     
-/*  351 */     this.continuousLayout = paramBoolean;
-/*  352 */     if (paramComponent1 != null)
-/*  353 */       setLeftComponent(paramComponent1); 
-/*  354 */     if (paramComponent2 != null)
-/*  355 */       setRightComponent(paramComponent2); 
-/*  356 */     updateUI();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setUI(SplitPaneUI paramSplitPaneUI) {
-/*  373 */     if ((SplitPaneUI)this.ui != paramSplitPaneUI) {
-/*  374 */       setUI(paramSplitPaneUI);
-/*  375 */       revalidate();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public SplitPaneUI getUI() {
-/*  390 */     return (SplitPaneUI)this.ui;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void updateUI() {
-/*  402 */     setUI((SplitPaneUI)UIManager.getUI(this));
-/*  403 */     revalidate();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getUIClassID() {
-/*  418 */     return "SplitPaneUI";
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setDividerSize(int paramInt) {
-/*  431 */     int i = this.dividerSize;
-/*      */     
-/*  433 */     this.dividerSizeSet = true;
-/*  434 */     if (i != paramInt) {
-/*  435 */       this.dividerSize = paramInt;
-/*  436 */       firePropertyChange("dividerSize", i, paramInt);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getDividerSize() {
-/*  447 */     return this.dividerSize;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setLeftComponent(Component paramComponent) {
-/*  457 */     if (paramComponent == null) {
-/*  458 */       if (this.leftComponent != null) {
-/*  459 */         remove(this.leftComponent);
-/*  460 */         this.leftComponent = null;
-/*      */       } 
-/*      */     } else {
-/*  463 */       add(paramComponent, "left");
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Component getLeftComponent() {
-/*  477 */     return this.leftComponent;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setTopComponent(Component paramComponent) {
-/*  489 */     setLeftComponent(paramComponent);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Component getTopComponent() {
-/*  499 */     return this.leftComponent;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setRightComponent(Component paramComponent) {
-/*  512 */     if (paramComponent == null) {
-/*  513 */       if (this.rightComponent != null) {
-/*  514 */         remove(this.rightComponent);
-/*  515 */         this.rightComponent = null;
-/*      */       } 
-/*      */     } else {
-/*  518 */       add(paramComponent, "right");
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Component getRightComponent() {
-/*  529 */     return this.rightComponent;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setBottomComponent(Component paramComponent) {
-/*  541 */     setRightComponent(paramComponent);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Component getBottomComponent() {
-/*  551 */     return this.rightComponent;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setOneTouchExpandable(boolean paramBoolean) {
-/*  574 */     boolean bool = this.oneTouchExpandable;
-/*      */     
-/*  576 */     this.oneTouchExpandable = paramBoolean;
-/*  577 */     this.oneTouchExpandableSet = true;
-/*  578 */     firePropertyChange("oneTouchExpandable", bool, paramBoolean);
-/*  579 */     repaint();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isOneTouchExpandable() {
-/*  590 */     return this.oneTouchExpandable;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setLastDividerLocation(int paramInt) {
-/*  606 */     int i = this.lastDividerLocation;
-/*      */     
-/*  608 */     this.lastDividerLocation = paramInt;
-/*  609 */     firePropertyChange("lastDividerLocation", i, paramInt);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getLastDividerLocation() {
-/*  622 */     return this.lastDividerLocation;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setOrientation(int paramInt) {
-/*  643 */     if (paramInt != 0 && paramInt != 1)
-/*      */     {
-/*  645 */       throw new IllegalArgumentException("JSplitPane: orientation must be one of JSplitPane.VERTICAL_SPLIT or JSplitPane.HORIZONTAL_SPLIT");
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  651 */     int i = this.orientation;
-/*      */     
-/*  653 */     this.orientation = paramInt;
-/*  654 */     firePropertyChange("orientation", i, paramInt);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getOrientation() {
-/*  665 */     return this.orientation;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setContinuousLayout(boolean paramBoolean) {
-/*  688 */     boolean bool = this.continuousLayout;
-/*      */     
-/*  690 */     this.continuousLayout = paramBoolean;
-/*  691 */     firePropertyChange("continuousLayout", bool, paramBoolean);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isContinuousLayout() {
-/*  703 */     return this.continuousLayout;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setResizeWeight(double paramDouble) {
-/*  725 */     if (paramDouble < 0.0D || paramDouble > 1.0D) {
-/*  726 */       throw new IllegalArgumentException("JSplitPane weight must be between 0 and 1");
-/*      */     }
-/*  728 */     double d = this.resizeWeight;
-/*      */     
-/*  730 */     this.resizeWeight = paramDouble;
-/*  731 */     firePropertyChange("resizeWeight", d, paramDouble);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public double getResizeWeight() {
-/*  741 */     return this.resizeWeight;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void resetToPreferredSizes() {
-/*  750 */     SplitPaneUI splitPaneUI = getUI();
-/*      */     
-/*  752 */     if (splitPaneUI != null) {
-/*  753 */       splitPaneUI.resetToPreferredSizes(this);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setDividerLocation(double paramDouble) {
-/*  778 */     if (paramDouble < 0.0D || paramDouble > 1.0D)
-/*      */     {
-/*  780 */       throw new IllegalArgumentException("proportional location must be between 0.0 and 1.0.");
-/*      */     }
-/*      */     
-/*  783 */     if (getOrientation() == 0) {
-/*  784 */       setDividerLocation((int)((getHeight() - getDividerSize()) * paramDouble));
-/*      */     } else {
-/*      */       
-/*  787 */       setDividerLocation((int)((getWidth() - getDividerSize()) * paramDouble));
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setDividerLocation(int paramInt) {
-/*  808 */     int i = this.dividerLocation;
-/*      */     
-/*  810 */     this.dividerLocation = paramInt;
-/*      */ 
-/*      */     
-/*  813 */     SplitPaneUI splitPaneUI = getUI();
-/*      */     
-/*  815 */     if (splitPaneUI != null) {
-/*  816 */       splitPaneUI.setDividerLocation(this, paramInt);
-/*      */     }
-/*      */ 
-/*      */     
-/*  820 */     firePropertyChange("dividerLocation", i, paramInt);
-/*      */ 
-/*      */     
-/*  823 */     setLastDividerLocation(i);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getDividerLocation() {
-/*  836 */     return this.dividerLocation;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getMinimumDividerLocation() {
-/*  851 */     SplitPaneUI splitPaneUI = getUI();
-/*      */     
-/*  853 */     if (splitPaneUI != null) {
-/*  854 */       return splitPaneUI.getMinimumDividerLocation(this);
-/*      */     }
-/*  856 */     return -1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getMaximumDividerLocation() {
-/*  869 */     SplitPaneUI splitPaneUI = getUI();
-/*      */     
-/*  871 */     if (splitPaneUI != null) {
-/*  872 */       return splitPaneUI.getMaximumDividerLocation(this);
-/*      */     }
-/*  874 */     return -1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void remove(Component paramComponent) {
-/*  886 */     if (paramComponent == this.leftComponent) {
-/*  887 */       this.leftComponent = null;
-/*  888 */     } else if (paramComponent == this.rightComponent) {
-/*  889 */       this.rightComponent = null;
-/*      */     } 
-/*  891 */     super.remove(paramComponent);
-/*      */ 
-/*      */     
-/*  894 */     revalidate();
-/*  895 */     repaint();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void remove(int paramInt) {
-/*  909 */     Component component = getComponent(paramInt);
-/*      */     
-/*  911 */     if (component == this.leftComponent) {
-/*  912 */       this.leftComponent = null;
-/*  913 */     } else if (component == this.rightComponent) {
-/*  914 */       this.rightComponent = null;
-/*      */     } 
-/*  916 */     super.remove(paramInt);
-/*      */ 
-/*      */     
-/*  919 */     revalidate();
-/*  920 */     repaint();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void removeAll() {
-/*  930 */     this.leftComponent = this.rightComponent = null;
-/*  931 */     super.removeAll();
-/*      */ 
-/*      */     
-/*  934 */     revalidate();
-/*  935 */     repaint();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isValidateRoot() {
-/*  954 */     return true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void addImpl(Component paramComponent, Object paramObject, int paramInt) {
-/*  992 */     if (paramObject != null && !(paramObject instanceof String)) {
-/*  993 */       throw new IllegalArgumentException("cannot add to layout: constraint must be a string (or null)");
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1000 */     if (paramObject == null) {
-/* 1001 */       if (getLeftComponent() == null) {
-/* 1002 */         paramObject = "left";
-/* 1003 */       } else if (getRightComponent() == null) {
-/* 1004 */         paramObject = "right";
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */     
-/* 1009 */     if (paramObject != null && (paramObject.equals("left") || paramObject
-/* 1010 */       .equals("top"))) {
-/* 1011 */       Component component = getLeftComponent();
-/* 1012 */       if (component != null) {
-/* 1013 */         remove(component);
-/*      */       }
-/* 1015 */       this.leftComponent = paramComponent;
-/* 1016 */       paramInt = -1;
-/* 1017 */     } else if (paramObject != null && (paramObject
-/* 1018 */       .equals("right") || paramObject
-/* 1019 */       .equals("bottom"))) {
-/* 1020 */       Component component = getRightComponent();
-/* 1021 */       if (component != null) {
-/* 1022 */         remove(component);
-/*      */       }
-/* 1024 */       this.rightComponent = paramComponent;
-/* 1025 */       paramInt = -1;
-/* 1026 */     } else if (paramObject != null && paramObject
-/* 1027 */       .equals("divider")) {
-/* 1028 */       paramInt = -1;
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1032 */     super.addImpl(paramComponent, paramObject, paramInt);
-/*      */ 
-/*      */     
-/* 1035 */     revalidate();
-/* 1036 */     repaint();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void paintChildren(Graphics paramGraphics) {
-/* 1047 */     super.paintChildren(paramGraphics);
-/*      */     
-/* 1049 */     SplitPaneUI splitPaneUI = getUI();
-/*      */     
-/* 1051 */     if (splitPaneUI != null) {
-/* 1052 */       Graphics graphics = paramGraphics.create();
-/* 1053 */       splitPaneUI.finishedPaintingChildren(this, graphics);
-/* 1054 */       graphics.dispose();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void writeObject(ObjectOutputStream paramObjectOutputStream) throws IOException {
-/* 1065 */     paramObjectOutputStream.defaultWriteObject();
-/* 1066 */     if (getUIClassID().equals("SplitPaneUI")) {
-/* 1067 */       byte b = JComponent.getWriteObjCounter(this);
-/* 1068 */       b = (byte)(b - 1); JComponent.setWriteObjCounter(this, b);
-/* 1069 */       if (b == 0 && this.ui != null) {
-/* 1070 */         this.ui.installUI(this);
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   void setUIProperty(String paramString, Object paramObject) {
-/* 1076 */     if (paramString == "dividerSize") {
-/* 1077 */       if (!this.dividerSizeSet) {
-/* 1078 */         setDividerSize(((Number)paramObject).intValue());
-/* 1079 */         this.dividerSizeSet = false;
-/*      */       } 
-/* 1081 */     } else if (paramString == "oneTouchExpandable") {
-/* 1082 */       if (!this.oneTouchExpandableSet) {
-/* 1083 */         setOneTouchExpandable(((Boolean)paramObject).booleanValue());
-/* 1084 */         this.oneTouchExpandableSet = false;
-/*      */       } 
-/*      */     } else {
-/* 1087 */       super.setUIProperty(paramString, paramObject);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected String paramString() {
-/* 1103 */     String str1 = (this.orientation == 1) ? "HORIZONTAL_SPLIT" : "VERTICAL_SPLIT";
-/*      */     
-/* 1105 */     String str2 = this.continuousLayout ? "true" : "false";
-/*      */     
-/* 1107 */     String str3 = this.oneTouchExpandable ? "true" : "false";
-/*      */ 
-/*      */     
-/* 1110 */     return super.paramString() + ",continuousLayout=" + str2 + ",dividerSize=" + this.dividerSize + ",lastDividerLocation=" + this.lastDividerLocation + ",oneTouchExpandable=" + str3 + ",orientation=" + str1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public AccessibleContext getAccessibleContext() {
-/* 1138 */     if (this.accessibleContext == null) {
-/* 1139 */       this.accessibleContext = new AccessibleJSplitPane();
-/*      */     }
-/* 1141 */     return this.accessibleContext;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected class AccessibleJSplitPane
-/*      */     extends JComponent.AccessibleJComponent
-/*      */     implements AccessibleValue
-/*      */   {
-/*      */     public AccessibleStateSet getAccessibleStateSet() {
-/* 1169 */       AccessibleStateSet accessibleStateSet = super.getAccessibleStateSet();
-/*      */ 
-/*      */ 
-/*      */       
-/* 1173 */       if (JSplitPane.this.getOrientation() == 0) {
-/* 1174 */         accessibleStateSet.add(AccessibleState.VERTICAL);
-/*      */       } else {
-/* 1176 */         accessibleStateSet.add(AccessibleState.HORIZONTAL);
-/*      */       } 
-/* 1178 */       return accessibleStateSet;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public AccessibleValue getAccessibleValue() {
-/* 1191 */       return this;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Number getCurrentAccessibleValue() {
-/* 1201 */       return Integer.valueOf(JSplitPane.this.getDividerLocation());
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public boolean setCurrentAccessibleValue(Number param1Number) {
-/* 1212 */       if (param1Number == null) {
-/* 1213 */         return false;
-/*      */       }
-/* 1215 */       JSplitPane.this.setDividerLocation(param1Number.intValue());
-/* 1216 */       return true;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Number getMinimumAccessibleValue() {
-/* 1226 */       return Integer.valueOf(JSplitPane.this.getUI().getMinimumDividerLocation(JSplitPane.this));
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Number getMaximumAccessibleValue() {
-/* 1237 */       return Integer.valueOf(JSplitPane.this.getUI().getMaximumDividerLocation(JSplitPane.this));
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public AccessibleRole getAccessibleRole() {
-/* 1250 */       return AccessibleRole.SPLIT_PANE;
-/*      */     }
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\JSplitPane.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+
+
+package javax.swing;
+
+
+
+import java.beans.ConstructorProperties;
+import javax.swing.plaf.*;
+import javax.accessibility.*;
+
+import java.awt.*;
+
+import java.io.ObjectOutputStream;
+import java.io.ObjectInputStream;
+import java.io.IOException;
+
+
+
+/**
+ * <code>JSplitPane</code> is used to divide two (and only two)
+ * <code>Component</code>s. The two <code>Component</code>s
+ * are graphically divided based on the look and feel
+ * implementation, and the two <code>Component</code>s can then be
+ * interactively resized by the user.
+ * Information on using <code>JSplitPane</code> is in
+ * <a
+ href="https://docs.oracle.com/javase/tutorial/uiswing/components/splitpane.html">How to Use Split Panes</a> in
+ * <em>The Java Tutorial</em>.
+ * <p>
+ * The two <code>Component</code>s in a split pane can be aligned
+ * left to right using
+ * <code>JSplitPane.HORIZONTAL_SPLIT</code>, or top to bottom using
+ * <code>JSplitPane.VERTICAL_SPLIT</code>.
+ * The preferred way to change the size of the <code>Component</code>s
+ * is to invoke
+ * <code>setDividerLocation</code> where <code>location</code> is either
+ * the new x or y position, depending on the orientation of the
+ * <code>JSplitPane</code>.
+ * <p>
+ * To resize the <code>Component</code>s to their preferred sizes invoke
+ * <code>resetToPreferredSizes</code>.
+ * <p>
+ * When the user is resizing the <code>Component</code>s the minimum
+ * size of the <code>Components</code> is used to determine the
+ * maximum/minimum position the <code>Component</code>s
+ * can be set to. If the minimum size of the two
+ * components is greater than the size of the split pane the divider
+ * will not allow you to resize it. To alter the minimum size of a
+ * <code>JComponent</code>, see {@link JComponent#setMinimumSize}.
+ * <p>
+ * When the user resizes the split pane the new space is distributed between
+ * the two components based on the <code>resizeWeight</code> property.
+ * A value of 0,
+ * the default, indicates the right/bottom component gets all the space,
+ * where as a value of 1 indicates the left/top component gets all the space.
+ * <p>
+ * <strong>Warning:</strong> Swing is not thread safe. For more
+ * information see <a
+ * href="package-summary.html#threading">Swing's Threading
+ * Policy</a>.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @see #setDividerLocation
+ * @see #resetToPreferredSizes
+ *
+ * @author Scott Violet
+ */
+public class JSplitPane extends JComponent implements Accessible
+{
+    /**
+     * @see #getUIClassID
+     * @see #readObject
+     */
+    private static final String uiClassID = "SplitPaneUI";
+
+    /**
+     * Vertical split indicates the <code>Component</code>s are
+     * split along the y axis.  For example the two
+     * <code>Component</code>s will be split one on top of the other.
+     */
+    public final static int VERTICAL_SPLIT = 0;
+
+    /**
+     * Horizontal split indicates the <code>Component</code>s are
+     * split along the x axis.  For example the two
+     * <code>Component</code>s will be split one to the left of the
+     * other.
+     */
+    public final static int HORIZONTAL_SPLIT = 1;
+
+    /**
+     * Used to add a <code>Component</code> to the left of the other
+     * <code>Component</code>.
+     */
+    public final static String LEFT = "left";
+
+    /**
+     * Used to add a <code>Component</code> to the right of the other
+     * <code>Component</code>.
+     */
+    public final static String RIGHT = "right";
+
+    /**
+     * Used to add a <code>Component</code> above the other
+     * <code>Component</code>.
+     */
+    public final static String TOP = "top";
+
+    /**
+     * Used to add a <code>Component</code> below the other
+     * <code>Component</code>.
+     */
+    public final static String BOTTOM = "bottom";
+
+    /**
+     * Used to add a <code>Component</code> that will represent the divider.
+     */
+    public final static String DIVIDER = "divider";
+
+    /**
+     * Bound property name for orientation (horizontal or vertical).
+     */
+    public final static String ORIENTATION_PROPERTY = "orientation";
+
+    /**
+     * Bound property name for continuousLayout.
+     */
+    public final static String CONTINUOUS_LAYOUT_PROPERTY = "continuousLayout";
+
+    /**
+     * Bound property name for border.
+     */
+    public final static String DIVIDER_SIZE_PROPERTY = "dividerSize";
+
+    /**
+     * Bound property for oneTouchExpandable.
+     */
+    public final static String ONE_TOUCH_EXPANDABLE_PROPERTY =
+                               "oneTouchExpandable";
+
+    /**
+     * Bound property for lastLocation.
+     */
+    public final static String LAST_DIVIDER_LOCATION_PROPERTY =
+                               "lastDividerLocation";
+
+    /**
+     * Bound property for the dividerLocation.
+     * @since 1.3
+     */
+    public final static String DIVIDER_LOCATION_PROPERTY = "dividerLocation";
+
+    /**
+     * Bound property for weight.
+     * @since 1.3
+     */
+    public final static String RESIZE_WEIGHT_PROPERTY = "resizeWeight";
+
+    /**
+     * How the views are split.
+     */
+    protected int orientation;
+
+    /**
+     * Whether or not the views are continuously redisplayed while
+     * resizing.
+     */
+    protected boolean continuousLayout;
+
+    /**
+     * The left or top component.
+     */
+    protected Component leftComponent;
+
+    /**
+     * The right or bottom component.
+     */
+    protected Component rightComponent;
+
+    /**
+     * Size of the divider.
+     */
+    protected int dividerSize;
+    private boolean dividerSizeSet = false;
+
+    /**
+     * Is a little widget provided to quickly expand/collapse the
+     * split pane?
+     */
+    protected boolean oneTouchExpandable;
+    private boolean oneTouchExpandableSet;
+
+    /**
+     * Previous location of the split pane.
+     */
+    protected int lastDividerLocation;
+
+    /**
+     * How to distribute extra space.
+     */
+    private double resizeWeight;
+
+    /**
+     * Location of the divider, at least the value that was set, the UI may
+     * have a different value.
+     */
+    private int dividerLocation;
+
+
+    /**
+     * Creates a new <code>JSplitPane</code> configured to arrange the child
+     * components side-by-side horizontally, using two buttons for the components.
+     */
+    public JSplitPane() {
+        this(JSplitPane.HORIZONTAL_SPLIT,
+                UIManager.getBoolean("SplitPane.continuousLayout"),
+                new JButton(UIManager.getString("SplitPane.leftButtonText")),
+                new JButton(UIManager.getString("SplitPane.rightButtonText")));
+    }
+
+
+    /**
+     * Creates a new <code>JSplitPane</code> configured with the
+     * specified orientation.
+     *
+     * @param newOrientation  <code>JSplitPane.HORIZONTAL_SPLIT</code> or
+     *                        <code>JSplitPane.VERTICAL_SPLIT</code>
+     * @exception IllegalArgumentException if <code>orientation</code>
+     *          is not one of HORIZONTAL_SPLIT or VERTICAL_SPLIT.
+     */
+    @ConstructorProperties({"orientation"})
+    public JSplitPane(int newOrientation) {
+        this(newOrientation,
+                UIManager.getBoolean("SplitPane.continuousLayout"));
+    }
+
+
+    /**
+     * Creates a new <code>JSplitPane</code> with the specified
+     * orientation and redrawing style.
+     *
+     * @param newOrientation  <code>JSplitPane.HORIZONTAL_SPLIT</code> or
+     *                        <code>JSplitPane.VERTICAL_SPLIT</code>
+     * @param newContinuousLayout  a boolean, true for the components to
+     *        redraw continuously as the divider changes position, false
+     *        to wait until the divider position stops changing to redraw
+     * @exception IllegalArgumentException if <code>orientation</code>
+     *          is not one of HORIZONTAL_SPLIT or VERTICAL_SPLIT
+     */
+    public JSplitPane(int newOrientation,
+                      boolean newContinuousLayout) {
+        this(newOrientation, newContinuousLayout, null, null);
+    }
+
+
+    /**
+     * Creates a new <code>JSplitPane</code> with the specified
+     * orientation and the specified components.
+     *
+     * @param newOrientation  <code>JSplitPane.HORIZONTAL_SPLIT</code> or
+     *                        <code>JSplitPane.VERTICAL_SPLIT</code>
+     * @param newLeftComponent the <code>Component</code> that will
+     *          appear on the left
+     *          of a horizontally-split pane, or at the top of a
+     *          vertically-split pane
+     * @param newRightComponent the <code>Component</code> that will
+     *          appear on the right
+     *          of a horizontally-split pane, or at the bottom of a
+     *          vertically-split pane
+     * @exception IllegalArgumentException if <code>orientation</code>
+     *          is not one of: HORIZONTAL_SPLIT or VERTICAL_SPLIT
+     */
+    public JSplitPane(int newOrientation,
+                      Component newLeftComponent,
+                      Component newRightComponent){
+        this(newOrientation,
+                UIManager.getBoolean("SplitPane.continuousLayout"),
+                newLeftComponent, newRightComponent);
+    }
+
+
+    /**
+     * Creates a new <code>JSplitPane</code> with the specified
+     * orientation and
+     * redrawing style, and with the specified components.
+     *
+     * @param newOrientation  <code>JSplitPane.HORIZONTAL_SPLIT</code> or
+     *                        <code>JSplitPane.VERTICAL_SPLIT</code>
+     * @param newContinuousLayout  a boolean, true for the components to
+     *        redraw continuously as the divider changes position, false
+     *        to wait until the divider position stops changing to redraw
+     * @param newLeftComponent the <code>Component</code> that will
+     *          appear on the left
+     *          of a horizontally-split pane, or at the top of a
+     *          vertically-split pane
+     * @param newRightComponent the <code>Component</code> that will
+     *          appear on the right
+     *          of a horizontally-split pane, or at the bottom of a
+     *          vertically-split pane
+     * @exception IllegalArgumentException if <code>orientation</code>
+     *          is not one of HORIZONTAL_SPLIT or VERTICAL_SPLIT
+     */
+    public JSplitPane(int newOrientation,
+                      boolean newContinuousLayout,
+                      Component newLeftComponent,
+                      Component newRightComponent){
+        super();
+
+        dividerLocation = -1;
+        setLayout(null);
+        setUIProperty("opaque", Boolean.TRUE);
+        orientation = newOrientation;
+        if (orientation != HORIZONTAL_SPLIT && orientation != VERTICAL_SPLIT)
+            throw new IllegalArgumentException("cannot create JSplitPane, " +
+                                               "orientation must be one of " +
+                                               "JSplitPane.HORIZONTAL_SPLIT " +
+                                               "or JSplitPane.VERTICAL_SPLIT");
+        continuousLayout = newContinuousLayout;
+        if (newLeftComponent != null)
+            setLeftComponent(newLeftComponent);
+        if (newRightComponent != null)
+            setRightComponent(newRightComponent);
+        updateUI();
+
+    }
+
+
+    /**
+     * Sets the L&amp;F object that renders this component.
+     *
+     * @param ui  the <code>SplitPaneUI</code> L&amp;F object
+     * @see UIDefaults#getUI
+     * @beaninfo
+     *        bound: true
+     *       hidden: true
+     *    attribute: visualUpdate true
+     *  description: The UI object that implements the Component's LookAndFeel.
+     */
+    public void setUI(SplitPaneUI ui) {
+        if ((SplitPaneUI)this.ui != ui) {
+            super.setUI(ui);
+            revalidate();
+        }
+    }
+
+
+    /**
+     * Returns the <code>SplitPaneUI</code> that is providing the
+     * current look and feel.
+     *
+     * @return the <code>SplitPaneUI</code> object that renders this component
+     * @beaninfo
+     *       expert: true
+     *  description: The L&amp;F object that renders this component.
+     */
+    public SplitPaneUI getUI() {
+        return (SplitPaneUI)ui;
+    }
+
+
+    /**
+     * Notification from the <code>UIManager</code> that the L&amp;F has changed.
+     * Replaces the current UI object with the latest version from the
+     * <code>UIManager</code>.
+     *
+     * @see JComponent#updateUI
+     */
+    public void updateUI() {
+        setUI((SplitPaneUI)UIManager.getUI(this));
+        revalidate();
+    }
+
+
+    /**
+     * Returns the name of the L&amp;F class that renders this component.
+     *
+     * @return the string "SplitPaneUI"
+     * @see JComponent#getUIClassID
+     * @see UIDefaults#getUI
+     * @beaninfo
+     *       expert: true
+     *  description: A string that specifies the name of the L&amp;F class.
+     */
+    public String getUIClassID() {
+        return uiClassID;
+    }
+
+
+    /**
+     * Sets the size of the divider.
+     *
+     * @param newSize an integer giving the size of the divider in pixels
+     * @beaninfo
+     *        bound: true
+     *  description: The size of the divider.
+     */
+    public void setDividerSize(int newSize) {
+        int           oldSize = dividerSize;
+
+        dividerSizeSet = true;
+        if (oldSize != newSize) {
+            dividerSize = newSize;
+            firePropertyChange(DIVIDER_SIZE_PROPERTY, oldSize, newSize);
+        }
+    }
+
+
+    /**
+     * Returns the size of the divider.
+     *
+     * @return an integer giving the size of the divider in pixels
+     */
+    public int getDividerSize() {
+        return dividerSize;
+    }
+
+
+    /**
+     * Sets the component to the left (or above) the divider.
+     *
+     * @param comp the <code>Component</code> to display in that position
+     */
+    public void setLeftComponent(Component comp) {
+        if (comp == null) {
+            if (leftComponent != null) {
+                remove(leftComponent);
+                leftComponent = null;
+            }
+        } else {
+            add(comp, JSplitPane.LEFT);
+        }
+    }
+
+
+    /**
+     * Returns the component to the left (or above) the divider.
+     *
+     * @return the <code>Component</code> displayed in that position
+     * @beaninfo
+     *    preferred: true
+     *  description: The component to the left (or above) the divider.
+     */
+    public Component getLeftComponent() {
+        return leftComponent;
+    }
+
+
+    /**
+     * Sets the component above, or to the left of the divider.
+     *
+     * @param comp the <code>Component</code> to display in that position
+     * @beaninfo
+     *  description: The component above, or to the left of the divider.
+     */
+    public void setTopComponent(Component comp) {
+        setLeftComponent(comp);
+    }
+
+
+    /**
+     * Returns the component above, or to the left of the divider.
+     *
+     * @return the <code>Component</code> displayed in that position
+     */
+    public Component getTopComponent() {
+        return leftComponent;
+    }
+
+
+    /**
+     * Sets the component to the right (or below) the divider.
+     *
+     * @param comp the <code>Component</code> to display in that position
+     * @beaninfo
+     *    preferred: true
+     *  description: The component to the right (or below) the divider.
+     */
+    public void setRightComponent(Component comp) {
+        if (comp == null) {
+            if (rightComponent != null) {
+                remove(rightComponent);
+                rightComponent = null;
+            }
+        } else {
+            add(comp, JSplitPane.RIGHT);
+        }
+    }
+
+
+    /**
+     * Returns the component to the right (or below) the divider.
+     *
+     * @return the <code>Component</code> displayed in that position
+     */
+    public Component getRightComponent() {
+        return rightComponent;
+    }
+
+
+    /**
+     * Sets the component below, or to the right of the divider.
+     *
+     * @param comp the <code>Component</code> to display in that position
+     * @beaninfo
+     *  description: The component below, or to the right of the divider.
+     */
+    public void setBottomComponent(Component comp) {
+        setRightComponent(comp);
+    }
+
+
+    /**
+     * Returns the component below, or to the right of the divider.
+     *
+     * @return the <code>Component</code> displayed in that position
+     */
+    public Component getBottomComponent() {
+        return rightComponent;
+    }
+
+
+    /**
+     * Sets the value of the <code>oneTouchExpandable</code> property,
+     * which must be <code>true</code> for the
+     * <code>JSplitPane</code> to provide a UI widget
+     * on the divider to quickly expand/collapse the divider.
+     * The default value of this property is <code>false</code>.
+     * Some look and feels might not support one-touch expanding;
+     * they will ignore this property.
+     *
+     * @param newValue <code>true</code> to specify that the split pane should provide a
+     *        collapse/expand widget
+     * @beaninfo
+     *        bound: true
+     *  description: UI widget on the divider to quickly
+     *               expand/collapse the divider.
+     *
+     * @see #isOneTouchExpandable
+     */
+    public void setOneTouchExpandable(boolean newValue) {
+        boolean           oldValue = oneTouchExpandable;
+
+        oneTouchExpandable = newValue;
+        oneTouchExpandableSet = true;
+        firePropertyChange(ONE_TOUCH_EXPANDABLE_PROPERTY, oldValue, newValue);
+        repaint();
+    }
+
+
+    /**
+     * Gets the <code>oneTouchExpandable</code> property.
+     *
+     * @return the value of the <code>oneTouchExpandable</code> property
+     * @see #setOneTouchExpandable
+     */
+    public boolean isOneTouchExpandable() {
+        return oneTouchExpandable;
+    }
+
+
+    /**
+     * Sets the last location the divider was at to
+     * <code>newLastLocation</code>.
+     *
+     * @param newLastLocation an integer specifying the last divider location
+     *        in pixels, from the left (or upper) edge of the pane to the
+     *        left (or upper) edge of the divider
+     * @beaninfo
+     *        bound: true
+     *  description: The last location the divider was at.
+     */
+    public void setLastDividerLocation(int newLastLocation) {
+        int               oldLocation = lastDividerLocation;
+
+        lastDividerLocation = newLastLocation;
+        firePropertyChange(LAST_DIVIDER_LOCATION_PROPERTY, oldLocation,
+                           newLastLocation);
+    }
+
+
+    /**
+     * Returns the last location the divider was at.
+     *
+     * @return an integer specifying the last divider location as a count
+     *       of pixels from the left (or upper) edge of the pane to the
+     *       left (or upper) edge of the divider
+     */
+    public int getLastDividerLocation() {
+        return lastDividerLocation;
+    }
+
+
+    /**
+     * Sets the orientation, or how the splitter is divided. The options
+     * are:<ul>
+     * <li>JSplitPane.VERTICAL_SPLIT  (above/below orientation of components)
+     * <li>JSplitPane.HORIZONTAL_SPLIT  (left/right orientation of components)
+     * </ul>
+     *
+     * @param orientation an integer specifying the orientation
+     * @exception IllegalArgumentException if orientation is not one of:
+     *        HORIZONTAL_SPLIT or VERTICAL_SPLIT.
+     * @beaninfo
+     *        bound: true
+     *  description: The orientation, or how the splitter is divided.
+     *         enum: HORIZONTAL_SPLIT JSplitPane.HORIZONTAL_SPLIT
+     *               VERTICAL_SPLIT   JSplitPane.VERTICAL_SPLIT
+     */
+    public void setOrientation(int orientation) {
+        if ((orientation != VERTICAL_SPLIT) &&
+            (orientation != HORIZONTAL_SPLIT)) {
+           throw new IllegalArgumentException("JSplitPane: orientation must " +
+                                              "be one of " +
+                                              "JSplitPane.VERTICAL_SPLIT or " +
+                                              "JSplitPane.HORIZONTAL_SPLIT");
+        }
+
+        int           oldOrientation = this.orientation;
+
+        this.orientation = orientation;
+        firePropertyChange(ORIENTATION_PROPERTY, oldOrientation, orientation);
+    }
+
+
+    /**
+     * Returns the orientation.
+     *
+     * @return an integer giving the orientation
+     * @see #setOrientation
+     */
+    public int getOrientation() {
+        return orientation;
+    }
+
+
+    /**
+     * Sets the value of the <code>continuousLayout</code> property,
+     * which must be <code>true</code> for the child components
+     * to be continuously
+     * redisplayed and laid out during user intervention.
+     * The default value of this property is look and feel dependent.
+     * Some look and feels might not support continuous layout;
+     * they will ignore this property.
+     *
+     * @param newContinuousLayout  <code>true</code> if the components
+     *        should continuously be redrawn as the divider changes position
+     * @beaninfo
+     *        bound: true
+     *  description: Whether the child components are
+     *               continuously redisplayed and laid out during
+     *               user intervention.
+     * @see #isContinuousLayout
+     */
+    public void setContinuousLayout(boolean newContinuousLayout) {
+        boolean           oldCD = continuousLayout;
+
+        continuousLayout = newContinuousLayout;
+        firePropertyChange(CONTINUOUS_LAYOUT_PROPERTY, oldCD,
+                           newContinuousLayout);
+    }
+
+
+    /**
+     * Gets the <code>continuousLayout</code> property.
+     *
+     * @return the value of the <code>continuousLayout</code> property
+     * @see #setContinuousLayout
+     */
+    public boolean isContinuousLayout() {
+        return continuousLayout;
+    }
+
+    /**
+     * Specifies how to distribute extra space when the size of the split pane
+     * changes. A value of 0, the default,
+     * indicates the right/bottom component gets all the extra space (the
+     * left/top component acts fixed), where as a value of 1 specifies the
+     * left/top component gets all the extra space (the right/bottom component
+     * acts fixed). Specifically, the left/top component gets (weight * diff)
+     * extra space and the right/bottom component gets (1 - weight) * diff
+     * extra space.
+     *
+     * @param value as described above
+     * @exception IllegalArgumentException if <code>value</code> is &lt; 0 or &gt; 1
+     * @since 1.3
+     * @beaninfo
+     *        bound: true
+     *  description: Specifies how to distribute extra space when the split pane
+     *               resizes.
+     */
+    public void setResizeWeight(double value) {
+        if (value < 0 || value > 1) {
+            throw new IllegalArgumentException("JSplitPane weight must be between 0 and 1");
+        }
+        double         oldWeight = resizeWeight;
+
+        resizeWeight = value;
+        firePropertyChange(RESIZE_WEIGHT_PROPERTY, oldWeight, value);
+    }
+
+    /**
+     * Returns the number that determines how extra space is distributed.
+     * @return how extra space is to be distributed on a resize of the
+     *         split pane
+     * @since 1.3
+     */
+    public double getResizeWeight() {
+        return resizeWeight;
+    }
+
+    /**
+     * Lays out the <code>JSplitPane</code> layout based on the preferred size
+     * of the children components. This will likely result in changing
+     * the divider location.
+     */
+    public void resetToPreferredSizes() {
+        SplitPaneUI         ui = getUI();
+
+        if (ui != null) {
+            ui.resetToPreferredSizes(this);
+        }
+    }
+
+
+    /**
+     * Sets the divider location as a percentage of the
+     * <code>JSplitPane</code>'s size.
+     * <p>
+     * This method is implemented in terms of
+     * <code>setDividerLocation(int)</code>.
+     * This method immediately changes the size of the split pane based on
+     * its current size. If the split pane is not correctly realized and on
+     * screen, this method will have no effect (new divider location will
+     * become (current size * proportionalLocation) which is 0).
+     *
+     * @param proportionalLocation  a double-precision floating point value
+     *        that specifies a percentage, from zero (top/left) to 1.0
+     *        (bottom/right)
+     * @exception IllegalArgumentException if the specified location is &lt; 0
+     *            or &gt; 1.0
+     * @beaninfo
+     *  description: The location of the divider.
+     */
+    public void setDividerLocation(double proportionalLocation) {
+        if (proportionalLocation < 0.0 ||
+           proportionalLocation > 1.0) {
+            throw new IllegalArgumentException("proportional location must " +
+                                               "be between 0.0 and 1.0.");
+        }
+        if (getOrientation() == VERTICAL_SPLIT) {
+            setDividerLocation((int)((double)(getHeight() - getDividerSize()) *
+                                     proportionalLocation));
+        } else {
+            setDividerLocation((int)((double)(getWidth() - getDividerSize()) *
+                                     proportionalLocation));
+        }
+    }
+
+
+    /**
+     * Sets the location of the divider. This is passed off to the
+     * look and feel implementation, and then listeners are notified. A value
+     * less than 0 implies the divider should be reset to a value that
+     * attempts to honor the preferred size of the left/top component.
+     * After notifying the listeners, the last divider location is updated,
+     * via <code>setLastDividerLocation</code>.
+     *
+     * @param location an int specifying a UI-specific value (typically a
+     *        pixel count)
+     * @beaninfo
+     *        bound: true
+     *  description: The location of the divider.
+     */
+    public void setDividerLocation(int location) {
+        int                 oldValue = dividerLocation;
+
+        dividerLocation = location;
+
+        // Notify UI.
+        SplitPaneUI         ui = getUI();
+
+        if (ui != null) {
+            ui.setDividerLocation(this, location);
+        }
+
+        // Then listeners
+        firePropertyChange(DIVIDER_LOCATION_PROPERTY, oldValue, location);
+
+        // And update the last divider location.
+        setLastDividerLocation(oldValue);
+    }
+
+
+    /**
+     * Returns the last value passed to <code>setDividerLocation</code>.
+     * The value returned from this method may differ from the actual
+     * divider location (if <code>setDividerLocation</code> was passed a
+     * value bigger than the current size).
+     *
+     * @return an integer specifying the location of the divider
+     */
+    public int getDividerLocation() {
+        return dividerLocation;
+    }
+
+
+    /**
+     * Returns the minimum location of the divider from the look and feel
+     * implementation.
+     *
+     * @return an integer specifying a UI-specific value for the minimum
+     *          location (typically a pixel count); or -1 if the UI is
+     *          <code>null</code>
+     * @beaninfo
+     *  description: The minimum location of the divider from the L&amp;F.
+     */
+    public int getMinimumDividerLocation() {
+        SplitPaneUI         ui = getUI();
+
+        if (ui != null) {
+            return ui.getMinimumDividerLocation(this);
+        }
+        return -1;
+    }
+
+
+    /**
+     * Returns the maximum location of the divider from the look and feel
+     * implementation.
+     *
+     * @return an integer specifying a UI-specific value for the maximum
+     *          location (typically a pixel count); or -1 if the  UI is
+     *          <code>null</code>
+     */
+    public int getMaximumDividerLocation() {
+        SplitPaneUI         ui = getUI();
+
+        if (ui != null) {
+            return ui.getMaximumDividerLocation(this);
+        }
+        return -1;
+    }
+
+
+    /**
+     * Removes the child component, <code>component</code> from the
+     * pane. Resets the <code>leftComponent</code> or
+     * <code>rightComponent</code> instance variable, as necessary.
+     *
+     * @param component the <code>Component</code> to remove
+     */
+    public void remove(Component component) {
+        if (component == leftComponent) {
+            leftComponent = null;
+        } else if (component == rightComponent) {
+            rightComponent = null;
+        }
+        super.remove(component);
+
+        // Update the JSplitPane on the screen
+        revalidate();
+        repaint();
+    }
+
+
+    /**
+     * Removes the <code>Component</code> at the specified index.
+     * Updates the <code>leftComponent</code> and <code>rightComponent</code>
+     * instance variables as necessary, and then messages super.
+     *
+     * @param index an integer specifying the component to remove, where
+     *        1 specifies the left/top component and 2 specifies the
+     *        bottom/right component
+     */
+    public void remove(int index) {
+        Component    comp = getComponent(index);
+
+        if (comp == leftComponent) {
+            leftComponent = null;
+        } else if (comp == rightComponent) {
+            rightComponent = null;
+        }
+        super.remove(index);
+
+        // Update the JSplitPane on the screen
+        revalidate();
+        repaint();
+    }
+
+
+    /**
+     * Removes all the child components from the split pane. Resets the
+     * <code>leftComonent</code> and <code>rightComponent</code>
+     * instance variables.
+     */
+    public void removeAll() {
+        leftComponent = rightComponent = null;
+        super.removeAll();
+
+        // Update the JSplitPane on the screen
+        revalidate();
+        repaint();
+    }
+
+
+    /**
+     * Returns true, so that calls to <code>revalidate</code>
+     * on any descendant of this <code>JSplitPane</code>
+     * will cause a request to be queued that
+     * will validate the <code>JSplitPane</code> and all its descendants.
+     *
+     * @return true
+     * @see JComponent#revalidate
+     * @see java.awt.Container#isValidateRoot
+     *
+     * @beaninfo
+     *    hidden: true
+     */
+    @Override
+    public boolean isValidateRoot() {
+        return true;
+    }
+
+
+    /**
+     * Adds the specified component to this split pane.
+     * If <code>constraints</code> identifies the left/top or
+     * right/bottom child component, and a component with that identifier
+     * was previously added, it will be removed and then <code>comp</code>
+     * will be added in its place. If <code>constraints</code> is not
+     * one of the known identifiers the layout manager may throw an
+     * <code>IllegalArgumentException</code>.
+     * <p>
+     * The possible constraints objects (Strings) are:
+     * <ul>
+     * <li>JSplitPane.TOP
+     * <li>JSplitPane.LEFT
+     * <li>JSplitPane.BOTTOM
+     * <li>JSplitPane.RIGHT
+     * </ul>
+     * If the <code>constraints</code> object is <code>null</code>,
+     * the component is added in the
+     * first available position (left/top if open, else right/bottom).
+     *
+     * @param comp        the component to add
+     * @param constraints an <code>Object</code> specifying the
+     *                    layout constraints
+     *                    (position) for this component
+     * @param index       an integer specifying the index in the container's
+     *                    list.
+     * @exception IllegalArgumentException  if the <code>constraints</code>
+     *          object does not match an existing component
+     * @see java.awt.Container#addImpl(Component, Object, int)
+     */
+    protected void addImpl(Component comp, Object constraints, int index)
+    {
+        Component             toRemove;
+
+        if (constraints != null && !(constraints instanceof String)) {
+            throw new IllegalArgumentException("cannot add to layout: " +
+                                               "constraint must be a string " +
+                                               "(or null)");
+        }
+
+        /* If the constraints are null and the left/right component is
+           invalid, add it at the left/right component. */
+        if (constraints == null) {
+            if (getLeftComponent() == null) {
+                constraints = JSplitPane.LEFT;
+            } else if (getRightComponent() == null) {
+                constraints = JSplitPane.RIGHT;
+            }
+        }
+
+        /* Find the Component that already exists and remove it. */
+        if (constraints != null && (constraints.equals(JSplitPane.LEFT) ||
+                                   constraints.equals(JSplitPane.TOP))) {
+            toRemove = getLeftComponent();
+            if (toRemove != null) {
+                remove(toRemove);
+            }
+            leftComponent = comp;
+            index = -1;
+        } else if (constraints != null &&
+                   (constraints.equals(JSplitPane.RIGHT) ||
+                    constraints.equals(JSplitPane.BOTTOM))) {
+            toRemove = getRightComponent();
+            if (toRemove != null) {
+                remove(toRemove);
+            }
+            rightComponent = comp;
+            index = -1;
+        } else if (constraints != null &&
+                constraints.equals(JSplitPane.DIVIDER)) {
+            index = -1;
+        }
+        /* LayoutManager should raise for else condition here. */
+
+        super.addImpl(comp, constraints, index);
+
+        // Update the JSplitPane on the screen
+        revalidate();
+        repaint();
+    }
+
+
+    /**
+     * Subclassed to message the UI with <code>finishedPaintingChildren</code>
+     * after super has been messaged, as well as painting the border.
+     *
+     * @param g the <code>Graphics</code> context within which to paint
+     */
+    protected void paintChildren(Graphics g) {
+        super.paintChildren(g);
+
+        SplitPaneUI        ui = getUI();
+
+        if (ui != null) {
+            Graphics           tempG = g.create();
+            ui.finishedPaintingChildren(this, tempG);
+            tempG.dispose();
+        }
+    }
+
+
+    /**
+     * See <code>readObject</code> and <code>writeObject</code> in
+     * <code>JComponent</code> for more
+     * information about serialization in Swing.
+     */
+    private void writeObject(ObjectOutputStream s) throws IOException {
+        s.defaultWriteObject();
+        if (getUIClassID().equals(uiClassID)) {
+            byte count = JComponent.getWriteObjCounter(this);
+            JComponent.setWriteObjCounter(this, --count);
+            if (count == 0 && ui != null) {
+                ui.installUI(this);
+            }
+        }
+    }
+
+    void setUIProperty(String propertyName, Object value) {
+        if (propertyName == "dividerSize") {
+            if (!dividerSizeSet) {
+                setDividerSize(((Number)value).intValue());
+                dividerSizeSet = false;
+            }
+        } else if (propertyName == "oneTouchExpandable") {
+            if (!oneTouchExpandableSet) {
+                setOneTouchExpandable(((Boolean)value).booleanValue());
+                oneTouchExpandableSet = false;
+            }
+        } else {
+            super.setUIProperty(propertyName, value);
+        }
+    }
+
+
+    /**
+     * Returns a string representation of this <code>JSplitPane</code>.
+     * This method
+     * is intended to be used only for debugging purposes, and the
+     * content and format of the returned string may vary between
+     * implementations. The returned string may be empty but may not
+     * be <code>null</code>.
+     *
+     * @return  a string representation of this <code>JSplitPane</code>.
+     */
+    protected String paramString() {
+        String orientationString = (orientation == HORIZONTAL_SPLIT ?
+                                    "HORIZONTAL_SPLIT" : "VERTICAL_SPLIT");
+        String continuousLayoutString = (continuousLayout ?
+                                         "true" : "false");
+        String oneTouchExpandableString = (oneTouchExpandable ?
+                                           "true" : "false");
+
+        return super.paramString() +
+        ",continuousLayout=" + continuousLayoutString +
+        ",dividerSize=" + dividerSize +
+        ",lastDividerLocation=" + lastDividerLocation +
+        ",oneTouchExpandable=" + oneTouchExpandableString +
+        ",orientation=" + orientationString;
+    }
+
+
+
+    ///////////////////////////
+    // Accessibility support //
+    ///////////////////////////
+
+
+    /**
+     * Gets the AccessibleContext associated with this JSplitPane.
+     * For split panes, the AccessibleContext takes the form of an
+     * AccessibleJSplitPane.
+     * A new AccessibleJSplitPane instance is created if necessary.
+     *
+     * @return an AccessibleJSplitPane that serves as the
+     *         AccessibleContext of this JSplitPane
+     * @beaninfo
+     *       expert: true
+     *  description: The AccessibleContext associated with this SplitPane.
+     */
+    public AccessibleContext getAccessibleContext() {
+        if (accessibleContext == null) {
+            accessibleContext = new AccessibleJSplitPane();
+        }
+        return accessibleContext;
+    }
+
+
+    /**
+     * This class implements accessibility support for the
+     * <code>JSplitPane</code> class.  It provides an implementation of the
+     * Java Accessibility API appropriate to split pane user-interface elements.
+     * <p>
+     * <strong>Warning:</strong>
+     * Serialized objects of this class will not be compatible with
+     * future Swing releases. The current serialization support is
+     * appropriate for short term storage or RMI between applications running
+     * the same version of Swing.  As of 1.4, support for long term storage
+     * of all JavaBeans&trade;
+     * has been added to the <code>java.beans</code> package.
+     * Please see {@link java.beans.XMLEncoder}.
+     */
+    protected class AccessibleJSplitPane extends AccessibleJComponent
+        implements AccessibleValue {
+        /**
+         * Gets the state set of this object.
+         *
+         * @return an instance of AccessibleState containing the current state
+         * of the object
+         * @see AccessibleState
+         */
+        public AccessibleStateSet getAccessibleStateSet() {
+            AccessibleStateSet states = super.getAccessibleStateSet();
+            // FIXME: [[[WDW - Should also add BUSY if this implements
+            // Adjustable at some point.  If this happens, we probably
+            // should also add actions.]]]
+            if (getOrientation() == VERTICAL_SPLIT) {
+                states.add(AccessibleState.VERTICAL);
+            } else {
+                states.add(AccessibleState.HORIZONTAL);
+            }
+            return states;
+        }
+
+
+        /**
+         * Get the AccessibleValue associated with this object.  In the
+         * implementation of the Java Accessibility API for this class,
+         * return this object, which is responsible for implementing the
+         * AccessibleValue interface on behalf of itself.
+         *
+         * @return this object
+         */
+        public AccessibleValue getAccessibleValue() {
+            return this;
+        }
+
+
+        /**
+         * Gets the accessible value of this object.
+         *
+         * @return a localized String describing the value of this object
+         */
+        public Number getCurrentAccessibleValue() {
+            return Integer.valueOf(getDividerLocation());
+        }
+
+
+        /**
+         * Sets the value of this object as a Number.
+         *
+         * @return True if the value was set.
+         */
+        public boolean setCurrentAccessibleValue(Number n) {
+            // TIGER - 4422535
+            if (n == null) {
+                return false;
+            }
+            setDividerLocation(n.intValue());
+            return true;
+        }
+
+
+        /**
+         * Gets the minimum accessible value of this object.
+         *
+         * @return The minimum value of this object.
+         */
+        public Number getMinimumAccessibleValue() {
+            return Integer.valueOf(getUI().getMinimumDividerLocation(
+                                                        JSplitPane.this));
+        }
+
+
+        /**
+         * Gets the maximum accessible value of this object.
+         *
+         * @return The maximum value of this object.
+         */
+        public Number getMaximumAccessibleValue() {
+            return Integer.valueOf(getUI().getMaximumDividerLocation(
+                                                        JSplitPane.this));
+        }
+
+
+        /**
+         * Gets the role of this object.
+         *
+         * @return an instance of AccessibleRole describing the role of
+         * the object
+         * @see AccessibleRole
+         */
+        public AccessibleRole getAccessibleRole() {
+            return AccessibleRole.SPLIT_PANE;
+        }
+    } // inner class AccessibleJSplitPane
+}

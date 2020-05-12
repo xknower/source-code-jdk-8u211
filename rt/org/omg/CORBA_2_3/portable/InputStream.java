@@ -1,157 +1,152 @@
-/*     */ package org.omg.CORBA_2_3.portable;
-/*     */ 
-/*     */ import java.io.Serializable;
-/*     */ import java.io.SerializablePermission;
-/*     */ import java.security.AccessController;
-/*     */ import java.security.PrivilegedAction;
-/*     */ import org.omg.CORBA.NO_IMPLEMENT;
-/*     */ import org.omg.CORBA.portable.BoxedValueHelper;
-/*     */ import org.omg.CORBA.portable.InputStream;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public abstract class InputStream
-/*     */   extends InputStream
-/*     */ {
-/*     */   private static final String ALLOW_SUBCLASS_PROP = "jdk.corba.allowInputStreamSubclass";
-/*     */   
-/*  53 */   private static final boolean allowSubclass = ((Boolean)AccessController.<Boolean>doPrivileged(new PrivilegedAction<Boolean>()
-/*     */       {
-/*     */         public Boolean run()
-/*     */         {
-/*  57 */           String str = System.getProperty("jdk.corba.allowInputStreamSubclass");
-/*  58 */           return Boolean.valueOf((str == null) ? false : (
-/*  59 */               !str.equalsIgnoreCase("false")));
-/*     */         }
-/*     */       })).booleanValue();
-/*     */   
-/*     */   private static Void checkPermission() {
-/*  64 */     SecurityManager securityManager = System.getSecurityManager();
-/*  65 */     if (securityManager != null && 
-/*  66 */       !allowSubclass) {
-/*  67 */       securityManager.checkPermission(new SerializablePermission("enableSubclassImplementation"));
-/*     */     }
-/*     */     
-/*  70 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private InputStream(Void paramVoid) {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public InputStream() {
-/*  84 */     this(checkPermission());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Serializable read_value() {
-/*  92 */     throw new NO_IMPLEMENT();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Serializable read_value(Class paramClass) {
-/* 101 */     throw new NO_IMPLEMENT();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Serializable read_value(BoxedValueHelper paramBoxedValueHelper) {
-/* 111 */     throw new NO_IMPLEMENT();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Serializable read_value(String paramString) {
-/* 120 */     throw new NO_IMPLEMENT();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Serializable read_value(Serializable paramSerializable) {
-/* 131 */     throw new NO_IMPLEMENT();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object read_abstract_interface() {
-/* 139 */     throw new NO_IMPLEMENT();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object read_abstract_interface(Class paramClass) {
-/* 149 */     throw new NO_IMPLEMENT();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\org\omg\CORBA_2_3\portable\InputStream.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+/*
+ * Licensed Materials - Property of IBM
+ * RMI-IIOP v1.0
+ * Copyright IBM Corp. 1998 1999  All Rights Reserved
+ *
+ */
+
+package org.omg.CORBA_2_3.portable;
+
+import java.io.SerializablePermission;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+
+/**
+ * InputStream provides for the reading of all of the mapped IDL types
+ * from the stream. It extends org.omg.CORBA.portable.InputStream.  This
+ * class defines new methods that were added for CORBA 2.3.
+ *
+ * @see org.omg.CORBA.portable.InputStream
+ * @author  OMG
+ * @since   JDK1.2
+ */
+
+public abstract class InputStream extends org.omg.CORBA.portable.InputStream {
+
+
+    private static final String ALLOW_SUBCLASS_PROP = "jdk.corba.allowInputStreamSubclass";
+
+    private static final boolean allowSubclass = AccessController.doPrivileged(
+        new PrivilegedAction<Boolean>() {
+            @Override
+            public Boolean run() {
+            String prop = System.getProperty(ALLOW_SUBCLASS_PROP);
+                return prop == null ? false :
+                           (prop.equalsIgnoreCase("false") ? false : true);
+            }
+        });
+
+    private static Void checkPermission() {
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            if (!allowSubclass)
+                sm.checkPermission(new
+                    SerializablePermission("enableSubclassImplementation"));
+        }
+        return null;
+    }
+
+    private InputStream(Void ignore) { }
+
+    /**
+     * Create a new instance of this class.
+     *
+     * throw SecurityException if SecurityManager is installed and
+     * enableSubclassImplementation SerializablePermission
+     * is not granted or jdk.corba.allowInputStreamSubclass system
+     * property is either not set or is set to 'false'
+     */
+    public InputStream() {
+        this(checkPermission());
+    }
+
+    /**
+     * Unmarshalls a value type from the input stream.
+     * @return the value type unmarshalled from the input stream
+     */
+    public java.io.Serializable read_value() {
+        throw new org.omg.CORBA.NO_IMPLEMENT();
+    }
+
+    /**
+     * Unmarshalls a value type from the input stream.
+     * @param clz is the declared type of the value to be unmarshalled
+     * @return the value unmarshalled from the input stream
+     */
+    public java.io.Serializable read_value(java.lang.Class clz) {
+        throw new org.omg.CORBA.NO_IMPLEMENT();
+    }
+
+    /**
+     * Unmarshalls a value type from the input stream.
+     * @param factory is the instance fo the helper to be used for
+     * unmarshalling the value type
+     * @return the value unmarshalled from the input stream
+     */
+    public java.io.Serializable read_value(org.omg.CORBA.portable.BoxedValueHelper factory) {
+        throw new org.omg.CORBA.NO_IMPLEMENT();
+    }
+
+    /**
+     * Unmarshalls a value type from the input stream.
+     * @param rep_id identifies the type of the value to be unmarshalled
+     * @return value type unmarshalled from the input stream
+     */
+    public java.io.Serializable read_value(java.lang.String rep_id) {
+        throw new org.omg.CORBA.NO_IMPLEMENT();
+    }
+
+    /**
+     * Unmarshalls a value type from the input stream.
+     * @param value is an uninitialized value which is added to the orb's
+     * indirection table before calling Streamable._read() or
+     * CustomMarshal.unmarshal() to unmarshal the value.
+     * @return value type unmarshalled from the input stream
+     */
+    public java.io.Serializable read_value(java.io.Serializable value) {
+        throw new org.omg.CORBA.NO_IMPLEMENT();
+    }
+
+    /**
+     * Unmarshal the value object or a suitable stub object.
+     * @return ORB runtime returns the value object or a suitable stub object.
+     */
+    public java.lang.Object read_abstract_interface() {
+        throw new org.omg.CORBA.NO_IMPLEMENT();
+    }
+
+    /**
+     * Unmarshal the class object or the stub class corresponding to the passed type.
+     * @param clz is the Class object for the stub class which corresponds to
+     * the type that is statically expected.
+     * @return ORB runtime returns the value object or a suitable stub object.
+     */
+    public java.lang.Object read_abstract_interface(java.lang.Class clz) {
+        throw new org.omg.CORBA.NO_IMPLEMENT();
+    }
+
+}

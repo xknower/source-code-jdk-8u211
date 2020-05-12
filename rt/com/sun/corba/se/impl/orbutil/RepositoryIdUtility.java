@@ -1,37 +1,59 @@
+/*
+ * Copyright (c) 2000, 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package com.sun.corba.se.impl.orbutil;
 
-public interface RepositoryIdUtility {
-  public static final int NO_TYPE_INFO = 0;
-  
-  public static final int SINGLE_REP_TYPE_INFO = 2;
-  
-  public static final int PARTIAL_LIST_TYPE_INFO = 6;
-  
-  boolean isChunkedEncoding(int paramInt);
-  
-  boolean isCodeBasePresent(int paramInt);
-  
-  int getTypeInfo(int paramInt);
-  
-  int getStandardRMIChunkedNoRepStrId();
-  
-  int getCodeBaseRMIChunkedNoRepStrId();
-  
-  int getStandardRMIChunkedId();
-  
-  int getCodeBaseRMIChunkedId();
-  
-  int getStandardRMIUnchunkedId();
-  
-  int getCodeBaseRMIUnchunkedId();
-  
-  int getStandardRMIUnchunkedNoRepStrId();
-  
-  int getCodeBaseRMIUnchunkedNoRepStrId();
-}
+import org.omg.CORBA.ORB;
+import com.sun.corba.se.impl.util.RepositoryId;
 
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\orbutil\RepositoryIdUtility.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * Utility methods for working with repository IDs.
  */
+public interface RepositoryIdUtility
+{
+    boolean isChunkedEncoding(int valueTag);
+    boolean isCodeBasePresent(int valueTag);
+
+    // These are currently the same in both RepositoryId and
+    // RepositoryId_1_3, but provide the constants again here
+    // to eliminate awkardness when using this interface.
+    int NO_TYPE_INFO = RepositoryId.kNoTypeInfo;
+    int SINGLE_REP_TYPE_INFO = RepositoryId.kSingleRepTypeInfo;
+    int PARTIAL_LIST_TYPE_INFO = RepositoryId.kPartialListTypeInfo;
+
+    // Determine how many (if any) repository IDs follow the value
+    // tag.
+    int getTypeInfo(int valueTag);
+
+    // Accessors for precomputed value tags
+    int getStandardRMIChunkedNoRepStrId();
+    int getCodeBaseRMIChunkedNoRepStrId();
+    int getStandardRMIChunkedId();
+    int getCodeBaseRMIChunkedId();
+    int getStandardRMIUnchunkedId();
+    int getCodeBaseRMIUnchunkedId();
+    int getStandardRMIUnchunkedNoRepStrId();
+    int getCodeBaseRMIUnchunkedNoRepStrId();
+}

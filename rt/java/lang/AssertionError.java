@@ -1,173 +1,167 @@
-/*     */ package java.lang;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class AssertionError
-/*     */   extends Error
-/*     */ {
-/*     */   private static final long serialVersionUID = -5013299493970297370L;
-/*     */   
-/*     */   public AssertionError() {}
-/*     */   
-/*     */   private AssertionError(String paramString) {
-/*  58 */     super(paramString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public AssertionError(Object paramObject) {
-/*  74 */     this(String.valueOf(paramObject));
-/*  75 */     if (paramObject instanceof Throwable) {
-/*  76 */       initCause((Throwable)paramObject);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public AssertionError(boolean paramBoolean) {
-/*  88 */     this(String.valueOf(paramBoolean));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public AssertionError(char paramChar) {
-/* 100 */     this(String.valueOf(paramChar));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public AssertionError(int paramInt) {
-/* 112 */     this(String.valueOf(paramInt));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public AssertionError(long paramLong) {
-/* 124 */     this(String.valueOf(paramLong));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public AssertionError(float paramFloat) {
-/* 136 */     this(String.valueOf(paramFloat));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public AssertionError(double paramDouble) {
-/* 148 */     this(String.valueOf(paramDouble));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public AssertionError(String paramString, Throwable paramThrowable) {
-/* 165 */     super(paramString, paramThrowable);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\lang\AssertionError.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.lang;
+
+/**
+ * Thrown to indicate that an assertion has failed.
+ *
+ * <p>The seven one-argument public constructors provided by this
+ * class ensure that the assertion error returned by the invocation:
+ * <pre>
+ *     new AssertionError(<i>expression</i>)
+ * </pre>
+ * has as its detail message the <i>string conversion</i> of
+ * <i>expression</i> (as defined in section 15.18.1.1 of
+ * <cite>The Java&trade; Language Specification</cite>),
+ * regardless of the type of <i>expression</i>.
+ *
+ * @since   1.4
+ */
+public class AssertionError extends Error {
+    private static final long serialVersionUID = -5013299493970297370L;
+
+    /**
+     * Constructs an AssertionError with no detail message.
+     */
+    public AssertionError() {
+    }
+
+    /**
+     * This internal constructor does no processing on its string argument,
+     * even if it is a null reference.  The public constructors will
+     * never call this constructor with a null argument.
+     */
+    private AssertionError(String detailMessage) {
+        super(detailMessage);
+    }
+
+    /**
+     * Constructs an AssertionError with its detail message derived
+     * from the specified object, which is converted to a string as
+     * defined in section 15.18.1.1 of
+     * <cite>The Java&trade; Language Specification</cite>.
+     *<p>
+     * If the specified object is an instance of {@code Throwable}, it
+     * becomes the <i>cause</i> of the newly constructed assertion error.
+     *
+     * @param detailMessage value to be used in constructing detail message
+     * @see   Throwable#getCause()
+     */
+    public AssertionError(Object detailMessage) {
+        this(String.valueOf(detailMessage));
+        if (detailMessage instanceof Throwable)
+            initCause((Throwable) detailMessage);
+    }
+
+    /**
+     * Constructs an AssertionError with its detail message derived
+     * from the specified <code>boolean</code>, which is converted to
+     * a string as defined in section 15.18.1.1 of
+     * <cite>The Java&trade; Language Specification</cite>.
+     *
+     * @param detailMessage value to be used in constructing detail message
+     */
+    public AssertionError(boolean detailMessage) {
+        this(String.valueOf(detailMessage));
+    }
+
+    /**
+     * Constructs an AssertionError with its detail message derived
+     * from the specified <code>char</code>, which is converted to a
+     * string as defined in section 15.18.1.1 of
+     * <cite>The Java&trade; Language Specification</cite>.
+     *
+     * @param detailMessage value to be used in constructing detail message
+     */
+    public AssertionError(char detailMessage) {
+        this(String.valueOf(detailMessage));
+    }
+
+    /**
+     * Constructs an AssertionError with its detail message derived
+     * from the specified <code>int</code>, which is converted to a
+     * string as defined in section 15.18.1.1 of
+     * <cite>The Java&trade; Language Specification</cite>.
+     *
+     * @param detailMessage value to be used in constructing detail message
+     */
+    public AssertionError(int detailMessage) {
+        this(String.valueOf(detailMessage));
+    }
+
+    /**
+     * Constructs an AssertionError with its detail message derived
+     * from the specified <code>long</code>, which is converted to a
+     * string as defined in section 15.18.1.1 of
+     * <cite>The Java&trade; Language Specification</cite>.
+     *
+     * @param detailMessage value to be used in constructing detail message
+     */
+    public AssertionError(long detailMessage) {
+        this(String.valueOf(detailMessage));
+    }
+
+    /**
+     * Constructs an AssertionError with its detail message derived
+     * from the specified <code>float</code>, which is converted to a
+     * string as defined in section 15.18.1.1 of
+     * <cite>The Java&trade; Language Specification</cite>.
+     *
+     * @param detailMessage value to be used in constructing detail message
+     */
+    public AssertionError(float detailMessage) {
+        this(String.valueOf(detailMessage));
+    }
+
+    /**
+     * Constructs an AssertionError with its detail message derived
+     * from the specified <code>double</code>, which is converted to a
+     * string as defined in section 15.18.1.1 of
+     * <cite>The Java&trade; Language Specification</cite>.
+     *
+     * @param detailMessage value to be used in constructing detail message
+     */
+    public AssertionError(double detailMessage) {
+        this(String.valueOf(detailMessage));
+    }
+
+    /**
+     * Constructs a new {@code AssertionError} with the specified
+     * detail message and cause.
+     *
+     * <p>Note that the detail message associated with
+     * {@code cause} is <i>not</i> automatically incorporated in
+     * this error's detail message.
+     *
+     * @param  message the detail message, may be {@code null}
+     * @param  cause the cause, may be {@code null}
+     *
+     * @since 1.7
+     */
+    public AssertionError(String message, Throwable cause) {
+        super(message, cause);
+    }
+}

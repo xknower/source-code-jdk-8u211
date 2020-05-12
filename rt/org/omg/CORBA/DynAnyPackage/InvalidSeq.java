@@ -1,58 +1,52 @@
-/*    */ package org.omg.CORBA.DynAnyPackage;
-/*    */ 
-/*    */ import org.omg.CORBA.UserException;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public final class InvalidSeq
-/*    */   extends UserException
-/*    */ {
-/*    */   public InvalidSeq() {}
-/*    */   
-/*    */   public InvalidSeq(String paramString) {
-/* 50 */     super(paramString);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\org\omg\CORBA\DynAnyPackage\InvalidSeq.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 1999, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+
+package org.omg.CORBA.DynAnyPackage;
+
+/**
+ * The InvalidSeq exception is thrown by all operations on dynamic
+ * anys that take a sequence (Java array) as an argument, when that
+ * sequence is invalid.
+ */
+public final class InvalidSeq
+    extends org.omg.CORBA.UserException {
+
+    /**
+     * Constructs an <code>InvalidSeq</code> object.
+     */
+    public InvalidSeq() {
+        super();
+    }
+
+    /**
+     * Constructs an <code>InvalidSeq</code> object.
+     * @param reason  a <code>String</code> giving more information
+     * regarding the exception.
+     */
+    public InvalidSeq(String reason) {
+        super(reason);
+    }
+}

@@ -1,231 +1,225 @@
-/*     */ package com.sun.org.apache.xml.internal.utils;
-/*     */ 
-/*     */ import java.io.Serializable;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class StringVector
-/*     */   implements Serializable
-/*     */ {
-/*     */   static final long serialVersionUID = 4995234972032919748L;
-/*     */   protected int m_blocksize;
-/*     */   protected String[] m_map;
-/*  41 */   protected int m_firstFree = 0;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected int m_mapSize;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StringVector() {
-/*  53 */     this.m_blocksize = 8;
-/*  54 */     this.m_mapSize = this.m_blocksize;
-/*  55 */     this.m_map = new String[this.m_blocksize];
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StringVector(int blocksize) {
-/*  66 */     this.m_blocksize = blocksize;
-/*  67 */     this.m_mapSize = blocksize;
-/*  68 */     this.m_map = new String[blocksize];
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getLength() {
-/*  78 */     return this.m_firstFree;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final int size() {
-/*  88 */     return this.m_firstFree;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final void addElement(String value) {
-/*  99 */     if (this.m_firstFree + 1 >= this.m_mapSize) {
-/*     */       
-/* 101 */       this.m_mapSize += this.m_blocksize;
-/*     */       
-/* 103 */       String[] newMap = new String[this.m_mapSize];
-/*     */       
-/* 105 */       System.arraycopy(this.m_map, 0, newMap, 0, this.m_firstFree + 1);
-/*     */       
-/* 107 */       this.m_map = newMap;
-/*     */     } 
-/*     */     
-/* 110 */     this.m_map[this.m_firstFree] = value;
-/*     */     
-/* 112 */     this.m_firstFree++;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final String elementAt(int i) {
-/* 124 */     return this.m_map[i];
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final boolean contains(String s) {
-/* 137 */     if (null == s) {
-/* 138 */       return false;
-/*     */     }
-/* 140 */     for (int i = 0; i < this.m_firstFree; i++) {
-/*     */       
-/* 142 */       if (this.m_map[i].equals(s)) {
-/* 143 */         return true;
-/*     */       }
-/*     */     } 
-/* 146 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final boolean containsIgnoreCase(String s) {
-/* 159 */     if (null == s) {
-/* 160 */       return false;
-/*     */     }
-/* 162 */     for (int i = 0; i < this.m_firstFree; i++) {
-/*     */       
-/* 164 */       if (this.m_map[i].equalsIgnoreCase(s)) {
-/* 165 */         return true;
-/*     */       }
-/*     */     } 
-/* 168 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final void push(String s) {
-/* 179 */     if (this.m_firstFree + 1 >= this.m_mapSize) {
-/*     */       
-/* 181 */       this.m_mapSize += this.m_blocksize;
-/*     */       
-/* 183 */       String[] newMap = new String[this.m_mapSize];
-/*     */       
-/* 185 */       System.arraycopy(this.m_map, 0, newMap, 0, this.m_firstFree + 1);
-/*     */       
-/* 187 */       this.m_map = newMap;
-/*     */     } 
-/*     */     
-/* 190 */     this.m_map[this.m_firstFree] = s;
-/*     */     
-/* 192 */     this.m_firstFree++;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final String pop() {
-/* 204 */     if (this.m_firstFree <= 0) {
-/* 205 */       return null;
-/*     */     }
-/* 207 */     this.m_firstFree--;
-/*     */     
-/* 209 */     String s = this.m_map[this.m_firstFree];
-/*     */     
-/* 211 */     this.m_map[this.m_firstFree] = null;
-/*     */     
-/* 213 */     return s;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final String peek() {
-/* 223 */     return (this.m_firstFree <= 0) ? null : this.m_map[this.m_firstFree - 1];
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\interna\\utils\StringVector.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: StringVector.java,v 1.2.4.1 2005/09/15 08:15:56 suresh_emailid Exp $
+ */
+package com.sun.org.apache.xml.internal.utils;
+
+/**
+ * A very simple table that stores a list of strings, optimized
+ * for small lists.
+ * @xsl.usage internal
+ */
+public class StringVector implements java.io.Serializable
+{
+    static final long serialVersionUID = 4995234972032919748L;
+
+  /** @serial Size of blocks to allocate           */
+  protected int m_blocksize;
+
+  /** @serial Array of strings this contains          */
+  protected String m_map[];
+
+  /** @serial Number of strings this contains          */
+  protected int m_firstFree = 0;
+
+  /** @serial Size of the array          */
+  protected int m_mapSize;
+
+  /**
+   * Default constructor.  Note that the default
+   * block size is very small, for small lists.
+   */
+  public StringVector()
+  {
+
+    m_blocksize = 8;
+    m_mapSize = m_blocksize;
+    m_map = new String[m_blocksize];
+  }
+
+  /**
+   * Construct a StringVector, using the given block size.
+   *
+   * @param blocksize Size of the blocks to allocate
+   */
+  public StringVector(int blocksize)
+  {
+
+    m_blocksize = blocksize;
+    m_mapSize = blocksize;
+    m_map = new String[blocksize];
+  }
+
+  /**
+   * Get the length of the list.
+   *
+   * @return Number of strings in the list
+   */
+  public int getLength()
+  {
+    return m_firstFree;
+  }
+
+  /**
+   * Get the length of the list.
+   *
+   * @return Number of strings in the list
+   */
+  public final int size()
+  {
+    return m_firstFree;
+  }
+
+  /**
+   * Append a string onto the vector.
+   *
+   * @param value Sting to add to the vector
+   */
+  public final void addElement(String value)
+  {
+
+    if ((m_firstFree + 1) >= m_mapSize)
+    {
+      m_mapSize += m_blocksize;
+
+      String newMap[] = new String[m_mapSize];
+
+      System.arraycopy(m_map, 0, newMap, 0, m_firstFree + 1);
+
+      m_map = newMap;
+    }
+
+    m_map[m_firstFree] = value;
+
+    m_firstFree++;
+  }
+
+  /**
+   * Get the nth element.
+   *
+   * @param i Index of string to find
+   *
+   * @return String at given index
+   */
+  public final String elementAt(int i)
+  {
+    return m_map[i];
+  }
+
+  /**
+   * Tell if the table contains the given string.
+   *
+   * @param s String to look for
+   *
+   * @return True if the string is in this table
+   */
+  public final boolean contains(String s)
+  {
+
+    if (null == s)
+      return false;
+
+    for (int i = 0; i < m_firstFree; i++)
+    {
+      if (m_map[i].equals(s))
+        return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Tell if the table contains the given string. Ignore case.
+   *
+   * @param s String to find
+   *
+   * @return True if the String is in this vector
+   */
+  public final boolean containsIgnoreCase(String s)
+  {
+
+    if (null == s)
+      return false;
+
+    for (int i = 0; i < m_firstFree; i++)
+    {
+      if (m_map[i].equalsIgnoreCase(s))
+        return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Tell if the table contains the given string.
+   *
+   * @param s String to push into the vector
+   */
+  public final void push(String s)
+  {
+
+    if ((m_firstFree + 1) >= m_mapSize)
+    {
+      m_mapSize += m_blocksize;
+
+      String newMap[] = new String[m_mapSize];
+
+      System.arraycopy(m_map, 0, newMap, 0, m_firstFree + 1);
+
+      m_map = newMap;
+    }
+
+    m_map[m_firstFree] = s;
+
+    m_firstFree++;
+  }
+
+  /**
+   * Pop the tail of this vector.
+   *
+   * @return The String last added to this vector or null not found.
+   * The string is removed from the vector.
+   */
+  public final String pop()
+  {
+
+    if (m_firstFree <= 0)
+      return null;
+
+    m_firstFree--;
+
+    String s = m_map[m_firstFree];
+
+    m_map[m_firstFree] = null;
+
+    return s;
+  }
+
+  /**
+   * Get the string at the tail of this vector without popping.
+   *
+   * @return The string at the tail of this vector.
+   */
+  public final String peek()
+  {
+    return (m_firstFree <= 0) ? null : m_map[m_firstFree - 1];
+  }
+}

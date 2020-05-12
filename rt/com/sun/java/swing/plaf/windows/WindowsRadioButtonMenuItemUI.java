@@ -1,109 +1,103 @@
-/*     */ package com.sun.java.swing.plaf.windows;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Rectangle;
-/*     */ import javax.swing.ButtonModel;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.JMenuItem;
-/*     */ import javax.swing.plaf.ComponentUI;
-/*     */ import javax.swing.plaf.basic.BasicRadioButtonMenuItemUI;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class WindowsRadioButtonMenuItemUI
-/*     */   extends BasicRadioButtonMenuItemUI
-/*     */ {
-/*  48 */   final WindowsMenuItemUIAccessor accessor = new WindowsMenuItemUIAccessor()
-/*     */     {
-/*     */       public JMenuItem getMenuItem()
-/*     */       {
-/*  52 */         return WindowsRadioButtonMenuItemUI.this.menuItem;
-/*     */       }
-/*     */       
-/*     */       public TMSchema.State getState(JMenuItem param1JMenuItem) {
-/*  56 */         return WindowsMenuItemUI.getState(this, param1JMenuItem);
-/*     */       }
-/*     */       
-/*     */       public TMSchema.Part getPart(JMenuItem param1JMenuItem) {
-/*  60 */         return WindowsMenuItemUI.getPart(this, param1JMenuItem);
-/*     */       }
-/*     */     };
-/*     */   public static ComponentUI createUI(JComponent paramJComponent) {
-/*  64 */     return new WindowsRadioButtonMenuItemUI();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void paintBackground(Graphics paramGraphics, JMenuItem paramJMenuItem, Color paramColor) {
-/*  70 */     if (WindowsMenuItemUI.isVistaPainting()) {
-/*  71 */       WindowsMenuItemUI.paintBackground(this.accessor, paramGraphics, paramJMenuItem, paramColor);
-/*     */       return;
-/*     */     } 
-/*  74 */     super.paintBackground(paramGraphics, paramJMenuItem, paramColor);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void paintText(Graphics paramGraphics, JMenuItem paramJMenuItem, Rectangle paramRectangle, String paramString) {
-/*  88 */     if (WindowsMenuItemUI.isVistaPainting()) {
-/*  89 */       WindowsMenuItemUI.paintText(this.accessor, paramGraphics, paramJMenuItem, paramRectangle, paramString);
-/*     */       return;
-/*     */     } 
-/*  92 */     ButtonModel buttonModel = paramJMenuItem.getModel();
-/*  93 */     Color color = paramGraphics.getColor();
-/*     */     
-/*  95 */     if (buttonModel.isEnabled() && buttonModel.isArmed()) {
-/*  96 */       paramGraphics.setColor(this.selectionForeground);
-/*     */     }
-/*     */     
-/*  99 */     WindowsGraphicsUtils.paintText(paramGraphics, paramJMenuItem, paramRectangle, paramString, 0);
-/*     */     
-/* 101 */     paramGraphics.setColor(color);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\java\swing\plaf\windows\WindowsRadioButtonMenuItemUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2006, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.java.swing.plaf.windows;
+
+import java.awt.*;
+import javax.swing.*;
+import javax.swing.plaf.*;
+import javax.swing.plaf.basic.*;
+
+import com.sun.java.swing.plaf.windows.TMSchema.Part;
+import com.sun.java.swing.plaf.windows.TMSchema.State;
+
+/**
+ * Windows rendition of the component.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases.  The current serialization support is appropriate
+ * for short term storage or RMI between applications running the same
+ * version of Swing.  A future release of Swing will provide support for
+ * long term persistence.
+ */
+public class WindowsRadioButtonMenuItemUI extends BasicRadioButtonMenuItemUI {
+
+    final WindowsMenuItemUIAccessor accessor =
+        new WindowsMenuItemUIAccessor() {
+
+           public JMenuItem getMenuItem() {
+               return menuItem;
+           }
+
+           public State getState(JMenuItem menuItem) {
+               return WindowsMenuItemUI.getState(this, menuItem);
+           }
+
+           public Part getPart(JMenuItem menuItem) {
+               return WindowsMenuItemUI.getPart(this, menuItem);
+           }
+    };
+    public static ComponentUI createUI(JComponent b) {
+        return new WindowsRadioButtonMenuItemUI();
+    }
+
+    @Override
+    protected  void paintBackground(Graphics g, JMenuItem menuItem,
+            Color bgColor) {
+        if (WindowsMenuItemUI.isVistaPainting()) {
+            WindowsMenuItemUI.paintBackground(accessor, g, menuItem, bgColor);
+            return;
+        }
+        super.paintBackground(g, menuItem, bgColor);
+    }
+
+    /**
+     * Method which renders the text of the current menu item.
+     * <p>
+     * @param g Graphics context
+     * @param menuItem Current menu item to render
+     * @param textRect Bounding rectangle to render the text.
+     * @param text String to render
+     * @since 1.4
+     */
+    protected void paintText(Graphics g, JMenuItem menuItem,
+            Rectangle textRect, String text) {
+        if (WindowsMenuItemUI.isVistaPainting()) {
+            WindowsMenuItemUI.paintText(accessor, g, menuItem, textRect, text);
+            return;
+        }
+        ButtonModel model = menuItem.getModel();
+        Color oldColor = g.getColor();
+
+        if(model.isEnabled() && model.isArmed()) {
+            g.setColor(selectionForeground); // Uses protected field.
+        }
+
+        WindowsGraphicsUtils.paintText(g, menuItem, textRect, text, 0);
+
+        g.setColor(oldColor);
+    }
+}

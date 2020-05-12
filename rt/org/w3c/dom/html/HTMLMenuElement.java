@@ -1,13 +1,57 @@
+/*
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
+/*
+ *
+ *
+ *
+ *
+ *
+ * Copyright (c) 2000 World Wide Web Consortium,
+ * (Massachusetts Institute of Technology, Institut National de
+ * Recherche en Informatique et en Automatique, Keio University). All
+ * Rights Reserved. This program is distributed under the W3C's Software
+ * Intellectual Property License. This program is distributed in the
+ * hope that it will be useful, but WITHOUT ANY WARRANTY; without even
+ * the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE. See W3C License http://www.w3.org/Consortium/Legal/ for more
+ * details.
+ */
+
 package org.w3c.dom.html;
 
-public interface HTMLMenuElement extends HTMLElement {
-  boolean getCompact();
-  
-  void setCompact(boolean paramBoolean);
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\org\w3c\dom\html\HTMLMenuElement.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ *  Menu list. See the  MENU element definition in HTML 4.0. This element is
+ * deprecated in HTML 4.0.
+ * <p>See also the <a href='http://www.w3.org/TR/2000/CR-DOM-Level-2-20000510'>Document Object Model (DOM) Level 2 Specification</a>.
  */
+public interface HTMLMenuElement extends HTMLElement {
+    /**
+     *  Reduce spacing between list items. See the  compact attribute
+     * definition in HTML 4.0. This attribute is deprecated in HTML 4.0.
+     */
+    public boolean getCompact();
+    public void setCompact(boolean compact);
+
+}

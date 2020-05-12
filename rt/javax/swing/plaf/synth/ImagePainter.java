@@ -1,1026 +1,1020 @@
-/*      */ package javax.swing.plaf.synth;
-/*      */ 
-/*      */ import java.awt.Graphics;
-/*      */ import java.awt.Image;
-/*      */ import java.awt.Insets;
-/*      */ import java.lang.ref.WeakReference;
-/*      */ import java.net.URL;
-/*      */ import javax.swing.ImageIcon;
-/*      */ import sun.awt.AppContext;
-/*      */ import sun.swing.plaf.synth.Paint9Painter;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ class ImagePainter
-/*      */   extends SynthPainter
-/*      */ {
-/*   44 */   private static final StringBuffer CACHE_KEY = new StringBuffer("SynthCacheKey");
-/*      */   
-/*      */   private Image image;
-/*      */   
-/*      */   private Insets sInsets;
-/*      */   
-/*      */   private Insets dInsets;
-/*      */   
-/*      */   private URL path;
-/*      */   
-/*      */   private boolean tiles;
-/*      */   
-/*      */   private boolean paintCenter;
-/*      */   
-/*      */   private Paint9Painter imageCache;
-/*      */   private boolean center;
-/*      */   
-/*      */   private static Paint9Painter getPaint9Painter() {
-/*   62 */     synchronized (CACHE_KEY) {
-/*      */ 
-/*      */       
-/*   65 */       WeakReference<Paint9Painter> weakReference = (WeakReference)AppContext.getAppContext().get(CACHE_KEY);
-/*      */       Paint9Painter paint9Painter;
-/*   67 */       if (weakReference == null || (paint9Painter = weakReference.get()) == null) {
-/*   68 */         paint9Painter = new Paint9Painter(30);
-/*   69 */         weakReference = new WeakReference<>(paint9Painter);
-/*   70 */         AppContext.getAppContext().put(CACHE_KEY, weakReference);
-/*      */       } 
-/*   72 */       return paint9Painter;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   ImagePainter(boolean paramBoolean1, boolean paramBoolean2, Insets paramInsets1, Insets paramInsets2, URL paramURL, boolean paramBoolean3) {
-/*   79 */     if (paramInsets1 != null) {
-/*   80 */       this.sInsets = (Insets)paramInsets1.clone();
-/*      */     }
-/*   82 */     if (paramInsets2 == null) {
-/*   83 */       this.dInsets = this.sInsets;
-/*      */     } else {
-/*      */       
-/*   86 */       this.dInsets = (Insets)paramInsets2.clone();
-/*      */     } 
-/*   88 */     this.tiles = paramBoolean1;
-/*   89 */     this.paintCenter = paramBoolean2;
-/*   90 */     this.imageCache = getPaint9Painter();
-/*   91 */     this.path = paramURL;
-/*   92 */     this.center = paramBoolean3;
-/*      */   }
-/*      */   
-/*      */   public boolean getTiles() {
-/*   96 */     return this.tiles;
-/*      */   }
-/*      */   
-/*      */   public boolean getPaintsCenter() {
-/*  100 */     return this.paintCenter;
-/*      */   }
-/*      */   
-/*      */   public boolean getCenter() {
-/*  104 */     return this.center;
-/*      */   }
-/*      */   
-/*      */   public Insets getInsets(Insets paramInsets) {
-/*  108 */     if (paramInsets == null) {
-/*  109 */       return (Insets)this.dInsets.clone();
-/*      */     }
-/*  111 */     paramInsets.left = this.dInsets.left;
-/*  112 */     paramInsets.right = this.dInsets.right;
-/*  113 */     paramInsets.top = this.dInsets.top;
-/*  114 */     paramInsets.bottom = this.dInsets.bottom;
-/*  115 */     return paramInsets;
-/*      */   }
-/*      */   
-/*      */   public Image getImage() {
-/*  119 */     if (this.image == null) {
-/*  120 */       this.image = (new ImageIcon(this.path, null)).getImage();
-/*      */     }
-/*  122 */     return this.image;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private void paint(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  127 */     Image image = getImage();
-/*  128 */     if (Paint9Painter.validImage(image)) {
-/*      */       Paint9Painter.PaintType paintType;
-/*  130 */       if (getCenter()) {
-/*  131 */         paintType = Paint9Painter.PaintType.CENTER;
-/*      */       }
-/*  133 */       else if (!getTiles()) {
-/*  134 */         paintType = Paint9Painter.PaintType.PAINT9_STRETCH;
-/*      */       } else {
-/*      */         
-/*  137 */         paintType = Paint9Painter.PaintType.PAINT9_TILE;
-/*      */       } 
-/*  139 */       int i = 512;
-/*  140 */       if (!getCenter() && !getPaintsCenter()) {
-/*  141 */         i |= 0x10;
-/*      */       }
-/*  143 */       this.imageCache.paint(paramSynthContext.getComponent(), paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4, image, this.sInsets, this.dInsets, paintType, i);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintArrowButtonBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  154 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintArrowButtonBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  160 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintArrowButtonForeground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5) {
-/*  167 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintButtonBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  174 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintButtonBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  180 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintCheckBoxMenuItemBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  187 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintCheckBoxMenuItemBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  193 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintCheckBoxBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  200 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintCheckBoxBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  206 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintColorChooserBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  213 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintColorChooserBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  219 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintComboBoxBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  226 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintComboBoxBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  232 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintDesktopIconBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  239 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintDesktopIconBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  245 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintDesktopPaneBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  252 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintDesktopPaneBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  258 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintEditorPaneBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  265 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintEditorPaneBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  271 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintFileChooserBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  278 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintFileChooserBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  284 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintFormattedTextFieldBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  291 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintFormattedTextFieldBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  297 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintInternalFrameTitlePaneBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  304 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintInternalFrameTitlePaneBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  310 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintInternalFrameBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  317 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintInternalFrameBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  323 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintLabelBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  330 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintLabelBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  336 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintListBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  343 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintListBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  349 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintMenuBarBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  356 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintMenuBarBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  362 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintMenuItemBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  369 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintMenuItemBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  375 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintMenuBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  382 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintMenuBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  388 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintOptionPaneBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  395 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintOptionPaneBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  401 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintPanelBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  408 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintPanelBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  414 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintPasswordFieldBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  421 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintPasswordFieldBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  427 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintPopupMenuBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  434 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintPopupMenuBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  440 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintProgressBarBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  447 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintProgressBarBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5) {
-/*  453 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintProgressBarBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  459 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintProgressBarBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5) {
-/*  465 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintProgressBarForeground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5) {
-/*  471 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintRadioButtonMenuItemBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  478 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintRadioButtonMenuItemBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  484 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintRadioButtonBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  491 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintRadioButtonBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  497 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintRootPaneBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  504 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintRootPaneBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  510 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintScrollBarBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  517 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintScrollBarBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5) {
-/*  523 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintScrollBarBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  529 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintScrollBarBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5) {
-/*  535 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintScrollBarThumbBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5) {
-/*  542 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintScrollBarThumbBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5) {
-/*  548 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintScrollBarTrackBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  555 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintScrollBarTrackBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5) {
-/*  561 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintScrollBarTrackBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  567 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintScrollBarTrackBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5) {
-/*  573 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintScrollPaneBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  580 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintScrollPaneBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  586 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintSeparatorBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  593 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintSeparatorBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5) {
-/*  599 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintSeparatorBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  605 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintSeparatorBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5) {
-/*  611 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintSeparatorForeground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5) {
-/*  617 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintSliderBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  624 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintSliderBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5) {
-/*  630 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintSliderBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  636 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintSliderBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5) {
-/*  642 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintSliderThumbBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5) {
-/*  649 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintSliderThumbBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5) {
-/*  655 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintSliderTrackBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  662 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintSliderTrackBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5) {
-/*  668 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintSliderTrackBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  674 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintSliderTrackBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5) {
-/*  681 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintSpinnerBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  688 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintSpinnerBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  694 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintSplitPaneDividerBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  701 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintSplitPaneDividerBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5) {
-/*  707 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintSplitPaneDividerForeground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5) {
-/*  713 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintSplitPaneDragDivider(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5) {
-/*  719 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintSplitPaneBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  726 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintSplitPaneBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  732 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintTabbedPaneBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  739 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintTabbedPaneBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  745 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintTabbedPaneTabAreaBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  752 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintTabbedPaneTabAreaBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5) {
-/*  758 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintTabbedPaneTabAreaBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  764 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintTabbedPaneTabAreaBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5) {
-/*  770 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintTabbedPaneTabBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5) {
-/*  777 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintTabbedPaneTabBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5, int paramInt6) {
-/*  783 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintTabbedPaneTabBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5) {
-/*  789 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintTabbedPaneTabBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5, int paramInt6) {
-/*  795 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintTabbedPaneContentBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  802 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public void paintTabbedPaneContentBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  807 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintTableHeaderBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  814 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintTableHeaderBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  820 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintTableBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  827 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintTableBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  833 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintTextAreaBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  840 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintTextAreaBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  846 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintTextPaneBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  853 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintTextPaneBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  859 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintTextFieldBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  866 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintTextFieldBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  872 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintToggleButtonBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  879 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintToggleButtonBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  885 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintToolBarBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  892 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintToolBarBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5) {
-/*  898 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintToolBarBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  904 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintToolBarBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5) {
-/*  910 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintToolBarContentBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  917 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintToolBarContentBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5) {
-/*  923 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintToolBarContentBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  929 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintToolBarContentBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5) {
-/*  935 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintToolBarDragWindowBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  942 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintToolBarDragWindowBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5) {
-/*  948 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintToolBarDragWindowBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  954 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintToolBarDragWindowBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5) {
-/*  960 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintToolTipBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  967 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintToolTipBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  973 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintTreeBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  980 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintTreeBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  986 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintTreeCellBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  993 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintTreeCellBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  999 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintTreeCellFocus(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/* 1005 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintViewportBackground(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/* 1012 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paintViewportBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/* 1018 */     paint(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\synth\ImagePainter.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2008, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.plaf.synth;
+
+import java.awt.*;
+import java.lang.ref.WeakReference;
+import java.net.*;
+import javax.swing.*;
+import sun.awt.AppContext;
+import sun.swing.plaf.synth.Paint9Painter;
+
+/**
+ * ImagePainter fills in the specified region using an Image. The Image
+ * is split into 9 segments: north, north east, east, south east, south,
+ * south west, west, north west and the center. The corners are defined
+ * by way of an insets, and the remaining regions are either tiled or
+ * scaled to fit.
+ *
+ * @author Scott Violet
+ */
+class ImagePainter extends SynthPainter {
+    private static final StringBuffer CACHE_KEY =
+                               new StringBuffer("SynthCacheKey");
+
+    private Image image;
+    private Insets sInsets;
+    private Insets dInsets;
+    private URL path;
+    private boolean tiles;
+    private boolean paintCenter;
+    private Paint9Painter imageCache;
+    private boolean center;
+
+    private static Paint9Painter getPaint9Painter() {
+        // A SynthPainter is created per <imagePainter>.  We want the
+        // cache to be shared by all, and we don't use a static because we
+        // don't want it to persist between look and feels.  For that reason
+        // we use a AppContext specific Paint9Painter.  It's backed via
+        // a WeakRef so that it can go away if the look and feel changes.
+        synchronized(CACHE_KEY) {
+            WeakReference<Paint9Painter> cacheRef =
+                     (WeakReference<Paint9Painter>)AppContext.getAppContext().
+                     get(CACHE_KEY);
+            Paint9Painter painter;
+            if (cacheRef == null || (painter = cacheRef.get()) == null) {
+                painter = new Paint9Painter(30);
+                cacheRef = new WeakReference<Paint9Painter>(painter);
+                AppContext.getAppContext().put(CACHE_KEY, cacheRef);
+            }
+            return painter;
+        }
+    }
+
+    ImagePainter(boolean tiles, boolean paintCenter,
+                 Insets sourceInsets, Insets destinationInsets, URL path,
+                 boolean center) {
+        if (sourceInsets != null) {
+            this.sInsets = (Insets)sourceInsets.clone();
+        }
+        if (destinationInsets == null) {
+            dInsets = sInsets;
+        }
+        else {
+            this.dInsets = (Insets)destinationInsets.clone();
+        }
+        this.tiles = tiles;
+        this.paintCenter = paintCenter;
+        this.imageCache = getPaint9Painter();
+        this.path = path;
+        this.center = center;
+    }
+
+    public boolean getTiles() {
+        return tiles;
+    }
+
+    public boolean getPaintsCenter() {
+        return paintCenter;
+    }
+
+    public boolean getCenter() {
+        return center;
+    }
+
+    public Insets getInsets(Insets insets) {
+        if (insets == null) {
+            return (Insets)this.dInsets.clone();
+        }
+        insets.left = this.dInsets.left;
+        insets.right = this.dInsets.right;
+        insets.top = this.dInsets.top;
+        insets.bottom = this.dInsets.bottom;
+        return insets;
+    }
+
+    public Image getImage() {
+        if (image == null) {
+            image = new ImageIcon(path, null).getImage();
+        }
+        return image;
+    }
+
+    private void paint(SynthContext context, Graphics g, int x, int y, int w,
+                       int h) {
+        Image image = getImage();
+        if (Paint9Painter.validImage(image)) {
+            Paint9Painter.PaintType type;
+            if (getCenter()) {
+                type = Paint9Painter.PaintType.CENTER;
+            }
+            else if (!getTiles()) {
+                type = Paint9Painter.PaintType.PAINT9_STRETCH;
+            }
+            else {
+                type = Paint9Painter.PaintType.PAINT9_TILE;
+            }
+            int mask = Paint9Painter.PAINT_ALL;
+            if (!getCenter() && !getPaintsCenter()) {
+                mask |= Paint9Painter.PAINT_CENTER;
+            }
+            imageCache.paint(context.getComponent(), g, x, y, w, h,
+                             image, sInsets, dInsets, type,
+                             mask);
+        }
+    }
+
+
+    // SynthPainter
+    public void paintArrowButtonBackground(SynthContext context,
+                                           Graphics g, int x, int y,
+                                           int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintArrowButtonBorder(SynthContext context,
+                                       Graphics g, int x, int y,
+                                       int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintArrowButtonForeground(SynthContext context,
+                                           Graphics g, int x, int y,
+                                           int w, int h,
+                                           int direction) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // BUTTON
+    public void paintButtonBackground(SynthContext context,
+                                      Graphics g, int x, int y,
+                                      int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintButtonBorder(SynthContext context,
+                                  Graphics g, int x, int y,
+                                  int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // CHECK_BOX_MENU_ITEM
+    public void paintCheckBoxMenuItemBackground(SynthContext context,
+                                                Graphics g, int x, int y,
+                                                int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintCheckBoxMenuItemBorder(SynthContext context,
+                                            Graphics g, int x, int y,
+                                            int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // CHECK_BOX
+    public void paintCheckBoxBackground(SynthContext context,
+                                        Graphics g, int x, int y,
+                                        int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintCheckBoxBorder(SynthContext context,
+                                    Graphics g, int x, int y,
+                                    int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // COLOR_CHOOSER
+    public void paintColorChooserBackground(SynthContext context,
+                                            Graphics g, int x, int y,
+                                            int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintColorChooserBorder(SynthContext context,
+                                        Graphics g, int x, int y,
+                                        int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // COMBO_BOX
+    public void paintComboBoxBackground(SynthContext context,
+                                        Graphics g, int x, int y,
+                                        int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintComboBoxBorder(SynthContext context,
+                                        Graphics g, int x, int y,
+                                        int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // DESKTOP_ICON
+    public void paintDesktopIconBackground(SynthContext context,
+                                        Graphics g, int x, int y,
+                                        int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintDesktopIconBorder(SynthContext context,
+                                           Graphics g, int x, int y,
+                                           int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // DESKTOP_PANE
+    public void paintDesktopPaneBackground(SynthContext context,
+                                           Graphics g, int x, int y,
+                                           int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintDesktopPaneBorder(SynthContext context,
+                                       Graphics g, int x, int y,
+                                       int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // EDITOR_PANE
+    public void paintEditorPaneBackground(SynthContext context,
+                                          Graphics g, int x, int y,
+                                          int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintEditorPaneBorder(SynthContext context,
+                                      Graphics g, int x, int y,
+                                      int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // FILE_CHOOSER
+    public void paintFileChooserBackground(SynthContext context,
+                                          Graphics g, int x, int y,
+                                          int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintFileChooserBorder(SynthContext context,
+                                      Graphics g, int x, int y,
+                                      int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // FORMATTED_TEXT_FIELD
+    public void paintFormattedTextFieldBackground(SynthContext context,
+                                          Graphics g, int x, int y,
+                                          int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintFormattedTextFieldBorder(SynthContext context,
+                                      Graphics g, int x, int y,
+                                      int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // INTERNAL_FRAME_TITLE_PANE
+    public void paintInternalFrameTitlePaneBackground(SynthContext context,
+                                          Graphics g, int x, int y,
+                                          int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintInternalFrameTitlePaneBorder(SynthContext context,
+                                      Graphics g, int x, int y,
+                                      int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // INTERNAL_FRAME
+    public void paintInternalFrameBackground(SynthContext context,
+                                          Graphics g, int x, int y,
+                                          int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintInternalFrameBorder(SynthContext context,
+                                      Graphics g, int x, int y,
+                                      int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // LABEL
+    public void paintLabelBackground(SynthContext context,
+                                     Graphics g, int x, int y,
+                                     int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintLabelBorder(SynthContext context,
+                                 Graphics g, int x, int y,
+                                 int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // LIST
+    public void paintListBackground(SynthContext context,
+                                     Graphics g, int x, int y,
+                                     int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintListBorder(SynthContext context,
+                                 Graphics g, int x, int y,
+                                 int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // MENU_BAR
+    public void paintMenuBarBackground(SynthContext context,
+                                     Graphics g, int x, int y,
+                                     int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintMenuBarBorder(SynthContext context,
+                                 Graphics g, int x, int y,
+                                 int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // MENU_ITEM
+    public void paintMenuItemBackground(SynthContext context,
+                                     Graphics g, int x, int y,
+                                     int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintMenuItemBorder(SynthContext context,
+                                 Graphics g, int x, int y,
+                                 int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // MENU
+    public void paintMenuBackground(SynthContext context,
+                                     Graphics g, int x, int y,
+                                     int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintMenuBorder(SynthContext context,
+                                 Graphics g, int x, int y,
+                                 int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // OPTION_PANE
+    public void paintOptionPaneBackground(SynthContext context,
+                                     Graphics g, int x, int y,
+                                     int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintOptionPaneBorder(SynthContext context,
+                                 Graphics g, int x, int y,
+                                 int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // PANEL
+    public void paintPanelBackground(SynthContext context,
+                                     Graphics g, int x, int y,
+                                     int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintPanelBorder(SynthContext context,
+                                 Graphics g, int x, int y,
+                                 int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // PANEL
+    public void paintPasswordFieldBackground(SynthContext context,
+                                     Graphics g, int x, int y,
+                                     int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintPasswordFieldBorder(SynthContext context,
+                                 Graphics g, int x, int y,
+                                 int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // POPUP_MENU
+    public void paintPopupMenuBackground(SynthContext context,
+                                     Graphics g, int x, int y,
+                                     int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintPopupMenuBorder(SynthContext context,
+                                 Graphics g, int x, int y,
+                                 int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // PROGRESS_BAR
+    public void paintProgressBarBackground(SynthContext context,
+                                     Graphics g, int x, int y,
+                                     int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintProgressBarBackground(SynthContext context,
+                                           Graphics g, int x, int y,
+                                           int w, int h, int orientation) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintProgressBarBorder(SynthContext context,
+                                 Graphics g, int x, int y,
+                                 int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintProgressBarBorder(SynthContext context,
+                                       Graphics g, int x, int y,
+                                       int w, int h, int orientation) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintProgressBarForeground(SynthContext context,
+                                 Graphics g, int x, int y,
+                                 int w, int h, int orientation) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // RADIO_BUTTON_MENU_ITEM
+    public void paintRadioButtonMenuItemBackground(SynthContext context,
+                                     Graphics g, int x, int y,
+                                     int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintRadioButtonMenuItemBorder(SynthContext context,
+                                 Graphics g, int x, int y,
+                                 int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // RADIO_BUTTON
+    public void paintRadioButtonBackground(SynthContext context,
+                                     Graphics g, int x, int y,
+                                     int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintRadioButtonBorder(SynthContext context,
+                                 Graphics g, int x, int y,
+                                 int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // ROOT_PANE
+    public void paintRootPaneBackground(SynthContext context,
+                                     Graphics g, int x, int y,
+                                     int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintRootPaneBorder(SynthContext context,
+                                 Graphics g, int x, int y,
+                                 int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // SCROLL_BAR
+    public void paintScrollBarBackground(SynthContext context,
+                                     Graphics g, int x, int y,
+                                     int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintScrollBarBackground(SynthContext context,
+                                     Graphics g, int x, int y,
+                                     int w, int h, int orientation) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintScrollBarBorder(SynthContext context,
+                                 Graphics g, int x, int y,
+                                 int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintScrollBarBorder(SynthContext context,
+                                     Graphics g, int x, int y,
+                                     int w, int h, int orientation) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // SCROLL_BAR_THUMB
+    public void paintScrollBarThumbBackground(SynthContext context,
+                                     Graphics g, int x, int y,
+                                     int w, int h, int orientation) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintScrollBarThumbBorder(SynthContext context,
+                                 Graphics g, int x, int y,
+                                 int w, int h, int orientation) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // SCROLL_BAR_TRACK
+    public void paintScrollBarTrackBackground(SynthContext context,
+                                     Graphics g, int x, int y,
+                                     int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintScrollBarTrackBackground(SynthContext context,
+                                              Graphics g, int x, int y,
+                                              int w, int h, int orientation) {
+         paint(context, g, x, y, w, h);
+     }
+
+    public void paintScrollBarTrackBorder(SynthContext context,
+                                 Graphics g, int x, int y,
+                                 int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintScrollBarTrackBorder(SynthContext context,
+                                          Graphics g, int x, int y,
+                                          int w, int h, int orientation) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // SCROLL_PANE
+    public void paintScrollPaneBackground(SynthContext context,
+                                     Graphics g, int x, int y,
+                                     int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintScrollPaneBorder(SynthContext context,
+                                 Graphics g, int x, int y,
+                                 int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // SEPARATOR
+    public void paintSeparatorBackground(SynthContext context,
+                                     Graphics g, int x, int y,
+                                     int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintSeparatorBackground(SynthContext context,
+                                         Graphics g, int x, int y,
+                                         int w, int h, int orientation) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintSeparatorBorder(SynthContext context,
+                                 Graphics g, int x, int y,
+                                 int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintSeparatorBorder(SynthContext context,
+                                     Graphics g, int x, int y,
+                                     int w, int h, int orientation) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintSeparatorForeground(SynthContext context,
+                                 Graphics g, int x, int y,
+                                 int w, int h, int orientation) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // SLIDER
+    public void paintSliderBackground(SynthContext context,
+                                     Graphics g, int x, int y,
+                                     int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintSliderBackground(SynthContext context,
+                                      Graphics g, int x, int y,
+                                      int w, int h, int orientation) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintSliderBorder(SynthContext context,
+                                 Graphics g, int x, int y,
+                                 int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintSliderBorder(SynthContext context,
+                                  Graphics g, int x, int y,
+                                  int w, int h, int orientation) {
+         paint(context, g, x, y, w, h);
+     }
+
+    // SLIDER_THUMB
+    public void paintSliderThumbBackground(SynthContext context,
+                                     Graphics g, int x, int y,
+                                     int w, int h, int orientation) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintSliderThumbBorder(SynthContext context,
+                                 Graphics g, int x, int y,
+                                 int w, int h, int orientation) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // SLIDER_TRACK
+    public void paintSliderTrackBackground(SynthContext context,
+                                     Graphics g, int x, int y,
+                                     int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintSliderTrackBackground(SynthContext context,
+                                           Graphics g, int x, int y,
+                                           int w, int h, int orientation) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintSliderTrackBorder(SynthContext context,
+                                 Graphics g, int x, int y,
+                                 int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+
+    public void paintSliderTrackBorder(SynthContext context,
+                                       Graphics g, int x, int y,
+                                       int w, int h, int orientation) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // SPINNER
+    public void paintSpinnerBackground(SynthContext context,
+                                     Graphics g, int x, int y,
+                                     int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintSpinnerBorder(SynthContext context,
+                                 Graphics g, int x, int y,
+                                 int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // SPLIT_PANE_DIVIDER
+    public void paintSplitPaneDividerBackground(SynthContext context,
+                                     Graphics g, int x, int y,
+                                     int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintSplitPaneDividerBackground(SynthContext context,
+                                                Graphics g, int x, int y,
+                                                int w, int h, int orientation) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintSplitPaneDividerForeground(SynthContext context,
+                                     Graphics g, int x, int y,
+                                     int w, int h, int orientation) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintSplitPaneDragDivider(SynthContext context,
+                                     Graphics g, int x, int y,
+                                     int w, int h, int orientation) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // SPLIT_PANE
+    public void paintSplitPaneBackground(SynthContext context,
+                                     Graphics g, int x, int y,
+                                     int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintSplitPaneBorder(SynthContext context,
+                                 Graphics g, int x, int y,
+                                 int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // TABBED_PANE
+    public void paintTabbedPaneBackground(SynthContext context,
+                                     Graphics g, int x, int y,
+                                     int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintTabbedPaneBorder(SynthContext context,
+                                 Graphics g, int x, int y,
+                                 int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // TABBED_PANE_TAB_AREA
+    public void paintTabbedPaneTabAreaBackground(SynthContext context,
+                                     Graphics g, int x, int y,
+                                     int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintTabbedPaneTabAreaBackground(SynthContext context,
+                                                 Graphics g, int x, int y,
+                                                 int w, int h, int orientation) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintTabbedPaneTabAreaBorder(SynthContext context,
+                                 Graphics g, int x, int y,
+                                 int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintTabbedPaneTabAreaBorder(SynthContext context,
+                                             Graphics g, int x, int y,
+                                             int w, int h, int orientation) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // TABBED_PANE_TAB
+    public void paintTabbedPaneTabBackground(SynthContext context, Graphics g,
+                                         int x, int y, int w, int h,
+                                         int tabIndex) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintTabbedPaneTabBackground(SynthContext context, Graphics g,
+                                             int x, int y, int w, int h,
+                                             int tabIndex, int orientation) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintTabbedPaneTabBorder(SynthContext context, Graphics g,
+                                         int x, int y, int w, int h,
+                                         int tabIndex) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintTabbedPaneTabBorder(SynthContext context, Graphics g,
+                                         int x, int y, int w, int h,
+                                         int tabIndex, int orientation) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // TABBED_PANE_CONTENT
+    public void paintTabbedPaneContentBackground(SynthContext context,
+                                         Graphics g, int x, int y, int w,
+                                         int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintTabbedPaneContentBorder(SynthContext context, Graphics g,
+                                         int x, int y, int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // TABLE_HEADER
+    public void paintTableHeaderBackground(SynthContext context,
+                                     Graphics g, int x, int y,
+                                     int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintTableHeaderBorder(SynthContext context,
+                                 Graphics g, int x, int y,
+                                 int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // TABLE
+    public void paintTableBackground(SynthContext context,
+                                     Graphics g, int x, int y,
+                                     int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintTableBorder(SynthContext context,
+                                 Graphics g, int x, int y,
+                                 int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // TEXT_AREA
+    public void paintTextAreaBackground(SynthContext context,
+                                     Graphics g, int x, int y,
+                                     int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintTextAreaBorder(SynthContext context,
+                                 Graphics g, int x, int y,
+                                 int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // TEXT_PANE
+    public void paintTextPaneBackground(SynthContext context,
+                                     Graphics g, int x, int y,
+                                     int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintTextPaneBorder(SynthContext context,
+                                 Graphics g, int x, int y,
+                                 int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // TEXT_FIELD
+    public void paintTextFieldBackground(SynthContext context,
+                                          Graphics g, int x, int y,
+                                          int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintTextFieldBorder(SynthContext context,
+                                      Graphics g, int x, int y,
+                                      int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // TOGGLE_BUTTON
+    public void paintToggleButtonBackground(SynthContext context,
+                                     Graphics g, int x, int y,
+                                     int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintToggleButtonBorder(SynthContext context,
+                                 Graphics g, int x, int y,
+                                 int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // TOOL_BAR
+    public void paintToolBarBackground(SynthContext context,
+                                     Graphics g, int x, int y,
+                                     int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintToolBarBackground(SynthContext context,
+                                       Graphics g, int x, int y,
+                                       int w, int h, int orientation) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintToolBarBorder(SynthContext context,
+                                 Graphics g, int x, int y,
+                                 int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintToolBarBorder(SynthContext context,
+                                   Graphics g, int x, int y,
+                                   int w, int h, int orientation) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // TOOL_BAR_CONTENT
+    public void paintToolBarContentBackground(SynthContext context,
+                                     Graphics g, int x, int y,
+                                     int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintToolBarContentBackground(SynthContext context,
+                                              Graphics g, int x, int y,
+                                              int w, int h, int orientation) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintToolBarContentBorder(SynthContext context,
+                                 Graphics g, int x, int y,
+                                 int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintToolBarContentBorder(SynthContext context,
+                                          Graphics g, int x, int y,
+                                          int w, int h, int orientation) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // TOOL_DRAG_WINDOW
+    public void paintToolBarDragWindowBackground(SynthContext context,
+                                     Graphics g, int x, int y,
+                                     int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintToolBarDragWindowBackground(SynthContext context,
+                                                 Graphics g, int x, int y,
+                                                 int w, int h, int orientation) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintToolBarDragWindowBorder(SynthContext context,
+                                 Graphics g, int x, int y,
+                                 int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintToolBarDragWindowBorder(SynthContext context,
+                                             Graphics g, int x, int y,
+                                             int w, int h, int orientation) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // TOOL_TIP
+    public void paintToolTipBackground(SynthContext context,
+                                     Graphics g, int x, int y,
+                                     int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintToolTipBorder(SynthContext context,
+                                 Graphics g, int x, int y,
+                                 int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // TREE
+    public void paintTreeBackground(SynthContext context,
+                                     Graphics g, int x, int y,
+                                     int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintTreeBorder(SynthContext context,
+                                 Graphics g, int x, int y,
+                                 int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // TREE_CELL
+    public void paintTreeCellBackground(SynthContext context,
+                                     Graphics g, int x, int y,
+                                     int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintTreeCellBorder(SynthContext context,
+                                 Graphics g, int x, int y,
+                                 int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintTreeCellFocus(SynthContext context,
+                                   Graphics g, int x, int y,
+                                   int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    // VIEWPORT
+    public void paintViewportBackground(SynthContext context,
+                                     Graphics g, int x, int y,
+                                     int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+
+    public void paintViewportBorder(SynthContext context,
+                                 Graphics g, int x, int y,
+                                 int w, int h) {
+        paint(context, g, x, y, w, h);
+    }
+}

@@ -1,556 +1,551 @@
-/*     */ package javax.swing.plaf.metal;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Component;
-/*     */ import java.awt.Container;
-/*     */ import java.awt.Dimension;
-/*     */ import java.awt.Font;
-/*     */ import java.awt.FontMetrics;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.LayoutManager;
-/*     */ import java.awt.Rectangle;
-/*     */ import java.beans.PropertyChangeEvent;
-/*     */ import java.beans.PropertyChangeListener;
-/*     */ import javax.swing.Icon;
-/*     */ import javax.swing.JButton;
-/*     */ import javax.swing.JInternalFrame;
-/*     */ import javax.swing.JMenu;
-/*     */ import javax.swing.UIManager;
-/*     */ import javax.swing.border.Border;
-/*     */ import javax.swing.border.EmptyBorder;
-/*     */ import javax.swing.plaf.ColorUIResource;
-/*     */ import javax.swing.plaf.basic.BasicInternalFrameTitlePane;
-/*     */ import sun.swing.SwingUtilities2;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class MetalInternalFrameTitlePane
-/*     */   extends BasicInternalFrameTitlePane
-/*     */ {
-/*     */   protected boolean isPalette = false;
-/*     */   protected Icon paletteCloseIcon;
-/*     */   protected int paletteTitleHeight;
-/*  53 */   private static final Border handyEmptyBorder = new EmptyBorder(0, 0, 0, 0);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private String selectedBackgroundKey;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private String selectedForegroundKey;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private String selectedShadowKey;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean wasClosable;
-/*     */ 
-/*     */ 
-/*     */   
-/*  76 */   int buttonsWidth = 0;
-/*     */   
-/*  78 */   MetalBumps activeBumps = new MetalBumps(0, 0, 
-/*     */       
-/*  80 */       MetalLookAndFeel.getPrimaryControlHighlight(), 
-/*  81 */       MetalLookAndFeel.getPrimaryControlDarkShadow(), 
-/*  82 */       (UIManager.get("InternalFrame.activeTitleGradient") != null) ? null : 
-/*  83 */       MetalLookAndFeel.getPrimaryControl());
-/*  84 */   MetalBumps inactiveBumps = new MetalBumps(0, 0, 
-/*     */       
-/*  86 */       MetalLookAndFeel.getControlHighlight(), 
-/*  87 */       MetalLookAndFeel.getControlDarkShadow(), 
-/*  88 */       (UIManager.get("InternalFrame.inactiveTitleGradient") != null) ? null : 
-/*  89 */       MetalLookAndFeel.getControl());
-/*     */   
-/*     */   MetalBumps paletteBumps;
-/*     */   
-/*  93 */   private Color activeBumpsHighlight = MetalLookAndFeel.getPrimaryControlHighlight();
-/*     */   
-/*  95 */   private Color activeBumpsShadow = MetalLookAndFeel.getPrimaryControlDarkShadow();
-/*     */   
-/*     */   public MetalInternalFrameTitlePane(JInternalFrame paramJInternalFrame) {
-/*  98 */     super(paramJInternalFrame);
-/*     */   }
-/*     */   
-/*     */   public void addNotify() {
-/* 102 */     super.addNotify();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 107 */     updateOptionPaneState();
-/*     */   }
-/*     */   
-/*     */   protected void installDefaults() {
-/* 111 */     super.installDefaults();
-/* 112 */     setFont(UIManager.getFont("InternalFrame.titleFont"));
-/* 113 */     this
-/* 114 */       .paletteTitleHeight = UIManager.getInt("InternalFrame.paletteTitleHeight");
-/* 115 */     this.paletteCloseIcon = UIManager.getIcon("InternalFrame.paletteCloseIcon");
-/* 116 */     this.wasClosable = this.frame.isClosable();
-/* 117 */     this.selectedForegroundKey = this.selectedBackgroundKey = null;
-/* 118 */     if (MetalLookAndFeel.usingOcean()) {
-/* 119 */       setOpaque(true);
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   protected void uninstallDefaults() {
-/* 124 */     super.uninstallDefaults();
-/* 125 */     if (this.wasClosable != this.frame.isClosable()) {
-/* 126 */       this.frame.setClosable(this.wasClosable);
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   protected void createButtons() {
-/* 131 */     super.createButtons();
-/*     */     
-/* 133 */     Boolean bool = this.frame.isSelected() ? Boolean.TRUE : Boolean.FALSE;
-/* 134 */     this.iconButton.putClientProperty("paintActive", bool);
-/* 135 */     this.iconButton.setBorder(handyEmptyBorder);
-/*     */     
-/* 137 */     this.maxButton.putClientProperty("paintActive", bool);
-/* 138 */     this.maxButton.setBorder(handyEmptyBorder);
-/*     */     
-/* 140 */     this.closeButton.putClientProperty("paintActive", bool);
-/* 141 */     this.closeButton.setBorder(handyEmptyBorder);
-/*     */ 
-/*     */ 
-/*     */     
-/* 145 */     this.closeButton.setBackground(MetalLookAndFeel.getPrimaryControlShadow());
-/*     */     
-/* 147 */     if (MetalLookAndFeel.usingOcean()) {
-/* 148 */       this.iconButton.setContentAreaFilled(false);
-/* 149 */       this.maxButton.setContentAreaFilled(false);
-/* 150 */       this.closeButton.setContentAreaFilled(false);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void assembleSystemMenu() {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void addSystemMenuItems(JMenu paramJMenu) {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void showSystemMenu() {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void addSubComponents() {
-/* 177 */     add(this.iconButton);
-/* 178 */     add(this.maxButton);
-/* 179 */     add(this.closeButton);
-/*     */   }
-/*     */   
-/*     */   protected PropertyChangeListener createPropertyChangeListener() {
-/* 183 */     return new MetalPropertyChangeHandler();
-/*     */   }
-/*     */   
-/*     */   protected LayoutManager createLayout() {
-/* 187 */     return new MetalTitlePaneLayout();
-/*     */   }
-/*     */   
-/*     */   class MetalPropertyChangeHandler
-/*     */     extends BasicInternalFrameTitlePane.PropertyChangeHandler
-/*     */   {
-/*     */     public void propertyChange(PropertyChangeEvent param1PropertyChangeEvent) {
-/* 194 */       String str = param1PropertyChangeEvent.getPropertyName();
-/* 195 */       if (str.equals("selected")) {
-/* 196 */         Boolean bool = (Boolean)param1PropertyChangeEvent.getNewValue();
-/* 197 */         MetalInternalFrameTitlePane.this.iconButton.putClientProperty("paintActive", bool);
-/* 198 */         MetalInternalFrameTitlePane.this.closeButton.putClientProperty("paintActive", bool);
-/* 199 */         MetalInternalFrameTitlePane.this.maxButton.putClientProperty("paintActive", bool);
-/*     */       }
-/* 201 */       else if ("JInternalFrame.messageType".equals(str)) {
-/* 202 */         MetalInternalFrameTitlePane.this.updateOptionPaneState();
-/* 203 */         MetalInternalFrameTitlePane.this.frame.repaint();
-/*     */       } 
-/* 205 */       super.propertyChange(param1PropertyChangeEvent);
-/*     */     } }
-/*     */   
-/*     */   class MetalTitlePaneLayout extends BasicInternalFrameTitlePane.TitlePaneLayout { public void addLayoutComponent(String param1String, Component param1Component) {}
-/*     */     
-/*     */     public void removeLayoutComponent(Component param1Component) {}
-/*     */     
-/*     */     public Dimension preferredLayoutSize(Container param1Container) {
-/* 213 */       return minimumLayoutSize(param1Container);
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public Dimension minimumLayoutSize(Container param1Container) {
-/* 218 */       int j, i = 30;
-/* 219 */       if (MetalInternalFrameTitlePane.this.frame.isClosable()) {
-/* 220 */         i += 21;
-/*     */       }
-/* 222 */       if (MetalInternalFrameTitlePane.this.frame.isMaximizable()) {
-/* 223 */         i += 16 + (MetalInternalFrameTitlePane.this.frame.isClosable() ? 10 : 4);
-/*     */       }
-/* 225 */       if (MetalInternalFrameTitlePane.this.frame.isIconifiable()) {
-/* 226 */         i += 16 + (MetalInternalFrameTitlePane.this.frame.isMaximizable() ? 2 : (
-/* 227 */           MetalInternalFrameTitlePane.this.frame.isClosable() ? 10 : 4));
-/*     */       }
-/* 229 */       FontMetrics fontMetrics = MetalInternalFrameTitlePane.this.frame.getFontMetrics(MetalInternalFrameTitlePane.this.getFont());
-/* 230 */       String str = MetalInternalFrameTitlePane.this.frame.getTitle();
-/* 231 */       byte b1 = (str != null) ? SwingUtilities2.stringWidth(MetalInternalFrameTitlePane.this
-/* 232 */           .frame, fontMetrics, str) : 0;
-/* 233 */       byte b2 = (str != null) ? str.length() : 0;
-/*     */       
-/* 235 */       if (b2 > 2) {
-/* 236 */         j = SwingUtilities2.stringWidth(MetalInternalFrameTitlePane.this.frame, fontMetrics, MetalInternalFrameTitlePane.this
-/* 237 */             .frame.getTitle().substring(0, 2) + "...");
-/* 238 */         i += (b1 < j) ? b1 : j;
-/*     */       } else {
-/*     */         
-/* 241 */         i += b1;
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */       
-/* 246 */       if (MetalInternalFrameTitlePane.this.isPalette) {
-/* 247 */         j = MetalInternalFrameTitlePane.this.paletteTitleHeight;
-/*     */       } else {
-/* 249 */         int k = fontMetrics.getHeight();
-/* 250 */         k += 7;
-/* 251 */         Icon icon = MetalInternalFrameTitlePane.this.frame.getFrameIcon();
-/* 252 */         int m = 0;
-/* 253 */         if (icon != null)
-/*     */         {
-/* 255 */           m = Math.min(icon.getIconHeight(), 16);
-/*     */         }
-/* 257 */         m += 5;
-/* 258 */         j = Math.max(k, m);
-/*     */       } 
-/*     */       
-/* 261 */       return new Dimension(i, j);
-/*     */     }
-/*     */     
-/*     */     public void layoutContainer(Container param1Container) {
-/* 265 */       boolean bool = MetalUtils.isLeftToRight(MetalInternalFrameTitlePane.this.frame);
-/*     */       
-/* 267 */       int i = MetalInternalFrameTitlePane.this.getWidth();
-/* 268 */       int j = bool ? i : 0;
-/* 269 */       byte b = 2;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 274 */       int k = MetalInternalFrameTitlePane.this.closeButton.getIcon().getIconHeight();
-/* 275 */       int m = MetalInternalFrameTitlePane.this.closeButton.getIcon().getIconWidth();
-/*     */       
-/* 277 */       if (MetalInternalFrameTitlePane.this.frame.isClosable()) {
-/* 278 */         if (MetalInternalFrameTitlePane.this.isPalette) {
-/* 279 */           byte b1 = 3;
-/* 280 */           j += bool ? (-b1 - m + 2) : b1;
-/* 281 */           MetalInternalFrameTitlePane.this.closeButton.setBounds(j, b, m + 2, MetalInternalFrameTitlePane.this.getHeight() - 4);
-/* 282 */           if (!bool) j += m + 2; 
-/*     */         } else {
-/* 284 */           byte b1 = 4;
-/* 285 */           j += bool ? (-b1 - m) : b1;
-/* 286 */           MetalInternalFrameTitlePane.this.closeButton.setBounds(j, b, m, k);
-/* 287 */           if (!bool) j += m;
-/*     */         
-/*     */         } 
-/*     */       }
-/* 291 */       if (MetalInternalFrameTitlePane.this.frame.isMaximizable() && !MetalInternalFrameTitlePane.this.isPalette) {
-/* 292 */         byte b1 = MetalInternalFrameTitlePane.this.frame.isClosable() ? 10 : 4;
-/* 293 */         j += bool ? (-b1 - m) : b1;
-/* 294 */         MetalInternalFrameTitlePane.this.maxButton.setBounds(j, b, m, k);
-/* 295 */         if (!bool) j += m;
-/*     */       
-/*     */       } 
-/* 298 */       if (MetalInternalFrameTitlePane.this.frame.isIconifiable() && !MetalInternalFrameTitlePane.this.isPalette) {
-/*     */         
-/* 300 */         byte b1 = MetalInternalFrameTitlePane.this.frame.isMaximizable() ? 2 : (MetalInternalFrameTitlePane.this.frame.isClosable() ? 10 : 4);
-/* 301 */         j += bool ? (-b1 - m) : b1;
-/* 302 */         MetalInternalFrameTitlePane.this.iconButton.setBounds(j, b, m, k);
-/* 303 */         if (!bool) j += m;
-/*     */       
-/*     */       } 
-/* 306 */       MetalInternalFrameTitlePane.this.buttonsWidth = bool ? (i - j) : j;
-/*     */     } }
-/*     */ 
-/*     */   
-/*     */   public void paintPalette(Graphics paramGraphics) {
-/* 311 */     boolean bool = MetalUtils.isLeftToRight(this.frame);
-/*     */     
-/* 313 */     int i = getWidth();
-/* 314 */     int j = getHeight();
-/*     */     
-/* 316 */     if (this.paletteBumps == null) {
-/* 317 */       this
-/*     */ 
-/*     */ 
-/*     */         
-/* 321 */         .paletteBumps = new MetalBumps(0, 0, MetalLookAndFeel.getPrimaryControlHighlight(), MetalLookAndFeel.getPrimaryControlInfo(), MetalLookAndFeel.getPrimaryControlShadow());
-/*     */     }
-/*     */     
-/* 324 */     ColorUIResource colorUIResource1 = MetalLookAndFeel.getPrimaryControlShadow();
-/* 325 */     ColorUIResource colorUIResource2 = MetalLookAndFeel.getPrimaryControlDarkShadow();
-/*     */     
-/* 327 */     paramGraphics.setColor(colorUIResource1);
-/* 328 */     paramGraphics.fillRect(0, 0, i, j);
-/*     */     
-/* 330 */     paramGraphics.setColor(colorUIResource2);
-/* 331 */     paramGraphics.drawLine(0, j - 1, i, j - 1);
-/*     */     
-/* 333 */     boolean bool1 = bool ? true : (this.buttonsWidth + 4);
-/* 334 */     int k = i - this.buttonsWidth - 8;
-/* 335 */     int m = getHeight() - 4;
-/* 336 */     this.paletteBumps.setBumpArea(k, m);
-/* 337 */     this.paletteBumps.paintIcon(this, paramGraphics, bool1, 2); } public void paintComponent(Graphics paramGraphics) {
-/*     */     MetalBumps metalBumps;
-/*     */     String str1;
-/*     */     int m, n;
-/* 341 */     if (this.isPalette) {
-/* 342 */       paintPalette(paramGraphics);
-/*     */       
-/*     */       return;
-/*     */     } 
-/* 346 */     boolean bool1 = MetalUtils.isLeftToRight(this.frame);
-/* 347 */     boolean bool2 = this.frame.isSelected();
-/*     */     
-/* 349 */     int i = getWidth();
-/* 350 */     int j = getHeight();
-/*     */     
-/* 352 */     Color color1 = null;
-/* 353 */     Color color2 = null;
-/* 354 */     Color color3 = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 359 */     if (bool2) {
-/* 360 */       if (!MetalLookAndFeel.usingOcean()) {
-/* 361 */         this.closeButton.setContentAreaFilled(true);
-/* 362 */         this.maxButton.setContentAreaFilled(true);
-/* 363 */         this.iconButton.setContentAreaFilled(true);
-/*     */       } 
-/* 365 */       if (this.selectedBackgroundKey != null) {
-/* 366 */         color1 = UIManager.getColor(this.selectedBackgroundKey);
-/*     */       }
-/* 368 */       if (color1 == null) {
-/* 369 */         color1 = MetalLookAndFeel.getWindowTitleBackground();
-/*     */       }
-/* 371 */       if (this.selectedForegroundKey != null) {
-/* 372 */         color2 = UIManager.getColor(this.selectedForegroundKey);
-/*     */       }
-/* 374 */       if (this.selectedShadowKey != null) {
-/* 375 */         color3 = UIManager.getColor(this.selectedShadowKey);
-/*     */       }
-/* 377 */       if (color3 == null) {
-/* 378 */         color3 = MetalLookAndFeel.getPrimaryControlDarkShadow();
-/*     */       }
-/* 380 */       if (color2 == null) {
-/* 381 */         color2 = MetalLookAndFeel.getWindowTitleForeground();
-/*     */       }
-/* 383 */       this.activeBumps.setBumpColors(this.activeBumpsHighlight, this.activeBumpsShadow, 
-/* 384 */           (UIManager.get("InternalFrame.activeTitleGradient") != null) ? null : color1);
-/*     */       
-/* 386 */       metalBumps = this.activeBumps;
-/* 387 */       str1 = "InternalFrame.activeTitleGradient";
-/*     */     } else {
-/* 389 */       if (!MetalLookAndFeel.usingOcean()) {
-/* 390 */         this.closeButton.setContentAreaFilled(false);
-/* 391 */         this.maxButton.setContentAreaFilled(false);
-/* 392 */         this.iconButton.setContentAreaFilled(false);
-/*     */       } 
-/* 394 */       color1 = MetalLookAndFeel.getWindowTitleInactiveBackground();
-/* 395 */       color2 = MetalLookAndFeel.getWindowTitleInactiveForeground();
-/* 396 */       color3 = MetalLookAndFeel.getControlDarkShadow();
-/* 397 */       metalBumps = this.inactiveBumps;
-/* 398 */       str1 = "InternalFrame.inactiveTitleGradient";
-/*     */     } 
-/*     */     
-/* 401 */     if (!MetalUtils.drawGradient(this, paramGraphics, str1, 0, 0, i, j, true)) {
-/*     */       
-/* 403 */       paramGraphics.setColor(color1);
-/* 404 */       paramGraphics.fillRect(0, 0, i, j);
-/*     */     } 
-/*     */     
-/* 407 */     paramGraphics.setColor(color3);
-/* 408 */     paramGraphics.drawLine(0, j - 1, i, j - 1);
-/* 409 */     paramGraphics.drawLine(0, 0, 0, 0);
-/* 410 */     paramGraphics.drawLine(i - 1, 0, i - 1, 0);
-/*     */ 
-/*     */ 
-/*     */     
-/* 414 */     int k = bool1 ? 5 : (i - 5);
-/* 415 */     String str2 = this.frame.getTitle();
-/*     */     
-/* 417 */     Icon icon = this.frame.getFrameIcon();
-/* 418 */     if (icon != null) {
-/* 419 */       if (!bool1)
-/* 420 */         k -= icon.getIconWidth(); 
-/* 421 */       m = j / 2 - icon.getIconHeight() / 2;
-/* 422 */       icon.paintIcon(this.frame, paramGraphics, k, m);
-/* 423 */       k += bool1 ? (icon.getIconWidth() + 5) : -5;
-/*     */     } 
-/*     */     
-/* 426 */     if (str2 != null) {
-/* 427 */       Font font = getFont();
-/* 428 */       paramGraphics.setFont(font);
-/* 429 */       FontMetrics fontMetrics = SwingUtilities2.getFontMetrics(this.frame, paramGraphics, font);
-/* 430 */       int i3 = fontMetrics.getHeight();
-/*     */       
-/* 432 */       paramGraphics.setColor(color2);
-/*     */       
-/* 434 */       int i4 = (j - fontMetrics.getHeight()) / 2 + fontMetrics.getAscent();
-/*     */       
-/* 436 */       Rectangle rectangle = new Rectangle(0, 0, 0, 0);
-/* 437 */       if (this.frame.isIconifiable()) { rectangle = this.iconButton.getBounds(); }
-/* 438 */       else if (this.frame.isMaximizable()) { rectangle = this.maxButton.getBounds(); }
-/* 439 */       else if (this.frame.isClosable()) { rectangle = this.closeButton.getBounds(); }
-/*     */ 
-/*     */       
-/* 442 */       if (bool1) {
-/* 443 */         if (rectangle.x == 0) {
-/* 444 */           rectangle.x = this.frame.getWidth() - (this.frame.getInsets()).right - 2;
-/*     */         }
-/* 446 */         int i5 = rectangle.x - k - 4;
-/* 447 */         str2 = getTitle(str2, fontMetrics, i5);
-/*     */       } else {
-/* 449 */         int i5 = k - rectangle.x - rectangle.width - 4;
-/* 450 */         str2 = getTitle(str2, fontMetrics, i5);
-/* 451 */         k -= SwingUtilities2.stringWidth(this.frame, fontMetrics, str2);
-/*     */       } 
-/*     */       
-/* 454 */       int i2 = SwingUtilities2.stringWidth(this.frame, fontMetrics, str2);
-/* 455 */       SwingUtilities2.drawString(this.frame, paramGraphics, str2, k, i4);
-/* 456 */       k += bool1 ? (i2 + 5) : -5;
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 461 */     if (bool1) {
-/* 462 */       n = i - this.buttonsWidth - k - 5;
-/* 463 */       m = k;
-/*     */     } else {
-/* 465 */       n = k - this.buttonsWidth - 5;
-/* 466 */       m = this.buttonsWidth + 5;
-/*     */     } 
-/* 468 */     byte b = 3;
-/* 469 */     int i1 = getHeight() - 2 * b;
-/* 470 */     metalBumps.setBumpArea(n, i1);
-/* 471 */     metalBumps.paintIcon(this, paramGraphics, m, b);
-/*     */   }
-/*     */   
-/*     */   public void setPalette(boolean paramBoolean) {
-/* 475 */     this.isPalette = paramBoolean;
-/*     */     
-/* 477 */     if (this.isPalette) {
-/* 478 */       this.closeButton.setIcon(this.paletteCloseIcon);
-/* 479 */       if (this.frame.isMaximizable())
-/* 480 */         remove(this.maxButton); 
-/* 481 */       if (this.frame.isIconifiable())
-/* 482 */         remove(this.iconButton); 
-/*     */     } else {
-/* 484 */       this.closeButton.setIcon(this.closeIcon);
-/* 485 */       if (this.frame.isMaximizable())
-/* 486 */         add(this.maxButton); 
-/* 487 */       if (this.frame.isIconifiable())
-/* 488 */         add(this.iconButton); 
-/*     */     } 
-/* 490 */     revalidate();
-/* 491 */     repaint();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void updateOptionPaneState() {
-/* 499 */     int i = -2;
-/* 500 */     boolean bool = this.wasClosable;
-/* 501 */     Object object = this.frame.getClientProperty("JInternalFrame.messageType");
-/*     */     
-/* 503 */     if (object == null) {
-/*     */       return;
-/*     */     }
-/*     */     
-/* 507 */     if (object instanceof Integer) {
-/* 508 */       i = ((Integer)object).intValue();
-/*     */     }
-/* 510 */     switch (i) {
-/*     */       case 0:
-/* 512 */         this.selectedBackgroundKey = "OptionPane.errorDialog.titlePane.background";
-/*     */         
-/* 514 */         this.selectedForegroundKey = "OptionPane.errorDialog.titlePane.foreground";
-/*     */         
-/* 516 */         this.selectedShadowKey = "OptionPane.errorDialog.titlePane.shadow";
-/* 517 */         bool = false;
-/*     */         break;
-/*     */       case 3:
-/* 520 */         this.selectedBackgroundKey = "OptionPane.questionDialog.titlePane.background";
-/*     */         
-/* 522 */         this.selectedForegroundKey = "OptionPane.questionDialog.titlePane.foreground";
-/*     */         
-/* 524 */         this.selectedShadowKey = "OptionPane.questionDialog.titlePane.shadow";
-/*     */         
-/* 526 */         bool = false;
-/*     */         break;
-/*     */       case 2:
-/* 529 */         this.selectedBackgroundKey = "OptionPane.warningDialog.titlePane.background";
-/*     */         
-/* 531 */         this.selectedForegroundKey = "OptionPane.warningDialog.titlePane.foreground";
-/*     */         
-/* 533 */         this.selectedShadowKey = "OptionPane.warningDialog.titlePane.shadow";
-/* 534 */         bool = false;
-/*     */         break;
-/*     */       case -1:
-/*     */       case 1:
-/* 538 */         this.selectedBackgroundKey = this.selectedForegroundKey = this.selectedShadowKey = null;
-/*     */         
-/* 540 */         bool = false;
-/*     */         break;
-/*     */       default:
-/* 543 */         this.selectedBackgroundKey = this.selectedForegroundKey = this.selectedShadowKey = null;
-/*     */         break;
-/*     */     } 
-/*     */     
-/* 547 */     if (bool != this.frame.isClosable())
-/* 548 */       this.frame.setClosable(bool); 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\metal\MetalInternalFrameTitlePane.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2008, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.plaf.metal;
+
+import sun.swing.SwingUtilities2;
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+import javax.swing.border.*;
+import javax.swing.event.InternalFrameEvent;
+import java.util.EventListener;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeEvent;
+import javax.swing.plaf.basic.BasicInternalFrameTitlePane;
+
+
+/**
+ * Class that manages a JLF title bar
+ * @author Steve Wilson
+ * @author Brian Beck
+ * @since 1.3
+ */
+
+public class MetalInternalFrameTitlePane  extends BasicInternalFrameTitlePane {
+
+    protected boolean isPalette = false;
+    protected Icon paletteCloseIcon;
+    protected int paletteTitleHeight;
+
+    private static final Border handyEmptyBorder = new EmptyBorder(0,0,0,0);
+
+    /**
+     * Key used to lookup Color from UIManager. If this is null,
+     * <code>getWindowTitleBackground</code> is used.
+     */
+    private String selectedBackgroundKey;
+    /**
+     * Key used to lookup Color from UIManager. If this is null,
+     * <code>getWindowTitleForeground</code> is used.
+     */
+    private String selectedForegroundKey;
+    /**
+     * Key used to lookup shadow color from UIManager. If this is null,
+     * <code>getPrimaryControlDarkShadow</code> is used.
+     */
+    private String selectedShadowKey;
+    /**
+     * Boolean indicating the state of the <code>JInternalFrame</code>s
+     * closable property at <code>updateUI</code> time.
+     */
+    private boolean wasClosable;
+
+    int buttonsWidth = 0;
+
+    MetalBumps activeBumps
+        = new MetalBumps( 0, 0,
+                          MetalLookAndFeel.getPrimaryControlHighlight(),
+                          MetalLookAndFeel.getPrimaryControlDarkShadow(),
+          (UIManager.get("InternalFrame.activeTitleGradient") != null) ? null :
+                          MetalLookAndFeel.getPrimaryControl() );
+    MetalBumps inactiveBumps
+        = new MetalBumps( 0, 0,
+                          MetalLookAndFeel.getControlHighlight(),
+                          MetalLookAndFeel.getControlDarkShadow(),
+        (UIManager.get("InternalFrame.inactiveTitleGradient") != null) ? null :
+                          MetalLookAndFeel.getControl() );
+    MetalBumps paletteBumps;
+
+    private Color activeBumpsHighlight = MetalLookAndFeel.
+                             getPrimaryControlHighlight();
+    private Color activeBumpsShadow = MetalLookAndFeel.
+                             getPrimaryControlDarkShadow();
+
+    public MetalInternalFrameTitlePane(JInternalFrame f) {
+        super( f );
+    }
+
+    public void addNotify() {
+        super.addNotify();
+        // This is done here instead of in installDefaults as I was worried
+        // that the BasicInternalFrameUI might not be fully initialized, and
+        // that if this resets the closable state the BasicInternalFrameUI
+        // Listeners that get notified might be in an odd/uninitialized state.
+        updateOptionPaneState();
+    }
+
+    protected void installDefaults() {
+        super.installDefaults();
+        setFont( UIManager.getFont("InternalFrame.titleFont") );
+        paletteTitleHeight
+            = UIManager.getInt("InternalFrame.paletteTitleHeight");
+        paletteCloseIcon = UIManager.getIcon("InternalFrame.paletteCloseIcon");
+        wasClosable = frame.isClosable();
+        selectedForegroundKey = selectedBackgroundKey = null;
+        if (MetalLookAndFeel.usingOcean()) {
+            setOpaque(true);
+        }
+    }
+
+    protected void uninstallDefaults() {
+        super.uninstallDefaults();
+        if (wasClosable != frame.isClosable()) {
+            frame.setClosable(wasClosable);
+        }
+    }
+
+    protected void createButtons() {
+        super.createButtons();
+
+        Boolean paintActive = frame.isSelected() ? Boolean.TRUE:Boolean.FALSE;
+        iconButton.putClientProperty("paintActive", paintActive);
+        iconButton.setBorder(handyEmptyBorder);
+
+        maxButton.putClientProperty("paintActive", paintActive);
+        maxButton.setBorder(handyEmptyBorder);
+
+        closeButton.putClientProperty("paintActive", paintActive);
+        closeButton.setBorder(handyEmptyBorder);
+
+        // The palette close icon isn't opaque while the regular close icon is.
+        // This makes sure palette close buttons have the right background.
+        closeButton.setBackground(MetalLookAndFeel.getPrimaryControlShadow());
+
+        if (MetalLookAndFeel.usingOcean()) {
+            iconButton.setContentAreaFilled(false);
+            maxButton.setContentAreaFilled(false);
+            closeButton.setContentAreaFilled(false);
+        }
+    }
+
+    /**
+     * Override the parent's method to do nothing. Metal frames do not
+     * have system menus.
+     */
+    protected void assembleSystemMenu() {}
+
+    /**
+     * Override the parent's method to do nothing. Metal frames do not
+     * have system menus.
+     */
+    protected void addSystemMenuItems(JMenu systemMenu) {}
+
+    /**
+     * Override the parent's method to do nothing. Metal frames do not
+     * have system menus.
+     */
+    protected void showSystemMenu() {}
+
+    /**
+     * Override the parent's method avoid creating a menu bar. Metal frames
+     * do not have system menus.
+     */
+    protected void addSubComponents() {
+        add(iconButton);
+        add(maxButton);
+        add(closeButton);
+    }
+
+    protected PropertyChangeListener createPropertyChangeListener() {
+        return new MetalPropertyChangeHandler();
+    }
+
+    protected LayoutManager createLayout() {
+        return new MetalTitlePaneLayout();
+    }
+
+    class MetalPropertyChangeHandler
+        extends BasicInternalFrameTitlePane.PropertyChangeHandler
+    {
+        public void propertyChange(PropertyChangeEvent evt) {
+            String prop = evt.getPropertyName();
+            if( prop.equals(JInternalFrame.IS_SELECTED_PROPERTY) ) {
+                Boolean b = (Boolean)evt.getNewValue();
+                iconButton.putClientProperty("paintActive", b);
+                closeButton.putClientProperty("paintActive", b);
+                maxButton.putClientProperty("paintActive", b);
+            }
+            else if ("JInternalFrame.messageType".equals(prop)) {
+                updateOptionPaneState();
+                frame.repaint();
+            }
+            super.propertyChange(evt);
+        }
+    }
+
+    class MetalTitlePaneLayout extends TitlePaneLayout {
+        public void addLayoutComponent(String name, Component c) {}
+        public void removeLayoutComponent(Component c) {}
+        public Dimension preferredLayoutSize(Container c)  {
+            return minimumLayoutSize(c);
+        }
+
+        public Dimension minimumLayoutSize(Container c) {
+            // Compute width.
+            int width = 30;
+            if (frame.isClosable()) {
+                width += 21;
+            }
+            if (frame.isMaximizable()) {
+                width += 16 + (frame.isClosable() ? 10 : 4);
+            }
+            if (frame.isIconifiable()) {
+                width += 16 + (frame.isMaximizable() ? 2 :
+                    (frame.isClosable() ? 10 : 4));
+            }
+            FontMetrics fm = frame.getFontMetrics(getFont());
+            String frameTitle = frame.getTitle();
+            int title_w = frameTitle != null ? SwingUtilities2.stringWidth(
+                               frame, fm, frameTitle) : 0;
+            int title_length = frameTitle != null ? frameTitle.length() : 0;
+
+            if (title_length > 2) {
+                int subtitle_w = SwingUtilities2.stringWidth(frame, fm,
+                                     frame.getTitle().substring(0, 2) + "...");
+                width += (title_w < subtitle_w) ? title_w : subtitle_w;
+            }
+            else {
+                width += title_w;
+            }
+
+            // Compute height.
+            int height;
+            if (isPalette) {
+                height = paletteTitleHeight;
+            } else {
+                int fontHeight = fm.getHeight();
+                fontHeight += 7;
+                Icon icon = frame.getFrameIcon();
+                int iconHeight = 0;
+                if (icon != null) {
+                    // SystemMenuBar forces the icon to be 16x16 or less.
+                    iconHeight = Math.min(icon.getIconHeight(), 16);
+                }
+                iconHeight += 5;
+                height = Math.max(fontHeight, iconHeight);
+            }
+
+            return new Dimension(width, height);
+        }
+
+        public void layoutContainer(Container c) {
+            boolean leftToRight = MetalUtils.isLeftToRight(frame);
+
+            int w = getWidth();
+            int x = leftToRight ? w : 0;
+            int y = 2;
+            int spacing;
+
+            // assumes all buttons have the same dimensions
+            // these dimensions include the borders
+            int buttonHeight = closeButton.getIcon().getIconHeight();
+            int buttonWidth = closeButton.getIcon().getIconWidth();
+
+            if(frame.isClosable()) {
+                if (isPalette) {
+                    spacing = 3;
+                    x += leftToRight ? -spacing -(buttonWidth+2) : spacing;
+                    closeButton.setBounds(x, y, buttonWidth+2, getHeight()-4);
+                    if( !leftToRight ) x += (buttonWidth+2);
+                } else {
+                    spacing = 4;
+                    x += leftToRight ? -spacing -buttonWidth : spacing;
+                    closeButton.setBounds(x, y, buttonWidth, buttonHeight);
+                    if( !leftToRight ) x += buttonWidth;
+                }
+            }
+
+            if(frame.isMaximizable() && !isPalette ) {
+                spacing = frame.isClosable() ? 10 : 4;
+                x += leftToRight ? -spacing -buttonWidth : spacing;
+                maxButton.setBounds(x, y, buttonWidth, buttonHeight);
+                if( !leftToRight ) x += buttonWidth;
+            }
+
+            if(frame.isIconifiable() && !isPalette ) {
+                spacing = frame.isMaximizable() ? 2
+                          : (frame.isClosable() ? 10 : 4);
+                x += leftToRight ? -spacing -buttonWidth : spacing;
+                iconButton.setBounds(x, y, buttonWidth, buttonHeight);
+                if( !leftToRight ) x += buttonWidth;
+            }
+
+            buttonsWidth = leftToRight ? w - x : x;
+        }
+    }
+
+    public void paintPalette(Graphics g)  {
+        boolean leftToRight = MetalUtils.isLeftToRight(frame);
+
+        int width = getWidth();
+        int height = getHeight();
+
+        if (paletteBumps == null) {
+            paletteBumps
+                = new MetalBumps(0, 0,
+                                 MetalLookAndFeel.getPrimaryControlHighlight(),
+                                 MetalLookAndFeel.getPrimaryControlInfo(),
+                                 MetalLookAndFeel.getPrimaryControlShadow() );
+        }
+
+        Color background = MetalLookAndFeel.getPrimaryControlShadow();
+        Color darkShadow = MetalLookAndFeel.getPrimaryControlDarkShadow();
+
+        g.setColor(background);
+        g.fillRect(0, 0, width, height);
+
+        g.setColor( darkShadow );
+        g.drawLine ( 0, height - 1, width, height -1);
+
+        int xOffset = leftToRight ? 4 : buttonsWidth + 4;
+        int bumpLength = width - buttonsWidth -2*4;
+        int bumpHeight = getHeight()  - 4;
+        paletteBumps.setBumpArea( bumpLength, bumpHeight );
+        paletteBumps.paintIcon( this, g, xOffset, 2);
+    }
+
+    public void paintComponent(Graphics g)  {
+        if(isPalette) {
+            paintPalette(g);
+            return;
+        }
+
+        boolean leftToRight = MetalUtils.isLeftToRight(frame);
+        boolean isSelected = frame.isSelected();
+
+        int width = getWidth();
+        int height = getHeight();
+
+        Color background = null;
+        Color foreground = null;
+        Color shadow = null;
+
+        MetalBumps bumps;
+        String gradientKey;
+
+        if (isSelected) {
+            if (!MetalLookAndFeel.usingOcean()) {
+                closeButton.setContentAreaFilled(true);
+                maxButton.setContentAreaFilled(true);
+                iconButton.setContentAreaFilled(true);
+            }
+            if (selectedBackgroundKey != null) {
+                background = UIManager.getColor(selectedBackgroundKey);
+            }
+            if (background == null) {
+                background = MetalLookAndFeel.getWindowTitleBackground();
+            }
+            if (selectedForegroundKey != null) {
+                foreground = UIManager.getColor(selectedForegroundKey);
+            }
+            if (selectedShadowKey != null) {
+                shadow = UIManager.getColor(selectedShadowKey);
+            }
+            if (shadow == null) {
+                shadow = MetalLookAndFeel.getPrimaryControlDarkShadow();
+            }
+            if (foreground == null) {
+                foreground = MetalLookAndFeel.getWindowTitleForeground();
+            }
+            activeBumps.setBumpColors(activeBumpsHighlight, activeBumpsShadow,
+                        UIManager.get("InternalFrame.activeTitleGradient") !=
+                                      null ? null : background);
+            bumps = activeBumps;
+            gradientKey = "InternalFrame.activeTitleGradient";
+        } else {
+            if (!MetalLookAndFeel.usingOcean()) {
+                closeButton.setContentAreaFilled(false);
+                maxButton.setContentAreaFilled(false);
+                iconButton.setContentAreaFilled(false);
+            }
+            background = MetalLookAndFeel.getWindowTitleInactiveBackground();
+            foreground = MetalLookAndFeel.getWindowTitleInactiveForeground();
+            shadow = MetalLookAndFeel.getControlDarkShadow();
+            bumps = inactiveBumps;
+            gradientKey = "InternalFrame.inactiveTitleGradient";
+        }
+
+        if (!MetalUtils.drawGradient(this, g, gradientKey, 0, 0, width,
+                                     height, true)) {
+            g.setColor(background);
+            g.fillRect(0, 0, width, height);
+        }
+
+        g.setColor( shadow );
+        g.drawLine ( 0, height - 1, width, height -1);
+        g.drawLine ( 0, 0, 0 ,0);
+        g.drawLine ( width - 1, 0 , width -1, 0);
+
+
+        int titleLength;
+        int xOffset = leftToRight ? 5 : width - 5;
+        String frameTitle = frame.getTitle();
+
+        Icon icon = frame.getFrameIcon();
+        if ( icon != null ) {
+            if( !leftToRight )
+                xOffset -= icon.getIconWidth();
+            int iconY = ((height / 2) - (icon.getIconHeight() /2));
+            icon.paintIcon(frame, g, xOffset, iconY);
+            xOffset += leftToRight ? icon.getIconWidth() + 5 : -5;
+        }
+
+        if(frameTitle != null) {
+            Font f = getFont();
+            g.setFont(f);
+            FontMetrics fm = SwingUtilities2.getFontMetrics(frame, g, f);
+            int fHeight = fm.getHeight();
+
+            g.setColor(foreground);
+
+            int yOffset = ( (height - fm.getHeight() ) / 2 ) + fm.getAscent();
+
+            Rectangle rect = new Rectangle(0, 0, 0, 0);
+            if (frame.isIconifiable()) { rect = iconButton.getBounds(); }
+            else if (frame.isMaximizable()) { rect = maxButton.getBounds(); }
+            else if (frame.isClosable()) { rect = closeButton.getBounds(); }
+            int titleW;
+
+            if( leftToRight ) {
+              if (rect.x == 0) {
+                rect.x = frame.getWidth()-frame.getInsets().right-2;
+              }
+              titleW = rect.x - xOffset - 4;
+              frameTitle = getTitle(frameTitle, fm, titleW);
+            } else {
+              titleW = xOffset - rect.x - rect.width - 4;
+              frameTitle = getTitle(frameTitle, fm, titleW);
+              xOffset -= SwingUtilities2.stringWidth(frame, fm, frameTitle);
+            }
+
+            titleLength = SwingUtilities2.stringWidth(frame, fm, frameTitle);
+            SwingUtilities2.drawString(frame, g, frameTitle, xOffset, yOffset);
+            xOffset += leftToRight ? titleLength + 5  : -5;
+        }
+
+        int bumpXOffset;
+        int bumpLength;
+        if( leftToRight ) {
+            bumpLength = width - buttonsWidth - xOffset - 5;
+            bumpXOffset = xOffset;
+        } else {
+            bumpLength = xOffset - buttonsWidth - 5;
+            bumpXOffset = buttonsWidth + 5;
+        }
+        int bumpYOffset = 3;
+        int bumpHeight = getHeight() - (2 * bumpYOffset);
+        bumps.setBumpArea( bumpLength, bumpHeight );
+        bumps.paintIcon(this, g, bumpXOffset, bumpYOffset);
+    }
+
+    public void setPalette(boolean b) {
+        isPalette = b;
+
+        if (isPalette) {
+            closeButton.setIcon(paletteCloseIcon);
+         if( frame.isMaximizable() )
+                remove(maxButton);
+            if( frame.isIconifiable() )
+                remove(iconButton);
+        } else {
+            closeButton.setIcon(closeIcon);
+            if( frame.isMaximizable() )
+                add(maxButton);
+            if( frame.isIconifiable() )
+                add(iconButton);
+        }
+        revalidate();
+        repaint();
+    }
+
+    /**
+     * Updates any state dependant upon the JInternalFrame being shown in
+     * a <code>JOptionPane</code>.
+     */
+    private void updateOptionPaneState() {
+        int type = -2;
+        boolean closable = wasClosable;
+        Object obj = frame.getClientProperty("JInternalFrame.messageType");
+
+        if (obj == null) {
+            // Don't change the closable state unless in an JOptionPane.
+            return;
+        }
+        if (obj instanceof Integer) {
+            type = ((Integer) obj).intValue();
+        }
+        switch (type) {
+        case JOptionPane.ERROR_MESSAGE:
+            selectedBackgroundKey =
+                              "OptionPane.errorDialog.titlePane.background";
+            selectedForegroundKey =
+                              "OptionPane.errorDialog.titlePane.foreground";
+            selectedShadowKey = "OptionPane.errorDialog.titlePane.shadow";
+            closable = false;
+            break;
+        case JOptionPane.QUESTION_MESSAGE:
+            selectedBackgroundKey =
+                            "OptionPane.questionDialog.titlePane.background";
+            selectedForegroundKey =
+                    "OptionPane.questionDialog.titlePane.foreground";
+            selectedShadowKey =
+                          "OptionPane.questionDialog.titlePane.shadow";
+            closable = false;
+            break;
+        case JOptionPane.WARNING_MESSAGE:
+            selectedBackgroundKey =
+                              "OptionPane.warningDialog.titlePane.background";
+            selectedForegroundKey =
+                              "OptionPane.warningDialog.titlePane.foreground";
+            selectedShadowKey = "OptionPane.warningDialog.titlePane.shadow";
+            closable = false;
+            break;
+        case JOptionPane.INFORMATION_MESSAGE:
+        case JOptionPane.PLAIN_MESSAGE:
+            selectedBackgroundKey = selectedForegroundKey = selectedShadowKey =
+                                    null;
+            closable = false;
+            break;
+        default:
+            selectedBackgroundKey = selectedForegroundKey = selectedShadowKey =
+                                    null;
+            break;
+        }
+        if (closable != frame.isClosable()) {
+            frame.setClosable(closable);
+        }
+    }
+}

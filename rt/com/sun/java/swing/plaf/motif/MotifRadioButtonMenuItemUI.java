@@ -1,123 +1,113 @@
-/*     */ package com.sun.java.swing.plaf.motif;
-/*     */ 
-/*     */ import java.awt.Point;
-/*     */ import java.awt.event.MouseEvent;
-/*     */ import java.io.Serializable;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.JMenuItem;
-/*     */ import javax.swing.LookAndFeel;
-/*     */ import javax.swing.MenuSelectionManager;
-/*     */ import javax.swing.event.ChangeEvent;
-/*     */ import javax.swing.event.ChangeListener;
-/*     */ import javax.swing.event.MouseInputListener;
-/*     */ import javax.swing.plaf.ComponentUI;
-/*     */ import javax.swing.plaf.basic.BasicRadioButtonMenuItemUI;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class MotifRadioButtonMenuItemUI
-/*     */   extends BasicRadioButtonMenuItemUI
-/*     */ {
-/*     */   protected ChangeListener changeListener;
-/*     */   
-/*     */   public static ComponentUI createUI(JComponent paramJComponent) {
-/*  56 */     return new MotifRadioButtonMenuItemUI();
-/*     */   }
-/*     */   
-/*     */   protected void installListeners() {
-/*  60 */     super.installListeners();
-/*  61 */     this.changeListener = createChangeListener(this.menuItem);
-/*  62 */     this.menuItem.addChangeListener(this.changeListener);
-/*     */   }
-/*     */   
-/*     */   protected void uninstallListeners() {
-/*  66 */     super.uninstallListeners();
-/*  67 */     this.menuItem.removeChangeListener(this.changeListener);
-/*     */   }
-/*     */   
-/*     */   protected ChangeListener createChangeListener(JComponent paramJComponent) {
-/*  71 */     return new ChangeHandler();
-/*     */   }
-/*     */   
-/*     */   protected class ChangeHandler implements ChangeListener, Serializable {
-/*     */     public void stateChanged(ChangeEvent param1ChangeEvent) {
-/*  76 */       JMenuItem jMenuItem = (JMenuItem)param1ChangeEvent.getSource();
-/*  77 */       LookAndFeel.installProperty(jMenuItem, "borderPainted", Boolean.valueOf(jMenuItem.isArmed()));
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   protected MouseInputListener createMouseInputListener(JComponent paramJComponent) {
-/*  82 */     return new MouseInputHandler();
-/*     */   }
-/*     */   
-/*     */   protected class MouseInputHandler implements MouseInputListener {
-/*     */     public void mouseClicked(MouseEvent param1MouseEvent) {}
-/*     */     
-/*     */     public void mousePressed(MouseEvent param1MouseEvent) {
-/*  89 */       MenuSelectionManager menuSelectionManager = MenuSelectionManager.defaultManager();
-/*  90 */       menuSelectionManager.setSelectedPath(MotifRadioButtonMenuItemUI.this.getPath());
-/*     */     }
-/*     */     
-/*     */     public void mouseReleased(MouseEvent param1MouseEvent) {
-/*  94 */       MenuSelectionManager menuSelectionManager = MenuSelectionManager.defaultManager();
-/*  95 */       JMenuItem jMenuItem = (JMenuItem)param1MouseEvent.getComponent();
-/*  96 */       Point point = param1MouseEvent.getPoint();
-/*  97 */       if (point.x >= 0 && point.x < jMenuItem.getWidth() && point.y >= 0 && point.y < jMenuItem
-/*  98 */         .getHeight()) {
-/*  99 */         menuSelectionManager.clearSelectedPath();
-/* 100 */         jMenuItem.doClick(0);
-/*     */       } else {
-/* 102 */         menuSelectionManager.processMouseEvent(param1MouseEvent);
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public void mouseDragged(MouseEvent param1MouseEvent) {
-/* 108 */       MenuSelectionManager.defaultManager().processMouseEvent(param1MouseEvent);
-/*     */     }
-/*     */     
-/*     */     public void mouseEntered(MouseEvent param1MouseEvent) {}
-/*     */     
-/*     */     public void mouseExited(MouseEvent param1MouseEvent) {}
-/*     */     
-/*     */     public void mouseMoved(MouseEvent param1MouseEvent) {}
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\java\swing\plaf\motif\MotifRadioButtonMenuItemUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2006, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.java.swing.plaf.motif;
+
+import javax.swing.*;
+import javax.swing.event.*;
+import javax.swing.plaf.*;
+import javax.swing.plaf.basic.BasicRadioButtonMenuItemUI;
+
+import java.awt.*;
+import java.awt.event.*;
+import java.io.Serializable;
+
+
+/**
+ * MotifRadioButtonMenuItem implementation
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases.  The current serialization support is appropriate
+ * for short term storage or RMI between applications running the same
+ * version of Swing.  A future release of Swing will provide support for
+ * long term persistence.
+ *
+ * @author Georges Saab
+ * @author Rich Schiavi
+ */
+public class MotifRadioButtonMenuItemUI extends BasicRadioButtonMenuItemUI
+{
+    protected ChangeListener changeListener;
+
+    public static ComponentUI createUI(JComponent b) {
+        return new MotifRadioButtonMenuItemUI();
+    }
+
+    protected void installListeners() {
+        super.installListeners();
+        changeListener = createChangeListener(menuItem);
+        menuItem.addChangeListener(changeListener);
+    }
+
+    protected void uninstallListeners() {
+        super.uninstallListeners();
+        menuItem.removeChangeListener(changeListener);
+    }
+
+    protected ChangeListener createChangeListener(JComponent c) {
+        return new ChangeHandler();
+    }
+
+    protected class ChangeHandler implements ChangeListener, Serializable {
+        public void stateChanged(ChangeEvent e) {
+            JMenuItem c = (JMenuItem)e.getSource();
+            LookAndFeel.installProperty(c, "borderPainted", c.isArmed());
+        }
+    }
+
+    protected MouseInputListener createMouseInputListener(JComponent c) {
+        return new MouseInputHandler();
+    }
+
+
+    protected class MouseInputHandler implements MouseInputListener {
+        public void mouseClicked(MouseEvent e) {}
+        public void mousePressed(MouseEvent e) {
+            MenuSelectionManager manager = MenuSelectionManager.defaultManager();
+            manager.setSelectedPath(getPath());
+        }
+        public void mouseReleased(MouseEvent e) {
+            MenuSelectionManager manager =
+                MenuSelectionManager.defaultManager();
+            JMenuItem menuItem = (JMenuItem)e.getComponent();
+            Point p = e.getPoint();
+            if(p.x >= 0 && p.x < menuItem.getWidth() &&
+               p.y >= 0 && p.y < menuItem.getHeight()) {
+                manager.clearSelectedPath();
+                menuItem.doClick(0);
+            } else {
+                manager.processMouseEvent(e);
+            }
+        }
+        public void mouseEntered(MouseEvent e) {}
+        public void mouseExited(MouseEvent e) {}
+        public void mouseDragged(MouseEvent e) {
+            MenuSelectionManager.defaultManager().processMouseEvent(e);
+        }
+        public void mouseMoved(MouseEvent e) { }
+    }
+
+}

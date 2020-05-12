@@ -1,257 +1,251 @@
-/*     */ package javax.swing.colorchooser;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Dimension;
-/*     */ import java.awt.Font;
-/*     */ import java.awt.FontMetrics;
-/*     */ import java.awt.Graphics;
-/*     */ import javax.swing.JColorChooser;
-/*     */ import javax.swing.JPanel;
-/*     */ import javax.swing.SwingUtilities;
-/*     */ import javax.swing.UIManager;
-/*     */ import sun.swing.SwingUtilities2;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class DefaultPreviewPanel
-/*     */   extends JPanel
-/*     */ {
-/*  58 */   private int squareSize = 25;
-/*  59 */   private int squareGap = 5;
-/*  60 */   private int innerGap = 5;
-/*     */ 
-/*     */   
-/*  63 */   private int textGap = 5;
-/*  64 */   private Font font = new Font("Dialog", 0, 12);
-/*     */   
-/*     */   private String sampleText;
-/*  67 */   private int swatchWidth = 50;
-/*     */   
-/*  69 */   private Color oldColor = null;
-/*     */   
-/*     */   private JColorChooser getColorChooser() {
-/*  72 */     return (JColorChooser)SwingUtilities.getAncestorOfClass(JColorChooser.class, this);
-/*     */   }
-/*     */   
-/*     */   public Dimension getPreferredSize() {
-/*     */     DefaultPreviewPanel defaultPreviewPanel;
-/*  77 */     JColorChooser jColorChooser = getColorChooser();
-/*  78 */     if (jColorChooser == null) {
-/*  79 */       defaultPreviewPanel = this;
-/*     */     }
-/*  81 */     FontMetrics fontMetrics = defaultPreviewPanel.getFontMetrics(getFont());
-/*     */     
-/*  83 */     int i = fontMetrics.getAscent();
-/*  84 */     int j = fontMetrics.getHeight();
-/*  85 */     int k = SwingUtilities2.stringWidth(defaultPreviewPanel, fontMetrics, getSampleText());
-/*     */     
-/*  87 */     int m = j * 3 + this.textGap * 3;
-/*  88 */     int n = this.squareSize * 3 + this.squareGap * 2 + this.swatchWidth + k + this.textGap * 3;
-/*  89 */     return new Dimension(n, m);
-/*     */   }
-/*     */   
-/*     */   public void paintComponent(Graphics paramGraphics) {
-/*  93 */     if (this.oldColor == null) {
-/*  94 */       this.oldColor = getForeground();
-/*     */     }
-/*  96 */     paramGraphics.setColor(getBackground());
-/*  97 */     paramGraphics.fillRect(0, 0, getWidth(), getHeight());
-/*     */     
-/*  99 */     if (getComponentOrientation().isLeftToRight()) {
-/* 100 */       int i = paintSquares(paramGraphics, 0);
-/* 101 */       int j = paintText(paramGraphics, i);
-/* 102 */       paintSwatch(paramGraphics, i + j);
-/*     */     } else {
-/* 104 */       int i = paintSwatch(paramGraphics, 0);
-/* 105 */       int j = paintText(paramGraphics, i);
-/* 106 */       paintSquares(paramGraphics, i + j);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private int paintSwatch(Graphics paramGraphics, int paramInt) {
-/* 112 */     int i = paramInt;
-/* 113 */     paramGraphics.setColor(this.oldColor);
-/* 114 */     paramGraphics.fillRect(i, 0, this.swatchWidth, this.squareSize + this.squareGap / 2);
-/* 115 */     paramGraphics.setColor(getForeground());
-/* 116 */     paramGraphics.fillRect(i, this.squareSize + this.squareGap / 2, this.swatchWidth, this.squareSize + this.squareGap / 2);
-/* 117 */     return i + this.swatchWidth;
-/*     */   }
-/*     */   private int paintText(Graphics paramGraphics, int paramInt) {
-/*     */     DefaultPreviewPanel defaultPreviewPanel;
-/* 121 */     paramGraphics.setFont(getFont());
-/* 122 */     JColorChooser jColorChooser = getColorChooser();
-/* 123 */     if (jColorChooser == null) {
-/* 124 */       defaultPreviewPanel = this;
-/*     */     }
-/* 126 */     FontMetrics fontMetrics = SwingUtilities2.getFontMetrics(defaultPreviewPanel, paramGraphics);
-/*     */     
-/* 128 */     int i = fontMetrics.getAscent();
-/* 129 */     int j = fontMetrics.getHeight();
-/* 130 */     int k = SwingUtilities2.stringWidth(defaultPreviewPanel, fontMetrics, getSampleText());
-/*     */     
-/* 132 */     int m = paramInt + this.textGap;
-/*     */     
-/* 134 */     Color color = getForeground();
-/*     */     
-/* 136 */     paramGraphics.setColor(color);
-/*     */     
-/* 138 */     SwingUtilities2.drawString(defaultPreviewPanel, paramGraphics, getSampleText(), m + this.textGap / 2, i + 2);
-/*     */ 
-/*     */     
-/* 141 */     paramGraphics.fillRect(m, j + this.textGap, k + this.textGap, j + 2);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 146 */     paramGraphics.setColor(Color.black);
-/* 147 */     SwingUtilities2.drawString(defaultPreviewPanel, paramGraphics, getSampleText(), m + this.textGap / 2, j + i + this.textGap + 2);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 152 */     paramGraphics.setColor(Color.white);
-/*     */     
-/* 154 */     paramGraphics.fillRect(m, (j + this.textGap) * 2, k + this.textGap, j + 2);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 159 */     paramGraphics.setColor(color);
-/* 160 */     SwingUtilities2.drawString(defaultPreviewPanel, paramGraphics, getSampleText(), m + this.textGap / 2, (j + this.textGap) * 2 + i + 2);
-/*     */ 
-/*     */ 
-/*     */     
-/* 164 */     return k + this.textGap * 3;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int paintSquares(Graphics paramGraphics, int paramInt) {
-/* 170 */     int i = paramInt;
-/* 171 */     Color color = getForeground();
-/*     */     
-/* 173 */     paramGraphics.setColor(Color.white);
-/* 174 */     paramGraphics.fillRect(i, 0, this.squareSize, this.squareSize);
-/* 175 */     paramGraphics.setColor(color);
-/* 176 */     paramGraphics.fillRect(i + this.innerGap, this.innerGap, this.squareSize - this.innerGap * 2, this.squareSize - this.innerGap * 2);
-/*     */ 
-/*     */ 
-/*     */     
-/* 180 */     paramGraphics.setColor(Color.white);
-/* 181 */     paramGraphics.fillRect(i + this.innerGap * 2, this.innerGap * 2, this.squareSize - this.innerGap * 4, this.squareSize - this.innerGap * 4);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 186 */     paramGraphics.setColor(color);
-/* 187 */     paramGraphics.fillRect(i, this.squareSize + this.squareGap, this.squareSize, this.squareSize);
-/*     */     
-/* 189 */     paramGraphics.translate(this.squareSize + this.squareGap, 0);
-/* 190 */     paramGraphics.setColor(Color.black);
-/* 191 */     paramGraphics.fillRect(i, 0, this.squareSize, this.squareSize);
-/* 192 */     paramGraphics.setColor(color);
-/* 193 */     paramGraphics.fillRect(i + this.innerGap, this.innerGap, this.squareSize - this.innerGap * 2, this.squareSize - this.innerGap * 2);
-/*     */ 
-/*     */ 
-/*     */     
-/* 197 */     paramGraphics.setColor(Color.white);
-/* 198 */     paramGraphics.fillRect(i + this.innerGap * 2, this.innerGap * 2, this.squareSize - this.innerGap * 4, this.squareSize - this.innerGap * 4);
-/*     */ 
-/*     */ 
-/*     */     
-/* 202 */     paramGraphics.translate(-(this.squareSize + this.squareGap), 0);
-/*     */     
-/* 204 */     paramGraphics.translate(this.squareSize + this.squareGap, this.squareSize + this.squareGap);
-/* 205 */     paramGraphics.setColor(Color.white);
-/* 206 */     paramGraphics.fillRect(i, 0, this.squareSize, this.squareSize);
-/* 207 */     paramGraphics.setColor(color);
-/* 208 */     paramGraphics.fillRect(i + this.innerGap, this.innerGap, this.squareSize - this.innerGap * 2, this.squareSize - this.innerGap * 2);
-/*     */ 
-/*     */ 
-/*     */     
-/* 212 */     paramGraphics.translate(-(this.squareSize + this.squareGap), -(this.squareSize + this.squareGap));
-/*     */ 
-/*     */ 
-/*     */     
-/* 216 */     paramGraphics.translate((this.squareSize + this.squareGap) * 2, 0);
-/* 217 */     paramGraphics.setColor(Color.white);
-/* 218 */     paramGraphics.fillRect(i, 0, this.squareSize, this.squareSize);
-/* 219 */     paramGraphics.setColor(color);
-/* 220 */     paramGraphics.fillRect(i + this.innerGap, this.innerGap, this.squareSize - this.innerGap * 2, this.squareSize - this.innerGap * 2);
-/*     */ 
-/*     */ 
-/*     */     
-/* 224 */     paramGraphics.setColor(Color.black);
-/* 225 */     paramGraphics.fillRect(i + this.innerGap * 2, this.innerGap * 2, this.squareSize - this.innerGap * 4, this.squareSize - this.innerGap * 4);
-/*     */ 
-/*     */ 
-/*     */     
-/* 229 */     paramGraphics.translate(-((this.squareSize + this.squareGap) * 2), 0);
-/*     */     
-/* 231 */     paramGraphics.translate((this.squareSize + this.squareGap) * 2, this.squareSize + this.squareGap);
-/* 232 */     paramGraphics.setColor(Color.black);
-/* 233 */     paramGraphics.fillRect(i, 0, this.squareSize, this.squareSize);
-/* 234 */     paramGraphics.setColor(color);
-/* 235 */     paramGraphics.fillRect(i + this.innerGap, this.innerGap, this.squareSize - this.innerGap * 2, this.squareSize - this.innerGap * 2);
-/*     */ 
-/*     */ 
-/*     */     
-/* 239 */     paramGraphics.translate(-((this.squareSize + this.squareGap) * 2), -(this.squareSize + this.squareGap));
-/*     */     
-/* 241 */     return this.squareSize * 3 + this.squareGap * 2;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private String getSampleText() {
-/* 246 */     if (this.sampleText == null) {
-/* 247 */       this.sampleText = UIManager.getString("ColorChooser.sampleText", getLocale());
-/*     */     }
-/* 249 */     return this.sampleText;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\colorchooser\DefaultPreviewPanel.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.colorchooser;
+
+import javax.swing.*;
+import javax.swing.border.*;
+import javax.swing.event.*;
+import javax.swing.text.*;
+import java.awt.*;
+import java.awt.image.*;
+import java.awt.event.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.io.Serializable;
+import sun.swing.SwingUtilities2;
+
+
+/**
+ * The standard preview panel for the color chooser.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @author Steve Wilson
+ * @see JColorChooser
+ */
+class DefaultPreviewPanel extends JPanel {
+
+    private int squareSize = 25;
+    private int squareGap = 5;
+    private int innerGap = 5;
+
+
+    private int textGap = 5;
+    private Font font = new Font(Font.DIALOG, Font.PLAIN, 12);
+    private String sampleText;
+
+    private int swatchWidth = 50;
+
+    private Color oldColor = null;
+
+    private JColorChooser getColorChooser() {
+        return (JColorChooser)SwingUtilities.getAncestorOfClass(
+                                   JColorChooser.class, this);
+    }
+
+    public Dimension getPreferredSize() {
+        JComponent host = getColorChooser();
+        if (host == null) {
+            host = this;
+        }
+        FontMetrics fm = host.getFontMetrics(getFont());
+
+        int ascent = fm.getAscent();
+        int height = fm.getHeight();
+        int width = SwingUtilities2.stringWidth(host, fm, getSampleText());
+
+        int y = height*3 + textGap*3;
+        int x = squareSize * 3 + squareGap*2 + swatchWidth + width + textGap*3;
+        return new Dimension( x,y );
+    }
+
+    public void paintComponent(Graphics g) {
+        if (oldColor == null)
+            oldColor = getForeground();
+
+        g.setColor(getBackground());
+        g.fillRect(0,0,getWidth(),getHeight());
+
+        if (this.getComponentOrientation().isLeftToRight()) {
+            int squareWidth = paintSquares(g, 0);
+            int textWidth = paintText(g, squareWidth);
+            paintSwatch(g, squareWidth + textWidth);
+        } else {
+            int swatchWidth = paintSwatch(g, 0);
+            int textWidth = paintText(g, swatchWidth);
+            paintSquares(g , swatchWidth + textWidth);
+
+        }
+    }
+
+    private int paintSwatch(Graphics g, int offsetX) {
+        int swatchX = offsetX;
+        g.setColor(oldColor);
+        g.fillRect(swatchX, 0, swatchWidth, (squareSize) + (squareGap/2));
+        g.setColor(getForeground());
+        g.fillRect(swatchX, (squareSize) + (squareGap/2), swatchWidth, (squareSize) + (squareGap/2) );
+        return (swatchX+swatchWidth);
+    }
+
+    private int paintText(Graphics g, int offsetX) {
+        g.setFont(getFont());
+        JComponent host = getColorChooser();
+        if (host == null) {
+            host = this;
+        }
+        FontMetrics fm = SwingUtilities2.getFontMetrics(host, g);
+
+        int ascent = fm.getAscent();
+        int height = fm.getHeight();
+        int width = SwingUtilities2.stringWidth(host, fm, getSampleText());
+
+        int textXOffset = offsetX + textGap;
+
+        Color color = getForeground();
+
+        g.setColor(color);
+
+        SwingUtilities2.drawString(host, g, getSampleText(),textXOffset+(textGap/2),
+                                   ascent+2);
+
+        g.fillRect(textXOffset,
+                   ( height) + textGap,
+                   width + (textGap),
+                   height +2);
+
+        g.setColor(Color.black);
+        SwingUtilities2.drawString(host, g, getSampleText(),
+                     textXOffset+(textGap/2),
+                     height+ascent+textGap+2);
+
+
+        g.setColor(Color.white);
+
+        g.fillRect(textXOffset,
+                   ( height + textGap) * 2,
+                   width + (textGap),
+                   height +2);
+
+        g.setColor(color);
+        SwingUtilities2.drawString(host, g, getSampleText(),
+                     textXOffset+(textGap/2),
+                     ((height+textGap) * 2)+ascent+2);
+
+        return width + textGap*3;
+
+    }
+
+    private int paintSquares(Graphics g, int offsetX) {
+
+        int squareXOffset = offsetX;
+        Color color = getForeground();
+
+        g.setColor(Color.white);
+        g.fillRect(squareXOffset,0,squareSize,squareSize);
+        g.setColor(color);
+        g.fillRect(squareXOffset+innerGap,
+                   innerGap,
+                   squareSize - (innerGap*2),
+                   squareSize - (innerGap*2));
+        g.setColor(Color.white);
+        g.fillRect(squareXOffset+innerGap*2,
+                   innerGap*2,
+                   squareSize - (innerGap*4),
+                   squareSize - (innerGap*4));
+
+        g.setColor(color);
+        g.fillRect(squareXOffset,squareSize+squareGap,squareSize,squareSize);
+
+        g.translate(squareSize+squareGap, 0);
+        g.setColor(Color.black);
+        g.fillRect(squareXOffset,0,squareSize,squareSize);
+        g.setColor(color);
+        g.fillRect(squareXOffset+innerGap,
+                   innerGap,
+                   squareSize - (innerGap*2),
+                   squareSize - (innerGap*2));
+        g.setColor(Color.white);
+        g.fillRect(squareXOffset+innerGap*2,
+                   innerGap*2,
+                   squareSize - (innerGap*4),
+                   squareSize - (innerGap*4));
+        g.translate(-(squareSize+squareGap), 0);
+
+        g.translate(squareSize+squareGap, squareSize+squareGap);
+        g.setColor(Color.white);
+        g.fillRect(squareXOffset,0,squareSize,squareSize);
+        g.setColor(color);
+        g.fillRect(squareXOffset+innerGap,
+                   innerGap,
+                   squareSize - (innerGap*2),
+                   squareSize - (innerGap*2));
+        g.translate(-(squareSize+squareGap), -(squareSize+squareGap));
+
+
+
+        g.translate((squareSize+squareGap)*2, 0);
+        g.setColor(Color.white);
+        g.fillRect(squareXOffset,0,squareSize,squareSize);
+        g.setColor(color);
+        g.fillRect(squareXOffset+innerGap,
+                   innerGap,
+                   squareSize - (innerGap*2),
+                   squareSize - (innerGap*2));
+        g.setColor(Color.black);
+        g.fillRect(squareXOffset+innerGap*2,
+                   innerGap*2,
+                   squareSize - (innerGap*4),
+                   squareSize - (innerGap*4));
+        g.translate(-((squareSize+squareGap)*2), 0);
+
+        g.translate((squareSize+squareGap)*2, (squareSize+squareGap));
+        g.setColor(Color.black);
+        g.fillRect(squareXOffset,0,squareSize,squareSize);
+        g.setColor(color);
+        g.fillRect(squareXOffset+innerGap,
+                   innerGap,
+                   squareSize - (innerGap*2),
+                   squareSize - (innerGap*2));
+        g.translate(-((squareSize+squareGap)*2), -(squareSize+squareGap));
+
+        return (squareSize*3+squareGap*2);
+
+    }
+
+    private String getSampleText() {
+        if (this.sampleText == null) {
+            this.sampleText = UIManager.getString("ColorChooser.sampleText", getLocale());
+        }
+        return this.sampleText;
+    }
+}

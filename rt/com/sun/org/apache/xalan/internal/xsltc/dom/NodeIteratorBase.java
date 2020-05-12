@@ -1,178 +1,172 @@
-/*     */ package com.sun.org.apache.xalan.internal.xsltc.dom;
-/*     */ 
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.NodeIterator;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.runtime.BasisLibrary;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public abstract class NodeIteratorBase
-/*     */   implements NodeIterator
-/*     */ {
-/*  39 */   protected int _last = -1;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  45 */   protected int _position = 0;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected int _markedNode;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  55 */   protected int _startNode = -1;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected boolean _includeSelf = false;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected boolean _isRestartable = true;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setRestartable(boolean isRestartable) {
-/*  71 */     this._isRestartable = isRestartable;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public abstract NodeIterator setStartNode(int paramInt);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public NodeIterator reset() {
-/*  86 */     boolean temp = this._isRestartable;
-/*  87 */     this._isRestartable = true;
-/*     */     
-/*  89 */     setStartNode(this._includeSelf ? (this._startNode + 1) : this._startNode);
-/*  90 */     this._isRestartable = temp;
-/*  91 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public NodeIterator includeSelf() {
-/*  98 */     this._includeSelf = true;
-/*  99 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getLast() {
-/* 108 */     if (this._last == -1) {
-/* 109 */       int temp = this._position;
-/* 110 */       setMark();
-/* 111 */       reset();
-/*     */       while (true) {
-/* 113 */         this._last++;
-/* 114 */         if (next() == -1)
-/* 115 */         { gotoMark();
-/* 116 */           this._position = temp; break; } 
-/*     */       } 
-/* 118 */     }  return this._last;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getPosition() {
-/* 125 */     return (this._position == 0) ? 1 : this._position;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isReverse() {
-/* 134 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public NodeIterator cloneIterator() {
-/*     */     try {
-/* 145 */       NodeIteratorBase clone = (NodeIteratorBase)clone();
-/* 146 */       clone._isRestartable = false;
-/* 147 */       return clone.reset();
-/*     */     }
-/* 149 */     catch (CloneNotSupportedException e) {
-/* 150 */       BasisLibrary.runTimeError("ITERATOR_CLONE_ERR", e
-/* 151 */           .toString());
-/* 152 */       return null;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected final int returnNode(int node) {
-/* 161 */     this._position++;
-/* 162 */     return node;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected final NodeIterator resetPosition() {
-/* 169 */     this._position = 0;
-/* 170 */     return this;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\dom\NodeIteratorBase.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: NodeIteratorBase.java,v 1.2.4.1 2005/09/06 09:37:02 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.dom;
+
+import com.sun.org.apache.xalan.internal.xsltc.NodeIterator;
+import com.sun.org.apache.xalan.internal.xsltc.runtime.BasisLibrary;
+
+/**
+ * @author Jacek Ambroziak
+ * @author Santiago Pericas-Geertsen
+ * @author Morten Jorgensen
+ */
+public abstract class NodeIteratorBase implements NodeIterator {
+
+    /**
+     * Cached computed value of last().
+     */
+    protected int _last = -1;
+
+    /**
+     * Value of position() in this iterator. Incremented in
+     * returnNode().
+     */
+    protected int _position = 0;
+
+    /**
+     * Store node in call to setMark().
+     */
+    protected int _markedNode;
+
+    /**
+     * Store node in call to setStartNode().
+     */
+    protected int _startNode = NodeIterator.END;
+
+    /**
+     * Flag indicating if "self" should be returned.
+     */
+    protected boolean _includeSelf = false;
+
+    /**
+     * Flag indicating if iterator can be restarted.
+     */
+    protected boolean _isRestartable = true;
+
+    /**
+     * Setter for _isRestartable flag.
+     */
+    public void setRestartable(boolean isRestartable) {
+        _isRestartable = isRestartable;
+    }
+
+    /**
+     * Initialize iterator using a node. If iterator is not
+     * restartable, then do nothing. If node is equal to END then
+     * subsequent calls to next() must return END.
+     */
+    abstract public NodeIterator setStartNode(int node);
+
+    /**
+     * Reset this iterator using state from last call to
+     * setStartNode().
+     */
+    public NodeIterator reset() {
+        final boolean temp = _isRestartable;
+        _isRestartable = true;
+        // Must adjust _startNode if self is included
+        setStartNode(_includeSelf ? _startNode + 1 : _startNode);
+        _isRestartable = temp;
+        return this;
+    }
+
+    /**
+     * Setter for _includeSelf flag.
+     */
+    public NodeIterator includeSelf() {
+        _includeSelf = true;
+        return this;
+    }
+
+    /**
+     * Default implementation of getLast(). Stores current position
+     * and current node, resets the iterator, counts all nodes and
+     * restores iterator to original state.
+     */
+    public int getLast() {
+        if (_last == -1) {
+            final int temp = _position;
+            setMark();
+            reset();
+            do {
+                _last++;
+            } while (next() != END);
+            gotoMark();
+            _position = temp;
+        }
+        return _last;
+    }
+
+    /**
+     * Returns the position() in this iterator.
+     */
+    public int getPosition() {
+        return _position == 0 ? 1 : _position;
+    }
+
+    /**
+     * Indicates if position in this iterator is computed in reverse
+     * document order. Note that nodes are always returned in document
+     * order.
+     */
+    public boolean isReverse() {
+        return false;
+    }
+
+    /**
+     * Clones and resets this iterator. Note that the cloned iterator is
+     * not restartable. This is because cloning is needed for variable
+     * references, and the context node of the original variable
+     * declaration must be preserved.
+     */
+    public NodeIterator cloneIterator() {
+        try {
+            final NodeIteratorBase clone = (NodeIteratorBase)super.clone();
+            clone._isRestartable = false;
+            return clone.reset();
+        }
+        catch (CloneNotSupportedException e) {
+            BasisLibrary.runTimeError(BasisLibrary.ITERATOR_CLONE_ERR,
+                                      e.toString());
+            return null;
+        }
+    }
+
+    /**
+     * Utility method that increments position and returns its
+     * argument.
+     */
+    protected final int returnNode(final int node) {
+        _position++;
+        return node;
+    }
+
+    /**
+     * Reset the position in this iterator.
+     */
+    protected final NodeIterator resetPosition() {
+        _position = 0;
+        return this;
+    }
+}

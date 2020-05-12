@@ -1,1051 +1,853 @@
-/*     */ package javax.swing.text;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Container;
-/*     */ import java.awt.Font;
-/*     */ import java.awt.FontMetrics;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Rectangle;
-/*     */ import java.awt.Shape;
-/*     */ import java.lang.ref.SoftReference;
-/*     */ import javax.swing.event.DocumentEvent;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class WrappedPlainView
-/*     */   extends BoxView
-/*     */   implements TabExpander
-/*     */ {
-/*     */   FontMetrics metrics;
-/*     */   Segment lineBuffer;
-/*     */   boolean widthChanging;
-/*     */   int tabBase;
-/*     */   int tabSize;
-/*     */   boolean wordWrap;
-/*     */   int sel0;
-/*     */   int sel1;
-/*     */   Color unselected;
-/*     */   Color selected;
-/*     */   
-/*     */   public WrappedPlainView(Element paramElement) {
-/*  62 */     this(paramElement, false);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public WrappedPlainView(Element paramElement, boolean paramBoolean) {
-/*  74 */     super(paramElement, 1);
-/*  75 */     this.wordWrap = paramBoolean;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected int getTabSize() {
-/*  84 */     Integer integer = (Integer)getDocument().getProperty("tabSize");
-/*  85 */     return (integer != null) ? integer.intValue() : 8;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void drawLine(int paramInt1, int paramInt2, Graphics paramGraphics, int paramInt3, int paramInt4) {
-/* 105 */     Element element1 = getElement();
-/* 106 */     Element element2 = element1.getElement(element1.getElementIndex(paramInt1));
-/*     */ 
-/*     */     
-/*     */     try {
-/* 110 */       if (element2.isLeaf()) {
-/* 111 */         drawText(element2, paramInt1, paramInt2, paramGraphics, paramInt3, paramInt4);
-/*     */       } else {
-/*     */         
-/* 114 */         int i = element2.getElementIndex(paramInt1);
-/* 115 */         int j = element2.getElementIndex(paramInt2);
-/* 116 */         for (; i <= j; i++) {
-/* 117 */           Element element = element2.getElement(i);
-/* 118 */           int k = Math.max(element.getStartOffset(), paramInt1);
-/* 119 */           int m = Math.min(element.getEndOffset(), paramInt2);
-/* 120 */           paramInt3 = drawText(element, k, m, paramGraphics, paramInt3, paramInt4);
-/*     */         } 
-/*     */       } 
-/* 123 */     } catch (BadLocationException badLocationException) {
-/* 124 */       throw new StateInvariantError("Can't render: " + paramInt1 + "," + paramInt2);
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   private int drawText(Element paramElement, int paramInt1, int paramInt2, Graphics paramGraphics, int paramInt3, int paramInt4) throws BadLocationException {
-/* 129 */     paramInt2 = Math.min(getDocument().getLength(), paramInt2);
-/* 130 */     AttributeSet attributeSet = paramElement.getAttributes();
-/*     */     
-/* 132 */     if (Utilities.isComposedTextAttributeDefined(attributeSet)) {
-/* 133 */       paramGraphics.setColor(this.unselected);
-/* 134 */       paramInt3 = Utilities.drawComposedText(this, attributeSet, paramGraphics, paramInt3, paramInt4, paramInt1 - paramElement
-/* 135 */           .getStartOffset(), paramInt2 - paramElement
-/* 136 */           .getStartOffset());
-/*     */     }
-/* 138 */     else if (this.sel0 == this.sel1 || this.selected == this.unselected) {
-/*     */       
-/* 140 */       paramInt3 = drawUnselectedText(paramGraphics, paramInt3, paramInt4, paramInt1, paramInt2);
-/* 141 */     } else if (paramInt1 >= this.sel0 && paramInt1 <= this.sel1 && paramInt2 >= this.sel0 && paramInt2 <= this.sel1) {
-/* 142 */       paramInt3 = drawSelectedText(paramGraphics, paramInt3, paramInt4, paramInt1, paramInt2);
-/* 143 */     } else if (this.sel0 >= paramInt1 && this.sel0 <= paramInt2) {
-/* 144 */       if (this.sel1 >= paramInt1 && this.sel1 <= paramInt2) {
-/* 145 */         paramInt3 = drawUnselectedText(paramGraphics, paramInt3, paramInt4, paramInt1, this.sel0);
-/* 146 */         paramInt3 = drawSelectedText(paramGraphics, paramInt3, paramInt4, this.sel0, this.sel1);
-/* 147 */         paramInt3 = drawUnselectedText(paramGraphics, paramInt3, paramInt4, this.sel1, paramInt2);
-/*     */       } else {
-/* 149 */         paramInt3 = drawUnselectedText(paramGraphics, paramInt3, paramInt4, paramInt1, this.sel0);
-/* 150 */         paramInt3 = drawSelectedText(paramGraphics, paramInt3, paramInt4, this.sel0, paramInt2);
-/*     */       } 
-/* 152 */     } else if (this.sel1 >= paramInt1 && this.sel1 <= paramInt2) {
-/* 153 */       paramInt3 = drawSelectedText(paramGraphics, paramInt3, paramInt4, paramInt1, this.sel1);
-/* 154 */       paramInt3 = drawUnselectedText(paramGraphics, paramInt3, paramInt4, this.sel1, paramInt2);
-/*     */     } else {
-/* 156 */       paramInt3 = drawUnselectedText(paramGraphics, paramInt3, paramInt4, paramInt1, paramInt2);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 160 */     return paramInt3;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected int drawUnselectedText(Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) throws BadLocationException {
-/* 177 */     paramGraphics.setColor(this.unselected);
-/* 178 */     Document document = getDocument();
-/* 179 */     Segment segment = SegmentCache.getSharedSegment();
-/* 180 */     document.getText(paramInt3, paramInt4 - paramInt3, segment);
-/* 181 */     int i = Utilities.drawTabbedText(this, segment, paramInt1, paramInt2, paramGraphics, this, paramInt3);
-/* 182 */     SegmentCache.releaseSharedSegment(segment);
-/* 183 */     return i;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected int drawSelectedText(Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) throws BadLocationException {
-/* 202 */     paramGraphics.setColor(this.selected);
-/* 203 */     Document document = getDocument();
-/* 204 */     Segment segment = SegmentCache.getSharedSegment();
-/* 205 */     document.getText(paramInt3, paramInt4 - paramInt3, segment);
-/* 206 */     int i = Utilities.drawTabbedText(this, segment, paramInt1, paramInt2, paramGraphics, this, paramInt3);
-/* 207 */     SegmentCache.releaseSharedSegment(segment);
-/* 208 */     return i;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected final Segment getLineBuffer() {
-/* 218 */     if (this.lineBuffer == null) {
-/* 219 */       this.lineBuffer = new Segment();
-/*     */     }
-/* 221 */     return this.lineBuffer;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected int calculateBreakPosition(int paramInt1, int paramInt2) {
-/*     */     int i;
-/* 234 */     Segment segment = SegmentCache.getSharedSegment();
-/* 235 */     loadText(segment, paramInt1, paramInt2);
-/* 236 */     int j = getWidth();
-/* 237 */     if (this.wordWrap) {
-/* 238 */       i = paramInt1 + Utilities.getBreakLocation(segment, this.metrics, this.tabBase, this.tabBase + j, this, paramInt1);
-/*     */     }
-/*     */     else {
-/*     */       
-/* 242 */       i = paramInt1 + Utilities.getTabbedTextOffset(segment, this.metrics, this.tabBase, this.tabBase + j, this, paramInt1, false);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 246 */     SegmentCache.releaseSharedSegment(segment);
-/* 247 */     return i;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void loadChildren(ViewFactory paramViewFactory) {
-/* 261 */     Element element = getElement();
-/* 262 */     int i = element.getElementCount();
-/* 263 */     if (i > 0) {
-/* 264 */       View[] arrayOfView = new View[i];
-/* 265 */       for (byte b = 0; b < i; b++) {
-/* 266 */         arrayOfView[b] = new WrappedLine(element.getElement(b));
-/*     */       }
-/* 268 */       replace(0, 0, arrayOfView);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void updateChildren(DocumentEvent paramDocumentEvent, Shape paramShape) {
-/* 277 */     Element element = getElement();
-/* 278 */     DocumentEvent.ElementChange elementChange = paramDocumentEvent.getChange(element);
-/* 279 */     if (elementChange != null) {
-/*     */       
-/* 281 */       Element[] arrayOfElement1 = elementChange.getChildrenRemoved();
-/* 282 */       Element[] arrayOfElement2 = elementChange.getChildrenAdded();
-/* 283 */       View[] arrayOfView = new View[arrayOfElement2.length];
-/* 284 */       for (byte b = 0; b < arrayOfElement2.length; b++) {
-/* 285 */         arrayOfView[b] = new WrappedLine(arrayOfElement2[b]);
-/*     */       }
-/* 287 */       replace(elementChange.getIndex(), arrayOfElement1.length, arrayOfView);
-/*     */ 
-/*     */       
-/* 290 */       if (paramShape != null) {
-/* 291 */         preferenceChanged((View)null, true, true);
-/* 292 */         getContainer().repaint();
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */     
-/* 297 */     updateMetrics();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   final void loadText(Segment paramSegment, int paramInt1, int paramInt2) {
-/*     */     try {
-/* 308 */       Document document = getDocument();
-/* 309 */       document.getText(paramInt1, paramInt2 - paramInt1, paramSegment);
-/* 310 */     } catch (BadLocationException badLocationException) {
-/* 311 */       throw new StateInvariantError("Can't get line text");
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   final void updateMetrics() {
-/* 316 */     Container container = getContainer();
-/* 317 */     Font font = container.getFont();
-/* 318 */     this.metrics = container.getFontMetrics(font);
-/* 319 */     this.tabSize = getTabSize() * this.metrics.charWidth('m');
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public float nextTabStop(float paramFloat, int paramInt) {
-/* 335 */     if (this.tabSize == 0)
-/* 336 */       return paramFloat; 
-/* 337 */     int i = ((int)paramFloat - this.tabBase) / this.tabSize;
-/* 338 */     return (this.tabBase + (i + 1) * this.tabSize);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void paint(Graphics paramGraphics, Shape paramShape) {
-/* 356 */     Rectangle rectangle = (Rectangle)paramShape;
-/* 357 */     this.tabBase = rectangle.x;
-/* 358 */     JTextComponent jTextComponent = (JTextComponent)getContainer();
-/* 359 */     this.sel0 = jTextComponent.getSelectionStart();
-/* 360 */     this.sel1 = jTextComponent.getSelectionEnd();
-/* 361 */     this
-/* 362 */       .unselected = jTextComponent.isEnabled() ? jTextComponent.getForeground() : jTextComponent.getDisabledTextColor();
-/* 363 */     Caret caret = jTextComponent.getCaret();
-/* 364 */     this
-/* 365 */       .selected = (caret.isSelectionVisible() && jTextComponent.getHighlighter() != null) ? jTextComponent.getSelectedTextColor() : this.unselected;
-/* 366 */     paramGraphics.setFont(jTextComponent.getFont());
-/*     */ 
-/*     */     
-/* 369 */     super.paint(paramGraphics, paramShape);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setSize(float paramFloat1, float paramFloat2) {
-/* 381 */     updateMetrics();
-/* 382 */     if ((int)paramFloat1 != getWidth()) {
-/*     */ 
-/*     */       
-/* 385 */       preferenceChanged((View)null, true, true);
-/* 386 */       this.widthChanging = true;
-/*     */     } 
-/* 388 */     super.setSize(paramFloat1, paramFloat2);
-/* 389 */     this.widthChanging = false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public float getPreferredSpan(int paramInt) {
-/* 408 */     updateMetrics();
-/* 409 */     return super.getPreferredSpan(paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public float getMinimumSpan(int paramInt) {
-/* 428 */     updateMetrics();
-/* 429 */     return super.getMinimumSpan(paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public float getMaximumSpan(int paramInt) {
-/* 448 */     updateMetrics();
-/* 449 */     return super.getMaximumSpan(paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void insertUpdate(DocumentEvent paramDocumentEvent, Shape paramShape, ViewFactory paramViewFactory) {
-/* 463 */     updateChildren(paramDocumentEvent, paramShape);
-/*     */ 
-/*     */     
-/* 466 */     Rectangle rectangle = (paramShape != null && isAllocationValid()) ? getInsideAllocation(paramShape) : null;
-/* 467 */     int i = paramDocumentEvent.getOffset();
-/* 468 */     View view = getViewAtPosition(i, rectangle);
-/* 469 */     if (view != null) {
-/* 470 */       view.insertUpdate(paramDocumentEvent, rectangle, paramViewFactory);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void removeUpdate(DocumentEvent paramDocumentEvent, Shape paramShape, ViewFactory paramViewFactory) {
-/* 485 */     updateChildren(paramDocumentEvent, paramShape);
-/*     */ 
-/*     */     
-/* 488 */     Rectangle rectangle = (paramShape != null && isAllocationValid()) ? getInsideAllocation(paramShape) : null;
-/* 489 */     int i = paramDocumentEvent.getOffset();
-/* 490 */     View view = getViewAtPosition(i, rectangle);
-/* 491 */     if (view != null) {
-/* 492 */       view.removeUpdate(paramDocumentEvent, rectangle, paramViewFactory);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void changedUpdate(DocumentEvent paramDocumentEvent, Shape paramShape, ViewFactory paramViewFactory) {
-/* 506 */     updateChildren(paramDocumentEvent, paramShape);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   class WrappedLine
-/*     */     extends View
-/*     */   {
-/*     */     int lineCount;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     SoftReference<int[]> lineCache;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     WrappedLine(Element param1Element) {
-/* 534 */       super(param1Element);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 851 */       this.lineCache = null;
-/*     */       this.lineCount = -1;
-/*     */     }
-/*     */     
-/*     */     public float getPreferredSpan(int param1Int) {
-/*     */       float f;
-/*     */       switch (param1Int) {
-/*     */         case 0:
-/*     */           f = WrappedPlainView.this.getWidth();
-/*     */           if (f == 2.14748365E9F)
-/*     */             return 100.0F; 
-/*     */           return f;
-/*     */         case 1:
-/*     */           if (this.lineCount < 0 || WrappedPlainView.this.widthChanging)
-/*     */             breakLines(getStartOffset()); 
-/*     */           return (this.lineCount * WrappedPlainView.this.metrics.getHeight());
-/*     */       } 
-/*     */       throw new IllegalArgumentException("Invalid axis: " + param1Int);
-/*     */     }
-/*     */     
-/*     */     public void paint(Graphics param1Graphics, Shape param1Shape) {
-/*     */       Rectangle rectangle = (Rectangle)param1Shape;
-/*     */       int i = rectangle.y + WrappedPlainView.this.metrics.getAscent();
-/*     */       int j = rectangle.x;
-/*     */       JTextComponent jTextComponent = (JTextComponent)getContainer();
-/*     */       Highlighter highlighter = jTextComponent.getHighlighter();
-/*     */       LayeredHighlighter layeredHighlighter = (highlighter instanceof LayeredHighlighter) ? (LayeredHighlighter)highlighter : null;
-/*     */       int k = getStartOffset();
-/*     */       int m = getEndOffset();
-/*     */       int n = k;
-/*     */       int[] arrayOfInt = getLineEnds();
-/*     */       for (byte b = 0; b < this.lineCount; b++) {
-/*     */         int i1 = (arrayOfInt == null) ? m : (k + arrayOfInt[b]);
-/*     */         if (layeredHighlighter != null) {
-/*     */           int i2 = (i1 == m) ? (i1 - 1) : i1;
-/*     */           layeredHighlighter.paintLayeredHighlights(param1Graphics, n, i2, param1Shape, jTextComponent, this);
-/*     */         } 
-/*     */         WrappedPlainView.this.drawLine(n, i1, param1Graphics, j, i);
-/*     */         n = i1;
-/*     */         i += WrappedPlainView.this.metrics.getHeight();
-/*     */       } 
-/*     */     }
-/*     */     
-/*     */     public Shape modelToView(int param1Int, Shape param1Shape, Position.Bias param1Bias) throws BadLocationException {
-/*     */       Rectangle rectangle = param1Shape.getBounds();
-/*     */       rectangle.height = WrappedPlainView.this.metrics.getHeight();
-/*     */       rectangle.width = 1;
-/*     */       int i = getStartOffset();
-/*     */       if (param1Int < i || param1Int > getEndOffset())
-/*     */         throw new BadLocationException("Position out of range", param1Int); 
-/*     */       int j = (param1Bias == Position.Bias.Forward) ? param1Int : Math.max(i, param1Int - 1);
-/*     */       int k = 0;
-/*     */       int[] arrayOfInt = getLineEnds();
-/*     */       if (arrayOfInt != null) {
-/*     */         k = findLine(j - i);
-/*     */         if (k > 0)
-/*     */           i += arrayOfInt[k - 1]; 
-/*     */         rectangle.y += rectangle.height * k;
-/*     */       } 
-/*     */       if (param1Int > i) {
-/*     */         Segment segment = SegmentCache.getSharedSegment();
-/*     */         WrappedPlainView.this.loadText(segment, i, param1Int);
-/*     */         rectangle.x += Utilities.getTabbedTextWidth(segment, WrappedPlainView.this.metrics, rectangle.x, WrappedPlainView.this, i);
-/*     */         SegmentCache.releaseSharedSegment(segment);
-/*     */       } 
-/*     */       return rectangle;
-/*     */     }
-/*     */     
-/*     */     public int viewToModel(float param1Float1, float param1Float2, Shape param1Shape, Position.Bias[] param1ArrayOfBias) {
-/*     */       int n;
-/*     */       param1ArrayOfBias[0] = Position.Bias.Forward;
-/*     */       Rectangle rectangle = (Rectangle)param1Shape;
-/*     */       int i = (int)param1Float1;
-/*     */       int j = (int)param1Float2;
-/*     */       if (j < rectangle.y)
-/*     */         return getStartOffset(); 
-/*     */       if (j > rectangle.y + rectangle.height)
-/*     */         return getEndOffset() - 1; 
-/*     */       rectangle.height = WrappedPlainView.this.metrics.getHeight();
-/*     */       int k = (rectangle.height > 0) ? ((j - rectangle.y) / rectangle.height) : (this.lineCount - 1);
-/*     */       if (k >= this.lineCount)
-/*     */         return getEndOffset() - 1; 
-/*     */       int m = getStartOffset();
-/*     */       if (this.lineCount == 1) {
-/*     */         n = getEndOffset();
-/*     */       } else {
-/*     */         int[] arrayOfInt = getLineEnds();
-/*     */         n = m + arrayOfInt[k];
-/*     */         if (k > 0)
-/*     */           m += arrayOfInt[k - 1]; 
-/*     */       } 
-/*     */       if (i < rectangle.x)
-/*     */         return m; 
-/*     */       if (i > rectangle.x + rectangle.width)
-/*     */         return n - 1; 
-/*     */       Segment segment = SegmentCache.getSharedSegment();
-/*     */       WrappedPlainView.this.loadText(segment, m, n);
-/*     */       int i1 = Utilities.getTabbedTextOffset(segment, WrappedPlainView.this.metrics, rectangle.x, i, WrappedPlainView.this, m);
-/*     */       SegmentCache.releaseSharedSegment(segment);
-/*     */       return Math.min(m + i1, n - 1);
-/*     */     }
-/*     */     
-/*     */     public void insertUpdate(DocumentEvent param1DocumentEvent, Shape param1Shape, ViewFactory param1ViewFactory) {
-/*     */       update(param1DocumentEvent, param1Shape);
-/*     */     }
-/*     */     
-/*     */     public void removeUpdate(DocumentEvent param1DocumentEvent, Shape param1Shape, ViewFactory param1ViewFactory) {
-/*     */       update(param1DocumentEvent, param1Shape);
-/*     */     }
-/*     */     
-/*     */     private void update(DocumentEvent param1DocumentEvent, Shape param1Shape) {
-/*     */       int i = this.lineCount;
-/*     */       breakLines(param1DocumentEvent.getOffset());
-/*     */       if (i != this.lineCount) {
-/*     */         WrappedPlainView.this.preferenceChanged(this, false, true);
-/*     */         getContainer().repaint();
-/*     */       } else if (param1Shape != null) {
-/*     */         Container container = getContainer();
-/*     */         Rectangle rectangle = (Rectangle)param1Shape;
-/*     */         container.repaint(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
-/*     */       } 
-/*     */     }
-/*     */     
-/*     */     final int[] getLineEnds() {
-/*     */       if (this.lineCache == null)
-/*     */         return null; 
-/*     */       int[] arrayOfInt = this.lineCache.get();
-/*     */       if (arrayOfInt == null)
-/*     */         return breakLines(getStartOffset()); 
-/*     */       return arrayOfInt;
-/*     */     }
-/*     */     
-/*     */     final int[] breakLines(int param1Int) {
-/*     */       int[] arrayOfInt1 = (this.lineCache == null) ? null : this.lineCache.get();
-/*     */       int[] arrayOfInt2 = arrayOfInt1;
-/*     */       int i = getStartOffset();
-/*     */       int j = 0;
-/*     */       if (arrayOfInt1 != null) {
-/*     */         j = findLine(param1Int - i);
-/*     */         if (j > 0)
-/*     */           j--; 
-/*     */       } 
-/*     */       int k = (j == 0) ? i : (i + arrayOfInt1[j - 1]);
-/*     */       int m = getEndOffset();
-/*     */       while (k < m) {
-/*     */         int n = WrappedPlainView.this.calculateBreakPosition(k, m);
-/*     */         k = (n == k) ? ++n : n;
-/*     */         if (j == 0 && k >= m) {
-/*     */           this.lineCache = null;
-/*     */           arrayOfInt1 = null;
-/*     */           j = 1;
-/*     */           break;
-/*     */         } 
-/*     */         if (arrayOfInt1 == null || j >= arrayOfInt1.length) {
-/*     */           double d = (m - i) / (k - i);
-/*     */           int i1 = (int)Math.ceil((j + 1) * d);
-/*     */           i1 = Math.max(i1, j + 2);
-/*     */           int[] arrayOfInt = new int[i1];
-/*     */           if (arrayOfInt1 != null)
-/*     */             System.arraycopy(arrayOfInt1, 0, arrayOfInt, 0, j); 
-/*     */           arrayOfInt1 = arrayOfInt;
-/*     */         } 
-/*     */         arrayOfInt1[j++] = k - i;
-/*     */       } 
-/*     */       this.lineCount = j;
-/*     */       if (this.lineCount > 1) {
-/*     */         int n = this.lineCount + this.lineCount / 3;
-/*     */         if (arrayOfInt1.length > n) {
-/*     */           int[] arrayOfInt = new int[n];
-/*     */           System.arraycopy(arrayOfInt1, 0, arrayOfInt, 0, this.lineCount);
-/*     */           arrayOfInt1 = arrayOfInt;
-/*     */         } 
-/*     */       } 
-/*     */       if (arrayOfInt1 != null && arrayOfInt1 != arrayOfInt2)
-/*     */         this.lineCache = (SoftReference)new SoftReference<>(arrayOfInt1); 
-/*     */       return arrayOfInt1;
-/*     */     }
-/*     */     
-/*     */     private int findLine(int param1Int) {
-/*     */       int[] arrayOfInt = this.lineCache.get();
-/*     */       if (param1Int < arrayOfInt[0])
-/*     */         return 0; 
-/*     */       if (param1Int > arrayOfInt[this.lineCount - 1])
-/*     */         return this.lineCount; 
-/*     */       return findLine(arrayOfInt, param1Int, 0, this.lineCount - 1);
-/*     */     }
-/*     */     
-/*     */     private int findLine(int[] param1ArrayOfint, int param1Int1, int param1Int2, int param1Int3) {
-/*     */       if (param1Int3 - param1Int2 <= 1)
-/*     */         return param1Int3; 
-/*     */       int i = (param1Int3 + param1Int2) / 2;
-/*     */       return (param1Int1 < param1ArrayOfint[i]) ? findLine(param1ArrayOfint, param1Int1, param1Int2, i) : findLine(param1ArrayOfint, param1Int1, i, param1Int3);
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\text\WrappedPlainView.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.text;
+
+import java.awt.*;
+import java.lang.ref.SoftReference;
+import javax.swing.event.*;
+
+/**
+ * View of plain text (text with only one font and color)
+ * that does line-wrapping.  This view expects that its
+ * associated element has child elements that represent
+ * the lines it should be wrapping.  It is implemented
+ * as a vertical box that contains logical line views.
+ * The logical line views are nested classes that render
+ * the logical line as multiple physical line if the logical
+ * line is too wide to fit within the allocation.  The
+ * line views draw upon the outer class for its state
+ * to reduce their memory requirements.
+ * <p>
+ * The line views do all of their rendering through the
+ * <code>drawLine</code> method which in turn does all of
+ * its rendering through the <code>drawSelectedText</code>
+ * and <code>drawUnselectedText</code> methods.  This
+ * enables subclasses to easily specialize the rendering
+ * without concern for the layout aspects.
+ *
+ * @author  Timothy Prinzing
+ * @see     View
+ */
+public class WrappedPlainView extends BoxView implements TabExpander {
+
+    /**
+     * Creates a new WrappedPlainView.  Lines will be wrapped
+     * on character boundaries.
+     *
+     * @param elem the element underlying the view
+     */
+    public WrappedPlainView(Element elem) {
+        this(elem, false);
+    }
+
+    /**
+     * Creates a new WrappedPlainView.  Lines can be wrapped on
+     * either character or word boundaries depending upon the
+     * setting of the wordWrap parameter.
+     *
+     * @param elem the element underlying the view
+     * @param wordWrap should lines be wrapped on word boundaries?
+     */
+    public WrappedPlainView(Element elem, boolean wordWrap) {
+        super(elem, Y_AXIS);
+        this.wordWrap = wordWrap;
+    }
+
+    /**
+     * Returns the tab size set for the document, defaulting to 8.
+     *
+     * @return the tab size
+     */
+    protected int getTabSize() {
+        Integer i = (Integer) getDocument().getProperty(PlainDocument.tabSizeAttribute);
+        int size = (i != null) ? i.intValue() : 8;
+        return size;
+    }
+
+    /**
+     * Renders a line of text, suppressing whitespace at the end
+     * and expanding any tabs.  This is implemented to make calls
+     * to the methods <code>drawUnselectedText</code> and
+     * <code>drawSelectedText</code> so that the way selected and
+     * unselected text are rendered can be customized.
+     *
+     * @param p0 the starting document location to use &gt;= 0
+     * @param p1 the ending document location to use &gt;= p1
+     * @param g the graphics context
+     * @param x the starting X position &gt;= 0
+     * @param y the starting Y position &gt;= 0
+     * @see #drawUnselectedText
+     * @see #drawSelectedText
+     */
+    protected void drawLine(int p0, int p1, Graphics g, int x, int y) {
+        Element lineMap = getElement();
+        Element line = lineMap.getElement(lineMap.getElementIndex(p0));
+        Element elem;
+
+        try {
+            if (line.isLeaf()) {
+                 drawText(line, p0, p1, g, x, y);
+            } else {
+                // this line contains the composed text.
+                int idx = line.getElementIndex(p0);
+                int lastIdx = line.getElementIndex(p1);
+                for(; idx <= lastIdx; idx++) {
+                    elem = line.getElement(idx);
+                    int start = Math.max(elem.getStartOffset(), p0);
+                    int end = Math.min(elem.getEndOffset(), p1);
+                    x = drawText(elem, start, end, g, x, y);
+                }
+            }
+        } catch (BadLocationException e) {
+            throw new StateInvariantError("Can't render: " + p0 + "," + p1);
+        }
+    }
+
+    private int drawText(Element elem, int p0, int p1, Graphics g, int x, int y) throws BadLocationException {
+        p1 = Math.min(getDocument().getLength(), p1);
+        AttributeSet attr = elem.getAttributes();
+
+        if (Utilities.isComposedTextAttributeDefined(attr)) {
+            g.setColor(unselected);
+            x = Utilities.drawComposedText(this, attr, g, x, y,
+                                        p0-elem.getStartOffset(),
+                                        p1-elem.getStartOffset());
+        } else {
+            if (sel0 == sel1 || selected == unselected) {
+                // no selection, or it is invisible
+                x = drawUnselectedText(g, x, y, p0, p1);
+            } else if ((p0 >= sel0 && p0 <= sel1) && (p1 >= sel0 && p1 <= sel1)) {
+                x = drawSelectedText(g, x, y, p0, p1);
+            } else if (sel0 >= p0 && sel0 <= p1) {
+                if (sel1 >= p0 && sel1 <= p1) {
+                    x = drawUnselectedText(g, x, y, p0, sel0);
+                    x = drawSelectedText(g, x, y, sel0, sel1);
+                    x = drawUnselectedText(g, x, y, sel1, p1);
+                } else {
+                    x = drawUnselectedText(g, x, y, p0, sel0);
+                    x = drawSelectedText(g, x, y, sel0, p1);
+                }
+            } else if (sel1 >= p0 && sel1 <= p1) {
+                x = drawSelectedText(g, x, y, p0, sel1);
+                x = drawUnselectedText(g, x, y, sel1, p1);
+            } else {
+                x = drawUnselectedText(g, x, y, p0, p1);
+            }
+        }
+
+        return x;
+    }
+
+    /**
+     * Renders the given range in the model as normal unselected
+     * text.
+     *
+     * @param g the graphics context
+     * @param x the starting X coordinate &gt;= 0
+     * @param y the starting Y coordinate &gt;= 0
+     * @param p0 the beginning position in the model &gt;= 0
+     * @param p1 the ending position in the model &gt;= p0
+     * @return the X location of the end of the range &gt;= 0
+     * @exception BadLocationException if the range is invalid
+     */
+    protected int drawUnselectedText(Graphics g, int x, int y,
+                                     int p0, int p1) throws BadLocationException {
+        g.setColor(unselected);
+        Document doc = getDocument();
+        Segment segment = SegmentCache.getSharedSegment();
+        doc.getText(p0, p1 - p0, segment);
+        int ret = Utilities.drawTabbedText(this, segment, x, y, g, this, p0);
+        SegmentCache.releaseSharedSegment(segment);
+        return ret;
+    }
+
+    /**
+     * Renders the given range in the model as selected text.  This
+     * is implemented to render the text in the color specified in
+     * the hosting component.  It assumes the highlighter will render
+     * the selected background.
+     *
+     * @param g the graphics context
+     * @param x the starting X coordinate &gt;= 0
+     * @param y the starting Y coordinate &gt;= 0
+     * @param p0 the beginning position in the model &gt;= 0
+     * @param p1 the ending position in the model &gt;= p0
+     * @return the location of the end of the range.
+     * @exception BadLocationException if the range is invalid
+     */
+    protected int drawSelectedText(Graphics g, int x,
+                                   int y, int p0, int p1) throws BadLocationException {
+        g.setColor(selected);
+        Document doc = getDocument();
+        Segment segment = SegmentCache.getSharedSegment();
+        doc.getText(p0, p1 - p0, segment);
+        int ret = Utilities.drawTabbedText(this, segment, x, y, g, this, p0);
+        SegmentCache.releaseSharedSegment(segment);
+        return ret;
+    }
+
+    /**
+     * Gives access to a buffer that can be used to fetch
+     * text from the associated document.
+     *
+     * @return the buffer
+     */
+    protected final Segment getLineBuffer() {
+        if (lineBuffer == null) {
+            lineBuffer = new Segment();
+        }
+        return lineBuffer;
+    }
+
+    /**
+     * This is called by the nested wrapped line
+     * views to determine the break location.  This can
+     * be reimplemented to alter the breaking behavior.
+     * It will either break at word or character boundaries
+     * depending upon the break argument given at
+     * construction.
+     */
+    protected int calculateBreakPosition(int p0, int p1) {
+        int p;
+        Segment segment = SegmentCache.getSharedSegment();
+        loadText(segment, p0, p1);
+        int currentWidth = getWidth();
+        if (wordWrap) {
+            p = p0 + Utilities.getBreakLocation(segment, metrics,
+                                                tabBase, tabBase + currentWidth,
+                                                this, p0);
+        } else {
+            p = p0 + Utilities.getTabbedTextOffset(segment, metrics,
+                                                   tabBase, tabBase + currentWidth,
+                                                   this, p0, false);
+        }
+        SegmentCache.releaseSharedSegment(segment);
+        return p;
+    }
+
+    /**
+     * Loads all of the children to initialize the view.
+     * This is called by the <code>setParent</code> method.
+     * Subclasses can reimplement this to initialize their
+     * child views in a different manner.  The default
+     * implementation creates a child view for each
+     * child element.
+     *
+     * @param f the view factory
+     */
+    protected void loadChildren(ViewFactory f) {
+        Element e = getElement();
+        int n = e.getElementCount();
+        if (n > 0) {
+            View[] added = new View[n];
+            for (int i = 0; i < n; i++) {
+                added[i] = new WrappedLine(e.getElement(i));
+            }
+            replace(0, 0, added);
+        }
+    }
+
+    /**
+     * Update the child views in response to a
+     * document event.
+     */
+    void updateChildren(DocumentEvent e, Shape a) {
+        Element elem = getElement();
+        DocumentEvent.ElementChange ec = e.getChange(elem);
+        if (ec != null) {
+            // the structure of this element changed.
+            Element[] removedElems = ec.getChildrenRemoved();
+            Element[] addedElems = ec.getChildrenAdded();
+            View[] added = new View[addedElems.length];
+            for (int i = 0; i < addedElems.length; i++) {
+                added[i] = new WrappedLine(addedElems[i]);
+            }
+            replace(ec.getIndex(), removedElems.length, added);
+
+            // should damge a little more intelligently.
+            if (a != null) {
+                preferenceChanged(null, true, true);
+                getContainer().repaint();
+            }
+        }
+
+        // update font metrics which may be used by the child views
+        updateMetrics();
+    }
+
+    /**
+     * Load the text buffer with the given range
+     * of text.  This is used by the fragments
+     * broken off of this view as well as this
+     * view itself.
+     */
+    final void loadText(Segment segment, int p0, int p1) {
+        try {
+            Document doc = getDocument();
+            doc.getText(p0, p1 - p0, segment);
+        } catch (BadLocationException bl) {
+            throw new StateInvariantError("Can't get line text");
+        }
+    }
+
+    final void updateMetrics() {
+        Component host = getContainer();
+        Font f = host.getFont();
+        metrics = host.getFontMetrics(f);
+        tabSize = getTabSize() * metrics.charWidth('m');
+    }
+
+    // --- TabExpander methods ------------------------------------------
+
+    /**
+     * Returns the next tab stop position after a given reference position.
+     * This implementation does not support things like centering so it
+     * ignores the tabOffset argument.
+     *
+     * @param x the current position &gt;= 0
+     * @param tabOffset the position within the text stream
+     *   that the tab occurred at &gt;= 0.
+     * @return the tab stop, measured in points &gt;= 0
+     */
+    public float nextTabStop(float x, int tabOffset) {
+        if (tabSize == 0)
+            return x;
+        int ntabs = ((int) x - tabBase) / tabSize;
+        return tabBase + ((ntabs + 1) * tabSize);
+    }
+
+
+    // --- View methods -------------------------------------
+
+    /**
+     * Renders using the given rendering surface and area
+     * on that surface.  This is implemented to stash the
+     * selection positions, selection colors, and font
+     * metrics for the nested lines to use.
+     *
+     * @param g the rendering surface to use
+     * @param a the allocated region to render into
+     *
+     * @see View#paint
+     */
+    public void paint(Graphics g, Shape a) {
+        Rectangle alloc = (Rectangle) a;
+        tabBase = alloc.x;
+        JTextComponent host = (JTextComponent) getContainer();
+        sel0 = host.getSelectionStart();
+        sel1 = host.getSelectionEnd();
+        unselected = (host.isEnabled()) ?
+            host.getForeground() : host.getDisabledTextColor();
+        Caret c = host.getCaret();
+        selected = c.isSelectionVisible() && host.getHighlighter() != null ?
+                        host.getSelectedTextColor() : unselected;
+        g.setFont(host.getFont());
+
+        // superclass paints the children
+        super.paint(g, a);
+    }
+
+    /**
+     * Sets the size of the view.  This should cause
+     * layout of the view along the given axis, if it
+     * has any layout duties.
+     *
+     * @param width the width &gt;= 0
+     * @param height the height &gt;= 0
+     */
+    public void setSize(float width, float height) {
+        updateMetrics();
+        if ((int) width != getWidth()) {
+            // invalidate the view itself since the desired widths
+            // of the children will be based upon this views width.
+            preferenceChanged(null, true, true);
+            widthChanging = true;
+        }
+        super.setSize(width, height);
+        widthChanging = false;
+    }
+
+    /**
+     * Determines the preferred span for this view along an
+     * axis.  This is implemented to provide the superclass
+     * behavior after first making sure that the current font
+     * metrics are cached (for the nested lines which use
+     * the metrics to determine the height of the potentially
+     * wrapped lines).
+     *
+     * @param axis may be either View.X_AXIS or View.Y_AXIS
+     * @return  the span the view would like to be rendered into.
+     *           Typically the view is told to render into the span
+     *           that is returned, although there is no guarantee.
+     *           The parent may choose to resize or break the view.
+     * @see View#getPreferredSpan
+     */
+    public float getPreferredSpan(int axis) {
+        updateMetrics();
+        return super.getPreferredSpan(axis);
+    }
+
+    /**
+     * Determines the minimum span for this view along an
+     * axis.  This is implemented to provide the superclass
+     * behavior after first making sure that the current font
+     * metrics are cached (for the nested lines which use
+     * the metrics to determine the height of the potentially
+     * wrapped lines).
+     *
+     * @param axis may be either View.X_AXIS or View.Y_AXIS
+     * @return  the span the view would like to be rendered into.
+     *           Typically the view is told to render into the span
+     *           that is returned, although there is no guarantee.
+     *           The parent may choose to resize or break the view.
+     * @see View#getMinimumSpan
+     */
+    public float getMinimumSpan(int axis) {
+        updateMetrics();
+        return super.getMinimumSpan(axis);
+    }
+
+    /**
+     * Determines the maximum span for this view along an
+     * axis.  This is implemented to provide the superclass
+     * behavior after first making sure that the current font
+     * metrics are cached (for the nested lines which use
+     * the metrics to determine the height of the potentially
+     * wrapped lines).
+     *
+     * @param axis may be either View.X_AXIS or View.Y_AXIS
+     * @return  the span the view would like to be rendered into.
+     *           Typically the view is told to render into the span
+     *           that is returned, although there is no guarantee.
+     *           The parent may choose to resize or break the view.
+     * @see View#getMaximumSpan
+     */
+    public float getMaximumSpan(int axis) {
+        updateMetrics();
+        return super.getMaximumSpan(axis);
+    }
+
+    /**
+     * Gives notification that something was inserted into the
+     * document in a location that this view is responsible for.
+     * This is implemented to simply update the children.
+     *
+     * @param e the change information from the associated document
+     * @param a the current allocation of the view
+     * @param f the factory to use to rebuild if the view has children
+     * @see View#insertUpdate
+     */
+    public void insertUpdate(DocumentEvent e, Shape a, ViewFactory f) {
+        updateChildren(e, a);
+
+        Rectangle alloc = ((a != null) && isAllocationValid()) ?
+            getInsideAllocation(a) : null;
+        int pos = e.getOffset();
+        View v = getViewAtPosition(pos, alloc);
+        if (v != null) {
+            v.insertUpdate(e, alloc, f);
+        }
+    }
+
+    /**
+     * Gives notification that something was removed from the
+     * document in a location that this view is responsible for.
+     * This is implemented to simply update the children.
+     *
+     * @param e the change information from the associated document
+     * @param a the current allocation of the view
+     * @param f the factory to use to rebuild if the view has children
+     * @see View#removeUpdate
+     */
+    public void removeUpdate(DocumentEvent e, Shape a, ViewFactory f) {
+        updateChildren(e, a);
+
+        Rectangle alloc = ((a != null) && isAllocationValid()) ?
+            getInsideAllocation(a) : null;
+        int pos = e.getOffset();
+        View v = getViewAtPosition(pos, alloc);
+        if (v != null) {
+            v.removeUpdate(e, alloc, f);
+        }
+    }
+
+    /**
+     * Gives notification from the document that attributes were changed
+     * in a location that this view is responsible for.
+     *
+     * @param e the change information from the associated document
+     * @param a the current allocation of the view
+     * @param f the factory to use to rebuild if the view has children
+     * @see View#changedUpdate
+     */
+    public void changedUpdate(DocumentEvent e, Shape a, ViewFactory f) {
+        updateChildren(e, a);
+    }
+
+    // --- variables -------------------------------------------
+
+    FontMetrics metrics;
+    Segment lineBuffer;
+    boolean widthChanging;
+    int tabBase;
+    int tabSize;
+    boolean wordWrap;
+
+    int sel0;
+    int sel1;
+    Color unselected;
+    Color selected;
+
+
+    /**
+     * Simple view of a line that wraps if it doesn't
+     * fit withing the horizontal space allocated.
+     * This class tries to be lightweight by carrying little
+     * state of it's own and sharing the state of the outer class
+     * with it's sibblings.
+     */
+    class WrappedLine extends View {
+
+        WrappedLine(Element elem) {
+            super(elem);
+            lineCount = -1;
+        }
+
+        /**
+         * Determines the preferred span for this view along an
+         * axis.
+         *
+         * @param axis may be either X_AXIS or Y_AXIS
+         * @return   the span the view would like to be rendered into.
+         *           Typically the view is told to render into the span
+         *           that is returned, although there is no guarantee.
+         *           The parent may choose to resize or break the view.
+         * @see View#getPreferredSpan
+         */
+        public float getPreferredSpan(int axis) {
+            switch (axis) {
+            case View.X_AXIS:
+                float width = getWidth();
+                if (width == Integer.MAX_VALUE) {
+                    // We have been initially set to MAX_VALUE, but we don't
+                    // want this as our preferred.
+                    return 100f;
+                }
+                return width;
+            case View.Y_AXIS:
+                if (lineCount < 0 || widthChanging) {
+                    breakLines(getStartOffset());
+                }
+                return lineCount * metrics.getHeight();
+            default:
+                throw new IllegalArgumentException("Invalid axis: " + axis);
+            }
+        }
+
+        /**
+         * Renders using the given rendering surface and area on that
+         * surface.  The view may need to do layout and create child
+         * views to enable itself to render into the given allocation.
+         *
+         * @param g the rendering surface to use
+         * @param a the allocated region to render into
+         * @see View#paint
+         */
+        public void paint(Graphics g, Shape a) {
+            Rectangle alloc = (Rectangle) a;
+            int y = alloc.y + metrics.getAscent();
+            int x = alloc.x;
+
+            JTextComponent host = (JTextComponent)getContainer();
+            Highlighter h = host.getHighlighter();
+            LayeredHighlighter dh = (h instanceof LayeredHighlighter) ?
+                                     (LayeredHighlighter)h : null;
+
+            int start = getStartOffset();
+            int end = getEndOffset();
+            int p0 = start;
+            int[] lineEnds = getLineEnds();
+            for (int i = 0; i < lineCount; i++) {
+                int p1 = (lineEnds == null) ? end :
+                                             start + lineEnds[i];
+                if (dh != null) {
+                    int hOffset = (p1 == end)
+                                  ? (p1 - 1)
+                                  : p1;
+                    dh.paintLayeredHighlights(g, p0, hOffset, a, host, this);
+                }
+                drawLine(p0, p1, g, x, y);
+
+                p0 = p1;
+                y += metrics.getHeight();
+            }
+        }
+
+        /**
+         * Provides a mapping from the document model coordinate space
+         * to the coordinate space of the view mapped to it.
+         *
+         * @param pos the position to convert
+         * @param a the allocated region to render into
+         * @return the bounding box of the given position is returned
+         * @exception BadLocationException  if the given position does not represent a
+         *   valid location in the associated document
+         * @see View#modelToView
+         */
+        public Shape modelToView(int pos, Shape a, Position.Bias b)
+                throws BadLocationException {
+            Rectangle alloc = a.getBounds();
+            alloc.height = metrics.getHeight();
+            alloc.width = 1;
+
+            int p0 = getStartOffset();
+            if (pos < p0 || pos > getEndOffset()) {
+                throw new BadLocationException("Position out of range", pos);
+            }
+
+            int testP = (b == Position.Bias.Forward) ? pos :
+                        Math.max(p0, pos - 1);
+            int line = 0;
+            int[] lineEnds = getLineEnds();
+            if (lineEnds != null) {
+                line = findLine(testP - p0);
+                if (line > 0) {
+                    p0 += lineEnds[line - 1];
+                }
+                alloc.y += alloc.height * line;
+            }
+
+            if (pos > p0) {
+                Segment segment = SegmentCache.getSharedSegment();
+                loadText(segment, p0, pos);
+                alloc.x += Utilities.getTabbedTextWidth(segment, metrics,
+                        alloc.x, WrappedPlainView.this, p0);
+                SegmentCache.releaseSharedSegment(segment);
+            }
+            return alloc;
+        }
+
+        /**
+         * Provides a mapping from the view coordinate space to the logical
+         * coordinate space of the model.
+         *
+         * @param fx the X coordinate
+         * @param fy the Y coordinate
+         * @param a the allocated region to render into
+         * @return the location within the model that best represents the
+         *  given point in the view
+         * @see View#viewToModel
+         */
+        public int viewToModel(float fx, float fy, Shape a, Position.Bias[] bias) {
+            // PENDING(prinz) implement bias properly
+            bias[0] = Position.Bias.Forward;
+
+            Rectangle alloc = (Rectangle) a;
+            int x = (int) fx;
+            int y = (int) fy;
+            if (y < alloc.y) {
+                // above the area covered by this icon, so the the position
+                // is assumed to be the start of the coverage for this view.
+                return getStartOffset();
+            } else if (y > alloc.y + alloc.height) {
+                // below the area covered by this icon, so the the position
+                // is assumed to be the end of the coverage for this view.
+                return getEndOffset() - 1;
+            } else {
+                // positioned within the coverage of this view vertically,
+                // so we figure out which line the point corresponds to.
+                // if the line is greater than the number of lines contained, then
+                // simply use the last line as it represents the last possible place
+                // we can position to.
+                alloc.height = metrics.getHeight();
+                int line = (alloc.height > 0 ?
+                            (y - alloc.y) / alloc.height : lineCount - 1);
+                if (line >= lineCount) {
+                    return getEndOffset() - 1;
+                } else {
+                    int p0 = getStartOffset();
+                    int p1;
+                    if (lineCount == 1) {
+                        p1 = getEndOffset();
+                    } else {
+                        int[] lineEnds = getLineEnds();
+                        p1 = p0 + lineEnds[line];
+                        if (line > 0) {
+                            p0 += lineEnds[line - 1];
+                        }
+                    }
+
+                    if (x < alloc.x) {
+                        // point is to the left of the line
+                        return p0;
+                    } else if (x > alloc.x + alloc.width) {
+                        // point is to the right of the line
+                        return p1 - 1;
+                    } else {
+                        // Determine the offset into the text
+                        Segment segment = SegmentCache.getSharedSegment();
+                        loadText(segment, p0, p1);
+                        int n = Utilities.getTabbedTextOffset(segment, metrics,
+                                                   alloc.x, x,
+                                                   WrappedPlainView.this, p0);
+                        SegmentCache.releaseSharedSegment(segment);
+                        return Math.min(p0 + n, p1 - 1);
+                    }
+                }
+            }
+        }
+
+        public void insertUpdate(DocumentEvent e, Shape a, ViewFactory f) {
+            update(e, a);
+        }
+
+        public void removeUpdate(DocumentEvent e, Shape a, ViewFactory f) {
+            update(e, a);
+        }
+
+        private void update(DocumentEvent ev, Shape a) {
+            int oldCount = lineCount;
+            breakLines(ev.getOffset());
+            if (oldCount != lineCount) {
+                WrappedPlainView.this.preferenceChanged(this, false, true);
+                // have to repaint any views after the receiver.
+                getContainer().repaint();
+            } else if (a != null) {
+                Component c = getContainer();
+                Rectangle alloc = (Rectangle) a;
+                c.repaint(alloc.x, alloc.y, alloc.width, alloc.height);
+            }
+        }
+
+        /**
+         * Returns line cache. If the cache was GC'ed, recreates it.
+         * If there's no cache, returns null
+         */
+        final int[] getLineEnds() {
+            if (lineCache == null) {
+                return null;
+            } else {
+                int[] lineEnds = lineCache.get();
+                if (lineEnds == null) {
+                    // Cache was GC'ed, so rebuild it
+                    return breakLines(getStartOffset());
+                } else {
+                    return lineEnds;
+                }
+            }
+        }
+
+        /**
+         * Creates line cache if text breaks into more than one physical line.
+         * @param startPos position to start breaking from
+         * @return the cache created, ot null if text breaks into one line
+         */
+        final int[] breakLines(int startPos) {
+            int[] lineEnds = (lineCache == null) ? null : lineCache.get();
+            int[] oldLineEnds = lineEnds;
+            int start = getStartOffset();
+            int lineIndex = 0;
+            if (lineEnds != null) {
+                lineIndex = findLine(startPos - start);
+                if (lineIndex > 0) {
+                    lineIndex--;
+                }
+            }
+
+            int p0 = (lineIndex == 0) ? start : start + lineEnds[lineIndex - 1];
+            int p1 = getEndOffset();
+            while (p0 < p1) {
+                int p = calculateBreakPosition(p0, p1);
+                p0 = (p == p0) ? ++p : p;      // 4410243
+
+                if (lineIndex == 0 && p0 >= p1) {
+                    // do not use cache if there's only one line
+                    lineCache = null;
+                    lineEnds = null;
+                    lineIndex = 1;
+                    break;
+                } else if (lineEnds == null || lineIndex >= lineEnds.length) {
+                    // we have 2+ lines, and the cache is not big enough
+                    // we try to estimate total number of lines
+                    double growFactor = ((double)(p1 - start) / (p0 - start));
+                    int newSize = (int)Math.ceil((lineIndex + 1) * growFactor);
+                    newSize = Math.max(newSize, lineIndex + 2);
+                    int[] tmp = new int[newSize];
+                    if (lineEnds != null) {
+                        System.arraycopy(lineEnds, 0, tmp, 0, lineIndex);
+                    }
+                    lineEnds = tmp;
+                }
+                lineEnds[lineIndex++] = p0 - start;
+            }
+
+            lineCount = lineIndex;
+            if (lineCount > 1) {
+                // check if the cache is too big
+                int maxCapacity = lineCount + lineCount / 3;
+                if (lineEnds.length > maxCapacity) {
+                    int[] tmp = new int[maxCapacity];
+                    System.arraycopy(lineEnds, 0, tmp, 0, lineCount);
+                    lineEnds = tmp;
+                }
+            }
+
+            if (lineEnds != null && lineEnds != oldLineEnds) {
+                lineCache = new SoftReference<int[]>(lineEnds);
+            }
+            return lineEnds;
+        }
+
+        /**
+         * Binary search in the cache for line containing specified offset
+         * (which is relative to the beginning of the view). This method
+         * assumes that cache exists.
+         */
+        private int findLine(int offset) {
+            int[] lineEnds = lineCache.get();
+            if (offset < lineEnds[0]) {
+                return 0;
+            } else if (offset > lineEnds[lineCount - 1]) {
+                return lineCount;
+            } else {
+                return findLine(lineEnds, offset, 0, lineCount - 1);
+            }
+        }
+
+        private int findLine(int[] array, int offset, int min, int max) {
+            if (max - min <= 1) {
+                return max;
+            } else {
+                int mid = (max + min) / 2;
+                return (offset < array[mid]) ?
+                        findLine(array, offset, min, mid) :
+                        findLine(array, offset, mid, max);
+            }
+        }
+
+        int lineCount;
+        SoftReference<int[]> lineCache = null;
+    }
+}

@@ -1,310 +1,305 @@
-/*     */ package com.sun.org.apache.xalan.internal.xsltc.dom;
-/*     */ 
-/*     */ import com.sun.org.apache.xalan.internal.utils.SecuritySupport;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.DOM;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.DOMCache;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.DOMEnhancedForDTM;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.TransletException;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl;
-/*     */ import com.sun.org.apache.xml.internal.dtm.DTM;
-/*     */ import com.sun.org.apache.xml.internal.dtm.DTMAxisIterator;
-/*     */ import com.sun.org.apache.xml.internal.dtm.DTMManager;
-/*     */ import com.sun.org.apache.xml.internal.dtm.ref.EmptyIterator;
-/*     */ import com.sun.org.apache.xml.internal.utils.SystemIDResolver;
-/*     */ import java.io.FileNotFoundException;
-/*     */ import javax.xml.transform.stream.StreamSource;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class LoadDocument
-/*     */ {
-/*     */   private static final String NAMESPACE_FEATURE = "http://xml.org/sax/features/namespaces";
-/*     */   
-/*     */   public static DTMAxisIterator documentF(Object arg1, DTMAxisIterator arg2, String xslURI, AbstractTranslet translet, DOM dom) throws TransletException {
-/*  67 */     String baseURI = null;
-/*  68 */     int arg2FirstNode = arg2.next();
-/*  69 */     if (arg2FirstNode == -1)
-/*     */     {
-/*  71 */       return EmptyIterator.getInstance();
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/*  76 */     baseURI = dom.getDocumentURI(arg2FirstNode);
-/*  77 */     if (!SystemIDResolver.isAbsoluteURI(baseURI)) {
-/*  78 */       baseURI = SystemIDResolver.getAbsoluteURIFromRelative(baseURI);
-/*     */     }
-/*     */     
-/*     */     try {
-/*  82 */       if (arg1 instanceof String) {
-/*  83 */         if (((String)arg1).length() == 0) {
-/*  84 */           return document(xslURI, "", translet, dom);
-/*     */         }
-/*  86 */         return document((String)arg1, baseURI, translet, dom);
-/*     */       } 
-/*  88 */       if (arg1 instanceof DTMAxisIterator) {
-/*  89 */         return document((DTMAxisIterator)arg1, baseURI, translet, dom);
-/*     */       }
-/*  91 */       String err = "document(" + arg1.toString() + ")";
-/*  92 */       throw new IllegalArgumentException(err);
-/*     */     }
-/*  94 */     catch (Exception e) {
-/*  95 */       throw new TransletException(e);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static DTMAxisIterator documentF(Object arg, String xslURI, AbstractTranslet translet, DOM dom) throws TransletException {
-/*     */     try {
-/* 109 */       if (arg instanceof String) {
-/* 110 */         if (xslURI == null) {
-/* 111 */           xslURI = "";
-/*     */         }
-/* 113 */         String baseURI = xslURI;
-/* 114 */         if (!SystemIDResolver.isAbsoluteURI(xslURI)) {
-/* 115 */           baseURI = SystemIDResolver.getAbsoluteURIFromRelative(xslURI);
-/*     */         }
-/* 117 */         String href = (String)arg;
-/* 118 */         if (href.length() == 0) {
-/* 119 */           href = "";
-/*     */ 
-/*     */ 
-/*     */           
-/* 123 */           TemplatesImpl templates = (TemplatesImpl)translet.getTemplates();
-/* 124 */           DOM sdom = null;
-/* 125 */           if (templates != null) {
-/* 126 */             sdom = templates.getStylesheetDOM();
-/*     */           }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */           
-/* 132 */           if (sdom != null) {
-/* 133 */             return document(sdom, translet, dom);
-/*     */           }
-/*     */           
-/* 136 */           return document(href, baseURI, translet, dom, true);
-/*     */         } 
-/*     */ 
-/*     */         
-/* 140 */         return document(href, baseURI, translet, dom);
-/*     */       } 
-/* 142 */       if (arg instanceof DTMAxisIterator) {
-/* 143 */         return document((DTMAxisIterator)arg, (String)null, translet, dom);
-/*     */       }
-/* 145 */       String err = "document(" + arg.toString() + ")";
-/* 146 */       throw new IllegalArgumentException(err);
-/*     */     }
-/* 148 */     catch (Exception e) {
-/* 149 */       throw new TransletException(e);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static DTMAxisIterator document(String uri, String base, AbstractTranslet translet, DOM dom) throws Exception {
-/* 157 */     return document(uri, base, translet, dom, false);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static DTMAxisIterator document(String uri, String base, AbstractTranslet translet, DOM dom, boolean cacheDOM) throws Exception {
-/*     */     try {
-/*     */       DOM newdom;
-/* 166 */       String originalUri = uri;
-/* 167 */       MultiDOM multiplexer = (MultiDOM)dom;
-/*     */ 
-/*     */       
-/* 170 */       if (base != null && !base.equals("")) {
-/* 171 */         uri = SystemIDResolver.getAbsoluteURI(uri, base);
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */       
-/* 176 */       if (uri == null || uri.equals("")) {
-/* 177 */         return EmptyIterator.getInstance();
-/*     */       }
-/*     */ 
-/*     */       
-/* 181 */       int mask = multiplexer.getDocumentMask(uri);
-/* 182 */       if (mask != -1) {
-/*     */         
-/* 184 */         DOM newDom = ((DOMAdapter)multiplexer.getDOMAdapter(uri)).getDOMImpl();
-/* 185 */         if (newDom instanceof DOMEnhancedForDTM) {
-/* 186 */           return new SingletonIterator(((DOMEnhancedForDTM)newDom)
-/* 187 */               .getDocument(), true);
-/*     */         }
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */       
-/* 193 */       DOMCache cache = translet.getDOMCache();
-/*     */ 
-/*     */       
-/* 196 */       mask = multiplexer.nextMask();
-/*     */       
-/* 198 */       if (cache != null) {
-/* 199 */         newdom = cache.retrieveDocument(base, originalUri, translet);
-/* 200 */         if (newdom == null) {
-/* 201 */           Exception e = new FileNotFoundException(originalUri);
-/* 202 */           throw new TransletException(e);
-/*     */         } 
-/*     */       } else {
-/* 205 */         String accessError = SecuritySupport.checkAccess(uri, translet.getAllowedProtocols(), "all");
-/* 206 */         if (accessError != null) {
-/*     */           
-/* 208 */           ErrorMsg msg = new ErrorMsg("ACCESSING_XSLT_TARGET_ERR", SecuritySupport.sanitizePath(uri), accessError);
-/* 209 */           throw new Exception(msg.toString());
-/*     */         } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 216 */         XSLTCDTMManager dtmManager = (XSLTCDTMManager)multiplexer.getDTMManager();
-/*     */         
-/* 218 */         DOMEnhancedForDTM enhancedDOM = (DOMEnhancedForDTM)dtmManager.getDTM(new StreamSource(uri), false, null, true, false, translet
-/*     */             
-/* 220 */             .hasIdCall(), cacheDOM);
-/* 221 */         newdom = enhancedDOM;
-/*     */ 
-/*     */         
-/* 224 */         if (cacheDOM) {
-/* 225 */           TemplatesImpl templates = (TemplatesImpl)translet.getTemplates();
-/* 226 */           if (templates != null) {
-/* 227 */             templates.setStylesheetDOM(enhancedDOM);
-/*     */           }
-/*     */         } 
-/*     */         
-/* 231 */         translet.prepassDocument(enhancedDOM);
-/* 232 */         enhancedDOM.setDocumentURI(uri);
-/*     */       } 
-/*     */ 
-/*     */       
-/* 236 */       DOMAdapter domAdapter = translet.makeDOMAdapter(newdom);
-/* 237 */       multiplexer.addDOMAdapter(domAdapter);
-/*     */ 
-/*     */       
-/* 240 */       translet.buildKeys(domAdapter, null, null, newdom.getDocument());
-/*     */ 
-/*     */       
-/* 243 */       return new SingletonIterator(newdom.getDocument(), true);
-/* 244 */     } catch (Exception e) {
-/* 245 */       throw e;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static DTMAxisIterator document(DTMAxisIterator arg1, String baseURI, AbstractTranslet translet, DOM dom) throws Exception {
-/* 255 */     UnionIterator union = new UnionIterator(dom);
-/* 256 */     int node = -1;
-/*     */     
-/* 258 */     while ((node = arg1.next()) != -1) {
-/* 259 */       String uri = dom.getStringValueX(node);
-/*     */       
-/* 261 */       if (baseURI == null) {
-/* 262 */         baseURI = dom.getDocumentURI(node);
-/* 263 */         if (!SystemIDResolver.isAbsoluteURI(baseURI))
-/* 264 */           baseURI = SystemIDResolver.getAbsoluteURIFromRelative(baseURI); 
-/*     */       } 
-/* 266 */       union.addIterator(document(uri, baseURI, translet, dom));
-/*     */     } 
-/* 268 */     return union;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static DTMAxisIterator document(DOM newdom, AbstractTranslet translet, DOM dom) throws Exception {
-/* 285 */     DTMManager dtmManager = ((MultiDOM)dom).getDTMManager();
-/*     */     
-/* 287 */     if (dtmManager != null && newdom instanceof DTM) {
-/* 288 */       ((DTM)newdom).migrateTo(dtmManager);
-/*     */     }
-/*     */     
-/* 291 */     translet.prepassDocument(newdom);
-/*     */ 
-/*     */     
-/* 294 */     DOMAdapter domAdapter = translet.makeDOMAdapter(newdom);
-/* 295 */     ((MultiDOM)dom).addDOMAdapter(domAdapter);
-/*     */ 
-/*     */     
-/* 298 */     translet.buildKeys(domAdapter, null, null, newdom
-/* 299 */         .getDocument());
-/*     */ 
-/*     */     
-/* 302 */     return new SingletonIterator(newdom.getDocument(), true);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\dom\LoadDocument.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: LoadDocument.java,v 1.2.4.1 2005/09/06 07:14:12 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.dom;
+
+import com.sun.org.apache.xalan.internal.XalanConstants;
+import java.io.FileNotFoundException;
+
+import javax.xml.transform.stream.StreamSource;
+
+import com.sun.org.apache.xalan.internal.xsltc.DOM;
+import com.sun.org.apache.xalan.internal.xsltc.DOMCache;
+import com.sun.org.apache.xalan.internal.xsltc.DOMEnhancedForDTM;
+import com.sun.org.apache.xalan.internal.xsltc.TransletException;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
+import com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet;
+import com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl;
+import com.sun.org.apache.xalan.internal.utils.SecuritySupport;
+import com.sun.org.apache.xml.internal.dtm.DTM;
+import com.sun.org.apache.xml.internal.dtm.DTMAxisIterator;
+import com.sun.org.apache.xml.internal.dtm.DTMManager;
+import com.sun.org.apache.xml.internal.dtm.ref.DTMDefaultBase;
+import com.sun.org.apache.xml.internal.dtm.ref.EmptyIterator;
+import com.sun.org.apache.xml.internal.utils.SystemIDResolver;
+
+import org.xml.sax.InputSource;
+import org.xml.sax.XMLReader;
+
+/**
+ * @author Morten Jorgensen
+ */
+public final class LoadDocument {
+
+    private static final String NAMESPACE_FEATURE =
+       "http://xml.org/sax/features/namespaces";
+
+    /**
+     * Interprets the arguments passed from the document() function (see
+     * com/sun/org/apache/xalan/internal/xsltc/compiler/DocumentCall.java) and returns an
+     * iterator containing the requested nodes. Builds a union-iterator if
+     * several documents are requested.
+     * 2 arguments arg1 and arg2.  document(Obj, node-set) call
+     */
+    public static DTMAxisIterator documentF(Object arg1, DTMAxisIterator arg2,
+                            String xslURI, AbstractTranslet translet, DOM dom)
+    throws TransletException {
+        String baseURI = null;
+        final int arg2FirstNode = arg2.next();
+        if (arg2FirstNode == DTMAxisIterator.END) {
+            //  the second argument node-set is empty
+            return EmptyIterator.getInstance();
+        } else {
+            //System.err.println("arg2FirstNode name: "
+            //                   + dom.getNodeName(arg2FirstNode )+"["
+            //                   +Integer.toHexString(arg2FirstNode )+"]");
+            baseURI = dom.getDocumentURI(arg2FirstNode);
+            if (!SystemIDResolver.isAbsoluteURI(baseURI))
+               baseURI = SystemIDResolver.getAbsoluteURIFromRelative(baseURI);
+        }
+
+        try {
+            if (arg1 instanceof String) {
+                if (((String)arg1).length() == 0) {
+                    return document(xslURI, "", translet, dom);
+                } else {
+                    return document((String)arg1, baseURI, translet, dom);
+                }
+            } else if (arg1 instanceof DTMAxisIterator) {
+                return document((DTMAxisIterator)arg1, baseURI, translet, dom);
+            } else {
+                final String err = "document("+arg1.toString()+")";
+                throw new IllegalArgumentException(err);
+            }
+        } catch (Exception e) {
+            throw new TransletException(e);
+        }
+    }
+    /**
+     * Interprets the arguments passed from the document() function (see
+     * com/sun/org/apache/xalan/internal/xsltc/compiler/DocumentCall.java) and returns an
+     * iterator containing the requested nodes. Builds a union-iterator if
+     * several documents are requested.
+     * 1 arguments arg.  document(Obj) call
+     */
+    public static DTMAxisIterator documentF(Object arg, String xslURI,
+                    AbstractTranslet translet, DOM dom)
+    throws TransletException {
+        try {
+            if (arg instanceof String) {
+                if (xslURI == null )
+                    xslURI = "";
+
+                String baseURI = xslURI;
+                if (!SystemIDResolver.isAbsoluteURI(xslURI))
+                   baseURI = SystemIDResolver.getAbsoluteURIFromRelative(xslURI);
+
+                String href = (String)arg;
+                if (href.length() == 0) {
+                    href = "";
+                    // %OPT% Optimization to cache the stylesheet DOM.
+                    // The stylesheet DOM is built once and cached
+                    // in the Templates object.
+                    TemplatesImpl templates = (TemplatesImpl)translet.getTemplates();
+                    DOM sdom = null;
+                    if (templates != null) {
+                        sdom = templates.getStylesheetDOM();
+                    }
+
+                    // If the cached dom exists, we need to migrate it
+                    // to the new DTMManager and create a DTMAxisIterator
+                    // for the document.
+                    if (sdom != null) {
+                        return document(sdom, translet, dom);
+                    }
+                    else {
+                        return document(href, baseURI, translet, dom, true);
+                    }
+                }
+                else {
+                    return document(href, baseURI, translet, dom);
+                }
+            } else if (arg instanceof DTMAxisIterator) {
+                return document((DTMAxisIterator)arg, null, translet, dom);
+            } else {
+                final String err = "document("+arg.toString()+")";
+                throw new IllegalArgumentException(err);
+            }
+        } catch (Exception e) {
+            throw new TransletException(e);
+        }
+    }
+
+    private static DTMAxisIterator document(String uri, String base,
+                    AbstractTranslet translet, DOM dom)
+        throws Exception
+    {
+        return document(uri, base, translet, dom, false);
+    }
+
+    private static DTMAxisIterator document(String uri, String base,
+                    AbstractTranslet translet, DOM dom,
+                    boolean cacheDOM)
+    throws Exception
+    {
+        try {
+        final String originalUri = uri;
+        MultiDOM multiplexer = (MultiDOM)dom;
+
+        // Prepend URI base to URI (from context)
+        if (base != null && !base.equals("")) {
+            uri = SystemIDResolver.getAbsoluteURI(uri, base);
+        }
+
+        // Return an empty iterator if the URI is clearly invalid
+        // (to prevent some unncessary MalformedURL exceptions).
+        if (uri == null || uri.equals("")) {
+            return(EmptyIterator.getInstance());
+        }
+
+        // Check if this DOM has already been added to the multiplexer
+        int mask = multiplexer.getDocumentMask(uri);
+        if (mask != -1) {
+            DOM newDom = ((DOMAdapter)multiplexer.getDOMAdapter(uri))
+                                       .getDOMImpl();
+            if (newDom instanceof DOMEnhancedForDTM) {
+                return new SingletonIterator(((DOMEnhancedForDTM)newDom)
+                                                               .getDocument(),
+                                             true);
+            }
+        }
+
+        // Check if we can get the DOM from a DOMCache
+        DOMCache cache = translet.getDOMCache();
+        DOM newdom;
+
+        mask = multiplexer.nextMask(); // peek
+
+        if (cache != null) {
+            newdom = cache.retrieveDocument(base, originalUri, translet);
+            if (newdom == null) {
+                final Exception e = new FileNotFoundException(originalUri);
+                throw new TransletException(e);
+            }
+        } else {
+            String accessError = SecuritySupport.checkAccess(uri, translet.getAllowedProtocols(), XalanConstants.ACCESS_EXTERNAL_ALL);
+            if (accessError != null) {
+                ErrorMsg msg = new ErrorMsg(ErrorMsg.ACCESSING_XSLT_TARGET_ERR,
+                        SecuritySupport.sanitizePath(uri), accessError);
+                throw new Exception(msg.toString());
+            }
+
+            // Parse the input document and construct DOM object
+            // Trust the DTMManager to pick the right parser and
+            // set up the DOM correctly.
+            XSLTCDTMManager dtmManager = (XSLTCDTMManager)multiplexer
+                                                              .getDTMManager();
+            DOMEnhancedForDTM enhancedDOM =
+                    (DOMEnhancedForDTM) dtmManager.getDTM(new StreamSource(uri),
+                                            false, null, true, false,
+                                            translet.hasIdCall(), cacheDOM);
+            newdom = enhancedDOM;
+
+            // Cache the stylesheet DOM in the Templates object
+            if (cacheDOM) {
+                TemplatesImpl templates = (TemplatesImpl)translet.getTemplates();
+                if (templates != null) {
+                    templates.setStylesheetDOM(enhancedDOM);
+                }
+            }
+
+            translet.prepassDocument(enhancedDOM);
+            enhancedDOM.setDocumentURI(uri);
+        }
+
+        // Wrap the DOM object in a DOM adapter and add to multiplexer
+        final DOMAdapter domAdapter = translet.makeDOMAdapter(newdom);
+        multiplexer.addDOMAdapter(domAdapter);
+
+        // Create index for any key elements
+        translet.buildKeys(domAdapter, null, null, newdom.getDocument());
+
+        // Return a singleton iterator containing the root node
+        return new SingletonIterator(newdom.getDocument(), true);
+        } catch (Exception e) {
+            throw e;
+        }
+    }
+
+
+    private static DTMAxisIterator document(DTMAxisIterator arg1,
+                                            String baseURI,
+                                            AbstractTranslet translet, DOM dom)
+    throws Exception
+    {
+        UnionIterator union = new UnionIterator(dom);
+        int node = DTM.NULL;
+
+        while ((node = arg1.next()) != DTM.NULL) {
+            String uri = dom.getStringValueX(node);
+            //document(node-set) if true;  document(node-set,node-set) if false
+            if (baseURI  == null) {
+               baseURI = dom.getDocumentURI(node);
+               if (!SystemIDResolver.isAbsoluteURI(baseURI))
+                    baseURI = SystemIDResolver.getAbsoluteURIFromRelative(baseURI);
+            }
+            union.addIterator(document(uri, baseURI, translet, dom));
+        }
+        return(union);
+    }
+
+    /**
+     * Create a DTMAxisIterator for the newdom. This is currently only
+     * used to create an iterator for the cached stylesheet DOM.
+     *
+     * @param newdom the cached stylesheet DOM
+     * @param translet the translet
+     * @param the main dom (should be a MultiDOM)
+     * @return a DTMAxisIterator from the document root
+     */
+    private static DTMAxisIterator document(DOM newdom,
+                                            AbstractTranslet translet,
+                                            DOM dom)
+        throws Exception
+    {
+        DTMManager dtmManager = ((MultiDOM)dom).getDTMManager();
+        // Need to migrate the cached DTM to the new DTMManager
+        if (dtmManager != null && newdom instanceof DTM) {
+            ((DTM)newdom).migrateTo(dtmManager);
+        }
+
+        translet.prepassDocument(newdom);
+
+        // Wrap the DOM object in a DOM adapter and add to multiplexer
+        final DOMAdapter domAdapter = translet.makeDOMAdapter(newdom);
+        ((MultiDOM)dom).addDOMAdapter(domAdapter);
+
+        // Create index for any key elements
+        translet.buildKeys(domAdapter, null, null,
+                           newdom.getDocument());
+
+        // Return a singleton iterator containing the root node
+        return new SingletonIterator(newdom.getDocument(), true);
+    }
+
+}

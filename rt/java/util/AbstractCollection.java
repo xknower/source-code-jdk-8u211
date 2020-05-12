@@ -1,502 +1,469 @@
-/*     */ package java.util;
-/*     */ 
-/*     */ import java.lang.reflect.Array;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public abstract class AbstractCollection<E>
-/*     */   implements Collection<E>
-/*     */ {
-/*     */   private static final int MAX_ARRAY_SIZE = 2147483639;
-/*     */   
-/*     */   public abstract Iterator<E> iterator();
-/*     */   
-/*     */   public abstract int size();
-/*     */   
-/*     */   public boolean isEmpty() {
-/*  86 */     return (size() == 0);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean contains(Object paramObject) {
-/*  99 */     Iterator<E> iterator = iterator();
-/* 100 */     if (paramObject == null)
-/* 101 */     { while (iterator.hasNext()) {
-/* 102 */         if (iterator.next() == null)
-/* 103 */           return true; 
-/*     */       }  }
-/* 105 */     else { while (iterator.hasNext()) {
-/* 106 */         if (paramObject.equals(iterator.next()))
-/* 107 */           return true; 
-/*     */       }  }
-/* 109 */      return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object[] toArray() {
-/* 136 */     Object[] arrayOfObject = new Object[size()];
-/* 137 */     Iterator<E> iterator = iterator();
-/* 138 */     for (byte b = 0; b < arrayOfObject.length; b++) {
-/* 139 */       if (!iterator.hasNext())
-/* 140 */         return Arrays.copyOf(arrayOfObject, b); 
-/* 141 */       arrayOfObject[b] = iterator.next();
-/*     */     } 
-/* 143 */     return iterator.hasNext() ? finishToArray(arrayOfObject, iterator) : arrayOfObject;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public <T> T[] toArray(T[] paramArrayOfT) {
-/* 176 */     int i = size();
-/*     */ 
-/*     */     
-/* 179 */     T[] arrayOfT = (T[])((paramArrayOfT.length >= i) ? (Object)paramArrayOfT : Array.newInstance(paramArrayOfT.getClass().getComponentType(), i));
-/* 180 */     Iterator<E> iterator = iterator();
-/*     */     
-/* 182 */     for (byte b = 0; b < arrayOfT.length; b++) {
-/* 183 */       if (!iterator.hasNext()) {
-/* 184 */         if (paramArrayOfT == arrayOfT)
-/* 185 */         { arrayOfT[b] = null; }
-/* 186 */         else { if (paramArrayOfT.length < b) {
-/* 187 */             return Arrays.copyOf(arrayOfT, b);
-/*     */           }
-/* 189 */           System.arraycopy(arrayOfT, 0, paramArrayOfT, 0, b);
-/* 190 */           if (paramArrayOfT.length > b) {
-/* 191 */             paramArrayOfT[b] = null;
-/*     */           } }
-/*     */         
-/* 194 */         return paramArrayOfT;
-/*     */       } 
-/* 196 */       arrayOfT[b] = (T)iterator.next();
-/*     */     } 
-/*     */     
-/* 199 */     return iterator.hasNext() ? finishToArray(arrayOfT, iterator) : arrayOfT;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static <T> T[] finishToArray(T[] paramArrayOfT, Iterator<?> paramIterator) {
-/* 222 */     int i = paramArrayOfT.length;
-/* 223 */     while (paramIterator.hasNext()) {
-/* 224 */       int j = paramArrayOfT.length;
-/* 225 */       if (i == j) {
-/* 226 */         int k = j + (j >> 1) + 1;
-/*     */         
-/* 228 */         if (k - 2147483639 > 0)
-/* 229 */           k = hugeCapacity(j + 1); 
-/* 230 */         paramArrayOfT = Arrays.copyOf(paramArrayOfT, k);
-/*     */       } 
-/* 232 */       paramArrayOfT[i++] = (T)paramIterator.next();
-/*     */     } 
-/*     */     
-/* 235 */     return (i == paramArrayOfT.length) ? paramArrayOfT : Arrays.<T>copyOf(paramArrayOfT, i);
-/*     */   }
-/*     */   
-/*     */   private static int hugeCapacity(int paramInt) {
-/* 239 */     if (paramInt < 0) {
-/* 240 */       throw new OutOfMemoryError("Required array size too large");
-/*     */     }
-/* 242 */     return (paramInt > 2147483639) ? Integer.MAX_VALUE : 2147483639;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean add(E paramE) {
-/* 262 */     throw new UnsupportedOperationException();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean remove(Object paramObject) {
-/* 282 */     Iterator<E> iterator = iterator();
-/* 283 */     if (paramObject == null) {
-/* 284 */       while (iterator.hasNext()) {
-/* 285 */         if (iterator.next() == null) {
-/* 286 */           iterator.remove();
-/* 287 */           return true;
-/*     */         } 
-/*     */       } 
-/*     */     } else {
-/* 291 */       while (iterator.hasNext()) {
-/* 292 */         if (paramObject.equals(iterator.next())) {
-/* 293 */           iterator.remove();
-/* 294 */           return true;
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/* 298 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean containsAll(Collection<?> paramCollection) {
-/* 317 */     for (Object object : paramCollection) {
-/* 318 */       if (!contains(object))
-/* 319 */         return false; 
-/* 320 */     }  return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean addAll(Collection<? extends E> paramCollection) {
-/*     */     // Byte code:
-/*     */     //   0: iconst_0
-/*     */     //   1: istore_2
-/*     */     //   2: aload_1
-/*     */     //   3: invokeinterface iterator : ()Ljava/util/Iterator;
-/*     */     //   8: astore_3
-/*     */     //   9: aload_3
-/*     */     //   10: invokeinterface hasNext : ()Z
-/*     */     //   15: ifeq -> 40
-/*     */     //   18: aload_3
-/*     */     //   19: invokeinterface next : ()Ljava/lang/Object;
-/*     */     //   24: astore #4
-/*     */     //   26: aload_0
-/*     */     //   27: aload #4
-/*     */     //   29: invokevirtual add : (Ljava/lang/Object;)Z
-/*     */     //   32: ifeq -> 37
-/*     */     //   35: iconst_1
-/*     */     //   36: istore_2
-/*     */     //   37: goto -> 9
-/*     */     //   40: iload_2
-/*     */     //   41: ireturn
-/*     */     // Line number table:
-/*     */     //   Java source line number -> byte code offset
-/*     */     //   #342	-> 0
-/*     */     //   #343	-> 2
-/*     */     //   #344	-> 26
-/*     */     //   #345	-> 35
-/*     */     //   #344	-> 37
-/*     */     //   #346	-> 40
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean removeAll(Collection<?> paramCollection) {
-/* 371 */     Objects.requireNonNull(paramCollection);
-/* 372 */     boolean bool = false;
-/* 373 */     Iterator<E> iterator = iterator();
-/* 374 */     while (iterator.hasNext()) {
-/* 375 */       if (paramCollection.contains(iterator.next())) {
-/* 376 */         iterator.remove();
-/* 377 */         bool = true;
-/*     */       } 
-/*     */     } 
-/* 380 */     return bool;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean retainAll(Collection<?> paramCollection) {
-/* 405 */     Objects.requireNonNull(paramCollection);
-/* 406 */     boolean bool = false;
-/* 407 */     Iterator<E> iterator = iterator();
-/* 408 */     while (iterator.hasNext()) {
-/* 409 */       if (!paramCollection.contains(iterator.next())) {
-/* 410 */         iterator.remove();
-/* 411 */         bool = true;
-/*     */       } 
-/*     */     } 
-/* 414 */     return bool;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void clear() {
-/* 433 */     Iterator<E> iterator = iterator();
-/* 434 */     while (iterator.hasNext()) {
-/* 435 */       iterator.next();
-/* 436 */       iterator.remove();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 454 */     Iterator<E> iterator = iterator();
-/* 455 */     if (!iterator.hasNext()) {
-/* 456 */       return "[]";
-/*     */     }
-/* 458 */     StringBuilder stringBuilder = new StringBuilder();
-/* 459 */     stringBuilder.append('[');
-/*     */     while (true) {
-/* 461 */       E e = iterator.next();
-/* 462 */       stringBuilder.append((e == this) ? "(this Collection)" : e);
-/* 463 */       if (!iterator.hasNext())
-/* 464 */         return stringBuilder.append(']').toString(); 
-/* 465 */       stringBuilder.append(',').append(' ');
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\AbstractCollection.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.util;
+
+/**
+ * This class provides a skeletal implementation of the <tt>Collection</tt>
+ * interface, to minimize the effort required to implement this interface. <p>
+ *
+ * To implement an unmodifiable collection, the programmer needs only to
+ * extend this class and provide implementations for the <tt>iterator</tt> and
+ * <tt>size</tt> methods.  (The iterator returned by the <tt>iterator</tt>
+ * method must implement <tt>hasNext</tt> and <tt>next</tt>.)<p>
+ *
+ * To implement a modifiable collection, the programmer must additionally
+ * override this class's <tt>add</tt> method (which otherwise throws an
+ * <tt>UnsupportedOperationException</tt>), and the iterator returned by the
+ * <tt>iterator</tt> method must additionally implement its <tt>remove</tt>
+ * method.<p>
+ *
+ * The programmer should generally provide a void (no argument) and
+ * <tt>Collection</tt> constructor, as per the recommendation in the
+ * <tt>Collection</tt> interface specification.<p>
+ *
+ * The documentation for each non-abstract method in this class describes its
+ * implementation in detail.  Each of these methods may be overridden if
+ * the collection being implemented admits a more efficient implementation.<p>
+ *
+ * This class is a member of the
+ * <a href="{@docRoot}/../technotes/guides/collections/index.html">
+ * Java Collections Framework</a>.
+ *
+ * @author  Josh Bloch
+ * @author  Neal Gafter
+ * @see Collection
+ * @since 1.2
+ */
+
+public abstract class AbstractCollection<E> implements Collection<E> {
+    /**
+     * Sole constructor.  (For invocation by subclass constructors, typically
+     * implicit.)
+     */
+    protected AbstractCollection() {
+    }
+
+    // Query Operations
+
+    /**
+     * Returns an iterator over the elements contained in this collection.
+     *
+     * @return an iterator over the elements contained in this collection
+     */
+    public abstract Iterator<E> iterator();
+
+    public abstract int size();
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>This implementation returns <tt>size() == 0</tt>.
+     */
+    public boolean isEmpty() {
+        return size() == 0;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>This implementation iterates over the elements in the collection,
+     * checking each element in turn for equality with the specified element.
+     *
+     * @throws ClassCastException   {@inheritDoc}
+     * @throws NullPointerException {@inheritDoc}
+     */
+    public boolean contains(Object o) {
+        Iterator<E> it = iterator();
+        if (o==null) {
+            while (it.hasNext())
+                if (it.next()==null)
+                    return true;
+        } else {
+            while (it.hasNext())
+                if (o.equals(it.next()))
+                    return true;
+        }
+        return false;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>This implementation returns an array containing all the elements
+     * returned by this collection's iterator, in the same order, stored in
+     * consecutive elements of the array, starting with index {@code 0}.
+     * The length of the returned array is equal to the number of elements
+     * returned by the iterator, even if the size of this collection changes
+     * during iteration, as might happen if the collection permits
+     * concurrent modification during iteration.  The {@code size} method is
+     * called only as an optimization hint; the correct result is returned
+     * even if the iterator returns a different number of elements.
+     *
+     * <p>This method is equivalent to:
+     *
+     *  <pre> {@code
+     * List<E> list = new ArrayList<E>(size());
+     * for (E e : this)
+     *     list.add(e);
+     * return list.toArray();
+     * }</pre>
+     */
+    public Object[] toArray() {
+        // Estimate size of array; be prepared to see more or fewer elements
+        Object[] r = new Object[size()];
+        Iterator<E> it = iterator();
+        for (int i = 0; i < r.length; i++) {
+            if (! it.hasNext()) // fewer elements than expected
+                return Arrays.copyOf(r, i);
+            r[i] = it.next();
+        }
+        return it.hasNext() ? finishToArray(r, it) : r;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>This implementation returns an array containing all the elements
+     * returned by this collection's iterator in the same order, stored in
+     * consecutive elements of the array, starting with index {@code 0}.
+     * If the number of elements returned by the iterator is too large to
+     * fit into the specified array, then the elements are returned in a
+     * newly allocated array with length equal to the number of elements
+     * returned by the iterator, even if the size of this collection
+     * changes during iteration, as might happen if the collection permits
+     * concurrent modification during iteration.  The {@code size} method is
+     * called only as an optimization hint; the correct result is returned
+     * even if the iterator returns a different number of elements.
+     *
+     * <p>This method is equivalent to:
+     *
+     *  <pre> {@code
+     * List<E> list = new ArrayList<E>(size());
+     * for (E e : this)
+     *     list.add(e);
+     * return list.toArray(a);
+     * }</pre>
+     *
+     * @throws ArrayStoreException  {@inheritDoc}
+     * @throws NullPointerException {@inheritDoc}
+     */
+    @SuppressWarnings("unchecked")
+    public <T> T[] toArray(T[] a) {
+        // Estimate size of array; be prepared to see more or fewer elements
+        int size = size();
+        T[] r = a.length >= size ? a :
+                  (T[])java.lang.reflect.Array
+                  .newInstance(a.getClass().getComponentType(), size);
+        Iterator<E> it = iterator();
+
+        for (int i = 0; i < r.length; i++) {
+            if (! it.hasNext()) { // fewer elements than expected
+                if (a == r) {
+                    r[i] = null; // null-terminate
+                } else if (a.length < i) {
+                    return Arrays.copyOf(r, i);
+                } else {
+                    System.arraycopy(r, 0, a, 0, i);
+                    if (a.length > i) {
+                        a[i] = null;
+                    }
+                }
+                return a;
+            }
+            r[i] = (T)it.next();
+        }
+        // more elements than expected
+        return it.hasNext() ? finishToArray(r, it) : r;
+    }
+
+    /**
+     * The maximum size of array to allocate.
+     * Some VMs reserve some header words in an array.
+     * Attempts to allocate larger arrays may result in
+     * OutOfMemoryError: Requested array size exceeds VM limit
+     */
+    private static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
+
+    /**
+     * Reallocates the array being used within toArray when the iterator
+     * returned more elements than expected, and finishes filling it from
+     * the iterator.
+     *
+     * @param r the array, replete with previously stored elements
+     * @param it the in-progress iterator over this collection
+     * @return array containing the elements in the given array, plus any
+     *         further elements returned by the iterator, trimmed to size
+     */
+    @SuppressWarnings("unchecked")
+    private static <T> T[] finishToArray(T[] r, Iterator<?> it) {
+        int i = r.length;
+        while (it.hasNext()) {
+            int cap = r.length;
+            if (i == cap) {
+                int newCap = cap + (cap >> 1) + 1;
+                // overflow-conscious code
+                if (newCap - MAX_ARRAY_SIZE > 0)
+                    newCap = hugeCapacity(cap + 1);
+                r = Arrays.copyOf(r, newCap);
+            }
+            r[i++] = (T)it.next();
+        }
+        // trim if overallocated
+        return (i == r.length) ? r : Arrays.copyOf(r, i);
+    }
+
+    private static int hugeCapacity(int minCapacity) {
+        if (minCapacity < 0) // overflow
+            throw new OutOfMemoryError
+                ("Required array size too large");
+        return (minCapacity > MAX_ARRAY_SIZE) ?
+            Integer.MAX_VALUE :
+            MAX_ARRAY_SIZE;
+    }
+
+    // Modification Operations
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>This implementation always throws an
+     * <tt>UnsupportedOperationException</tt>.
+     *
+     * @throws UnsupportedOperationException {@inheritDoc}
+     * @throws ClassCastException            {@inheritDoc}
+     * @throws NullPointerException          {@inheritDoc}
+     * @throws IllegalArgumentException      {@inheritDoc}
+     * @throws IllegalStateException         {@inheritDoc}
+     */
+    public boolean add(E e) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>This implementation iterates over the collection looking for the
+     * specified element.  If it finds the element, it removes the element
+     * from the collection using the iterator's remove method.
+     *
+     * <p>Note that this implementation throws an
+     * <tt>UnsupportedOperationException</tt> if the iterator returned by this
+     * collection's iterator method does not implement the <tt>remove</tt>
+     * method and this collection contains the specified object.
+     *
+     * @throws UnsupportedOperationException {@inheritDoc}
+     * @throws ClassCastException            {@inheritDoc}
+     * @throws NullPointerException          {@inheritDoc}
+     */
+    public boolean remove(Object o) {
+        Iterator<E> it = iterator();
+        if (o==null) {
+            while (it.hasNext()) {
+                if (it.next()==null) {
+                    it.remove();
+                    return true;
+                }
+            }
+        } else {
+            while (it.hasNext()) {
+                if (o.equals(it.next())) {
+                    it.remove();
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+
+    // Bulk Operations
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>This implementation iterates over the specified collection,
+     * checking each element returned by the iterator in turn to see
+     * if it's contained in this collection.  If all elements are so
+     * contained <tt>true</tt> is returned, otherwise <tt>false</tt>.
+     *
+     * @throws ClassCastException            {@inheritDoc}
+     * @throws NullPointerException          {@inheritDoc}
+     * @see #contains(Object)
+     */
+    public boolean containsAll(Collection<?> c) {
+        for (Object e : c)
+            if (!contains(e))
+                return false;
+        return true;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>This implementation iterates over the specified collection, and adds
+     * each object returned by the iterator to this collection, in turn.
+     *
+     * <p>Note that this implementation will throw an
+     * <tt>UnsupportedOperationException</tt> unless <tt>add</tt> is
+     * overridden (assuming the specified collection is non-empty).
+     *
+     * @throws UnsupportedOperationException {@inheritDoc}
+     * @throws ClassCastException            {@inheritDoc}
+     * @throws NullPointerException          {@inheritDoc}
+     * @throws IllegalArgumentException      {@inheritDoc}
+     * @throws IllegalStateException         {@inheritDoc}
+     *
+     * @see #add(Object)
+     */
+    public boolean addAll(Collection<? extends E> c) {
+        boolean modified = false;
+        for (E e : c)
+            if (add(e))
+                modified = true;
+        return modified;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>This implementation iterates over this collection, checking each
+     * element returned by the iterator in turn to see if it's contained
+     * in the specified collection.  If it's so contained, it's removed from
+     * this collection with the iterator's <tt>remove</tt> method.
+     *
+     * <p>Note that this implementation will throw an
+     * <tt>UnsupportedOperationException</tt> if the iterator returned by the
+     * <tt>iterator</tt> method does not implement the <tt>remove</tt> method
+     * and this collection contains one or more elements in common with the
+     * specified collection.
+     *
+     * @throws UnsupportedOperationException {@inheritDoc}
+     * @throws ClassCastException            {@inheritDoc}
+     * @throws NullPointerException          {@inheritDoc}
+     *
+     * @see #remove(Object)
+     * @see #contains(Object)
+     */
+    public boolean removeAll(Collection<?> c) {
+        Objects.requireNonNull(c);
+        boolean modified = false;
+        Iterator<?> it = iterator();
+        while (it.hasNext()) {
+            if (c.contains(it.next())) {
+                it.remove();
+                modified = true;
+            }
+        }
+        return modified;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>This implementation iterates over this collection, checking each
+     * element returned by the iterator in turn to see if it's contained
+     * in the specified collection.  If it's not so contained, it's removed
+     * from this collection with the iterator's <tt>remove</tt> method.
+     *
+     * <p>Note that this implementation will throw an
+     * <tt>UnsupportedOperationException</tt> if the iterator returned by the
+     * <tt>iterator</tt> method does not implement the <tt>remove</tt> method
+     * and this collection contains one or more elements not present in the
+     * specified collection.
+     *
+     * @throws UnsupportedOperationException {@inheritDoc}
+     * @throws ClassCastException            {@inheritDoc}
+     * @throws NullPointerException          {@inheritDoc}
+     *
+     * @see #remove(Object)
+     * @see #contains(Object)
+     */
+    public boolean retainAll(Collection<?> c) {
+        Objects.requireNonNull(c);
+        boolean modified = false;
+        Iterator<E> it = iterator();
+        while (it.hasNext()) {
+            if (!c.contains(it.next())) {
+                it.remove();
+                modified = true;
+            }
+        }
+        return modified;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>This implementation iterates over this collection, removing each
+     * element using the <tt>Iterator.remove</tt> operation.  Most
+     * implementations will probably choose to override this method for
+     * efficiency.
+     *
+     * <p>Note that this implementation will throw an
+     * <tt>UnsupportedOperationException</tt> if the iterator returned by this
+     * collection's <tt>iterator</tt> method does not implement the
+     * <tt>remove</tt> method and this collection is non-empty.
+     *
+     * @throws UnsupportedOperationException {@inheritDoc}
+     */
+    public void clear() {
+        Iterator<E> it = iterator();
+        while (it.hasNext()) {
+            it.next();
+            it.remove();
+        }
+    }
+
+
+    //  String conversion
+
+    /**
+     * Returns a string representation of this collection.  The string
+     * representation consists of a list of the collection's elements in the
+     * order they are returned by its iterator, enclosed in square brackets
+     * (<tt>"[]"</tt>).  Adjacent elements are separated by the characters
+     * <tt>", "</tt> (comma and space).  Elements are converted to strings as
+     * by {@link String#valueOf(Object)}.
+     *
+     * @return a string representation of this collection
+     */
+    public String toString() {
+        Iterator<E> it = iterator();
+        if (! it.hasNext())
+            return "[]";
+
+        StringBuilder sb = new StringBuilder();
+        sb.append('[');
+        for (;;) {
+            E e = it.next();
+            sb.append(e == this ? "(this Collection)" : e);
+            if (! it.hasNext())
+                return sb.append(']').toString();
+            sb.append(',').append(' ');
+        }
+    }
+
+}

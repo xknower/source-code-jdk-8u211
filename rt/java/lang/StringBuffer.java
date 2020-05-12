@@ -1,721 +1,715 @@
-/*     */ package java.lang;
-/*     */ 
-/*     */ import java.io.IOException;
-/*     */ import java.io.ObjectInputStream;
-/*     */ import java.io.ObjectOutputStream;
-/*     */ import java.io.ObjectStreamField;
-/*     */ import java.io.Serializable;
-/*     */ import java.util.Arrays;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class StringBuffer
-/*     */   extends AbstractStringBuilder
-/*     */   implements Serializable, CharSequence
-/*     */ {
-/*     */   private transient char[] toStringCache;
-/*     */   static final long serialVersionUID = 3388685877147921107L;
-/*     */   
-/*     */   public StringBuffer() {
-/* 116 */     super(16);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StringBuffer(int paramInt) {
-/* 128 */     super(paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StringBuffer(String paramString) {
-/* 139 */     super(paramString.length() + 16);
-/* 140 */     append(paramString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StringBuffer(CharSequence paramCharSequence) {
-/* 157 */     this(paramCharSequence.length() + 16);
-/* 158 */     append(paramCharSequence);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public synchronized int length() {
-/* 163 */     return this.count;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public synchronized int capacity() {
-/* 168 */     return this.value.length;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void ensureCapacity(int paramInt) {
-/* 174 */     super.ensureCapacity(paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void trimToSize() {
-/* 182 */     super.trimToSize();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void setLength(int paramInt) {
-/* 191 */     this.toStringCache = null;
-/* 192 */     super.setLength(paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized char charAt(int paramInt) {
-/* 201 */     if (paramInt < 0 || paramInt >= this.count)
-/* 202 */       throw new StringIndexOutOfBoundsException(paramInt); 
-/* 203 */     return this.value[paramInt];
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized int codePointAt(int paramInt) {
-/* 211 */     return super.codePointAt(paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized int codePointBefore(int paramInt) {
-/* 219 */     return super.codePointBefore(paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized int codePointCount(int paramInt1, int paramInt2) {
-/* 227 */     return super.codePointCount(paramInt1, paramInt2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized int offsetByCodePoints(int paramInt1, int paramInt2) {
-/* 235 */     return super.offsetByCodePoints(paramInt1, paramInt2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void getChars(int paramInt1, int paramInt2, char[] paramArrayOfchar, int paramInt3) {
-/* 245 */     super.getChars(paramInt1, paramInt2, paramArrayOfchar, paramInt3);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void setCharAt(int paramInt, char paramChar) {
-/* 254 */     if (paramInt < 0 || paramInt >= this.count)
-/* 255 */       throw new StringIndexOutOfBoundsException(paramInt); 
-/* 256 */     this.toStringCache = null;
-/* 257 */     this.value[paramInt] = paramChar;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public synchronized StringBuffer append(Object paramObject) {
-/* 262 */     this.toStringCache = null;
-/* 263 */     super.append(String.valueOf(paramObject));
-/* 264 */     return this;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public synchronized StringBuffer append(String paramString) {
-/* 269 */     this.toStringCache = null;
-/* 270 */     super.append(paramString);
-/* 271 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized StringBuffer append(StringBuffer paramStringBuffer) {
-/* 299 */     this.toStringCache = null;
-/* 300 */     super.append(paramStringBuffer);
-/* 301 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   synchronized StringBuffer append(AbstractStringBuilder paramAbstractStringBuilder) {
-/* 309 */     this.toStringCache = null;
-/* 310 */     super.append(paramAbstractStringBuilder);
-/* 311 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized StringBuffer append(CharSequence paramCharSequence) {
-/* 337 */     this.toStringCache = null;
-/* 338 */     super.append(paramCharSequence);
-/* 339 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized StringBuffer append(CharSequence paramCharSequence, int paramInt1, int paramInt2) {
-/* 349 */     this.toStringCache = null;
-/* 350 */     super.append(paramCharSequence, paramInt1, paramInt2);
-/* 351 */     return this;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public synchronized StringBuffer append(char[] paramArrayOfchar) {
-/* 356 */     this.toStringCache = null;
-/* 357 */     super.append(paramArrayOfchar);
-/* 358 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized StringBuffer append(char[] paramArrayOfchar, int paramInt1, int paramInt2) {
-/* 366 */     this.toStringCache = null;
-/* 367 */     super.append(paramArrayOfchar, paramInt1, paramInt2);
-/* 368 */     return this;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public synchronized StringBuffer append(boolean paramBoolean) {
-/* 373 */     this.toStringCache = null;
-/* 374 */     super.append(paramBoolean);
-/* 375 */     return this;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public synchronized StringBuffer append(char paramChar) {
-/* 380 */     this.toStringCache = null;
-/* 381 */     super.append(paramChar);
-/* 382 */     return this;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public synchronized StringBuffer append(int paramInt) {
-/* 387 */     this.toStringCache = null;
-/* 388 */     super.append(paramInt);
-/* 389 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized StringBuffer appendCodePoint(int paramInt) {
-/* 397 */     this.toStringCache = null;
-/* 398 */     super.appendCodePoint(paramInt);
-/* 399 */     return this;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public synchronized StringBuffer append(long paramLong) {
-/* 404 */     this.toStringCache = null;
-/* 405 */     super.append(paramLong);
-/* 406 */     return this;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public synchronized StringBuffer append(float paramFloat) {
-/* 411 */     this.toStringCache = null;
-/* 412 */     super.append(paramFloat);
-/* 413 */     return this;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public synchronized StringBuffer append(double paramDouble) {
-/* 418 */     this.toStringCache = null;
-/* 419 */     super.append(paramDouble);
-/* 420 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized StringBuffer delete(int paramInt1, int paramInt2) {
-/* 429 */     this.toStringCache = null;
-/* 430 */     super.delete(paramInt1, paramInt2);
-/* 431 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized StringBuffer deleteCharAt(int paramInt) {
-/* 440 */     this.toStringCache = null;
-/* 441 */     super.deleteCharAt(paramInt);
-/* 442 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized StringBuffer replace(int paramInt1, int paramInt2, String paramString) {
-/* 451 */     this.toStringCache = null;
-/* 452 */     super.replace(paramInt1, paramInt2, paramString);
-/* 453 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized String substring(int paramInt) {
-/* 462 */     return substring(paramInt, this.count);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized CharSequence subSequence(int paramInt1, int paramInt2) {
-/* 471 */     return super.substring(paramInt1, paramInt2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized String substring(int paramInt1, int paramInt2) {
-/* 480 */     return super.substring(paramInt1, paramInt2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized StringBuffer insert(int paramInt1, char[] paramArrayOfchar, int paramInt2, int paramInt3) {
-/* 491 */     this.toStringCache = null;
-/* 492 */     super.insert(paramInt1, paramArrayOfchar, paramInt2, paramInt3);
-/* 493 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized StringBuffer insert(int paramInt, Object paramObject) {
-/* 501 */     this.toStringCache = null;
-/* 502 */     super.insert(paramInt, String.valueOf(paramObject));
-/* 503 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized StringBuffer insert(int paramInt, String paramString) {
-/* 511 */     this.toStringCache = null;
-/* 512 */     super.insert(paramInt, paramString);
-/* 513 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized StringBuffer insert(int paramInt, char[] paramArrayOfchar) {
-/* 521 */     this.toStringCache = null;
-/* 522 */     super.insert(paramInt, paramArrayOfchar);
-/* 523 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StringBuffer insert(int paramInt, CharSequence paramCharSequence) {
-/* 535 */     super.insert(paramInt, paramCharSequence);
-/* 536 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized StringBuffer insert(int paramInt1, CharSequence paramCharSequence, int paramInt2, int paramInt3) {
-/* 547 */     this.toStringCache = null;
-/* 548 */     super.insert(paramInt1, paramCharSequence, paramInt2, paramInt3);
-/* 549 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StringBuffer insert(int paramInt, boolean paramBoolean) {
-/* 560 */     super.insert(paramInt, paramBoolean);
-/* 561 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized StringBuffer insert(int paramInt, char paramChar) {
-/* 569 */     this.toStringCache = null;
-/* 570 */     super.insert(paramInt, paramChar);
-/* 571 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StringBuffer insert(int paramInt1, int paramInt2) {
-/* 582 */     super.insert(paramInt1, paramInt2);
-/* 583 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StringBuffer insert(int paramInt, long paramLong) {
-/* 594 */     super.insert(paramInt, paramLong);
-/* 595 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StringBuffer insert(int paramInt, float paramFloat) {
-/* 606 */     super.insert(paramInt, paramFloat);
-/* 607 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StringBuffer insert(int paramInt, double paramDouble) {
-/* 618 */     super.insert(paramInt, paramDouble);
-/* 619 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int indexOf(String paramString) {
-/* 628 */     return super.indexOf(paramString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized int indexOf(String paramString, int paramInt) {
-/* 636 */     return super.indexOf(paramString, paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int lastIndexOf(String paramString) {
-/* 645 */     return lastIndexOf(paramString, this.count);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized int lastIndexOf(String paramString, int paramInt) {
-/* 653 */     return super.lastIndexOf(paramString, paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized StringBuffer reverse() {
-/* 661 */     this.toStringCache = null;
-/* 662 */     super.reverse();
-/* 663 */     return this;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public synchronized String toString() {
-/* 668 */     if (this.toStringCache == null) {
-/* 669 */       this.toStringCache = Arrays.copyOfRange(this.value, 0, this.count);
-/*     */     }
-/* 671 */     return new String(this.toStringCache, true);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 685 */   private static final ObjectStreamField[] serialPersistentFields = new ObjectStreamField[] { new ObjectStreamField("value", char[].class), new ObjectStreamField("count", int.class), new ObjectStreamField("shared", boolean.class) };
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private synchronized void writeObject(ObjectOutputStream paramObjectOutputStream) throws IOException {
-/* 698 */     ObjectOutputStream.PutField putField = paramObjectOutputStream.putFields();
-/* 699 */     putField.put("value", this.value);
-/* 700 */     putField.put("count", this.count);
-/* 701 */     putField.put("shared", false);
-/* 702 */     paramObjectOutputStream.writeFields();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void readObject(ObjectInputStream paramObjectInputStream) throws IOException, ClassNotFoundException {
-/* 711 */     ObjectInputStream.GetField getField = paramObjectInputStream.readFields();
-/* 712 */     this.value = (char[])getField.get("value", (Object)null);
-/* 713 */     this.count = getField.get("count", 0);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\lang\StringBuffer.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1994, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.lang;
+
+import java.util.Arrays;
+
+/**
+ * A thread-safe, mutable sequence of characters.
+ * A string buffer is like a {@link String}, but can be modified. At any
+ * point in time it contains some particular sequence of characters, but
+ * the length and content of the sequence can be changed through certain
+ * method calls.
+ * <p>
+ * String buffers are safe for use by multiple threads. The methods
+ * are synchronized where necessary so that all the operations on any
+ * particular instance behave as if they occur in some serial order
+ * that is consistent with the order of the method calls made by each of
+ * the individual threads involved.
+ * <p>
+ * The principal operations on a {@code StringBuffer} are the
+ * {@code append} and {@code insert} methods, which are
+ * overloaded so as to accept data of any type. Each effectively
+ * converts a given datum to a string and then appends or inserts the
+ * characters of that string to the string buffer. The
+ * {@code append} method always adds these characters at the end
+ * of the buffer; the {@code insert} method adds the characters at
+ * a specified point.
+ * <p>
+ * For example, if {@code z} refers to a string buffer object
+ * whose current contents are {@code "start"}, then
+ * the method call {@code z.append("le")} would cause the string
+ * buffer to contain {@code "startle"}, whereas
+ * {@code z.insert(4, "le")} would alter the string buffer to
+ * contain {@code "starlet"}.
+ * <p>
+ * In general, if sb refers to an instance of a {@code StringBuffer},
+ * then {@code sb.append(x)} has the same effect as
+ * {@code sb.insert(sb.length(), x)}.
+ * <p>
+ * Whenever an operation occurs involving a source sequence (such as
+ * appending or inserting from a source sequence), this class synchronizes
+ * only on the string buffer performing the operation, not on the source.
+ * Note that while {@code StringBuffer} is designed to be safe to use
+ * concurrently from multiple threads, if the constructor or the
+ * {@code append} or {@code insert} operation is passed a source sequence
+ * that is shared across threads, the calling code must ensure
+ * that the operation has a consistent and unchanging view of the source
+ * sequence for the duration of the operation.
+ * This could be satisfied by the caller holding a lock during the
+ * operation's call, by using an immutable source sequence, or by not
+ * sharing the source sequence across threads.
+ * <p>
+ * Every string buffer has a capacity. As long as the length of the
+ * character sequence contained in the string buffer does not exceed
+ * the capacity, it is not necessary to allocate a new internal
+ * buffer array. If the internal buffer overflows, it is
+ * automatically made larger.
+ * <p>
+ * Unless otherwise noted, passing a {@code null} argument to a constructor
+ * or method in this class will cause a {@link NullPointerException} to be
+ * thrown.
+ * <p>
+ * As of  release JDK 5, this class has been supplemented with an equivalent
+ * class designed for use by a single thread, {@link StringBuilder}.  The
+ * {@code StringBuilder} class should generally be used in preference to
+ * this one, as it supports all of the same operations but it is faster, as
+ * it performs no synchronization.
+ *
+ * @author      Arthur van Hoff
+ * @see     java.lang.StringBuilder
+ * @see     java.lang.String
+ * @since   JDK1.0
+ */
+ public final class StringBuffer
+    extends AbstractStringBuilder
+    implements java.io.Serializable, CharSequence
+{
+
+    /**
+     * A cache of the last value returned by toString. Cleared
+     * whenever the StringBuffer is modified.
+     */
+    private transient char[] toStringCache;
+
+    /** use serialVersionUID from JDK 1.0.2 for interoperability */
+    static final long serialVersionUID = 3388685877147921107L;
+
+    /**
+     * Constructs a string buffer with no characters in it and an
+     * initial capacity of 16 characters.
+     */
+    public StringBuffer() {
+        super(16);
+    }
+
+    /**
+     * Constructs a string buffer with no characters in it and
+     * the specified initial capacity.
+     *
+     * @param      capacity  the initial capacity.
+     * @exception  NegativeArraySizeException  if the {@code capacity}
+     *               argument is less than {@code 0}.
+     */
+    public StringBuffer(int capacity) {
+        super(capacity);
+    }
+
+    /**
+     * Constructs a string buffer initialized to the contents of the
+     * specified string. The initial capacity of the string buffer is
+     * {@code 16} plus the length of the string argument.
+     *
+     * @param   str   the initial contents of the buffer.
+     */
+    public StringBuffer(String str) {
+        super(str.length() + 16);
+        append(str);
+    }
+
+    /**
+     * Constructs a string buffer that contains the same characters
+     * as the specified {@code CharSequence}. The initial capacity of
+     * the string buffer is {@code 16} plus the length of the
+     * {@code CharSequence} argument.
+     * <p>
+     * If the length of the specified {@code CharSequence} is
+     * less than or equal to zero, then an empty buffer of capacity
+     * {@code 16} is returned.
+     *
+     * @param      seq   the sequence to copy.
+     * @since 1.5
+     */
+    public StringBuffer(CharSequence seq) {
+        this(seq.length() + 16);
+        append(seq);
+    }
+
+    @Override
+    public synchronized int length() {
+        return count;
+    }
+
+    @Override
+    public synchronized int capacity() {
+        return value.length;
+    }
+
+
+    @Override
+    public synchronized void ensureCapacity(int minimumCapacity) {
+        super.ensureCapacity(minimumCapacity);
+    }
+
+    /**
+     * @since      1.5
+     */
+    @Override
+    public synchronized void trimToSize() {
+        super.trimToSize();
+    }
+
+    /**
+     * @throws IndexOutOfBoundsException {@inheritDoc}
+     * @see        #length()
+     */
+    @Override
+    public synchronized void setLength(int newLength) {
+        toStringCache = null;
+        super.setLength(newLength);
+    }
+
+    /**
+     * @throws IndexOutOfBoundsException {@inheritDoc}
+     * @see        #length()
+     */
+    @Override
+    public synchronized char charAt(int index) {
+        if ((index < 0) || (index >= count))
+            throw new StringIndexOutOfBoundsException(index);
+        return value[index];
+    }
+
+    /**
+     * @since      1.5
+     */
+    @Override
+    public synchronized int codePointAt(int index) {
+        return super.codePointAt(index);
+    }
+
+    /**
+     * @since     1.5
+     */
+    @Override
+    public synchronized int codePointBefore(int index) {
+        return super.codePointBefore(index);
+    }
+
+    /**
+     * @since     1.5
+     */
+    @Override
+    public synchronized int codePointCount(int beginIndex, int endIndex) {
+        return super.codePointCount(beginIndex, endIndex);
+    }
+
+    /**
+     * @since     1.5
+     */
+    @Override
+    public synchronized int offsetByCodePoints(int index, int codePointOffset) {
+        return super.offsetByCodePoints(index, codePointOffset);
+    }
+
+    /**
+     * @throws IndexOutOfBoundsException {@inheritDoc}
+     */
+    @Override
+    public synchronized void getChars(int srcBegin, int srcEnd, char[] dst,
+                                      int dstBegin)
+    {
+        super.getChars(srcBegin, srcEnd, dst, dstBegin);
+    }
+
+    /**
+     * @throws IndexOutOfBoundsException {@inheritDoc}
+     * @see        #length()
+     */
+    @Override
+    public synchronized void setCharAt(int index, char ch) {
+        if ((index < 0) || (index >= count))
+            throw new StringIndexOutOfBoundsException(index);
+        toStringCache = null;
+        value[index] = ch;
+    }
+
+    @Override
+    public synchronized StringBuffer append(Object obj) {
+        toStringCache = null;
+        super.append(String.valueOf(obj));
+        return this;
+    }
+
+    @Override
+    public synchronized StringBuffer append(String str) {
+        toStringCache = null;
+        super.append(str);
+        return this;
+    }
+
+    /**
+     * Appends the specified {@code StringBuffer} to this sequence.
+     * <p>
+     * The characters of the {@code StringBuffer} argument are appended,
+     * in order, to the contents of this {@code StringBuffer}, increasing the
+     * length of this {@code StringBuffer} by the length of the argument.
+     * If {@code sb} is {@code null}, then the four characters
+     * {@code "null"} are appended to this {@code StringBuffer}.
+     * <p>
+     * Let <i>n</i> be the length of the old character sequence, the one
+     * contained in the {@code StringBuffer} just prior to execution of the
+     * {@code append} method. Then the character at index <i>k</i> in
+     * the new character sequence is equal to the character at index <i>k</i>
+     * in the old character sequence, if <i>k</i> is less than <i>n</i>;
+     * otherwise, it is equal to the character at index <i>k-n</i> in the
+     * argument {@code sb}.
+     * <p>
+     * This method synchronizes on {@code this}, the destination
+     * object, but does not synchronize on the source ({@code sb}).
+     *
+     * @param   sb   the {@code StringBuffer} to append.
+     * @return  a reference to this object.
+     * @since 1.4
+     */
+    public synchronized StringBuffer append(StringBuffer sb) {
+        toStringCache = null;
+        super.append(sb);
+        return this;
+    }
+
+    /**
+     * @since 1.8
+     */
+    @Override
+    synchronized StringBuffer append(AbstractStringBuilder asb) {
+        toStringCache = null;
+        super.append(asb);
+        return this;
+    }
+
+    /**
+     * Appends the specified {@code CharSequence} to this
+     * sequence.
+     * <p>
+     * The characters of the {@code CharSequence} argument are appended,
+     * in order, increasing the length of this sequence by the length of the
+     * argument.
+     *
+     * <p>The result of this method is exactly the same as if it were an
+     * invocation of this.append(s, 0, s.length());
+     *
+     * <p>This method synchronizes on {@code this}, the destination
+     * object, but does not synchronize on the source ({@code s}).
+     *
+     * <p>If {@code s} is {@code null}, then the four characters
+     * {@code "null"} are appended.
+     *
+     * @param   s the {@code CharSequence} to append.
+     * @return  a reference to this object.
+     * @since 1.5
+     */
+    @Override
+    public synchronized StringBuffer append(CharSequence s) {
+        toStringCache = null;
+        super.append(s);
+        return this;
+    }
+
+    /**
+     * @throws IndexOutOfBoundsException {@inheritDoc}
+     * @since      1.5
+     */
+    @Override
+    public synchronized StringBuffer append(CharSequence s, int start, int end)
+    {
+        toStringCache = null;
+        super.append(s, start, end);
+        return this;
+    }
+
+    @Override
+    public synchronized StringBuffer append(char[] str) {
+        toStringCache = null;
+        super.append(str);
+        return this;
+    }
+
+    /**
+     * @throws IndexOutOfBoundsException {@inheritDoc}
+     */
+    @Override
+    public synchronized StringBuffer append(char[] str, int offset, int len) {
+        toStringCache = null;
+        super.append(str, offset, len);
+        return this;
+    }
+
+    @Override
+    public synchronized StringBuffer append(boolean b) {
+        toStringCache = null;
+        super.append(b);
+        return this;
+    }
+
+    @Override
+    public synchronized StringBuffer append(char c) {
+        toStringCache = null;
+        super.append(c);
+        return this;
+    }
+
+    @Override
+    public synchronized StringBuffer append(int i) {
+        toStringCache = null;
+        super.append(i);
+        return this;
+    }
+
+    /**
+     * @since 1.5
+     */
+    @Override
+    public synchronized StringBuffer appendCodePoint(int codePoint) {
+        toStringCache = null;
+        super.appendCodePoint(codePoint);
+        return this;
+    }
+
+    @Override
+    public synchronized StringBuffer append(long lng) {
+        toStringCache = null;
+        super.append(lng);
+        return this;
+    }
+
+    @Override
+    public synchronized StringBuffer append(float f) {
+        toStringCache = null;
+        super.append(f);
+        return this;
+    }
+
+    @Override
+    public synchronized StringBuffer append(double d) {
+        toStringCache = null;
+        super.append(d);
+        return this;
+    }
+
+    /**
+     * @throws StringIndexOutOfBoundsException {@inheritDoc}
+     * @since      1.2
+     */
+    @Override
+    public synchronized StringBuffer delete(int start, int end) {
+        toStringCache = null;
+        super.delete(start, end);
+        return this;
+    }
+
+    /**
+     * @throws StringIndexOutOfBoundsException {@inheritDoc}
+     * @since      1.2
+     */
+    @Override
+    public synchronized StringBuffer deleteCharAt(int index) {
+        toStringCache = null;
+        super.deleteCharAt(index);
+        return this;
+    }
+
+    /**
+     * @throws StringIndexOutOfBoundsException {@inheritDoc}
+     * @since      1.2
+     */
+    @Override
+    public synchronized StringBuffer replace(int start, int end, String str) {
+        toStringCache = null;
+        super.replace(start, end, str);
+        return this;
+    }
+
+    /**
+     * @throws StringIndexOutOfBoundsException {@inheritDoc}
+     * @since      1.2
+     */
+    @Override
+    public synchronized String substring(int start) {
+        return substring(start, count);
+    }
+
+    /**
+     * @throws IndexOutOfBoundsException {@inheritDoc}
+     * @since      1.4
+     */
+    @Override
+    public synchronized CharSequence subSequence(int start, int end) {
+        return super.substring(start, end);
+    }
+
+    /**
+     * @throws StringIndexOutOfBoundsException {@inheritDoc}
+     * @since      1.2
+     */
+    @Override
+    public synchronized String substring(int start, int end) {
+        return super.substring(start, end);
+    }
+
+    /**
+     * @throws StringIndexOutOfBoundsException {@inheritDoc}
+     * @since      1.2
+     */
+    @Override
+    public synchronized StringBuffer insert(int index, char[] str, int offset,
+                                            int len)
+    {
+        toStringCache = null;
+        super.insert(index, str, offset, len);
+        return this;
+    }
+
+    /**
+     * @throws StringIndexOutOfBoundsException {@inheritDoc}
+     */
+    @Override
+    public synchronized StringBuffer insert(int offset, Object obj) {
+        toStringCache = null;
+        super.insert(offset, String.valueOf(obj));
+        return this;
+    }
+
+    /**
+     * @throws StringIndexOutOfBoundsException {@inheritDoc}
+     */
+    @Override
+    public synchronized StringBuffer insert(int offset, String str) {
+        toStringCache = null;
+        super.insert(offset, str);
+        return this;
+    }
+
+    /**
+     * @throws StringIndexOutOfBoundsException {@inheritDoc}
+     */
+    @Override
+    public synchronized StringBuffer insert(int offset, char[] str) {
+        toStringCache = null;
+        super.insert(offset, str);
+        return this;
+    }
+
+    /**
+     * @throws IndexOutOfBoundsException {@inheritDoc}
+     * @since      1.5
+     */
+    @Override
+    public StringBuffer insert(int dstOffset, CharSequence s) {
+        // Note, synchronization achieved via invocations of other StringBuffer methods
+        // after narrowing of s to specific type
+        // Ditto for toStringCache clearing
+        super.insert(dstOffset, s);
+        return this;
+    }
+
+    /**
+     * @throws IndexOutOfBoundsException {@inheritDoc}
+     * @since      1.5
+     */
+    @Override
+    public synchronized StringBuffer insert(int dstOffset, CharSequence s,
+            int start, int end)
+    {
+        toStringCache = null;
+        super.insert(dstOffset, s, start, end);
+        return this;
+    }
+
+    /**
+     * @throws StringIndexOutOfBoundsException {@inheritDoc}
+     */
+    @Override
+    public  StringBuffer insert(int offset, boolean b) {
+        // Note, synchronization achieved via invocation of StringBuffer insert(int, String)
+        // after conversion of b to String by super class method
+        // Ditto for toStringCache clearing
+        super.insert(offset, b);
+        return this;
+    }
+
+    /**
+     * @throws IndexOutOfBoundsException {@inheritDoc}
+     */
+    @Override
+    public synchronized StringBuffer insert(int offset, char c) {
+        toStringCache = null;
+        super.insert(offset, c);
+        return this;
+    }
+
+    /**
+     * @throws StringIndexOutOfBoundsException {@inheritDoc}
+     */
+    @Override
+    public StringBuffer insert(int offset, int i) {
+        // Note, synchronization achieved via invocation of StringBuffer insert(int, String)
+        // after conversion of i to String by super class method
+        // Ditto for toStringCache clearing
+        super.insert(offset, i);
+        return this;
+    }
+
+    /**
+     * @throws StringIndexOutOfBoundsException {@inheritDoc}
+     */
+    @Override
+    public StringBuffer insert(int offset, long l) {
+        // Note, synchronization achieved via invocation of StringBuffer insert(int, String)
+        // after conversion of l to String by super class method
+        // Ditto for toStringCache clearing
+        super.insert(offset, l);
+        return this;
+    }
+
+    /**
+     * @throws StringIndexOutOfBoundsException {@inheritDoc}
+     */
+    @Override
+    public StringBuffer insert(int offset, float f) {
+        // Note, synchronization achieved via invocation of StringBuffer insert(int, String)
+        // after conversion of f to String by super class method
+        // Ditto for toStringCache clearing
+        super.insert(offset, f);
+        return this;
+    }
+
+    /**
+     * @throws StringIndexOutOfBoundsException {@inheritDoc}
+     */
+    @Override
+    public StringBuffer insert(int offset, double d) {
+        // Note, synchronization achieved via invocation of StringBuffer insert(int, String)
+        // after conversion of d to String by super class method
+        // Ditto for toStringCache clearing
+        super.insert(offset, d);
+        return this;
+    }
+
+    /**
+     * @since      1.4
+     */
+    @Override
+    public int indexOf(String str) {
+        // Note, synchronization achieved via invocations of other StringBuffer methods
+        return super.indexOf(str);
+    }
+
+    /**
+     * @since      1.4
+     */
+    @Override
+    public synchronized int indexOf(String str, int fromIndex) {
+        return super.indexOf(str, fromIndex);
+    }
+
+    /**
+     * @since      1.4
+     */
+    @Override
+    public int lastIndexOf(String str) {
+        // Note, synchronization achieved via invocations of other StringBuffer methods
+        return lastIndexOf(str, count);
+    }
+
+    /**
+     * @since      1.4
+     */
+    @Override
+    public synchronized int lastIndexOf(String str, int fromIndex) {
+        return super.lastIndexOf(str, fromIndex);
+    }
+
+    /**
+     * @since   JDK1.0.2
+     */
+    @Override
+    public synchronized StringBuffer reverse() {
+        toStringCache = null;
+        super.reverse();
+        return this;
+    }
+
+    @Override
+    public synchronized String toString() {
+        if (toStringCache == null) {
+            toStringCache = Arrays.copyOfRange(value, 0, count);
+        }
+        return new String(toStringCache, true);
+    }
+
+    /**
+     * Serializable fields for StringBuffer.
+     *
+     * @serialField value  char[]
+     *              The backing character array of this StringBuffer.
+     * @serialField count int
+     *              The number of characters in this StringBuffer.
+     * @serialField shared  boolean
+     *              A flag indicating whether the backing array is shared.
+     *              The value is ignored upon deserialization.
+     */
+    private static final java.io.ObjectStreamField[] serialPersistentFields =
+    {
+        new java.io.ObjectStreamField("value", char[].class),
+        new java.io.ObjectStreamField("count", Integer.TYPE),
+        new java.io.ObjectStreamField("shared", Boolean.TYPE),
+    };
+
+    /**
+     * readObject is called to restore the state of the StringBuffer from
+     * a stream.
+     */
+    private synchronized void writeObject(java.io.ObjectOutputStream s)
+        throws java.io.IOException {
+        java.io.ObjectOutputStream.PutField fields = s.putFields();
+        fields.put("value", value);
+        fields.put("count", count);
+        fields.put("shared", false);
+        s.writeFields();
+    }
+
+    /**
+     * readObject is called to restore the state of the StringBuffer from
+     * a stream.
+     */
+    private void readObject(java.io.ObjectInputStream s)
+        throws java.io.IOException, ClassNotFoundException {
+        java.io.ObjectInputStream.GetField fields = s.readFields();
+        value = (char[])fields.get("value", null);
+        count = fields.get("count", 0);
+    }
+}

@@ -1,9 +1,41 @@
+/*
+ * Copyright (c) 1999, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
+
 package org.omg.CORBA.portable;
 
-public interface StreamableValue extends Streamable, ValueBase {}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\org\omg\CORBA\portable\StreamableValue.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * Defines the base type for all non-boxed IDL valuetypes
+ * that are not custom marshaled.
+ *
+ * All value types implement ValueBase either directly or
+ * indirectly by implementing either the
+ * StreamableValue or CustomValue interface.
+ *
+ * @author OMG
  */
+public interface StreamableValue extends Streamable, ValueBase {
+
+}

@@ -1,450 +1,280 @@
-/*     */ package com.sun.jmx.mbeanserver;
-/*     */ 
-/*     */ import java.security.AccessController;
-/*     */ import java.util.Arrays;
-/*     */ import java.util.Collections;
-/*     */ import java.util.List;
-/*     */ import java.util.Map;
-/*     */ import javax.management.AttributeNotFoundException;
-/*     */ import javax.management.InvalidAttributeValueException;
-/*     */ import javax.management.MBeanException;
-/*     */ import javax.management.MBeanInfo;
-/*     */ import javax.management.ReflectionException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class PerInterface<M>
-/*     */ {
-/*     */   private final Class<?> mbeanInterface;
-/*     */   private final MBeanIntrospector<M> introspector;
-/*     */   private final MBeanInfo mbeanInfo;
-/*     */   private final Map<String, M> getters;
-/*     */   private final Map<String, M> setters;
-/*     */   private final Map<String, List<MethodAndSig>> ops;
-/*     */   
-/*     */   PerInterface(Class<?> paramClass, MBeanIntrospector<M> paramMBeanIntrospector, MBeanAnalyzer<M> paramMBeanAnalyzer, MBeanInfo paramMBeanInfo) {
-/* 277 */     this.getters = Util.newMap();
-/* 278 */     this.setters = Util.newMap();
-/* 279 */     this.ops = Util.newMap();
-/*     */     this.mbeanInterface = paramClass;
-/*     */     this.introspector = paramMBeanIntrospector;
-/*     */     this.mbeanInfo = paramMBeanInfo;
-/*     */     paramMBeanAnalyzer.visit(new InitMaps());
-/*     */   }
-/*     */   
-/*     */   Class<?> getMBeanInterface() {
-/*     */     return this.mbeanInterface;
-/*     */   }
-/*     */   
-/*     */   MBeanInfo getMBeanInfo() {
-/*     */     return this.mbeanInfo;
-/*     */   }
-/*     */   
-/*     */   boolean isMXBean() {
-/*     */     return this.introspector.isMXBean();
-/*     */   }
-/*     */   
-/*     */   Object getAttribute(Object paramObject1, String paramString, Object paramObject2) throws AttributeNotFoundException, MBeanException, ReflectionException {
-/*     */     M m = this.getters.get(paramString);
-/*     */     if (m == null) {
-/*     */       String str;
-/*     */       if (this.setters.containsKey(paramString)) {
-/*     */         str = "Write-only attribute: " + paramString;
-/*     */       } else {
-/*     */         str = "No such attribute: " + paramString;
-/*     */       } 
-/*     */       throw new AttributeNotFoundException(str);
-/*     */     } 
-/*     */     return this.introspector.invokeM(m, paramObject1, (Object[])null, paramObject2);
-/*     */   }
-/*     */   
-/*     */   void setAttribute(Object paramObject1, String paramString, Object paramObject2, Object paramObject3) throws AttributeNotFoundException, InvalidAttributeValueException, MBeanException, ReflectionException {
-/*     */     M m = this.setters.get(paramString);
-/*     */     if (m == null) {
-/*     */       String str;
-/*     */       if (this.getters.containsKey(paramString)) {
-/*     */         str = "Read-only attribute: " + paramString;
-/*     */       } else {
-/*     */         str = "No such attribute: " + paramString;
-/*     */       } 
-/*     */       throw new AttributeNotFoundException(str);
-/*     */     } 
-/*     */     this.introspector.invokeSetter(paramString, m, paramObject1, paramObject2, paramObject3);
-/*     */   }
-/*     */   
-/*     */   Object invoke(Object paramObject1, String paramString, Object[] paramArrayOfObject, String[] paramArrayOfString, Object paramObject2) throws MBeanException, ReflectionException {
-/*     */     List list = this.ops.get(paramString);
-/*     */     if (list == null) {
-/*     */       String str = "No such operation: " + paramString;
-/*     */       return noSuchMethod(str, paramObject1, paramString, paramArrayOfObject, paramArrayOfString, paramObject2);
-/*     */     } 
-/*     */     if (paramArrayOfString == null)
-/*     */       paramArrayOfString = new String[0]; 
-/*     */     MethodAndSig methodAndSig = null;
-/*     */     for (MethodAndSig methodAndSig1 : list) {
-/*     */       if (Arrays.equals((Object[])methodAndSig1.signature, (Object[])paramArrayOfString)) {
-/*     */         methodAndSig = methodAndSig1;
-/*     */         break;
-/*     */       } 
-/*     */     } 
-/*     */     if (methodAndSig == null) {
-/*     */       String str2, str1 = sigString(paramArrayOfString);
-/*     */       if (list.size() == 1) {
-/*     */         str2 = "Signature mismatch for operation " + paramString + ": " + str1 + " should be " + sigString(((MethodAndSig)list.get(0)).signature);
-/*     */       } else {
-/*     */         str2 = "Operation " + paramString + " exists but not with this signature: " + str1;
-/*     */       } 
-/*     */       return noSuchMethod(str2, paramObject1, paramString, paramArrayOfObject, paramArrayOfString, paramObject2);
-/*     */     } 
-/*     */     return this.introspector.invokeM(methodAndSig.method, paramObject1, paramArrayOfObject, paramObject2);
-/*     */   }
-/*     */   
-/*     */   private Object noSuchMethod(String paramString1, Object paramObject1, String paramString2, Object[] paramArrayOfObject, String[] paramArrayOfString, Object paramObject2) throws MBeanException, ReflectionException {
-/*     */     Object object;
-/*     */     NoSuchMethodException noSuchMethodException = new NoSuchMethodException(paramString2 + sigString(paramArrayOfString));
-/*     */     ReflectionException reflectionException = new ReflectionException(noSuchMethodException, paramString1);
-/*     */     if (this.introspector.isMXBean())
-/*     */       throw reflectionException; 
-/*     */     GetPropertyAction getPropertyAction = new GetPropertyAction("jmx.invoke.getters");
-/*     */     try {
-/*     */       object = AccessController.<String>doPrivileged(getPropertyAction);
-/*     */     } catch (Exception exception) {
-/*     */       object = null;
-/*     */     } 
-/*     */     if (object == null)
-/*     */       throw reflectionException; 
-/*     */     byte b = 0;
-/*     */     Map<String, M> map = null;
-/*     */     if (paramArrayOfString == null || paramArrayOfString.length == 0) {
-/*     */       if (paramString2.startsWith("get")) {
-/*     */         b = 3;
-/*     */       } else if (paramString2.startsWith("is")) {
-/*     */         b = 2;
-/*     */       } 
-/*     */       if (b != 0)
-/*     */         map = this.getters; 
-/*     */     } else if (paramArrayOfString.length == 1 && paramString2.startsWith("set")) {
-/*     */       b = 3;
-/*     */       map = this.setters;
-/*     */     } 
-/*     */     if (b != 0) {
-/*     */       String str = paramString2.substring(b);
-/*     */       M m = map.get(str);
-/*     */       if (m != null && this.introspector.getName(m).equals(paramString2)) {
-/*     */         String[] arrayOfString = this.introspector.getSignature(m);
-/*     */         if ((paramArrayOfString == null && arrayOfString.length == 0) || Arrays.equals((Object[])paramArrayOfString, (Object[])arrayOfString))
-/*     */           return this.introspector.invokeM(m, paramObject1, paramArrayOfObject, paramObject2); 
-/*     */       } 
-/*     */     } 
-/*     */     throw reflectionException;
-/*     */   }
-/*     */   
-/*     */   private String sigString(String[] paramArrayOfString) {
-/*     */     StringBuilder stringBuilder = new StringBuilder("(");
-/*     */     if (paramArrayOfString != null)
-/*     */       for (String str : paramArrayOfString) {
-/*     */         if (stringBuilder.length() > 1)
-/*     */           stringBuilder.append(", "); 
-/*     */         stringBuilder.append(str);
-/*     */       }  
-/*     */     return stringBuilder.append(")").toString();
-/*     */   }
-/*     */   
-/*     */   private class InitMaps implements MBeanAnalyzer.MBeanVisitor<M> {
-/*     */     private InitMaps() {}
-/*     */     
-/*     */     public void visitAttribute(String param1String, M param1M1, M param1M2) {
-/*     */       if (param1M1 != null) {
-/*     */         PerInterface.this.introspector.checkMethod(param1M1);
-/*     */         Object object = PerInterface.this.getters.put(param1String, (Object)param1M1);
-/*     */         assert object == null;
-/*     */       } 
-/*     */       if (param1M2 != null) {
-/*     */         PerInterface.this.introspector.checkMethod(param1M2);
-/*     */         Object object = PerInterface.this.setters.put(param1String, (Object)param1M2);
-/*     */         assert object == null;
-/*     */       } 
-/*     */     }
-/*     */     
-/*     */     public void visitOperation(String param1String, M param1M) {
-/*     */       PerInterface.this.introspector.checkMethod(param1M);
-/*     */       String[] arrayOfString = PerInterface.this.introspector.getSignature(param1M);
-/*     */       PerInterface.MethodAndSig methodAndSig = new PerInterface.MethodAndSig();
-/*     */       methodAndSig.method = param1M;
-/*     */       methodAndSig.signature = arrayOfString;
-/*     */       List<PerInterface.MethodAndSig> list = (List)PerInterface.access$500(PerInterface.this).get(param1String);
-/*     */       if (list == null) {
-/*     */         list = Collections.singletonList(methodAndSig);
-/*     */       } else {
-/*     */         if (list.size() == 1)
-/*     */           list = Util.newList(list); 
-/*     */         list.add(methodAndSig);
-/*     */       } 
-/*     */       PerInterface.access$500(PerInterface.this).put(param1String, list);
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   private class MethodAndSig {
-/*     */     M method;
-/*     */     String[] signature;
-/*     */     
-/*     */     private MethodAndSig() {}
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\jmx\mbeanserver\PerInterface.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.jmx.mbeanserver;
+
+import java.security.AccessController;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import javax.management.AttributeNotFoundException;
+import javax.management.InvalidAttributeValueException;
+import javax.management.MBeanException;
+import javax.management.MBeanInfo;
+import javax.management.ReflectionException;
+
+import static com.sun.jmx.mbeanserver.Util.*;
+
+/**
+ * Per-MBean-interface behavior.  A single instance of this class can be shared
+ * by all MBeans of the same kind (Standard MBean or MXBean) that have the same
+ * MBean interface.
+ *
+ * @since 1.6
+ */
+final class PerInterface<M> {
+    PerInterface(Class<?> mbeanInterface, MBeanIntrospector<M> introspector,
+                 MBeanAnalyzer<M> analyzer, MBeanInfo mbeanInfo) {
+        this.mbeanInterface = mbeanInterface;
+        this.introspector = introspector;
+        this.mbeanInfo = mbeanInfo;
+        analyzer.visit(new InitMaps());
+    }
+
+    Class<?> getMBeanInterface() {
+        return mbeanInterface;
+    }
+
+    MBeanInfo getMBeanInfo() {
+        return mbeanInfo;
+    }
+
+    boolean isMXBean() {
+        return introspector.isMXBean();
+    }
+
+    Object getAttribute(Object resource, String attribute, Object cookie)
+            throws AttributeNotFoundException,
+                   MBeanException,
+                   ReflectionException {
+
+        final M cm = getters.get(attribute);
+        if (cm == null) {
+            final String msg;
+            if (setters.containsKey(attribute))
+                msg = "Write-only attribute: " + attribute;
+            else
+                msg = "No such attribute: " + attribute;
+            throw new AttributeNotFoundException(msg);
+        }
+        return introspector.invokeM(cm, resource, (Object[]) null, cookie);
+    }
+
+    void setAttribute(Object resource, String attribute, Object value,
+                      Object cookie)
+            throws AttributeNotFoundException,
+                   InvalidAttributeValueException,
+                   MBeanException,
+                   ReflectionException {
+
+        final M cm = setters.get(attribute);
+        if (cm == null) {
+            final String msg;
+            if (getters.containsKey(attribute))
+                msg = "Read-only attribute: " + attribute;
+            else
+                msg = "No such attribute: " + attribute;
+            throw new AttributeNotFoundException(msg);
+        }
+        introspector.invokeSetter(attribute, cm, resource, value, cookie);
+    }
+
+    Object invoke(Object resource, String operation, Object[] params,
+                  String[] signature, Object cookie)
+            throws MBeanException, ReflectionException {
+
+        final List<MethodAndSig> list = ops.get(operation);
+        if (list == null) {
+            final String msg = "No such operation: " + operation;
+            return noSuchMethod(msg, resource, operation, params, signature,
+                                cookie);
+        }
+        if (signature == null)
+            signature = new String[0];
+        MethodAndSig found = null;
+        for (MethodAndSig mas : list) {
+            if (Arrays.equals(mas.signature, signature)) {
+                found = mas;
+                break;
+            }
+        }
+        if (found == null) {
+            final String badSig = sigString(signature);
+            final String msg;
+            if (list.size() == 1) {  // helpful exception message
+                msg = "Signature mismatch for operation " + operation +
+                        ": " + badSig + " should be " +
+                        sigString(list.get(0).signature);
+            } else {
+                msg = "Operation " + operation + " exists but not with " +
+                        "this signature: " + badSig;
+            }
+            return noSuchMethod(msg, resource, operation, params, signature,
+                                cookie);
+        }
+        return introspector.invokeM(found.method, resource, params, cookie);
+    }
+
+    /*
+     * This method is called when invoke doesn't find the named method.
+     * Before throwing an exception, we check to see whether the
+     * jmx.invoke.getters property is set, and if so whether the method
+     * being invoked might be a getter or a setter.  If so we invoke it
+     * and return the result.  This is for compatibility
+     * with code based on JMX RI 1.0 or 1.1 which allowed invoking getters
+     * and setters.  It is *not* recommended that new code use this feature.
+     *
+     * Since this method is either going to throw an exception or use
+     * functionality that is strongly discouraged, we consider that its
+     * performance is not very important.
+     *
+     * A simpler way to implement the functionality would be to add the getters
+     * and setters to the operations map when jmx.invoke.getters is set.
+     * However, that means that the property is consulted when an MBean
+     * interface is being introspected and not thereafter.  Previously,
+     * the property was consulted on every invocation.  So this simpler
+     * implementation could potentially break code that sets and unsets
+     * the property at different times.
+     */
+    private Object noSuchMethod(String msg, Object resource, String operation,
+                                Object[] params, String[] signature,
+                                Object cookie)
+            throws MBeanException, ReflectionException {
+
+        // Construct the exception that we will probably throw
+        final NoSuchMethodException nsme =
+            new NoSuchMethodException(operation + sigString(signature));
+        final ReflectionException exception =
+            new ReflectionException(nsme, msg);
+
+        if (introspector.isMXBean())
+            throw exception; // No compatibility requirement here
+
+        // Is the compatibility property set?
+        GetPropertyAction act = new GetPropertyAction("jmx.invoke.getters");
+        String invokeGettersS;
+        try {
+            invokeGettersS = AccessController.doPrivileged(act);
+        } catch (Exception e) {
+            // We don't expect an exception here but if we get one then
+            // we'll simply assume that the property is not set.
+            invokeGettersS = null;
+        }
+        if (invokeGettersS == null)
+            throw exception;
+
+        int rest = 0;
+        Map<String, M> methods = null;
+        if (signature == null || signature.length == 0) {
+            if (operation.startsWith("get"))
+                rest = 3;
+            else if (operation.startsWith("is"))
+                rest = 2;
+            if (rest != 0)
+                methods = getters;
+        } else if (signature.length == 1 &&
+                   operation.startsWith("set")) {
+            rest = 3;
+            methods = setters;
+        }
+
+        if (rest != 0) {
+            String attrName = operation.substring(rest);
+            M method = methods.get(attrName);
+            if (method != null && introspector.getName(method).equals(operation)) {
+                String[] msig = introspector.getSignature(method);
+                if ((signature == null && msig.length == 0) ||
+                        Arrays.equals(signature, msig)) {
+                    return introspector.invokeM(method, resource, params, cookie);
+                }
+            }
+        }
+
+        throw exception;
+    }
+
+    private String sigString(String[] signature) {
+        StringBuilder b = new StringBuilder("(");
+        if (signature != null) {
+            for (String s : signature) {
+                if (b.length() > 1)
+                    b.append(", ");
+                b.append(s);
+            }
+        }
+        return b.append(")").toString();
+    }
+
+    /**
+     * Visitor that sets up the method maps (operations, getters, setters).
+     */
+    private class InitMaps implements MBeanAnalyzer.MBeanVisitor<M> {
+        public void visitAttribute(String attributeName,
+                                   M getter,
+                                   M setter) {
+            if (getter != null) {
+                introspector.checkMethod(getter);
+                final Object old = getters.put(attributeName, getter);
+                assert(old == null);
+            }
+            if (setter != null) {
+                introspector.checkMethod(setter);
+                final Object old = setters.put(attributeName, setter);
+                assert(old == null);
+            }
+        }
+
+        public void visitOperation(String operationName,
+                                   M operation) {
+            introspector.checkMethod(operation);
+            final String[] sig = introspector.getSignature(operation);
+            final MethodAndSig mas = new MethodAndSig();
+            mas.method = operation;
+            mas.signature = sig;
+            List<MethodAndSig> list = ops.get(operationName);
+            if (list == null)
+                list = Collections.singletonList(mas);
+            else {
+                if (list.size() == 1)
+                    list = newList(list);
+                list.add(mas);
+            }
+            ops.put(operationName, list);
+        }
+    }
+
+    private class MethodAndSig {
+        M method;
+        String[] signature;
+    }
+
+    private final Class<?> mbeanInterface;
+    private final MBeanIntrospector<M> introspector;
+    private final MBeanInfo mbeanInfo;
+    private final Map<String, M> getters = newMap();
+    private final Map<String, M> setters = newMap();
+    private final Map<String, List<MethodAndSig>> ops = newMap();
+}

@@ -1,113 +1,107 @@
-/*     */ package javax.security.auth.callback;
-/*     */ 
-/*     */ import java.io.Serializable;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class TextOutputCallback
-/*     */   implements Callback, Serializable
-/*     */ {
-/*     */   private static final long serialVersionUID = 1689502495511663102L;
-/*     */   public static final int INFORMATION = 0;
-/*     */   public static final int WARNING = 1;
-/*     */   public static final int ERROR = 2;
-/*     */   private int messageType;
-/*     */   private String message;
-/*     */   
-/*     */   public TextOutputCallback(int paramInt, String paramString) {
-/*  76 */     if ((paramInt != 0 && paramInt != 1 && paramInt != 2) || paramString == null || paramString
-/*     */       
-/*  78 */       .length() == 0) {
-/*  79 */       throw new IllegalArgumentException();
-/*     */     }
-/*  81 */     this.messageType = paramInt;
-/*  82 */     this.message = paramString;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getMessageType() {
-/*  94 */     return this.messageType;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getMessage() {
-/* 105 */     return this.message;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\security\auth\callback\TextOutputCallback.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.security.auth.callback;
+
+/**
+ * <p> Underlying security services instantiate and pass a
+ * {@code TextOutputCallback} to the {@code handle}
+ * method of a {@code CallbackHandler} to display information messages,
+ * warning messages and error messages.
+ *
+ * @see javax.security.auth.callback.CallbackHandler
+ */
+public class TextOutputCallback implements Callback, java.io.Serializable {
+
+    private static final long serialVersionUID = 1689502495511663102L;
+
+    /** Information message. */
+    public static final int INFORMATION         = 0;
+    /** Warning message. */
+    public static final int WARNING             = 1;
+    /** Error message. */
+    public static final int ERROR               = 2;
+
+    /**
+     * @serial
+     * @since 1.4
+     */
+    private int messageType;
+    /**
+     * @serial
+     * @since 1.4
+     */
+    private String message;
+
+    /**
+     * Construct a TextOutputCallback with a message type and message
+     * to be displayed.
+     *
+     * <p>
+     *
+     * @param messageType the message type ({@code INFORMATION},
+     *                  {@code WARNING} or {@code ERROR}). <p>
+     *
+     * @param message the message to be displayed. <p>
+     *
+     * @exception IllegalArgumentException if {@code messageType}
+     *                  is not either {@code INFORMATION},
+     *                  {@code WARNING} or {@code ERROR},
+     *                  if {@code message} is null,
+     *                  or if {@code message} has a length of 0.
+     */
+    public TextOutputCallback(int messageType, String message) {
+        if ((messageType != INFORMATION &&
+                messageType != WARNING && messageType != ERROR) ||
+            message == null || message.length() == 0)
+            throw new IllegalArgumentException();
+
+        this.messageType = messageType;
+        this.message = message;
+    }
+
+    /**
+     * Get the message type.
+     *
+     * <p>
+     *
+     * @return the message type ({@code INFORMATION},
+     *                  {@code WARNING} or {@code ERROR}).
+     */
+    public int getMessageType() {
+        return messageType;
+    }
+
+    /**
+     * Get the message to be displayed.
+     *
+     * <p>
+     *
+     * @return the message to be displayed.
+     */
+    public String getMessage() {
+        return message;
+    }
+}

@@ -1,80 +1,74 @@
-/*    */ package javax.swing.text.html.parser;
-/*    */ 
-/*    */ import javax.swing.text.html.HTML;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class TagElement
-/*    */ {
-/*    */   Element elem;
-/*    */   HTML.Tag htmlTag;
-/*    */   boolean insertedByErrorRecovery;
-/*    */   
-/*    */   public TagElement(Element paramElement) {
-/* 43 */     this(paramElement, false);
-/*    */   }
-/*    */   
-/*    */   public TagElement(Element paramElement, boolean paramBoolean) {
-/* 47 */     this.elem = paramElement;
-/* 48 */     this.htmlTag = HTML.getTag(paramElement.getName());
-/* 49 */     if (this.htmlTag == null) {
-/* 50 */       this.htmlTag = new HTML.UnknownTag(paramElement.getName());
-/*    */     }
-/* 52 */     this.insertedByErrorRecovery = paramBoolean;
-/*    */   }
-/*    */   
-/*    */   public boolean breaksFlow() {
-/* 56 */     return this.htmlTag.breaksFlow();
-/*    */   }
-/*    */   
-/*    */   public boolean isPreformatted() {
-/* 60 */     return this.htmlTag.isPreformatted();
-/*    */   }
-/*    */   
-/*    */   public Element getElement() {
-/* 64 */     return this.elem;
-/*    */   }
-/*    */   
-/*    */   public HTML.Tag getHTMLTag() {
-/* 68 */     return this.htmlTag;
-/*    */   }
-/*    */   
-/*    */   public boolean fictional() {
-/* 72 */     return this.insertedByErrorRecovery;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\text\html\parser\TagElement.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.text.html.parser;
+
+import javax.swing.text.html.HTML;
+/**
+ * A generic HTML TagElement class. The methods define how white
+ * space is interpreted around the tag.
+ *
+ * @author      Sunita Mani
+ */
+
+public class TagElement {
+
+    Element elem;
+    HTML.Tag htmlTag;
+    boolean insertedByErrorRecovery;
+
+    public TagElement ( Element elem ) {
+        this(elem, false);
+    }
+
+    public TagElement (Element elem, boolean fictional) {
+        this.elem = elem;
+        htmlTag = HTML.getTag(elem.getName());
+        if (htmlTag == null) {
+            htmlTag = new HTML.UnknownTag(elem.getName());
+        }
+        insertedByErrorRecovery = fictional;
+    }
+
+    public boolean breaksFlow() {
+        return htmlTag.breaksFlow();
+    }
+
+    public boolean isPreformatted() {
+        return htmlTag.isPreformatted();
+    }
+
+    public Element getElement() {
+        return elem;
+    }
+
+    public HTML.Tag getHTMLTag() {
+        return htmlTag;
+    }
+
+    public boolean fictional() {
+        return insertedByErrorRecovery;
+    }
+}

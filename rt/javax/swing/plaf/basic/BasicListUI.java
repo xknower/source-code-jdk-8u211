@@ -1,2885 +1,2880 @@
-/*      */ package javax.swing.plaf.basic;
-/*      */ 
-/*      */ import java.awt.Color;
-/*      */ import java.awt.Component;
-/*      */ import java.awt.Dimension;
-/*      */ import java.awt.Font;
-/*      */ import java.awt.Graphics;
-/*      */ import java.awt.Insets;
-/*      */ import java.awt.LayoutManager;
-/*      */ import java.awt.Point;
-/*      */ import java.awt.Rectangle;
-/*      */ import java.awt.Shape;
-/*      */ import java.awt.datatransfer.Transferable;
-/*      */ import java.awt.event.ActionEvent;
-/*      */ import java.awt.event.FocusEvent;
-/*      */ import java.awt.event.FocusListener;
-/*      */ import java.awt.event.KeyEvent;
-/*      */ import java.awt.event.KeyListener;
-/*      */ import java.awt.event.MouseEvent;
-/*      */ import java.awt.geom.Point2D;
-/*      */ import java.beans.PropertyChangeEvent;
-/*      */ import java.beans.PropertyChangeListener;
-/*      */ import javax.swing.CellRendererPane;
-/*      */ import javax.swing.DefaultListCellRenderer;
-/*      */ import javax.swing.DefaultListSelectionModel;
-/*      */ import javax.swing.InputMap;
-/*      */ import javax.swing.JComponent;
-/*      */ import javax.swing.JList;
-/*      */ import javax.swing.KeyStroke;
-/*      */ import javax.swing.ListCellRenderer;
-/*      */ import javax.swing.ListModel;
-/*      */ import javax.swing.ListSelectionModel;
-/*      */ import javax.swing.LookAndFeel;
-/*      */ import javax.swing.SwingUtilities;
-/*      */ import javax.swing.TransferHandler;
-/*      */ import javax.swing.UIDefaults;
-/*      */ import javax.swing.UIManager;
-/*      */ import javax.swing.event.ListDataEvent;
-/*      */ import javax.swing.event.ListDataListener;
-/*      */ import javax.swing.event.ListSelectionEvent;
-/*      */ import javax.swing.event.ListSelectionListener;
-/*      */ import javax.swing.event.MouseInputListener;
-/*      */ import javax.swing.plaf.ComponentUI;
-/*      */ import javax.swing.plaf.ListUI;
-/*      */ import javax.swing.plaf.UIResource;
-/*      */ import javax.swing.text.Position;
-/*      */ import sun.swing.DefaultLookup;
-/*      */ import sun.swing.SwingUtilities2;
-/*      */ import sun.swing.UIAction;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class BasicListUI
-/*      */   extends ListUI
-/*      */ {
-/*   59 */   private static final StringBuilder BASELINE_COMPONENT_KEY = new StringBuilder("List.baselineComponent");
-/*      */ 
-/*      */   
-/*   62 */   protected JList list = null;
-/*      */   
-/*      */   protected CellRendererPane rendererPane;
-/*      */   
-/*      */   protected FocusListener focusListener;
-/*      */   
-/*      */   protected MouseInputListener mouseInputListener;
-/*      */   protected ListSelectionListener listSelectionListener;
-/*      */   protected ListDataListener listDataListener;
-/*      */   protected PropertyChangeListener propertyChangeListener;
-/*      */   private Handler handler;
-/*   73 */   protected int[] cellHeights = null;
-/*   74 */   protected int cellHeight = -1;
-/*   75 */   protected int cellWidth = -1;
-/*   76 */   protected int updateLayoutStateNeeded = 1;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int listHeight;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int listWidth;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int layoutOrientation;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int columnCount;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int preferredHeight;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int rowsPerColumn;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  115 */   private long timeFactor = 1000L;
-/*      */   
-/*      */   private boolean isFileList = false;
-/*      */   
-/*      */   private boolean isLeftToRight = true;
-/*      */   
-/*      */   protected static final int modelChanged = 1;
-/*      */   
-/*      */   protected static final int selectionModelChanged = 2;
-/*      */   
-/*      */   protected static final int fontChanged = 4;
-/*      */   
-/*      */   protected static final int fixedCellWidthChanged = 8;
-/*      */   
-/*      */   protected static final int fixedCellHeightChanged = 16;
-/*      */   
-/*      */   protected static final int prototypeCellValueChanged = 32;
-/*      */   
-/*      */   protected static final int cellRendererChanged = 64;
-/*      */   
-/*      */   private static final int layoutOrientationChanged = 128;
-/*      */   
-/*      */   private static final int heightChanged = 256;
-/*      */   
-/*      */   private static final int widthChanged = 512;
-/*      */   
-/*      */   private static final int componentOrientationChanged = 1024;
-/*      */   
-/*      */   private static final int DROP_LINE_THICKNESS = 2;
-/*      */   private static final int CHANGE_LEAD = 0;
-/*      */   private static final int CHANGE_SELECTION = 1;
-/*      */   private static final int EXTEND_SELECTION = 2;
-/*      */   
-/*      */   static void loadActionMap(LazyActionMap paramLazyActionMap) {
-/*  149 */     paramLazyActionMap.put(new Actions("selectPreviousColumn"));
-/*  150 */     paramLazyActionMap.put(new Actions("selectPreviousColumnExtendSelection"));
-/*  151 */     paramLazyActionMap.put(new Actions("selectPreviousColumnChangeLead"));
-/*  152 */     paramLazyActionMap.put(new Actions("selectNextColumn"));
-/*  153 */     paramLazyActionMap.put(new Actions("selectNextColumnExtendSelection"));
-/*  154 */     paramLazyActionMap.put(new Actions("selectNextColumnChangeLead"));
-/*  155 */     paramLazyActionMap.put(new Actions("selectPreviousRow"));
-/*  156 */     paramLazyActionMap.put(new Actions("selectPreviousRowExtendSelection"));
-/*  157 */     paramLazyActionMap.put(new Actions("selectPreviousRowChangeLead"));
-/*  158 */     paramLazyActionMap.put(new Actions("selectNextRow"));
-/*  159 */     paramLazyActionMap.put(new Actions("selectNextRowExtendSelection"));
-/*  160 */     paramLazyActionMap.put(new Actions("selectNextRowChangeLead"));
-/*  161 */     paramLazyActionMap.put(new Actions("selectFirstRow"));
-/*  162 */     paramLazyActionMap.put(new Actions("selectFirstRowExtendSelection"));
-/*  163 */     paramLazyActionMap.put(new Actions("selectFirstRowChangeLead"));
-/*  164 */     paramLazyActionMap.put(new Actions("selectLastRow"));
-/*  165 */     paramLazyActionMap.put(new Actions("selectLastRowExtendSelection"));
-/*  166 */     paramLazyActionMap.put(new Actions("selectLastRowChangeLead"));
-/*  167 */     paramLazyActionMap.put(new Actions("scrollUp"));
-/*  168 */     paramLazyActionMap.put(new Actions("scrollUpExtendSelection"));
-/*  169 */     paramLazyActionMap.put(new Actions("scrollUpChangeLead"));
-/*  170 */     paramLazyActionMap.put(new Actions("scrollDown"));
-/*  171 */     paramLazyActionMap.put(new Actions("scrollDownExtendSelection"));
-/*  172 */     paramLazyActionMap.put(new Actions("scrollDownChangeLead"));
-/*  173 */     paramLazyActionMap.put(new Actions("selectAll"));
-/*  174 */     paramLazyActionMap.put(new Actions("clearSelection"));
-/*  175 */     paramLazyActionMap.put(new Actions("addToSelection"));
-/*  176 */     paramLazyActionMap.put(new Actions("toggleAndAnchor"));
-/*  177 */     paramLazyActionMap.put(new Actions("extendTo"));
-/*  178 */     paramLazyActionMap.put(new Actions("moveSelectionTo"));
-/*      */     
-/*  180 */     paramLazyActionMap.put(TransferHandler.getCutAction().getValue("Name"), 
-/*  181 */         TransferHandler.getCutAction());
-/*  182 */     paramLazyActionMap.put(TransferHandler.getCopyAction().getValue("Name"), 
-/*  183 */         TransferHandler.getCopyAction());
-/*  184 */     paramLazyActionMap.put(TransferHandler.getPasteAction().getValue("Name"), 
-/*  185 */         TransferHandler.getPasteAction());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void paintCell(Graphics paramGraphics, int paramInt1, Rectangle paramRectangle, ListCellRenderer paramListCellRenderer, ListModel<Object> paramListModel, ListSelectionModel paramListSelectionModel, int paramInt2) {
-/*  204 */     Object object = paramListModel.getElementAt(paramInt1);
-/*  205 */     boolean bool = (this.list.hasFocus() && paramInt1 == paramInt2) ? true : false;
-/*  206 */     boolean bool1 = paramListSelectionModel.isSelectedIndex(paramInt1);
-/*      */ 
-/*      */     
-/*  209 */     Component component = paramListCellRenderer.getListCellRendererComponent(this.list, object, paramInt1, bool1, bool);
-/*      */     
-/*  211 */     int i = paramRectangle.x;
-/*  212 */     int j = paramRectangle.y;
-/*  213 */     int k = paramRectangle.width;
-/*  214 */     int m = paramRectangle.height;
-/*      */     
-/*  216 */     if (this.isFileList) {
-/*      */ 
-/*      */ 
-/*      */       
-/*  220 */       int n = Math.min(k, (component.getPreferredSize()).width + 4);
-/*  221 */       if (!this.isLeftToRight) {
-/*  222 */         i += k - n;
-/*      */       }
-/*  224 */       k = n;
-/*      */     } 
-/*      */     
-/*  227 */     this.rendererPane.paintComponent(paramGraphics, component, this.list, i, j, k, m, true);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paint(Graphics paramGraphics, JComponent paramJComponent) {
-/*  239 */     Shape shape = paramGraphics.getClip();
-/*  240 */     paintImpl(paramGraphics, paramJComponent);
-/*  241 */     paramGraphics.setClip(shape);
-/*      */     
-/*  243 */     paintDropLine(paramGraphics);
-/*      */   }
-/*      */   
-/*      */   private void paintImpl(Graphics paramGraphics, JComponent paramJComponent) {
-/*      */     int j, k;
-/*  248 */     switch (this.layoutOrientation) {
-/*      */       case 1:
-/*  250 */         if (this.list.getHeight() != this.listHeight) {
-/*  251 */           this.updateLayoutStateNeeded |= 0x100;
-/*  252 */           redrawList();
-/*      */         } 
-/*      */         break;
-/*      */       case 2:
-/*  256 */         if (this.list.getWidth() != this.listWidth) {
-/*  257 */           this.updateLayoutStateNeeded |= 0x200;
-/*  258 */           redrawList();
-/*      */         } 
-/*      */         break;
-/*      */     } 
-/*      */ 
-/*      */     
-/*  264 */     maybeUpdateLayoutState();
-/*      */     
-/*  266 */     ListCellRenderer listCellRenderer = this.list.getCellRenderer();
-/*  267 */     ListModel listModel = this.list.getModel();
-/*  268 */     ListSelectionModel listSelectionModel = this.list.getSelectionModel();
-/*      */     
-/*      */     int i;
-/*  271 */     if (listCellRenderer == null || (i = listModel.getSize()) == 0) {
-/*      */       return;
-/*      */     }
-/*      */ 
-/*      */     
-/*  276 */     Rectangle rectangle = paramGraphics.getClipBounds();
-/*      */ 
-/*      */     
-/*  279 */     if (paramJComponent.getComponentOrientation().isLeftToRight()) {
-/*  280 */       j = convertLocationToColumn(rectangle.x, rectangle.y);
-/*      */       
-/*  282 */       k = convertLocationToColumn(rectangle.x + rectangle.width, rectangle.y);
-/*      */     }
-/*      */     else {
-/*      */       
-/*  286 */       j = convertLocationToColumn(rectangle.x + rectangle.width, rectangle.y);
-/*      */ 
-/*      */       
-/*  289 */       k = convertLocationToColumn(rectangle.x, rectangle.y);
-/*      */     } 
-/*      */     
-/*  292 */     int m = rectangle.y + rectangle.height;
-/*  293 */     int n = adjustIndex(this.list.getLeadSelectionIndex(), this.list);
-/*  294 */     byte b = (this.layoutOrientation == 2) ? this.columnCount : 1;
-/*      */ 
-/*      */ 
-/*      */     
-/*  298 */     for (int i1 = j; i1 <= k; 
-/*  299 */       i1++) {
-/*      */       
-/*  301 */       int i2 = convertLocationToRowInColumn(rectangle.y, i1);
-/*  302 */       int i3 = getRowCount(i1);
-/*  303 */       int i4 = getModelIndex(i1, i2);
-/*  304 */       Rectangle rectangle1 = getCellBounds(this.list, i4, i4);
-/*      */       
-/*  306 */       if (rectangle1 == null) {
-/*      */         return;
-/*      */       }
-/*      */       
-/*  310 */       while (i2 < i3 && rectangle1.y < m && i4 < i) {
-/*      */         
-/*  312 */         rectangle1.height = getHeight(i1, i2);
-/*  313 */         paramGraphics.setClip(rectangle1.x, rectangle1.y, rectangle1.width, rectangle1.height);
-/*      */         
-/*  315 */         paramGraphics.clipRect(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
-/*      */         
-/*  317 */         paintCell(paramGraphics, i4, rectangle1, listCellRenderer, listModel, listSelectionModel, n);
-/*      */         
-/*  319 */         rectangle1.y += rectangle1.height;
-/*  320 */         i4 += b;
-/*  321 */         i2++;
-/*      */       } 
-/*      */     } 
-/*      */     
-/*  325 */     this.rendererPane.removeAll();
-/*      */   }
-/*      */   
-/*      */   private void paintDropLine(Graphics paramGraphics) {
-/*  329 */     JList.DropLocation dropLocation = this.list.getDropLocation();
-/*  330 */     if (dropLocation == null || !dropLocation.isInsert()) {
-/*      */       return;
-/*      */     }
-/*      */     
-/*  334 */     Color color = DefaultLookup.getColor(this.list, this, "List.dropLineColor", null);
-/*  335 */     if (color != null) {
-/*  336 */       paramGraphics.setColor(color);
-/*  337 */       Rectangle rectangle = getDropLineRect(dropLocation);
-/*  338 */       paramGraphics.fillRect(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   private Rectangle getDropLineRect(JList.DropLocation paramDropLocation) {
-/*  343 */     int i = this.list.getModel().getSize();
-/*      */     
-/*  345 */     if (i == 0) {
-/*  346 */       Insets insets = this.list.getInsets();
-/*  347 */       if (this.layoutOrientation == 2) {
-/*  348 */         if (this.isLeftToRight) {
-/*  349 */           return new Rectangle(insets.left, insets.top, 2, 20);
-/*      */         }
-/*  351 */         return new Rectangle(this.list.getWidth() - 2 - insets.right, insets.top, 2, 20);
-/*      */       } 
-/*      */ 
-/*      */       
-/*  355 */       return new Rectangle(insets.left, insets.top, this.list
-/*  356 */           .getWidth() - insets.left - insets.right, 2);
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/*  361 */     Rectangle rectangle = null;
-/*  362 */     int j = paramDropLocation.getIndex();
-/*  363 */     boolean bool = false;
-/*      */     
-/*  365 */     if (this.layoutOrientation == 2) {
-/*  366 */       if (j == i) {
-/*  367 */         bool = true;
-/*  368 */       } else if (j != 0 && convertModelToRow(j) != 
-/*  369 */         convertModelToRow(j - 1)) {
-/*      */         
-/*  371 */         Rectangle rectangle1 = getCellBounds(this.list, j - 1);
-/*  372 */         Rectangle rectangle2 = getCellBounds(this.list, j);
-/*  373 */         Point point = paramDropLocation.getDropPoint();
-/*      */         
-/*  375 */         if (this.isLeftToRight) {
-/*      */ 
-/*      */ 
-/*      */           
-/*  379 */           bool = (Point2D.distance((rectangle1.x + rectangle1.width), (rectangle1.y + (int)(rectangle1.height / 2.0D)), point.x, point.y) < Point2D.distance(rectangle2.x, (rectangle2.y + (int)(rectangle2.height / 2.0D)), point.x, point.y)) ? true : false;
-/*      */ 
-/*      */         
-/*      */         }
-/*      */         else {
-/*      */ 
-/*      */           
-/*  386 */           bool = (Point2D.distance(rectangle1.x, (rectangle1.y + (int)(rectangle1.height / 2.0D)), point.x, point.y) < Point2D.distance((rectangle2.x + rectangle2.width), (rectangle2.y + (int)(rectangle1.height / 2.0D)), point.x, point.y)) ? true : false;
-/*      */         } 
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */       
-/*  392 */       if (bool) {
-/*  393 */         j--;
-/*  394 */         rectangle = getCellBounds(this.list, j);
-/*  395 */         if (this.isLeftToRight) {
-/*  396 */           rectangle.x += rectangle.width;
-/*      */         } else {
-/*  398 */           rectangle.x -= 2;
-/*      */         } 
-/*      */       } else {
-/*  401 */         rectangle = getCellBounds(this.list, j);
-/*  402 */         if (!this.isLeftToRight) {
-/*  403 */           rectangle.x += rectangle.width - 2;
-/*      */         }
-/*      */       } 
-/*      */       
-/*  407 */       if (rectangle.x >= this.list.getWidth()) {
-/*  408 */         rectangle.x = this.list.getWidth() - 2;
-/*  409 */       } else if (rectangle.x < 0) {
-/*  410 */         rectangle.x = 0;
-/*      */       } 
-/*      */       
-/*  413 */       rectangle.width = 2;
-/*  414 */     } else if (this.layoutOrientation == 1) {
-/*  415 */       if (j == i) {
-/*  416 */         j--;
-/*  417 */         rectangle = getCellBounds(this.list, j);
-/*  418 */         rectangle.y += rectangle.height;
-/*  419 */       } else if (j != 0 && convertModelToColumn(j) != 
-/*  420 */         convertModelToColumn(j - 1)) {
-/*      */         
-/*  422 */         Rectangle rectangle1 = getCellBounds(this.list, j - 1);
-/*  423 */         Rectangle rectangle2 = getCellBounds(this.list, j);
-/*  424 */         Point point = paramDropLocation.getDropPoint();
-/*  425 */         if (Point2D.distance((rectangle1.x + (int)(rectangle1.width / 2.0D)), (rectangle1.y + rectangle1.height), point.x, point.y) < 
-/*      */ 
-/*      */           
-/*  428 */           Point2D.distance((rectangle2.x + (int)(rectangle2.width / 2.0D)), rectangle2.y, point.x, point.y)) {
-/*      */ 
-/*      */ 
-/*      */           
-/*  432 */           j--;
-/*  433 */           rectangle = getCellBounds(this.list, j);
-/*  434 */           rectangle.y += rectangle.height;
-/*      */         } else {
-/*  436 */           rectangle = getCellBounds(this.list, j);
-/*      */         } 
-/*      */       } else {
-/*  439 */         rectangle = getCellBounds(this.list, j);
-/*      */       } 
-/*      */       
-/*  442 */       if (rectangle.y >= this.list.getHeight()) {
-/*  443 */         rectangle.y = this.list.getHeight() - 2;
-/*      */       }
-/*      */       
-/*  446 */       rectangle.height = 2;
-/*      */     } else {
-/*  448 */       if (j == i) {
-/*  449 */         j--;
-/*  450 */         rectangle = getCellBounds(this.list, j);
-/*  451 */         rectangle.y += rectangle.height;
-/*      */       } else {
-/*  453 */         rectangle = getCellBounds(this.list, j);
-/*      */       } 
-/*      */       
-/*  456 */       if (rectangle.y >= this.list.getHeight()) {
-/*  457 */         rectangle.y = this.list.getHeight() - 2;
-/*      */       }
-/*      */       
-/*  460 */       rectangle.height = 2;
-/*      */     } 
-/*      */     
-/*  463 */     return rectangle;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getBaseline(JComponent paramJComponent, int paramInt1, int paramInt2) {
-/*  475 */     super.getBaseline(paramJComponent, paramInt1, paramInt2);
-/*  476 */     int i = this.list.getFixedCellHeight();
-/*  477 */     UIDefaults uIDefaults = UIManager.getLookAndFeelDefaults();
-/*  478 */     Component component = (Component)uIDefaults.get(BASELINE_COMPONENT_KEY);
-/*      */     
-/*  480 */     if (component == null) {
-/*  481 */       ListCellRenderer<String> listCellRenderer = (ListCellRenderer)UIManager.get("List.cellRenderer");
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  486 */       if (listCellRenderer == null) {
-/*  487 */         listCellRenderer = new DefaultListCellRenderer();
-/*      */       }
-/*  489 */       component = listCellRenderer.getListCellRendererComponent(this.list, "a", -1, false, false);
-/*      */       
-/*  491 */       uIDefaults.put(BASELINE_COMPONENT_KEY, component);
-/*      */     } 
-/*  493 */     component.setFont(this.list.getFont());
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  501 */     if (i == -1) {
-/*  502 */       i = (component.getPreferredSize()).height;
-/*      */     }
-/*  504 */     return component.getBaseline(2147483647, i) + 
-/*  505 */       (this.list.getInsets()).top;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Component.BaselineResizeBehavior getBaselineResizeBehavior(JComponent paramJComponent) {
-/*  518 */     super.getBaselineResizeBehavior(paramJComponent);
-/*  519 */     return Component.BaselineResizeBehavior.CONSTANT_ASCENT;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Dimension getPreferredSize(JComponent paramJComponent) {
-/*      */     boolean bool;
-/*  578 */     maybeUpdateLayoutState();
-/*      */     
-/*  580 */     int i = this.list.getModel().getSize() - 1;
-/*  581 */     if (i < 0) {
-/*  582 */       return new Dimension(0, 0);
-/*      */     }
-/*      */     
-/*  585 */     Insets insets = this.list.getInsets();
-/*  586 */     int j = this.cellWidth * this.columnCount + insets.left + insets.right;
-/*      */ 
-/*      */     
-/*  589 */     if (this.layoutOrientation != 0) {
-/*  590 */       bool = this.preferredHeight;
-/*      */     } else {
-/*      */       
-/*  593 */       Rectangle rectangle = getCellBounds(this.list, i);
-/*      */       
-/*  595 */       if (rectangle != null) {
-/*  596 */         bool = rectangle.y + rectangle.height + insets.bottom;
-/*      */       } else {
-/*      */         
-/*  599 */         bool = false;
-/*      */       } 
-/*      */     } 
-/*  602 */     return new Dimension(j, bool);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void selectPreviousIndex() {
-/*  612 */     int i = this.list.getSelectedIndex();
-/*  613 */     if (i > 0) {
-/*  614 */       i--;
-/*  615 */       this.list.setSelectedIndex(i);
-/*  616 */       this.list.ensureIndexIsVisible(i);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void selectNextIndex() {
-/*  628 */     int i = this.list.getSelectedIndex();
-/*  629 */     if (i + 1 < this.list.getModel().getSize()) {
-/*  630 */       i++;
-/*  631 */       this.list.setSelectedIndex(i);
-/*  632 */       this.list.ensureIndexIsVisible(i);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void installKeyboardActions() {
-/*  645 */     InputMap inputMap = getInputMap(0);
-/*      */     
-/*  647 */     SwingUtilities.replaceUIInputMap(this.list, 0, inputMap);
-/*      */ 
-/*      */     
-/*  650 */     LazyActionMap.installLazyActionMap(this.list, BasicListUI.class, "List.actionMap");
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   InputMap getInputMap(int paramInt) {
-/*  655 */     if (paramInt == 0) {
-/*  656 */       InputMap inputMap1 = (InputMap)DefaultLookup.get(this.list, this, "List.focusInputMap");
-/*      */       
-/*      */       InputMap inputMap2;
-/*      */       
-/*  660 */       if (this.isLeftToRight || (
-/*  661 */         inputMap2 = (InputMap)DefaultLookup.get(this.list, this, "List.focusInputMap.RightToLeft")) == null)
-/*      */       {
-/*  663 */         return inputMap1;
-/*      */       }
-/*  665 */       inputMap2.setParent(inputMap1);
-/*  666 */       return inputMap2;
-/*      */     } 
-/*      */     
-/*  669 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void uninstallKeyboardActions() {
-/*  682 */     SwingUtilities.replaceUIActionMap(this.list, null);
-/*  683 */     SwingUtilities.replaceUIInputMap(this.list, 0, null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void installListeners() {
-/*  696 */     TransferHandler transferHandler = this.list.getTransferHandler();
-/*  697 */     if (transferHandler == null || transferHandler instanceof UIResource) {
-/*  698 */       this.list.setTransferHandler(defaultTransferHandler);
-/*      */ 
-/*      */       
-/*  701 */       if (this.list.getDropTarget() instanceof UIResource) {
-/*  702 */         this.list.setDropTarget(null);
-/*      */       }
-/*      */     } 
-/*      */     
-/*  706 */     this.focusListener = createFocusListener();
-/*  707 */     this.mouseInputListener = createMouseInputListener();
-/*  708 */     this.propertyChangeListener = createPropertyChangeListener();
-/*  709 */     this.listSelectionListener = createListSelectionListener();
-/*  710 */     this.listDataListener = createListDataListener();
-/*      */     
-/*  712 */     this.list.addFocusListener(this.focusListener);
-/*  713 */     this.list.addMouseListener(this.mouseInputListener);
-/*  714 */     this.list.addMouseMotionListener(this.mouseInputListener);
-/*  715 */     this.list.addPropertyChangeListener(this.propertyChangeListener);
-/*  716 */     this.list.addKeyListener(getHandler());
-/*      */     
-/*  718 */     ListModel listModel = this.list.getModel();
-/*  719 */     if (listModel != null) {
-/*  720 */       listModel.addListDataListener(this.listDataListener);
-/*      */     }
-/*      */     
-/*  723 */     ListSelectionModel listSelectionModel = this.list.getSelectionModel();
-/*  724 */     if (listSelectionModel != null) {
-/*  725 */       listSelectionModel.addListSelectionListener(this.listSelectionListener);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void uninstallListeners() {
-/*  741 */     this.list.removeFocusListener(this.focusListener);
-/*  742 */     this.list.removeMouseListener(this.mouseInputListener);
-/*  743 */     this.list.removeMouseMotionListener(this.mouseInputListener);
-/*  744 */     this.list.removePropertyChangeListener(this.propertyChangeListener);
-/*  745 */     this.list.removeKeyListener(getHandler());
-/*      */     
-/*  747 */     ListModel listModel = this.list.getModel();
-/*  748 */     if (listModel != null) {
-/*  749 */       listModel.removeListDataListener(this.listDataListener);
-/*      */     }
-/*      */     
-/*  752 */     ListSelectionModel listSelectionModel = this.list.getSelectionModel();
-/*  753 */     if (listSelectionModel != null) {
-/*  754 */       listSelectionModel.removeListSelectionListener(this.listSelectionListener);
-/*      */     }
-/*      */     
-/*  757 */     this.focusListener = null;
-/*  758 */     this.mouseInputListener = null;
-/*  759 */     this.listSelectionListener = null;
-/*  760 */     this.listDataListener = null;
-/*  761 */     this.propertyChangeListener = null;
-/*  762 */     this.handler = null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void installDefaults() {
-/*  779 */     this.list.setLayout((LayoutManager)null);
-/*      */     
-/*  781 */     LookAndFeel.installBorder(this.list, "List.border");
-/*      */     
-/*  783 */     LookAndFeel.installColorsAndFont(this.list, "List.background", "List.foreground", "List.font");
-/*      */     
-/*  785 */     LookAndFeel.installProperty(this.list, "opaque", Boolean.TRUE);
-/*      */     
-/*  787 */     if (this.list.getCellRenderer() == null) {
-/*  788 */       this.list.setCellRenderer((ListCellRenderer)UIManager.get("List.cellRenderer"));
-/*      */     }
-/*      */     
-/*  791 */     Color color1 = this.list.getSelectionBackground();
-/*  792 */     if (color1 == null || color1 instanceof UIResource) {
-/*  793 */       this.list.setSelectionBackground(UIManager.getColor("List.selectionBackground"));
-/*      */     }
-/*      */     
-/*  796 */     Color color2 = this.list.getSelectionForeground();
-/*  797 */     if (color2 == null || color2 instanceof UIResource) {
-/*  798 */       this.list.setSelectionForeground(UIManager.getColor("List.selectionForeground"));
-/*      */     }
-/*      */     
-/*  801 */     Long long_ = (Long)UIManager.get("List.timeFactor");
-/*  802 */     this.timeFactor = (long_ != null) ? long_.longValue() : 1000L;
-/*      */     
-/*  804 */     updateIsFileList();
-/*      */   }
-/*      */   
-/*      */   private void updateIsFileList() {
-/*  808 */     boolean bool = Boolean.TRUE.equals(this.list.getClientProperty("List.isFileList"));
-/*  809 */     if (bool != this.isFileList) {
-/*  810 */       this.isFileList = bool;
-/*  811 */       Font font = this.list.getFont();
-/*  812 */       if (font == null || font instanceof UIResource) {
-/*  813 */         Font font1 = UIManager.getFont(bool ? "FileChooser.listFont" : "List.font");
-/*  814 */         if (font1 != null && font1 != font) {
-/*  815 */           this.list.setFont(font1);
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void uninstallDefaults() {
-/*  833 */     LookAndFeel.uninstallBorder(this.list);
-/*  834 */     if (this.list.getFont() instanceof UIResource) {
-/*  835 */       this.list.setFont((Font)null);
-/*      */     }
-/*  837 */     if (this.list.getForeground() instanceof UIResource) {
-/*  838 */       this.list.setForeground((Color)null);
-/*      */     }
-/*  840 */     if (this.list.getBackground() instanceof UIResource) {
-/*  841 */       this.list.setBackground((Color)null);
-/*      */     }
-/*  843 */     if (this.list.getSelectionBackground() instanceof UIResource) {
-/*  844 */       this.list.setSelectionBackground((Color)null);
-/*      */     }
-/*  846 */     if (this.list.getSelectionForeground() instanceof UIResource) {
-/*  847 */       this.list.setSelectionForeground((Color)null);
-/*      */     }
-/*  849 */     if (this.list.getCellRenderer() instanceof UIResource) {
-/*  850 */       this.list.setCellRenderer((ListCellRenderer)null);
-/*      */     }
-/*  852 */     if (this.list.getTransferHandler() instanceof UIResource) {
-/*  853 */       this.list.setTransferHandler((TransferHandler)null);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void installUI(JComponent paramJComponent) {
-/*  869 */     this.list = (JList)paramJComponent;
-/*      */     
-/*  871 */     this.layoutOrientation = this.list.getLayoutOrientation();
-/*      */     
-/*  873 */     this.rendererPane = new CellRendererPane();
-/*  874 */     this.list.add(this.rendererPane);
-/*      */     
-/*  876 */     this.columnCount = 1;
-/*      */     
-/*  878 */     this.updateLayoutStateNeeded = 1;
-/*  879 */     this.isLeftToRight = this.list.getComponentOrientation().isLeftToRight();
-/*      */     
-/*  881 */     installDefaults();
-/*  882 */     installListeners();
-/*  883 */     installKeyboardActions();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void uninstallUI(JComponent paramJComponent) {
-/*  898 */     uninstallListeners();
-/*  899 */     uninstallDefaults();
-/*  900 */     uninstallKeyboardActions();
-/*      */     
-/*  902 */     this.cellWidth = this.cellHeight = -1;
-/*  903 */     this.cellHeights = null;
-/*      */     
-/*  905 */     this.listWidth = this.listHeight = -1;
-/*      */     
-/*  907 */     this.list.remove(this.rendererPane);
-/*  908 */     this.rendererPane = null;
-/*  909 */     this.list = null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static ComponentUI createUI(JComponent paramJComponent) {
-/*  920 */     return new BasicListUI();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int locationToIndex(JList paramJList, Point paramPoint) {
-/*  929 */     maybeUpdateLayoutState();
-/*  930 */     return convertLocationToModel(paramPoint.x, paramPoint.y);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Point indexToLocation(JList paramJList, int paramInt) {
-/*  938 */     maybeUpdateLayoutState();
-/*  939 */     Rectangle rectangle = getCellBounds(paramJList, paramInt, paramInt);
-/*      */     
-/*  941 */     if (rectangle != null) {
-/*  942 */       return new Point(rectangle.x, rectangle.y);
-/*      */     }
-/*  944 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Rectangle getCellBounds(JList paramJList, int paramInt1, int paramInt2) {
-/*  952 */     maybeUpdateLayoutState();
-/*      */     
-/*  954 */     int i = Math.min(paramInt1, paramInt2);
-/*  955 */     int j = Math.max(paramInt1, paramInt2);
-/*      */     
-/*  957 */     if (i >= paramJList.getModel().getSize()) {
-/*  958 */       return null;
-/*      */     }
-/*      */     
-/*  961 */     Rectangle rectangle1 = getCellBounds(paramJList, i);
-/*      */     
-/*  963 */     if (rectangle1 == null) {
-/*  964 */       return null;
-/*      */     }
-/*  966 */     if (i == j) {
-/*  967 */       return rectangle1;
-/*      */     }
-/*  969 */     Rectangle rectangle2 = getCellBounds(paramJList, j);
-/*      */     
-/*  971 */     if (rectangle2 != null) {
-/*  972 */       if (this.layoutOrientation == 2) {
-/*  973 */         int k = convertModelToRow(i);
-/*  974 */         int m = convertModelToRow(j);
-/*      */         
-/*  976 */         if (k != m) {
-/*  977 */           rectangle1.x = 0;
-/*  978 */           rectangle1.width = paramJList.getWidth();
-/*      */         }
-/*      */       
-/*  981 */       } else if (rectangle1.x != rectangle2.x) {
-/*      */         
-/*  983 */         rectangle1.y = 0;
-/*  984 */         rectangle1.height = paramJList.getHeight();
-/*      */       } 
-/*  986 */       rectangle1.add(rectangle2);
-/*      */     } 
-/*  988 */     return rectangle1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Rectangle getCellBounds(JList paramJList, int paramInt) {
-/*  996 */     maybeUpdateLayoutState();
-/*      */     
-/*  998 */     int i = convertModelToRow(paramInt);
-/*  999 */     int j = convertModelToColumn(paramInt);
-/*      */     
-/* 1001 */     if (i == -1 || j == -1) {
-/* 1002 */       return null;
-/*      */     }
-/*      */     
-/* 1005 */     Insets insets = paramJList.getInsets();
-/*      */     
-/* 1007 */     int m = this.cellWidth;
-/* 1008 */     int n = insets.top;
-/*      */     
-/* 1010 */     switch (this.layoutOrientation)
-/*      */     { case 1:
-/*      */       case 2:
-/* 1013 */         if (this.isLeftToRight) {
-/* 1014 */           k = insets.left + j * this.cellWidth;
-/*      */         } else {
-/* 1016 */           k = paramJList.getWidth() - insets.right - (j + 1) * this.cellWidth;
-/*      */         } 
-/* 1018 */         n += this.cellHeight * i;
-/* 1019 */         i1 = this.cellHeight;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1038 */         return new Rectangle(k, n, m, i1); }  int k = insets.left; if (this.cellHeights == null) { n += this.cellHeight * i; } else if (i >= this.cellHeights.length) { n = 0; } else { for (byte b = 0; b < i; b++) n += this.cellHeights[b];  }  m = paramJList.getWidth() - insets.left + insets.right; int i1 = getRowHeight(paramInt); return new Rectangle(k, n, m, i1);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected int getRowHeight(int paramInt) {
-/* 1051 */     return getHeight(0, paramInt);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected int convertYToRow(int paramInt) {
-/* 1066 */     return convertLocationToRow(0, paramInt, false);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected int convertRowToY(int paramInt) {
-/* 1080 */     if (paramInt >= getRowCount(0) || paramInt < 0) {
-/* 1081 */       return -1;
-/*      */     }
-/* 1083 */     Rectangle rectangle = getCellBounds(this.list, paramInt, paramInt);
-/* 1084 */     return rectangle.y;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int getHeight(int paramInt1, int paramInt2) {
-/* 1091 */     if (paramInt1 < 0 || paramInt1 > this.columnCount || paramInt2 < 0) {
-/* 1092 */       return -1;
-/*      */     }
-/* 1094 */     if (this.layoutOrientation != 0) {
-/* 1095 */       return this.cellHeight;
-/*      */     }
-/* 1097 */     if (paramInt2 >= this.list.getModel().getSize()) {
-/* 1098 */       return -1;
-/*      */     }
-/* 1100 */     return (this.cellHeights == null) ? this.cellHeight : ((paramInt2 < this.cellHeights.length) ? this.cellHeights[paramInt2] : -1);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int convertLocationToRow(int paramInt1, int paramInt2, boolean paramBoolean) {
-/* 1111 */     int i = this.list.getModel().getSize();
-/*      */     
-/* 1113 */     if (i <= 0) {
-/* 1114 */       return -1;
-/*      */     }
-/* 1116 */     Insets insets = this.list.getInsets();
-/* 1117 */     if (this.cellHeights == null) {
-/* 1118 */       int k = (this.cellHeight == 0) ? 0 : ((paramInt2 - insets.top) / this.cellHeight);
-/*      */       
-/* 1120 */       if (paramBoolean) {
-/* 1121 */         if (k) {
-/* 1122 */           k = 0;
-/*      */         }
-/* 1124 */         else if (k >= i) {
-/* 1125 */           k = i - 1;
-/*      */         } 
-/*      */       }
-/* 1128 */       return k;
-/*      */     } 
-/* 1130 */     if (i > this.cellHeights.length) {
-/* 1131 */       return -1;
-/*      */     }
-/*      */     
-/* 1134 */     int j = insets.top;
-/* 1135 */     byte b1 = 0;
-/*      */     
-/* 1137 */     if (paramBoolean && paramInt2 < j) {
-/* 1138 */       return 0;
-/*      */     }
-/*      */     byte b2;
-/* 1141 */     for (b2 = 0; b2 < i; b2++) {
-/* 1142 */       if (paramInt2 >= j && paramInt2 < j + this.cellHeights[b2]) {
-/* 1143 */         return b1;
-/*      */       }
-/* 1145 */       j += this.cellHeights[b2];
-/* 1146 */       b1++;
-/*      */     } 
-/* 1148 */     return b2 - 1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int convertLocationToRowInColumn(int paramInt1, int paramInt2) {
-/* 1157 */     int i = 0;
-/*      */     
-/* 1159 */     if (this.layoutOrientation != 0) {
-/* 1160 */       if (this.isLeftToRight) {
-/* 1161 */         i = paramInt2 * this.cellWidth;
-/*      */       } else {
-/* 1163 */         i = this.list.getWidth() - (paramInt2 + 1) * this.cellWidth - (this.list.getInsets()).right;
-/*      */       } 
-/*      */     }
-/* 1166 */     return convertLocationToRow(i, paramInt1, true);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int convertLocationToModel(int paramInt1, int paramInt2) {
-/* 1174 */     int i = convertLocationToRow(paramInt1, paramInt2, true);
-/* 1175 */     int j = convertLocationToColumn(paramInt1, paramInt2);
-/*      */     
-/* 1177 */     if (i >= 0 && j >= 0) {
-/* 1178 */       return getModelIndex(j, i);
-/*      */     }
-/* 1180 */     return -1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int getRowCount(int paramInt) {
-/* 1187 */     if (paramInt < 0 || paramInt >= this.columnCount) {
-/* 1188 */       return -1;
-/*      */     }
-/* 1190 */     if (this.layoutOrientation == 0 || (paramInt == 0 && this.columnCount == 1))
-/*      */     {
-/* 1192 */       return this.list.getModel().getSize();
-/*      */     }
-/* 1194 */     if (paramInt >= this.columnCount) {
-/* 1195 */       return -1;
-/*      */     }
-/* 1197 */     if (this.layoutOrientation == 1) {
-/* 1198 */       if (paramInt < this.columnCount - 1) {
-/* 1199 */         return this.rowsPerColumn;
-/*      */       }
-/* 1201 */       return this.list.getModel().getSize() - (this.columnCount - 1) * this.rowsPerColumn;
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1206 */     int i = this.columnCount - this.columnCount * this.rowsPerColumn - this.list.getModel().getSize();
-/*      */     
-/* 1208 */     if (paramInt >= i) {
-/* 1209 */       return Math.max(0, this.rowsPerColumn - 1);
-/*      */     }
-/* 1211 */     return this.rowsPerColumn;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int getModelIndex(int paramInt1, int paramInt2) {
-/* 1220 */     switch (this.layoutOrientation) {
-/*      */       case 1:
-/* 1222 */         return Math.min(this.list.getModel().getSize() - 1, this.rowsPerColumn * paramInt1 + 
-/* 1223 */             Math.min(paramInt2, this.rowsPerColumn - 1));
-/*      */       case 2:
-/* 1225 */         return Math.min(this.list.getModel().getSize() - 1, paramInt2 * this.columnCount + paramInt1);
-/*      */     } 
-/*      */     
-/* 1228 */     return paramInt2;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int convertLocationToColumn(int paramInt1, int paramInt2) {
-/* 1236 */     if (this.cellWidth > 0) {
-/* 1237 */       int i; if (this.layoutOrientation == 0) {
-/* 1238 */         return 0;
-/*      */       }
-/* 1240 */       Insets insets = this.list.getInsets();
-/*      */       
-/* 1242 */       if (this.isLeftToRight) {
-/* 1243 */         i = (paramInt1 - insets.left) / this.cellWidth;
-/*      */       } else {
-/* 1245 */         i = (this.list.getWidth() - paramInt1 - insets.right - 1) / this.cellWidth;
-/*      */       } 
-/* 1247 */       if (i < 0) {
-/* 1248 */         return 0;
-/*      */       }
-/* 1250 */       if (i >= this.columnCount) {
-/* 1251 */         return this.columnCount - 1;
-/*      */       }
-/* 1253 */       return i;
-/*      */     } 
-/* 1255 */     return 0;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int convertModelToRow(int paramInt) {
-/* 1263 */     int i = this.list.getModel().getSize();
-/*      */     
-/* 1265 */     if (paramInt < 0 || paramInt >= i) {
-/* 1266 */       return -1;
-/*      */     }
-/*      */     
-/* 1269 */     if (this.layoutOrientation != 0 && this.columnCount > 1 && this.rowsPerColumn > 0) {
-/*      */       
-/* 1271 */       if (this.layoutOrientation == 1) {
-/* 1272 */         return paramInt % this.rowsPerColumn;
-/*      */       }
-/* 1274 */       return paramInt / this.columnCount;
-/*      */     } 
-/* 1276 */     return paramInt;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int convertModelToColumn(int paramInt) {
-/* 1284 */     int i = this.list.getModel().getSize();
-/*      */     
-/* 1286 */     if (paramInt < 0 || paramInt >= i) {
-/* 1287 */       return -1;
-/*      */     }
-/*      */     
-/* 1290 */     if (this.layoutOrientation != 0 && this.rowsPerColumn > 0 && this.columnCount > 1) {
-/*      */       
-/* 1292 */       if (this.layoutOrientation == 1) {
-/* 1293 */         return paramInt / this.rowsPerColumn;
-/*      */       }
-/* 1295 */       return paramInt % this.columnCount;
-/*      */     } 
-/* 1297 */     return 0;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void maybeUpdateLayoutState() {
-/* 1310 */     if (this.updateLayoutStateNeeded != 0) {
-/* 1311 */       updateLayoutState();
-/* 1312 */       this.updateLayoutStateNeeded = 0;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void updateLayoutState() {
-/* 1331 */     int i = this.list.getFixedCellHeight();
-/* 1332 */     int j = this.list.getFixedCellWidth();
-/*      */     
-/* 1334 */     this.cellWidth = (j != -1) ? j : -1;
-/*      */     
-/* 1336 */     if (i != -1) {
-/* 1337 */       this.cellHeight = i;
-/* 1338 */       this.cellHeights = null;
-/*      */     } else {
-/*      */       
-/* 1341 */       this.cellHeight = -1;
-/* 1342 */       this.cellHeights = new int[this.list.getModel().getSize()];
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1352 */     if (j == -1 || i == -1) {
-/*      */       
-/* 1354 */       ListModel<Object> listModel = this.list.getModel();
-/* 1355 */       int k = listModel.getSize();
-/* 1356 */       ListCellRenderer listCellRenderer = this.list.getCellRenderer();
-/*      */       
-/* 1358 */       if (listCellRenderer != null) {
-/* 1359 */         for (byte b = 0; b < k; b++) {
-/* 1360 */           Object object = listModel.getElementAt(b);
-/* 1361 */           Component component = listCellRenderer.getListCellRendererComponent(this.list, object, b, false, false);
-/* 1362 */           this.rendererPane.add(component);
-/* 1363 */           Dimension dimension = component.getPreferredSize();
-/* 1364 */           if (j == -1) {
-/* 1365 */             this.cellWidth = Math.max(dimension.width, this.cellWidth);
-/*      */           }
-/* 1367 */           if (i == -1) {
-/* 1368 */             this.cellHeights[b] = dimension.height;
-/*      */           }
-/*      */         } 
-/*      */       } else {
-/*      */         
-/* 1373 */         if (this.cellWidth == -1) {
-/* 1374 */           this.cellWidth = 0;
-/*      */         }
-/* 1376 */         if (this.cellHeights == null) {
-/* 1377 */           this.cellHeights = new int[k];
-/*      */         }
-/* 1379 */         for (byte b = 0; b < k; b++) {
-/* 1380 */           this.cellHeights[b] = 0;
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*      */     
-/* 1385 */     this.columnCount = 1;
-/* 1386 */     if (this.layoutOrientation != 0) {
-/* 1387 */       updateHorizontalLayoutState(j, i);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void updateHorizontalLayoutState(int paramInt1, int paramInt2) {
-/* 1401 */     int k, i = this.list.getVisibleRowCount();
-/* 1402 */     int j = this.list.getModel().getSize();
-/* 1403 */     Insets insets = this.list.getInsets();
-/*      */     
-/* 1405 */     this.listHeight = this.list.getHeight();
-/* 1406 */     this.listWidth = this.list.getWidth();
-/*      */     
-/* 1408 */     if (j == 0) {
-/* 1409 */       this.rowsPerColumn = this.columnCount = 0;
-/* 1410 */       this.preferredHeight = insets.top + insets.bottom;
-/*      */ 
-/*      */       
-/*      */       return;
-/*      */     } 
-/*      */     
-/* 1416 */     if (paramInt2 != -1) {
-/* 1417 */       k = paramInt2;
-/*      */     }
-/*      */     else {
-/*      */       
-/* 1421 */       int m = 0;
-/* 1422 */       if (this.cellHeights.length > 0) {
-/* 1423 */         m = this.cellHeights[this.cellHeights.length - 1];
-/* 1424 */         int n = this.cellHeights.length - 2;
-/* 1425 */         for (; n >= 0; n--) {
-/* 1426 */           m = Math.max(m, this.cellHeights[n]);
-/*      */         }
-/*      */       } 
-/* 1429 */       k = this.cellHeight = m;
-/* 1430 */       this.cellHeights = null;
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1434 */     this.rowsPerColumn = j;
-/* 1435 */     if (i > 0) {
-/* 1436 */       this.rowsPerColumn = i;
-/* 1437 */       this.columnCount = Math.max(1, j / this.rowsPerColumn);
-/* 1438 */       if (j > 0 && j > this.rowsPerColumn && j % this.rowsPerColumn != 0)
-/*      */       {
-/* 1440 */         this.columnCount++;
-/*      */       }
-/* 1442 */       if (this.layoutOrientation == 2)
-/*      */       {
-/*      */         
-/* 1445 */         this.rowsPerColumn = j / this.columnCount;
-/* 1446 */         if (j % this.columnCount > 0) {
-/* 1447 */           this.rowsPerColumn++;
-/*      */         }
-/*      */       }
-/*      */     
-/* 1451 */     } else if (this.layoutOrientation == 1 && k != 0) {
-/* 1452 */       this.rowsPerColumn = Math.max(1, (this.listHeight - insets.top - insets.bottom) / k);
-/*      */       
-/* 1454 */       this.columnCount = Math.max(1, j / this.rowsPerColumn);
-/* 1455 */       if (j > 0 && j > this.rowsPerColumn && j % this.rowsPerColumn != 0)
-/*      */       {
-/* 1457 */         this.columnCount++;
-/*      */       }
-/*      */     }
-/* 1460 */     else if (this.layoutOrientation == 2 && this.cellWidth > 0 && this.listWidth > 0) {
-/*      */       
-/* 1462 */       this.columnCount = Math.max(1, (this.listWidth - insets.left - insets.right) / this.cellWidth);
-/*      */       
-/* 1464 */       this.rowsPerColumn = j / this.columnCount;
-/* 1465 */       if (j % this.columnCount > 0) {
-/* 1466 */         this.rowsPerColumn++;
-/*      */       }
-/*      */     } 
-/* 1469 */     this.preferredHeight = this.rowsPerColumn * this.cellHeight + insets.top + insets.bottom;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private Handler getHandler() {
-/* 1474 */     if (this.handler == null) {
-/* 1475 */       this.handler = new Handler();
-/*      */     }
-/* 1477 */     return this.handler;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public class MouseInputHandler
-/*      */     implements MouseInputListener
-/*      */   {
-/*      */     public void mouseClicked(MouseEvent param1MouseEvent) {
-/* 1502 */       BasicListUI.this.getHandler().mouseClicked(param1MouseEvent);
-/*      */     }
-/*      */     
-/*      */     public void mouseEntered(MouseEvent param1MouseEvent) {
-/* 1506 */       BasicListUI.this.getHandler().mouseEntered(param1MouseEvent);
-/*      */     }
-/*      */     
-/*      */     public void mouseExited(MouseEvent param1MouseEvent) {
-/* 1510 */       BasicListUI.this.getHandler().mouseExited(param1MouseEvent);
-/*      */     }
-/*      */     
-/*      */     public void mousePressed(MouseEvent param1MouseEvent) {
-/* 1514 */       BasicListUI.this.getHandler().mousePressed(param1MouseEvent);
-/*      */     }
-/*      */     
-/*      */     public void mouseDragged(MouseEvent param1MouseEvent) {
-/* 1518 */       BasicListUI.this.getHandler().mouseDragged(param1MouseEvent);
-/*      */     }
-/*      */     
-/*      */     public void mouseMoved(MouseEvent param1MouseEvent) {
-/* 1522 */       BasicListUI.this.getHandler().mouseMoved(param1MouseEvent);
-/*      */     }
-/*      */     
-/*      */     public void mouseReleased(MouseEvent param1MouseEvent) {
-/* 1526 */       BasicListUI.this.getHandler().mouseReleased(param1MouseEvent);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected MouseInputListener createMouseInputListener() {
-/* 1554 */     return getHandler();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public class FocusHandler
-/*      */     implements FocusListener
-/*      */   {
-/*      */     protected void repaintCellFocus() {
-/* 1565 */       BasicListUI.this.getHandler().repaintCellFocus();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void focusGained(FocusEvent param1FocusEvent) {
-/* 1573 */       BasicListUI.this.getHandler().focusGained(param1FocusEvent);
-/*      */     }
-/*      */     
-/*      */     public void focusLost(FocusEvent param1FocusEvent) {
-/* 1577 */       BasicListUI.this.getHandler().focusLost(param1FocusEvent);
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   protected FocusListener createFocusListener() {
-/* 1582 */     return getHandler();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public class ListSelectionHandler
-/*      */     implements ListSelectionListener
-/*      */   {
-/*      */     public void valueChanged(ListSelectionEvent param1ListSelectionEvent) {
-/* 1607 */       BasicListUI.this.getHandler().valueChanged(param1ListSelectionEvent);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected ListSelectionListener createListSelectionListener() {
-/* 1634 */     return getHandler();
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private void redrawList() {
-/* 1639 */     this.list.revalidate();
-/* 1640 */     this.list.repaint();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public class ListDataHandler
-/*      */     implements ListDataListener
-/*      */   {
-/*      */     public void intervalAdded(ListDataEvent param1ListDataEvent) {
-/* 1665 */       BasicListUI.this.getHandler().intervalAdded(param1ListDataEvent);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void intervalRemoved(ListDataEvent param1ListDataEvent) {
-/* 1671 */       BasicListUI.this.getHandler().intervalRemoved(param1ListDataEvent);
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public void contentsChanged(ListDataEvent param1ListDataEvent) {
-/* 1676 */       BasicListUI.this.getHandler().contentsChanged(param1ListDataEvent);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected ListDataListener createListDataListener() {
-/* 1704 */     return getHandler();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public class PropertyChangeHandler
-/*      */     implements PropertyChangeListener
-/*      */   {
-/*      */     public void propertyChange(PropertyChangeEvent param1PropertyChangeEvent) {
-/* 1732 */       BasicListUI.this.getHandler().propertyChange(param1PropertyChangeEvent);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected PropertyChangeListener createPropertyChangeListener() {
-/* 1761 */     return getHandler();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static class Actions
-/*      */     extends UIAction
-/*      */   {
-/*      */     private static final String SELECT_PREVIOUS_COLUMN = "selectPreviousColumn";
-/*      */ 
-/*      */     
-/*      */     private static final String SELECT_PREVIOUS_COLUMN_EXTEND = "selectPreviousColumnExtendSelection";
-/*      */ 
-/*      */     
-/*      */     private static final String SELECT_PREVIOUS_COLUMN_CHANGE_LEAD = "selectPreviousColumnChangeLead";
-/*      */     
-/*      */     private static final String SELECT_NEXT_COLUMN = "selectNextColumn";
-/*      */     
-/*      */     private static final String SELECT_NEXT_COLUMN_EXTEND = "selectNextColumnExtendSelection";
-/*      */     
-/*      */     private static final String SELECT_NEXT_COLUMN_CHANGE_LEAD = "selectNextColumnChangeLead";
-/*      */     
-/*      */     private static final String SELECT_PREVIOUS_ROW = "selectPreviousRow";
-/*      */     
-/*      */     private static final String SELECT_PREVIOUS_ROW_EXTEND = "selectPreviousRowExtendSelection";
-/*      */     
-/*      */     private static final String SELECT_PREVIOUS_ROW_CHANGE_LEAD = "selectPreviousRowChangeLead";
-/*      */     
-/*      */     private static final String SELECT_NEXT_ROW = "selectNextRow";
-/*      */     
-/*      */     private static final String SELECT_NEXT_ROW_EXTEND = "selectNextRowExtendSelection";
-/*      */     
-/*      */     private static final String SELECT_NEXT_ROW_CHANGE_LEAD = "selectNextRowChangeLead";
-/*      */     
-/*      */     private static final String SELECT_FIRST_ROW = "selectFirstRow";
-/*      */     
-/*      */     private static final String SELECT_FIRST_ROW_EXTEND = "selectFirstRowExtendSelection";
-/*      */     
-/*      */     private static final String SELECT_FIRST_ROW_CHANGE_LEAD = "selectFirstRowChangeLead";
-/*      */     
-/*      */     private static final String SELECT_LAST_ROW = "selectLastRow";
-/*      */     
-/*      */     private static final String SELECT_LAST_ROW_EXTEND = "selectLastRowExtendSelection";
-/*      */     
-/*      */     private static final String SELECT_LAST_ROW_CHANGE_LEAD = "selectLastRowChangeLead";
-/*      */     
-/*      */     private static final String SCROLL_UP = "scrollUp";
-/*      */     
-/*      */     private static final String SCROLL_UP_EXTEND = "scrollUpExtendSelection";
-/*      */     
-/*      */     private static final String SCROLL_UP_CHANGE_LEAD = "scrollUpChangeLead";
-/*      */     
-/*      */     private static final String SCROLL_DOWN = "scrollDown";
-/*      */     
-/*      */     private static final String SCROLL_DOWN_EXTEND = "scrollDownExtendSelection";
-/*      */     
-/*      */     private static final String SCROLL_DOWN_CHANGE_LEAD = "scrollDownChangeLead";
-/*      */     
-/*      */     private static final String SELECT_ALL = "selectAll";
-/*      */     
-/*      */     private static final String CLEAR_SELECTION = "clearSelection";
-/*      */     
-/*      */     private static final String ADD_TO_SELECTION = "addToSelection";
-/*      */     
-/*      */     private static final String TOGGLE_AND_ANCHOR = "toggleAndAnchor";
-/*      */     
-/*      */     private static final String EXTEND_TO = "extendTo";
-/*      */     
-/*      */     private static final String MOVE_SELECTION_TO = "moveSelectionTo";
-/*      */ 
-/*      */     
-/*      */     Actions(String param1String) {
-/* 1833 */       super(param1String);
-/*      */     }
-/*      */     public void actionPerformed(ActionEvent param1ActionEvent) {
-/* 1836 */       String str = getName();
-/* 1837 */       JList jList = (JList)param1ActionEvent.getSource();
-/* 1838 */       BasicListUI basicListUI = (BasicListUI)BasicLookAndFeel.getUIOfType(jList
-/* 1839 */           .getUI(), BasicListUI.class);
-/*      */       
-/* 1841 */       if (str == "selectPreviousColumn") {
-/* 1842 */         changeSelection(jList, 1, 
-/* 1843 */             getNextColumnIndex(jList, basicListUI, -1), -1);
-/*      */       }
-/* 1845 */       else if (str == "selectPreviousColumnExtendSelection") {
-/* 1846 */         changeSelection(jList, 2, 
-/* 1847 */             getNextColumnIndex(jList, basicListUI, -1), -1);
-/*      */       }
-/* 1849 */       else if (str == "selectPreviousColumnChangeLead") {
-/* 1850 */         changeSelection(jList, 0, 
-/* 1851 */             getNextColumnIndex(jList, basicListUI, -1), -1);
-/*      */       }
-/* 1853 */       else if (str == "selectNextColumn") {
-/* 1854 */         changeSelection(jList, 1, 
-/* 1855 */             getNextColumnIndex(jList, basicListUI, 1), 1);
-/*      */       }
-/* 1857 */       else if (str == "selectNextColumnExtendSelection") {
-/* 1858 */         changeSelection(jList, 2, 
-/* 1859 */             getNextColumnIndex(jList, basicListUI, 1), 1);
-/*      */       }
-/* 1861 */       else if (str == "selectNextColumnChangeLead") {
-/* 1862 */         changeSelection(jList, 0, 
-/* 1863 */             getNextColumnIndex(jList, basicListUI, 1), 1);
-/*      */       }
-/* 1865 */       else if (str == "selectPreviousRow") {
-/* 1866 */         changeSelection(jList, 1, 
-/* 1867 */             getNextIndex(jList, basicListUI, -1), -1);
-/*      */       }
-/* 1869 */       else if (str == "selectPreviousRowExtendSelection") {
-/* 1870 */         changeSelection(jList, 2, 
-/* 1871 */             getNextIndex(jList, basicListUI, -1), -1);
-/*      */       }
-/* 1873 */       else if (str == "selectPreviousRowChangeLead") {
-/* 1874 */         changeSelection(jList, 0, 
-/* 1875 */             getNextIndex(jList, basicListUI, -1), -1);
-/*      */       }
-/* 1877 */       else if (str == "selectNextRow") {
-/* 1878 */         changeSelection(jList, 1, 
-/* 1879 */             getNextIndex(jList, basicListUI, 1), 1);
-/*      */       }
-/* 1881 */       else if (str == "selectNextRowExtendSelection") {
-/* 1882 */         changeSelection(jList, 2, 
-/* 1883 */             getNextIndex(jList, basicListUI, 1), 1);
-/*      */       }
-/* 1885 */       else if (str == "selectNextRowChangeLead") {
-/* 1886 */         changeSelection(jList, 0, 
-/* 1887 */             getNextIndex(jList, basicListUI, 1), 1);
-/*      */       }
-/* 1889 */       else if (str == "selectFirstRow") {
-/* 1890 */         changeSelection(jList, 1, 0, -1);
-/*      */       }
-/* 1892 */       else if (str == "selectFirstRowExtendSelection") {
-/* 1893 */         changeSelection(jList, 2, 0, -1);
-/*      */       }
-/* 1895 */       else if (str == "selectFirstRowChangeLead") {
-/* 1896 */         changeSelection(jList, 0, 0, -1);
-/*      */       }
-/* 1898 */       else if (str == "selectLastRow") {
-/* 1899 */         changeSelection(jList, 1, jList
-/* 1900 */             .getModel().getSize() - 1, 1);
-/*      */       }
-/* 1902 */       else if (str == "selectLastRowExtendSelection") {
-/* 1903 */         changeSelection(jList, 2, jList
-/* 1904 */             .getModel().getSize() - 1, 1);
-/*      */       }
-/* 1906 */       else if (str == "selectLastRowChangeLead") {
-/* 1907 */         changeSelection(jList, 0, jList
-/* 1908 */             .getModel().getSize() - 1, 1);
-/*      */       }
-/* 1910 */       else if (str == "scrollUp") {
-/* 1911 */         changeSelection(jList, 1, 
-/* 1912 */             getNextPageIndex(jList, -1), -1);
-/*      */       }
-/* 1914 */       else if (str == "scrollUpExtendSelection") {
-/* 1915 */         changeSelection(jList, 2, 
-/* 1916 */             getNextPageIndex(jList, -1), -1);
-/*      */       }
-/* 1918 */       else if (str == "scrollUpChangeLead") {
-/* 1919 */         changeSelection(jList, 0, 
-/* 1920 */             getNextPageIndex(jList, -1), -1);
-/*      */       }
-/* 1922 */       else if (str == "scrollDown") {
-/* 1923 */         changeSelection(jList, 1, 
-/* 1924 */             getNextPageIndex(jList, 1), 1);
-/*      */       }
-/* 1926 */       else if (str == "scrollDownExtendSelection") {
-/* 1927 */         changeSelection(jList, 2, 
-/* 1928 */             getNextPageIndex(jList, 1), 1);
-/*      */       }
-/* 1930 */       else if (str == "scrollDownChangeLead") {
-/* 1931 */         changeSelection(jList, 0, 
-/* 1932 */             getNextPageIndex(jList, 1), 1);
-/*      */       }
-/* 1934 */       else if (str == "selectAll") {
-/* 1935 */         selectAll(jList);
-/*      */       }
-/* 1937 */       else if (str == "clearSelection") {
-/* 1938 */         clearSelection(jList);
-/*      */       }
-/* 1940 */       else if (str == "addToSelection") {
-/* 1941 */         int i = BasicListUI.adjustIndex(jList
-/* 1942 */             .getSelectionModel().getLeadSelectionIndex(), jList);
-/*      */         
-/* 1944 */         if (!jList.isSelectedIndex(i)) {
-/* 1945 */           int j = jList.getSelectionModel().getAnchorSelectionIndex();
-/* 1946 */           jList.setValueIsAdjusting(true);
-/* 1947 */           jList.addSelectionInterval(i, i);
-/* 1948 */           jList.getSelectionModel().setAnchorSelectionIndex(j);
-/* 1949 */           jList.setValueIsAdjusting(false);
-/*      */         }
-/*      */       
-/* 1952 */       } else if (str == "toggleAndAnchor") {
-/* 1953 */         int i = BasicListUI.adjustIndex(jList
-/* 1954 */             .getSelectionModel().getLeadSelectionIndex(), jList);
-/*      */         
-/* 1956 */         if (jList.isSelectedIndex(i)) {
-/* 1957 */           jList.removeSelectionInterval(i, i);
-/*      */         } else {
-/* 1959 */           jList.addSelectionInterval(i, i);
-/*      */         }
-/*      */       
-/* 1962 */       } else if (str == "extendTo") {
-/* 1963 */         changeSelection(jList, 2, BasicListUI
-/*      */             
-/* 1965 */             .adjustIndex(jList.getSelectionModel().getLeadSelectionIndex(), jList), 0);
-/*      */       
-/*      */       }
-/* 1968 */       else if (str == "moveSelectionTo") {
-/* 1969 */         changeSelection(jList, 1, BasicListUI
-/*      */             
-/* 1971 */             .adjustIndex(jList.getSelectionModel().getLeadSelectionIndex(), jList), 0);
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public boolean isEnabled(Object param1Object) {
-/* 1977 */       String str = getName();
-/* 1978 */       if (str == "selectPreviousColumnChangeLead" || str == "selectNextColumnChangeLead" || str == "selectPreviousRowChangeLead" || str == "selectNextRowChangeLead" || str == "selectFirstRowChangeLead" || str == "selectLastRowChangeLead" || str == "scrollUpChangeLead" || str == "scrollDownChangeLead")
-/*      */       {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1989 */         return (param1Object != null && ((JList)param1Object).getSelectionModel() instanceof DefaultListSelectionModel);
-/*      */       }
-/*      */ 
-/*      */       
-/* 1993 */       return true;
-/*      */     }
-/*      */     
-/*      */     private void clearSelection(JList param1JList) {
-/* 1997 */       param1JList.clearSelection();
-/*      */     }
-/*      */     
-/*      */     private void selectAll(JList param1JList) {
-/* 2001 */       int i = param1JList.getModel().getSize();
-/* 2002 */       if (i > 0) {
-/* 2003 */         ListSelectionModel listSelectionModel = param1JList.getSelectionModel();
-/* 2004 */         int j = BasicListUI.adjustIndex(listSelectionModel.getLeadSelectionIndex(), param1JList);
-/*      */         
-/* 2006 */         if (listSelectionModel.getSelectionMode() == 0) {
-/* 2007 */           if (j == -1) {
-/* 2008 */             int k = BasicListUI.adjustIndex(param1JList.getMinSelectionIndex(), param1JList);
-/* 2009 */             j = (k == -1) ? 0 : k;
-/*      */           } 
-/*      */           
-/* 2012 */           param1JList.setSelectionInterval(j, j);
-/* 2013 */           param1JList.ensureIndexIsVisible(j);
-/*      */         } else {
-/* 2015 */           param1JList.setValueIsAdjusting(true);
-/*      */           
-/* 2017 */           int k = BasicListUI.adjustIndex(listSelectionModel.getAnchorSelectionIndex(), param1JList);
-/*      */           
-/* 2019 */           param1JList.setSelectionInterval(0, i - 1);
-/*      */ 
-/*      */           
-/* 2022 */           SwingUtilities2.setLeadAnchorWithoutSelection(listSelectionModel, k, j);
-/*      */           
-/* 2024 */           param1JList.setValueIsAdjusting(false);
-/*      */         } 
-/*      */       } 
-/*      */     }
-/*      */     
-/*      */     private int getNextPageIndex(JList param1JList, int param1Int) {
-/* 2030 */       if (param1JList.getModel().getSize() == 0) {
-/* 2031 */         return -1;
-/*      */       }
-/*      */       
-/* 2034 */       int i = -1;
-/* 2035 */       Rectangle rectangle1 = param1JList.getVisibleRect();
-/* 2036 */       ListSelectionModel listSelectionModel = param1JList.getSelectionModel();
-/* 2037 */       int j = BasicListUI.adjustIndex(listSelectionModel.getLeadSelectionIndex(), param1JList);
-/*      */       
-/* 2039 */       Rectangle rectangle2 = (j == -1) ? new Rectangle() : param1JList.getCellBounds(j, j);
-/*      */       
-/* 2041 */       if (param1JList.getLayoutOrientation() == 1 && param1JList
-/* 2042 */         .getVisibleRowCount() <= 0) {
-/* 2043 */         if (!param1JList.getComponentOrientation().isLeftToRight()) {
-/* 2044 */           param1Int = -param1Int;
-/*      */         }
-/*      */ 
-/*      */         
-/* 2048 */         if (param1Int < 0) {
-/*      */           
-/* 2050 */           rectangle1.x = rectangle2.x + rectangle2.width - rectangle1.width;
-/* 2051 */           Point point = new Point(rectangle1.x - 1, rectangle2.y);
-/* 2052 */           i = param1JList.locationToIndex(point);
-/* 2053 */           Rectangle rectangle = param1JList.getCellBounds(i, i);
-/* 2054 */           if (rectangle1.intersects(rectangle)) {
-/* 2055 */             point.x = rectangle.x - 1;
-/* 2056 */             i = param1JList.locationToIndex(point);
-/* 2057 */             rectangle = param1JList.getCellBounds(i, i);
-/*      */           } 
-/*      */           
-/* 2060 */           if (rectangle.y != rectangle2.y) {
-/* 2061 */             point.x = rectangle.x + rectangle.width;
-/* 2062 */             i = param1JList.locationToIndex(point);
-/*      */           }
-/*      */         
-/*      */         } else {
-/*      */           
-/* 2067 */           rectangle1.x = rectangle2.x;
-/* 2068 */           Point point = new Point(rectangle1.x + rectangle1.width, rectangle2.y);
-/* 2069 */           i = param1JList.locationToIndex(point);
-/* 2070 */           Rectangle rectangle = param1JList.getCellBounds(i, i);
-/* 2071 */           if (rectangle1.intersects(rectangle)) {
-/* 2072 */             point.x = rectangle.x + rectangle.width;
-/* 2073 */             i = param1JList.locationToIndex(point);
-/* 2074 */             rectangle = param1JList.getCellBounds(i, i);
-/*      */           } 
-/* 2076 */           if (rectangle.y != rectangle2.y) {
-/* 2077 */             point.x = rectangle.x - 1;
-/* 2078 */             i = param1JList.locationToIndex(point);
-/*      */           }
-/*      */         
-/*      */         }
-/*      */       
-/* 2083 */       } else if (param1Int < 0) {
-/*      */ 
-/*      */         
-/* 2086 */         Point point = new Point(rectangle2.x, rectangle1.y);
-/* 2087 */         i = param1JList.locationToIndex(point);
-/* 2088 */         if (j <= i)
-/*      */         {
-/*      */           
-/* 2091 */           rectangle1.y = rectangle2.y + rectangle2.height - rectangle1.height;
-/* 2092 */           point.y = rectangle1.y;
-/* 2093 */           i = param1JList.locationToIndex(point);
-/* 2094 */           Rectangle rectangle = param1JList.getCellBounds(i, i);
-/*      */ 
-/*      */           
-/* 2097 */           if (rectangle.y < rectangle1.y) {
-/* 2098 */             point.y = rectangle.y + rectangle.height;
-/* 2099 */             i = param1JList.locationToIndex(point);
-/* 2100 */             rectangle = param1JList.getCellBounds(i, i);
-/*      */           } 
-/*      */ 
-/*      */           
-/* 2104 */           if (rectangle.y >= rectangle2.y) {
-/* 2105 */             point.y = rectangle2.y - 1;
-/* 2106 */             i = param1JList.locationToIndex(point);
-/*      */           }
-/*      */         
-/*      */         }
-/*      */       
-/*      */       } else {
-/*      */         
-/* 2113 */         Point point = new Point(rectangle2.x, rectangle1.y + rectangle1.height - 1);
-/*      */         
-/* 2115 */         i = param1JList.locationToIndex(point);
-/* 2116 */         Rectangle rectangle = param1JList.getCellBounds(i, i);
-/*      */ 
-/*      */         
-/* 2119 */         if (rectangle.y + rectangle.height > rectangle1.y + rectangle1.height) {
-/*      */           
-/* 2121 */           point.y = rectangle.y - 1;
-/* 2122 */           i = param1JList.locationToIndex(point);
-/* 2123 */           rectangle = param1JList.getCellBounds(i, i);
-/* 2124 */           i = Math.max(i, j);
-/*      */         } 
-/*      */         
-/* 2127 */         if (j >= i) {
-/*      */ 
-/*      */           
-/* 2130 */           rectangle1.y = rectangle2.y;
-/* 2131 */           point.y = rectangle1.y + rectangle1.height - 1;
-/* 2132 */           i = param1JList.locationToIndex(point);
-/* 2133 */           rectangle = param1JList.getCellBounds(i, i);
-/*      */ 
-/*      */           
-/* 2136 */           if (rectangle.y + rectangle.height > rectangle1.y + rectangle1.height) {
-/*      */             
-/* 2138 */             point.y = rectangle.y - 1;
-/* 2139 */             i = param1JList.locationToIndex(point);
-/* 2140 */             rectangle = param1JList.getCellBounds(i, i);
-/*      */           } 
-/*      */ 
-/*      */           
-/* 2144 */           if (rectangle.y <= rectangle2.y) {
-/* 2145 */             point.y = rectangle2.y + rectangle2.height;
-/* 2146 */             i = param1JList.locationToIndex(point);
-/*      */           } 
-/*      */         } 
-/*      */       } 
-/*      */       
-/* 2151 */       return i;
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     private void changeSelection(JList param1JList, int param1Int1, int param1Int2, int param1Int3) {
-/* 2156 */       if (param1Int2 >= 0 && param1Int2 < param1JList.getModel().getSize()) {
-/* 2157 */         ListSelectionModel listSelectionModel = param1JList.getSelectionModel();
-/*      */ 
-/*      */         
-/* 2160 */         if (param1Int1 == 0 && param1JList
-/* 2161 */           .getSelectionMode() != 2)
-/*      */         {
-/*      */           
-/* 2164 */           param1Int1 = 1;
-/*      */         }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 2171 */         adjustScrollPositionIfNecessary(param1JList, param1Int2, param1Int3);
-/*      */         
-/* 2173 */         if (param1Int1 == 2) {
-/* 2174 */           int i = BasicListUI.adjustIndex(listSelectionModel.getAnchorSelectionIndex(), param1JList);
-/* 2175 */           if (i == -1) {
-/* 2176 */             i = 0;
-/*      */           }
-/*      */           
-/* 2179 */           param1JList.setSelectionInterval(i, param1Int2);
-/*      */         }
-/* 2181 */         else if (param1Int1 == 1) {
-/* 2182 */           param1JList.setSelectedIndex(param1Int2);
-/*      */         
-/*      */         }
-/*      */         else {
-/*      */           
-/* 2187 */           ((DefaultListSelectionModel)listSelectionModel).moveLeadSelectionIndex(param1Int2);
-/*      */         } 
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private void adjustScrollPositionIfNecessary(JList param1JList, int param1Int1, int param1Int2) {
-/* 2199 */       if (param1Int2 == 0) {
-/*      */         return;
-/*      */       }
-/* 2202 */       Rectangle rectangle1 = param1JList.getCellBounds(param1Int1, param1Int1);
-/* 2203 */       Rectangle rectangle2 = param1JList.getVisibleRect();
-/* 2204 */       if (rectangle1 != null && !rectangle2.contains(rectangle1)) {
-/* 2205 */         if (param1JList.getLayoutOrientation() == 1 && param1JList
-/* 2206 */           .getVisibleRowCount() <= 0) {
-/*      */           
-/* 2208 */           if (param1JList.getComponentOrientation().isLeftToRight()) {
-/* 2209 */             if (param1Int2 > 0) {
-/*      */               
-/* 2211 */               int i = Math.max(0, rectangle1.x + rectangle1.width - rectangle2.width);
-/*      */ 
-/*      */               
-/* 2214 */               int j = param1JList.locationToIndex(new Point(i, rectangle1.y));
-/* 2215 */               Rectangle rectangle = param1JList.getCellBounds(j, j);
-/*      */               
-/* 2217 */               if (rectangle.x < i && rectangle.x < rectangle1.x) {
-/* 2218 */                 rectangle.x += rectangle.width;
-/*      */                 
-/* 2220 */                 j = param1JList.locationToIndex(rectangle.getLocation());
-/* 2221 */                 rectangle = param1JList.getCellBounds(j, j);
-/*      */               } 
-/*      */               
-/* 2224 */               rectangle1 = rectangle;
-/*      */             } 
-/* 2226 */             rectangle1.width = rectangle2.width;
-/*      */           
-/*      */           }
-/* 2229 */           else if (param1Int2 > 0) {
-/*      */             
-/* 2231 */             int i = rectangle1.x + rectangle2.width;
-/*      */             
-/* 2233 */             int j = param1JList.locationToIndex(new Point(i, rectangle1.y));
-/* 2234 */             Rectangle rectangle = param1JList.getCellBounds(j, j);
-/*      */             
-/* 2236 */             if (rectangle.x + rectangle.width > i && rectangle.x > rectangle1.x)
-/*      */             {
-/* 2238 */               rectangle.width = 0;
-/*      */             }
-/* 2240 */             rectangle1.x = Math.max(0, rectangle.x + rectangle.width - rectangle2.width);
-/*      */             
-/* 2242 */             rectangle1.width = rectangle2.width;
-/*      */           } else {
-/*      */             
-/* 2245 */             rectangle1.x += Math.max(0, rectangle1.width - rectangle2.width);
-/*      */ 
-/*      */             
-/* 2248 */             rectangle1.width = Math.min(rectangle1.width, rectangle2.width);
-/*      */ 
-/*      */           
-/*      */           }
-/*      */ 
-/*      */         
-/*      */         }
-/* 2255 */         else if (param1Int2 > 0 && (rectangle1.y < rectangle2.y || rectangle1.y + rectangle1.height > rectangle2.y + rectangle2.height)) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/* 2260 */           int i = Math.max(0, rectangle1.y + rectangle1.height - rectangle2.height);
-/*      */ 
-/*      */           
-/* 2263 */           int j = param1JList.locationToIndex(new Point(rectangle1.x, i));
-/* 2264 */           Rectangle rectangle = param1JList.getCellBounds(j, j);
-/*      */           
-/* 2266 */           if (rectangle.y < i && rectangle.y < rectangle1.y) {
-/* 2267 */             rectangle.y += rectangle.height;
-/*      */             
-/* 2269 */             j = param1JList.locationToIndex(rectangle.getLocation());
-/*      */             
-/* 2271 */             rectangle = param1JList.getCellBounds(j, j);
-/*      */           } 
-/* 2273 */           rectangle1 = rectangle;
-/* 2274 */           rectangle1.height = rectangle2.height;
-/*      */         }
-/*      */         else {
-/*      */           
-/* 2278 */           rectangle1.height = Math.min(rectangle1.height, rectangle2.height);
-/*      */         } 
-/*      */         
-/* 2281 */         param1JList.scrollRectToVisible(rectangle1);
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     private int getNextColumnIndex(JList param1JList, BasicListUI param1BasicListUI, int param1Int) {
-/* 2287 */       if (param1JList.getLayoutOrientation() != 0) {
-/* 2288 */         int i = BasicListUI.adjustIndex(param1JList.getLeadSelectionIndex(), param1JList);
-/* 2289 */         int j = param1JList.getModel().getSize();
-/*      */         
-/* 2291 */         if (i == -1)
-/* 2292 */           return 0; 
-/* 2293 */         if (j == 1)
-/*      */         {
-/* 2295 */           return 0; } 
-/* 2296 */         if (param1BasicListUI == null || param1BasicListUI.columnCount <= 1) {
-/* 2297 */           return -1;
-/*      */         }
-/*      */         
-/* 2300 */         int k = param1BasicListUI.convertModelToColumn(i);
-/* 2301 */         int m = param1BasicListUI.convertModelToRow(i);
-/*      */         
-/* 2303 */         k += param1Int;
-/* 2304 */         if (k >= param1BasicListUI.columnCount || k < 0)
-/*      */         {
-/* 2306 */           return -1;
-/*      */         }
-/* 2308 */         int n = param1BasicListUI.getRowCount(k);
-/* 2309 */         if (m >= n) {
-/* 2310 */           return -1;
-/*      */         }
-/* 2312 */         return param1BasicListUI.getModelIndex(k, m);
-/*      */       } 
-/*      */       
-/* 2315 */       return -1;
-/*      */     }
-/*      */     
-/*      */     private int getNextIndex(JList param1JList, BasicListUI param1BasicListUI, int param1Int) {
-/* 2319 */       int i = BasicListUI.adjustIndex(param1JList.getLeadSelectionIndex(), param1JList);
-/* 2320 */       int j = param1JList.getModel().getSize();
-/*      */       
-/* 2322 */       if (i == -1) {
-/* 2323 */         if (j > 0) {
-/* 2324 */           if (param1Int > 0) {
-/* 2325 */             i = 0;
-/*      */           } else {
-/*      */             
-/* 2328 */             i = j - 1;
-/*      */           } 
-/*      */         }
-/* 2331 */       } else if (j == 1) {
-/*      */         
-/* 2333 */         i = 0;
-/* 2334 */       } else if (param1JList.getLayoutOrientation() == 2) {
-/* 2335 */         if (param1BasicListUI != null) {
-/* 2336 */           i += param1BasicListUI.columnCount * param1Int;
-/*      */         }
-/*      */       } else {
-/* 2339 */         i += param1Int;
-/*      */       } 
-/*      */       
-/* 2342 */       return i;
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   private class Handler
-/*      */     implements FocusListener, KeyListener, ListDataListener, ListSelectionListener, MouseInputListener, PropertyChangeListener, DragRecognitionSupport.BeforeDrag {
-/*      */     private String prefix;
-/*      */     private String typedString;
-/*      */     private long lastTime;
-/*      */     private boolean dragPressDidSelection;
-/*      */     
-/*      */     private Handler() {
-/* 2354 */       this.prefix = "";
-/* 2355 */       this.typedString = "";
-/* 2356 */       this.lastTime = 0L;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void keyTyped(KeyEvent param1KeyEvent) {
-/* 2370 */       JList jList = (JList)param1KeyEvent.getSource();
-/* 2371 */       ListModel listModel = jList.getModel();
-/*      */       
-/* 2373 */       if (listModel.getSize() == 0 || param1KeyEvent.isAltDown() || 
-/* 2374 */         BasicGraphicsUtils.isMenuShortcutKeyDown(param1KeyEvent) || 
-/* 2375 */         isNavigationKey(param1KeyEvent)) {
-/*      */         return;
-/*      */       }
-/*      */       
-/* 2379 */       boolean bool = true;
-/*      */       
-/* 2381 */       char c = param1KeyEvent.getKeyChar();
-/*      */       
-/* 2383 */       long l = param1KeyEvent.getWhen();
-/* 2384 */       int i = BasicListUI.adjustIndex(jList.getLeadSelectionIndex(), BasicListUI.this.list);
-/* 2385 */       if (l - this.lastTime < BasicListUI.this.timeFactor) {
-/* 2386 */         this.typedString += c;
-/* 2387 */         if (this.prefix.length() == 1 && c == this.prefix.charAt(0)) {
-/*      */ 
-/*      */           
-/* 2390 */           i++;
-/*      */         } else {
-/* 2392 */           this.prefix = this.typedString;
-/*      */         } 
-/*      */       } else {
-/* 2395 */         i++;
-/* 2396 */         this.typedString = "" + c;
-/* 2397 */         this.prefix = this.typedString;
-/*      */       } 
-/* 2399 */       this.lastTime = l;
-/*      */       
-/* 2401 */       if (i < 0 || i >= listModel.getSize()) {
-/* 2402 */         bool = false;
-/* 2403 */         i = 0;
-/*      */       } 
-/* 2405 */       int j = jList.getNextMatch(this.prefix, i, Position.Bias.Forward);
-/*      */       
-/* 2407 */       if (j >= 0) {
-/* 2408 */         jList.setSelectedIndex(j);
-/* 2409 */         jList.ensureIndexIsVisible(j);
-/* 2410 */       } else if (bool) {
-/* 2411 */         j = jList.getNextMatch(this.prefix, 0, Position.Bias.Forward);
-/*      */         
-/* 2413 */         if (j >= 0) {
-/* 2414 */           jList.setSelectedIndex(j);
-/* 2415 */           jList.ensureIndexIsVisible(j);
-/*      */         } 
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void keyPressed(KeyEvent param1KeyEvent) {
-/* 2427 */       if (isNavigationKey(param1KeyEvent)) {
-/* 2428 */         this.prefix = "";
-/* 2429 */         this.typedString = "";
-/* 2430 */         this.lastTime = 0L;
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void keyReleased(KeyEvent param1KeyEvent) {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private boolean isNavigationKey(KeyEvent param1KeyEvent) {
-/* 2448 */       InputMap inputMap = BasicListUI.this.list.getInputMap(1);
-/* 2449 */       KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent(param1KeyEvent);
-/*      */       
-/* 2451 */       if (inputMap != null && inputMap.get(keyStroke) != null) {
-/* 2452 */         return true;
-/*      */       }
-/* 2454 */       return false;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void propertyChange(PropertyChangeEvent param1PropertyChangeEvent) {
-/* 2461 */       String str = param1PropertyChangeEvent.getPropertyName();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2466 */       if (str == "model") {
-/* 2467 */         ListModel listModel1 = (ListModel)param1PropertyChangeEvent.getOldValue();
-/* 2468 */         ListModel listModel2 = (ListModel)param1PropertyChangeEvent.getNewValue();
-/* 2469 */         if (listModel1 != null) {
-/* 2470 */           listModel1.removeListDataListener(BasicListUI.this.listDataListener);
-/*      */         }
-/* 2472 */         if (listModel2 != null) {
-/* 2473 */           listModel2.addListDataListener(BasicListUI.this.listDataListener);
-/*      */         }
-/* 2475 */         BasicListUI.this.updateLayoutStateNeeded |= 0x1;
-/* 2476 */         BasicListUI.this.redrawList();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       }
-/* 2482 */       else if (str == "selectionModel") {
-/* 2483 */         ListSelectionModel listSelectionModel1 = (ListSelectionModel)param1PropertyChangeEvent.getOldValue();
-/* 2484 */         ListSelectionModel listSelectionModel2 = (ListSelectionModel)param1PropertyChangeEvent.getNewValue();
-/* 2485 */         if (listSelectionModel1 != null) {
-/* 2486 */           listSelectionModel1.removeListSelectionListener(BasicListUI.this.listSelectionListener);
-/*      */         }
-/* 2488 */         if (listSelectionModel2 != null) {
-/* 2489 */           listSelectionModel2.addListSelectionListener(BasicListUI.this.listSelectionListener);
-/*      */         }
-/* 2491 */         BasicListUI.this.updateLayoutStateNeeded |= 0x1;
-/* 2492 */         BasicListUI.this.redrawList();
-/*      */       }
-/* 2494 */       else if (str == "cellRenderer") {
-/* 2495 */         BasicListUI.this.updateLayoutStateNeeded |= 0x40;
-/* 2496 */         BasicListUI.this.redrawList();
-/*      */       }
-/* 2498 */       else if (str == "font") {
-/* 2499 */         BasicListUI.this.updateLayoutStateNeeded |= 0x4;
-/* 2500 */         BasicListUI.this.redrawList();
-/*      */       }
-/* 2502 */       else if (str == "prototypeCellValue") {
-/* 2503 */         BasicListUI.this.updateLayoutStateNeeded |= 0x20;
-/* 2504 */         BasicListUI.this.redrawList();
-/*      */       }
-/* 2506 */       else if (str == "fixedCellHeight") {
-/* 2507 */         BasicListUI.this.updateLayoutStateNeeded |= 0x10;
-/* 2508 */         BasicListUI.this.redrawList();
-/*      */       }
-/* 2510 */       else if (str == "fixedCellWidth") {
-/* 2511 */         BasicListUI.this.updateLayoutStateNeeded |= 0x8;
-/* 2512 */         BasicListUI.this.redrawList();
-/*      */       }
-/* 2514 */       else if (str == "selectionForeground") {
-/* 2515 */         BasicListUI.this.list.repaint();
-/*      */       }
-/* 2517 */       else if (str == "selectionBackground") {
-/* 2518 */         BasicListUI.this.list.repaint();
-/*      */       }
-/* 2520 */       else if ("layoutOrientation" == str) {
-/* 2521 */         BasicListUI.this.updateLayoutStateNeeded |= 0x80;
-/* 2522 */         BasicListUI.this.layoutOrientation = BasicListUI.this.list.getLayoutOrientation();
-/* 2523 */         BasicListUI.this.redrawList();
-/*      */       }
-/* 2525 */       else if ("visibleRowCount" == str) {
-/* 2526 */         if (BasicListUI.this.layoutOrientation != 0) {
-/* 2527 */           BasicListUI.this.updateLayoutStateNeeded |= 0x80;
-/* 2528 */           BasicListUI.this.redrawList();
-/*      */         }
-/*      */       
-/* 2531 */       } else if ("componentOrientation" == str) {
-/* 2532 */         BasicListUI.this.isLeftToRight = BasicListUI.this.list.getComponentOrientation().isLeftToRight();
-/* 2533 */         BasicListUI.this.updateLayoutStateNeeded |= 0x400;
-/* 2534 */         BasicListUI.this.redrawList();
-/*      */         
-/* 2536 */         InputMap inputMap = BasicListUI.this.getInputMap(0);
-/* 2537 */         SwingUtilities.replaceUIInputMap(BasicListUI.this.list, 0, inputMap);
-/*      */       }
-/* 2539 */       else if ("List.isFileList" == str) {
-/* 2540 */         BasicListUI.this.updateIsFileList();
-/* 2541 */         BasicListUI.this.redrawList();
-/* 2542 */       } else if ("dropLocation" == str) {
-/* 2543 */         JList.DropLocation dropLocation = (JList.DropLocation)param1PropertyChangeEvent.getOldValue();
-/* 2544 */         repaintDropLocation(dropLocation);
-/* 2545 */         repaintDropLocation(BasicListUI.this.list.getDropLocation());
-/*      */       } 
-/*      */     }
-/*      */     private void repaintDropLocation(JList.DropLocation param1DropLocation) {
-/*      */       Rectangle rectangle;
-/* 2550 */       if (param1DropLocation == null) {
-/*      */         return;
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */       
-/* 2556 */       if (param1DropLocation.isInsert()) {
-/* 2557 */         rectangle = BasicListUI.this.getDropLineRect(param1DropLocation);
-/*      */       } else {
-/* 2559 */         rectangle = BasicListUI.this.getCellBounds(BasicListUI.this.list, param1DropLocation.getIndex());
-/*      */       } 
-/*      */       
-/* 2562 */       if (rectangle != null) {
-/* 2563 */         BasicListUI.this.list.repaint(rectangle);
-/*      */       }
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void intervalAdded(ListDataEvent param1ListDataEvent) {
-/* 2571 */       BasicListUI.this.updateLayoutStateNeeded = 1;
-/*      */       
-/* 2573 */       int i = Math.min(param1ListDataEvent.getIndex0(), param1ListDataEvent.getIndex1());
-/* 2574 */       int j = Math.max(param1ListDataEvent.getIndex0(), param1ListDataEvent.getIndex1());
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2579 */       ListSelectionModel listSelectionModel = BasicListUI.this.list.getSelectionModel();
-/* 2580 */       if (listSelectionModel != null) {
-/* 2581 */         listSelectionModel.insertIndexInterval(i, j - i + 1, true);
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2588 */       BasicListUI.this.redrawList();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void intervalRemoved(ListDataEvent param1ListDataEvent) {
-/* 2594 */       BasicListUI.this.updateLayoutStateNeeded = 1;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2599 */       ListSelectionModel listSelectionModel = BasicListUI.this.list.getSelectionModel();
-/* 2600 */       if (listSelectionModel != null) {
-/* 2601 */         listSelectionModel.removeIndexInterval(param1ListDataEvent.getIndex0(), param1ListDataEvent.getIndex1());
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2609 */       BasicListUI.this.redrawList();
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public void contentsChanged(ListDataEvent param1ListDataEvent) {
-/* 2614 */       BasicListUI.this.updateLayoutStateNeeded = 1;
-/* 2615 */       BasicListUI.this.redrawList();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void valueChanged(ListSelectionEvent param1ListSelectionEvent) {
-/* 2623 */       BasicListUI.this.maybeUpdateLayoutState();
-/*      */       
-/* 2625 */       int i = BasicListUI.this.list.getModel().getSize();
-/* 2626 */       int j = Math.min(i - 1, Math.max(param1ListSelectionEvent.getFirstIndex(), 0));
-/* 2627 */       int k = Math.min(i - 1, Math.max(param1ListSelectionEvent.getLastIndex(), 0));
-/*      */       
-/* 2629 */       Rectangle rectangle = BasicListUI.this.getCellBounds(BasicListUI.this.list, j, k);
-/*      */       
-/* 2631 */       if (rectangle != null) {
-/* 2632 */         BasicListUI.this.list.repaint(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
-/*      */       }
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void mouseClicked(MouseEvent param1MouseEvent) {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void mouseEntered(MouseEvent param1MouseEvent) {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void mouseExited(MouseEvent param1MouseEvent) {}
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void mousePressed(MouseEvent param1MouseEvent) {
-/* 2654 */       if (SwingUtilities2.shouldIgnore(param1MouseEvent, BasicListUI.this.list)) {
-/*      */         return;
-/*      */       }
-/*      */       
-/* 2658 */       boolean bool = BasicListUI.this.list.getDragEnabled();
-/* 2659 */       boolean bool1 = true;
-/*      */ 
-/*      */       
-/* 2662 */       if (bool) {
-/* 2663 */         int i = SwingUtilities2.loc2IndexFileList(BasicListUI.this.list, param1MouseEvent.getPoint());
-/*      */         
-/* 2665 */         if (i != -1 && DragRecognitionSupport.mousePressed(param1MouseEvent)) {
-/* 2666 */           this.dragPressDidSelection = false;
-/*      */           
-/* 2668 */           if (BasicGraphicsUtils.isMenuShortcutKeyDown(param1MouseEvent)) {
-/*      */             return;
-/*      */           }
-/*      */           
-/* 2672 */           if (!param1MouseEvent.isShiftDown() && BasicListUI.this.list.isSelectedIndex(i)) {
-/*      */ 
-/*      */             
-/* 2675 */             BasicListUI.this.list.addSelectionInterval(i, i);
-/*      */             
-/*      */             return;
-/*      */           } 
-/*      */           
-/* 2680 */           bool1 = false;
-/*      */           
-/* 2682 */           this.dragPressDidSelection = true;
-/*      */         }
-/*      */       
-/*      */       }
-/*      */       else {
-/*      */         
-/* 2688 */         BasicListUI.this.list.setValueIsAdjusting(true);
-/*      */       } 
-/*      */       
-/* 2691 */       if (bool1) {
-/* 2692 */         SwingUtilities2.adjustFocus(BasicListUI.this.list);
-/*      */       }
-/*      */       
-/* 2695 */       adjustSelection(param1MouseEvent);
-/*      */     }
-/*      */     
-/*      */     private void adjustSelection(MouseEvent param1MouseEvent) {
-/* 2699 */       int i = SwingUtilities2.loc2IndexFileList(BasicListUI.this.list, param1MouseEvent.getPoint());
-/* 2700 */       if (i < 0) {
-/*      */ 
-/*      */         
-/* 2703 */         if (BasicListUI.this.isFileList && param1MouseEvent
-/* 2704 */           .getID() == 501 && (
-/* 2705 */           !param1MouseEvent.isShiftDown() || BasicListUI.this.list
-/* 2706 */           .getSelectionMode() == 0)) {
-/* 2707 */           BasicListUI.this.list.clearSelection();
-/*      */         }
-/*      */       } else {
-/*      */         boolean bool;
-/* 2711 */         int j = BasicListUI.adjustIndex(BasicListUI.this.list.getAnchorSelectionIndex(), BasicListUI.this.list);
-/*      */         
-/* 2713 */         if (j == -1) {
-/* 2714 */           j = 0;
-/* 2715 */           bool = false;
-/*      */         } else {
-/* 2717 */           bool = BasicListUI.this.list.isSelectedIndex(j);
-/*      */         } 
-/*      */         
-/* 2720 */         if (BasicGraphicsUtils.isMenuShortcutKeyDown(param1MouseEvent)) {
-/* 2721 */           if (param1MouseEvent.isShiftDown()) {
-/* 2722 */             if (bool) {
-/* 2723 */               BasicListUI.this.list.addSelectionInterval(j, i);
-/*      */             } else {
-/* 2725 */               BasicListUI.this.list.removeSelectionInterval(j, i);
-/* 2726 */               if (BasicListUI.this.isFileList) {
-/* 2727 */                 BasicListUI.this.list.addSelectionInterval(i, i);
-/* 2728 */                 BasicListUI.this.list.getSelectionModel().setAnchorSelectionIndex(j);
-/*      */               } 
-/*      */             } 
-/* 2731 */           } else if (BasicListUI.this.list.isSelectedIndex(i)) {
-/* 2732 */             BasicListUI.this.list.removeSelectionInterval(i, i);
-/*      */           } else {
-/* 2734 */             BasicListUI.this.list.addSelectionInterval(i, i);
-/*      */           } 
-/* 2736 */         } else if (param1MouseEvent.isShiftDown()) {
-/* 2737 */           BasicListUI.this.list.setSelectionInterval(j, i);
-/*      */         } else {
-/* 2739 */           BasicListUI.this.list.setSelectionInterval(i, i);
-/*      */         } 
-/*      */       } 
-/*      */     }
-/*      */     
-/*      */     public void dragStarting(MouseEvent param1MouseEvent) {
-/* 2745 */       if (BasicGraphicsUtils.isMenuShortcutKeyDown(param1MouseEvent)) {
-/* 2746 */         int i = SwingUtilities2.loc2IndexFileList(BasicListUI.this.list, param1MouseEvent.getPoint());
-/* 2747 */         BasicListUI.this.list.addSelectionInterval(i, i);
-/*      */       } 
-/*      */     }
-/*      */     
-/*      */     public void mouseDragged(MouseEvent param1MouseEvent) {
-/* 2752 */       if (SwingUtilities2.shouldIgnore(param1MouseEvent, BasicListUI.this.list)) {
-/*      */         return;
-/*      */       }
-/*      */       
-/* 2756 */       if (BasicListUI.this.list.getDragEnabled()) {
-/* 2757 */         DragRecognitionSupport.mouseDragged(param1MouseEvent, this);
-/*      */         
-/*      */         return;
-/*      */       } 
-/* 2761 */       if (param1MouseEvent.isShiftDown() || BasicGraphicsUtils.isMenuShortcutKeyDown(param1MouseEvent)) {
-/*      */         return;
-/*      */       }
-/*      */       
-/* 2765 */       int i = BasicListUI.this.locationToIndex(BasicListUI.this.list, param1MouseEvent.getPoint());
-/* 2766 */       if (i != -1) {
-/*      */         
-/* 2768 */         if (BasicListUI.this.isFileList) {
-/*      */           return;
-/*      */         }
-/* 2771 */         Rectangle rectangle = BasicListUI.this.getCellBounds(BasicListUI.this.list, i, i);
-/* 2772 */         if (rectangle != null) {
-/* 2773 */           BasicListUI.this.list.scrollRectToVisible(rectangle);
-/* 2774 */           BasicListUI.this.list.setSelectionInterval(i, i);
-/*      */         } 
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public void mouseMoved(MouseEvent param1MouseEvent) {}
-/*      */     
-/*      */     public void mouseReleased(MouseEvent param1MouseEvent) {
-/* 2783 */       if (SwingUtilities2.shouldIgnore(param1MouseEvent, BasicListUI.this.list)) {
-/*      */         return;
-/*      */       }
-/*      */       
-/* 2787 */       if (BasicListUI.this.list.getDragEnabled()) {
-/* 2788 */         MouseEvent mouseEvent = DragRecognitionSupport.mouseReleased(param1MouseEvent);
-/* 2789 */         if (mouseEvent != null) {
-/* 2790 */           SwingUtilities2.adjustFocus(BasicListUI.this.list);
-/* 2791 */           if (!this.dragPressDidSelection) {
-/* 2792 */             adjustSelection(mouseEvent);
-/*      */           }
-/*      */         } 
-/*      */       } else {
-/* 2796 */         BasicListUI.this.list.setValueIsAdjusting(false);
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected void repaintCellFocus() {
-/* 2805 */       int i = BasicListUI.adjustIndex(BasicListUI.this.list.getLeadSelectionIndex(), BasicListUI.this.list);
-/* 2806 */       if (i != -1) {
-/* 2807 */         Rectangle rectangle = BasicListUI.this.getCellBounds(BasicListUI.this.list, i, i);
-/* 2808 */         if (rectangle != null) {
-/* 2809 */           BasicListUI.this.list.repaint(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
-/*      */         }
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void focusGained(FocusEvent param1FocusEvent) {
-/* 2819 */       repaintCellFocus();
-/*      */     }
-/*      */     
-/*      */     public void focusLost(FocusEvent param1FocusEvent) {
-/* 2823 */       repaintCellFocus();
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   private static int adjustIndex(int paramInt, JList paramJList) {
-/* 2828 */     return (paramInt < paramJList.getModel().getSize()) ? paramInt : -1;
-/*      */   }
-/*      */   
-/* 2831 */   private static final TransferHandler defaultTransferHandler = new ListTransferHandler();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static class ListTransferHandler
-/*      */     extends TransferHandler
-/*      */     implements UIResource
-/*      */   {
-/*      */     protected Transferable createTransferable(JComponent param1JComponent) {
-/* 2845 */       if (param1JComponent instanceof JList) {
-/* 2846 */         JList jList = (JList)param1JComponent;
-/* 2847 */         Object[] arrayOfObject = jList.getSelectedValues();
-/*      */         
-/* 2849 */         if (arrayOfObject == null || arrayOfObject.length == 0) {
-/* 2850 */           return null;
-/*      */         }
-/*      */         
-/* 2853 */         StringBuffer stringBuffer1 = new StringBuffer();
-/* 2854 */         StringBuffer stringBuffer2 = new StringBuffer();
-/*      */         
-/* 2856 */         stringBuffer2.append("<html>\n<body>\n<ul>\n");
-/*      */         
-/* 2858 */         for (byte b = 0; b < arrayOfObject.length; b++) {
-/* 2859 */           Object object = arrayOfObject[b];
-/* 2860 */           String str = (object == null) ? "" : object.toString();
-/* 2861 */           stringBuffer1.append(str + "\n");
-/* 2862 */           stringBuffer2.append("  <li>" + str + "\n");
-/*      */         } 
-/*      */ 
-/*      */         
-/* 2866 */         stringBuffer1.deleteCharAt(stringBuffer1.length() - 1);
-/* 2867 */         stringBuffer2.append("</ul>\n</body>\n</html>");
-/*      */         
-/* 2869 */         return new BasicTransferable(stringBuffer1.toString(), stringBuffer2.toString());
-/*      */       } 
-/*      */       
-/* 2872 */       return null;
-/*      */     }
-/*      */     
-/*      */     public int getSourceActions(JComponent param1JComponent) {
-/* 2876 */       return 1;
-/*      */     }
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\basic\BasicListUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.plaf.basic;
+
+import sun.swing.DefaultLookup;
+import sun.swing.UIAction;
+
+import javax.swing.*;
+import javax.swing.event.*;
+import javax.swing.plaf.*;
+import javax.swing.text.Position;
+
+import java.awt.*;
+import java.awt.event.*;
+import java.awt.datatransfer.Transferable;
+import java.awt.geom.Point2D;
+
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeEvent;
+
+import sun.swing.SwingUtilities2;
+import javax.swing.plaf.basic.DragRecognitionSupport.BeforeDrag;
+
+/**
+ * An extensible implementation of {@code ListUI}.
+ * <p>
+ * {@code BasicListUI} instances cannot be shared between multiple
+ * lists.
+ *
+ * @author Hans Muller
+ * @author Philip Milne
+ * @author Shannon Hickey (drag and drop)
+ */
+public class BasicListUI extends ListUI
+{
+    private static final StringBuilder BASELINE_COMPONENT_KEY =
+        new StringBuilder("List.baselineComponent");
+
+    protected JList list = null;
+    protected CellRendererPane rendererPane;
+
+    // Listeners that this UI attaches to the JList
+    protected FocusListener focusListener;
+    protected MouseInputListener mouseInputListener;
+    protected ListSelectionListener listSelectionListener;
+    protected ListDataListener listDataListener;
+    protected PropertyChangeListener propertyChangeListener;
+    private Handler handler;
+
+    protected int[] cellHeights = null;
+    protected int cellHeight = -1;
+    protected int cellWidth = -1;
+    protected int updateLayoutStateNeeded = modelChanged;
+    /**
+     * Height of the list. When asked to paint, if the current size of
+     * the list differs, this will update the layout state.
+     */
+    private int listHeight;
+
+    /**
+     * Width of the list. When asked to paint, if the current size of
+     * the list differs, this will update the layout state.
+     */
+    private int listWidth;
+
+    /**
+     * The layout orientation of the list.
+     */
+    private int layoutOrientation;
+
+    // Following ivars are used if the list is laying out horizontally
+
+    /**
+     * Number of columns to create.
+     */
+    private int columnCount;
+    /**
+     * Preferred height to make the list, this is only used if the
+     * the list is layed out horizontally.
+     */
+    private int preferredHeight;
+    /**
+     * Number of rows per column. This is only used if the row height is
+     * fixed.
+     */
+    private int rowsPerColumn;
+
+    /**
+     * The time factor to treate the series of typed alphanumeric key
+     * as prefix for first letter navigation.
+     */
+    private long timeFactor = 1000L;
+
+    /**
+     * Local cache of JList's client property "List.isFileList"
+     */
+    private boolean isFileList = false;
+
+    /**
+     * Local cache of JList's component orientation property
+     */
+    private boolean isLeftToRight = true;
+
+    /* The bits below define JList property changes that affect layout.
+     * When one of these properties changes we set a bit in
+     * updateLayoutStateNeeded.  The change is dealt with lazily, see
+     * maybeUpdateLayoutState.  Changes to the JLists model, e.g. the
+     * models length changed, are handled similarly, see DataListener.
+     */
+
+    protected final static int modelChanged = 1 << 0;
+    protected final static int selectionModelChanged = 1 << 1;
+    protected final static int fontChanged = 1 << 2;
+    protected final static int fixedCellWidthChanged = 1 << 3;
+    protected final static int fixedCellHeightChanged = 1 << 4;
+    protected final static int prototypeCellValueChanged = 1 << 5;
+    protected final static int cellRendererChanged = 1 << 6;
+    private final static int layoutOrientationChanged = 1 << 7;
+    private final static int heightChanged = 1 << 8;
+    private final static int widthChanged = 1 << 9;
+    private final static int componentOrientationChanged = 1 << 10;
+
+    private static final int DROP_LINE_THICKNESS = 2;
+
+    static void loadActionMap(LazyActionMap map) {
+        map.put(new Actions(Actions.SELECT_PREVIOUS_COLUMN));
+        map.put(new Actions(Actions.SELECT_PREVIOUS_COLUMN_EXTEND));
+        map.put(new Actions(Actions.SELECT_PREVIOUS_COLUMN_CHANGE_LEAD));
+        map.put(new Actions(Actions.SELECT_NEXT_COLUMN));
+        map.put(new Actions(Actions.SELECT_NEXT_COLUMN_EXTEND));
+        map.put(new Actions(Actions.SELECT_NEXT_COLUMN_CHANGE_LEAD));
+        map.put(new Actions(Actions.SELECT_PREVIOUS_ROW));
+        map.put(new Actions(Actions.SELECT_PREVIOUS_ROW_EXTEND));
+        map.put(new Actions(Actions.SELECT_PREVIOUS_ROW_CHANGE_LEAD));
+        map.put(new Actions(Actions.SELECT_NEXT_ROW));
+        map.put(new Actions(Actions.SELECT_NEXT_ROW_EXTEND));
+        map.put(new Actions(Actions.SELECT_NEXT_ROW_CHANGE_LEAD));
+        map.put(new Actions(Actions.SELECT_FIRST_ROW));
+        map.put(new Actions(Actions.SELECT_FIRST_ROW_EXTEND));
+        map.put(new Actions(Actions.SELECT_FIRST_ROW_CHANGE_LEAD));
+        map.put(new Actions(Actions.SELECT_LAST_ROW));
+        map.put(new Actions(Actions.SELECT_LAST_ROW_EXTEND));
+        map.put(new Actions(Actions.SELECT_LAST_ROW_CHANGE_LEAD));
+        map.put(new Actions(Actions.SCROLL_UP));
+        map.put(new Actions(Actions.SCROLL_UP_EXTEND));
+        map.put(new Actions(Actions.SCROLL_UP_CHANGE_LEAD));
+        map.put(new Actions(Actions.SCROLL_DOWN));
+        map.put(new Actions(Actions.SCROLL_DOWN_EXTEND));
+        map.put(new Actions(Actions.SCROLL_DOWN_CHANGE_LEAD));
+        map.put(new Actions(Actions.SELECT_ALL));
+        map.put(new Actions(Actions.CLEAR_SELECTION));
+        map.put(new Actions(Actions.ADD_TO_SELECTION));
+        map.put(new Actions(Actions.TOGGLE_AND_ANCHOR));
+        map.put(new Actions(Actions.EXTEND_TO));
+        map.put(new Actions(Actions.MOVE_SELECTION_TO));
+
+        map.put(TransferHandler.getCutAction().getValue(Action.NAME),
+                TransferHandler.getCutAction());
+        map.put(TransferHandler.getCopyAction().getValue(Action.NAME),
+                TransferHandler.getCopyAction());
+        map.put(TransferHandler.getPasteAction().getValue(Action.NAME),
+                TransferHandler.getPasteAction());
+    }
+
+    /**
+     * Paint one List cell: compute the relevant state, get the "rubber stamp"
+     * cell renderer component, and then use the CellRendererPane to paint it.
+     * Subclasses may want to override this method rather than paint().
+     *
+     * @see #paint
+     */
+    protected void paintCell(
+        Graphics g,
+        int row,
+        Rectangle rowBounds,
+        ListCellRenderer cellRenderer,
+        ListModel dataModel,
+        ListSelectionModel selModel,
+        int leadIndex)
+    {
+        Object value = dataModel.getElementAt(row);
+        boolean cellHasFocus = list.hasFocus() && (row == leadIndex);
+        boolean isSelected = selModel.isSelectedIndex(row);
+
+        Component rendererComponent =
+            cellRenderer.getListCellRendererComponent(list, value, row, isSelected, cellHasFocus);
+
+        int cx = rowBounds.x;
+        int cy = rowBounds.y;
+        int cw = rowBounds.width;
+        int ch = rowBounds.height;
+
+        if (isFileList) {
+            // Shrink renderer to preferred size. This is mostly used on Windows
+            // where selection is only shown around the file name, instead of
+            // across the whole list cell.
+            int w = Math.min(cw, rendererComponent.getPreferredSize().width + 4);
+            if (!isLeftToRight) {
+                cx += (cw - w);
+            }
+            cw = w;
+        }
+
+        rendererPane.paintComponent(g, rendererComponent, list, cx, cy, cw, ch, true);
+    }
+
+
+    /**
+     * Paint the rows that intersect the Graphics objects clipRect.  This
+     * method calls paintCell as necessary.  Subclasses
+     * may want to override these methods.
+     *
+     * @see #paintCell
+     */
+    public void paint(Graphics g, JComponent c) {
+        Shape clip = g.getClip();
+        paintImpl(g, c);
+        g.setClip(clip);
+
+        paintDropLine(g);
+    }
+
+    private void paintImpl(Graphics g, JComponent c)
+    {
+        switch (layoutOrientation) {
+        case JList.VERTICAL_WRAP:
+            if (list.getHeight() != listHeight) {
+                updateLayoutStateNeeded |= heightChanged;
+                redrawList();
+            }
+            break;
+        case JList.HORIZONTAL_WRAP:
+            if (list.getWidth() != listWidth) {
+                updateLayoutStateNeeded |= widthChanged;
+                redrawList();
+            }
+            break;
+        default:
+            break;
+        }
+        maybeUpdateLayoutState();
+
+        ListCellRenderer renderer = list.getCellRenderer();
+        ListModel dataModel = list.getModel();
+        ListSelectionModel selModel = list.getSelectionModel();
+        int size;
+
+        if ((renderer == null) || (size = dataModel.getSize()) == 0) {
+            return;
+        }
+
+        // Determine how many columns we need to paint
+        Rectangle paintBounds = g.getClipBounds();
+
+        int startColumn, endColumn;
+        if (c.getComponentOrientation().isLeftToRight()) {
+            startColumn = convertLocationToColumn(paintBounds.x,
+                                                  paintBounds.y);
+            endColumn = convertLocationToColumn(paintBounds.x +
+                                                paintBounds.width,
+                                                paintBounds.y);
+        } else {
+            startColumn = convertLocationToColumn(paintBounds.x +
+                                                paintBounds.width,
+                                                paintBounds.y);
+            endColumn = convertLocationToColumn(paintBounds.x,
+                                                  paintBounds.y);
+        }
+        int maxY = paintBounds.y + paintBounds.height;
+        int leadIndex = adjustIndex(list.getLeadSelectionIndex(), list);
+        int rowIncrement = (layoutOrientation == JList.HORIZONTAL_WRAP) ?
+                           columnCount : 1;
+
+
+        for (int colCounter = startColumn; colCounter <= endColumn;
+             colCounter++) {
+            // And then how many rows in this columnn
+            int row = convertLocationToRowInColumn(paintBounds.y, colCounter);
+            int rowCount = getRowCount(colCounter);
+            int index = getModelIndex(colCounter, row);
+            Rectangle rowBounds = getCellBounds(list, index, index);
+
+            if (rowBounds == null) {
+                // Not valid, bail!
+                return;
+            }
+            while (row < rowCount && rowBounds.y < maxY &&
+                   index < size) {
+                rowBounds.height = getHeight(colCounter, row);
+                g.setClip(rowBounds.x, rowBounds.y, rowBounds.width,
+                          rowBounds.height);
+                g.clipRect(paintBounds.x, paintBounds.y, paintBounds.width,
+                           paintBounds.height);
+                paintCell(g, index, rowBounds, renderer, dataModel, selModel,
+                          leadIndex);
+                rowBounds.y += rowBounds.height;
+                index += rowIncrement;
+                row++;
+            }
+        }
+        // Empty out the renderer pane, allowing renderers to be gc'ed.
+        rendererPane.removeAll();
+    }
+
+    private void paintDropLine(Graphics g) {
+        JList.DropLocation loc = list.getDropLocation();
+        if (loc == null || !loc.isInsert()) {
+            return;
+        }
+
+        Color c = DefaultLookup.getColor(list, this, "List.dropLineColor", null);
+        if (c != null) {
+            g.setColor(c);
+            Rectangle rect = getDropLineRect(loc);
+            g.fillRect(rect.x, rect.y, rect.width, rect.height);
+        }
+    }
+
+    private Rectangle getDropLineRect(JList.DropLocation loc) {
+        int size = list.getModel().getSize();
+
+        if (size == 0) {
+            Insets insets = list.getInsets();
+            if (layoutOrientation == JList.HORIZONTAL_WRAP) {
+                if (isLeftToRight) {
+                    return new Rectangle(insets.left, insets.top, DROP_LINE_THICKNESS, 20);
+                } else {
+                    return new Rectangle(list.getWidth() - DROP_LINE_THICKNESS - insets.right,
+                                         insets.top, DROP_LINE_THICKNESS, 20);
+                }
+            } else {
+                return new Rectangle(insets.left, insets.top,
+                                     list.getWidth() - insets.left - insets.right,
+                                     DROP_LINE_THICKNESS);
+            }
+        }
+
+        Rectangle rect = null;
+        int index = loc.getIndex();
+        boolean decr = false;
+
+        if (layoutOrientation == JList.HORIZONTAL_WRAP) {
+            if (index == size) {
+                decr = true;
+            } else if (index != 0 && convertModelToRow(index)
+                                         != convertModelToRow(index - 1)) {
+
+                Rectangle prev = getCellBounds(list, index - 1);
+                Rectangle me = getCellBounds(list, index);
+                Point p = loc.getDropPoint();
+
+                if (isLeftToRight) {
+                    decr = Point2D.distance(prev.x + prev.width,
+                                            prev.y + (int)(prev.height / 2.0),
+                                            p.x, p.y)
+                           < Point2D.distance(me.x,
+                                              me.y + (int)(me.height / 2.0),
+                                              p.x, p.y);
+                } else {
+                    decr = Point2D.distance(prev.x,
+                                            prev.y + (int)(prev.height / 2.0),
+                                            p.x, p.y)
+                           < Point2D.distance(me.x + me.width,
+                                              me.y + (int)(prev.height / 2.0),
+                                              p.x, p.y);
+                }
+            }
+
+            if (decr) {
+                index--;
+                rect = getCellBounds(list, index);
+                if (isLeftToRight) {
+                    rect.x += rect.width;
+                } else {
+                    rect.x -= DROP_LINE_THICKNESS;
+                }
+            } else {
+                rect = getCellBounds(list, index);
+                if (!isLeftToRight) {
+                    rect.x += rect.width - DROP_LINE_THICKNESS;
+                }
+            }
+
+            if (rect.x >= list.getWidth()) {
+                rect.x = list.getWidth() - DROP_LINE_THICKNESS;
+            } else if (rect.x < 0) {
+                rect.x = 0;
+            }
+
+            rect.width = DROP_LINE_THICKNESS;
+        } else if (layoutOrientation == JList.VERTICAL_WRAP) {
+            if (index == size) {
+                index--;
+                rect = getCellBounds(list, index);
+                rect.y += rect.height;
+            } else if (index != 0 && convertModelToColumn(index)
+                                         != convertModelToColumn(index - 1)) {
+
+                Rectangle prev = getCellBounds(list, index - 1);
+                Rectangle me = getCellBounds(list, index);
+                Point p = loc.getDropPoint();
+                if (Point2D.distance(prev.x + (int)(prev.width / 2.0),
+                                     prev.y + prev.height,
+                                     p.x, p.y)
+                        < Point2D.distance(me.x + (int)(me.width / 2.0),
+                                           me.y,
+                                           p.x, p.y)) {
+
+                    index--;
+                    rect = getCellBounds(list, index);
+                    rect.y += rect.height;
+                } else {
+                    rect = getCellBounds(list, index);
+                }
+            } else {
+                rect = getCellBounds(list, index);
+            }
+
+            if (rect.y >= list.getHeight()) {
+                rect.y = list.getHeight() - DROP_LINE_THICKNESS;
+            }
+
+            rect.height = DROP_LINE_THICKNESS;
+        } else {
+            if (index == size) {
+                index--;
+                rect = getCellBounds(list, index);
+                rect.y += rect.height;
+            } else {
+                rect = getCellBounds(list, index);
+            }
+
+            if (rect.y >= list.getHeight()) {
+                rect.y = list.getHeight() - DROP_LINE_THICKNESS;
+            }
+
+            rect.height = DROP_LINE_THICKNESS;
+        }
+
+        return rect;
+    }
+
+    /**
+     * Returns the baseline.
+     *
+     * @throws NullPointerException {@inheritDoc}
+     * @throws IllegalArgumentException {@inheritDoc}
+     * @see javax.swing.JComponent#getBaseline(int, int)
+     * @since 1.6
+     */
+    public int getBaseline(JComponent c, int width, int height) {
+        super.getBaseline(c, width, height);
+        int rowHeight = list.getFixedCellHeight();
+        UIDefaults lafDefaults = UIManager.getLookAndFeelDefaults();
+        Component renderer = (Component)lafDefaults.get(
+                BASELINE_COMPONENT_KEY);
+        if (renderer == null) {
+            ListCellRenderer lcr = (ListCellRenderer)UIManager.get(
+                    "List.cellRenderer");
+
+            // fix for 6711072 some LAFs like Nimbus do not provide this
+            // UIManager key and we should not through a NPE here because of it
+            if (lcr == null) {
+                lcr = new DefaultListCellRenderer();
+            }
+            renderer = lcr.getListCellRendererComponent(
+                    list, "a", -1, false, false);
+            lafDefaults.put(BASELINE_COMPONENT_KEY, renderer);
+        }
+        renderer.setFont(list.getFont());
+        // JList actually has much more complex behavior here.
+        // If rowHeight != -1 the rowHeight is either the max of all cell
+        // heights (layout orientation != VERTICAL), or is variable depending
+        // upon the cell.  We assume a default size.
+        // We could theoretically query the real renderer, but that would
+        // not work for an empty model and the results may vary with
+        // the content.
+        if (rowHeight == -1) {
+            rowHeight = renderer.getPreferredSize().height;
+        }
+        return renderer.getBaseline(Integer.MAX_VALUE, rowHeight) +
+                list.getInsets().top;
+    }
+
+    /**
+     * Returns an enum indicating how the baseline of the component
+     * changes as the size changes.
+     *
+     * @throws NullPointerException {@inheritDoc}
+     * @see javax.swing.JComponent#getBaseline(int, int)
+     * @since 1.6
+     */
+    public Component.BaselineResizeBehavior getBaselineResizeBehavior(
+            JComponent c) {
+        super.getBaselineResizeBehavior(c);
+        return Component.BaselineResizeBehavior.CONSTANT_ASCENT;
+    }
+
+    /**
+     * The preferredSize of the list depends upon the layout orientation.
+     * <table summary="Describes the preferred size for each layout orientation">
+     * <tr><th>Layout Orientation</th><th>Preferred Size</th></tr>
+     * <tr>
+     *   <td>JList.VERTICAL
+     *   <td>The preferredSize of the list is total height of the rows
+     *       and the maximum width of the cells.  If JList.fixedCellHeight
+     *       is specified then the total height of the rows is just
+     *       (cellVerticalMargins + fixedCellHeight) * model.getSize() where
+     *       rowVerticalMargins is the space we allocate for drawing
+     *       the yellow focus outline.  Similarly if fixedCellWidth is
+     *       specified then we just use that.
+     *   </td>
+     * <tr>
+     *   <td>JList.VERTICAL_WRAP
+     *   <td>If the visible row count is greater than zero, the preferredHeight
+     *       is the maximum cell height * visibleRowCount. If the visible row
+     *       count is &lt;= 0, the preferred height is either the current height
+     *       of the list, or the maximum cell height, whichever is
+     *       bigger. The preferred width is than the maximum cell width *
+     *       number of columns needed. Where the number of columns needs is
+     *       list.height / max cell height. Max cell height is either the fixed
+     *       cell height, or is determined by iterating through all the cells
+     *       to find the maximum height from the ListCellRenderer.
+     * <tr>
+     *   <td>JList.HORIZONTAL_WRAP
+     *   <td>If the visible row count is greater than zero, the preferredHeight
+     *       is the maximum cell height * adjustedRowCount.  Where
+     *       visibleRowCount is used to determine the number of columns.
+     *       Because this lays out horizontally the number of rows is
+     *       then determined from the column count.  For example, lets say
+     *       you have a model with 10 items and the visible row count is 8.
+     *       The number of columns needed to display this is 2, but you no
+     *       longer need 8 rows to display this, you only need 5, thus
+     *       the adjustedRowCount is 5.
+     *       <p>If the visible row
+     *       count is &lt;= 0, the preferred height is dictated by the
+     *       number of columns, which will be as many as can fit in the width
+     *       of the <code>JList</code> (width / max cell width), with at
+     *       least one column.  The preferred height then becomes the
+     *       model size / number of columns * maximum cell height.
+     *       Max cell height is either the fixed
+     *       cell height, or is determined by iterating through all the cells
+     *       to find the maximum height from the ListCellRenderer.
+     * </table>
+     * The above specifies the raw preferred width and height. The resulting
+     * preferred width is the above width + insets.left + insets.right and
+     * the resulting preferred height is the above height + insets.top +
+     * insets.bottom. Where the <code>Insets</code> are determined from
+     * <code>list.getInsets()</code>.
+     *
+     * @param c The JList component.
+     * @return The total size of the list.
+     */
+    public Dimension getPreferredSize(JComponent c) {
+        maybeUpdateLayoutState();
+
+        int lastRow = list.getModel().getSize() - 1;
+        if (lastRow < 0) {
+            return new Dimension(0, 0);
+        }
+
+        Insets insets = list.getInsets();
+        int width = cellWidth * columnCount + insets.left + insets.right;
+        int height;
+
+        if (layoutOrientation != JList.VERTICAL) {
+            height = preferredHeight;
+        }
+        else {
+            Rectangle bounds = getCellBounds(list, lastRow);
+
+            if (bounds != null) {
+                height = bounds.y + bounds.height + insets.bottom;
+            }
+            else {
+                height = 0;
+            }
+        }
+        return new Dimension(width, height);
+    }
+
+
+    /**
+     * Selected the previous row and force it to be visible.
+     *
+     * @see JList#ensureIndexIsVisible
+     */
+    protected void selectPreviousIndex() {
+        int s = list.getSelectedIndex();
+        if(s > 0) {
+            s -= 1;
+            list.setSelectedIndex(s);
+            list.ensureIndexIsVisible(s);
+        }
+    }
+
+
+    /**
+     * Selected the previous row and force it to be visible.
+     *
+     * @see JList#ensureIndexIsVisible
+     */
+    protected void selectNextIndex()
+    {
+        int s = list.getSelectedIndex();
+        if((s + 1) < list.getModel().getSize()) {
+            s += 1;
+            list.setSelectedIndex(s);
+            list.ensureIndexIsVisible(s);
+        }
+    }
+
+
+    /**
+     * Registers the keyboard bindings on the <code>JList</code> that the
+     * <code>BasicListUI</code> is associated with. This method is called at
+     * installUI() time.
+     *
+     * @see #installUI
+     */
+    protected void installKeyboardActions() {
+        InputMap inputMap = getInputMap(JComponent.WHEN_FOCUSED);
+
+        SwingUtilities.replaceUIInputMap(list, JComponent.WHEN_FOCUSED,
+                                           inputMap);
+
+        LazyActionMap.installLazyActionMap(list, BasicListUI.class,
+                                           "List.actionMap");
+    }
+
+    InputMap getInputMap(int condition) {
+        if (condition == JComponent.WHEN_FOCUSED) {
+            InputMap keyMap = (InputMap)DefaultLookup.get(
+                             list, this, "List.focusInputMap");
+            InputMap rtlKeyMap;
+
+            if (isLeftToRight ||
+                ((rtlKeyMap = (InputMap)DefaultLookup.get(list, this,
+                              "List.focusInputMap.RightToLeft")) == null)) {
+                    return keyMap;
+            } else {
+                rtlKeyMap.setParent(keyMap);
+                return rtlKeyMap;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Unregisters keyboard actions installed from
+     * <code>installKeyboardActions</code>.
+     * This method is called at uninstallUI() time - subclassess should
+     * ensure that all of the keyboard actions registered at installUI
+     * time are removed here.
+     *
+     * @see #installUI
+     */
+    protected void uninstallKeyboardActions() {
+        SwingUtilities.replaceUIActionMap(list, null);
+        SwingUtilities.replaceUIInputMap(list, JComponent.WHEN_FOCUSED, null);
+    }
+
+
+    /**
+     * Creates and installs the listeners for the JList, its model, and its
+     * selectionModel.  This method is called at installUI() time.
+     *
+     * @see #installUI
+     * @see #uninstallListeners
+     */
+    protected void installListeners()
+    {
+        TransferHandler th = list.getTransferHandler();
+        if (th == null || th instanceof UIResource) {
+            list.setTransferHandler(defaultTransferHandler);
+            // default TransferHandler doesn't support drop
+            // so we don't want drop handling
+            if (list.getDropTarget() instanceof UIResource) {
+                list.setDropTarget(null);
+            }
+        }
+
+        focusListener = createFocusListener();
+        mouseInputListener = createMouseInputListener();
+        propertyChangeListener = createPropertyChangeListener();
+        listSelectionListener = createListSelectionListener();
+        listDataListener = createListDataListener();
+
+        list.addFocusListener(focusListener);
+        list.addMouseListener(mouseInputListener);
+        list.addMouseMotionListener(mouseInputListener);
+        list.addPropertyChangeListener(propertyChangeListener);
+        list.addKeyListener(getHandler());
+
+        ListModel model = list.getModel();
+        if (model != null) {
+            model.addListDataListener(listDataListener);
+        }
+
+        ListSelectionModel selectionModel = list.getSelectionModel();
+        if (selectionModel != null) {
+            selectionModel.addListSelectionListener(listSelectionListener);
+        }
+    }
+
+
+    /**
+     * Removes the listeners from the JList, its model, and its
+     * selectionModel.  All of the listener fields, are reset to
+     * null here.  This method is called at uninstallUI() time,
+     * it should be kept in sync with installListeners.
+     *
+     * @see #uninstallUI
+     * @see #installListeners
+     */
+    protected void uninstallListeners()
+    {
+        list.removeFocusListener(focusListener);
+        list.removeMouseListener(mouseInputListener);
+        list.removeMouseMotionListener(mouseInputListener);
+        list.removePropertyChangeListener(propertyChangeListener);
+        list.removeKeyListener(getHandler());
+
+        ListModel model = list.getModel();
+        if (model != null) {
+            model.removeListDataListener(listDataListener);
+        }
+
+        ListSelectionModel selectionModel = list.getSelectionModel();
+        if (selectionModel != null) {
+            selectionModel.removeListSelectionListener(listSelectionListener);
+        }
+
+        focusListener = null;
+        mouseInputListener  = null;
+        listSelectionListener = null;
+        listDataListener = null;
+        propertyChangeListener = null;
+        handler = null;
+    }
+
+
+    /**
+     * Initializes list properties such as font, foreground, and background,
+     * and adds the CellRendererPane. The font, foreground, and background
+     * properties are only set if their current value is either null
+     * or a UIResource, other properties are set if the current
+     * value is null.
+     *
+     * @see #uninstallDefaults
+     * @see #installUI
+     * @see CellRendererPane
+     */
+    protected void installDefaults()
+    {
+        list.setLayout(null);
+
+        LookAndFeel.installBorder(list, "List.border");
+
+        LookAndFeel.installColorsAndFont(list, "List.background", "List.foreground", "List.font");
+
+        LookAndFeel.installProperty(list, "opaque", Boolean.TRUE);
+
+        if (list.getCellRenderer() == null) {
+            list.setCellRenderer((ListCellRenderer)(UIManager.get("List.cellRenderer")));
+        }
+
+        Color sbg = list.getSelectionBackground();
+        if (sbg == null || sbg instanceof UIResource) {
+            list.setSelectionBackground(UIManager.getColor("List.selectionBackground"));
+        }
+
+        Color sfg = list.getSelectionForeground();
+        if (sfg == null || sfg instanceof UIResource) {
+            list.setSelectionForeground(UIManager.getColor("List.selectionForeground"));
+        }
+
+        Long l = (Long)UIManager.get("List.timeFactor");
+        timeFactor = (l!=null) ? l.longValue() : 1000L;
+
+        updateIsFileList();
+    }
+
+    private void updateIsFileList() {
+        boolean b = Boolean.TRUE.equals(list.getClientProperty("List.isFileList"));
+        if (b != isFileList) {
+            isFileList = b;
+            Font oldFont = list.getFont();
+            if (oldFont == null || oldFont instanceof UIResource) {
+                Font newFont = UIManager.getFont(b ? "FileChooser.listFont" : "List.font");
+                if (newFont != null && newFont != oldFont) {
+                    list.setFont(newFont);
+                }
+            }
+        }
+    }
+
+
+    /**
+     * Sets the list properties that have not been explicitly overridden to
+     * {@code null}. A property is considered overridden if its current value
+     * is not a {@code UIResource}.
+     *
+     * @see #installDefaults
+     * @see #uninstallUI
+     * @see CellRendererPane
+     */
+    protected void uninstallDefaults()
+    {
+        LookAndFeel.uninstallBorder(list);
+        if (list.getFont() instanceof UIResource) {
+            list.setFont(null);
+        }
+        if (list.getForeground() instanceof UIResource) {
+            list.setForeground(null);
+        }
+        if (list.getBackground() instanceof UIResource) {
+            list.setBackground(null);
+        }
+        if (list.getSelectionBackground() instanceof UIResource) {
+            list.setSelectionBackground(null);
+        }
+        if (list.getSelectionForeground() instanceof UIResource) {
+            list.setSelectionForeground(null);
+        }
+        if (list.getCellRenderer() instanceof UIResource) {
+            list.setCellRenderer(null);
+        }
+        if (list.getTransferHandler() instanceof UIResource) {
+            list.setTransferHandler(null);
+        }
+    }
+
+
+    /**
+     * Initializes <code>this.list</code> by calling <code>installDefaults()</code>,
+     * <code>installListeners()</code>, and <code>installKeyboardActions()</code>
+     * in order.
+     *
+     * @see #installDefaults
+     * @see #installListeners
+     * @see #installKeyboardActions
+     */
+    public void installUI(JComponent c)
+    {
+        list = (JList)c;
+
+        layoutOrientation = list.getLayoutOrientation();
+
+        rendererPane = new CellRendererPane();
+        list.add(rendererPane);
+
+        columnCount = 1;
+
+        updateLayoutStateNeeded = modelChanged;
+        isLeftToRight = list.getComponentOrientation().isLeftToRight();
+
+        installDefaults();
+        installListeners();
+        installKeyboardActions();
+    }
+
+
+    /**
+     * Uninitializes <code>this.list</code> by calling <code>uninstallListeners()</code>,
+     * <code>uninstallKeyboardActions()</code>, and <code>uninstallDefaults()</code>
+     * in order.  Sets this.list to null.
+     *
+     * @see #uninstallListeners
+     * @see #uninstallKeyboardActions
+     * @see #uninstallDefaults
+     */
+    public void uninstallUI(JComponent c)
+    {
+        uninstallListeners();
+        uninstallDefaults();
+        uninstallKeyboardActions();
+
+        cellWidth = cellHeight = -1;
+        cellHeights = null;
+
+        listWidth = listHeight = -1;
+
+        list.remove(rendererPane);
+        rendererPane = null;
+        list = null;
+    }
+
+
+    /**
+     * Returns a new instance of BasicListUI.  BasicListUI delegates are
+     * allocated one per JList.
+     *
+     * @return A new ListUI implementation for the Windows look and feel.
+     */
+    public static ComponentUI createUI(JComponent list) {
+        return new BasicListUI();
+    }
+
+
+    /**
+     * {@inheritDoc}
+     * @throws NullPointerException {@inheritDoc}
+     */
+    public int locationToIndex(JList list, Point location) {
+        maybeUpdateLayoutState();
+        return convertLocationToModel(location.x, location.y);
+    }
+
+
+    /**
+     * {@inheritDoc}
+     */
+    public Point indexToLocation(JList list, int index) {
+        maybeUpdateLayoutState();
+        Rectangle rect = getCellBounds(list, index, index);
+
+        if (rect != null) {
+            return new Point(rect.x, rect.y);
+        }
+        return null;
+    }
+
+
+    /**
+     * {@inheritDoc}
+     */
+    public Rectangle getCellBounds(JList list, int index1, int index2) {
+        maybeUpdateLayoutState();
+
+        int minIndex = Math.min(index1, index2);
+        int maxIndex = Math.max(index1, index2);
+
+        if (minIndex >= list.getModel().getSize()) {
+            return null;
+        }
+
+        Rectangle minBounds = getCellBounds(list, minIndex);
+
+        if (minBounds == null) {
+            return null;
+        }
+        if (minIndex == maxIndex) {
+            return minBounds;
+        }
+        Rectangle maxBounds = getCellBounds(list, maxIndex);
+
+        if (maxBounds != null) {
+            if (layoutOrientation == JList.HORIZONTAL_WRAP) {
+                int minRow = convertModelToRow(minIndex);
+                int maxRow = convertModelToRow(maxIndex);
+
+                if (minRow != maxRow) {
+                    minBounds.x = 0;
+                    minBounds.width = list.getWidth();
+                }
+            }
+            else if (minBounds.x != maxBounds.x) {
+                // Different columns
+                minBounds.y = 0;
+                minBounds.height = list.getHeight();
+            }
+            minBounds.add(maxBounds);
+        }
+        return minBounds;
+    }
+
+    /**
+     * Gets the bounds of the specified model index, returning the resulting
+     * bounds, or null if <code>index</code> is not valid.
+     */
+    private Rectangle getCellBounds(JList list, int index) {
+        maybeUpdateLayoutState();
+
+        int row = convertModelToRow(index);
+        int column = convertModelToColumn(index);
+
+        if (row == -1 || column == -1) {
+            return null;
+        }
+
+        Insets insets = list.getInsets();
+        int x;
+        int w = cellWidth;
+        int y = insets.top;
+        int h;
+        switch (layoutOrientation) {
+        case JList.VERTICAL_WRAP:
+        case JList.HORIZONTAL_WRAP:
+            if (isLeftToRight) {
+                x = insets.left + column * cellWidth;
+            } else {
+                x = list.getWidth() - insets.right - (column+1) * cellWidth;
+            }
+            y += cellHeight * row;
+            h = cellHeight;
+            break;
+        default:
+            x = insets.left;
+            if (cellHeights == null) {
+                y += (cellHeight * row);
+            }
+            else if (row >= cellHeights.length) {
+                y = 0;
+            }
+            else {
+                for(int i = 0; i < row; i++) {
+                    y += cellHeights[i];
+                }
+            }
+            w = list.getWidth() - (insets.left + insets.right);
+            h = getRowHeight(index);
+            break;
+        }
+        return new Rectangle(x, y, w, h);
+    }
+
+    /**
+     * Returns the height of the specified row based on the current layout.
+     *
+     * @return The specified row height or -1 if row isn't valid.
+     * @see #convertYToRow
+     * @see #convertRowToY
+     * @see #updateLayoutState
+     */
+    protected int getRowHeight(int row)
+    {
+        return getHeight(0, row);
+    }
+
+
+    /**
+     * Convert the JList relative coordinate to the row that contains it,
+     * based on the current layout.  If y0 doesn't fall within any row,
+     * return -1.
+     *
+     * @return The row that contains y0, or -1.
+     * @see #getRowHeight
+     * @see #updateLayoutState
+     */
+    protected int convertYToRow(int y0)
+    {
+        return convertLocationToRow(0, y0, false);
+    }
+
+
+    /**
+     * Return the JList relative Y coordinate of the origin of the specified
+     * row or -1 if row isn't valid.
+     *
+     * @return The Y coordinate of the origin of row, or -1.
+     * @see #getRowHeight
+     * @see #updateLayoutState
+     */
+    protected int convertRowToY(int row)
+    {
+        if (row >= getRowCount(0) || row < 0) {
+            return -1;
+        }
+        Rectangle bounds = getCellBounds(list, row, row);
+        return bounds.y;
+    }
+
+    /**
+     * Returns the height of the cell at the passed in location.
+     */
+    private int getHeight(int column, int row) {
+        if (column < 0 || column > columnCount || row < 0) {
+            return -1;
+        }
+        if (layoutOrientation != JList.VERTICAL) {
+            return cellHeight;
+        }
+        if (row >= list.getModel().getSize()) {
+            return -1;
+        }
+        return (cellHeights == null) ? cellHeight :
+                           ((row < cellHeights.length) ? cellHeights[row] : -1);
+    }
+
+    /**
+     * Returns the row at location x/y.
+     *
+     * @param closest If true and the location doesn't exactly match a
+     *                particular location, this will return the closest row.
+     */
+    private int convertLocationToRow(int x, int y0, boolean closest) {
+        int size = list.getModel().getSize();
+
+        if (size <= 0) {
+            return -1;
+        }
+        Insets insets = list.getInsets();
+        if (cellHeights == null) {
+            int row = (cellHeight == 0) ? 0 :
+                           ((y0 - insets.top) / cellHeight);
+            if (closest) {
+                if (row < 0) {
+                    row = 0;
+                }
+                else if (row >= size) {
+                    row = size - 1;
+                }
+            }
+            return row;
+        }
+        else if (size > cellHeights.length) {
+            return -1;
+        }
+        else {
+            int y = insets.top;
+            int row = 0;
+
+            if (closest && y0 < y) {
+                return 0;
+            }
+            int i;
+            for (i = 0; i < size; i++) {
+                if ((y0 >= y) && (y0 < y + cellHeights[i])) {
+                    return row;
+                }
+                y += cellHeights[i];
+                row += 1;
+            }
+            return i - 1;
+        }
+    }
+
+    /**
+     * Returns the closest row that starts at the specified y-location
+     * in the passed in column.
+     */
+    private int convertLocationToRowInColumn(int y, int column) {
+        int x = 0;
+
+        if (layoutOrientation != JList.VERTICAL) {
+            if (isLeftToRight) {
+                x = column * cellWidth;
+            } else {
+                x = list.getWidth() - (column+1)*cellWidth - list.getInsets().right;
+            }
+        }
+        return convertLocationToRow(x, y, true);
+    }
+
+    /**
+     * Returns the closest location to the model index of the passed in
+     * location.
+     */
+    private int convertLocationToModel(int x, int y) {
+        int row = convertLocationToRow(x, y, true);
+        int column = convertLocationToColumn(x, y);
+
+        if (row >= 0 && column >= 0) {
+            return getModelIndex(column, row);
+        }
+        return -1;
+    }
+
+    /**
+     * Returns the number of rows in the given column.
+     */
+    private int getRowCount(int column) {
+        if (column < 0 || column >= columnCount) {
+            return -1;
+        }
+        if (layoutOrientation == JList.VERTICAL ||
+                  (column == 0 && columnCount == 1)) {
+            return list.getModel().getSize();
+        }
+        if (column >= columnCount) {
+            return -1;
+        }
+        if (layoutOrientation == JList.VERTICAL_WRAP) {
+            if (column < (columnCount - 1)) {
+                return rowsPerColumn;
+            }
+            return list.getModel().getSize() - (columnCount - 1) *
+                        rowsPerColumn;
+        }
+        // JList.HORIZONTAL_WRAP
+        int diff = columnCount - (columnCount * rowsPerColumn -
+                                  list.getModel().getSize());
+
+        if (column >= diff) {
+            return Math.max(0, rowsPerColumn - 1);
+        }
+        return rowsPerColumn;
+    }
+
+    /**
+     * Returns the model index for the specified display location.
+     * If <code>column</code>x<code>row</code> is beyond the length of the
+     * model, this will return the model size - 1.
+     */
+    private int getModelIndex(int column, int row) {
+        switch (layoutOrientation) {
+        case JList.VERTICAL_WRAP:
+            return Math.min(list.getModel().getSize() - 1, rowsPerColumn *
+                            column + Math.min(row, rowsPerColumn-1));
+        case JList.HORIZONTAL_WRAP:
+            return Math.min(list.getModel().getSize() - 1, row * columnCount +
+                            column);
+        default:
+            return row;
+        }
+    }
+
+    /**
+     * Returns the closest column to the passed in location.
+     */
+    private int convertLocationToColumn(int x, int y) {
+        if (cellWidth > 0) {
+            if (layoutOrientation == JList.VERTICAL) {
+                return 0;
+            }
+            Insets insets = list.getInsets();
+            int col;
+            if (isLeftToRight) {
+                col = (x - insets.left) / cellWidth;
+            } else {
+                col = (list.getWidth() - x - insets.right - 1) / cellWidth;
+            }
+            if (col < 0) {
+                return 0;
+            }
+            else if (col >= columnCount) {
+                return columnCount - 1;
+            }
+            return col;
+        }
+        return 0;
+    }
+
+    /**
+     * Returns the row that the model index <code>index</code> will be
+     * displayed in..
+     */
+    private int convertModelToRow(int index) {
+        int size = list.getModel().getSize();
+
+        if ((index < 0) || (index >= size)) {
+            return -1;
+        }
+
+        if (layoutOrientation != JList.VERTICAL && columnCount > 1 &&
+                                                   rowsPerColumn > 0) {
+            if (layoutOrientation == JList.VERTICAL_WRAP) {
+                return index % rowsPerColumn;
+            }
+            return index / columnCount;
+        }
+        return index;
+    }
+
+    /**
+     * Returns the column that the model index <code>index</code> will be
+     * displayed in.
+     */
+    private int convertModelToColumn(int index) {
+        int size = list.getModel().getSize();
+
+        if ((index < 0) || (index >= size)) {
+            return -1;
+        }
+
+        if (layoutOrientation != JList.VERTICAL && rowsPerColumn > 0 &&
+                                                   columnCount > 1) {
+            if (layoutOrientation == JList.VERTICAL_WRAP) {
+                return index / rowsPerColumn;
+            }
+            return index % columnCount;
+        }
+        return 0;
+    }
+
+    /**
+     * If updateLayoutStateNeeded is non zero, call updateLayoutState() and reset
+     * updateLayoutStateNeeded.  This method should be called by methods
+     * before doing any computation based on the geometry of the list.
+     * For example it's the first call in paint() and getPreferredSize().
+     *
+     * @see #updateLayoutState
+     */
+    protected void maybeUpdateLayoutState()
+    {
+        if (updateLayoutStateNeeded != 0) {
+            updateLayoutState();
+            updateLayoutStateNeeded = 0;
+        }
+    }
+
+
+    /**
+     * Recompute the value of cellHeight or cellHeights based
+     * and cellWidth, based on the current font and the current
+     * values of fixedCellWidth, fixedCellHeight, and prototypeCellValue.
+     *
+     * @see #maybeUpdateLayoutState
+     */
+    protected void updateLayoutState()
+    {
+        /* If both JList fixedCellWidth and fixedCellHeight have been
+         * set, then initialize cellWidth and cellHeight, and set
+         * cellHeights to null.
+         */
+
+        int fixedCellHeight = list.getFixedCellHeight();
+        int fixedCellWidth = list.getFixedCellWidth();
+
+        cellWidth = (fixedCellWidth != -1) ? fixedCellWidth : -1;
+
+        if (fixedCellHeight != -1) {
+            cellHeight = fixedCellHeight;
+            cellHeights = null;
+        }
+        else {
+            cellHeight = -1;
+            cellHeights = new int[list.getModel().getSize()];
+        }
+
+        /* If either of  JList fixedCellWidth and fixedCellHeight haven't
+         * been set, then initialize cellWidth and cellHeights by
+         * scanning through the entire model.  Note: if the renderer is
+         * null, we just set cellWidth and cellHeights[*] to zero,
+         * if they're not set already.
+         */
+
+        if ((fixedCellWidth == -1) || (fixedCellHeight == -1)) {
+
+            ListModel dataModel = list.getModel();
+            int dataModelSize = dataModel.getSize();
+            ListCellRenderer renderer = list.getCellRenderer();
+
+            if (renderer != null) {
+                for(int index = 0; index < dataModelSize; index++) {
+                    Object value = dataModel.getElementAt(index);
+                    Component c = renderer.getListCellRendererComponent(list, value, index, false, false);
+                    rendererPane.add(c);
+                    Dimension cellSize = c.getPreferredSize();
+                    if (fixedCellWidth == -1) {
+                        cellWidth = Math.max(cellSize.width, cellWidth);
+                    }
+                    if (fixedCellHeight == -1) {
+                        cellHeights[index] = cellSize.height;
+                    }
+                }
+            }
+            else {
+                if (cellWidth == -1) {
+                    cellWidth = 0;
+                }
+                if (cellHeights == null) {
+                    cellHeights = new int[dataModelSize];
+                }
+                for(int index = 0; index < dataModelSize; index++) {
+                    cellHeights[index] = 0;
+                }
+            }
+        }
+
+        columnCount = 1;
+        if (layoutOrientation != JList.VERTICAL) {
+            updateHorizontalLayoutState(fixedCellWidth, fixedCellHeight);
+        }
+    }
+
+    /**
+     * Invoked when the list is layed out horizontally to determine how
+     * many columns to create.
+     * <p>
+     * This updates the <code>rowsPerColumn, </code><code>columnCount</code>,
+     * <code>preferredHeight</code> and potentially <code>cellHeight</code>
+     * instance variables.
+     */
+    private void updateHorizontalLayoutState(int fixedCellWidth,
+                                             int fixedCellHeight) {
+        int visRows = list.getVisibleRowCount();
+        int dataModelSize = list.getModel().getSize();
+        Insets insets = list.getInsets();
+
+        listHeight = list.getHeight();
+        listWidth = list.getWidth();
+
+        if (dataModelSize == 0) {
+            rowsPerColumn = columnCount = 0;
+            preferredHeight = insets.top + insets.bottom;
+            return;
+        }
+
+        int height;
+
+        if (fixedCellHeight != -1) {
+            height = fixedCellHeight;
+        }
+        else {
+            // Determine the max of the renderer heights.
+            int maxHeight = 0;
+            if (cellHeights.length > 0) {
+                maxHeight = cellHeights[cellHeights.length - 1];
+                for (int counter = cellHeights.length - 2;
+                     counter >= 0; counter--) {
+                    maxHeight = Math.max(maxHeight, cellHeights[counter]);
+                }
+            }
+            height = cellHeight = maxHeight;
+            cellHeights = null;
+        }
+        // The number of rows is either determined by the visible row
+        // count, or by the height of the list.
+        rowsPerColumn = dataModelSize;
+        if (visRows > 0) {
+            rowsPerColumn = visRows;
+            columnCount = Math.max(1, dataModelSize / rowsPerColumn);
+            if (dataModelSize > 0 && dataModelSize > rowsPerColumn &&
+                dataModelSize % rowsPerColumn != 0) {
+                columnCount++;
+            }
+            if (layoutOrientation == JList.HORIZONTAL_WRAP) {
+                // Because HORIZONTAL_WRAP flows differently, the
+                // rowsPerColumn needs to be adjusted.
+                rowsPerColumn = (dataModelSize / columnCount);
+                if (dataModelSize % columnCount > 0) {
+                    rowsPerColumn++;
+                }
+            }
+        }
+        else if (layoutOrientation == JList.VERTICAL_WRAP && height != 0) {
+            rowsPerColumn = Math.max(1, (listHeight - insets.top -
+                                         insets.bottom) / height);
+            columnCount = Math.max(1, dataModelSize / rowsPerColumn);
+            if (dataModelSize > 0 && dataModelSize > rowsPerColumn &&
+                dataModelSize % rowsPerColumn != 0) {
+                columnCount++;
+            }
+        }
+        else if (layoutOrientation == JList.HORIZONTAL_WRAP && cellWidth > 0 &&
+                 listWidth > 0) {
+            columnCount = Math.max(1, (listWidth - insets.left -
+                                       insets.right) / cellWidth);
+            rowsPerColumn = dataModelSize / columnCount;
+            if (dataModelSize % columnCount > 0) {
+                rowsPerColumn++;
+            }
+        }
+        preferredHeight = rowsPerColumn * cellHeight + insets.top +
+                              insets.bottom;
+    }
+
+    private Handler getHandler() {
+        if (handler == null) {
+            handler = new Handler();
+        }
+        return handler;
+    }
+
+    /**
+     * Mouse input, and focus handling for JList.  An instance of this
+     * class is added to the appropriate java.awt.Component lists
+     * at installUI() time.  Note keyboard input is handled with JComponent
+     * KeyboardActions, see installKeyboardActions().
+     * <p>
+     * <strong>Warning:</strong>
+     * Serialized objects of this class will not be compatible with
+     * future Swing releases. The current serialization support is
+     * appropriate for short term storage or RMI between applications running
+     * the same version of Swing.  As of 1.4, support for long term storage
+     * of all JavaBeans&trade;
+     * has been added to the <code>java.beans</code> package.
+     * Please see {@link java.beans.XMLEncoder}.
+     *
+     * @see #createMouseInputListener
+     * @see #installKeyboardActions
+     * @see #installUI
+     */
+    public class MouseInputHandler implements MouseInputListener
+    {
+        public void mouseClicked(MouseEvent e) {
+            getHandler().mouseClicked(e);
+        }
+
+        public void mouseEntered(MouseEvent e) {
+            getHandler().mouseEntered(e);
+        }
+
+        public void mouseExited(MouseEvent e) {
+            getHandler().mouseExited(e);
+        }
+
+        public void mousePressed(MouseEvent e) {
+            getHandler().mousePressed(e);
+        }
+
+        public void mouseDragged(MouseEvent e) {
+            getHandler().mouseDragged(e);
+        }
+
+        public void mouseMoved(MouseEvent e) {
+            getHandler().mouseMoved(e);
+        }
+
+        public void mouseReleased(MouseEvent e) {
+            getHandler().mouseReleased(e);
+        }
+    }
+
+
+    /**
+     * Creates a delegate that implements MouseInputListener.
+     * The delegate is added to the corresponding java.awt.Component listener
+     * lists at installUI() time. Subclasses can override this method to return
+     * a custom MouseInputListener, e.g.
+     * <pre>
+     * class MyListUI extends BasicListUI {
+     *    protected MouseInputListener <b>createMouseInputListener</b>() {
+     *        return new MyMouseInputHandler();
+     *    }
+     *    public class MyMouseInputHandler extends MouseInputHandler {
+     *        public void mouseMoved(MouseEvent e) {
+     *            // do some extra work when the mouse moves
+     *            super.mouseMoved(e);
+     *        }
+     *    }
+     * }
+     * </pre>
+     *
+     * @see MouseInputHandler
+     * @see #installUI
+     */
+    protected MouseInputListener createMouseInputListener() {
+        return getHandler();
+    }
+
+    /**
+     * This class should be treated as a &quot;protected&quot; inner class.
+     * Instantiate it only within subclasses of {@code BasicListUI}.
+     */
+    public class FocusHandler implements FocusListener
+    {
+        protected void repaintCellFocus()
+        {
+            getHandler().repaintCellFocus();
+        }
+
+        /* The focusGained() focusLost() methods run when the JList
+         * focus changes.
+         */
+
+        public void focusGained(FocusEvent e) {
+            getHandler().focusGained(e);
+        }
+
+        public void focusLost(FocusEvent e) {
+            getHandler().focusLost(e);
+        }
+    }
+
+    protected FocusListener createFocusListener() {
+        return getHandler();
+    }
+
+    /**
+     * The ListSelectionListener that's added to the JLists selection
+     * model at installUI time, and whenever the JList.selectionModel property
+     * changes.  When the selection changes we repaint the affected rows.
+     * <p>
+     * <strong>Warning:</strong>
+     * Serialized objects of this class will not be compatible with
+     * future Swing releases. The current serialization support is
+     * appropriate for short term storage or RMI between applications running
+     * the same version of Swing.  As of 1.4, support for long term storage
+     * of all JavaBeans&trade;
+     * has been added to the <code>java.beans</code> package.
+     * Please see {@link java.beans.XMLEncoder}.
+     *
+     * @see #createListSelectionListener
+     * @see #getCellBounds
+     * @see #installUI
+     */
+    public class ListSelectionHandler implements ListSelectionListener
+    {
+        public void valueChanged(ListSelectionEvent e)
+        {
+            getHandler().valueChanged(e);
+        }
+    }
+
+
+    /**
+     * Creates an instance of ListSelectionHandler that's added to
+     * the JLists by selectionModel as needed.  Subclasses can override
+     * this method to return a custom ListSelectionListener, e.g.
+     * <pre>
+     * class MyListUI extends BasicListUI {
+     *    protected ListSelectionListener <b>createListSelectionListener</b>() {
+     *        return new MySelectionListener();
+     *    }
+     *    public class MySelectionListener extends ListSelectionHandler {
+     *        public void valueChanged(ListSelectionEvent e) {
+     *            // do some extra work when the selection changes
+     *            super.valueChange(e);
+     *        }
+     *    }
+     * }
+     * </pre>
+     *
+     * @see ListSelectionHandler
+     * @see #installUI
+     */
+    protected ListSelectionListener createListSelectionListener() {
+        return getHandler();
+    }
+
+
+    private void redrawList() {
+        list.revalidate();
+        list.repaint();
+    }
+
+
+    /**
+     * The ListDataListener that's added to the JLists model at
+     * installUI time, and whenever the JList.model property changes.
+     * <p>
+     * <strong>Warning:</strong>
+     * Serialized objects of this class will not be compatible with
+     * future Swing releases. The current serialization support is
+     * appropriate for short term storage or RMI between applications running
+     * the same version of Swing.  As of 1.4, support for long term storage
+     * of all JavaBeans&trade;
+     * has been added to the <code>java.beans</code> package.
+     * Please see {@link java.beans.XMLEncoder}.
+     *
+     * @see JList#getModel
+     * @see #maybeUpdateLayoutState
+     * @see #createListDataListener
+     * @see #installUI
+     */
+    public class ListDataHandler implements ListDataListener
+    {
+        public void intervalAdded(ListDataEvent e) {
+            getHandler().intervalAdded(e);
+        }
+
+
+        public void intervalRemoved(ListDataEvent e)
+        {
+            getHandler().intervalRemoved(e);
+        }
+
+
+        public void contentsChanged(ListDataEvent e) {
+            getHandler().contentsChanged(e);
+        }
+    }
+
+
+    /**
+     * Creates an instance of ListDataListener that's added to
+     * the JLists by model as needed.  Subclasses can override
+     * this method to return a custom ListDataListener, e.g.
+     * <pre>
+     * class MyListUI extends BasicListUI {
+     *    protected ListDataListener <b>createListDataListener</b>() {
+     *        return new MyListDataListener();
+     *    }
+     *    public class MyListDataListener extends ListDataHandler {
+     *        public void contentsChanged(ListDataEvent e) {
+     *            // do some extra work when the models contents change
+     *            super.contentsChange(e);
+     *        }
+     *    }
+     * }
+     * </pre>
+     *
+     * @see ListDataListener
+     * @see JList#getModel
+     * @see #installUI
+     */
+    protected ListDataListener createListDataListener() {
+        return getHandler();
+    }
+
+
+    /**
+     * The PropertyChangeListener that's added to the JList at
+     * installUI time.  When the value of a JList property that
+     * affects layout changes, we set a bit in updateLayoutStateNeeded.
+     * If the JLists model changes we additionally remove our listeners
+     * from the old model.  Likewise for the JList selectionModel.
+     * <p>
+     * <strong>Warning:</strong>
+     * Serialized objects of this class will not be compatible with
+     * future Swing releases. The current serialization support is
+     * appropriate for short term storage or RMI between applications running
+     * the same version of Swing.  As of 1.4, support for long term storage
+     * of all JavaBeans&trade;
+     * has been added to the <code>java.beans</code> package.
+     * Please see {@link java.beans.XMLEncoder}.
+     *
+     * @see #maybeUpdateLayoutState
+     * @see #createPropertyChangeListener
+     * @see #installUI
+     */
+    public class PropertyChangeHandler implements PropertyChangeListener
+    {
+        public void propertyChange(PropertyChangeEvent e)
+        {
+            getHandler().propertyChange(e);
+        }
+    }
+
+
+    /**
+     * Creates an instance of PropertyChangeHandler that's added to
+     * the JList by installUI().  Subclasses can override this method
+     * to return a custom PropertyChangeListener, e.g.
+     * <pre>
+     * class MyListUI extends BasicListUI {
+     *    protected PropertyChangeListener <b>createPropertyChangeListener</b>() {
+     *        return new MyPropertyChangeListener();
+     *    }
+     *    public class MyPropertyChangeListener extends PropertyChangeHandler {
+     *        public void propertyChange(PropertyChangeEvent e) {
+     *            if (e.getPropertyName().equals("model")) {
+     *                // do some extra work when the model changes
+     *            }
+     *            super.propertyChange(e);
+     *        }
+     *    }
+     * }
+     * </pre>
+     *
+     * @see PropertyChangeListener
+     * @see #installUI
+     */
+    protected PropertyChangeListener createPropertyChangeListener() {
+        return getHandler();
+    }
+
+    /** Used by IncrementLeadSelectionAction. Indicates the action should
+     * change the lead, and not select it. */
+    private static final int CHANGE_LEAD = 0;
+    /** Used by IncrementLeadSelectionAction. Indicates the action should
+     * change the selection and lead. */
+    private static final int CHANGE_SELECTION = 1;
+    /** Used by IncrementLeadSelectionAction. Indicates the action should
+     * extend the selection from the anchor to the next index. */
+    private static final int EXTEND_SELECTION = 2;
+
+
+    private static class Actions extends UIAction {
+        private static final String SELECT_PREVIOUS_COLUMN =
+                                    "selectPreviousColumn";
+        private static final String SELECT_PREVIOUS_COLUMN_EXTEND =
+                                    "selectPreviousColumnExtendSelection";
+        private static final String SELECT_PREVIOUS_COLUMN_CHANGE_LEAD =
+                                    "selectPreviousColumnChangeLead";
+        private static final String SELECT_NEXT_COLUMN = "selectNextColumn";
+        private static final String SELECT_NEXT_COLUMN_EXTEND =
+                                    "selectNextColumnExtendSelection";
+        private static final String SELECT_NEXT_COLUMN_CHANGE_LEAD =
+                                    "selectNextColumnChangeLead";
+        private static final String SELECT_PREVIOUS_ROW = "selectPreviousRow";
+        private static final String SELECT_PREVIOUS_ROW_EXTEND =
+                                     "selectPreviousRowExtendSelection";
+        private static final String SELECT_PREVIOUS_ROW_CHANGE_LEAD =
+                                     "selectPreviousRowChangeLead";
+        private static final String SELECT_NEXT_ROW = "selectNextRow";
+        private static final String SELECT_NEXT_ROW_EXTEND =
+                                     "selectNextRowExtendSelection";
+        private static final String SELECT_NEXT_ROW_CHANGE_LEAD =
+                                     "selectNextRowChangeLead";
+        private static final String SELECT_FIRST_ROW = "selectFirstRow";
+        private static final String SELECT_FIRST_ROW_EXTEND =
+                                     "selectFirstRowExtendSelection";
+        private static final String SELECT_FIRST_ROW_CHANGE_LEAD =
+                                     "selectFirstRowChangeLead";
+        private static final String SELECT_LAST_ROW = "selectLastRow";
+        private static final String SELECT_LAST_ROW_EXTEND =
+                                     "selectLastRowExtendSelection";
+        private static final String SELECT_LAST_ROW_CHANGE_LEAD =
+                                     "selectLastRowChangeLead";
+        private static final String SCROLL_UP = "scrollUp";
+        private static final String SCROLL_UP_EXTEND =
+                                     "scrollUpExtendSelection";
+        private static final String SCROLL_UP_CHANGE_LEAD =
+                                     "scrollUpChangeLead";
+        private static final String SCROLL_DOWN = "scrollDown";
+        private static final String SCROLL_DOWN_EXTEND =
+                                     "scrollDownExtendSelection";
+        private static final String SCROLL_DOWN_CHANGE_LEAD =
+                                     "scrollDownChangeLead";
+        private static final String SELECT_ALL = "selectAll";
+        private static final String CLEAR_SELECTION = "clearSelection";
+
+        // add the lead item to the selection without changing lead or anchor
+        private static final String ADD_TO_SELECTION = "addToSelection";
+
+        // toggle the selected state of the lead item and move the anchor to it
+        private static final String TOGGLE_AND_ANCHOR = "toggleAndAnchor";
+
+        // extend the selection to the lead item
+        private static final String EXTEND_TO = "extendTo";
+
+        // move the anchor to the lead and ensure only that item is selected
+        private static final String MOVE_SELECTION_TO = "moveSelectionTo";
+
+        Actions(String name) {
+            super(name);
+        }
+        public void actionPerformed(ActionEvent e) {
+            String name = getName();
+            JList list = (JList)e.getSource();
+            BasicListUI ui = (BasicListUI)BasicLookAndFeel.getUIOfType(
+                     list.getUI(), BasicListUI.class);
+
+            if (name == SELECT_PREVIOUS_COLUMN) {
+                changeSelection(list, CHANGE_SELECTION,
+                                getNextColumnIndex(list, ui, -1), -1);
+            }
+            else if (name == SELECT_PREVIOUS_COLUMN_EXTEND) {
+                changeSelection(list, EXTEND_SELECTION,
+                                getNextColumnIndex(list, ui, -1), -1);
+            }
+            else if (name == SELECT_PREVIOUS_COLUMN_CHANGE_LEAD) {
+                changeSelection(list, CHANGE_LEAD,
+                                getNextColumnIndex(list, ui, -1), -1);
+            }
+            else if (name == SELECT_NEXT_COLUMN) {
+                changeSelection(list, CHANGE_SELECTION,
+                                getNextColumnIndex(list, ui, 1), 1);
+            }
+            else if (name == SELECT_NEXT_COLUMN_EXTEND) {
+                changeSelection(list, EXTEND_SELECTION,
+                                getNextColumnIndex(list, ui, 1), 1);
+            }
+            else if (name == SELECT_NEXT_COLUMN_CHANGE_LEAD) {
+                changeSelection(list, CHANGE_LEAD,
+                                getNextColumnIndex(list, ui, 1), 1);
+            }
+            else if (name == SELECT_PREVIOUS_ROW) {
+                changeSelection(list, CHANGE_SELECTION,
+                                getNextIndex(list, ui, -1), -1);
+            }
+            else if (name == SELECT_PREVIOUS_ROW_EXTEND) {
+                changeSelection(list, EXTEND_SELECTION,
+                                getNextIndex(list, ui, -1), -1);
+            }
+            else if (name == SELECT_PREVIOUS_ROW_CHANGE_LEAD) {
+                changeSelection(list, CHANGE_LEAD,
+                                getNextIndex(list, ui, -1), -1);
+            }
+            else if (name == SELECT_NEXT_ROW) {
+                changeSelection(list, CHANGE_SELECTION,
+                                getNextIndex(list, ui, 1), 1);
+            }
+            else if (name == SELECT_NEXT_ROW_EXTEND) {
+                changeSelection(list, EXTEND_SELECTION,
+                                getNextIndex(list, ui, 1), 1);
+            }
+            else if (name == SELECT_NEXT_ROW_CHANGE_LEAD) {
+                changeSelection(list, CHANGE_LEAD,
+                                getNextIndex(list, ui, 1), 1);
+            }
+            else if (name == SELECT_FIRST_ROW) {
+                changeSelection(list, CHANGE_SELECTION, 0, -1);
+            }
+            else if (name == SELECT_FIRST_ROW_EXTEND) {
+                changeSelection(list, EXTEND_SELECTION, 0, -1);
+            }
+            else if (name == SELECT_FIRST_ROW_CHANGE_LEAD) {
+                changeSelection(list, CHANGE_LEAD, 0, -1);
+            }
+            else if (name == SELECT_LAST_ROW) {
+                changeSelection(list, CHANGE_SELECTION,
+                                list.getModel().getSize() - 1, 1);
+            }
+            else if (name == SELECT_LAST_ROW_EXTEND) {
+                changeSelection(list, EXTEND_SELECTION,
+                                list.getModel().getSize() - 1, 1);
+            }
+            else if (name == SELECT_LAST_ROW_CHANGE_LEAD) {
+                changeSelection(list, CHANGE_LEAD,
+                                list.getModel().getSize() - 1, 1);
+            }
+            else if (name == SCROLL_UP) {
+                changeSelection(list, CHANGE_SELECTION,
+                                getNextPageIndex(list, -1), -1);
+            }
+            else if (name == SCROLL_UP_EXTEND) {
+                changeSelection(list, EXTEND_SELECTION,
+                                getNextPageIndex(list, -1), -1);
+            }
+            else if (name == SCROLL_UP_CHANGE_LEAD) {
+                changeSelection(list, CHANGE_LEAD,
+                                getNextPageIndex(list, -1), -1);
+            }
+            else if (name == SCROLL_DOWN) {
+                changeSelection(list, CHANGE_SELECTION,
+                                getNextPageIndex(list, 1), 1);
+            }
+            else if (name == SCROLL_DOWN_EXTEND) {
+                changeSelection(list, EXTEND_SELECTION,
+                                getNextPageIndex(list, 1), 1);
+            }
+            else if (name == SCROLL_DOWN_CHANGE_LEAD) {
+                changeSelection(list, CHANGE_LEAD,
+                                getNextPageIndex(list, 1), 1);
+            }
+            else if (name == SELECT_ALL) {
+                selectAll(list);
+            }
+            else if (name == CLEAR_SELECTION) {
+                clearSelection(list);
+            }
+            else if (name == ADD_TO_SELECTION) {
+                int index = adjustIndex(
+                    list.getSelectionModel().getLeadSelectionIndex(), list);
+
+                if (!list.isSelectedIndex(index)) {
+                    int oldAnchor = list.getSelectionModel().getAnchorSelectionIndex();
+                    list.setValueIsAdjusting(true);
+                    list.addSelectionInterval(index, index);
+                    list.getSelectionModel().setAnchorSelectionIndex(oldAnchor);
+                    list.setValueIsAdjusting(false);
+                }
+            }
+            else if (name == TOGGLE_AND_ANCHOR) {
+                int index = adjustIndex(
+                    list.getSelectionModel().getLeadSelectionIndex(), list);
+
+                if (list.isSelectedIndex(index)) {
+                    list.removeSelectionInterval(index, index);
+                } else {
+                    list.addSelectionInterval(index, index);
+                }
+            }
+            else if (name == EXTEND_TO) {
+                changeSelection(
+                    list, EXTEND_SELECTION,
+                    adjustIndex(list.getSelectionModel().getLeadSelectionIndex(), list),
+                    0);
+            }
+            else if (name == MOVE_SELECTION_TO) {
+                changeSelection(
+                    list, CHANGE_SELECTION,
+                    adjustIndex(list.getSelectionModel().getLeadSelectionIndex(), list),
+                    0);
+            }
+        }
+
+        public boolean isEnabled(Object c) {
+            Object name = getName();
+            if (name == SELECT_PREVIOUS_COLUMN_CHANGE_LEAD ||
+                    name == SELECT_NEXT_COLUMN_CHANGE_LEAD ||
+                    name == SELECT_PREVIOUS_ROW_CHANGE_LEAD ||
+                    name == SELECT_NEXT_ROW_CHANGE_LEAD ||
+                    name == SELECT_FIRST_ROW_CHANGE_LEAD ||
+                    name == SELECT_LAST_ROW_CHANGE_LEAD ||
+                    name == SCROLL_UP_CHANGE_LEAD ||
+                    name == SCROLL_DOWN_CHANGE_LEAD) {
+
+                // discontinuous selection actions are only enabled for
+                // DefaultListSelectionModel
+                return c != null && ((JList)c).getSelectionModel()
+                                        instanceof DefaultListSelectionModel;
+            }
+
+            return true;
+        }
+
+        private void clearSelection(JList list) {
+            list.clearSelection();
+        }
+
+        private void selectAll(JList list) {
+            int size = list.getModel().getSize();
+            if (size > 0) {
+                ListSelectionModel lsm = list.getSelectionModel();
+                int lead = adjustIndex(lsm.getLeadSelectionIndex(), list);
+
+                if (lsm.getSelectionMode() == ListSelectionModel.SINGLE_SELECTION) {
+                    if (lead == -1) {
+                        int min = adjustIndex(list.getMinSelectionIndex(), list);
+                        lead = (min == -1 ? 0 : min);
+                    }
+
+                    list.setSelectionInterval(lead, lead);
+                    list.ensureIndexIsVisible(lead);
+                } else {
+                    list.setValueIsAdjusting(true);
+
+                    int anchor = adjustIndex(lsm.getAnchorSelectionIndex(), list);
+
+                    list.setSelectionInterval(0, size - 1);
+
+                    // this is done to restore the anchor and lead
+                    SwingUtilities2.setLeadAnchorWithoutSelection(lsm, anchor, lead);
+
+                    list.setValueIsAdjusting(false);
+                }
+            }
+        }
+
+        private int getNextPageIndex(JList list, int direction) {
+            if (list.getModel().getSize() == 0) {
+                return -1;
+            }
+
+            int index = -1;
+            Rectangle visRect = list.getVisibleRect();
+            ListSelectionModel lsm = list.getSelectionModel();
+            int lead = adjustIndex(lsm.getLeadSelectionIndex(), list);
+            Rectangle leadRect =
+                (lead==-1) ? new Rectangle() : list.getCellBounds(lead, lead);
+
+            if (list.getLayoutOrientation() == JList.VERTICAL_WRAP &&
+                list.getVisibleRowCount() <= 0) {
+                if (!list.getComponentOrientation().isLeftToRight()) {
+                    direction = -direction;
+                }
+                // apply for horizontal scrolling: the step for next
+                // page index is number of visible columns
+                if (direction < 0) {
+                    // left
+                    visRect.x = leadRect.x + leadRect.width - visRect.width;
+                    Point p = new Point(visRect.x - 1, leadRect.y);
+                    index = list.locationToIndex(p);
+                    Rectangle cellBounds = list.getCellBounds(index, index);
+                    if (visRect.intersects(cellBounds)) {
+                        p.x = cellBounds.x - 1;
+                        index = list.locationToIndex(p);
+                        cellBounds = list.getCellBounds(index, index);
+                    }
+                    // this is necessary for right-to-left orientation only
+                    if (cellBounds.y != leadRect.y) {
+                        p.x = cellBounds.x + cellBounds.width;
+                        index = list.locationToIndex(p);
+                    }
+                }
+                else {
+                    // right
+                    visRect.x = leadRect.x;
+                    Point p = new Point(visRect.x + visRect.width, leadRect.y);
+                    index = list.locationToIndex(p);
+                    Rectangle cellBounds = list.getCellBounds(index, index);
+                    if (visRect.intersects(cellBounds)) {
+                        p.x = cellBounds.x + cellBounds.width;
+                        index = list.locationToIndex(p);
+                        cellBounds = list.getCellBounds(index, index);
+                    }
+                    if (cellBounds.y != leadRect.y) {
+                        p.x = cellBounds.x - 1;
+                        index = list.locationToIndex(p);
+                    }
+                }
+            }
+            else {
+                if (direction < 0) {
+                    // up
+                    // go to the first visible cell
+                    Point p = new Point(leadRect.x, visRect.y);
+                    index = list.locationToIndex(p);
+                    if (lead <= index) {
+                        // if lead is the first visible cell (or above it)
+                        // adjust the visible rect up
+                        visRect.y = leadRect.y + leadRect.height - visRect.height;
+                        p.y = visRect.y;
+                        index = list.locationToIndex(p);
+                        Rectangle cellBounds = list.getCellBounds(index, index);
+                        // go one cell down if first visible cell doesn't fit
+                        // into adjasted visible rectangle
+                        if (cellBounds.y < visRect.y) {
+                            p.y = cellBounds.y + cellBounds.height;
+                            index = list.locationToIndex(p);
+                            cellBounds = list.getCellBounds(index, index);
+                        }
+                        // if index isn't less then lead
+                        // try to go to cell previous to lead
+                        if (cellBounds.y >= leadRect.y) {
+                            p.y = leadRect.y - 1;
+                            index = list.locationToIndex(p);
+                        }
+                    }
+                }
+                else {
+                    // down
+                    // go to the last completely visible cell
+                    Point p = new Point(leadRect.x,
+                                        visRect.y + visRect.height - 1);
+                    index = list.locationToIndex(p);
+                    Rectangle cellBounds = list.getCellBounds(index, index);
+                    // go up one cell if last visible cell doesn't fit
+                    // into visible rectangle
+                    if (cellBounds.y + cellBounds.height >
+                        visRect.y + visRect.height) {
+                        p.y = cellBounds.y - 1;
+                        index = list.locationToIndex(p);
+                        cellBounds = list.getCellBounds(index, index);
+                        index = Math.max(index, lead);
+                    }
+
+                    if (lead >= index) {
+                        // if lead is the last completely visible index
+                        // (or below it) adjust the visible rect down
+                        visRect.y = leadRect.y;
+                        p.y = visRect.y + visRect.height - 1;
+                        index = list.locationToIndex(p);
+                        cellBounds = list.getCellBounds(index, index);
+                        // go one cell up if last visible cell doesn't fit
+                        // into adjasted visible rectangle
+                        if (cellBounds.y + cellBounds.height >
+                            visRect.y + visRect.height) {
+                            p.y = cellBounds.y - 1;
+                            index = list.locationToIndex(p);
+                            cellBounds = list.getCellBounds(index, index);
+                        }
+                        // if index isn't greater then lead
+                        // try to go to cell next after lead
+                        if (cellBounds.y <= leadRect.y) {
+                            p.y = leadRect.y + leadRect.height;
+                            index = list.locationToIndex(p);
+                        }
+                    }
+                }
+            }
+            return index;
+        }
+
+        private void changeSelection(JList list, int type,
+                                     int index, int direction) {
+            if (index >= 0 && index < list.getModel().getSize()) {
+                ListSelectionModel lsm = list.getSelectionModel();
+
+                // CHANGE_LEAD is only valid with multiple interval selection
+                if (type == CHANGE_LEAD &&
+                        list.getSelectionMode()
+                            != ListSelectionModel.MULTIPLE_INTERVAL_SELECTION) {
+
+                    type = CHANGE_SELECTION;
+                }
+
+                // IMPORTANT - This needs to happen before the index is changed.
+                // This is because JFileChooser, which uses JList, also scrolls
+                // the selected item into view. If that happens first, then
+                // this method becomes a no-op.
+                adjustScrollPositionIfNecessary(list, index, direction);
+
+                if (type == EXTEND_SELECTION) {
+                    int anchor = adjustIndex(lsm.getAnchorSelectionIndex(), list);
+                    if (anchor == -1) {
+                        anchor = 0;
+                    }
+
+                    list.setSelectionInterval(anchor, index);
+                }
+                else if (type == CHANGE_SELECTION) {
+                    list.setSelectedIndex(index);
+                }
+                else {
+                    // casting should be safe since the action is only enabled
+                    // for DefaultListSelectionModel
+                    ((DefaultListSelectionModel)lsm).moveLeadSelectionIndex(index);
+                }
+            }
+        }
+
+        /**
+         * When scroll down makes selected index the last completely visible
+         * index. When scroll up makes selected index the first visible index.
+         * Adjust visible rectangle respect to list's component orientation.
+         */
+        private void adjustScrollPositionIfNecessary(JList list, int index,
+                                                     int direction) {
+            if (direction == 0) {
+                return;
+            }
+            Rectangle cellBounds = list.getCellBounds(index, index);
+            Rectangle visRect = list.getVisibleRect();
+            if (cellBounds != null && !visRect.contains(cellBounds)) {
+                if (list.getLayoutOrientation() == JList.VERTICAL_WRAP &&
+                    list.getVisibleRowCount() <= 0) {
+                    // horizontal
+                    if (list.getComponentOrientation().isLeftToRight()) {
+                        if (direction > 0) {
+                            // right for left-to-right
+                            int x =Math.max(0,
+                                cellBounds.x + cellBounds.width - visRect.width);
+                            int startIndex =
+                                list.locationToIndex(new Point(x, cellBounds.y));
+                            Rectangle startRect = list.getCellBounds(startIndex,
+                                                                     startIndex);
+                            if (startRect.x < x && startRect.x < cellBounds.x) {
+                                startRect.x += startRect.width;
+                                startIndex =
+                                    list.locationToIndex(startRect.getLocation());
+                                startRect = list.getCellBounds(startIndex,
+                                                               startIndex);
+                            }
+                            cellBounds = startRect;
+                        }
+                        cellBounds.width = visRect.width;
+                    }
+                    else {
+                        if (direction > 0) {
+                            // left for right-to-left
+                            int x = cellBounds.x + visRect.width;
+                            int rightIndex =
+                                list.locationToIndex(new Point(x, cellBounds.y));
+                            Rectangle rightRect = list.getCellBounds(rightIndex,
+                                                                     rightIndex);
+                            if (rightRect.x + rightRect.width > x &&
+                                rightRect.x > cellBounds.x) {
+                                rightRect.width = 0;
+                            }
+                            cellBounds.x = Math.max(0,
+                                rightRect.x + rightRect.width - visRect.width);
+                            cellBounds.width = visRect.width;
+                        }
+                        else {
+                            cellBounds.x += Math.max(0,
+                                cellBounds.width - visRect.width);
+                            // adjust width to fit into visible rectangle
+                            cellBounds.width = Math.min(cellBounds.width,
+                                                        visRect.width);
+                        }
+                    }
+                }
+                else {
+                    // vertical
+                    if (direction > 0 &&
+                            (cellBounds.y < visRect.y ||
+                                    cellBounds.y + cellBounds.height
+                                            > visRect.y + visRect.height)) {
+                        //down
+                        int y = Math.max(0,
+                            cellBounds.y + cellBounds.height - visRect.height);
+                        int startIndex =
+                            list.locationToIndex(new Point(cellBounds.x, y));
+                        Rectangle startRect = list.getCellBounds(startIndex,
+                                                                 startIndex);
+                        if (startRect.y < y && startRect.y < cellBounds.y) {
+                            startRect.y += startRect.height;
+                            startIndex =
+                                list.locationToIndex(startRect.getLocation());
+                            startRect =
+                                list.getCellBounds(startIndex, startIndex);
+                        }
+                        cellBounds = startRect;
+                        cellBounds.height = visRect.height;
+                    }
+                    else {
+                        // adjust height to fit into visible rectangle
+                        cellBounds.height = Math.min(cellBounds.height, visRect.height);
+                    }
+                }
+                list.scrollRectToVisible(cellBounds);
+            }
+        }
+
+        private int getNextColumnIndex(JList list, BasicListUI ui,
+                                       int amount) {
+            if (list.getLayoutOrientation() != JList.VERTICAL) {
+                int index = adjustIndex(list.getLeadSelectionIndex(), list);
+                int size = list.getModel().getSize();
+
+                if (index == -1) {
+                    return 0;
+                } else if (size == 1) {
+                    // there's only one item so we should select it
+                    return 0;
+                } else if (ui == null || ui.columnCount <= 1) {
+                    return -1;
+                }
+
+                int column = ui.convertModelToColumn(index);
+                int row = ui.convertModelToRow(index);
+
+                column += amount;
+                if (column >= ui.columnCount || column < 0) {
+                    // No wrapping.
+                    return -1;
+                }
+                int maxRowCount = ui.getRowCount(column);
+                if (row >= maxRowCount) {
+                    return -1;
+                }
+                return ui.getModelIndex(column, row);
+            }
+            // Won't change the selection.
+            return -1;
+        }
+
+        private int getNextIndex(JList list, BasicListUI ui, int amount) {
+            int index = adjustIndex(list.getLeadSelectionIndex(), list);
+            int size = list.getModel().getSize();
+
+            if (index == -1) {
+                if (size > 0) {
+                    if (amount > 0) {
+                        index = 0;
+                    }
+                    else {
+                        index = size - 1;
+                    }
+                }
+            } else if (size == 1) {
+                // there's only one item so we should select it
+                index = 0;
+            } else if (list.getLayoutOrientation() == JList.HORIZONTAL_WRAP) {
+                if (ui != null) {
+                    index += ui.columnCount * amount;
+                }
+            } else {
+                index += amount;
+            }
+
+            return index;
+        }
+    }
+
+
+    private class Handler implements FocusListener, KeyListener,
+                          ListDataListener, ListSelectionListener,
+                          MouseInputListener, PropertyChangeListener,
+                          BeforeDrag {
+        //
+        // KeyListener
+        //
+        private String prefix = "";
+        private String typedString = "";
+        private long lastTime = 0L;
+
+        /**
+         * Invoked when a key has been typed.
+         *
+         * Moves the keyboard focus to the first element whose prefix matches the
+         * sequence of alphanumeric keys pressed by the user with delay less
+         * than value of <code>timeFactor</code> property (or 1000 milliseconds
+         * if it is not defined). Subsequent same key presses move the keyboard
+         * focus to the next object that starts with the same letter until another
+         * key is pressed, then it is treated as the prefix with appropriate number
+         * of the same letters followed by first typed another letter.
+         */
+        public void keyTyped(KeyEvent e) {
+            JList src = (JList)e.getSource();
+            ListModel model = src.getModel();
+
+            if (model.getSize() == 0 || e.isAltDown() ||
+                    BasicGraphicsUtils.isMenuShortcutKeyDown(e) ||
+                    isNavigationKey(e)) {
+                // Nothing to select
+                return;
+            }
+            boolean startingFromSelection = true;
+
+            char c = e.getKeyChar();
+
+            long time = e.getWhen();
+            int startIndex = adjustIndex(src.getLeadSelectionIndex(), list);
+            if (time - lastTime < timeFactor) {
+                typedString += c;
+                if((prefix.length() == 1) && (c == prefix.charAt(0))) {
+                    // Subsequent same key presses move the keyboard focus to the next
+                    // object that starts with the same letter.
+                    startIndex++;
+                } else {
+                    prefix = typedString;
+                }
+            } else {
+                startIndex++;
+                typedString = "" + c;
+                prefix = typedString;
+            }
+            lastTime = time;
+
+            if (startIndex < 0 || startIndex >= model.getSize()) {
+                startingFromSelection = false;
+                startIndex = 0;
+            }
+            int index = src.getNextMatch(prefix, startIndex,
+                                         Position.Bias.Forward);
+            if (index >= 0) {
+                src.setSelectedIndex(index);
+                src.ensureIndexIsVisible(index);
+            } else if (startingFromSelection) { // wrap
+                index = src.getNextMatch(prefix, 0,
+                                         Position.Bias.Forward);
+                if (index >= 0) {
+                    src.setSelectedIndex(index);
+                    src.ensureIndexIsVisible(index);
+                }
+            }
+        }
+
+        /**
+         * Invoked when a key has been pressed.
+         *
+         * Checks to see if the key event is a navigation key to prevent
+         * dispatching these keys for the first letter navigation.
+         */
+        public void keyPressed(KeyEvent e) {
+            if ( isNavigationKey(e) ) {
+                prefix = "";
+                typedString = "";
+                lastTime = 0L;
+            }
+        }
+
+        /**
+         * Invoked when a key has been released.
+         * See the class description for {@link KeyEvent} for a definition of
+         * a key released event.
+         */
+        public void keyReleased(KeyEvent e) {
+        }
+
+        /**
+         * Returns whether or not the supplied key event maps to a key that is used for
+         * navigation.  This is used for optimizing key input by only passing non-
+         * navigation keys to the first letter navigation mechanism.
+         */
+        private boolean isNavigationKey(KeyEvent event) {
+            InputMap inputMap = list.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+            KeyStroke key = KeyStroke.getKeyStrokeForEvent(event);
+
+            if (inputMap != null && inputMap.get(key) != null) {
+                return true;
+            }
+            return false;
+        }
+
+        //
+        // PropertyChangeListener
+        //
+        public void propertyChange(PropertyChangeEvent e) {
+            String propertyName = e.getPropertyName();
+
+            /* If the JList.model property changes, remove our listener,
+             * listDataListener from the old model and add it to the new one.
+             */
+            if (propertyName == "model") {
+                ListModel oldModel = (ListModel)e.getOldValue();
+                ListModel newModel = (ListModel)e.getNewValue();
+                if (oldModel != null) {
+                    oldModel.removeListDataListener(listDataListener);
+                }
+                if (newModel != null) {
+                    newModel.addListDataListener(listDataListener);
+                }
+                updateLayoutStateNeeded |= modelChanged;
+                redrawList();
+            }
+
+            /* If the JList.selectionModel property changes, remove our listener,
+             * listSelectionListener from the old selectionModel and add it to the new one.
+             */
+            else if (propertyName == "selectionModel") {
+                ListSelectionModel oldModel = (ListSelectionModel)e.getOldValue();
+                ListSelectionModel newModel = (ListSelectionModel)e.getNewValue();
+                if (oldModel != null) {
+                    oldModel.removeListSelectionListener(listSelectionListener);
+                }
+                if (newModel != null) {
+                    newModel.addListSelectionListener(listSelectionListener);
+                }
+                updateLayoutStateNeeded |= modelChanged;
+                redrawList();
+            }
+            else if (propertyName == "cellRenderer") {
+                updateLayoutStateNeeded |= cellRendererChanged;
+                redrawList();
+            }
+            else if (propertyName == "font") {
+                updateLayoutStateNeeded |= fontChanged;
+                redrawList();
+            }
+            else if (propertyName == "prototypeCellValue") {
+                updateLayoutStateNeeded |= prototypeCellValueChanged;
+                redrawList();
+            }
+            else if (propertyName == "fixedCellHeight") {
+                updateLayoutStateNeeded |= fixedCellHeightChanged;
+                redrawList();
+            }
+            else if (propertyName == "fixedCellWidth") {
+                updateLayoutStateNeeded |= fixedCellWidthChanged;
+                redrawList();
+            }
+            else if (propertyName == "selectionForeground") {
+                list.repaint();
+            }
+            else if (propertyName == "selectionBackground") {
+                list.repaint();
+            }
+            else if ("layoutOrientation" == propertyName) {
+                updateLayoutStateNeeded |= layoutOrientationChanged;
+                layoutOrientation = list.getLayoutOrientation();
+                redrawList();
+            }
+            else if ("visibleRowCount" == propertyName) {
+                if (layoutOrientation != JList.VERTICAL) {
+                    updateLayoutStateNeeded |= layoutOrientationChanged;
+                    redrawList();
+                }
+            }
+            else if ("componentOrientation" == propertyName) {
+                isLeftToRight = list.getComponentOrientation().isLeftToRight();
+                updateLayoutStateNeeded |= componentOrientationChanged;
+                redrawList();
+
+                InputMap inputMap = getInputMap(JComponent.WHEN_FOCUSED);
+                SwingUtilities.replaceUIInputMap(list, JComponent.WHEN_FOCUSED,
+                                                 inputMap);
+            } else if ("List.isFileList" == propertyName) {
+                updateIsFileList();
+                redrawList();
+            } else if ("dropLocation" == propertyName) {
+                JList.DropLocation oldValue = (JList.DropLocation)e.getOldValue();
+                repaintDropLocation(oldValue);
+                repaintDropLocation(list.getDropLocation());
+            }
+        }
+
+        private void repaintDropLocation(JList.DropLocation loc) {
+            if (loc == null) {
+                return;
+            }
+
+            Rectangle r;
+
+            if (loc.isInsert()) {
+                r = getDropLineRect(loc);
+            } else {
+                r = getCellBounds(list, loc.getIndex());
+            }
+
+            if (r != null) {
+                list.repaint(r);
+            }
+        }
+
+        //
+        // ListDataListener
+        //
+        public void intervalAdded(ListDataEvent e) {
+            updateLayoutStateNeeded = modelChanged;
+
+            int minIndex = Math.min(e.getIndex0(), e.getIndex1());
+            int maxIndex = Math.max(e.getIndex0(), e.getIndex1());
+
+            /* Sync the SelectionModel with the DataModel.
+             */
+
+            ListSelectionModel sm = list.getSelectionModel();
+            if (sm != null) {
+                sm.insertIndexInterval(minIndex, maxIndex - minIndex+1, true);
+            }
+
+            /* Repaint the entire list, from the origin of
+             * the first added cell, to the bottom of the
+             * component.
+             */
+            redrawList();
+        }
+
+
+        public void intervalRemoved(ListDataEvent e)
+        {
+            updateLayoutStateNeeded = modelChanged;
+
+            /* Sync the SelectionModel with the DataModel.
+             */
+
+            ListSelectionModel sm = list.getSelectionModel();
+            if (sm != null) {
+                sm.removeIndexInterval(e.getIndex0(), e.getIndex1());
+            }
+
+            /* Repaint the entire list, from the origin of
+             * the first removed cell, to the bottom of the
+             * component.
+             */
+
+            redrawList();
+        }
+
+
+        public void contentsChanged(ListDataEvent e) {
+            updateLayoutStateNeeded = modelChanged;
+            redrawList();
+        }
+
+
+        //
+        // ListSelectionListener
+        //
+        public void valueChanged(ListSelectionEvent e) {
+            maybeUpdateLayoutState();
+
+            int size = list.getModel().getSize();
+            int firstIndex = Math.min(size - 1, Math.max(e.getFirstIndex(), 0));
+            int lastIndex = Math.min(size - 1, Math.max(e.getLastIndex(), 0));
+
+            Rectangle bounds = getCellBounds(list, firstIndex, lastIndex);
+
+            if (bounds != null) {
+                list.repaint(bounds.x, bounds.y, bounds.width, bounds.height);
+            }
+        }
+
+        //
+        // MouseListener
+        //
+        public void mouseClicked(MouseEvent e) {
+        }
+
+        public void mouseEntered(MouseEvent e) {
+        }
+
+        public void mouseExited(MouseEvent e) {
+        }
+
+        // Whether or not the mouse press (which is being considered as part
+        // of a drag sequence) also caused the selection change to be fully
+        // processed.
+        private boolean dragPressDidSelection;
+
+        public void mousePressed(MouseEvent e) {
+            if (SwingUtilities2.shouldIgnore(e, list)) {
+                return;
+            }
+
+            boolean dragEnabled = list.getDragEnabled();
+            boolean grabFocus = true;
+
+            // different behavior if drag is enabled
+            if (dragEnabled) {
+                int row = SwingUtilities2.loc2IndexFileList(list, e.getPoint());
+                // if we have a valid row and this is a drag initiating event
+                if (row != -1 && DragRecognitionSupport.mousePressed(e)) {
+                    dragPressDidSelection = false;
+
+                    if (BasicGraphicsUtils.isMenuShortcutKeyDown(e)) {
+                        // do nothing for control - will be handled on release
+                        // or when drag starts
+                        return;
+                    } else if (!e.isShiftDown() && list.isSelectedIndex(row)) {
+                        // clicking on something that's already selected
+                        // and need to make it the lead now
+                        list.addSelectionInterval(row, row);
+                        return;
+                    }
+
+                    // could be a drag initiating event - don't grab focus
+                    grabFocus = false;
+
+                    dragPressDidSelection = true;
+                }
+            } else {
+                // When drag is enabled mouse drags won't change the selection
+                // in the list, so we only set the isAdjusting flag when it's
+                // not enabled
+                list.setValueIsAdjusting(true);
+            }
+
+            if (grabFocus) {
+                SwingUtilities2.adjustFocus(list);
+            }
+
+            adjustSelection(e);
+        }
+
+        private void adjustSelection(MouseEvent e) {
+            int row = SwingUtilities2.loc2IndexFileList(list, e.getPoint());
+            if (row < 0) {
+                // If shift is down in multi-select, we should do nothing.
+                // For single select or non-shift-click, clear the selection
+                if (isFileList &&
+                    e.getID() == MouseEvent.MOUSE_PRESSED &&
+                    (!e.isShiftDown() ||
+                     list.getSelectionMode() == ListSelectionModel.SINGLE_SELECTION)) {
+                    list.clearSelection();
+                }
+            }
+            else {
+                int anchorIndex = adjustIndex(list.getAnchorSelectionIndex(), list);
+                boolean anchorSelected;
+                if (anchorIndex == -1) {
+                    anchorIndex = 0;
+                    anchorSelected = false;
+                } else {
+                    anchorSelected = list.isSelectedIndex(anchorIndex);
+                }
+
+                if (BasicGraphicsUtils.isMenuShortcutKeyDown(e)) {
+                    if (e.isShiftDown()) {
+                        if (anchorSelected) {
+                            list.addSelectionInterval(anchorIndex, row);
+                        } else {
+                            list.removeSelectionInterval(anchorIndex, row);
+                            if (isFileList) {
+                                list.addSelectionInterval(row, row);
+                                list.getSelectionModel().setAnchorSelectionIndex(anchorIndex);
+                            }
+                        }
+                    } else if (list.isSelectedIndex(row)) {
+                        list.removeSelectionInterval(row, row);
+                    } else {
+                        list.addSelectionInterval(row, row);
+                    }
+                } else if (e.isShiftDown()) {
+                    list.setSelectionInterval(anchorIndex, row);
+                } else {
+                    list.setSelectionInterval(row, row);
+                }
+            }
+        }
+
+        public void dragStarting(MouseEvent me) {
+            if (BasicGraphicsUtils.isMenuShortcutKeyDown(me)) {
+                int row = SwingUtilities2.loc2IndexFileList(list, me.getPoint());
+                list.addSelectionInterval(row, row);
+            }
+        }
+
+        public void mouseDragged(MouseEvent e) {
+            if (SwingUtilities2.shouldIgnore(e, list)) {
+                return;
+            }
+
+            if (list.getDragEnabled()) {
+                DragRecognitionSupport.mouseDragged(e, this);
+                return;
+            }
+
+            if (e.isShiftDown() || BasicGraphicsUtils.isMenuShortcutKeyDown(e)) {
+                return;
+            }
+
+            int row = locationToIndex(list, e.getPoint());
+            if (row != -1) {
+                // 4835633.  Dragging onto a File should not select it.
+                if (isFileList) {
+                    return;
+                }
+                Rectangle cellBounds = getCellBounds(list, row, row);
+                if (cellBounds != null) {
+                    list.scrollRectToVisible(cellBounds);
+                    list.setSelectionInterval(row, row);
+                }
+            }
+        }
+
+        public void mouseMoved(MouseEvent e) {
+        }
+
+        public void mouseReleased(MouseEvent e) {
+            if (SwingUtilities2.shouldIgnore(e, list)) {
+                return;
+            }
+
+            if (list.getDragEnabled()) {
+                MouseEvent me = DragRecognitionSupport.mouseReleased(e);
+                if (me != null) {
+                    SwingUtilities2.adjustFocus(list);
+                    if (!dragPressDidSelection) {
+                        adjustSelection(me);
+                    }
+                }
+            } else {
+                list.setValueIsAdjusting(false);
+            }
+        }
+
+        //
+        // FocusListener
+        //
+        protected void repaintCellFocus()
+        {
+            int leadIndex = adjustIndex(list.getLeadSelectionIndex(), list);
+            if (leadIndex != -1) {
+                Rectangle r = getCellBounds(list, leadIndex, leadIndex);
+                if (r != null) {
+                    list.repaint(r.x, r.y, r.width, r.height);
+                }
+            }
+        }
+
+        /* The focusGained() focusLost() methods run when the JList
+         * focus changes.
+         */
+
+        public void focusGained(FocusEvent e) {
+            repaintCellFocus();
+        }
+
+        public void focusLost(FocusEvent e) {
+            repaintCellFocus();
+        }
+    }
+
+    private static int adjustIndex(int index, JList list) {
+        return index < list.getModel().getSize() ? index : -1;
+    }
+
+    private static final TransferHandler defaultTransferHandler = new ListTransferHandler();
+
+    static class ListTransferHandler extends TransferHandler implements UIResource {
+
+        /**
+         * Create a Transferable to use as the source for a data transfer.
+         *
+         * @param c  The component holding the data to be transfered.  This
+         *  argument is provided to enable sharing of TransferHandlers by
+         *  multiple components.
+         * @return  The representation of the data to be transfered.
+         *
+         */
+        protected Transferable createTransferable(JComponent c) {
+            if (c instanceof JList) {
+                JList list = (JList) c;
+                Object[] values = list.getSelectedValues();
+
+                if (values == null || values.length == 0) {
+                    return null;
+                }
+
+                StringBuffer plainBuf = new StringBuffer();
+                StringBuffer htmlBuf = new StringBuffer();
+
+                htmlBuf.append("<html>\n<body>\n<ul>\n");
+
+                for (int i = 0; i < values.length; i++) {
+                    Object obj = values[i];
+                    String val = ((obj == null) ? "" : obj.toString());
+                    plainBuf.append(val + "\n");
+                    htmlBuf.append("  <li>" + val + "\n");
+                }
+
+                // remove the last newline
+                plainBuf.deleteCharAt(plainBuf.length() - 1);
+                htmlBuf.append("</ul>\n</body>\n</html>");
+
+                return new BasicTransferable(plainBuf.toString(), htmlBuf.toString());
+            }
+
+            return null;
+        }
+
+        public int getSourceActions(JComponent c) {
+            return COPY;
+        }
+
+    }
+}

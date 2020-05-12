@@ -1,11 +1,41 @@
+/*
+ * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package javax.lang.model.element;
 
-public interface QualifiedNameable extends Element {
-  Name getQualifiedName();
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\lang\model\element\QualifiedNameable.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * A mixin interface for an element that has a qualified name.
+ *
+ * @author Joseph D. Darcy
+ * @since 1.7
  */
+public interface QualifiedNameable extends Element {
+    /**
+     * Returns the fully qualified name of an element.
+     *
+     * @return the fully qualified name of an element
+     */
+    Name getQualifiedName();
+}

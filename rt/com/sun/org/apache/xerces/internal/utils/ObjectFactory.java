@@ -1,236 +1,231 @@
-/*     */ package com.sun.org.apache.xerces.internal.utils;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class ObjectFactory
-/*     */ {
-/*     */   private static final String JAXP_INTERNAL = "com.sun.org.apache";
-/*     */   private static final String STAX_INTERNAL = "com.sun.xml.internal";
-/*  46 */   private static final boolean DEBUG = isDebugEnabled();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static boolean isDebugEnabled() {
-/*     */     try {
-/*  56 */       String val = SecuritySupport.getSystemProperty("xerces.debug");
-/*     */       
-/*  58 */       return (val != null && !"false".equals(val));
-/*     */     }
-/*  60 */     catch (SecurityException securityException) {
-/*  61 */       return false;
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   private static void debugPrintln(String msg) {
-/*  66 */     if (DEBUG) {
-/*  67 */       System.err.println("XERCES: " + msg);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static ClassLoader findClassLoader() throws ConfigurationError {
-/*  78 */     if (System.getSecurityManager() != null)
-/*     */     {
-/*  80 */       return null;
-/*     */     }
-/*     */ 
-/*     */     
-/*  84 */     ClassLoader context = SecuritySupport.getContextClassLoader();
-/*  85 */     ClassLoader system = SecuritySupport.getSystemClassLoader();
-/*     */     
-/*  87 */     ClassLoader chain = system;
-/*     */     while (true) {
-/*  89 */       if (context == chain) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/*  98 */         ClassLoader current = ObjectFactory.class.getClassLoader();
-/*     */         
-/* 100 */         chain = system;
-/*     */         while (true) {
-/* 102 */           if (current == chain)
-/*     */           {
-/*     */             
-/* 105 */             return system;
-/*     */           }
-/* 107 */           if (chain == null) {
-/*     */             break;
-/*     */           }
-/* 110 */           chain = SecuritySupport.getParentClassLoader(chain);
-/*     */         } 
-/*     */ 
-/*     */ 
-/*     */         
-/* 115 */         return current;
-/*     */       } 
-/*     */       
-/* 118 */       if (chain == null) {
-/*     */         break;
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 125 */       chain = SecuritySupport.getParentClassLoader(chain);
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 130 */     return context;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Object newInstance(String className, boolean doFallback) throws ConfigurationError {
-/* 140 */     if (System.getSecurityManager() != null) {
-/* 141 */       return newInstance(className, null, doFallback);
-/*     */     }
-/* 143 */     return newInstance(className, 
-/* 144 */         findClassLoader(), doFallback);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Object newInstance(String className, ClassLoader cl, boolean doFallback) throws ConfigurationError {
-/*     */     try {
-/* 157 */       Class providerClass = findProviderClass(className, cl, doFallback);
-/* 158 */       Object instance = providerClass.newInstance();
-/* 159 */       if (DEBUG) debugPrintln("created new instance of " + providerClass + " using ClassLoader: " + cl);
-/*     */       
-/* 161 */       return instance;
-/* 162 */     } catch (ClassNotFoundException x) {
-/* 163 */       throw new ConfigurationError("Provider " + className + " not found", x);
-/*     */     }
-/* 165 */     catch (Exception x) {
-/* 166 */       throw new ConfigurationError("Provider " + className + " could not be instantiated: " + x, x);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Class findProviderClass(String className, boolean doFallback) throws ClassNotFoundException, ConfigurationError {
-/* 179 */     return findProviderClass(className, 
-/* 180 */         findClassLoader(), doFallback);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Class findProviderClass(String className, ClassLoader cl, boolean doFallback) throws ClassNotFoundException, ConfigurationError {
-/*     */     Class<?> providerClass;
-/* 191 */     SecurityManager security = System.getSecurityManager();
-/* 192 */     if (security != null) {
-/* 193 */       if (className.startsWith("com.sun.org.apache") || className
-/* 194 */         .startsWith("com.sun.xml.internal")) {
-/* 195 */         cl = null;
-/*     */       } else {
-/* 197 */         int lastDot = className.lastIndexOf(".");
-/* 198 */         String packageName = className;
-/* 199 */         if (lastDot != -1) packageName = className.substring(0, lastDot); 
-/* 200 */         security.checkPackageAccess(packageName);
-/*     */       } 
-/*     */     }
-/*     */     
-/* 204 */     if (cl == null) {
-/*     */       
-/* 206 */       providerClass = Class.forName(className, false, ObjectFactory.class.getClassLoader());
-/*     */     } else {
-/*     */       try {
-/* 209 */         providerClass = cl.loadClass(className);
-/* 210 */       } catch (ClassNotFoundException x) {
-/* 211 */         if (doFallback) {
-/*     */           
-/* 213 */           ClassLoader current = ObjectFactory.class.getClassLoader();
-/* 214 */           if (current == null) {
-/* 215 */             providerClass = Class.forName(className);
-/* 216 */           } else if (cl != current) {
-/* 217 */             cl = current;
-/* 218 */             providerClass = cl.loadClass(className);
-/*     */           } else {
-/* 220 */             throw x;
-/*     */           } 
-/*     */         } else {
-/* 223 */           throw x;
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 228 */     return providerClass;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\interna\\utils\ObjectFactory.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2005 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.utils;
+
+/**
+ * This class is duplicated for each JAXP subpackage so keep it in sync.
+ * It is package private and therefore is not exposed as part of the JAXP
+ * API.
+ * <p>
+ * This code is designed to implement the JAXP 1.1 spec pluggability
+ * feature and is designed to run on JDK version 1.1 and
+ * later, and to compile on JDK 1.2 and onward.
+ * The code also runs both as part of an unbundled jar file and
+ * when bundled as part of the JDK.
+ * <p>
+ *
+ * @version $Id: ObjectFactory.java,v 1.6 2010/04/23 01:44:34 joehw Exp $
+ */
+public final class ObjectFactory {
+
+    //
+    // Constants
+    //
+    private static final String JAXP_INTERNAL = "com.sun.org.apache";
+    private static final String STAX_INTERNAL = "com.sun.xml.internal";
+
+    /** Set to true for debugging */
+    private static final boolean DEBUG = isDebugEnabled();
+
+
+    //
+    // Private static methods
+    //
+
+    /** Returns true if debug has been enabled. */
+    private static boolean isDebugEnabled() {
+        try {
+            String val = SecuritySupport.getSystemProperty("xerces.debug");
+            // Allow simply setting the prop to turn on debug
+            return (val != null && (!"false".equals(val)));
+        }
+        catch (SecurityException se) {}
+        return false;
+    } // isDebugEnabled()
+
+    /** Prints a message to standard error if debugging is enabled. */
+    private static void debugPrintln(String msg) {
+        if (DEBUG) {
+            System.err.println("XERCES: " + msg);
+        }
+    } // debugPrintln(String)
+
+    /**
+     * Figure out which ClassLoader to use.  For JDK 1.2 and later use
+     * the context ClassLoader.
+     */
+    public static ClassLoader findClassLoader()
+        throws ConfigurationError
+    {
+        if (System.getSecurityManager()!=null) {
+            //this will ensure bootclassloader is used
+            return null;
+        }
+        // Figure out which ClassLoader to use for loading the provider
+        // class.  If there is a Context ClassLoader then use it.
+        ClassLoader context = SecuritySupport.getContextClassLoader();
+        ClassLoader system = SecuritySupport.getSystemClassLoader();
+
+        ClassLoader chain = system;
+        while (true) {
+            if (context == chain) {
+                // Assert: we are on JDK 1.1 or we have no Context ClassLoader
+                // or any Context ClassLoader in chain of system classloader
+                // (including extension ClassLoader) so extend to widest
+                // ClassLoader (always look in system ClassLoader if Xerces
+                // is in boot/extension/system classpath and in current
+                // ClassLoader otherwise); normal classloaders delegate
+                // back to system ClassLoader first so this widening doesn't
+                // change the fact that context ClassLoader will be consulted
+                ClassLoader current = ObjectFactory.class.getClassLoader();
+
+                chain = system;
+                while (true) {
+                    if (current == chain) {
+                        // Assert: Current ClassLoader in chain of
+                        // boot/extension/system ClassLoaders
+                        return system;
+                    }
+                    if (chain == null) {
+                        break;
+                    }
+                    chain = SecuritySupport.getParentClassLoader(chain);
+                }
+
+                // Assert: Current ClassLoader not in chain of
+                // boot/extension/system ClassLoaders
+                return current;
+            }
+
+            if (chain == null) {
+                // boot ClassLoader reached
+                break;
+            }
+
+            // Check for any extension ClassLoaders in chain up to
+            // boot ClassLoader
+            chain = SecuritySupport.getParentClassLoader(chain);
+        }
+
+        // Assert: Context ClassLoader not in chain of
+        // boot/extension/system ClassLoaders
+        return context;
+    } // findClassLoader():ClassLoader
+
+    /**
+     * Create an instance of a class using the same classloader for the ObjectFactory by default
+     * or bootclassloader when Security Manager is in place
+     */
+    public static Object newInstance(String className, boolean doFallback)
+        throws ConfigurationError
+    {
+        if (System.getSecurityManager()!=null) {
+            return newInstance(className, null, doFallback);
+        } else {
+            return newInstance(className,
+                findClassLoader (), doFallback);
+        }
+    }
+
+    /**
+     * Create an instance of a class using the specified ClassLoader
+     */
+    public static Object newInstance(String className, ClassLoader cl,
+                                      boolean doFallback)
+        throws ConfigurationError
+    {
+        // assert(className != null);
+        try{
+            Class providerClass = findProviderClass(className, cl, doFallback);
+            Object instance = providerClass.newInstance();
+            if (DEBUG) debugPrintln("created new instance of " + providerClass +
+                   " using ClassLoader: " + cl);
+            return instance;
+        } catch (ClassNotFoundException x) {
+            throw new ConfigurationError(
+                "Provider " + className + " not found", x);
+        } catch (Exception x) {
+            throw new ConfigurationError(
+                "Provider " + className + " could not be instantiated: " + x,
+                x);
+        }
+    }
+
+    /**
+     * Find a Class using the same classloader for the ObjectFactory by default
+     * or bootclassloader when Security Manager is in place
+     */
+    public static Class findProviderClass(String className, boolean doFallback)
+        throws ClassNotFoundException, ConfigurationError
+    {
+        return findProviderClass (className,
+                findClassLoader (), doFallback);
+    }
+    /**
+     * Find a Class using the specified ClassLoader
+     */
+    public static Class findProviderClass(String className, ClassLoader cl,
+                                      boolean doFallback)
+        throws ClassNotFoundException, ConfigurationError
+    {
+        //throw security exception if the calling thread is not allowed to access the package
+        //restrict the access to package as speicified in java.security policy
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            if (className.startsWith(JAXP_INTERNAL) ||
+                    className.startsWith(STAX_INTERNAL)) {
+                cl = null;
+            } else {
+                final int lastDot = className.lastIndexOf(".");
+                String packageName = className;
+                if (lastDot != -1) packageName = className.substring(0, lastDot);
+                security.checkPackageAccess(packageName);
+            }
+        }
+        Class providerClass;
+        if (cl == null) {
+            //use the bootstrap ClassLoader.
+            providerClass = Class.forName(className, false, ObjectFactory.class.getClassLoader());
+        } else {
+            try {
+                providerClass = cl.loadClass(className);
+            } catch (ClassNotFoundException x) {
+                if (doFallback) {
+                    // Fall back to current classloader
+                    ClassLoader current = ObjectFactory.class.getClassLoader();
+                    if (current == null) {
+                        providerClass = Class.forName(className);
+                    } else if (cl != current) {
+                        cl = current;
+                        providerClass = cl.loadClass(className);
+                    } else {
+                        throw x;
+                    }
+                } else {
+                    throw x;
+                }
+            }
+        }
+
+        return providerClass;
+    }
+
+} // class ObjectFactory

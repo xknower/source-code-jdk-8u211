@@ -1,59 +1,53 @@
-/*    */ package javax.management.relation;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class InvalidRelationServiceException
-/*    */   extends RelationException
-/*    */ {
-/*    */   private static final long serialVersionUID = 3400722103759507559L;
-/*    */   
-/*    */   public InvalidRelationServiceException() {}
-/*    */   
-/*    */   public InvalidRelationServiceException(String paramString) {
-/* 51 */     super(paramString);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\management\relation\InvalidRelationServiceException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.management.relation;
+
+/**
+ * This exception is raised when an invalid Relation Service is provided.
+ *
+ * @since 1.5
+ */
+public class InvalidRelationServiceException extends RelationException {
+
+    /* Serial version */
+    private static final long serialVersionUID = 3400722103759507559L;
+
+    /**
+     * Default constructor, no message put in exception.
+     */
+    public InvalidRelationServiceException() {
+        super();
+    }
+
+    /**
+     * Constructor with given message put in exception.
+     *
+     * @param message the detail message.
+     */
+    public InvalidRelationServiceException(String message) {
+        super(message);
+    }
+}

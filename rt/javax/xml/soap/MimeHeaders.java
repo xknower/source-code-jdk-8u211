@@ -1,275 +1,269 @@
-/*     */ package javax.xml.soap;
-/*     */ 
-/*     */ import java.util.Iterator;
-/*     */ import java.util.Vector;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class MimeHeaders
-/*     */ {
-/*  51 */   private Vector headers = new Vector();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String[] getHeader(String name) {
-/*  64 */     Vector<String> values = new Vector();
-/*     */     
-/*  66 */     for (int i = 0; i < this.headers.size(); i++) {
-/*  67 */       MimeHeader hdr = this.headers.elementAt(i);
-/*  68 */       if (hdr.getName().equalsIgnoreCase(name) && hdr
-/*  69 */         .getValue() != null) {
-/*  70 */         values.addElement(hdr.getValue());
-/*     */       }
-/*     */     } 
-/*  73 */     if (values.size() == 0) {
-/*  74 */       return null;
-/*     */     }
-/*  76 */     String[] r = new String[values.size()];
-/*  77 */     values.copyInto((Object[])r);
-/*  78 */     return r;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setHeader(String name, String value) {
-/*  99 */     boolean found = false;
-/*     */     
-/* 101 */     if (name == null || name.equals("")) {
-/* 102 */       throw new IllegalArgumentException("Illegal MimeHeader name");
-/*     */     }
-/* 104 */     for (int i = 0; i < this.headers.size(); i++) {
-/* 105 */       MimeHeader hdr = this.headers.elementAt(i);
-/* 106 */       if (hdr.getName().equalsIgnoreCase(name)) {
-/* 107 */         if (!found) {
-/* 108 */           this.headers.setElementAt(new MimeHeader(hdr.getName(), value), i);
-/*     */           
-/* 110 */           found = true;
-/*     */         } else {
-/*     */           
-/* 113 */           this.headers.removeElementAt(i--);
-/*     */         } 
-/*     */       }
-/*     */     } 
-/* 117 */     if (!found) {
-/* 118 */       addHeader(name, value);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addHeader(String name, String value) {
-/* 137 */     if (name == null || name.equals("")) {
-/* 138 */       throw new IllegalArgumentException("Illegal MimeHeader name");
-/*     */     }
-/* 140 */     int pos = this.headers.size();
-/*     */     
-/* 142 */     for (int i = pos - 1; i >= 0; i--) {
-/* 143 */       MimeHeader hdr = this.headers.elementAt(i);
-/* 144 */       if (hdr.getName().equalsIgnoreCase(name)) {
-/* 145 */         this.headers.insertElementAt(new MimeHeader(name, value), i + 1);
-/*     */         
-/*     */         return;
-/*     */       } 
-/*     */     } 
-/* 150 */     this.headers.addElement(new MimeHeader(name, value));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void removeHeader(String name) {
-/* 161 */     for (int i = 0; i < this.headers.size(); i++) {
-/* 162 */       MimeHeader hdr = this.headers.elementAt(i);
-/* 163 */       if (hdr.getName().equalsIgnoreCase(name)) {
-/* 164 */         this.headers.removeElementAt(i--);
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void removeAllHeaders() {
-/* 172 */     this.headers.removeAllElements();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Iterator getAllHeaders() {
-/* 183 */     return this.headers.iterator();
-/*     */   }
-/*     */   
-/*     */   class MatchingIterator implements Iterator {
-/*     */     private boolean match;
-/*     */     private Iterator iterator;
-/*     */     private String[] names;
-/*     */     private Object nextHeader;
-/*     */     
-/*     */     MatchingIterator(String[] names, boolean match) {
-/* 193 */       this.match = match;
-/* 194 */       this.names = names;
-/* 195 */       this.iterator = MimeHeaders.this.headers.iterator();
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     private Object nextMatch() {
-/* 200 */       label21: while (this.iterator.hasNext()) {
-/* 201 */         MimeHeader hdr = this.iterator.next();
-/*     */         
-/* 203 */         if (this.names == null) {
-/* 204 */           return this.match ? null : hdr;
-/*     */         }
-/* 206 */         for (int i = 0; i < this.names.length; i++) {
-/* 207 */           if (hdr.getName().equalsIgnoreCase(this.names[i])) {
-/* 208 */             if (this.match)
-/* 209 */               return hdr;  continue label21;
-/*     */           } 
-/*     */         } 
-/* 212 */         if (!this.match)
-/* 213 */           return hdr; 
-/*     */       } 
-/* 215 */       return null;
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public boolean hasNext() {
-/* 220 */       if (this.nextHeader == null)
-/* 221 */         this.nextHeader = nextMatch(); 
-/* 222 */       return (this.nextHeader != null);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public Object next() {
-/* 228 */       if (this.nextHeader != null) {
-/* 229 */         Object ret = this.nextHeader;
-/* 230 */         this.nextHeader = null;
-/* 231 */         return ret;
-/*     */       } 
-/* 233 */       if (hasNext())
-/* 234 */         return this.nextHeader; 
-/* 235 */       return null;
-/*     */     }
-/*     */     
-/*     */     public void remove() {
-/* 239 */       this.iterator.remove();
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Iterator getMatchingHeaders(String[] names) {
-/* 254 */     return new MatchingIterator(names, true);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Iterator getNonMatchingHeaders(String[] names) {
-/* 267 */     return new MatchingIterator(names, false);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\xml\soap\MimeHeaders.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2004, 2012, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.xml.soap;
+
+import java.util.Iterator;
+import java.util.Vector;
+
+/**
+ * A container for <code>MimeHeader</code> objects, which represent
+ * the MIME headers present in a MIME part of a message.
+ *
+ * <p>This class is used primarily when an application wants to
+ * retrieve specific attachments based on certain MIME headers and
+ * values. This class will most likely be used by implementations of
+ * <code>AttachmentPart</code> and other MIME dependent parts of the SAAJ
+ * API.
+ * @see SOAPMessage#getAttachments
+ * @see AttachmentPart
+ */
+public class MimeHeaders {
+    private Vector headers;
+
+   /**
+    * Constructs a default <code>MimeHeaders</code> object initialized with
+    * an empty <code>Vector</code> object.
+    */
+    public MimeHeaders() {
+        headers = new Vector();
+    }
+
+    /**
+     * Returns all of the values for the specified header as an array of
+     * <code>String</code> objects.
+     *
+     * @param   name the name of the header for which values will be returned
+     * @return a <code>String</code> array with all of the values for the
+     *         specified header
+     * @see #setHeader
+     */
+    public String[] getHeader(String name) {
+        Vector values = new Vector();
+
+        for(int i = 0; i < headers.size(); i++) {
+            MimeHeader hdr = (MimeHeader) headers.elementAt(i);
+            if (hdr.getName().equalsIgnoreCase(name)
+                && hdr.getValue() != null)
+                values.addElement(hdr.getValue());
+        }
+
+        if (values.size() == 0)
+            return null;
+
+        String r[] = new String[values.size()];
+        values.copyInto(r);
+        return r;
+    }
+
+    /**
+     * Replaces the current value of the first header entry whose name matches
+     * the given name with the given value, adding a new header if no existing header
+     * name matches. This method also removes all matching headers after the first one.
+     * <P>
+     * Note that RFC822 headers can contain only US-ASCII characters.
+     *
+     * @param   name a <code>String</code> with the name of the header for
+     *          which to search
+     * @param   value a <code>String</code> with the value that will replace the
+     *          current value of the specified header
+     *
+     * @exception IllegalArgumentException if there was a problem in the
+     * mime header name or the value being set
+     * @see #getHeader
+     */
+    public void setHeader(String name, String value)
+    {
+        boolean found = false;
+
+        if ((name == null) || name.equals(""))
+            throw new IllegalArgumentException("Illegal MimeHeader name");
+
+        for(int i = 0; i < headers.size(); i++) {
+            MimeHeader hdr = (MimeHeader) headers.elementAt(i);
+            if (hdr.getName().equalsIgnoreCase(name)) {
+                if (!found) {
+                    headers.setElementAt(new MimeHeader(hdr.getName(),
+                                                        value), i);
+                    found = true;
+                }
+                else
+                    headers.removeElementAt(i--);
+            }
+        }
+
+        if (!found)
+            addHeader(name, value);
+    }
+
+    /**
+     * Adds a <code>MimeHeader</code> object with the specified name and value
+     * to this <code>MimeHeaders</code> object's list of headers.
+     * <P>
+     * Note that RFC822 headers can contain only US-ASCII characters.
+     *
+     * @param   name a <code>String</code> with the name of the header to
+     *          be added
+     * @param   value a <code>String</code> with the value of the header to
+     *          be added
+     *
+     * @exception IllegalArgumentException if there was a problem in the
+     * mime header name or value being added
+     */
+    public void addHeader(String name, String value)
+    {
+        if ((name == null) || name.equals(""))
+            throw new IllegalArgumentException("Illegal MimeHeader name");
+
+        int pos = headers.size();
+
+        for(int i = pos - 1 ; i >= 0; i--) {
+            MimeHeader hdr = (MimeHeader) headers.elementAt(i);
+            if (hdr.getName().equalsIgnoreCase(name)) {
+                headers.insertElementAt(new MimeHeader(name, value),
+                                        i+1);
+                return;
+            }
+        }
+        headers.addElement(new MimeHeader(name, value));
+    }
+
+    /**
+     * Remove all <code>MimeHeader</code> objects whose name matches the
+     * given name.
+     *
+     * @param   name a <code>String</code> with the name of the header for
+     *          which to search
+     */
+    public void removeHeader(String name) {
+        for(int i = 0; i < headers.size(); i++) {
+            MimeHeader hdr = (MimeHeader) headers.elementAt(i);
+            if (hdr.getName().equalsIgnoreCase(name))
+                headers.removeElementAt(i--);
+        }
+    }
+
+    /**
+     * Removes all the header entries from this <code>MimeHeaders</code> object.
+     */
+    public void removeAllHeaders() {
+        headers.removeAllElements();
+    }
+
+
+    /**
+     * Returns all the <code>MimeHeader</code>s in this <code>MimeHeaders</code> object.
+     *
+     * @return  an <code>Iterator</code> object over this <code>MimeHeaders</code>
+     *          object's list of <code>MimeHeader</code> objects
+     */
+    public Iterator getAllHeaders() {
+        return headers.iterator();
+    }
+
+    class MatchingIterator implements Iterator {
+        private boolean match;
+        private Iterator iterator;
+        private String[] names;
+        private Object nextHeader;
+
+        MatchingIterator(String[] names, boolean match) {
+            this.match = match;
+            this.names = names;
+            this.iterator = headers.iterator();
+        }
+
+        private Object nextMatch() {
+        next:
+            while (iterator.hasNext()) {
+                MimeHeader hdr = (MimeHeader) iterator.next();
+
+                if (names == null)
+                    return match ? null : hdr;
+
+                for(int i = 0; i < names.length; i++)
+                    if (hdr.getName().equalsIgnoreCase(names[i]))
+                        if (match)
+                            return hdr;
+                        else
+                            continue next;
+                if (!match)
+                    return hdr;
+            }
+            return null;
+        }
+
+
+        public boolean hasNext() {
+            if (nextHeader == null)
+                nextHeader = nextMatch();
+            return nextHeader != null;
+        }
+
+        public Object next() {
+            // hasNext should've prefetched the header for us,
+            // return it.
+            if (nextHeader != null) {
+                Object ret = nextHeader;
+                nextHeader = null;
+                return ret;
+            }
+            if (hasNext())
+                return nextHeader;
+            return null;
+        }
+
+        public void remove() {
+            iterator.remove();
+        }
+    }
+
+
+    /**
+     * Returns all the <code>MimeHeader</code> objects whose name matches
+     * a name in the given array of names.
+     *
+     * @param names an array of <code>String</code> objects with the names
+     *         for which to search
+     * @return  an <code>Iterator</code> object over the <code>MimeHeader</code>
+     *          objects whose name matches one of the names in the given list
+     */
+    public Iterator getMatchingHeaders(String[] names) {
+        return new MatchingIterator(names, true);
+    }
+
+    /**
+     * Returns all of the <code>MimeHeader</code> objects whose name does not
+     * match a name in the given array of names.
+     *
+     * @param names an array of <code>String</code> objects with the names
+     *         for which to search
+     * @return  an <code>Iterator</code> object over the <code>MimeHeader</code>
+     *          objects whose name does not match one of the names in the given list
+     */
+    public Iterator getNonMatchingHeaders(String[] names) {
+        return new MatchingIterator(names, false);
+    }
+}

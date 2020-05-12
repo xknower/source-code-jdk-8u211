@@ -1,432 +1,427 @@
-/*     */ package javax.management.openmbean;
-/*     */ 
-/*     */ import java.util.Arrays;
-/*     */ import javax.management.Descriptor;
-/*     */ import javax.management.ImmutableDescriptor;
-/*     */ import javax.management.MBeanOperationInfo;
-/*     */ import javax.management.MBeanParameterInfo;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class OpenMBeanOperationInfoSupport
-/*     */   extends MBeanOperationInfo
-/*     */   implements OpenMBeanOperationInfo
-/*     */ {
-/*     */   static final long serialVersionUID = 4996859732565369366L;
-/*     */   private OpenType<?> returnOpenType;
-/*  63 */   private transient Integer myHashCode = null;
-/*  64 */   private transient String myToString = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public OpenMBeanOperationInfoSupport(String paramString1, String paramString2, OpenMBeanParameterInfo[] paramArrayOfOpenMBeanParameterInfo, OpenType<?> paramOpenType, int paramInt) {
-/* 104 */     this(paramString1, paramString2, paramArrayOfOpenMBeanParameterInfo, paramOpenType, paramInt, (Descriptor)null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public OpenMBeanOperationInfoSupport(String paramString1, String paramString2, OpenMBeanParameterInfo[] paramArrayOfOpenMBeanParameterInfo, OpenType<?> paramOpenType, int paramInt, Descriptor paramDescriptor) {
-/* 151 */     super(paramString1, paramString2, 
-/*     */         
-/* 153 */         arrayCopyCast(paramArrayOfOpenMBeanParameterInfo), (paramOpenType == null) ? null : paramOpenType
-/*     */ 
-/*     */         
-/* 156 */         .getClassName(), paramInt, 
-/*     */         
-/* 158 */         ImmutableDescriptor.union(new Descriptor[] {
-/*     */ 
-/*     */             
-/* 161 */             paramDescriptor, (paramOpenType == null) ? null : paramOpenType.getDescriptor()
-/*     */           }));
-/*     */ 
-/*     */ 
-/*     */     
-/* 166 */     if (paramString1 == null || paramString1.trim().equals("")) {
-/* 167 */       throw new IllegalArgumentException("Argument name cannot be null or empty");
-/*     */     }
-/*     */     
-/* 170 */     if (paramString2 == null || paramString2.trim().equals("")) {
-/* 171 */       throw new IllegalArgumentException("Argument description cannot be null or empty");
-/*     */     }
-/*     */     
-/* 174 */     if (paramOpenType == null) {
-/* 175 */       throw new IllegalArgumentException("Argument returnOpenType cannot be null");
-/*     */     }
-/*     */ 
-/*     */     
-/* 179 */     if (paramInt != 1 && paramInt != 2 && paramInt != 0 && paramInt != 3)
-/*     */     {
-/* 181 */       throw new IllegalArgumentException("Argument impact can only be one of ACTION, ACTION_INFO, INFO, or UNKNOWN: " + paramInt);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 186 */     this.returnOpenType = paramOpenType;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static MBeanParameterInfo[] arrayCopyCast(OpenMBeanParameterInfo[] paramArrayOfOpenMBeanParameterInfo) {
-/* 195 */     if (paramArrayOfOpenMBeanParameterInfo == null) {
-/* 196 */       return null;
-/*     */     }
-/* 198 */     MBeanParameterInfo[] arrayOfMBeanParameterInfo = new MBeanParameterInfo[paramArrayOfOpenMBeanParameterInfo.length];
-/* 199 */     System.arraycopy(paramArrayOfOpenMBeanParameterInfo, 0, arrayOfMBeanParameterInfo, 0, paramArrayOfOpenMBeanParameterInfo.length);
-/*     */     
-/* 201 */     return arrayOfMBeanParameterInfo;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static OpenMBeanParameterInfo[] arrayCopyCast(MBeanParameterInfo[] paramArrayOfMBeanParameterInfo) {
-/* 209 */     if (paramArrayOfMBeanParameterInfo == null) {
-/* 210 */       return null;
-/*     */     }
-/* 212 */     OpenMBeanParameterInfo[] arrayOfOpenMBeanParameterInfo = new OpenMBeanParameterInfo[paramArrayOfMBeanParameterInfo.length];
-/* 213 */     System.arraycopy(paramArrayOfMBeanParameterInfo, 0, arrayOfOpenMBeanParameterInfo, 0, paramArrayOfMBeanParameterInfo.length);
-/*     */     
-/* 215 */     return arrayOfOpenMBeanParameterInfo;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public OpenType<?> getReturnOpenType() {
-/* 231 */     return this.returnOpenType;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean equals(Object paramObject) {
-/*     */     OpenMBeanOperationInfo openMBeanOperationInfo;
-/* 271 */     if (paramObject == null) {
-/* 272 */       return false;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     try {
-/* 279 */       openMBeanOperationInfo = (OpenMBeanOperationInfo)paramObject;
-/* 280 */     } catch (ClassCastException classCastException) {
-/* 281 */       return false;
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 289 */     if (!getName().equals(openMBeanOperationInfo.getName())) {
-/* 290 */       return false;
-/*     */     }
-/*     */ 
-/*     */     
-/* 294 */     if (!Arrays.equals((Object[])getSignature(), (Object[])openMBeanOperationInfo.getSignature())) {
-/* 295 */       return false;
-/*     */     }
-/*     */ 
-/*     */     
-/* 299 */     if (!getReturnOpenType().equals(openMBeanOperationInfo.getReturnOpenType())) {
-/* 300 */       return false;
-/*     */     }
-/*     */ 
-/*     */     
-/* 304 */     if (getImpact() != openMBeanOperationInfo.getImpact()) {
-/* 305 */       return false;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 310 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int hashCode() {
-/* 349 */     if (this.myHashCode == null) {
-/* 350 */       int i = 0;
-/* 351 */       i += getName().hashCode();
-/* 352 */       i += Arrays.<MBeanParameterInfo>asList(getSignature()).hashCode();
-/* 353 */       i += getReturnOpenType().hashCode();
-/* 354 */       i += getImpact();
-/* 355 */       this.myHashCode = Integer.valueOf(i);
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 360 */     return this.myHashCode.intValue();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 386 */     if (this.myToString == null) {
-/* 387 */       this
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 400 */         .myToString = getClass().getName() + "(name=" + getName() + ",signature=" + Arrays.<MBeanParameterInfo>asList(getSignature()).toString() + ",return=" + getReturnOpenType().toString() + ",impact=" + getImpact() + ",descriptor=" + getDescriptor() + ")";
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 406 */     return this.myToString;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private Object readResolve() {
-/* 417 */     if ((getDescriptor().getFieldNames()).length == 0)
-/*     */     {
-/*     */       
-/* 420 */       return new OpenMBeanOperationInfoSupport(this.name, this.description, 
-/* 421 */           arrayCopyCast(getSignature()), this.returnOpenType, 
-/* 422 */           getImpact());
-/*     */     }
-/* 424 */     return this;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\management\openmbean\OpenMBeanOperationInfoSupport.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2008, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+
+package javax.management.openmbean;
+
+
+// java import
+//
+import java.util.Arrays;
+
+import javax.management.Descriptor;
+import javax.management.ImmutableDescriptor;
+import javax.management.MBeanOperationInfo;
+import javax.management.MBeanParameterInfo;
+
+
+/**
+ * Describes an operation of an Open MBean.
+ *
+ *
+ * @since 1.5
+ */
+public class OpenMBeanOperationInfoSupport
+    extends MBeanOperationInfo
+    implements OpenMBeanOperationInfo {
+
+    /* Serial version */
+    static final long serialVersionUID = 4996859732565369366L;
+
+    /**
+     * @serial The <i>open type</i> of the values returned by the operation
+     *         described by this {@link OpenMBeanOperationInfo} instance
+     *
+     */
+    private OpenType<?> returnOpenType;
+
+
+    // As this instance is immutable,
+    // these two values need only be calculated once.
+    private transient Integer myHashCode = null;
+    private transient String  myToString = null;
+
+
+    /**
+     * <p>Constructs an {@code OpenMBeanOperationInfoSupport}
+     * instance, which describes the operation of a class of open
+     * MBeans, with the specified {@code name}, {@code description},
+     * {@code signature}, {@code returnOpenType} and {@code
+     * impact}.</p>
+     *
+     * <p>The {@code signature} array parameter is internally copied,
+     * so that subsequent changes to the array referenced by {@code
+     * signature} have no effect on this instance.</p>
+     *
+     * @param name cannot be a null or empty string.
+     *
+     * @param description cannot be a null or empty string.
+     *
+     * @param signature can be null or empty if there are no
+     * parameters to describe.
+     *
+     * @param returnOpenType cannot be null: use {@code
+     * SimpleType.VOID} for operations that return nothing.
+     *
+     * @param impact must be one of {@code ACTION}, {@code
+     * ACTION_INFO}, {@code INFO}, or {@code UNKNOWN}.
+     *
+     * @throws IllegalArgumentException if {@code name} or {@code
+     * description} are null or empty string, or {@code
+     * returnOpenType} is null, or {@code impact} is not one of {@code
+     * ACTION}, {@code ACTION_INFO}, {@code INFO}, or {@code UNKNOWN}.
+     *
+     * @throws ArrayStoreException If {@code signature} is not an
+     * array of instances of a subclass of {@code MBeanParameterInfo}.
+     */
+    public OpenMBeanOperationInfoSupport(String name,
+                                         String description,
+                                         OpenMBeanParameterInfo[] signature,
+                                         OpenType<?> returnOpenType,
+                                         int impact) {
+        this(name, description, signature, returnOpenType, impact,
+             (Descriptor) null);
+    }
+
+    /**
+     * <p>Constructs an {@code OpenMBeanOperationInfoSupport}
+     * instance, which describes the operation of a class of open
+     * MBeans, with the specified {@code name}, {@code description},
+     * {@code signature}, {@code returnOpenType}, {@code
+     * impact}, and {@code descriptor}.</p>
+     *
+     * <p>The {@code signature} array parameter is internally copied,
+     * so that subsequent changes to the array referenced by {@code
+     * signature} have no effect on this instance.</p>
+     *
+     * @param name cannot be a null or empty string.
+     *
+     * @param description cannot be a null or empty string.
+     *
+     * @param signature can be null or empty if there are no
+     * parameters to describe.
+     *
+     * @param returnOpenType cannot be null: use {@code
+     * SimpleType.VOID} for operations that return nothing.
+     *
+     * @param impact must be one of {@code ACTION}, {@code
+     * ACTION_INFO}, {@code INFO}, or {@code UNKNOWN}.
+     *
+     * @param descriptor The descriptor for the operation.  This may
+     * be null, which is equivalent to an empty descriptor.
+     *
+     * @throws IllegalArgumentException if {@code name} or {@code
+     * description} are null or empty string, or {@code
+     * returnOpenType} is null, or {@code impact} is not one of {@code
+     * ACTION}, {@code ACTION_INFO}, {@code INFO}, or {@code UNKNOWN}.
+     *
+     * @throws ArrayStoreException If {@code signature} is not an
+     * array of instances of a subclass of {@code MBeanParameterInfo}.
+     *
+     * @since 1.6
+     */
+    public OpenMBeanOperationInfoSupport(String name,
+                                         String description,
+                                         OpenMBeanParameterInfo[] signature,
+                                         OpenType<?> returnOpenType,
+                                         int impact,
+                                         Descriptor descriptor) {
+        super(name,
+              description,
+              arrayCopyCast(signature),
+              // must prevent NPE here - we will throw IAE later on if
+              // returnOpenType is null
+              (returnOpenType == null) ? null : returnOpenType.getClassName(),
+              impact,
+              ImmutableDescriptor.union(descriptor,
+                // must prevent NPE here - we will throw IAE later on if
+                // returnOpenType is null
+                (returnOpenType==null) ? null :returnOpenType.getDescriptor()));
+
+        // check parameters that should not be null or empty
+        // (unfortunately it is not done in superclass :-( ! )
+        //
+        if (name == null || name.trim().equals("")) {
+            throw new IllegalArgumentException("Argument name cannot " +
+                                               "be null or empty");
+        }
+        if (description == null || description.trim().equals("")) {
+            throw new IllegalArgumentException("Argument description cannot " +
+                                               "be null or empty");
+        }
+        if (returnOpenType == null) {
+            throw new IllegalArgumentException("Argument returnOpenType " +
+                                               "cannot be null");
+        }
+
+        if (impact != ACTION && impact != ACTION_INFO && impact != INFO &&
+                impact != UNKNOWN) {
+            throw new IllegalArgumentException("Argument impact can only be " +
+                                               "one of ACTION, ACTION_INFO, " +
+                                               "INFO, or UNKNOWN: " + impact);
+        }
+
+        this.returnOpenType = returnOpenType;
+    }
+
+
+    // Converts an array of OpenMBeanParameterInfo objects extending
+    // MBeanParameterInfo into an array of MBeanParameterInfo.
+    //
+    private static MBeanParameterInfo[]
+            arrayCopyCast(OpenMBeanParameterInfo[] src) {
+        if (src == null)
+            return null;
+
+        MBeanParameterInfo[] dst = new MBeanParameterInfo[src.length];
+        System.arraycopy(src, 0, dst, 0, src.length);
+        // may throw an ArrayStoreException
+        return dst;
+    }
+
+    // Converts an array of MBeanParameterInfo objects implementing
+    // OpenMBeanParameterInfo into an array of OpenMBeanParameterInfo.
+    //
+    private static OpenMBeanParameterInfo[]
+            arrayCopyCast(MBeanParameterInfo[] src) {
+        if (src == null)
+            return null;
+
+        OpenMBeanParameterInfo[] dst = new OpenMBeanParameterInfo[src.length];
+        System.arraycopy(src, 0, dst, 0, src.length);
+        // may throw an ArrayStoreException
+        return dst;
+    }
+
+
+    // [JF]: should we add constructor with java.lang.reflect.Method
+    // method parameter ?  would need to add consistency check between
+    // OpenType<?> returnOpenType and method.getReturnType().
+
+
+    /**
+     * Returns the <i>open type</i> of the values returned by the
+     * operation described by this {@code OpenMBeanOperationInfo}
+     * instance.
+     */
+    public OpenType<?> getReturnOpenType() {
+
+        return returnOpenType;
+    }
+
+
+
+    /* ***  Commodity methods from java.lang.Object  *** */
+
+
+    /**
+     * <p>Compares the specified {@code obj} parameter with this
+     * {@code OpenMBeanOperationInfoSupport} instance for
+     * equality.</p>
+     *
+     * <p>Returns {@code true} if and only if all of the following
+     * statements are true:
+     *
+     * <ul>
+     * <li>{@code obj} is non null,</li>
+     * <li>{@code obj} also implements the {@code
+     * OpenMBeanOperationInfo} interface,</li>
+     * <li>their names are equal</li>
+     * <li>their signatures are equal</li>
+     * <li>their return open types are equal</li>
+     * <li>their impacts are equal</li>
+     * </ul>
+     *
+     * This ensures that this {@code equals} method works properly for
+     * {@code obj} parameters which are different implementations of
+     * the {@code OpenMBeanOperationInfo} interface.
+     *
+     * @param obj the object to be compared for equality with this
+     * {@code OpenMBeanOperationInfoSupport} instance;
+     *
+     * @return {@code true} if the specified object is equal to this
+     * {@code OpenMBeanOperationInfoSupport} instance.
+     */
+    public boolean equals(Object obj) {
+
+        // if obj is null, return false
+        //
+        if (obj == null) {
+            return false;
+        }
+
+        // if obj is not a OpenMBeanOperationInfo, return false
+        //
+        OpenMBeanOperationInfo other;
+        try {
+            other = (OpenMBeanOperationInfo) obj;
+        } catch (ClassCastException e) {
+            return false;
+        }
+
+        // Now, really test for equality between this
+        // OpenMBeanOperationInfo implementation and the other:
+        //
+
+        // their Name should be equal
+        if ( ! this.getName().equals(other.getName()) ) {
+            return false;
+        }
+
+        // their Signatures should be equal
+        if ( ! Arrays.equals(this.getSignature(), other.getSignature()) ) {
+            return false;
+        }
+
+        // their return open types should be equal
+        if ( ! this.getReturnOpenType().equals(other.getReturnOpenType()) ) {
+            return false;
+        }
+
+        // their impacts should be equal
+        if ( this.getImpact() != other.getImpact() ) {
+            return false;
+        }
+
+        // All tests for equality were successfull
+        //
+        return true;
+    }
+
+    /**
+     * <p>Returns the hash code value for this {@code
+     * OpenMBeanOperationInfoSupport} instance.</p>
+     *
+     * <p>The hash code of an {@code OpenMBeanOperationInfoSupport}
+     * instance is the sum of the hash codes of all elements of
+     * information used in {@code equals} comparisons (ie: its name,
+     * return open type, impact and signature, where the signature
+     * hashCode is calculated by a call to {@code
+     * java.util.Arrays.asList(this.getSignature).hashCode()}).</p>
+     *
+     * <p>This ensures that {@code t1.equals(t2) } implies that {@code
+     * t1.hashCode()==t2.hashCode() } for any two {@code
+     * OpenMBeanOperationInfoSupport} instances {@code t1} and {@code
+     * t2}, as required by the general contract of the method {@link
+     * Object#hashCode() Object.hashCode()}.</p>
+     *
+     * <p>However, note that another instance of a class implementing
+     * the {@code OpenMBeanOperationInfo} interface may be equal to
+     * this {@code OpenMBeanOperationInfoSupport} instance as defined
+     * by {@link #equals(java.lang.Object)}, but may have a different
+     * hash code if it is calculated differently.</p>
+     *
+     * <p>As {@code OpenMBeanOperationInfoSupport} instances are
+     * immutable, the hash code for this instance is calculated once,
+     * on the first call to {@code hashCode}, and then the same value
+     * is returned for subsequent calls.</p>
+     *
+     * @return the hash code value for this {@code
+     * OpenMBeanOperationInfoSupport} instance
+     */
+    public int hashCode() {
+
+        // Calculate the hash code value if it has not yet been done
+        // (ie 1st call to hashCode())
+        //
+        if (myHashCode == null) {
+            int value = 0;
+            value += this.getName().hashCode();
+            value += Arrays.asList(this.getSignature()).hashCode();
+            value += this.getReturnOpenType().hashCode();
+            value += this.getImpact();
+            myHashCode = Integer.valueOf(value);
+        }
+
+        // return always the same hash code for this instance (immutable)
+        //
+        return myHashCode.intValue();
+    }
+
+    /**
+     * <p>Returns a string representation of this {@code
+     * OpenMBeanOperationInfoSupport} instance.</p>
+     *
+     * <p>The string representation consists of the name of this class
+     * (ie {@code
+     * javax.management.openmbean.OpenMBeanOperationInfoSupport}), and
+     * the name, signature, return open type and impact of the
+     * described operation and the string representation of its descriptor.</p>
+     *
+     * <p>As {@code OpenMBeanOperationInfoSupport} instances are
+     * immutable, the string representation for this instance is
+     * calculated once, on the first call to {@code toString}, and
+     * then the same value is returned for subsequent calls.</p>
+     *
+     * @return a string representation of this {@code
+     * OpenMBeanOperationInfoSupport} instance
+     */
+    public String toString() {
+
+        // Calculate the hash code value if it has not yet been done
+        // (ie 1st call to toString())
+        //
+        if (myToString == null) {
+            myToString = new StringBuilder()
+                .append(this.getClass().getName())
+                .append("(name=")
+                .append(this.getName())
+                .append(",signature=")
+                .append(Arrays.asList(this.getSignature()).toString())
+                .append(",return=")
+                .append(this.getReturnOpenType().toString())
+                .append(",impact=")
+                .append(this.getImpact())
+                .append(",descriptor=")
+                .append(this.getDescriptor())
+                .append(")")
+                .toString();
+        }
+
+        // return always the same string representation for this
+        // instance (immutable)
+        //
+        return myToString;
+    }
+
+    /**
+     * An object serialized in a version of the API before Descriptors were
+     * added to this class will have an empty or null Descriptor.
+     * For consistency with our
+     * behavior in this version, we must replace the object with one
+     * where the Descriptors reflect the same value of returned openType.
+     **/
+    private Object readResolve() {
+        if (getDescriptor().getFieldNames().length == 0) {
+            // This constructor will construct the expected default Descriptor.
+            //
+            return new OpenMBeanOperationInfoSupport(
+                    name, description, arrayCopyCast(getSignature()),
+                    returnOpenType, getImpact());
+        } else
+            return this;
+    }
+
+}

@@ -1,58 +1,52 @@
-/*    */ package com.sun.corba.se.spi.ior;
-/*    */ 
-/*    */ import com.sun.corba.se.impl.ior.EncapsulationUtility;
-/*    */ import org.omg.CORBA_2_3.portable.InputStream;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public abstract class EncapsulationFactoryBase
-/*    */   implements IdentifiableFactory
-/*    */ {
-/*    */   private int id;
-/*    */   
-/*    */   public int getId() {
-/* 37 */     return this.id;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public EncapsulationFactoryBase(int paramInt) {
-/* 42 */     this.id = paramInt;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public final Identifiable create(InputStream paramInputStream) {
-/* 47 */     InputStream inputStream = EncapsulationUtility.getEncapsulationStream(paramInputStream);
-/* 48 */     return readContents(inputStream);
-/*    */   }
-/*    */   
-/*    */   protected abstract Identifiable readContents(InputStream paramInputStream);
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\spi\ior\EncapsulationFactoryBase.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.spi.ior ;
+
+import org.omg.CORBA_2_3.portable.InputStream ;
+
+import com.sun.corba.se.impl.ior.EncapsulationUtility ;
+
+public abstract class EncapsulationFactoryBase implements IdentifiableFactory {
+    private int id ;
+
+    public int getId()
+    {
+        return id ;
+    }
+
+    public EncapsulationFactoryBase( int id )
+    {
+        this.id = id ;
+    }
+
+    public final Identifiable create( InputStream in )
+    {
+        InputStream is = EncapsulationUtility.getEncapsulationStream( in ) ;
+        return readContents( is ) ;
+    }
+
+    protected abstract Identifiable readContents( InputStream is ) ;
+}

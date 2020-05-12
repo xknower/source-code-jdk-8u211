@@ -1,207 +1,201 @@
-/*     */ package com.sun.org.apache.xalan.internal.xsltc.dom;
-/*     */ 
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.runtime.BasisLibrary;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.util.IntegerArray;
-/*     */ import com.sun.org.apache.xml.internal.dtm.DTMAxisIterator;
-/*     */ import com.sun.org.apache.xml.internal.dtm.ref.DTMAxisIteratorBase;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class CurrentNodeListIterator
-/*     */   extends DTMAxisIteratorBase
-/*     */ {
-/*     */   private boolean _docOrder;
-/*     */   private DTMAxisIterator _source;
-/*     */   private final CurrentNodeListFilter _filter;
-/*  65 */   private IntegerArray _nodes = new IntegerArray();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int _currentIndex;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private final int _currentNode;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private AbstractTranslet _translet;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public CurrentNodeListIterator(DTMAxisIterator source, CurrentNodeListFilter filter, int currentNode, AbstractTranslet translet) {
-/*  87 */     this(source, !source.isReverse(), filter, currentNode, translet);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public CurrentNodeListIterator(DTMAxisIterator source, boolean docOrder, CurrentNodeListFilter filter, int currentNode, AbstractTranslet translet) {
-/*  95 */     this._source = source;
-/*  96 */     this._filter = filter;
-/*  97 */     this._translet = translet;
-/*  98 */     this._docOrder = docOrder;
-/*  99 */     this._currentNode = currentNode;
-/*     */   }
-/*     */   
-/*     */   public DTMAxisIterator forceNaturalOrder() {
-/* 103 */     this._docOrder = true;
-/* 104 */     return this;
-/*     */   }
-/*     */   
-/*     */   public void setRestartable(boolean isRestartable) {
-/* 108 */     this._isRestartable = isRestartable;
-/* 109 */     this._source.setRestartable(isRestartable);
-/*     */   }
-/*     */   
-/*     */   public boolean isReverse() {
-/* 113 */     return !this._docOrder;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public DTMAxisIterator cloneIterator() {
-/*     */     try {
-/* 119 */       CurrentNodeListIterator clone = (CurrentNodeListIterator)clone();
-/* 120 */       clone._nodes = (IntegerArray)this._nodes.clone();
-/* 121 */       clone._source = this._source.cloneIterator();
-/* 122 */       clone._isRestartable = false;
-/* 123 */       return clone.reset();
-/*     */     }
-/* 125 */     catch (CloneNotSupportedException e) {
-/* 126 */       BasisLibrary.runTimeError("ITERATOR_CLONE_ERR", e
-/* 127 */           .toString());
-/* 128 */       return null;
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public DTMAxisIterator reset() {
-/* 133 */     this._currentIndex = 0;
-/* 134 */     return resetPosition();
-/*     */   }
-/*     */   
-/*     */   public int next() {
-/* 138 */     int last = this._nodes.cardinality();
-/* 139 */     int currentNode = this._currentNode;
-/* 140 */     AbstractTranslet translet = this._translet;
-/*     */     
-/* 142 */     for (int index = this._currentIndex; index < last; ) {
-/* 143 */       int position = this._docOrder ? (index + 1) : (last - index);
-/* 144 */       int node = this._nodes.at(index++);
-/*     */       
-/* 146 */       if (this._filter.test(node, position, last, currentNode, translet, this)) {
-/*     */         
-/* 148 */         this._currentIndex = index;
-/* 149 */         return returnNode(node);
-/*     */       } 
-/*     */     } 
-/* 152 */     return -1;
-/*     */   }
-/*     */   
-/*     */   public DTMAxisIterator setStartNode(int node) {
-/* 156 */     if (this._isRestartable) {
-/* 157 */       this._source.setStartNode(this._startNode = node);
-/*     */       
-/* 159 */       this._nodes.clear();
-/* 160 */       while ((node = this._source.next()) != -1) {
-/* 161 */         this._nodes.add(node);
-/*     */       }
-/* 163 */       this._currentIndex = 0;
-/* 164 */       resetPosition();
-/*     */     } 
-/* 166 */     return this;
-/*     */   }
-/*     */   
-/*     */   public int getLast() {
-/* 170 */     if (this._last == -1) {
-/* 171 */       this._last = computePositionOfLast();
-/*     */     }
-/* 173 */     return this._last;
-/*     */   }
-/*     */   
-/*     */   public void setMark() {
-/* 177 */     this._markedNode = this._currentIndex;
-/*     */   }
-/*     */   
-/*     */   public void gotoMark() {
-/* 181 */     this._currentIndex = this._markedNode;
-/*     */   }
-/*     */   
-/*     */   private int computePositionOfLast() {
-/* 185 */     int last = this._nodes.cardinality();
-/* 186 */     int currNode = this._currentNode;
-/* 187 */     AbstractTranslet translet = this._translet;
-/*     */     
-/* 189 */     int lastPosition = this._position;
-/* 190 */     for (int index = this._currentIndex; index < last; ) {
-/* 191 */       int position = this._docOrder ? (index + 1) : (last - index);
-/* 192 */       int nodeIndex = this._nodes.at(index++);
-/*     */       
-/* 194 */       if (this._filter.test(nodeIndex, position, last, currNode, translet, this))
-/*     */       {
-/* 196 */         lastPosition++;
-/*     */       }
-/*     */     } 
-/* 199 */     return lastPosition;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\dom\CurrentNodeListIterator.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: CurrentNodeListIterator.java,v 1.2.4.1 2005/09/06 06:04:45 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.dom;
+
+import com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet;
+import com.sun.org.apache.xalan.internal.xsltc.runtime.BasisLibrary;
+import com.sun.org.apache.xalan.internal.xsltc.util.IntegerArray;
+import com.sun.org.apache.xml.internal.dtm.DTMAxisIterator;
+import com.sun.org.apache.xml.internal.dtm.ref.DTMAxisIteratorBase;
+
+/**
+ * Iterators of this kind use a CurrentNodeListFilter to filter a subset of
+ * nodes from a source iterator. For each node from the source, the boolean
+ * method CurrentNodeListFilter.test() is called.
+ *
+ * All nodes from the source are read into an array upon calling setStartNode()
+ * (this is needed to determine the value of last, a parameter to
+ * CurrentNodeListFilter.test()). The method getLast() returns the last element
+ * after applying the filter.
+ * @author Jacek Ambroziak
+ * @author Santiago Pericas-Geertsen
+ * @author Morten Jorgensen
+ */
+
+public final class CurrentNodeListIterator extends DTMAxisIteratorBase {
+    /**
+     * A flag indicating if nodes are returned in document order.
+     */
+    private boolean _docOrder;
+
+    /**
+     * The source for this iterator.
+     */
+    private DTMAxisIterator _source;
+
+    /**
+     * A reference to a filter object.
+     */
+    private final CurrentNodeListFilter _filter;
+
+    /**
+     * An integer array to store nodes from source iterator.
+     */
+    private IntegerArray _nodes = new IntegerArray();
+
+    /**
+     * Index in _nodes of the next node to filter.
+     */
+    private int _currentIndex;
+
+    /**
+     * The current node in the stylesheet at the time of evaluation.
+     */
+    private final int _currentNode;
+
+    /**
+     * A reference to the translet.
+     */
+    private AbstractTranslet _translet;
+
+    public CurrentNodeListIterator(DTMAxisIterator source,
+                                   CurrentNodeListFilter filter,
+                                   int currentNode,
+                                   AbstractTranslet translet)
+    {
+        this(source, !source.isReverse(), filter, currentNode, translet);
+    }
+
+    public CurrentNodeListIterator(DTMAxisIterator source, boolean docOrder,
+                                   CurrentNodeListFilter filter,
+                                   int currentNode,
+                                   AbstractTranslet translet)
+    {
+        _source = source;
+        _filter = filter;
+        _translet = translet;
+        _docOrder = docOrder;
+        _currentNode = currentNode;
+    }
+
+    public DTMAxisIterator forceNaturalOrder() {
+        _docOrder = true;
+        return this;
+    }
+
+    public void setRestartable(boolean isRestartable) {
+        _isRestartable = isRestartable;
+        _source.setRestartable(isRestartable);
+    }
+
+    public boolean isReverse() {
+        return !_docOrder;
+    }
+
+    public DTMAxisIterator cloneIterator() {
+        try {
+            final CurrentNodeListIterator clone =
+                (CurrentNodeListIterator) super.clone();
+            clone._nodes = (IntegerArray) _nodes.clone();
+            clone._source = _source.cloneIterator();
+            clone._isRestartable = false;
+            return clone.reset();
+        }
+        catch (CloneNotSupportedException e) {
+            BasisLibrary.runTimeError(BasisLibrary.ITERATOR_CLONE_ERR,
+                                      e.toString());
+            return null;
+        }
+    }
+
+    public DTMAxisIterator reset() {
+        _currentIndex = 0;
+        return resetPosition();
+    }
+
+    public int next() {
+        final int last = _nodes.cardinality();
+        final int currentNode = _currentNode;
+        final AbstractTranslet translet = _translet;
+
+        for (int index = _currentIndex; index < last; ) {
+            final int position = _docOrder ? index + 1 : last - index;
+            final int node = _nodes.at(index++);        // note increment
+
+            if (_filter.test(node, position, last, currentNode, translet,
+                             this)) {
+                _currentIndex = index;
+                return returnNode(node);
+            }
+        }
+        return END;
+    }
+
+    public DTMAxisIterator setStartNode(int node) {
+        if (_isRestartable) {
+            _source.setStartNode(_startNode = node);
+
+            _nodes.clear();
+            while ((node = _source.next()) != END) {
+                _nodes.add(node);
+            }
+            _currentIndex = 0;
+            resetPosition();
+        }
+        return this;
+    }
+
+    public int getLast() {
+        if (_last == -1) {
+            _last = computePositionOfLast();
+        }
+        return _last;
+    }
+
+    public void setMark() {
+        _markedNode = _currentIndex;
+    }
+
+    public void gotoMark() {
+        _currentIndex = _markedNode;
+    }
+
+    private int computePositionOfLast() {
+        final int last = _nodes.cardinality();
+        final int currNode = _currentNode;
+        final AbstractTranslet translet = _translet;
+
+        int lastPosition = _position;
+        for (int index = _currentIndex; index < last; ) {
+            final int position = _docOrder ? index + 1 : last - index;
+            int nodeIndex = _nodes.at(index++);         // note increment
+
+            if (_filter.test(nodeIndex, position, last, currNode, translet,
+                             this)) {
+                lastPosition++;
+            }
+        }
+        return lastPosition;
+    }
+}

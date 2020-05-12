@@ -1,107 +1,101 @@
-/*    */ package com.sun.corba.se.impl.presentation.rmi;
-/*    */ 
-/*    */ import com.sun.corba.se.impl.logging.ORBUtilSystemException;
-/*    */ import com.sun.corba.se.spi.orb.ORB;
-/*    */ import com.sun.corba.se.spi.presentation.rmi.PresentationManager;
-/*    */ import java.rmi.Remote;
-/*    */ import javax.rmi.CORBA.Tie;
-/*    */ import javax.rmi.CORBA.Util;
-/*    */ import org.omg.CORBA.CompletionStatus;
-/*    */ import org.omg.CORBA.portable.IDLEntity;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public abstract class StubFactoryFactoryDynamicBase
-/*    */   extends StubFactoryFactoryBase
-/*    */ {
-/* 53 */   protected final ORBUtilSystemException wrapper = ORBUtilSystemException.get("rpc.presentation");
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public PresentationManager.StubFactory createStubFactory(String paramString1, boolean paramBoolean, String paramString2, Class paramClass, ClassLoader paramClassLoader) {
-/* 61 */     Class<?> clazz = null;
-/*    */     
-/*    */     try {
-/* 64 */       clazz = Util.loadClass(paramString1, paramString2, paramClassLoader);
-/* 65 */     } catch (ClassNotFoundException classNotFoundException) {
-/* 66 */       throw this.wrapper.classNotFound3(CompletionStatus.COMPLETED_MAYBE, classNotFoundException, paramString1);
-/*    */     } 
-/*    */ 
-/*    */     
-/* 70 */     PresentationManager presentationManager = ORB.getPresentationManager();
-/*    */     
-/* 72 */     if (IDLEntity.class.isAssignableFrom(clazz) && 
-/* 73 */       !Remote.class.isAssignableFrom(clazz)) {
-/*    */ 
-/*    */       
-/* 76 */       PresentationManager.StubFactoryFactory stubFactoryFactory = presentationManager.getStubFactoryFactory(false);
-/*    */       
-/* 78 */       return stubFactoryFactory.createStubFactory(paramString1, true, paramString2, paramClass, paramClassLoader);
-/*    */     } 
-/*    */ 
-/*    */     
-/* 82 */     PresentationManager.ClassData classData = presentationManager.getClassData(clazz);
-/* 83 */     return makeDynamicStubFactory(presentationManager, classData, paramClassLoader);
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public abstract PresentationManager.StubFactory makeDynamicStubFactory(PresentationManager paramPresentationManager, PresentationManager.ClassData paramClassData, ClassLoader paramClassLoader);
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public Tie getTie(Class paramClass) {
-/* 93 */     PresentationManager presentationManager = ORB.getPresentationManager();
-/* 94 */     return new ReflectiveTie(presentationManager, this.wrapper);
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public boolean createsDynamicStubs() {
-/* 99 */     return true;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\presentation\rmi\StubFactoryFactoryDynamicBase.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.presentation.rmi;
+
+import java.rmi.Remote ;
+import javax.rmi.CORBA.Tie ;
+
+import javax.rmi.CORBA.Util;
+
+import org.omg.CORBA.CompletionStatus;
+
+import org.omg.CORBA.portable.IDLEntity ;
+
+import com.sun.corba.se.spi.presentation.rmi.PresentationManager;
+import com.sun.corba.se.spi.presentation.rmi.PresentationDefaults;
+
+import com.sun.corba.se.spi.orb.ORB;
+
+import com.sun.corba.se.spi.logging.CORBALogDomains ;
+
+import com.sun.corba.se.impl.logging.ORBUtilSystemException ;
+
+public abstract class StubFactoryFactoryDynamicBase extends
+    StubFactoryFactoryBase
+{
+    protected final ORBUtilSystemException wrapper ;
+
+    public StubFactoryFactoryDynamicBase()
+    {
+        wrapper = ORBUtilSystemException.get(
+            CORBALogDomains.RPC_PRESENTATION ) ;
+    }
+
+    public PresentationManager.StubFactory createStubFactory(
+        String className, boolean isIDLStub, String remoteCodeBase,
+        Class expectedClass, ClassLoader classLoader)
+    {
+        Class cls = null ;
+
+        try {
+            cls = Util.loadClass( className, remoteCodeBase, classLoader ) ;
+        } catch (ClassNotFoundException exc) {
+            throw wrapper.classNotFound3(
+                CompletionStatus.COMPLETED_MAYBE, exc, className ) ;
+        }
+
+        PresentationManager pm = ORB.getPresentationManager() ;
+
+        if (IDLEntity.class.isAssignableFrom( cls ) &&
+            !Remote.class.isAssignableFrom( cls )) {
+            // IDL stubs must always use static factories.
+            PresentationManager.StubFactoryFactory sff =
+                pm.getStubFactoryFactory( false ) ;
+            PresentationManager.StubFactory sf =
+                sff.createStubFactory( className, true, remoteCodeBase,
+                    expectedClass, classLoader ) ;
+            return sf ;
+        } else {
+            PresentationManager.ClassData classData = pm.getClassData( cls ) ;
+            return makeDynamicStubFactory( pm, classData, classLoader ) ;
+        }
+    }
+
+    public abstract PresentationManager.StubFactory makeDynamicStubFactory(
+        PresentationManager pm, PresentationManager.ClassData classData,
+        ClassLoader classLoader ) ;
+
+    public Tie getTie( Class cls )
+    {
+        PresentationManager pm = ORB.getPresentationManager() ;
+        return new ReflectiveTie( pm, wrapper ) ;
+    }
+
+    public boolean createsDynamicStubs()
+    {
+        return true ;
+    }
+}

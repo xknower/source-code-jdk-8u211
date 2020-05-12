@@ -1,78 +1,72 @@
-/*    */ package com.sun.org.apache.xerces.internal.impl.xs.traversers;
-/*    */ 
-/*    */ import com.sun.org.apache.xerces.internal.impl.xs.opti.ElementImpl;
-/*    */ import org.w3c.dom.Element;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ final class XSAnnotationInfo
-/*    */ {
-/*    */   String fAnnotation;
-/*    */   int fLine;
-/*    */   int fColumn;
-/*    */   int fCharOffset;
-/*    */   XSAnnotationInfo next;
-/*    */   
-/*    */   XSAnnotationInfo(String annotation, int line, int column, int charOffset) {
-/* 52 */     this.fAnnotation = annotation;
-/* 53 */     this.fLine = line;
-/* 54 */     this.fColumn = column;
-/* 55 */     this.fCharOffset = charOffset;
-/*    */   }
-/*    */   
-/*    */   XSAnnotationInfo(String annotation, Element annotationDecl) {
-/* 59 */     this.fAnnotation = annotation;
-/* 60 */     if (annotationDecl instanceof ElementImpl) {
-/* 61 */       ElementImpl annotationDeclImpl = (ElementImpl)annotationDecl;
-/* 62 */       this.fLine = annotationDeclImpl.getLineNumber();
-/* 63 */       this.fColumn = annotationDeclImpl.getColumnNumber();
-/* 64 */       this.fCharOffset = annotationDeclImpl.getCharacterOffset();
-/*    */     } else {
-/*    */       
-/* 67 */       this.fLine = -1;
-/* 68 */       this.fColumn = -1;
-/* 69 */       this.fCharOffset = -1;
-/*    */     } 
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\impl\xs\traversers\XSAnnotationInfo.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.sun.org.apache.xerces.internal.impl.xs.traversers;
+
+import org.w3c.dom.Element;
+import com.sun.org.apache.xerces.internal.impl.xs.opti.ElementImpl;
+
+/**
+ * Objects of this class contain the textual representation of
+ * an XML schema annotation as well as information on the location
+ * of the annotation in the document it originated from.
+ *
+ * @xerces.internal
+ *
+ * @author Michael Glavassevich, IBM
+ */
+final class XSAnnotationInfo {
+
+    /** Textual representation of annotation. **/
+    String fAnnotation;
+
+    /** Line number of &lt;annotation&gt; element. **/
+    int fLine;
+
+    /** Column number of &lt;annotation&gt; element. **/
+    int fColumn;
+
+    /** Character offset of &lt;annotation&gt; element. **/
+    int fCharOffset;
+
+    /** Next annotation. **/
+    XSAnnotationInfo next;
+
+    XSAnnotationInfo(String annotation, int line, int column, int charOffset) {
+        fAnnotation = annotation;
+        fLine = line;
+        fColumn = column;
+        fCharOffset = charOffset;
+    }
+
+    XSAnnotationInfo(String annotation, Element annotationDecl) {
+        fAnnotation = annotation;
+        if (annotationDecl instanceof ElementImpl) {
+            final ElementImpl annotationDeclImpl = (ElementImpl) annotationDecl;
+            fLine = annotationDeclImpl.getLineNumber();
+            fColumn = annotationDeclImpl.getColumnNumber();
+            fCharOffset = annotationDeclImpl.getCharacterOffset();
+        }
+        else {
+            fLine = -1;
+            fColumn = -1;
+            fCharOffset = -1;
+        }
+    }
+} // XSAnnotationInfo

@@ -1,77 +1,71 @@
-/*    */ package javax.swing;
-/*    */ 
-/*    */ import java.awt.Color;
-/*    */ import java.io.PrintStream;
-/*    */ import java.util.Hashtable;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ class DebugGraphicsInfo
-/*    */ {
-/* 37 */   Color flashColor = Color.red;
-/* 38 */   int flashTime = 100;
-/* 39 */   int flashCount = 2;
-/*    */   Hashtable<JComponent, Integer> componentToDebug;
-/* 41 */   JFrame debugFrame = null;
-/* 42 */   PrintStream stream = System.out;
-/*    */   
-/*    */   void setDebugOptions(JComponent paramJComponent, int paramInt) {
-/* 45 */     if (paramInt == 0) {
-/*    */       return;
-/*    */     }
-/* 48 */     if (this.componentToDebug == null) {
-/* 49 */       this.componentToDebug = new Hashtable<>();
-/*    */     }
-/* 51 */     if (paramInt > 0) {
-/* 52 */       this.componentToDebug.put(paramJComponent, Integer.valueOf(paramInt));
-/*    */     } else {
-/* 54 */       this.componentToDebug.remove(paramJComponent);
-/*    */     } 
-/*    */   }
-/*    */   
-/*    */   int getDebugOptions(JComponent paramJComponent) {
-/* 59 */     if (this.componentToDebug == null) {
-/* 60 */       return 0;
-/*    */     }
-/* 62 */     Integer integer = this.componentToDebug.get(paramJComponent);
-/*    */     
-/* 64 */     return (integer == null) ? 0 : integer.intValue();
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   void log(String paramString) {
-/* 69 */     this.stream.println(paramString);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\DebugGraphicsInfo.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2008, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing;
+
+import java.awt.*;
+import java.util.*;
+
+/** Class used by DebugGraphics for maintaining information about how
+  * to render graphics calls.
+  *
+  * @author Dave Karlton
+  */
+class DebugGraphicsInfo {
+    Color                flashColor = Color.red;
+    int                  flashTime = 100;
+    int                  flashCount = 2;
+    Hashtable<JComponent, Integer> componentToDebug;
+    JFrame               debugFrame = null;
+    java.io.PrintStream  stream = System.out;
+
+    void setDebugOptions(JComponent component, int debug) {
+        if (debug == 0) {
+            return;
+        }
+        if (componentToDebug == null) {
+            componentToDebug = new Hashtable<JComponent, Integer>();
+        }
+        if (debug > 0) {
+            componentToDebug.put(component, Integer.valueOf(debug));
+        } else {
+            componentToDebug.remove(component);
+        }
+    }
+
+    int getDebugOptions(JComponent component) {
+        if (componentToDebug == null) {
+            return 0;
+        } else {
+            Integer integer = componentToDebug.get(component);
+
+            return integer == null ? 0 : integer.intValue();
+        }
+    }
+
+    void log(String string) {
+        stream.println(string);
+    }
+}

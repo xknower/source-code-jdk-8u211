@@ -1,77 +1,73 @@
-/*    */ package com.sun.corba.se.spi.monitoring;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public abstract class StringMonitoredAttributeBase
-/*    */   extends MonitoredAttributeBase
-/*    */ {
-/*    */   public StringMonitoredAttributeBase(String paramString1, String paramString2) {
-/* 64 */     super(paramString1);
-/*    */     
-/* 66 */     MonitoredAttributeInfoFactory monitoredAttributeInfoFactory = MonitoringFactories.getMonitoredAttributeInfoFactory();
-/* 67 */     MonitoredAttributeInfo monitoredAttributeInfo = monitoredAttributeInfoFactory.createMonitoredAttributeInfo(paramString2, String.class, false, false);
-/*    */     
-/* 69 */     setMonitoredAttributeInfo(monitoredAttributeInfo);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\spi\monitoring\StringMonitoredAttributeBase.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package com.sun.corba.se.spi.monitoring;
+
+import java.util.*;
+
+/**
+ * <p>
+ *
+ * @author Hemanth Puttaswamy
+ * </p>
+ * <p>
+ * A Convenient Abstraction to present String type Monitored Attribute. One
+ * of the examples of StringMonitoredAttribute is the State information.
+ * </p>
+ */
+public abstract class StringMonitoredAttributeBase
+    extends MonitoredAttributeBase
+{
+
+  ///////////////////////////////////////
+  // operations
+
+
+/**
+ * <p>
+ * Constructs StringMonitoredAttribute with the MonitoredAttributeInfo
+ * built with the class type of String.
+ * </p>
+ * <p>
+ *
+ * @param name of this attribute
+ * </p>
+ * <p>
+ * @param description of this attribute
+ * </p>
+ * <p>
+ * @return a StringMonitoredAttributeBase
+ * </p>
+ */
+    public  StringMonitoredAttributeBase(String name, String description) {
+        super( name );
+        MonitoredAttributeInfoFactory f =
+            MonitoringFactories.getMonitoredAttributeInfoFactory();
+        MonitoredAttributeInfo maInfo = f.createMonitoredAttributeInfo(
+            description, String.class, false, false );
+       this.setMonitoredAttributeInfo( maInfo );
+    } // end StringMonitoredAttributeBase
+
+
+} // end StringMonitoredAttributeBase

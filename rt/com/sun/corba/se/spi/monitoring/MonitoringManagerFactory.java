@@ -1,13 +1,45 @@
+/*
+ * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
 package com.sun.corba.se.spi.monitoring;
 
-public interface MonitoringManagerFactory {
-  MonitoringManager createMonitoringManager(String paramString1, String paramString2);
-  
-  void remove(String paramString);
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\spi\monitoring\MonitoringManagerFactory.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * <p>
+ *
+ * @author Hemanth Puttaswamy
+ * </p>
+ * <p>
+ * MonitoringObjectFactory is used internally by the ORB, It is not for
+ * general public use.
+ * </p>
  */
+public interface MonitoringManagerFactory {
+    /**
+     *  A Simple Factory Method to create the Monitored Attribute Info.
+     */
+    MonitoringManager createMonitoringManager( String nameOfTheRoot,
+        String description );
+
+    void remove(String nameOfTheRoot);
+}

@@ -1,219 +1,215 @@
-/*     */ package com.sun.org.apache.xerces.internal.util;
-/*     */ 
-/*     */ import com.sun.org.apache.xerces.internal.impl.ExternalSubsetResolver;
-/*     */ import com.sun.org.apache.xerces.internal.impl.XMLEntityDescription;
-/*     */ import com.sun.org.apache.xerces.internal.xni.XMLResourceIdentifier;
-/*     */ import com.sun.org.apache.xerces.internal.xni.XNIException;
-/*     */ import com.sun.org.apache.xerces.internal.xni.grammars.XMLDTDDescription;
-/*     */ import com.sun.org.apache.xerces.internal.xni.parser.XMLInputSource;
-/*     */ import java.io.IOException;
-/*     */ import java.io.InputStream;
-/*     */ import java.io.Reader;
-/*     */ import org.xml.sax.InputSource;
-/*     */ import org.xml.sax.SAXException;
-/*     */ import org.xml.sax.ext.EntityResolver2;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class EntityResolver2Wrapper
-/*     */   implements ExternalSubsetResolver
-/*     */ {
-/*     */   protected EntityResolver2 fEntityResolver;
-/*     */   
-/*     */   public EntityResolver2Wrapper() {}
-/*     */   
-/*     */   public EntityResolver2Wrapper(EntityResolver2 entityResolver) {
-/*  67 */     setEntityResolver(entityResolver);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setEntityResolver(EntityResolver2 entityResolver) {
-/*  80 */     this.fEntityResolver = entityResolver;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public EntityResolver2 getEntityResolver() {
-/*  89 */     return this.fEntityResolver;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XMLInputSource getExternalSubset(XMLDTDDescription grammarDescription) throws XNIException, IOException {
-/* 110 */     if (this.fEntityResolver != null) {
-/*     */       
-/* 112 */       String name = grammarDescription.getRootName();
-/* 113 */       String baseURI = grammarDescription.getBaseSystemId();
-/*     */ 
-/*     */       
-/*     */       try {
-/* 117 */         InputSource inputSource = this.fEntityResolver.getExternalSubset(name, baseURI);
-/* 118 */         return (inputSource != null) ? createXMLInputSource(inputSource, baseURI) : null;
-/*     */       
-/*     */       }
-/* 121 */       catch (SAXException e) {
-/* 122 */         Exception ex = e.getException();
-/* 123 */         if (ex == null) {
-/* 124 */           ex = e;
-/*     */         }
-/* 126 */         throw new XNIException(ex);
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */     
-/* 131 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XMLInputSource resolveEntity(XMLResourceIdentifier resourceIdentifier) throws XNIException, IOException {
-/* 152 */     if (this.fEntityResolver != null) {
-/*     */       
-/* 154 */       String pubId = resourceIdentifier.getPublicId();
-/* 155 */       String sysId = resourceIdentifier.getLiteralSystemId();
-/* 156 */       String baseURI = resourceIdentifier.getBaseSystemId();
-/* 157 */       String name = null;
-/* 158 */       if (resourceIdentifier instanceof XMLDTDDescription) {
-/* 159 */         name = "[dtd]";
-/*     */       }
-/* 161 */       else if (resourceIdentifier instanceof XMLEntityDescription) {
-/* 162 */         name = ((XMLEntityDescription)resourceIdentifier).getEntityName();
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 170 */       if (pubId == null && sysId == null) {
-/* 171 */         return null;
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */       
-/*     */       try {
-/* 177 */         InputSource inputSource = this.fEntityResolver.resolveEntity(name, pubId, baseURI, sysId);
-/* 178 */         return (inputSource != null) ? createXMLInputSource(inputSource, baseURI) : null;
-/*     */       
-/*     */       }
-/* 181 */       catch (SAXException e) {
-/* 182 */         Exception ex = e.getException();
-/* 183 */         if (ex == null) {
-/* 184 */           ex = e;
-/*     */         }
-/* 186 */         throw new XNIException(ex);
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */     
-/* 191 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private XMLInputSource createXMLInputSource(InputSource source, String baseURI) {
-/* 200 */     String publicId = source.getPublicId();
-/* 201 */     String systemId = source.getSystemId();
-/* 202 */     String baseSystemId = baseURI;
-/* 203 */     InputStream byteStream = source.getByteStream();
-/* 204 */     Reader charStream = source.getCharacterStream();
-/* 205 */     String encoding = source.getEncoding();
-/* 206 */     XMLInputSource xmlInputSource = new XMLInputSource(publicId, systemId, baseSystemId);
-/*     */     
-/* 208 */     xmlInputSource.setByteStream(byteStream);
-/* 209 */     xmlInputSource.setCharacterStream(charStream);
-/* 210 */     xmlInputSource.setEncoding(encoding);
-/* 211 */     return xmlInputSource;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\interna\\util\EntityResolver2Wrapper.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2004,2005 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.util;
+
+import java.io.InputStream;
+import java.io.IOException;
+import java.io.Reader;
+
+import com.sun.org.apache.xerces.internal.impl.ExternalSubsetResolver;
+import com.sun.org.apache.xerces.internal.impl.XMLEntityDescription;
+import com.sun.org.apache.xerces.internal.xni.XMLResourceIdentifier;
+import com.sun.org.apache.xerces.internal.xni.XNIException;
+import com.sun.org.apache.xerces.internal.xni.grammars.XMLDTDDescription;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLInputSource;
+
+import org.xml.sax.ext.EntityResolver2;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+
+/**
+ * <p>This class wraps a SAX entity resolver (EntityResolver2) in an XNI entity resolver.</p>
+ *
+ * @author Michael Glavassevich, IBM
+ *
+ */
+public class EntityResolver2Wrapper
+    implements ExternalSubsetResolver {
+
+    //
+    // Data
+    //
+
+    /** An instance of SAX2 Extensions 1.1's EntityResolver2. */
+    protected EntityResolver2 fEntityResolver;
+
+    //
+    // Constructors
+    //
+
+    /** Default constructor. */
+    public EntityResolver2Wrapper() {}
+
+    /**
+     * <p>Creates a new instance wrapping the given SAX entity resolver.</p>
+     *
+     * @param entityResolver the SAX entity resolver to wrap
+     */
+    public EntityResolver2Wrapper(EntityResolver2 entityResolver) {
+        setEntityResolver(entityResolver);
+    } // <init>(EntityResolver2)
+
+    //
+    // Public methods
+    //
+
+    /**
+     * <p>Sets the SAX entity resolver wrapped by this object.</p>
+     *
+     * @param entityResolver the SAX entity resolver to wrap
+     */
+    public void setEntityResolver(EntityResolver2 entityResolver) {
+        fEntityResolver = entityResolver;
+    } // setEntityResolver(EntityResolver2)
+
+    /**
+     * <p>Returns the SAX entity resolver wrapped by this object.</p>
+     *
+     * @return the SAX entity resolver wrapped by this object
+     */
+    public EntityResolver2 getEntityResolver() {
+        return fEntityResolver;
+    } // getEntityResolver():EntityResolver2
+
+    //
+    // ExternalSubsetResolver methods
+    //
+
+    /**
+     * <p>Locates an external subset for documents which do not explicitly
+     * provide one. If no external subset is provided, this method should
+     * return <code>null</code>.</p>
+     *
+     * @param grammarDescription a description of the DTD
+     *
+     * @throws XNIException Thrown on general error.
+     * @throws IOException  Thrown if resolved entity stream cannot be
+     *                      opened or some other i/o error occurs.
+     */
+    public XMLInputSource getExternalSubset(XMLDTDDescription grammarDescription)
+            throws XNIException, IOException {
+
+        if (fEntityResolver != null) {
+
+            String name = grammarDescription.getRootName();
+            String baseURI = grammarDescription.getBaseSystemId();
+
+            // Resolve using EntityResolver2
+            try {
+                InputSource inputSource = fEntityResolver.getExternalSubset(name, baseURI);
+                return (inputSource != null) ? createXMLInputSource(inputSource, baseURI) : null;
+            }
+            // error resolving external subset
+            catch (SAXException e) {
+                Exception ex = e.getException();
+                if (ex == null) {
+                    ex = e;
+                }
+                throw new XNIException(ex);
+            }
+        }
+
+        // unable to resolve external subset
+        return null;
+
+    } // getExternalSubset(XMLDTDDescription):XMLInputSource
+
+    //
+    // XMLEntityResolver methods
+    //
+
+    /**
+     * Resolves an external parsed entity. If the entity cannot be
+     * resolved, this method should return null.
+     *
+     * @param resourceIdentifier contains the physical co-ordinates of the resource to be resolved
+     *
+     * @throws XNIException Thrown on general error.
+     * @throws IOException  Thrown if resolved entity stream cannot be
+     *                      opened or some other i/o error occurs.
+     */
+    public XMLInputSource resolveEntity(XMLResourceIdentifier resourceIdentifier)
+            throws XNIException, IOException {
+
+        if (fEntityResolver != null) {
+
+            String pubId = resourceIdentifier.getPublicId();
+            String sysId = resourceIdentifier.getLiteralSystemId();
+            String baseURI = resourceIdentifier.getBaseSystemId();
+            String name = null;
+            if (resourceIdentifier instanceof XMLDTDDescription) {
+                name = "[dtd]";
+            }
+            else if (resourceIdentifier instanceof XMLEntityDescription) {
+                name = ((XMLEntityDescription) resourceIdentifier).getEntityName();
+            }
+
+            // When both pubId and sysId are null, the user's entity resolver
+            // can do nothing about it. We'd better not bother calling it.
+            // This happens when the resourceIdentifier is a GrammarDescription,
+            // which describes a schema grammar of some namespace, but without
+            // any schema location hint. -Sg
+            if (pubId == null && sysId == null) {
+                return null;
+            }
+
+            // Resolve using EntityResolver2
+            try {
+                InputSource inputSource =
+                    fEntityResolver.resolveEntity(name, pubId, baseURI, sysId);
+                return (inputSource != null) ? createXMLInputSource(inputSource, baseURI) : null;
+            }
+            // error resolving entity
+            catch (SAXException e) {
+                Exception ex = e.getException();
+                if (ex == null) {
+                    ex = e;
+                }
+                throw new XNIException(ex);
+            }
+        }
+
+        // unable to resolve entity
+        return null;
+
+    } // resolveEntity(XMLResourceIdentifier):XMLInputSource
+
+    /**
+     * Creates an XMLInputSource from a SAX InputSource.
+     */
+    private XMLInputSource createXMLInputSource(InputSource source, String baseURI) {
+
+        String publicId = source.getPublicId();
+        String systemId = source.getSystemId();
+        String baseSystemId = baseURI;
+        InputStream byteStream = source.getByteStream();
+        Reader charStream = source.getCharacterStream();
+        String encoding = source.getEncoding();
+        XMLInputSource xmlInputSource =
+            new XMLInputSource(publicId, systemId, baseSystemId);
+        xmlInputSource.setByteStream(byteStream);
+        xmlInputSource.setCharacterStream(charStream);
+        xmlInputSource.setEncoding(encoding);
+        return xmlInputSource;
+
+    } // createXMLInputSource(InputSource,String):XMLInputSource
+
+} // class EntityResolver2Wrapper

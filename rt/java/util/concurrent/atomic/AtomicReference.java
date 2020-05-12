@@ -1,245 +1,240 @@
-/*     */ package java.util.concurrent.atomic;
-/*     */ 
-/*     */ import java.io.Serializable;
-/*     */ import java.util.function.BinaryOperator;
-/*     */ import java.util.function.UnaryOperator;
-/*     */ import sun.misc.Unsafe;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class AtomicReference<V>
-/*     */   implements Serializable
-/*     */ {
-/*     */   private static final long serialVersionUID = -1848883965231344442L;
-/*  52 */   private static final Unsafe unsafe = Unsafe.getUnsafe();
-/*     */   private static final long valueOffset;
-/*     */   private volatile V value;
-/*     */   
-/*     */   static {
-/*     */     
-/*  58 */     try { valueOffset = unsafe.objectFieldOffset(AtomicReference.class.getDeclaredField("value")); }
-/*  59 */     catch (Exception exception) { throw new Error(exception); }
-/*     */   
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public AtomicReference(V paramV) {
-/*  70 */     this.value = paramV;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public AtomicReference() {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final V get() {
-/*  85 */     return this.value;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final void set(V paramV) {
-/*  94 */     this.value = paramV;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final void lazySet(V paramV) {
-/* 104 */     unsafe.putOrderedObject(this, valueOffset, paramV);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final boolean compareAndSet(V paramV1, V paramV2) {
-/* 116 */     return unsafe.compareAndSwapObject(this, valueOffset, paramV1, paramV2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final boolean weakCompareAndSet(V paramV1, V paramV2) {
-/* 132 */     return unsafe.compareAndSwapObject(this, valueOffset, paramV1, paramV2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final V getAndSet(V paramV) {
-/* 143 */     return (V)unsafe.getAndSetObject(this, valueOffset, paramV);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final V getAndUpdate(UnaryOperator<V> paramUnaryOperator) {
-/*     */     while (true) {
-/* 159 */       V v1 = get();
-/* 160 */       V v2 = paramUnaryOperator.apply(v1);
-/* 161 */       if (compareAndSet(v1, v2)) {
-/* 162 */         return v1;
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final V updateAndGet(UnaryOperator<V> paramUnaryOperator) {
-/*     */     while (true) {
-/* 178 */       V v1 = get();
-/* 179 */       V v2 = paramUnaryOperator.apply(v1);
-/* 180 */       if (compareAndSet(v1, v2)) {
-/* 181 */         return v2;
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final V getAndAccumulate(V paramV, BinaryOperator<V> paramBinaryOperator) {
-/*     */     while (true) {
-/* 202 */       V v1 = get();
-/* 203 */       V v2 = paramBinaryOperator.apply(v1, paramV);
-/* 204 */       if (compareAndSet(v1, v2)) {
-/* 205 */         return v1;
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final V accumulateAndGet(V paramV, BinaryOperator<V> paramBinaryOperator) {
-/*     */     while (true) {
-/* 226 */       V v1 = get();
-/* 227 */       V v2 = paramBinaryOperator.apply(v1, paramV);
-/* 228 */       if (compareAndSet(v1, v2)) {
-/* 229 */         return v2;
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 237 */     return String.valueOf(get());
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\concurrent\atomic\AtomicReference.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+/*
+ *
+ *
+ *
+ *
+ *
+ * Written by Doug Lea with assistance from members of JCP JSR-166
+ * Expert Group and released to the public domain, as explained at
+ * http://creativecommons.org/publicdomain/zero/1.0/
+ */
+
+package java.util.concurrent.atomic;
+import java.util.function.UnaryOperator;
+import java.util.function.BinaryOperator;
+import sun.misc.Unsafe;
+
+/**
+ * An object reference that may be updated atomically. See the {@link
+ * java.util.concurrent.atomic} package specification for description
+ * of the properties of atomic variables.
+ * @since 1.5
+ * @author Doug Lea
+ * @param <V> The type of object referred to by this reference
+ */
+public class AtomicReference<V> implements java.io.Serializable {
+    private static final long serialVersionUID = -1848883965231344442L;
+
+    private static final Unsafe unsafe = Unsafe.getUnsafe();
+    private static final long valueOffset;
+
+    static {
+        try {
+            valueOffset = unsafe.objectFieldOffset
+                (AtomicReference.class.getDeclaredField("value"));
+        } catch (Exception ex) { throw new Error(ex); }
+    }
+
+    private volatile V value;
+
+    /**
+     * Creates a new AtomicReference with the given initial value.
+     *
+     * @param initialValue the initial value
+     */
+    public AtomicReference(V initialValue) {
+        value = initialValue;
+    }
+
+    /**
+     * Creates a new AtomicReference with null initial value.
+     */
+    public AtomicReference() {
+    }
+
+    /**
+     * Gets the current value.
+     *
+     * @return the current value
+     */
+    public final V get() {
+        return value;
+    }
+
+    /**
+     * Sets to the given value.
+     *
+     * @param newValue the new value
+     */
+    public final void set(V newValue) {
+        value = newValue;
+    }
+
+    /**
+     * Eventually sets to the given value.
+     *
+     * @param newValue the new value
+     * @since 1.6
+     */
+    public final void lazySet(V newValue) {
+        unsafe.putOrderedObject(this, valueOffset, newValue);
+    }
+
+    /**
+     * Atomically sets the value to the given updated value
+     * if the current value {@code ==} the expected value.
+     * @param expect the expected value
+     * @param update the new value
+     * @return {@code true} if successful. False return indicates that
+     * the actual value was not equal to the expected value.
+     */
+    public final boolean compareAndSet(V expect, V update) {
+        return unsafe.compareAndSwapObject(this, valueOffset, expect, update);
+    }
+
+    /**
+     * Atomically sets the value to the given updated value
+     * if the current value {@code ==} the expected value.
+     *
+     * <p><a href="package-summary.html#weakCompareAndSet">May fail
+     * spuriously and does not provide ordering guarantees</a>, so is
+     * only rarely an appropriate alternative to {@code compareAndSet}.
+     *
+     * @param expect the expected value
+     * @param update the new value
+     * @return {@code true} if successful
+     */
+    public final boolean weakCompareAndSet(V expect, V update) {
+        return unsafe.compareAndSwapObject(this, valueOffset, expect, update);
+    }
+
+    /**
+     * Atomically sets to the given value and returns the old value.
+     *
+     * @param newValue the new value
+     * @return the previous value
+     */
+    @SuppressWarnings("unchecked")
+    public final V getAndSet(V newValue) {
+        return (V)unsafe.getAndSetObject(this, valueOffset, newValue);
+    }
+
+    /**
+     * Atomically updates the current value with the results of
+     * applying the given function, returning the previous value. The
+     * function should be side-effect-free, since it may be re-applied
+     * when attempted updates fail due to contention among threads.
+     *
+     * @param updateFunction a side-effect-free function
+     * @return the previous value
+     * @since 1.8
+     */
+    public final V getAndUpdate(UnaryOperator<V> updateFunction) {
+        V prev, next;
+        do {
+            prev = get();
+            next = updateFunction.apply(prev);
+        } while (!compareAndSet(prev, next));
+        return prev;
+    }
+
+    /**
+     * Atomically updates the current value with the results of
+     * applying the given function, returning the updated value. The
+     * function should be side-effect-free, since it may be re-applied
+     * when attempted updates fail due to contention among threads.
+     *
+     * @param updateFunction a side-effect-free function
+     * @return the updated value
+     * @since 1.8
+     */
+    public final V updateAndGet(UnaryOperator<V> updateFunction) {
+        V prev, next;
+        do {
+            prev = get();
+            next = updateFunction.apply(prev);
+        } while (!compareAndSet(prev, next));
+        return next;
+    }
+
+    /**
+     * Atomically updates the current value with the results of
+     * applying the given function to the current and given values,
+     * returning the previous value. The function should be
+     * side-effect-free, since it may be re-applied when attempted
+     * updates fail due to contention among threads.  The function
+     * is applied with the current value as its first argument,
+     * and the given update as the second argument.
+     *
+     * @param x the update value
+     * @param accumulatorFunction a side-effect-free function of two arguments
+     * @return the previous value
+     * @since 1.8
+     */
+    public final V getAndAccumulate(V x,
+                                    BinaryOperator<V> accumulatorFunction) {
+        V prev, next;
+        do {
+            prev = get();
+            next = accumulatorFunction.apply(prev, x);
+        } while (!compareAndSet(prev, next));
+        return prev;
+    }
+
+    /**
+     * Atomically updates the current value with the results of
+     * applying the given function to the current and given values,
+     * returning the updated value. The function should be
+     * side-effect-free, since it may be re-applied when attempted
+     * updates fail due to contention among threads.  The function
+     * is applied with the current value as its first argument,
+     * and the given update as the second argument.
+     *
+     * @param x the update value
+     * @param accumulatorFunction a side-effect-free function of two arguments
+     * @return the updated value
+     * @since 1.8
+     */
+    public final V accumulateAndGet(V x,
+                                    BinaryOperator<V> accumulatorFunction) {
+        V prev, next;
+        do {
+            prev = get();
+            next = accumulatorFunction.apply(prev, x);
+        } while (!compareAndSet(prev, next));
+        return next;
+    }
+
+    /**
+     * Returns the String representation of the current value.
+     * @return the String representation of the current value
+     */
+    public String toString() {
+        return String.valueOf(get());
+    }
+
+}

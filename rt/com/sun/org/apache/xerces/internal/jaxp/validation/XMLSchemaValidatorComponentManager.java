@@ -1,565 +1,561 @@
-/*     */ package com.sun.org.apache.xerces.internal.jaxp.validation;
-/*     */ 
-/*     */ import com.sun.org.apache.xerces.internal.impl.Constants;
-/*     */ import com.sun.org.apache.xerces.internal.impl.XMLEntityManager;
-/*     */ import com.sun.org.apache.xerces.internal.impl.XMLErrorReporter;
-/*     */ import com.sun.org.apache.xerces.internal.impl.validation.ValidationManager;
-/*     */ import com.sun.org.apache.xerces.internal.impl.xs.XMLSchemaValidator;
-/*     */ import com.sun.org.apache.xerces.internal.impl.xs.XSMessageFormatter;
-/*     */ import com.sun.org.apache.xerces.internal.util.DOMEntityResolverWrapper;
-/*     */ import com.sun.org.apache.xerces.internal.util.ErrorHandlerWrapper;
-/*     */ import com.sun.org.apache.xerces.internal.util.FeatureState;
-/*     */ import com.sun.org.apache.xerces.internal.util.NamespaceSupport;
-/*     */ import com.sun.org.apache.xerces.internal.util.ParserConfigurationSettings;
-/*     */ import com.sun.org.apache.xerces.internal.util.PropertyState;
-/*     */ import com.sun.org.apache.xerces.internal.util.Status;
-/*     */ import com.sun.org.apache.xerces.internal.util.SymbolTable;
-/*     */ import com.sun.org.apache.xerces.internal.utils.XMLSecurityManager;
-/*     */ import com.sun.org.apache.xerces.internal.utils.XMLSecurityPropertyManager;
-/*     */ import com.sun.org.apache.xerces.internal.xni.NamespaceContext;
-/*     */ import com.sun.org.apache.xerces.internal.xni.XNIException;
-/*     */ import com.sun.org.apache.xerces.internal.xni.parser.XMLComponent;
-/*     */ import com.sun.org.apache.xerces.internal.xni.parser.XMLComponentManager;
-/*     */ import com.sun.org.apache.xerces.internal.xni.parser.XMLConfigurationException;
-/*     */ import java.util.HashMap;
-/*     */ import java.util.Iterator;
-/*     */ import java.util.Locale;
-/*     */ import java.util.Map;
-/*     */ import org.w3c.dom.ls.LSResourceResolver;
-/*     */ import org.xml.sax.ErrorHandler;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class XMLSchemaValidatorComponentManager
-/*     */   extends ParserConfigurationSettings
-/*     */   implements XMLComponentManager
-/*     */ {
-/*     */   private static final String SCHEMA_VALIDATION = "http://apache.org/xml/features/validation/schema";
-/*     */   private static final String VALIDATION = "http://xml.org/sax/features/validation";
-/*     */   private static final String SCHEMA_ELEMENT_DEFAULT = "http://apache.org/xml/features/validation/schema/element-default";
-/*     */   private static final String USE_GRAMMAR_POOL_ONLY = "http://apache.org/xml/features/internal/validation/schema/use-grammar-pool-only";
-/*     */   private static final String ENTITY_MANAGER = "http://apache.org/xml/properties/internal/entity-manager";
-/*     */   private static final String ENTITY_RESOLVER = "http://apache.org/xml/properties/internal/entity-resolver";
-/*     */   private static final String ERROR_HANDLER = "http://apache.org/xml/properties/internal/error-handler";
-/*     */   private static final String ERROR_REPORTER = "http://apache.org/xml/properties/internal/error-reporter";
-/*     */   private static final String NAMESPACE_CONTEXT = "http://apache.org/xml/properties/internal/namespace-context";
-/*     */   private static final String SCHEMA_VALIDATOR = "http://apache.org/xml/properties/internal/validator/schema";
-/*     */   private static final String SECURITY_MANAGER = "http://apache.org/xml/properties/security-manager";
-/*     */   private static final String XML_SECURITY_PROPERTY_MANAGER = "http://www.oracle.com/xml/jaxp/properties/xmlSecurityPropertyManager";
-/*     */   private static final String SYMBOL_TABLE = "http://apache.org/xml/properties/internal/symbol-table";
-/*     */   private static final String VALIDATION_MANAGER = "http://apache.org/xml/properties/internal/validation-manager";
-/*     */   private static final String XMLGRAMMAR_POOL = "http://apache.org/xml/properties/internal/grammar-pool";
-/*     */   private static final String LOCALE = "http://apache.org/xml/properties/locale";
-/*     */   private boolean _isSecureMode = false;
-/*     */   private boolean fConfigUpdated = true;
-/*     */   private boolean fUseGrammarPoolOnly;
-/* 152 */   private final HashMap fComponents = new HashMap<>();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private XMLEntityManager fEntityManager;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private XMLErrorReporter fErrorReporter;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private NamespaceContext fNamespaceContext;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private XMLSchemaValidator fSchemaValidator;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private ValidationManager fValidationManager;
-/*     */ 
-/*     */ 
-/*     */   
-/* 178 */   private final HashMap fInitFeatures = new HashMap<>();
-/*     */ 
-/*     */   
-/* 181 */   private final HashMap fInitProperties = new HashMap<>();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private XMLSecurityManager fInitSecurityManager;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private final XMLSecurityPropertyManager fSecurityPropertyMgr;
-/*     */ 
-/*     */ 
-/*     */   
-/* 194 */   private ErrorHandler fErrorHandler = null;
-/*     */ 
-/*     */   
-/* 197 */   private LSResourceResolver fResourceResolver = null;
-/*     */ 
-/*     */   
-/* 200 */   private Locale fLocale = null;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XMLSchemaValidatorComponentManager(XSGrammarPoolContainer grammarContainer) {
-/* 205 */     this.fEntityManager = new XMLEntityManager();
-/* 206 */     this.fComponents.put("http://apache.org/xml/properties/internal/entity-manager", this.fEntityManager);
-/*     */     
-/* 208 */     this.fErrorReporter = new XMLErrorReporter();
-/* 209 */     this.fComponents.put("http://apache.org/xml/properties/internal/error-reporter", this.fErrorReporter);
-/*     */     
-/* 211 */     this.fNamespaceContext = new NamespaceSupport();
-/* 212 */     this.fComponents.put("http://apache.org/xml/properties/internal/namespace-context", this.fNamespaceContext);
-/*     */     
-/* 214 */     this.fSchemaValidator = new XMLSchemaValidator();
-/* 215 */     this.fComponents.put("http://apache.org/xml/properties/internal/validator/schema", this.fSchemaValidator);
-/*     */     
-/* 217 */     this.fValidationManager = new ValidationManager();
-/* 218 */     this.fComponents.put("http://apache.org/xml/properties/internal/validation-manager", this.fValidationManager);
-/*     */ 
-/*     */     
-/* 221 */     this.fComponents.put("http://apache.org/xml/properties/internal/entity-resolver", null);
-/* 222 */     this.fComponents.put("http://apache.org/xml/properties/internal/error-handler", null);
-/*     */     
-/* 224 */     this.fComponents.put("http://apache.org/xml/properties/internal/symbol-table", new SymbolTable());
-/*     */ 
-/*     */     
-/* 227 */     this.fComponents.put("http://apache.org/xml/properties/internal/grammar-pool", grammarContainer.getGrammarPool());
-/* 228 */     this.fUseGrammarPoolOnly = grammarContainer.isFullyComposed();
-/*     */ 
-/*     */     
-/* 231 */     this.fErrorReporter.putMessageFormatter("http://www.w3.org/TR/xml-schema-1", new XSMessageFormatter());
-/*     */ 
-/*     */     
-/* 234 */     addRecognizedParamsAndSetDefaults(this.fEntityManager, grammarContainer);
-/* 235 */     addRecognizedParamsAndSetDefaults(this.fErrorReporter, grammarContainer);
-/* 236 */     addRecognizedParamsAndSetDefaults(this.fSchemaValidator, grammarContainer);
-/*     */     
-/* 238 */     boolean secureProcessing = grammarContainer.getFeature("http://javax.xml.XMLConstants/feature/secure-processing").booleanValue();
-/* 239 */     if (System.getSecurityManager() != null) {
-/* 240 */       this._isSecureMode = true;
-/* 241 */       secureProcessing = true;
-/*     */     } 
-/*     */     
-/* 244 */     this
-/* 245 */       .fInitSecurityManager = (XMLSecurityManager)grammarContainer.getProperty("http://apache.org/xml/properties/security-manager");
-/* 246 */     if (this.fInitSecurityManager != null) {
-/* 247 */       this.fInitSecurityManager.setSecureProcessing(secureProcessing);
-/*     */     } else {
-/* 249 */       this.fInitSecurityManager = new XMLSecurityManager(secureProcessing);
-/*     */     } 
-/*     */     
-/* 252 */     setProperty("http://apache.org/xml/properties/security-manager", this.fInitSecurityManager);
-/*     */ 
-/*     */     
-/* 255 */     this
-/* 256 */       .fSecurityPropertyMgr = (XMLSecurityPropertyManager)grammarContainer.getProperty("http://www.oracle.com/xml/jaxp/properties/xmlSecurityPropertyManager");
-/* 257 */     setProperty("http://www.oracle.com/xml/jaxp/properties/xmlSecurityPropertyManager", this.fSecurityPropertyMgr);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public FeatureState getFeatureState(String featureId) throws XMLConfigurationException {
-/* 274 */     if ("http://apache.org/xml/features/internal/parser-settings".equals(featureId)) {
-/* 275 */       return FeatureState.is(this.fConfigUpdated);
-/*     */     }
-/* 277 */     if ("http://xml.org/sax/features/validation".equals(featureId) || "http://apache.org/xml/features/validation/schema".equals(featureId)) {
-/* 278 */       return FeatureState.is(true);
-/*     */     }
-/* 280 */     if ("http://apache.org/xml/features/internal/validation/schema/use-grammar-pool-only".equals(featureId)) {
-/* 281 */       return FeatureState.is(this.fUseGrammarPoolOnly);
-/*     */     }
-/* 283 */     if ("http://javax.xml.XMLConstants/feature/secure-processing".equals(featureId)) {
-/* 284 */       return FeatureState.is(this.fInitSecurityManager.isSecureProcessing());
-/*     */     }
-/* 286 */     if ("http://apache.org/xml/features/validation/schema/element-default".equals(featureId)) {
-/* 287 */       return FeatureState.is(true);
-/*     */     }
-/* 289 */     return super.getFeatureState(featureId);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setFeature(String featureId, boolean value) throws XMLConfigurationException {
-/* 301 */     if ("http://apache.org/xml/features/internal/parser-settings".equals(featureId)) {
-/* 302 */       throw new XMLConfigurationException(Status.NOT_SUPPORTED, featureId);
-/*     */     }
-/* 304 */     if (!value && ("http://xml.org/sax/features/validation".equals(featureId) || "http://apache.org/xml/features/validation/schema".equals(featureId))) {
-/* 305 */       throw new XMLConfigurationException(Status.NOT_SUPPORTED, featureId);
-/*     */     }
-/* 307 */     if ("http://apache.org/xml/features/internal/validation/schema/use-grammar-pool-only".equals(featureId) && value != this.fUseGrammarPoolOnly) {
-/* 308 */       throw new XMLConfigurationException(Status.NOT_SUPPORTED, featureId);
-/*     */     }
-/* 310 */     if ("http://javax.xml.XMLConstants/feature/secure-processing".equals(featureId)) {
-/* 311 */       if (this._isSecureMode && !value) {
-/* 312 */         throw new XMLConfigurationException(Status.NOT_ALLOWED, "http://javax.xml.XMLConstants/feature/secure-processing");
-/*     */       }
-/*     */       
-/* 315 */       this.fInitSecurityManager.setSecureProcessing(value);
-/* 316 */       setProperty("http://apache.org/xml/properties/security-manager", this.fInitSecurityManager);
-/*     */       
-/* 318 */       if (value && Constants.IS_JDK8_OR_ABOVE) {
-/* 319 */         this.fSecurityPropertyMgr.setValue(XMLSecurityPropertyManager.Property.ACCESS_EXTERNAL_DTD, XMLSecurityPropertyManager.State.FSP, "");
-/*     */         
-/* 321 */         this.fSecurityPropertyMgr.setValue(XMLSecurityPropertyManager.Property.ACCESS_EXTERNAL_SCHEMA, XMLSecurityPropertyManager.State.FSP, "");
-/*     */         
-/* 323 */         setProperty("http://www.oracle.com/xml/jaxp/properties/xmlSecurityPropertyManager", this.fSecurityPropertyMgr);
-/*     */       } 
-/*     */       
-/*     */       return;
-/*     */     } 
-/* 328 */     this.fConfigUpdated = true;
-/* 329 */     this.fEntityManager.setFeature(featureId, value);
-/* 330 */     this.fErrorReporter.setFeature(featureId, value);
-/* 331 */     this.fSchemaValidator.setFeature(featureId, value);
-/* 332 */     if (!this.fInitFeatures.containsKey(featureId)) {
-/* 333 */       boolean current = getFeature(featureId);
-/* 334 */       this.fInitFeatures.put(featureId, current ? Boolean.TRUE : Boolean.FALSE);
-/*     */     } 
-/* 336 */     super.setFeature(featureId, value);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public PropertyState getPropertyState(String propertyId) throws XMLConfigurationException {
-/* 353 */     if ("http://apache.org/xml/properties/locale".equals(propertyId)) {
-/* 354 */       return PropertyState.is(getLocale());
-/*     */     }
-/* 356 */     Object component = this.fComponents.get(propertyId);
-/* 357 */     if (component != null) {
-/* 358 */       return PropertyState.is(component);
-/*     */     }
-/* 360 */     if (this.fComponents.containsKey(propertyId)) {
-/* 361 */       return PropertyState.is(null);
-/*     */     }
-/* 363 */     return super.getPropertyState(propertyId);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setProperty(String propertyId, Object value) throws XMLConfigurationException {
-/* 375 */     if ("http://apache.org/xml/properties/internal/entity-manager".equals(propertyId) || "http://apache.org/xml/properties/internal/error-reporter".equals(propertyId) || "http://apache.org/xml/properties/internal/namespace-context"
-/* 376 */       .equals(propertyId) || "http://apache.org/xml/properties/internal/validator/schema".equals(propertyId) || "http://apache.org/xml/properties/internal/symbol-table"
-/* 377 */       .equals(propertyId) || "http://apache.org/xml/properties/internal/validation-manager".equals(propertyId) || "http://apache.org/xml/properties/internal/grammar-pool"
-/* 378 */       .equals(propertyId)) {
-/* 379 */       throw new XMLConfigurationException(Status.NOT_SUPPORTED, propertyId);
-/*     */     }
-/* 381 */     this.fConfigUpdated = true;
-/* 382 */     this.fEntityManager.setProperty(propertyId, value);
-/* 383 */     this.fErrorReporter.setProperty(propertyId, value);
-/* 384 */     this.fSchemaValidator.setProperty(propertyId, value);
-/* 385 */     if ("http://apache.org/xml/properties/internal/entity-resolver".equals(propertyId) || "http://apache.org/xml/properties/internal/error-handler".equals(propertyId) || "http://apache.org/xml/properties/security-manager"
-/* 386 */       .equals(propertyId)) {
-/* 387 */       this.fComponents.put(propertyId, value);
-/*     */       return;
-/*     */     } 
-/* 390 */     if ("http://apache.org/xml/properties/locale".equals(propertyId)) {
-/* 391 */       setLocale((Locale)value);
-/* 392 */       this.fComponents.put(propertyId, value);
-/*     */       
-/*     */       return;
-/*     */     } 
-/* 396 */     if (this.fInitSecurityManager == null || 
-/* 397 */       !this.fInitSecurityManager.setLimit(propertyId, XMLSecurityManager.State.APIPROPERTY, value))
-/*     */     {
-/* 399 */       if (this.fSecurityPropertyMgr == null || 
-/* 400 */         !this.fSecurityPropertyMgr.setValue(propertyId, XMLSecurityPropertyManager.State.APIPROPERTY, value)) {
-/*     */         
-/* 402 */         if (!this.fInitProperties.containsKey(propertyId)) {
-/* 403 */           this.fInitProperties.put(propertyId, getProperty(propertyId));
-/*     */         }
-/* 405 */         super.setProperty(propertyId, value);
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addRecognizedParamsAndSetDefaults(XMLComponent component, XSGrammarPoolContainer grammarContainer) {
-/* 422 */     String[] recognizedFeatures = component.getRecognizedFeatures();
-/* 423 */     addRecognizedFeatures(recognizedFeatures);
-/*     */ 
-/*     */     
-/* 426 */     String[] recognizedProperties = component.getRecognizedProperties();
-/* 427 */     addRecognizedProperties(recognizedProperties);
-/*     */ 
-/*     */     
-/* 430 */     setFeatureDefaults(component, recognizedFeatures, grammarContainer);
-/* 431 */     setPropertyDefaults(component, recognizedProperties);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void reset() throws XNIException {
-/* 436 */     this.fNamespaceContext.reset();
-/* 437 */     this.fValidationManager.reset();
-/* 438 */     this.fEntityManager.reset(this);
-/* 439 */     this.fErrorReporter.reset(this);
-/* 440 */     this.fSchemaValidator.reset(this);
-/*     */     
-/* 442 */     this.fConfigUpdated = false;
-/*     */   }
-/*     */   
-/*     */   void setErrorHandler(ErrorHandler errorHandler) {
-/* 446 */     this.fErrorHandler = errorHandler;
-/* 447 */     setProperty("http://apache.org/xml/properties/internal/error-handler", (errorHandler != null) ? new ErrorHandlerWrapper(errorHandler) : new ErrorHandlerWrapper(
-/* 448 */           DraconianErrorHandler.getInstance()));
-/*     */   }
-/*     */   
-/*     */   ErrorHandler getErrorHandler() {
-/* 452 */     return this.fErrorHandler;
-/*     */   }
-/*     */   
-/*     */   void setResourceResolver(LSResourceResolver resourceResolver) {
-/* 456 */     this.fResourceResolver = resourceResolver;
-/* 457 */     setProperty("http://apache.org/xml/properties/internal/entity-resolver", new DOMEntityResolverWrapper(resourceResolver));
-/*     */   }
-/*     */   
-/*     */   LSResourceResolver getResourceResolver() {
-/* 461 */     return this.fResourceResolver;
-/*     */   }
-/*     */   
-/*     */   void setLocale(Locale locale) {
-/* 465 */     this.fLocale = locale;
-/* 466 */     this.fErrorReporter.setLocale(locale);
-/*     */   }
-/*     */   
-/*     */   Locale getLocale() {
-/* 470 */     return this.fLocale;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   void restoreInitialState() {
-/* 475 */     this.fConfigUpdated = true;
-/*     */ 
-/*     */     
-/* 478 */     this.fComponents.put("http://apache.org/xml/properties/internal/entity-resolver", null);
-/* 479 */     this.fComponents.put("http://apache.org/xml/properties/internal/error-handler", null);
-/*     */ 
-/*     */     
-/* 482 */     setLocale((Locale)null);
-/* 483 */     this.fComponents.put("http://apache.org/xml/properties/locale", null);
-/*     */ 
-/*     */     
-/* 486 */     this.fComponents.put("http://apache.org/xml/properties/security-manager", this.fInitSecurityManager);
-/*     */ 
-/*     */     
-/* 489 */     setLocale((Locale)null);
-/* 490 */     this.fComponents.put("http://apache.org/xml/properties/locale", null);
-/*     */ 
-/*     */     
-/* 493 */     if (!this.fInitFeatures.isEmpty()) {
-/* 494 */       Iterator<Map.Entry> iter = this.fInitFeatures.entrySet().iterator();
-/* 495 */       while (iter.hasNext()) {
-/* 496 */         Map.Entry entry = iter.next();
-/* 497 */         String name = (String)entry.getKey();
-/* 498 */         boolean value = ((Boolean)entry.getValue()).booleanValue();
-/* 499 */         super.setFeature(name, value);
-/*     */       } 
-/* 501 */       this.fInitFeatures.clear();
-/*     */     } 
-/* 503 */     if (!this.fInitProperties.isEmpty()) {
-/* 504 */       Iterator<Map.Entry> iter = this.fInitProperties.entrySet().iterator();
-/* 505 */       while (iter.hasNext()) {
-/* 506 */         Map.Entry entry = iter.next();
-/* 507 */         String name = (String)entry.getKey();
-/* 508 */         Object value = entry.getValue();
-/* 509 */         super.setProperty(name, value);
-/*     */       } 
-/* 511 */       this.fInitProperties.clear();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void setFeatureDefaults(XMLComponent component, String[] recognizedFeatures, XSGrammarPoolContainer grammarContainer) {
-/* 518 */     if (recognizedFeatures != null) {
-/* 519 */       for (int i = 0; i < recognizedFeatures.length; i++) {
-/* 520 */         String featureId = recognizedFeatures[i];
-/* 521 */         Boolean state = grammarContainer.getFeature(featureId);
-/* 522 */         if (state == null) {
-/* 523 */           state = component.getFeatureDefault(featureId);
-/*     */         }
-/* 525 */         if (state != null)
-/*     */         {
-/* 527 */           if (!this.fFeatures.containsKey(featureId)) {
-/* 528 */             this.fFeatures.put(featureId, state);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */             
-/* 533 */             this.fConfigUpdated = true;
-/*     */           } 
-/*     */         }
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void setPropertyDefaults(XMLComponent component, String[] recognizedProperties) {
-/* 542 */     if (recognizedProperties != null)
-/* 543 */       for (int i = 0; i < recognizedProperties.length; i++) {
-/* 544 */         String propertyId = recognizedProperties[i];
-/* 545 */         Object value = component.getPropertyDefault(propertyId);
-/* 546 */         if (value != null)
-/*     */         {
-/* 548 */           if (!this.fProperties.containsKey(propertyId)) {
-/* 549 */             this.fProperties.put(propertyId, value);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */             
-/* 554 */             this.fConfigUpdated = true;
-/*     */           } 
-/*     */         }
-/*     */       }  
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\jaxp\validation\XMLSchemaValidatorComponentManager.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2005 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.jaxp.validation;
+
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Iterator;
+import java.util.Map;
+
+import javax.xml.XMLConstants;
+
+import com.sun.org.apache.xerces.internal.impl.Constants;
+import com.sun.org.apache.xerces.internal.impl.XMLEntityManager;
+import com.sun.org.apache.xerces.internal.impl.XMLErrorReporter;
+import com.sun.org.apache.xerces.internal.impl.validation.ValidationManager;
+import com.sun.org.apache.xerces.internal.impl.xs.XMLSchemaValidator;
+import com.sun.org.apache.xerces.internal.impl.xs.XSMessageFormatter;
+import com.sun.org.apache.xerces.internal.util.DOMEntityResolverWrapper;
+import com.sun.org.apache.xerces.internal.util.ErrorHandlerWrapper;
+import com.sun.org.apache.xerces.internal.util.FeatureState;
+import com.sun.org.apache.xerces.internal.util.NamespaceSupport;
+import com.sun.org.apache.xerces.internal.util.ParserConfigurationSettings;
+import com.sun.org.apache.xerces.internal.util.PropertyState;
+import com.sun.org.apache.xerces.internal.util.Status;
+import com.sun.org.apache.xerces.internal.util.SymbolTable;
+import com.sun.org.apache.xerces.internal.utils.XMLSecurityPropertyManager;
+import com.sun.org.apache.xerces.internal.utils.XMLSecurityManager;
+import com.sun.org.apache.xerces.internal.xni.NamespaceContext;
+import com.sun.org.apache.xerces.internal.xni.XNIException;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLComponent;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLComponentManager;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLConfigurationException;
+import org.w3c.dom.ls.LSResourceResolver;
+import org.xml.sax.ErrorHandler;
+
+/**
+ * <p>An implementation of XMLComponentManager for a schema validator.</p>
+ *
+ * @author Michael Glavassevich, IBM
+ * @version $Id: XMLSchemaValidatorComponentManager.java,v 1.9 2010-11-01 04:40:08 joehw Exp $
+ */
+final class XMLSchemaValidatorComponentManager extends ParserConfigurationSettings implements
+        XMLComponentManager {
+
+    // feature identifiers
+
+    /** Feature identifier: schema validation. */
+    private static final String SCHEMA_VALIDATION =
+        Constants.XERCES_FEATURE_PREFIX + Constants.SCHEMA_VALIDATION_FEATURE;
+
+    /** Feature identifier: validation. */
+    private static final String VALIDATION =
+        Constants.SAX_FEATURE_PREFIX + Constants.VALIDATION_FEATURE;
+
+    /** Feature identifier: send element default value via characters() */
+    private static final String SCHEMA_ELEMENT_DEFAULT =
+        Constants.XERCES_FEATURE_PREFIX + Constants.SCHEMA_ELEMENT_DEFAULT;
+
+    /** Feature identifier: use grammar pool only. */
+    private static final String USE_GRAMMAR_POOL_ONLY =
+        Constants.XERCES_FEATURE_PREFIX + Constants.USE_GRAMMAR_POOL_ONLY_FEATURE;
+
+    // property identifiers
+
+    /** Property identifier: entity manager. */
+    private static final String ENTITY_MANAGER =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.ENTITY_MANAGER_PROPERTY;
+
+    /** Property identifier: entity resolver. */
+    private static final String ENTITY_RESOLVER =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.ENTITY_RESOLVER_PROPERTY;
+
+    /** Property identifier: error handler. */
+    private static final String ERROR_HANDLER =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.ERROR_HANDLER_PROPERTY;
+
+    /** Property identifier: error reporter. */
+    private static final String ERROR_REPORTER =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.ERROR_REPORTER_PROPERTY;
+
+    /** Property identifier: namespace context. */
+    private static final String NAMESPACE_CONTEXT =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.NAMESPACE_CONTEXT_PROPERTY;
+
+    /** Property identifier: XML Schema validator. */
+    private static final String SCHEMA_VALIDATOR =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.SCHEMA_VALIDATOR_PROPERTY;
+
+    /** Property identifier: security manager. */
+    private static final String SECURITY_MANAGER =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.SECURITY_MANAGER_PROPERTY;
+
+    /** Property identifier: security property manager. */
+    private static final String XML_SECURITY_PROPERTY_MANAGER =
+            Constants.XML_SECURITY_PROPERTY_MANAGER;
+
+    /** Property identifier: symbol table. */
+    private static final String SYMBOL_TABLE =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.SYMBOL_TABLE_PROPERTY;
+
+    /** Property identifier: validation manager. */
+    private static final String VALIDATION_MANAGER =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.VALIDATION_MANAGER_PROPERTY;
+
+    /** Property identifier: grammar pool. */
+    private static final String XMLGRAMMAR_POOL =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.XMLGRAMMAR_POOL_PROPERTY;
+
+    /** Property identifier: locale. */
+    private static final String LOCALE =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.LOCALE_PROPERTY;
+
+    //
+    // Data
+    //
+    /**
+     * <p>State of secure mode.</p>
+     */
+    private boolean _isSecureMode = false;
+
+    /**
+     * fConfigUpdated is set to true if there has been any change to the configuration settings,
+     * i.e a feature or a property was changed.
+     */
+    private boolean fConfigUpdated = true;
+
+    /**
+     * Tracks whether the validator should use components from
+     * the grammar pool to the exclusion of all others.
+     */
+    private boolean fUseGrammarPoolOnly;
+
+    /** Lookup map for components required for validation. **/
+    private final HashMap fComponents = new HashMap();
+
+    //
+    // Components
+    //
+
+    /** Entity manager. */
+    private XMLEntityManager fEntityManager;
+
+    /** Error reporter. */
+    private XMLErrorReporter fErrorReporter;
+
+    /** Namespace context. */
+    private NamespaceContext fNamespaceContext;
+
+    /** XML Schema validator. */
+    private XMLSchemaValidator fSchemaValidator;
+
+    /** Validation manager. */
+    private ValidationManager fValidationManager;
+
+    //
+    // Configuration
+    //
+
+    /** Stores initial feature values for validator reset. */
+    private final HashMap fInitFeatures = new HashMap();
+
+    /** Stores initial property values for validator reset. */
+    private final HashMap fInitProperties = new HashMap();
+
+    /** Stores the initial security manager. */
+    private XMLSecurityManager fInitSecurityManager;
+
+    /** Stores the initial security property manager. */
+    private final XMLSecurityPropertyManager fSecurityPropertyMgr;
+
+    //
+    // User Objects
+    //
+
+    /** Application's ErrorHandler. **/
+    private ErrorHandler fErrorHandler = null;
+
+    /** Application's LSResourceResolver. */
+    private LSResourceResolver fResourceResolver = null;
+
+    /** Locale chosen by the application. */
+    private Locale fLocale = null;
+
+    /** Constructs a component manager suitable for Xerces' schema validator. */
+    public XMLSchemaValidatorComponentManager(XSGrammarPoolContainer grammarContainer) {
+        // setup components
+        fEntityManager = new XMLEntityManager();
+        fComponents.put(ENTITY_MANAGER, fEntityManager);
+
+        fErrorReporter = new XMLErrorReporter();
+        fComponents.put(ERROR_REPORTER, fErrorReporter);
+
+        fNamespaceContext = new NamespaceSupport();
+        fComponents.put(NAMESPACE_CONTEXT, fNamespaceContext);
+
+        fSchemaValidator = new XMLSchemaValidator();
+        fComponents.put(SCHEMA_VALIDATOR, fSchemaValidator);
+
+        fValidationManager = new ValidationManager();
+        fComponents.put(VALIDATION_MANAGER, fValidationManager);
+
+        // setup other properties
+        fComponents.put(ENTITY_RESOLVER, null);
+        fComponents.put(ERROR_HANDLER, null);
+
+        fComponents.put(SYMBOL_TABLE, new SymbolTable());
+
+        // setup grammar pool
+        fComponents.put(XMLGRAMMAR_POOL, grammarContainer.getGrammarPool());
+        fUseGrammarPoolOnly = grammarContainer.isFullyComposed();
+
+        // add schema message formatter to error reporter
+        fErrorReporter.putMessageFormatter(XSMessageFormatter.SCHEMA_DOMAIN, new XSMessageFormatter());
+
+        // add all recognized features and properties and apply their defaults
+        addRecognizedParamsAndSetDefaults(fEntityManager, grammarContainer);
+        addRecognizedParamsAndSetDefaults(fErrorReporter, grammarContainer);
+        addRecognizedParamsAndSetDefaults(fSchemaValidator, grammarContainer);
+
+        boolean secureProcessing = grammarContainer.getFeature(XMLConstants.FEATURE_SECURE_PROCESSING);
+        if (System.getSecurityManager() != null) {
+            _isSecureMode = true;
+            secureProcessing = true;
+        }
+
+        fInitSecurityManager = (XMLSecurityManager)
+                grammarContainer.getProperty(SECURITY_MANAGER);
+        if (fInitSecurityManager != null ) {
+            fInitSecurityManager.setSecureProcessing(secureProcessing);
+        } else {
+            fInitSecurityManager = new XMLSecurityManager(secureProcessing);
+        }
+
+        setProperty(SECURITY_MANAGER, fInitSecurityManager);
+
+        //pass on properties set on SchemaFactory
+        fSecurityPropertyMgr = (XMLSecurityPropertyManager)
+                grammarContainer.getProperty(Constants.XML_SECURITY_PROPERTY_MANAGER);
+        setProperty(XML_SECURITY_PROPERTY_MANAGER, fSecurityPropertyMgr);
+    }
+
+    /**
+     * Returns the state of a feature.
+     *
+     * @param featureId The feature identifier.
+     * @return true if the feature is supported
+     *
+     * @throws XMLConfigurationException Thrown for configuration error.
+     *                                   In general, components should
+     *                                   only throw this exception if
+     *                                   it is <strong>really</strong>
+     *                                   a critical error.
+     */
+    public FeatureState getFeatureState(String featureId)
+            throws XMLConfigurationException {
+        if (PARSER_SETTINGS.equals(featureId)) {
+            return FeatureState.is(fConfigUpdated);
+        }
+        else if (VALIDATION.equals(featureId) || SCHEMA_VALIDATION.equals(featureId)) {
+            return FeatureState.is(true);
+        }
+        else if (USE_GRAMMAR_POOL_ONLY.equals(featureId)) {
+            return FeatureState.is(fUseGrammarPoolOnly);
+        }
+        else if (XMLConstants.FEATURE_SECURE_PROCESSING.equals(featureId)) {
+            return FeatureState.is(fInitSecurityManager.isSecureProcessing());
+        }
+        else if (SCHEMA_ELEMENT_DEFAULT.equals(featureId)) {
+            return FeatureState.is(true); //pre-condition: VALIDATION and SCHEMA_VALIDATION are always true
+        }
+        return super.getFeatureState(featureId);
+    }
+
+    /**
+     * Set the state of a feature.
+     *
+     * @param featureId The unique identifier (URI) of the feature.
+     * @param state The requested state of the feature (true or false).
+     *
+     * @exception XMLConfigurationException If the requested feature is not known.
+     */
+    public void setFeature(String featureId, boolean value) throws XMLConfigurationException {
+        if (PARSER_SETTINGS.equals(featureId)) {
+            throw new XMLConfigurationException(Status.NOT_SUPPORTED, featureId);
+        }
+        else if (value == false && (VALIDATION.equals(featureId) || SCHEMA_VALIDATION.equals(featureId))) {
+            throw new XMLConfigurationException(Status.NOT_SUPPORTED, featureId);
+        }
+        else if (USE_GRAMMAR_POOL_ONLY.equals(featureId) && value != fUseGrammarPoolOnly) {
+            throw new XMLConfigurationException(Status.NOT_SUPPORTED, featureId);
+        }
+        if (XMLConstants.FEATURE_SECURE_PROCESSING.equals(featureId)) {
+            if (_isSecureMode && !value) {
+                throw new XMLConfigurationException(Status.NOT_ALLOWED, XMLConstants.FEATURE_SECURE_PROCESSING);
+            }
+
+            fInitSecurityManager.setSecureProcessing(value);
+            setProperty(SECURITY_MANAGER, fInitSecurityManager);
+
+            if (value && Constants.IS_JDK8_OR_ABOVE) {
+                fSecurityPropertyMgr.setValue(XMLSecurityPropertyManager.Property.ACCESS_EXTERNAL_DTD,
+                        XMLSecurityPropertyManager.State.FSP, Constants.EXTERNAL_ACCESS_DEFAULT_FSP);
+                fSecurityPropertyMgr.setValue(XMLSecurityPropertyManager.Property.ACCESS_EXTERNAL_SCHEMA,
+                        XMLSecurityPropertyManager.State.FSP, Constants.EXTERNAL_ACCESS_DEFAULT_FSP);
+                setProperty(XML_SECURITY_PROPERTY_MANAGER, fSecurityPropertyMgr);
+            }
+
+            return;
+        }
+        fConfigUpdated = true;
+        fEntityManager.setFeature(featureId, value);
+        fErrorReporter.setFeature(featureId, value);
+        fSchemaValidator.setFeature(featureId, value);
+        if (!fInitFeatures.containsKey(featureId)) {
+            boolean current = super.getFeature(featureId);
+            fInitFeatures.put(featureId, current ? Boolean.TRUE : Boolean.FALSE);
+        }
+        super.setFeature(featureId, value);
+    }
+
+    /**
+     * Returns the value of a property.
+     *
+     * @param propertyId The property identifier.
+     * @return the value of the property
+     *
+     * @throws XMLConfigurationException Thrown for configuration error.
+     *                                   In general, components should
+     *                                   only throw this exception if
+     *                                   it is <strong>really</strong>
+     *                                   a critical error.
+     */
+    public PropertyState getPropertyState(String propertyId)
+            throws XMLConfigurationException {
+        if (LOCALE.equals(propertyId)) {
+            return PropertyState.is(getLocale());
+        }
+        final Object component = fComponents.get(propertyId);
+        if (component != null) {
+            return PropertyState.is(component);
+        }
+        else if (fComponents.containsKey(propertyId)) {
+            return PropertyState.is(null);
+        }
+        return super.getPropertyState(propertyId);
+    }
+
+    /**
+     * Sets the state of a property.
+     *
+     * @param propertyId The unique identifier (URI) of the property.
+     * @param value The requested state of the property.
+     *
+     * @exception XMLConfigurationException If the requested property is not known.
+     */
+    public void setProperty(String propertyId, Object value) throws XMLConfigurationException {
+        if ( ENTITY_MANAGER.equals(propertyId) || ERROR_REPORTER.equals(propertyId) ||
+             NAMESPACE_CONTEXT.equals(propertyId) || SCHEMA_VALIDATOR.equals(propertyId) ||
+             SYMBOL_TABLE.equals(propertyId) || VALIDATION_MANAGER.equals(propertyId) ||
+             XMLGRAMMAR_POOL.equals(propertyId)) {
+            throw new XMLConfigurationException(Status.NOT_SUPPORTED, propertyId);
+        }
+        fConfigUpdated = true;
+        fEntityManager.setProperty(propertyId, value);
+        fErrorReporter.setProperty(propertyId, value);
+        fSchemaValidator.setProperty(propertyId, value);
+        if (ENTITY_RESOLVER.equals(propertyId) || ERROR_HANDLER.equals(propertyId) ||
+                SECURITY_MANAGER.equals(propertyId)) {
+            fComponents.put(propertyId, value);
+            return;
+        }
+        else if (LOCALE.equals(propertyId)) {
+            setLocale((Locale) value);
+            fComponents.put(propertyId, value);
+            return;
+        }
+        //check if the property is managed by security manager
+        if (fInitSecurityManager == null ||
+                !fInitSecurityManager.setLimit(propertyId, XMLSecurityManager.State.APIPROPERTY, value)) {
+            //check if the property is managed by security property manager
+            if (fSecurityPropertyMgr == null ||
+                    !fSecurityPropertyMgr.setValue(propertyId, XMLSecurityPropertyManager.State.APIPROPERTY, value)) {
+                //fall back to the existing property manager
+                if (!fInitProperties.containsKey(propertyId)) {
+                    fInitProperties.put(propertyId, super.getProperty(propertyId));
+                }
+                super.setProperty(propertyId, value);
+            }
+        }
+    }
+
+    /**
+     * Adds all of the component's recognized features and properties
+     * to the list of default recognized features and properties, and
+     * sets default values on the configuration for features and
+     * properties which were previously absent from the configuration.
+     *
+     * @param component The component whose recognized features
+     * and properties will be added to the configuration
+     */
+    public void addRecognizedParamsAndSetDefaults(XMLComponent component, XSGrammarPoolContainer grammarContainer) {
+
+        // register component's recognized features
+        final String[] recognizedFeatures = component.getRecognizedFeatures();
+        addRecognizedFeatures(recognizedFeatures);
+
+        // register component's recognized properties
+        final String[] recognizedProperties = component.getRecognizedProperties();
+        addRecognizedProperties(recognizedProperties);
+
+        // set default values
+        setFeatureDefaults(component, recognizedFeatures, grammarContainer);
+        setPropertyDefaults(component, recognizedProperties);
+    }
+
+    /** Calls reset on each of the components owned by this component manager. **/
+    public void reset() throws XNIException {
+        fNamespaceContext.reset();
+        fValidationManager.reset();
+        fEntityManager.reset(this);
+        fErrorReporter.reset(this);
+        fSchemaValidator.reset(this);
+        // Mark configuration as fixed.
+        fConfigUpdated = false;
+    }
+
+    void setErrorHandler(ErrorHandler errorHandler) {
+        fErrorHandler = errorHandler;
+        setProperty(ERROR_HANDLER, (errorHandler != null) ? new ErrorHandlerWrapper(errorHandler) :
+                new ErrorHandlerWrapper(DraconianErrorHandler.getInstance()));
+    }
+
+    ErrorHandler getErrorHandler() {
+        return fErrorHandler;
+    }
+
+    void setResourceResolver(LSResourceResolver resourceResolver) {
+        fResourceResolver = resourceResolver;
+        setProperty(ENTITY_RESOLVER, new DOMEntityResolverWrapper(resourceResolver));
+    }
+
+    LSResourceResolver getResourceResolver() {
+        return fResourceResolver;
+    }
+
+    void setLocale(Locale locale) {
+        fLocale = locale;
+        fErrorReporter.setLocale(locale);
+    }
+
+    Locale getLocale() {
+        return fLocale;
+    }
+
+    /** Cleans out configuration, restoring it to its initial state. */
+    void restoreInitialState() {
+        fConfigUpdated = true;
+
+        // Remove error resolver and error handler
+        fComponents.put(ENTITY_RESOLVER, null);
+        fComponents.put(ERROR_HANDLER, null);
+
+        // Set the Locale back to null.
+        setLocale(null);
+        fComponents.put(LOCALE, null);
+
+        // Restore initial security manager
+        fComponents.put(SECURITY_MANAGER, fInitSecurityManager);
+
+        // Set the Locale back to null.
+        setLocale(null);
+        fComponents.put(LOCALE, null);
+
+        // Reset feature and property values to their initial values
+        if (!fInitFeatures.isEmpty()) {
+            Iterator iter = fInitFeatures.entrySet().iterator();
+            while (iter.hasNext()) {
+                Map.Entry entry = (Map.Entry) iter.next();
+                String name = (String) entry.getKey();
+                boolean value = ((Boolean) entry.getValue()).booleanValue();
+                super.setFeature(name, value);
+            }
+            fInitFeatures.clear();
+        }
+        if (!fInitProperties.isEmpty()) {
+            Iterator iter = fInitProperties.entrySet().iterator();
+            while (iter.hasNext()) {
+                Map.Entry entry = (Map.Entry) iter.next();
+                String name = (String) entry.getKey();
+                Object value = entry.getValue();
+                super.setProperty(name, value);
+            }
+            fInitProperties.clear();
+        }
+    }
+
+    /** Sets feature defaults for the given component on this configuration. */
+    private void setFeatureDefaults(final XMLComponent component,
+            final String [] recognizedFeatures, XSGrammarPoolContainer grammarContainer) {
+        if (recognizedFeatures != null) {
+            for (int i = 0; i < recognizedFeatures.length; ++i) {
+                String featureId = recognizedFeatures[i];
+                Boolean state = grammarContainer.getFeature(featureId);
+                if (state == null) {
+                    state = component.getFeatureDefault(featureId);
+                }
+                if (state != null) {
+                    // Do not overwrite values already set on the configuration.
+                    if (!fFeatures.containsKey(featureId)) {
+                        fFeatures.put(featureId, state);
+                        // For newly added components who recognize this feature
+                        // but did not offer a default value, we need to make
+                        // sure these components will get an opportunity to read
+                        // the value before parsing begins.
+                        fConfigUpdated = true;
+                    }
+                }
+            }
+        }
+    }
+
+    /** Sets property defaults for the given component on this configuration. */
+    private void setPropertyDefaults(final XMLComponent component, final String [] recognizedProperties) {
+        if (recognizedProperties != null) {
+            for (int i = 0; i < recognizedProperties.length; ++i) {
+                String propertyId = recognizedProperties[i];
+                Object value = component.getPropertyDefault(propertyId);
+                if (value != null) {
+                    // Do not overwrite values already set on the configuration.
+                    if (!fProperties.containsKey(propertyId)) {
+                        fProperties.put(propertyId, value);
+                        // For newly added components who recognize this property
+                        // but did not offer a default value, we need to make
+                        // sure these components will get an opportunity to read
+                        // the value before parsing begins.
+                        fConfigUpdated = true;
+                    }
+                }
+            }
+        }
+    }
+
+} // XMLSchemaValidatorComponentManager

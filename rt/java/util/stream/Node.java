@@ -1,537 +1,531 @@
-/*     */ package java.util.stream;
-/*     */ 
-/*     */ import java.util.Spliterator;
-/*     */ import java.util.function.Consumer;
-/*     */ import java.util.function.DoubleConsumer;
-/*     */ import java.util.function.IntConsumer;
-/*     */ import java.util.function.IntFunction;
-/*     */ import java.util.function.LongConsumer;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ interface Node<T>
-/*     */ {
-/*     */   default int getChildCount() {
-/*  89 */     return 0;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   default Node<T> getChild(int paramInt) {
-/* 104 */     throw new IndexOutOfBoundsException();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   default Node<T> truncate(long paramLong1, long paramLong2, IntFunction<T[]> paramIntFunction) {
-/* 121 */     if (paramLong1 == 0L && paramLong2 == count())
-/* 122 */       return this; 
-/* 123 */     Spliterator<T> spliterator = spliterator();
-/* 124 */     long l = paramLong2 - paramLong1;
-/* 125 */     Builder<T> builder = Nodes.builder(l, paramIntFunction);
-/* 126 */     builder.begin(l); byte b;
-/* 127 */     for (b = 0; b < paramLong1 && spliterator.tryAdvance(paramObject -> {  }); b++);
-/* 128 */     for (b = 0; b < l && spliterator.tryAdvance(builder); b++);
-/* 129 */     builder.end();
-/* 130 */     return builder.build();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   default StreamShape getShape() {
-/* 174 */     return StreamShape.REFERENCE;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   Spliterator<T> spliterator();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void forEach(Consumer<? super T> paramConsumer);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   T[] asArray(IntFunction<T[]> paramIntFunction);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void copyInto(T[] paramArrayOfT, int paramInt);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   long count();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static interface Builder<T>
-/*     */     extends Sink<T>
-/*     */   {
-/*     */     Node<T> build();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public static interface OfInt
-/*     */       extends Builder<Integer>, Sink.OfInt
-/*     */     {
-/*     */       Node.OfInt build();
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public static interface OfLong
-/*     */       extends Builder<Long>, Sink.OfLong
-/*     */     {
-/*     */       Node.OfLong build();
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public static interface OfDouble
-/*     */       extends Builder<Double>, Sink.OfDouble
-/*     */     {
-/*     */       Node.OfDouble build();
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static interface OfPrimitive<T, T_CONS, T_ARR, T_SPLITR extends Spliterator.OfPrimitive<T, T_CONS, T_SPLITR>, T_NODE extends OfPrimitive<T, T_CONS, T_ARR, T_SPLITR, T_NODE>>
-/*     */     extends Node<T>
-/*     */   {
-/*     */     default T_NODE getChild(int param1Int) {
-/* 249 */       throw new IndexOutOfBoundsException();
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     default T[] asArray(IntFunction<T[]> param1IntFunction) {
-/* 264 */       if (Tripwire.ENABLED) {
-/* 265 */         Tripwire.trip(getClass(), "{0} calling Node.OfPrimitive.asArray");
-/*     */       }
-/* 267 */       long l = count();
-/* 268 */       if (l >= 2147483639L)
-/* 269 */         throw new IllegalArgumentException("Stream size exceeds max array size"); 
-/* 270 */       Object[] arrayOfObject = (Object[])param1IntFunction.apply((int)count());
-/* 271 */       copyInto((T[])arrayOfObject, 0);
-/* 272 */       return (T[])arrayOfObject;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     T_SPLITR spliterator();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     void forEach(T_CONS param1T_CONS);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     T_NODE truncate(long param1Long1, long param1Long2, IntFunction<T[]> param1IntFunction);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     T_ARR asPrimitiveArray();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     T_ARR newArray(int param1Int);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     void copyInto(T_ARR param1T_ARR, int param1Int);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static interface OfInt
-/*     */     extends OfPrimitive<Integer, IntConsumer, int[], Spliterator.OfInt, OfInt>
-/*     */   {
-/*     */     default void forEach(Consumer<? super Integer> param1Consumer) {
-/* 325 */       if (param1Consumer instanceof IntConsumer) {
-/* 326 */         forEach((IntConsumer)param1Consumer);
-/*     */       } else {
-/*     */         
-/* 329 */         if (Tripwire.ENABLED)
-/* 330 */           Tripwire.trip(getClass(), "{0} calling Node.OfInt.forEachRemaining(Consumer)"); 
-/* 331 */         spliterator().forEachRemaining(param1Consumer);
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     default void copyInto(Integer[] param1ArrayOfInteger, int param1Int) {
-/* 345 */       if (Tripwire.ENABLED) {
-/* 346 */         Tripwire.trip(getClass(), "{0} calling Node.OfInt.copyInto(Integer[], int)");
-/*     */       }
-/* 348 */       int[] arrayOfInt = asPrimitiveArray();
-/* 349 */       for (byte b = 0; b < arrayOfInt.length; b++) {
-/* 350 */         param1ArrayOfInteger[param1Int + b] = Integer.valueOf(arrayOfInt[b]);
-/*     */       }
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     default OfInt truncate(long param1Long1, long param1Long2, IntFunction<Integer[]> param1IntFunction) {
-/* 356 */       if (param1Long1 == 0L && param1Long2 == count())
-/* 357 */         return this; 
-/* 358 */       long l = param1Long2 - param1Long1;
-/* 359 */       Spliterator.OfInt ofInt = spliterator();
-/* 360 */       Node.Builder.OfInt ofInt1 = Nodes.intBuilder(l);
-/* 361 */       ofInt1.begin(l); byte b;
-/* 362 */       for (b = 0; b < param1Long1 && ofInt.tryAdvance(param1Int -> {  }); b++);
-/* 363 */       for (b = 0; b < l && ofInt.tryAdvance(ofInt1); b++);
-/* 364 */       ofInt1.end();
-/* 365 */       return ofInt1.build();
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     default int[] newArray(int param1Int) {
-/* 370 */       return new int[param1Int];
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     default StreamShape getShape() {
-/* 379 */       return StreamShape.INT_VALUE;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static interface OfLong
-/*     */     extends OfPrimitive<Long, LongConsumer, long[], Spliterator.OfLong, OfLong>
-/*     */   {
-/*     */     default void forEach(Consumer<? super Long> param1Consumer) {
-/* 398 */       if (param1Consumer instanceof LongConsumer) {
-/* 399 */         forEach((LongConsumer)param1Consumer);
-/*     */       } else {
-/*     */         
-/* 402 */         if (Tripwire.ENABLED)
-/* 403 */           Tripwire.trip(getClass(), "{0} calling Node.OfLong.forEachRemaining(Consumer)"); 
-/* 404 */         spliterator().forEachRemaining(param1Consumer);
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     default void copyInto(Long[] param1ArrayOfLong, int param1Int) {
-/* 418 */       if (Tripwire.ENABLED) {
-/* 419 */         Tripwire.trip(getClass(), "{0} calling Node.OfInt.copyInto(Long[], int)");
-/*     */       }
-/* 421 */       long[] arrayOfLong = asPrimitiveArray();
-/* 422 */       for (byte b = 0; b < arrayOfLong.length; b++) {
-/* 423 */         param1ArrayOfLong[param1Int + b] = Long.valueOf(arrayOfLong[b]);
-/*     */       }
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     default OfLong truncate(long param1Long1, long param1Long2, IntFunction<Long[]> param1IntFunction) {
-/* 429 */       if (param1Long1 == 0L && param1Long2 == count())
-/* 430 */         return this; 
-/* 431 */       long l = param1Long2 - param1Long1;
-/* 432 */       Spliterator.OfLong ofLong = spliterator();
-/* 433 */       Node.Builder.OfLong ofLong1 = Nodes.longBuilder(l);
-/* 434 */       ofLong1.begin(l); byte b;
-/* 435 */       for (b = 0; b < param1Long1 && ofLong.tryAdvance(param1Long -> {  }); b++);
-/* 436 */       for (b = 0; b < l && ofLong.tryAdvance(ofLong1); b++);
-/* 437 */       ofLong1.end();
-/* 438 */       return ofLong1.build();
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     default long[] newArray(int param1Int) {
-/* 443 */       return new long[param1Int];
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     default StreamShape getShape() {
-/* 452 */       return StreamShape.LONG_VALUE;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static interface OfDouble
-/*     */     extends OfPrimitive<Double, DoubleConsumer, double[], Spliterator.OfDouble, OfDouble>
-/*     */   {
-/*     */     default void forEach(Consumer<? super Double> param1Consumer) {
-/* 471 */       if (param1Consumer instanceof DoubleConsumer) {
-/* 472 */         forEach((DoubleConsumer)param1Consumer);
-/*     */       } else {
-/*     */         
-/* 475 */         if (Tripwire.ENABLED)
-/* 476 */           Tripwire.trip(getClass(), "{0} calling Node.OfLong.forEachRemaining(Consumer)"); 
-/* 477 */         spliterator().forEachRemaining(param1Consumer);
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     default void copyInto(Double[] param1ArrayOfDouble, int param1Int) {
-/* 493 */       if (Tripwire.ENABLED) {
-/* 494 */         Tripwire.trip(getClass(), "{0} calling Node.OfDouble.copyInto(Double[], int)");
-/*     */       }
-/* 496 */       double[] arrayOfDouble = asPrimitiveArray();
-/* 497 */       for (byte b = 0; b < arrayOfDouble.length; b++) {
-/* 498 */         param1ArrayOfDouble[param1Int + b] = Double.valueOf(arrayOfDouble[b]);
-/*     */       }
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     default OfDouble truncate(long param1Long1, long param1Long2, IntFunction<Double[]> param1IntFunction) {
-/* 504 */       if (param1Long1 == 0L && param1Long2 == count())
-/* 505 */         return this; 
-/* 506 */       long l = param1Long2 - param1Long1;
-/* 507 */       Spliterator.OfDouble ofDouble = spliterator();
-/* 508 */       Node.Builder.OfDouble ofDouble1 = Nodes.doubleBuilder(l);
-/* 509 */       ofDouble1.begin(l); byte b;
-/* 510 */       for (b = 0; b < param1Long1 && ofDouble.tryAdvance(param1Double -> {  }); b++);
-/* 511 */       for (b = 0; b < l && ofDouble.tryAdvance(ofDouble1); b++);
-/* 512 */       ofDouble1.end();
-/* 513 */       return ofDouble1.build();
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     default double[] newArray(int param1Int) {
-/* 518 */       return new double[param1Int];
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     default StreamShape getShape() {
-/* 528 */       return StreamShape.DOUBLE_VALUE;
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\stream\Node.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package java.util.stream;
+
+import java.util.Spliterator;
+import java.util.function.Consumer;
+import java.util.function.DoubleConsumer;
+import java.util.function.IntConsumer;
+import java.util.function.IntFunction;
+import java.util.function.LongConsumer;
+
+/**
+ * An immutable container for describing an ordered sequence of elements of some
+ * type {@code T}.
+ *
+ * <p>A {@code Node} contains a fixed number of elements, which can be accessed
+ * via the {@link #count}, {@link #spliterator}, {@link #forEach},
+ * {@link #asArray}, or {@link #copyInto} methods.  A {@code Node} may have zero
+ * or more child {@code Node}s; if it has no children (accessed via
+ * {@link #getChildCount} and {@link #getChild(int)}, it is considered <em>flat
+ * </em> or a <em>leaf</em>; if it has children, it is considered an
+ * <em>internal</em> node.  The size of an internal node is the sum of sizes of
+ * its children.
+ *
+ * @apiNote
+ * <p>A {@code Node} typically does not store the elements directly, but instead
+ * mediates access to one or more existing (effectively immutable) data
+ * structures such as a {@code Collection}, array, or a set of other
+ * {@code Node}s.  Commonly {@code Node}s are formed into a tree whose shape
+ * corresponds to the computation tree that produced the elements that are
+ * contained in the leaf nodes.  The use of {@code Node} within the stream
+ * framework is largely to avoid copying data unnecessarily during parallel
+ * operations.
+ *
+ * @param <T> the type of elements.
+ * @since 1.8
+ */
+interface Node<T> {
+
+    /**
+     * Returns a {@link Spliterator} describing the elements contained in this
+     * {@code Node}.
+     *
+     * @return a {@code Spliterator} describing the elements contained in this
+     *         {@code Node}
+     */
+    Spliterator<T> spliterator();
+
+    /**
+     * Traverses the elements of this node, and invoke the provided
+     * {@code Consumer} with each element.  Elements are provided in encounter
+     * order if the source for the {@code Node} has a defined encounter order.
+     *
+     * @param consumer a {@code Consumer} that is to be invoked with each
+     *        element in this {@code Node}
+     */
+    void forEach(Consumer<? super T> consumer);
+
+    /**
+     * Returns the number of child nodes of this node.
+     *
+     * @implSpec The default implementation returns zero.
+     *
+     * @return the number of child nodes
+     */
+    default int getChildCount() {
+        return 0;
+    }
+
+    /**
+     * Retrieves the child {@code Node} at a given index.
+     *
+     * @implSpec The default implementation always throws
+     * {@code IndexOutOfBoundsException}.
+     *
+     * @param i the index to the child node
+     * @return the child node
+     * @throws IndexOutOfBoundsException if the index is less than 0 or greater
+     *         than or equal to the number of child nodes
+     */
+    default Node<T> getChild(int i) {
+        throw new IndexOutOfBoundsException();
+    }
+
+    /**
+     * Return a node describing a subsequence of the elements of this node,
+     * starting at the given inclusive start offset and ending at the given
+     * exclusive end offset.
+     *
+     * @param from The (inclusive) starting offset of elements to include, must
+     *             be in range 0..count().
+     * @param to The (exclusive) end offset of elements to include, must be
+     *           in range 0..count().
+     * @param generator A function to be used to create a new array, if needed,
+     *                  for reference nodes.
+     * @return the truncated node
+     */
+    default Node<T> truncate(long from, long to, IntFunction<T[]> generator) {
+        if (from == 0 && to == count())
+            return this;
+        Spliterator<T> spliterator = spliterator();
+        long size = to - from;
+        Node.Builder<T> nodeBuilder = Nodes.builder(size, generator);
+        nodeBuilder.begin(size);
+        for (int i = 0; i < from && spliterator.tryAdvance(e -> { }); i++) { }
+        for (int i = 0; (i < size) && spliterator.tryAdvance(nodeBuilder); i++) { }
+        nodeBuilder.end();
+        return nodeBuilder.build();
+    }
+
+    /**
+     * Provides an array view of the contents of this node.
+     *
+     * <p>Depending on the underlying implementation, this may return a
+     * reference to an internal array rather than a copy.  Since the returned
+     * array may be shared, the returned array should not be modified.  The
+     * {@code generator} function may be consulted to create the array if a new
+     * array needs to be created.
+     *
+     * @param generator a factory function which takes an integer parameter and
+     *        returns a new, empty array of that size and of the appropriate
+     *        array type
+     * @return an array containing the contents of this {@code Node}
+     */
+    T[] asArray(IntFunction<T[]> generator);
+
+    /**
+     * Copies the content of this {@code Node} into an array, starting at a
+     * given offset into the array.  It is the caller's responsibility to ensure
+     * there is sufficient room in the array, otherwise unspecified behaviour
+     * will occur if the array length is less than the number of elements
+     * contained in this node.
+     *
+     * @param array the array into which to copy the contents of this
+     *       {@code Node}
+     * @param offset the starting offset within the array
+     * @throws IndexOutOfBoundsException if copying would cause access of data
+     *         outside array bounds
+     * @throws NullPointerException if {@code array} is {@code null}
+     */
+    void copyInto(T[] array, int offset);
+
+    /**
+     * Gets the {@code StreamShape} associated with this {@code Node}.
+     *
+     * @implSpec The default in {@code Node} returns
+     * {@code StreamShape.REFERENCE}
+     *
+     * @return the stream shape associated with this node
+     */
+    default StreamShape getShape() {
+        return StreamShape.REFERENCE;
+    }
+
+    /**
+     * Returns the number of elements contained in this node.
+     *
+     * @return the number of elements contained in this node
+     */
+    long count();
+
+    /**
+     * A mutable builder for a {@code Node} that implements {@link Sink}, which
+     * builds a flat node containing the elements that have been pushed to it.
+     */
+    interface Builder<T> extends Sink<T> {
+
+        /**
+         * Builds the node.  Should be called after all elements have been
+         * pushed and signalled with an invocation of {@link Sink#end()}.
+         *
+         * @return the resulting {@code Node}
+         */
+        Node<T> build();
+
+        /**
+         * Specialized @{code Node.Builder} for int elements
+         */
+        interface OfInt extends Node.Builder<Integer>, Sink.OfInt {
+            @Override
+            Node.OfInt build();
+        }
+
+        /**
+         * Specialized @{code Node.Builder} for long elements
+         */
+        interface OfLong extends Node.Builder<Long>, Sink.OfLong {
+            @Override
+            Node.OfLong build();
+        }
+
+        /**
+         * Specialized @{code Node.Builder} for double elements
+         */
+        interface OfDouble extends Node.Builder<Double>, Sink.OfDouble {
+            @Override
+            Node.OfDouble build();
+        }
+    }
+
+    public interface OfPrimitive<T, T_CONS, T_ARR,
+                                 T_SPLITR extends Spliterator.OfPrimitive<T, T_CONS, T_SPLITR>,
+                                 T_NODE extends OfPrimitive<T, T_CONS, T_ARR, T_SPLITR, T_NODE>>
+            extends Node<T> {
+
+        /**
+         * {@inheritDoc}
+         *
+         * @return a {@link Spliterator.OfPrimitive} describing the elements of
+         *         this node
+         */
+        @Override
+        T_SPLITR spliterator();
+
+        /**
+         * Traverses the elements of this node, and invoke the provided
+         * {@code action} with each element.
+         *
+         * @param action a consumer that is to be invoked with each
+         *        element in this {@code Node.OfPrimitive}
+         */
+        @SuppressWarnings("overloads")
+        void forEach(T_CONS action);
+
+        @Override
+        default T_NODE getChild(int i) {
+            throw new IndexOutOfBoundsException();
+        }
+
+        T_NODE truncate(long from, long to, IntFunction<T[]> generator);
+
+        /**
+         * {@inheritDoc}
+         *
+         * @implSpec the default implementation invokes the generator to create
+         * an instance of a boxed primitive array with a length of
+         * {@link #count()} and then invokes {@link #copyInto(T[], int)} with
+         * that array at an offset of 0.
+         */
+        @Override
+        default T[] asArray(IntFunction<T[]> generator) {
+            if (java.util.stream.Tripwire.ENABLED)
+                java.util.stream.Tripwire.trip(getClass(), "{0} calling Node.OfPrimitive.asArray");
+
+            long size = count();
+            if (size >= Nodes.MAX_ARRAY_SIZE)
+                throw new IllegalArgumentException(Nodes.BAD_SIZE);
+            T[] boxed = generator.apply((int) count());
+            copyInto(boxed, 0);
+            return boxed;
+        }
+
+        /**
+         * Views this node as a primitive array.
+         *
+         * <p>Depending on the underlying implementation this may return a
+         * reference to an internal array rather than a copy.  It is the callers
+         * responsibility to decide if either this node or the array is utilized
+         * as the primary reference for the data.</p>
+         *
+         * @return an array containing the contents of this {@code Node}
+         */
+        T_ARR asPrimitiveArray();
+
+        /**
+         * Creates a new primitive array.
+         *
+         * @param count the length of the primitive array.
+         * @return the new primitive array.
+         */
+        T_ARR newArray(int count);
+
+        /**
+         * Copies the content of this {@code Node} into a primitive array,
+         * starting at a given offset into the array.  It is the caller's
+         * responsibility to ensure there is sufficient room in the array.
+         *
+         * @param array the array into which to copy the contents of this
+         *              {@code Node}
+         * @param offset the starting offset within the array
+         * @throws IndexOutOfBoundsException if copying would cause access of
+         *         data outside array bounds
+         * @throws NullPointerException if {@code array} is {@code null}
+         */
+        void copyInto(T_ARR array, int offset);
+    }
+
+    /**
+     * Specialized {@code Node} for int elements
+     */
+    interface OfInt extends OfPrimitive<Integer, IntConsumer, int[], Spliterator.OfInt, OfInt> {
+
+        /**
+         * {@inheritDoc}
+         *
+         * @param consumer a {@code Consumer} that is to be invoked with each
+         *        element in this {@code Node}.  If this is an
+         *        {@code IntConsumer}, it is cast to {@code IntConsumer} so the
+         *        elements may be processed without boxing.
+         */
+        @Override
+        default void forEach(Consumer<? super Integer> consumer) {
+            if (consumer instanceof IntConsumer) {
+                forEach((IntConsumer) consumer);
+            }
+            else {
+                if (Tripwire.ENABLED)
+                    Tripwire.trip(getClass(), "{0} calling Node.OfInt.forEachRemaining(Consumer)");
+                spliterator().forEachRemaining(consumer);
+            }
+        }
+
+        /**
+         * {@inheritDoc}
+         *
+         * @implSpec the default implementation invokes {@link #asPrimitiveArray()} to
+         * obtain an int[] array then and copies the elements from that int[]
+         * array into the boxed Integer[] array.  This is not efficient and it
+         * is recommended to invoke {@link #copyInto(Object, int)}.
+         */
+        @Override
+        default void copyInto(Integer[] boxed, int offset) {
+            if (Tripwire.ENABLED)
+                Tripwire.trip(getClass(), "{0} calling Node.OfInt.copyInto(Integer[], int)");
+
+            int[] array = asPrimitiveArray();
+            for (int i = 0; i < array.length; i++) {
+                boxed[offset + i] = array[i];
+            }
+        }
+
+        @Override
+        default Node.OfInt truncate(long from, long to, IntFunction<Integer[]> generator) {
+            if (from == 0 && to == count())
+                return this;
+            long size = to - from;
+            Spliterator.OfInt spliterator = spliterator();
+            Node.Builder.OfInt nodeBuilder = Nodes.intBuilder(size);
+            nodeBuilder.begin(size);
+            for (int i = 0; i < from && spliterator.tryAdvance((IntConsumer) e -> { }); i++) { }
+            for (int i = 0; (i < size) && spliterator.tryAdvance((IntConsumer) nodeBuilder); i++) { }
+            nodeBuilder.end();
+            return nodeBuilder.build();
+        }
+
+        @Override
+        default int[] newArray(int count) {
+            return new int[count];
+        }
+
+        /**
+         * {@inheritDoc}
+         * @implSpec The default in {@code Node.OfInt} returns
+         * {@code StreamShape.INT_VALUE}
+         */
+        default StreamShape getShape() {
+            return StreamShape.INT_VALUE;
+        }
+    }
+
+    /**
+     * Specialized {@code Node} for long elements
+     */
+    interface OfLong extends OfPrimitive<Long, LongConsumer, long[], Spliterator.OfLong, OfLong> {
+
+        /**
+         * {@inheritDoc}
+         *
+         * @param consumer A {@code Consumer} that is to be invoked with each
+         *        element in this {@code Node}.  If this is an
+         *        {@code LongConsumer}, it is cast to {@code LongConsumer} so
+         *        the elements may be processed without boxing.
+         */
+        @Override
+        default void forEach(Consumer<? super Long> consumer) {
+            if (consumer instanceof LongConsumer) {
+                forEach((LongConsumer) consumer);
+            }
+            else {
+                if (Tripwire.ENABLED)
+                    Tripwire.trip(getClass(), "{0} calling Node.OfLong.forEachRemaining(Consumer)");
+                spliterator().forEachRemaining(consumer);
+            }
+        }
+
+        /**
+         * {@inheritDoc}
+         *
+         * @implSpec the default implementation invokes {@link #asPrimitiveArray()}
+         * to obtain a long[] array then and copies the elements from that
+         * long[] array into the boxed Long[] array.  This is not efficient and
+         * it is recommended to invoke {@link #copyInto(Object, int)}.
+         */
+        @Override
+        default void copyInto(Long[] boxed, int offset) {
+            if (Tripwire.ENABLED)
+                Tripwire.trip(getClass(), "{0} calling Node.OfInt.copyInto(Long[], int)");
+
+            long[] array = asPrimitiveArray();
+            for (int i = 0; i < array.length; i++) {
+                boxed[offset + i] = array[i];
+            }
+        }
+
+        @Override
+        default Node.OfLong truncate(long from, long to, IntFunction<Long[]> generator) {
+            if (from == 0 && to == count())
+                return this;
+            long size = to - from;
+            Spliterator.OfLong spliterator = spliterator();
+            Node.Builder.OfLong nodeBuilder = Nodes.longBuilder(size);
+            nodeBuilder.begin(size);
+            for (int i = 0; i < from && spliterator.tryAdvance((LongConsumer) e -> { }); i++) { }
+            for (int i = 0; (i < size) && spliterator.tryAdvance((LongConsumer) nodeBuilder); i++) { }
+            nodeBuilder.end();
+            return nodeBuilder.build();
+        }
+
+        @Override
+        default long[] newArray(int count) {
+            return new long[count];
+        }
+
+        /**
+         * {@inheritDoc}
+         * @implSpec The default in {@code Node.OfLong} returns
+         * {@code StreamShape.LONG_VALUE}
+         */
+        default StreamShape getShape() {
+            return StreamShape.LONG_VALUE;
+        }
+    }
+
+    /**
+     * Specialized {@code Node} for double elements
+     */
+    interface OfDouble extends OfPrimitive<Double, DoubleConsumer, double[], Spliterator.OfDouble, OfDouble> {
+
+        /**
+         * {@inheritDoc}
+         *
+         * @param consumer A {@code Consumer} that is to be invoked with each
+         *        element in this {@code Node}.  If this is an
+         *        {@code DoubleConsumer}, it is cast to {@code DoubleConsumer}
+         *        so the elements may be processed without boxing.
+         */
+        @Override
+        default void forEach(Consumer<? super Double> consumer) {
+            if (consumer instanceof DoubleConsumer) {
+                forEach((DoubleConsumer) consumer);
+            }
+            else {
+                if (Tripwire.ENABLED)
+                    Tripwire.trip(getClass(), "{0} calling Node.OfLong.forEachRemaining(Consumer)");
+                spliterator().forEachRemaining(consumer);
+            }
+        }
+
+        //
+
+        /**
+         * {@inheritDoc}
+         *
+         * @implSpec the default implementation invokes {@link #asPrimitiveArray()}
+         * to obtain a double[] array then and copies the elements from that
+         * double[] array into the boxed Double[] array.  This is not efficient
+         * and it is recommended to invoke {@link #copyInto(Object, int)}.
+         */
+        @Override
+        default void copyInto(Double[] boxed, int offset) {
+            if (Tripwire.ENABLED)
+                Tripwire.trip(getClass(), "{0} calling Node.OfDouble.copyInto(Double[], int)");
+
+            double[] array = asPrimitiveArray();
+            for (int i = 0; i < array.length; i++) {
+                boxed[offset + i] = array[i];
+            }
+        }
+
+        @Override
+        default Node.OfDouble truncate(long from, long to, IntFunction<Double[]> generator) {
+            if (from == 0 && to == count())
+                return this;
+            long size = to - from;
+            Spliterator.OfDouble spliterator = spliterator();
+            Node.Builder.OfDouble nodeBuilder = Nodes.doubleBuilder(size);
+            nodeBuilder.begin(size);
+            for (int i = 0; i < from && spliterator.tryAdvance((DoubleConsumer) e -> { }); i++) { }
+            for (int i = 0; (i < size) && spliterator.tryAdvance((DoubleConsumer) nodeBuilder); i++) { }
+            nodeBuilder.end();
+            return nodeBuilder.build();
+        }
+
+        @Override
+        default double[] newArray(int count) {
+            return new double[count];
+        }
+
+        /**
+         * {@inheritDoc}
+         *
+         * @implSpec The default in {@code Node.OfDouble} returns
+         * {@code StreamShape.DOUBLE_VALUE}
+         */
+        default StreamShape getShape() {
+            return StreamShape.DOUBLE_VALUE;
+        }
+    }
+}

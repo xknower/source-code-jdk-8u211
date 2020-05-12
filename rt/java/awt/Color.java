@@ -1,1250 +1,1244 @@
-/*      */ package java.awt;
-/*      */ 
-/*      */ import java.awt.color.ColorSpace;
-/*      */ import java.awt.geom.AffineTransform;
-/*      */ import java.awt.geom.Rectangle2D;
-/*      */ import java.awt.image.ColorModel;
-/*      */ import java.beans.ConstructorProperties;
-/*      */ import java.io.Serializable;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class Color
-/*      */   implements Paint, Serializable
-/*      */ {
-/*   65 */   public static final Color white = new Color(255, 255, 255);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*   71 */   public static final Color WHITE = white;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*   76 */   public static final Color lightGray = new Color(192, 192, 192);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*   82 */   public static final Color LIGHT_GRAY = lightGray;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*   87 */   public static final Color gray = new Color(128, 128, 128);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*   93 */   public static final Color GRAY = gray;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*   98 */   public static final Color darkGray = new Color(64, 64, 64);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  104 */   public static final Color DARK_GRAY = darkGray;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  109 */   public static final Color black = new Color(0, 0, 0);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  115 */   public static final Color BLACK = black;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  120 */   public static final Color red = new Color(255, 0, 0);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  126 */   public static final Color RED = red;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  131 */   public static final Color pink = new Color(255, 175, 175);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  137 */   public static final Color PINK = pink;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  142 */   public static final Color orange = new Color(255, 200, 0);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  148 */   public static final Color ORANGE = orange;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  153 */   public static final Color yellow = new Color(255, 255, 0);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  159 */   public static final Color YELLOW = yellow;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  164 */   public static final Color green = new Color(0, 255, 0);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  170 */   public static final Color GREEN = green;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  175 */   public static final Color magenta = new Color(255, 0, 255);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  181 */   public static final Color MAGENTA = magenta;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  186 */   public static final Color cyan = new Color(0, 255, 255);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  192 */   public static final Color CYAN = cyan;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  197 */   public static final Color blue = new Color(0, 0, 255);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  203 */   public static final Color BLUE = blue;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   int value;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  222 */   private float[] frgbvalue = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  234 */   private float[] fvalue = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  244 */   private float falpha = 0.0F;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  254 */   private ColorSpace cs = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static final long serialVersionUID = 118526816881161077L;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static final double FACTOR = 0.7D;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static {
-/*  275 */     Toolkit.loadLibraries();
-/*  276 */     if (!GraphicsEnvironment.isHeadless()) {
-/*  277 */       initIDs();
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static void testColorValueRange(int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  290 */     boolean bool = false;
-/*  291 */     String str = "";
-/*      */     
-/*  293 */     if (paramInt4 < 0 || paramInt4 > 255) {
-/*  294 */       bool = true;
-/*  295 */       str = str + " Alpha";
-/*      */     } 
-/*  297 */     if (paramInt1 < 0 || paramInt1 > 255) {
-/*  298 */       bool = true;
-/*  299 */       str = str + " Red";
-/*      */     } 
-/*  301 */     if (paramInt2 < 0 || paramInt2 > 255) {
-/*  302 */       bool = true;
-/*  303 */       str = str + " Green";
-/*      */     } 
-/*  305 */     if (paramInt3 < 0 || paramInt3 > 255) {
-/*  306 */       bool = true;
-/*  307 */       str = str + " Blue";
-/*      */     } 
-/*  309 */     if (bool == true) {
-/*  310 */       throw new IllegalArgumentException("Color parameter outside of expected range:" + str);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static void testColorValueRange(float paramFloat1, float paramFloat2, float paramFloat3, float paramFloat4) {
-/*  325 */     boolean bool = false;
-/*  326 */     String str = "";
-/*  327 */     if (paramFloat4 < 0.0D || paramFloat4 > 1.0D) {
-/*  328 */       bool = true;
-/*  329 */       str = str + " Alpha";
-/*      */     } 
-/*  331 */     if (paramFloat1 < 0.0D || paramFloat1 > 1.0D) {
-/*  332 */       bool = true;
-/*  333 */       str = str + " Red";
-/*      */     } 
-/*  335 */     if (paramFloat2 < 0.0D || paramFloat2 > 1.0D) {
-/*  336 */       bool = true;
-/*  337 */       str = str + " Green";
-/*      */     } 
-/*  339 */     if (paramFloat3 < 0.0D || paramFloat3 > 1.0D) {
-/*  340 */       bool = true;
-/*  341 */       str = str + " Blue";
-/*      */     } 
-/*  343 */     if (bool == true) {
-/*  344 */       throw new IllegalArgumentException("Color parameter outside of expected range:" + str);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Color(int paramInt1, int paramInt2, int paramInt3) {
-/*  369 */     this(paramInt1, paramInt2, paramInt3, 255);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   @ConstructorProperties({"red", "green", "blue", "alpha"})
-/*      */   public Color(int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  391 */     this.value = (paramInt4 & 0xFF) << 24 | (paramInt1 & 0xFF) << 16 | (paramInt2 & 0xFF) << 8 | (paramInt3 & 0xFF) << 0;
-/*      */ 
-/*      */ 
-/*      */     
-/*  395 */     testColorValueRange(paramInt1, paramInt2, paramInt3, paramInt4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Color(int paramInt) {
-/*  414 */     this.value = 0xFF000000 | paramInt;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Color(int paramInt, boolean paramBoolean) {
-/*  435 */     if (paramBoolean) {
-/*  436 */       this.value = paramInt;
-/*      */     } else {
-/*  438 */       this.value = 0xFF000000 | paramInt;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Color(float paramFloat1, float paramFloat2, float paramFloat3) {
-/*  461 */     this((int)((paramFloat1 * 255.0F) + 0.5D), (int)((paramFloat2 * 255.0F) + 0.5D), (int)((paramFloat3 * 255.0F) + 0.5D));
-/*  462 */     testColorValueRange(paramFloat1, paramFloat2, paramFloat3, 1.0F);
-/*  463 */     this.frgbvalue = new float[3];
-/*  464 */     this.frgbvalue[0] = paramFloat1;
-/*  465 */     this.frgbvalue[1] = paramFloat2;
-/*  466 */     this.frgbvalue[2] = paramFloat3;
-/*  467 */     this.falpha = 1.0F;
-/*  468 */     this.fvalue = this.frgbvalue;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Color(float paramFloat1, float paramFloat2, float paramFloat3, float paramFloat4) {
-/*  490 */     this((int)((paramFloat1 * 255.0F) + 0.5D), (int)((paramFloat2 * 255.0F) + 0.5D), (int)((paramFloat3 * 255.0F) + 0.5D), (int)((paramFloat4 * 255.0F) + 0.5D));
-/*  491 */     this.frgbvalue = new float[3];
-/*  492 */     this.frgbvalue[0] = paramFloat1;
-/*  493 */     this.frgbvalue[1] = paramFloat2;
-/*  494 */     this.frgbvalue[2] = paramFloat3;
-/*  495 */     this.falpha = paramFloat4;
-/*  496 */     this.fvalue = this.frgbvalue;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Color(ColorSpace paramColorSpace, float[] paramArrayOffloat, float paramFloat) {
-/*  518 */     boolean bool = false;
-/*  519 */     String str = "";
-/*  520 */     int i = paramColorSpace.getNumComponents();
-/*  521 */     this.fvalue = new float[i];
-/*  522 */     for (byte b = 0; b < i; b++) {
-/*  523 */       if (paramArrayOffloat[b] < 0.0D || paramArrayOffloat[b] > 1.0D) {
-/*  524 */         bool = true;
-/*  525 */         str = str + "Component " + b + " ";
-/*      */       } else {
-/*      */         
-/*  528 */         this.fvalue[b] = paramArrayOffloat[b];
-/*      */       } 
-/*      */     } 
-/*  531 */     if (paramFloat < 0.0D || paramFloat > 1.0D) {
-/*  532 */       bool = true;
-/*  533 */       str = str + "Alpha";
-/*      */     } else {
-/*  535 */       this.falpha = paramFloat;
-/*      */     } 
-/*  537 */     if (bool) {
-/*  538 */       throw new IllegalArgumentException("Color parameter outside of expected range: " + str);
-/*      */     }
-/*      */ 
-/*      */     
-/*  542 */     this.frgbvalue = paramColorSpace.toRGB(this.fvalue);
-/*  543 */     this.cs = paramColorSpace;
-/*  544 */     this.value = ((int)(this.falpha * 255.0F) & 0xFF) << 24 | ((int)(this.frgbvalue[0] * 255.0F) & 0xFF) << 16 | ((int)(this.frgbvalue[1] * 255.0F) & 0xFF) << 8 | ((int)(this.frgbvalue[2] * 255.0F) & 0xFF) << 0;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getRed() {
-/*  557 */     return getRGB() >> 16 & 0xFF;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getGreen() {
-/*  567 */     return getRGB() >> 8 & 0xFF;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getBlue() {
-/*  577 */     return getRGB() >> 0 & 0xFF;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getAlpha() {
-/*  586 */     return getRGB() >> 24 & 0xFF;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getRGB() {
-/*  603 */     return this.value;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Color brighter() {
-/*  627 */     int i = getRed();
-/*  628 */     int j = getGreen();
-/*  629 */     int k = getBlue();
-/*  630 */     int m = getAlpha();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  637 */     byte b = 3;
-/*  638 */     if (i == 0 && j == 0 && k == 0) {
-/*  639 */       return new Color(b, b, b, m);
-/*      */     }
-/*  641 */     if (i > 0 && i < b) i = b; 
-/*  642 */     if (j > 0 && j < b) j = b; 
-/*  643 */     if (k > 0 && k < b) k = b;
-/*      */     
-/*  645 */     return new Color(Math.min((int)(i / 0.7D), 255), 
-/*  646 */         Math.min((int)(j / 0.7D), 255), 
-/*  647 */         Math.min((int)(k / 0.7D), 255), m);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Color darker() {
-/*  670 */     return new Color(Math.max((int)(getRed() * 0.7D), 0), 
-/*  671 */         Math.max((int)(getGreen() * 0.7D), 0), 
-/*  672 */         Math.max((int)(getBlue() * 0.7D), 0), 
-/*  673 */         getAlpha());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int hashCode() {
-/*  682 */     return this.value;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean equals(Object paramObject) {
-/*  699 */     return (paramObject instanceof Color && ((Color)paramObject).getRGB() == getRGB());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String toString() {
-/*  712 */     return getClass().getName() + "[r=" + getRed() + ",g=" + getGreen() + ",b=" + getBlue() + "]";
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static Color decode(String paramString) throws NumberFormatException {
-/*  729 */     Integer integer = Integer.decode(paramString);
-/*  730 */     int i = integer.intValue();
-/*  731 */     return new Color(i >> 16 & 0xFF, i >> 8 & 0xFF, i & 0xFF);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static Color getColor(String paramString) {
-/*  753 */     return getColor(paramString, (Color)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static Color getColor(String paramString, Color paramColor) {
-/*  777 */     Integer integer = Integer.getInteger(paramString);
-/*  778 */     if (integer == null) {
-/*  779 */       return paramColor;
-/*      */     }
-/*  781 */     int i = integer.intValue();
-/*  782 */     return new Color(i >> 16 & 0xFF, i >> 8 & 0xFF, i & 0xFF);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static Color getColor(String paramString, int paramInt) {
-/*  807 */     Integer integer = Integer.getInteger(paramString);
-/*  808 */     int i = (integer != null) ? integer.intValue() : paramInt;
-/*  809 */     return new Color(i >> 16 & 0xFF, i >> 8 & 0xFF, i >> 0 & 0xFF);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static int HSBtoRGB(float paramFloat1, float paramFloat2, float paramFloat3) {
-/*  840 */     int i = 0, j = 0, k = 0;
-/*  841 */     if (paramFloat2 == 0.0F) {
-/*  842 */       i = j = k = (int)(paramFloat3 * 255.0F + 0.5F);
-/*      */     } else {
-/*  844 */       float f1 = (paramFloat1 - (float)Math.floor(paramFloat1)) * 6.0F;
-/*  845 */       float f2 = f1 - (float)Math.floor(f1);
-/*  846 */       float f3 = paramFloat3 * (1.0F - paramFloat2);
-/*  847 */       float f4 = paramFloat3 * (1.0F - paramFloat2 * f2);
-/*  848 */       float f5 = paramFloat3 * (1.0F - paramFloat2 * (1.0F - f2));
-/*  849 */       switch ((int)f1) {
-/*      */         case 0:
-/*  851 */           i = (int)(paramFloat3 * 255.0F + 0.5F);
-/*  852 */           j = (int)(f5 * 255.0F + 0.5F);
-/*  853 */           k = (int)(f3 * 255.0F + 0.5F);
-/*      */           break;
-/*      */         case 1:
-/*  856 */           i = (int)(f4 * 255.0F + 0.5F);
-/*  857 */           j = (int)(paramFloat3 * 255.0F + 0.5F);
-/*  858 */           k = (int)(f3 * 255.0F + 0.5F);
-/*      */           break;
-/*      */         case 2:
-/*  861 */           i = (int)(f3 * 255.0F + 0.5F);
-/*  862 */           j = (int)(paramFloat3 * 255.0F + 0.5F);
-/*  863 */           k = (int)(f5 * 255.0F + 0.5F);
-/*      */           break;
-/*      */         case 3:
-/*  866 */           i = (int)(f3 * 255.0F + 0.5F);
-/*  867 */           j = (int)(f4 * 255.0F + 0.5F);
-/*  868 */           k = (int)(paramFloat3 * 255.0F + 0.5F);
-/*      */           break;
-/*      */         case 4:
-/*  871 */           i = (int)(f5 * 255.0F + 0.5F);
-/*  872 */           j = (int)(f3 * 255.0F + 0.5F);
-/*  873 */           k = (int)(paramFloat3 * 255.0F + 0.5F);
-/*      */           break;
-/*      */         case 5:
-/*  876 */           i = (int)(paramFloat3 * 255.0F + 0.5F);
-/*  877 */           j = (int)(f3 * 255.0F + 0.5F);
-/*  878 */           k = (int)(f4 * 255.0F + 0.5F);
-/*      */           break;
-/*      */       } 
-/*      */     } 
-/*  882 */     return 0xFF000000 | i << 16 | j << 8 | k << 0;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static float[] RGBtoHSB(int paramInt1, int paramInt2, int paramInt3, float[] paramArrayOffloat) {
-/*      */     float f1, f2;
-/*  909 */     if (paramArrayOffloat == null) {
-/*  910 */       paramArrayOffloat = new float[3];
-/*      */     }
-/*  912 */     int i = (paramInt1 > paramInt2) ? paramInt1 : paramInt2;
-/*  913 */     if (paramInt3 > i) i = paramInt3; 
-/*  914 */     int j = (paramInt1 < paramInt2) ? paramInt1 : paramInt2;
-/*  915 */     if (paramInt3 < j) j = paramInt3;
-/*      */     
-/*  917 */     float f3 = i / 255.0F;
-/*  918 */     if (i != 0) {
-/*  919 */       f2 = (i - j) / i;
-/*      */     } else {
-/*  921 */       f2 = 0.0F;
-/*  922 */     }  if (f2 == 0.0F) {
-/*  923 */       f1 = 0.0F;
-/*      */     } else {
-/*  925 */       float f4 = (i - paramInt1) / (i - j);
-/*  926 */       float f5 = (i - paramInt2) / (i - j);
-/*  927 */       float f6 = (i - paramInt3) / (i - j);
-/*  928 */       if (paramInt1 == i) {
-/*  929 */         f1 = f6 - f5;
-/*  930 */       } else if (paramInt2 == i) {
-/*  931 */         f1 = 2.0F + f4 - f6;
-/*      */       } else {
-/*  933 */         f1 = 4.0F + f5 - f4;
-/*  934 */       }  f1 /= 6.0F;
-/*  935 */       if (f1 < 0.0F)
-/*  936 */         f1++; 
-/*      */     } 
-/*  938 */     paramArrayOffloat[0] = f1;
-/*  939 */     paramArrayOffloat[1] = f2;
-/*  940 */     paramArrayOffloat[2] = f3;
-/*  941 */     return paramArrayOffloat;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static Color getHSBColor(float paramFloat1, float paramFloat2, float paramFloat3) {
-/*  963 */     return new Color(HSBtoRGB(paramFloat1, paramFloat2, paramFloat3));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public float[] getRGBComponents(float[] paramArrayOffloat) {
-/*      */     float[] arrayOfFloat;
-/*  980 */     if (paramArrayOffloat == null) {
-/*  981 */       arrayOfFloat = new float[4];
-/*      */     } else {
-/*  983 */       arrayOfFloat = paramArrayOffloat;
-/*      */     } 
-/*  985 */     if (this.frgbvalue == null) {
-/*  986 */       arrayOfFloat[0] = getRed() / 255.0F;
-/*  987 */       arrayOfFloat[1] = getGreen() / 255.0F;
-/*  988 */       arrayOfFloat[2] = getBlue() / 255.0F;
-/*  989 */       arrayOfFloat[3] = getAlpha() / 255.0F;
-/*      */     } else {
-/*  991 */       arrayOfFloat[0] = this.frgbvalue[0];
-/*  992 */       arrayOfFloat[1] = this.frgbvalue[1];
-/*  993 */       arrayOfFloat[2] = this.frgbvalue[2];
-/*  994 */       arrayOfFloat[3] = this.falpha;
-/*      */     } 
-/*  996 */     return arrayOfFloat;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public float[] getRGBColorComponents(float[] paramArrayOffloat) {
-/*      */     float[] arrayOfFloat;
-/* 1012 */     if (paramArrayOffloat == null) {
-/* 1013 */       arrayOfFloat = new float[3];
-/*      */     } else {
-/* 1015 */       arrayOfFloat = paramArrayOffloat;
-/*      */     } 
-/* 1017 */     if (this.frgbvalue == null) {
-/* 1018 */       arrayOfFloat[0] = getRed() / 255.0F;
-/* 1019 */       arrayOfFloat[1] = getGreen() / 255.0F;
-/* 1020 */       arrayOfFloat[2] = getBlue() / 255.0F;
-/*      */     } else {
-/* 1022 */       arrayOfFloat[0] = this.frgbvalue[0];
-/* 1023 */       arrayOfFloat[1] = this.frgbvalue[1];
-/* 1024 */       arrayOfFloat[2] = this.frgbvalue[2];
-/*      */     } 
-/* 1026 */     return arrayOfFloat;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public float[] getComponents(float[] paramArrayOffloat) {
-/*      */     float[] arrayOfFloat;
-/* 1046 */     if (this.fvalue == null) {
-/* 1047 */       return getRGBComponents(paramArrayOffloat);
-/*      */     }
-/* 1049 */     int i = this.fvalue.length;
-/* 1050 */     if (paramArrayOffloat == null) {
-/* 1051 */       arrayOfFloat = new float[i + 1];
-/*      */     } else {
-/* 1053 */       arrayOfFloat = paramArrayOffloat;
-/*      */     } 
-/* 1055 */     for (byte b = 0; b < i; b++) {
-/* 1056 */       arrayOfFloat[b] = this.fvalue[b];
-/*      */     }
-/* 1058 */     arrayOfFloat[i] = this.falpha;
-/* 1059 */     return arrayOfFloat;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public float[] getColorComponents(float[] paramArrayOffloat) {
-/*      */     float[] arrayOfFloat;
-/* 1078 */     if (this.fvalue == null) {
-/* 1079 */       return getRGBColorComponents(paramArrayOffloat);
-/*      */     }
-/* 1081 */     int i = this.fvalue.length;
-/* 1082 */     if (paramArrayOffloat == null) {
-/* 1083 */       arrayOfFloat = new float[i];
-/*      */     } else {
-/* 1085 */       arrayOfFloat = paramArrayOffloat;
-/*      */     } 
-/* 1087 */     for (byte b = 0; b < i; b++) {
-/* 1088 */       arrayOfFloat[b] = this.fvalue[b];
-/*      */     }
-/* 1090 */     return arrayOfFloat;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public float[] getComponents(ColorSpace paramColorSpace, float[] paramArrayOffloat) {
-/*      */     float[] arrayOfFloat1;
-/* 1110 */     if (this.cs == null) {
-/* 1111 */       this.cs = ColorSpace.getInstance(1000);
-/*      */     }
-/*      */     
-/* 1114 */     if (this.fvalue == null) {
-/* 1115 */       arrayOfFloat1 = new float[3];
-/* 1116 */       arrayOfFloat1[0] = getRed() / 255.0F;
-/* 1117 */       arrayOfFloat1[1] = getGreen() / 255.0F;
-/* 1118 */       arrayOfFloat1[2] = getBlue() / 255.0F;
-/*      */     } else {
-/* 1120 */       arrayOfFloat1 = this.fvalue;
-/*      */     } 
-/* 1122 */     float[] arrayOfFloat2 = this.cs.toCIEXYZ(arrayOfFloat1);
-/* 1123 */     float[] arrayOfFloat3 = paramColorSpace.fromCIEXYZ(arrayOfFloat2);
-/* 1124 */     if (paramArrayOffloat == null) {
-/* 1125 */       paramArrayOffloat = new float[arrayOfFloat3.length + 1];
-/*      */     }
-/* 1127 */     for (byte b = 0; b < arrayOfFloat3.length; b++) {
-/* 1128 */       paramArrayOffloat[b] = arrayOfFloat3[b];
-/*      */     }
-/* 1130 */     if (this.fvalue == null) {
-/* 1131 */       paramArrayOffloat[arrayOfFloat3.length] = getAlpha() / 255.0F;
-/*      */     } else {
-/* 1133 */       paramArrayOffloat[arrayOfFloat3.length] = this.falpha;
-/*      */     } 
-/* 1135 */     return paramArrayOffloat;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public float[] getColorComponents(ColorSpace paramColorSpace, float[] paramArrayOffloat) {
-/*      */     float[] arrayOfFloat1;
-/* 1154 */     if (this.cs == null) {
-/* 1155 */       this.cs = ColorSpace.getInstance(1000);
-/*      */     }
-/*      */     
-/* 1158 */     if (this.fvalue == null) {
-/* 1159 */       arrayOfFloat1 = new float[3];
-/* 1160 */       arrayOfFloat1[0] = getRed() / 255.0F;
-/* 1161 */       arrayOfFloat1[1] = getGreen() / 255.0F;
-/* 1162 */       arrayOfFloat1[2] = getBlue() / 255.0F;
-/*      */     } else {
-/* 1164 */       arrayOfFloat1 = this.fvalue;
-/*      */     } 
-/* 1166 */     float[] arrayOfFloat2 = this.cs.toCIEXYZ(arrayOfFloat1);
-/* 1167 */     float[] arrayOfFloat3 = paramColorSpace.fromCIEXYZ(arrayOfFloat2);
-/* 1168 */     if (paramArrayOffloat == null) {
-/* 1169 */       return arrayOfFloat3;
-/*      */     }
-/* 1171 */     for (byte b = 0; b < arrayOfFloat3.length; b++) {
-/* 1172 */       paramArrayOffloat[b] = arrayOfFloat3[b];
-/*      */     }
-/* 1174 */     return paramArrayOffloat;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public ColorSpace getColorSpace() {
-/* 1182 */     if (this.cs == null) {
-/* 1183 */       this.cs = ColorSpace.getInstance(1000);
-/*      */     }
-/* 1185 */     return this.cs;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public synchronized PaintContext createContext(ColorModel paramColorModel, Rectangle paramRectangle, Rectangle2D paramRectangle2D, AffineTransform paramAffineTransform, RenderingHints paramRenderingHints) {
-/* 1220 */     return new ColorPaintContext(getRGB(), paramColorModel);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getTransparency() {
-/* 1232 */     int i = getAlpha();
-/* 1233 */     if (i == 255) {
-/* 1234 */       return 1;
-/*      */     }
-/* 1236 */     if (i == 0) {
-/* 1237 */       return 2;
-/*      */     }
-/*      */     
-/* 1240 */     return 3;
-/*      */   }
-/*      */   
-/*      */   private static native void initIDs();
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\awt\Color.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1995, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.awt;
+
+import java.beans.ConstructorProperties;
+import java.awt.image.ColorModel;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Rectangle2D;
+import java.awt.color.ColorSpace;
+
+/**
+ * The <code>Color</code> class is used to encapsulate colors in the default
+ * sRGB color space or colors in arbitrary color spaces identified by a
+ * {@link ColorSpace}.  Every color has an implicit alpha value of 1.0 or
+ * an explicit one provided in the constructor.  The alpha value
+ * defines the transparency of a color and can be represented by
+ * a float value in the range 0.0&nbsp;-&nbsp;1.0 or 0&nbsp;-&nbsp;255.
+ * An alpha value of 1.0 or 255 means that the color is completely
+ * opaque and an alpha value of 0 or 0.0 means that the color is
+ * completely transparent.
+ * When constructing a <code>Color</code> with an explicit alpha or
+ * getting the color/alpha components of a <code>Color</code>, the color
+ * components are never premultiplied by the alpha component.
+ * <p>
+ * The default color space for the Java 2D(tm) API is sRGB, a proposed
+ * standard RGB color space.  For further information on sRGB,
+ * see <A href="http://www.w3.org/pub/WWW/Graphics/Color/sRGB.html">
+ * http://www.w3.org/pub/WWW/Graphics/Color/sRGB.html
+ * </A>.
+ * <p>
+ * @version     10 Feb 1997
+ * @author      Sami Shaio
+ * @author      Arthur van Hoff
+ * @see         ColorSpace
+ * @see         AlphaComposite
+ */
+public class Color implements Paint, java.io.Serializable {
+
+    /**
+     * The color white.  In the default sRGB space.
+     */
+    public final static Color white     = new Color(255, 255, 255);
+
+    /**
+     * The color white.  In the default sRGB space.
+     * @since 1.4
+     */
+    public final static Color WHITE = white;
+
+    /**
+     * The color light gray.  In the default sRGB space.
+     */
+    public final static Color lightGray = new Color(192, 192, 192);
+
+    /**
+     * The color light gray.  In the default sRGB space.
+     * @since 1.4
+     */
+    public final static Color LIGHT_GRAY = lightGray;
+
+    /**
+     * The color gray.  In the default sRGB space.
+     */
+    public final static Color gray      = new Color(128, 128, 128);
+
+    /**
+     * The color gray.  In the default sRGB space.
+     * @since 1.4
+     */
+    public final static Color GRAY = gray;
+
+    /**
+     * The color dark gray.  In the default sRGB space.
+     */
+    public final static Color darkGray  = new Color(64, 64, 64);
+
+    /**
+     * The color dark gray.  In the default sRGB space.
+     * @since 1.4
+     */
+    public final static Color DARK_GRAY = darkGray;
+
+    /**
+     * The color black.  In the default sRGB space.
+     */
+    public final static Color black     = new Color(0, 0, 0);
+
+    /**
+     * The color black.  In the default sRGB space.
+     * @since 1.4
+     */
+    public final static Color BLACK = black;
+
+    /**
+     * The color red.  In the default sRGB space.
+     */
+    public final static Color red       = new Color(255, 0, 0);
+
+    /**
+     * The color red.  In the default sRGB space.
+     * @since 1.4
+     */
+    public final static Color RED = red;
+
+    /**
+     * The color pink.  In the default sRGB space.
+     */
+    public final static Color pink      = new Color(255, 175, 175);
+
+    /**
+     * The color pink.  In the default sRGB space.
+     * @since 1.4
+     */
+    public final static Color PINK = pink;
+
+    /**
+     * The color orange.  In the default sRGB space.
+     */
+    public final static Color orange    = new Color(255, 200, 0);
+
+    /**
+     * The color orange.  In the default sRGB space.
+     * @since 1.4
+     */
+    public final static Color ORANGE = orange;
+
+    /**
+     * The color yellow.  In the default sRGB space.
+     */
+    public final static Color yellow    = new Color(255, 255, 0);
+
+    /**
+     * The color yellow.  In the default sRGB space.
+     * @since 1.4
+     */
+    public final static Color YELLOW = yellow;
+
+    /**
+     * The color green.  In the default sRGB space.
+     */
+    public final static Color green     = new Color(0, 255, 0);
+
+    /**
+     * The color green.  In the default sRGB space.
+     * @since 1.4
+     */
+    public final static Color GREEN = green;
+
+    /**
+     * The color magenta.  In the default sRGB space.
+     */
+    public final static Color magenta   = new Color(255, 0, 255);
+
+    /**
+     * The color magenta.  In the default sRGB space.
+     * @since 1.4
+     */
+    public final static Color MAGENTA = magenta;
+
+    /**
+     * The color cyan.  In the default sRGB space.
+     */
+    public final static Color cyan      = new Color(0, 255, 255);
+
+    /**
+     * The color cyan.  In the default sRGB space.
+     * @since 1.4
+     */
+    public final static Color CYAN = cyan;
+
+    /**
+     * The color blue.  In the default sRGB space.
+     */
+    public final static Color blue      = new Color(0, 0, 255);
+
+    /**
+     * The color blue.  In the default sRGB space.
+     * @since 1.4
+     */
+    public final static Color BLUE = blue;
+
+    /**
+     * The color value.
+     * @serial
+     * @see #getRGB
+     */
+    int value;
+
+    /**
+     * The color value in the default sRGB <code>ColorSpace</code> as
+     * <code>float</code> components (no alpha).
+     * If <code>null</code> after object construction, this must be an
+     * sRGB color constructed with 8-bit precision, so compute from the
+     * <code>int</code> color value.
+     * @serial
+     * @see #getRGBColorComponents
+     * @see #getRGBComponents
+     */
+    private float frgbvalue[] = null;
+
+    /**
+     * The color value in the native <code>ColorSpace</code> as
+     * <code>float</code> components (no alpha).
+     * If <code>null</code> after object construction, this must be an
+     * sRGB color constructed with 8-bit precision, so compute from the
+     * <code>int</code> color value.
+     * @serial
+     * @see #getRGBColorComponents
+     * @see #getRGBComponents
+     */
+    private float fvalue[] = null;
+
+    /**
+     * The alpha value as a <code>float</code> component.
+     * If <code>frgbvalue</code> is <code>null</code>, this is not valid
+     * data, so compute from the <code>int</code> color value.
+     * @serial
+     * @see #getRGBComponents
+     * @see #getComponents
+     */
+    private float falpha = 0.0f;
+
+    /**
+     * The <code>ColorSpace</code>.  If <code>null</code>, then it's
+     * default is sRGB.
+     * @serial
+     * @see #getColor
+     * @see #getColorSpace
+     * @see #getColorComponents
+     */
+    private ColorSpace cs = null;
+
+    /*
+     * JDK 1.1 serialVersionUID
+     */
+     private static final long serialVersionUID = 118526816881161077L;
+
+    /**
+     * Initialize JNI field and method IDs
+     */
+    private static native void initIDs();
+
+    static {
+        /** 4112352 - Calling getDefaultToolkit()
+         ** here can cause this class to be accessed before it is fully
+         ** initialized. DON'T DO IT!!!
+         **
+         ** Toolkit.getDefaultToolkit();
+         **/
+
+        /* ensure that the necessary native libraries are loaded */
+        Toolkit.loadLibraries();
+        if (!GraphicsEnvironment.isHeadless()) {
+            initIDs();
+        }
+    }
+
+    /**
+     * Checks the color integer components supplied for validity.
+     * Throws an {@link IllegalArgumentException} if the value is out of
+     * range.
+     * @param r the Red component
+     * @param g the Green component
+     * @param b the Blue component
+     **/
+    private static void testColorValueRange(int r, int g, int b, int a) {
+        boolean rangeError = false;
+        String badComponentString = "";
+
+        if ( a < 0 || a > 255) {
+            rangeError = true;
+            badComponentString = badComponentString + " Alpha";
+        }
+        if ( r < 0 || r > 255) {
+            rangeError = true;
+            badComponentString = badComponentString + " Red";
+        }
+        if ( g < 0 || g > 255) {
+            rangeError = true;
+            badComponentString = badComponentString + " Green";
+        }
+        if ( b < 0 || b > 255) {
+            rangeError = true;
+            badComponentString = badComponentString + " Blue";
+        }
+        if ( rangeError == true ) {
+        throw new IllegalArgumentException("Color parameter outside of expected range:"
+                                           + badComponentString);
+        }
+    }
+
+    /**
+     * Checks the color <code>float</code> components supplied for
+     * validity.
+     * Throws an <code>IllegalArgumentException</code> if the value is out
+     * of range.
+     * @param r the Red component
+     * @param g the Green component
+     * @param b the Blue component
+     **/
+    private static void testColorValueRange(float r, float g, float b, float a) {
+        boolean rangeError = false;
+        String badComponentString = "";
+        if ( a < 0.0 || a > 1.0) {
+            rangeError = true;
+            badComponentString = badComponentString + " Alpha";
+        }
+        if ( r < 0.0 || r > 1.0) {
+            rangeError = true;
+            badComponentString = badComponentString + " Red";
+        }
+        if ( g < 0.0 || g > 1.0) {
+            rangeError = true;
+            badComponentString = badComponentString + " Green";
+        }
+        if ( b < 0.0 || b > 1.0) {
+            rangeError = true;
+            badComponentString = badComponentString + " Blue";
+        }
+        if ( rangeError == true ) {
+        throw new IllegalArgumentException("Color parameter outside of expected range:"
+                                           + badComponentString);
+        }
+    }
+
+    /**
+     * Creates an opaque sRGB color with the specified red, green,
+     * and blue values in the range (0 - 255).
+     * The actual color used in rendering depends
+     * on finding the best match given the color space
+     * available for a given output device.
+     * Alpha is defaulted to 255.
+     *
+     * @throws IllegalArgumentException if <code>r</code>, <code>g</code>
+     *        or <code>b</code> are outside of the range
+     *        0 to 255, inclusive
+     * @param r the red component
+     * @param g the green component
+     * @param b the blue component
+     * @see #getRed
+     * @see #getGreen
+     * @see #getBlue
+     * @see #getRGB
+     */
+    public Color(int r, int g, int b) {
+        this(r, g, b, 255);
+    }
+
+    /**
+     * Creates an sRGB color with the specified red, green, blue, and alpha
+     * values in the range (0 - 255).
+     *
+     * @throws IllegalArgumentException if <code>r</code>, <code>g</code>,
+     *        <code>b</code> or <code>a</code> are outside of the range
+     *        0 to 255, inclusive
+     * @param r the red component
+     * @param g the green component
+     * @param b the blue component
+     * @param a the alpha component
+     * @see #getRed
+     * @see #getGreen
+     * @see #getBlue
+     * @see #getAlpha
+     * @see #getRGB
+     */
+    @ConstructorProperties({"red", "green", "blue", "alpha"})
+    public Color(int r, int g, int b, int a) {
+        value = ((a & 0xFF) << 24) |
+                ((r & 0xFF) << 16) |
+                ((g & 0xFF) << 8)  |
+                ((b & 0xFF) << 0);
+        testColorValueRange(r,g,b,a);
+    }
+
+    /**
+     * Creates an opaque sRGB color with the specified combined RGB value
+     * consisting of the red component in bits 16-23, the green component
+     * in bits 8-15, and the blue component in bits 0-7.  The actual color
+     * used in rendering depends on finding the best match given the
+     * color space available for a particular output device.  Alpha is
+     * defaulted to 255.
+     *
+     * @param rgb the combined RGB components
+     * @see java.awt.image.ColorModel#getRGBdefault
+     * @see #getRed
+     * @see #getGreen
+     * @see #getBlue
+     * @see #getRGB
+     */
+    public Color(int rgb) {
+        value = 0xff000000 | rgb;
+    }
+
+    /**
+     * Creates an sRGB color with the specified combined RGBA value consisting
+     * of the alpha component in bits 24-31, the red component in bits 16-23,
+     * the green component in bits 8-15, and the blue component in bits 0-7.
+     * If the <code>hasalpha</code> argument is <code>false</code>, alpha
+     * is defaulted to 255.
+     *
+     * @param rgba the combined RGBA components
+     * @param hasalpha <code>true</code> if the alpha bits are valid;
+     *        <code>false</code> otherwise
+     * @see java.awt.image.ColorModel#getRGBdefault
+     * @see #getRed
+     * @see #getGreen
+     * @see #getBlue
+     * @see #getAlpha
+     * @see #getRGB
+     */
+    public Color(int rgba, boolean hasalpha) {
+        if (hasalpha) {
+            value = rgba;
+        } else {
+            value = 0xff000000 | rgba;
+        }
+    }
+
+    /**
+     * Creates an opaque sRGB color with the specified red, green, and blue
+     * values in the range (0.0 - 1.0).  Alpha is defaulted to 1.0.  The
+     * actual color used in rendering depends on finding the best
+     * match given the color space available for a particular output
+     * device.
+     *
+     * @throws IllegalArgumentException if <code>r</code>, <code>g</code>
+     *        or <code>b</code> are outside of the range
+     *        0.0 to 1.0, inclusive
+     * @param r the red component
+     * @param g the green component
+     * @param b the blue component
+     * @see #getRed
+     * @see #getGreen
+     * @see #getBlue
+     * @see #getRGB
+     */
+    public Color(float r, float g, float b) {
+        this( (int) (r*255+0.5), (int) (g*255+0.5), (int) (b*255+0.5));
+        testColorValueRange(r,g,b,1.0f);
+        frgbvalue = new float[3];
+        frgbvalue[0] = r;
+        frgbvalue[1] = g;
+        frgbvalue[2] = b;
+        falpha = 1.0f;
+        fvalue = frgbvalue;
+    }
+
+    /**
+     * Creates an sRGB color with the specified red, green, blue, and
+     * alpha values in the range (0.0 - 1.0).  The actual color
+     * used in rendering depends on finding the best match given the
+     * color space available for a particular output device.
+     * @throws IllegalArgumentException if <code>r</code>, <code>g</code>
+     *        <code>b</code> or <code>a</code> are outside of the range
+     *        0.0 to 1.0, inclusive
+     * @param r the red component
+     * @param g the green component
+     * @param b the blue component
+     * @param a the alpha component
+     * @see #getRed
+     * @see #getGreen
+     * @see #getBlue
+     * @see #getAlpha
+     * @see #getRGB
+     */
+    public Color(float r, float g, float b, float a) {
+        this((int)(r*255+0.5), (int)(g*255+0.5), (int)(b*255+0.5), (int)(a*255+0.5));
+        frgbvalue = new float[3];
+        frgbvalue[0] = r;
+        frgbvalue[1] = g;
+        frgbvalue[2] = b;
+        falpha = a;
+        fvalue = frgbvalue;
+    }
+
+    /**
+     * Creates a color in the specified <code>ColorSpace</code>
+     * with the color components specified in the <code>float</code>
+     * array and the specified alpha.  The number of components is
+     * determined by the type of the <code>ColorSpace</code>.  For
+     * example, RGB requires 3 components, but CMYK requires 4
+     * components.
+     * @param cspace the <code>ColorSpace</code> to be used to
+     *                  interpret the components
+     * @param components an arbitrary number of color components
+     *                      that is compatible with the <code>ColorSpace</code>
+     * @param alpha alpha value
+     * @throws IllegalArgumentException if any of the values in the
+     *         <code>components</code> array or <code>alpha</code> is
+     *         outside of the range 0.0 to 1.0
+     * @see #getComponents
+     * @see #getColorComponents
+     */
+    public Color(ColorSpace cspace, float components[], float alpha) {
+        boolean rangeError = false;
+        String badComponentString = "";
+        int n = cspace.getNumComponents();
+        fvalue = new float[n];
+        for (int i = 0; i < n; i++) {
+            if (components[i] < 0.0 || components[i] > 1.0) {
+                rangeError = true;
+                badComponentString = badComponentString + "Component " + i
+                                     + " ";
+            } else {
+                fvalue[i] = components[i];
+            }
+        }
+        if (alpha < 0.0 || alpha > 1.0) {
+            rangeError = true;
+            badComponentString = badComponentString + "Alpha";
+        } else {
+            falpha = alpha;
+        }
+        if (rangeError) {
+            throw new IllegalArgumentException(
+                "Color parameter outside of expected range: " +
+                badComponentString);
+        }
+        frgbvalue = cspace.toRGB(fvalue);
+        cs = cspace;
+        value = ((((int)(falpha*255)) & 0xFF) << 24) |
+                ((((int)(frgbvalue[0]*255)) & 0xFF) << 16) |
+                ((((int)(frgbvalue[1]*255)) & 0xFF) << 8)  |
+                ((((int)(frgbvalue[2]*255)) & 0xFF) << 0);
+    }
+
+    /**
+     * Returns the red component in the range 0-255 in the default sRGB
+     * space.
+     * @return the red component.
+     * @see #getRGB
+     */
+    public int getRed() {
+        return (getRGB() >> 16) & 0xFF;
+    }
+
+    /**
+     * Returns the green component in the range 0-255 in the default sRGB
+     * space.
+     * @return the green component.
+     * @see #getRGB
+     */
+    public int getGreen() {
+        return (getRGB() >> 8) & 0xFF;
+    }
+
+    /**
+     * Returns the blue component in the range 0-255 in the default sRGB
+     * space.
+     * @return the blue component.
+     * @see #getRGB
+     */
+    public int getBlue() {
+        return (getRGB() >> 0) & 0xFF;
+    }
+
+    /**
+     * Returns the alpha component in the range 0-255.
+     * @return the alpha component.
+     * @see #getRGB
+     */
+    public int getAlpha() {
+        return (getRGB() >> 24) & 0xff;
+    }
+
+    /**
+     * Returns the RGB value representing the color in the default sRGB
+     * {@link ColorModel}.
+     * (Bits 24-31 are alpha, 16-23 are red, 8-15 are green, 0-7 are
+     * blue).
+     * @return the RGB value of the color in the default sRGB
+     *         <code>ColorModel</code>.
+     * @see java.awt.image.ColorModel#getRGBdefault
+     * @see #getRed
+     * @see #getGreen
+     * @see #getBlue
+     * @since JDK1.0
+     */
+    public int getRGB() {
+        return value;
+    }
+
+    private static final double FACTOR = 0.7;
+
+    /**
+     * Creates a new <code>Color</code> that is a brighter version of this
+     * <code>Color</code>.
+     * <p>
+     * This method applies an arbitrary scale factor to each of the three RGB
+     * components of this <code>Color</code> to create a brighter version
+     * of this <code>Color</code>.
+     * The {@code alpha} value is preserved.
+     * Although <code>brighter</code> and
+     * <code>darker</code> are inverse operations, the results of a
+     * series of invocations of these two methods might be inconsistent
+     * because of rounding errors.
+     * @return     a new <code>Color</code> object that is
+     *                 a brighter version of this <code>Color</code>
+     *                 with the same {@code alpha} value.
+     * @see        java.awt.Color#darker
+     * @since      JDK1.0
+     */
+    public Color brighter() {
+        int r = getRed();
+        int g = getGreen();
+        int b = getBlue();
+        int alpha = getAlpha();
+
+        /* From 2D group:
+         * 1. black.brighter() should return grey
+         * 2. applying brighter to blue will always return blue, brighter
+         * 3. non pure color (non zero rgb) will eventually return white
+         */
+        int i = (int)(1.0/(1.0-FACTOR));
+        if ( r == 0 && g == 0 && b == 0) {
+            return new Color(i, i, i, alpha);
+        }
+        if ( r > 0 && r < i ) r = i;
+        if ( g > 0 && g < i ) g = i;
+        if ( b > 0 && b < i ) b = i;
+
+        return new Color(Math.min((int)(r/FACTOR), 255),
+                         Math.min((int)(g/FACTOR), 255),
+                         Math.min((int)(b/FACTOR), 255),
+                         alpha);
+    }
+
+    /**
+     * Creates a new <code>Color</code> that is a darker version of this
+     * <code>Color</code>.
+     * <p>
+     * This method applies an arbitrary scale factor to each of the three RGB
+     * components of this <code>Color</code> to create a darker version of
+     * this <code>Color</code>.
+     * The {@code alpha} value is preserved.
+     * Although <code>brighter</code> and
+     * <code>darker</code> are inverse operations, the results of a series
+     * of invocations of these two methods might be inconsistent because
+     * of rounding errors.
+     * @return  a new <code>Color</code> object that is
+     *                    a darker version of this <code>Color</code>
+     *                    with the same {@code alpha} value.
+     * @see        java.awt.Color#brighter
+     * @since      JDK1.0
+     */
+    public Color darker() {
+        return new Color(Math.max((int)(getRed()  *FACTOR), 0),
+                         Math.max((int)(getGreen()*FACTOR), 0),
+                         Math.max((int)(getBlue() *FACTOR), 0),
+                         getAlpha());
+    }
+
+    /**
+     * Computes the hash code for this <code>Color</code>.
+     * @return     a hash code value for this object.
+     * @since      JDK1.0
+     */
+    public int hashCode() {
+        return value;
+    }
+
+    /**
+     * Determines whether another object is equal to this
+     * <code>Color</code>.
+     * <p>
+     * The result is <code>true</code> if and only if the argument is not
+     * <code>null</code> and is a <code>Color</code> object that has the same
+     * red, green, blue, and alpha values as this object.
+     * @param       obj   the object to test for equality with this
+     *                          <code>Color</code>
+     * @return      <code>true</code> if the objects are the same;
+     *                             <code>false</code> otherwise.
+     * @since   JDK1.0
+     */
+    public boolean equals(Object obj) {
+        return obj instanceof Color && ((Color)obj).getRGB() == this.getRGB();
+    }
+
+    /**
+     * Returns a string representation of this <code>Color</code>. This
+     * method is intended to be used only for debugging purposes.  The
+     * content and format of the returned string might vary between
+     * implementations. The returned string might be empty but cannot
+     * be <code>null</code>.
+     *
+     * @return  a string representation of this <code>Color</code>.
+     */
+    public String toString() {
+        return getClass().getName() + "[r=" + getRed() + ",g=" + getGreen() + ",b=" + getBlue() + "]";
+    }
+
+    /**
+     * Converts a <code>String</code> to an integer and returns the
+     * specified opaque <code>Color</code>. This method handles string
+     * formats that are used to represent octal and hexadecimal numbers.
+     * @param      nm a <code>String</code> that represents
+     *                            an opaque color as a 24-bit integer
+     * @return     the new <code>Color</code> object.
+     * @see        java.lang.Integer#decode
+     * @exception  NumberFormatException  if the specified string cannot
+     *                      be interpreted as a decimal,
+     *                      octal, or hexadecimal integer.
+     * @since      JDK1.1
+     */
+    public static Color decode(String nm) throws NumberFormatException {
+        Integer intval = Integer.decode(nm);
+        int i = intval.intValue();
+        return new Color((i >> 16) & 0xFF, (i >> 8) & 0xFF, i & 0xFF);
+    }
+
+    /**
+     * Finds a color in the system properties.
+     * <p>
+     * The argument is treated as the name of a system property to
+     * be obtained. The string value of this property is then interpreted
+     * as an integer which is then converted to a <code>Color</code>
+     * object.
+     * <p>
+     * If the specified property is not found or could not be parsed as
+     * an integer then <code>null</code> is returned.
+     * @param    nm the name of the color property
+     * @return   the <code>Color</code> converted from the system
+     *          property.
+     * @see      java.lang.System#getProperty(java.lang.String)
+     * @see      java.lang.Integer#getInteger(java.lang.String)
+     * @see      java.awt.Color#Color(int)
+     * @since    JDK1.0
+     */
+    public static Color getColor(String nm) {
+        return getColor(nm, null);
+    }
+
+    /**
+     * Finds a color in the system properties.
+     * <p>
+     * The first argument is treated as the name of a system property to
+     * be obtained. The string value of this property is then interpreted
+     * as an integer which is then converted to a <code>Color</code>
+     * object.
+     * <p>
+     * If the specified property is not found or cannot be parsed as
+     * an integer then the <code>Color</code> specified by the second
+     * argument is returned instead.
+     * @param    nm the name of the color property
+     * @param    v    the default <code>Color</code>
+     * @return   the <code>Color</code> converted from the system
+     *          property, or the specified <code>Color</code>.
+     * @see      java.lang.System#getProperty(java.lang.String)
+     * @see      java.lang.Integer#getInteger(java.lang.String)
+     * @see      java.awt.Color#Color(int)
+     * @since    JDK1.0
+     */
+    public static Color getColor(String nm, Color v) {
+        Integer intval = Integer.getInteger(nm);
+        if (intval == null) {
+            return v;
+        }
+        int i = intval.intValue();
+        return new Color((i >> 16) & 0xFF, (i >> 8) & 0xFF, i & 0xFF);
+    }
+
+    /**
+     * Finds a color in the system properties.
+     * <p>
+     * The first argument is treated as the name of a system property to
+     * be obtained. The string value of this property is then interpreted
+     * as an integer which is then converted to a <code>Color</code>
+     * object.
+     * <p>
+     * If the specified property is not found or could not be parsed as
+     * an integer then the integer value <code>v</code> is used instead,
+     * and is converted to a <code>Color</code> object.
+     * @param    nm  the name of the color property
+     * @param    v   the default color value, as an integer
+     * @return   the <code>Color</code> converted from the system
+     *          property or the <code>Color</code> converted from
+     *          the specified integer.
+     * @see      java.lang.System#getProperty(java.lang.String)
+     * @see      java.lang.Integer#getInteger(java.lang.String)
+     * @see      java.awt.Color#Color(int)
+     * @since    JDK1.0
+     */
+    public static Color getColor(String nm, int v) {
+        Integer intval = Integer.getInteger(nm);
+        int i = (intval != null) ? intval.intValue() : v;
+        return new Color((i >> 16) & 0xFF, (i >> 8) & 0xFF, (i >> 0) & 0xFF);
+    }
+
+    /**
+     * Converts the components of a color, as specified by the HSB
+     * model, to an equivalent set of values for the default RGB model.
+     * <p>
+     * The <code>saturation</code> and <code>brightness</code> components
+     * should be floating-point values between zero and one
+     * (numbers in the range 0.0-1.0).  The <code>hue</code> component
+     * can be any floating-point number.  The floor of this number is
+     * subtracted from it to create a fraction between 0 and 1.  This
+     * fractional number is then multiplied by 360 to produce the hue
+     * angle in the HSB color model.
+     * <p>
+     * The integer that is returned by <code>HSBtoRGB</code> encodes the
+     * value of a color in bits 0-23 of an integer value that is the same
+     * format used by the method {@link #getRGB() getRGB}.
+     * This integer can be supplied as an argument to the
+     * <code>Color</code> constructor that takes a single integer argument.
+     * @param     hue   the hue component of the color
+     * @param     saturation   the saturation of the color
+     * @param     brightness   the brightness of the color
+     * @return    the RGB value of the color with the indicated hue,
+     *                            saturation, and brightness.
+     * @see       java.awt.Color#getRGB()
+     * @see       java.awt.Color#Color(int)
+     * @see       java.awt.image.ColorModel#getRGBdefault()
+     * @since     JDK1.0
+     */
+    public static int HSBtoRGB(float hue, float saturation, float brightness) {
+        int r = 0, g = 0, b = 0;
+        if (saturation == 0) {
+            r = g = b = (int) (brightness * 255.0f + 0.5f);
+        } else {
+            float h = (hue - (float)Math.floor(hue)) * 6.0f;
+            float f = h - (float)java.lang.Math.floor(h);
+            float p = brightness * (1.0f - saturation);
+            float q = brightness * (1.0f - saturation * f);
+            float t = brightness * (1.0f - (saturation * (1.0f - f)));
+            switch ((int) h) {
+            case 0:
+                r = (int) (brightness * 255.0f + 0.5f);
+                g = (int) (t * 255.0f + 0.5f);
+                b = (int) (p * 255.0f + 0.5f);
+                break;
+            case 1:
+                r = (int) (q * 255.0f + 0.5f);
+                g = (int) (brightness * 255.0f + 0.5f);
+                b = (int) (p * 255.0f + 0.5f);
+                break;
+            case 2:
+                r = (int) (p * 255.0f + 0.5f);
+                g = (int) (brightness * 255.0f + 0.5f);
+                b = (int) (t * 255.0f + 0.5f);
+                break;
+            case 3:
+                r = (int) (p * 255.0f + 0.5f);
+                g = (int) (q * 255.0f + 0.5f);
+                b = (int) (brightness * 255.0f + 0.5f);
+                break;
+            case 4:
+                r = (int) (t * 255.0f + 0.5f);
+                g = (int) (p * 255.0f + 0.5f);
+                b = (int) (brightness * 255.0f + 0.5f);
+                break;
+            case 5:
+                r = (int) (brightness * 255.0f + 0.5f);
+                g = (int) (p * 255.0f + 0.5f);
+                b = (int) (q * 255.0f + 0.5f);
+                break;
+            }
+        }
+        return 0xff000000 | (r << 16) | (g << 8) | (b << 0);
+    }
+
+    /**
+     * Converts the components of a color, as specified by the default RGB
+     * model, to an equivalent set of values for hue, saturation, and
+     * brightness that are the three components of the HSB model.
+     * <p>
+     * If the <code>hsbvals</code> argument is <code>null</code>, then a
+     * new array is allocated to return the result. Otherwise, the method
+     * returns the array <code>hsbvals</code>, with the values put into
+     * that array.
+     * @param     r   the red component of the color
+     * @param     g   the green component of the color
+     * @param     b   the blue component of the color
+     * @param     hsbvals  the array used to return the
+     *                     three HSB values, or <code>null</code>
+     * @return    an array of three elements containing the hue, saturation,
+     *                     and brightness (in that order), of the color with
+     *                     the indicated red, green, and blue components.
+     * @see       java.awt.Color#getRGB()
+     * @see       java.awt.Color#Color(int)
+     * @see       java.awt.image.ColorModel#getRGBdefault()
+     * @since     JDK1.0
+     */
+    public static float[] RGBtoHSB(int r, int g, int b, float[] hsbvals) {
+        float hue, saturation, brightness;
+        if (hsbvals == null) {
+            hsbvals = new float[3];
+        }
+        int cmax = (r > g) ? r : g;
+        if (b > cmax) cmax = b;
+        int cmin = (r < g) ? r : g;
+        if (b < cmin) cmin = b;
+
+        brightness = ((float) cmax) / 255.0f;
+        if (cmax != 0)
+            saturation = ((float) (cmax - cmin)) / ((float) cmax);
+        else
+            saturation = 0;
+        if (saturation == 0)
+            hue = 0;
+        else {
+            float redc = ((float) (cmax - r)) / ((float) (cmax - cmin));
+            float greenc = ((float) (cmax - g)) / ((float) (cmax - cmin));
+            float bluec = ((float) (cmax - b)) / ((float) (cmax - cmin));
+            if (r == cmax)
+                hue = bluec - greenc;
+            else if (g == cmax)
+                hue = 2.0f + redc - bluec;
+            else
+                hue = 4.0f + greenc - redc;
+            hue = hue / 6.0f;
+            if (hue < 0)
+                hue = hue + 1.0f;
+        }
+        hsbvals[0] = hue;
+        hsbvals[1] = saturation;
+        hsbvals[2] = brightness;
+        return hsbvals;
+    }
+
+    /**
+     * Creates a <code>Color</code> object based on the specified values
+     * for the HSB color model.
+     * <p>
+     * The <code>s</code> and <code>b</code> components should be
+     * floating-point values between zero and one
+     * (numbers in the range 0.0-1.0).  The <code>h</code> component
+     * can be any floating-point number.  The floor of this number is
+     * subtracted from it to create a fraction between 0 and 1.  This
+     * fractional number is then multiplied by 360 to produce the hue
+     * angle in the HSB color model.
+     * @param  h   the hue component
+     * @param  s   the saturation of the color
+     * @param  b   the brightness of the color
+     * @return  a <code>Color</code> object with the specified hue,
+     *                                 saturation, and brightness.
+     * @since   JDK1.0
+     */
+    public static Color getHSBColor(float h, float s, float b) {
+        return new Color(HSBtoRGB(h, s, b));
+    }
+
+    /**
+     * Returns a <code>float</code> array containing the color and alpha
+     * components of the <code>Color</code>, as represented in the default
+     * sRGB color space.
+     * If <code>compArray</code> is <code>null</code>, an array of length
+     * 4 is created for the return value.  Otherwise,
+     * <code>compArray</code> must have length 4 or greater,
+     * and it is filled in with the components and returned.
+     * @param compArray an array that this method fills with
+     *                  color and alpha components and returns
+     * @return the RGBA components in a <code>float</code> array.
+     */
+    public float[] getRGBComponents(float[] compArray) {
+        float[] f;
+        if (compArray == null) {
+            f = new float[4];
+        } else {
+            f = compArray;
+        }
+        if (frgbvalue == null) {
+            f[0] = ((float)getRed())/255f;
+            f[1] = ((float)getGreen())/255f;
+            f[2] = ((float)getBlue())/255f;
+            f[3] = ((float)getAlpha())/255f;
+        } else {
+            f[0] = frgbvalue[0];
+            f[1] = frgbvalue[1];
+            f[2] = frgbvalue[2];
+            f[3] = falpha;
+        }
+        return f;
+    }
+
+    /**
+     * Returns a <code>float</code> array containing only the color
+     * components of the <code>Color</code>, in the default sRGB color
+     * space.  If <code>compArray</code> is <code>null</code>, an array of
+     * length 3 is created for the return value.  Otherwise,
+     * <code>compArray</code> must have length 3 or greater, and it is
+     * filled in with the components and returned.
+     * @param compArray an array that this method fills with color
+     *          components and returns
+     * @return the RGB components in a <code>float</code> array.
+     */
+    public float[] getRGBColorComponents(float[] compArray) {
+        float[] f;
+        if (compArray == null) {
+            f = new float[3];
+        } else {
+            f = compArray;
+        }
+        if (frgbvalue == null) {
+            f[0] = ((float)getRed())/255f;
+            f[1] = ((float)getGreen())/255f;
+            f[2] = ((float)getBlue())/255f;
+        } else {
+            f[0] = frgbvalue[0];
+            f[1] = frgbvalue[1];
+            f[2] = frgbvalue[2];
+        }
+        return f;
+    }
+
+    /**
+     * Returns a <code>float</code> array containing the color and alpha
+     * components of the <code>Color</code>, in the
+     * <code>ColorSpace</code> of the <code>Color</code>.
+     * If <code>compArray</code> is <code>null</code>, an array with
+     * length equal to the number of components in the associated
+     * <code>ColorSpace</code> plus one is created for
+     * the return value.  Otherwise, <code>compArray</code> must have at
+     * least this length and it is filled in with the components and
+     * returned.
+     * @param compArray an array that this method fills with the color and
+     *          alpha components of this <code>Color</code> in its
+     *          <code>ColorSpace</code> and returns
+     * @return the color and alpha components in a <code>float</code>
+     *          array.
+     */
+    public float[] getComponents(float[] compArray) {
+        if (fvalue == null)
+            return getRGBComponents(compArray);
+        float[] f;
+        int n = fvalue.length;
+        if (compArray == null) {
+            f = new float[n + 1];
+        } else {
+            f = compArray;
+        }
+        for (int i = 0; i < n; i++) {
+            f[i] = fvalue[i];
+        }
+        f[n] = falpha;
+        return f;
+    }
+
+    /**
+     * Returns a <code>float</code> array containing only the color
+     * components of the <code>Color</code>, in the
+     * <code>ColorSpace</code> of the <code>Color</code>.
+     * If <code>compArray</code> is <code>null</code>, an array with
+     * length equal to the number of components in the associated
+     * <code>ColorSpace</code> is created for
+     * the return value.  Otherwise, <code>compArray</code> must have at
+     * least this length and it is filled in with the components and
+     * returned.
+     * @param compArray an array that this method fills with the color
+     *          components of this <code>Color</code> in its
+     *          <code>ColorSpace</code> and returns
+     * @return the color components in a <code>float</code> array.
+     */
+    public float[] getColorComponents(float[] compArray) {
+        if (fvalue == null)
+            return getRGBColorComponents(compArray);
+        float[] f;
+        int n = fvalue.length;
+        if (compArray == null) {
+            f = new float[n];
+        } else {
+            f = compArray;
+        }
+        for (int i = 0; i < n; i++) {
+            f[i] = fvalue[i];
+        }
+        return f;
+    }
+
+    /**
+     * Returns a <code>float</code> array containing the color and alpha
+     * components of the <code>Color</code>, in the
+     * <code>ColorSpace</code> specified by the <code>cspace</code>
+     * parameter.  If <code>compArray</code> is <code>null</code>, an
+     * array with length equal to the number of components in
+     * <code>cspace</code> plus one is created for the return value.
+     * Otherwise, <code>compArray</code> must have at least this
+     * length, and it is filled in with the components and returned.
+     * @param cspace a specified <code>ColorSpace</code>
+     * @param compArray an array that this method fills with the
+     *          color and alpha components of this <code>Color</code> in
+     *          the specified <code>ColorSpace</code> and returns
+     * @return the color and alpha components in a <code>float</code>
+     *          array.
+     */
+    public float[] getComponents(ColorSpace cspace, float[] compArray) {
+        if (cs == null) {
+            cs = ColorSpace.getInstance(ColorSpace.CS_sRGB);
+        }
+        float f[];
+        if (fvalue == null) {
+            f = new float[3];
+            f[0] = ((float)getRed())/255f;
+            f[1] = ((float)getGreen())/255f;
+            f[2] = ((float)getBlue())/255f;
+        } else {
+            f = fvalue;
+        }
+        float tmp[] = cs.toCIEXYZ(f);
+        float tmpout[] = cspace.fromCIEXYZ(tmp);
+        if (compArray == null) {
+            compArray = new float[tmpout.length + 1];
+        }
+        for (int i = 0 ; i < tmpout.length ; i++) {
+            compArray[i] = tmpout[i];
+        }
+        if (fvalue == null) {
+            compArray[tmpout.length] = ((float)getAlpha())/255f;
+        } else {
+            compArray[tmpout.length] = falpha;
+        }
+        return compArray;
+    }
+
+    /**
+     * Returns a <code>float</code> array containing only the color
+     * components of the <code>Color</code> in the
+     * <code>ColorSpace</code> specified by the <code>cspace</code>
+     * parameter. If <code>compArray</code> is <code>null</code>, an array
+     * with length equal to the number of components in
+     * <code>cspace</code> is created for the return value.  Otherwise,
+     * <code>compArray</code> must have at least this length, and it is
+     * filled in with the components and returned.
+     * @param cspace a specified <code>ColorSpace</code>
+     * @param compArray an array that this method fills with the color
+     *          components of this <code>Color</code> in the specified
+     *          <code>ColorSpace</code>
+     * @return the color components in a <code>float</code> array.
+     */
+    public float[] getColorComponents(ColorSpace cspace, float[] compArray) {
+        if (cs == null) {
+            cs = ColorSpace.getInstance(ColorSpace.CS_sRGB);
+        }
+        float f[];
+        if (fvalue == null) {
+            f = new float[3];
+            f[0] = ((float)getRed())/255f;
+            f[1] = ((float)getGreen())/255f;
+            f[2] = ((float)getBlue())/255f;
+        } else {
+            f = fvalue;
+        }
+        float tmp[] = cs.toCIEXYZ(f);
+        float tmpout[] = cspace.fromCIEXYZ(tmp);
+        if (compArray == null) {
+            return tmpout;
+        }
+        for (int i = 0 ; i < tmpout.length ; i++) {
+            compArray[i] = tmpout[i];
+        }
+        return compArray;
+    }
+
+    /**
+     * Returns the <code>ColorSpace</code> of this <code>Color</code>.
+     * @return this <code>Color</code> object's <code>ColorSpace</code>.
+     */
+    public ColorSpace getColorSpace() {
+        if (cs == null) {
+            cs = ColorSpace.getInstance(ColorSpace.CS_sRGB);
+        }
+        return cs;
+    }
+
+    /**
+     * Creates and returns a {@link PaintContext} used to
+     * generate a solid color field pattern.
+     * See the {@link Paint#createContext specification} of the
+     * method in the {@link Paint} interface for information
+     * on null parameter handling.
+     *
+     * @param cm the preferred {@link ColorModel} which represents the most convenient
+     *           format for the caller to receive the pixel data, or {@code null}
+     *           if there is no preference.
+     * @param r the device space bounding box
+     *                     of the graphics primitive being rendered.
+     * @param r2d the user space bounding box
+     *                   of the graphics primitive being rendered.
+     * @param xform the {@link AffineTransform} from user
+     *              space into device space.
+     * @param hints the set of hints that the context object can use to
+     *              choose between rendering alternatives.
+     * @return the {@code PaintContext} for
+     *         generating color patterns.
+     * @see Paint
+     * @see PaintContext
+     * @see ColorModel
+     * @see Rectangle
+     * @see Rectangle2D
+     * @see AffineTransform
+     * @see RenderingHints
+     */
+    public synchronized PaintContext createContext(ColorModel cm, Rectangle r,
+                                                   Rectangle2D r2d,
+                                                   AffineTransform xform,
+                                                   RenderingHints hints) {
+        return new ColorPaintContext(getRGB(), cm);
+    }
+
+    /**
+     * Returns the transparency mode for this <code>Color</code>.  This is
+     * required to implement the <code>Paint</code> interface.
+     * @return this <code>Color</code> object's transparency mode.
+     * @see Paint
+     * @see Transparency
+     * @see #createContext
+     */
+    public int getTransparency() {
+        int alpha = getAlpha();
+        if (alpha == 0xff) {
+            return Transparency.OPAQUE;
+        }
+        else if (alpha == 0) {
+            return Transparency.BITMASK;
+        }
+        else {
+            return Transparency.TRANSLUCENT;
+        }
+    }
+
+}

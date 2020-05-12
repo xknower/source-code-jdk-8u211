@@ -1,890 +1,884 @@
-/*     */ package javax.management.monitor;
-/*     */ 
-/*     */ import com.sun.jmx.defaults.JmxProperties;
-/*     */ import java.util.logging.Level;
-/*     */ import javax.management.MBeanNotificationInfo;
-/*     */ import javax.management.ObjectName;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class GaugeMonitor
-/*     */   extends Monitor
-/*     */   implements GaugeMonitorMBean
-/*     */ {
-/*     */   static class GaugeMonitorObservedObject
-/*     */     extends Monitor.ObservedObject
-/*     */   {
-/*     */     private boolean derivedGaugeValid;
-/*     */     private Monitor.NumericalType type;
-/*     */     private Number previousScanGauge;
-/*     */     private int status;
-/*     */     
-/*     */     public GaugeMonitorObservedObject(ObjectName param1ObjectName) {
-/*  98 */       super(param1ObjectName);
-/*     */     }
-/*     */     
-/*     */     public final synchronized boolean getDerivedGaugeValid() {
-/* 102 */       return this.derivedGaugeValid;
-/*     */     }
-/*     */     
-/*     */     public final synchronized void setDerivedGaugeValid(boolean param1Boolean) {
-/* 106 */       this.derivedGaugeValid = param1Boolean;
-/*     */     }
-/*     */     public final synchronized Monitor.NumericalType getType() {
-/* 109 */       return this.type;
-/*     */     }
-/*     */     public final synchronized void setType(Monitor.NumericalType param1NumericalType) {
-/* 112 */       this.type = param1NumericalType;
-/*     */     }
-/*     */     public final synchronized Number getPreviousScanGauge() {
-/* 115 */       return this.previousScanGauge;
-/*     */     }
-/*     */     
-/*     */     public final synchronized void setPreviousScanGauge(Number param1Number) {
-/* 119 */       this.previousScanGauge = param1Number;
-/*     */     }
-/*     */     public final synchronized int getStatus() {
-/* 122 */       return this.status;
-/*     */     }
-/*     */     public final synchronized void setStatus(int param1Int) {
-/* 125 */       this.status = param1Int;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 145 */   private Number highThreshold = INTEGER_ZERO;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 152 */   private Number lowThreshold = INTEGER_ZERO;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean notifyHigh = false;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean notifyLow = false;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean differenceMode = false;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 181 */   private static final String[] types = new String[] { "jmx.monitor.error.runtime", "jmx.monitor.error.mbean", "jmx.monitor.error.attribute", "jmx.monitor.error.type", "jmx.monitor.error.threshold", "jmx.monitor.gauge.high", "jmx.monitor.gauge.low" };
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 191 */   private static final MBeanNotificationInfo[] notifsInfo = new MBeanNotificationInfo[] { new MBeanNotificationInfo(types, "javax.management.monitor.MonitorNotification", "Notifications sent by the GaugeMonitor MBean") };
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static final int RISING = 0;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static final int FALLING = 1;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static final int RISING_OR_FALLING = 2;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void start() {
-/* 226 */     if (isActive()) {
-/* 227 */       JmxProperties.MONITOR_LOGGER.logp(Level.FINER, GaugeMonitor.class.getName(), "start", "the monitor is already active");
-/*     */ 
-/*     */       
-/*     */       return;
-/*     */     } 
-/*     */     
-/* 233 */     for (Monitor.ObservedObject observedObject : this.observedObjects) {
-/* 234 */       GaugeMonitorObservedObject gaugeMonitorObservedObject = (GaugeMonitorObservedObject)observedObject;
-/*     */       
-/* 236 */       gaugeMonitorObservedObject.setStatus(2);
-/* 237 */       gaugeMonitorObservedObject.setPreviousScanGauge((Number)null);
-/*     */     } 
-/* 239 */     doStart();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void stop() {
-/* 246 */     doStop();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized Number getDerivedGauge(ObjectName paramObjectName) {
-/* 263 */     return (Number)super.getDerivedGauge(paramObjectName);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized long getDerivedGaugeTimeStamp(ObjectName paramObjectName) {
-/* 279 */     return super.getDerivedGaugeTimeStamp(paramObjectName);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   @Deprecated
-/*     */   public synchronized Number getDerivedGauge() {
-/* 293 */     if (this.observedObjects.isEmpty()) {
-/* 294 */       return null;
-/*     */     }
-/* 296 */     return (Number)((Monitor.ObservedObject)this.observedObjects.get(0)).getDerivedGauge();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   @Deprecated
-/*     */   public synchronized long getDerivedGaugeTimeStamp() {
-/* 311 */     if (this.observedObjects.isEmpty()) {
-/* 312 */       return 0L;
-/*     */     }
-/* 314 */     return ((Monitor.ObservedObject)this.observedObjects.get(0)).getDerivedGaugeTimeStamp();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized Number getHighThreshold() {
-/* 326 */     return this.highThreshold;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized Number getLowThreshold() {
-/* 337 */     return this.lowThreshold;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void setThresholds(Number paramNumber1, Number paramNumber2) throws IllegalArgumentException {
-/* 358 */     if (paramNumber1 == null || paramNumber2 == null) {
-/* 359 */       throw new IllegalArgumentException("Null threshold value");
-/*     */     }
-/*     */     
-/* 362 */     if (paramNumber1.getClass() != paramNumber2.getClass()) {
-/* 363 */       throw new IllegalArgumentException("Different type threshold values");
-/*     */     }
-/*     */ 
-/*     */     
-/* 367 */     if (isFirstStrictlyGreaterThanLast(paramNumber2, paramNumber1, paramNumber1
-/* 368 */         .getClass().getName())) {
-/* 369 */       throw new IllegalArgumentException("High threshold less than low threshold");
-/*     */     }
-/*     */ 
-/*     */     
-/* 373 */     if (this.highThreshold.equals(paramNumber1) && this.lowThreshold.equals(paramNumber2))
-/*     */       return; 
-/* 375 */     this.highThreshold = paramNumber1;
-/* 376 */     this.lowThreshold = paramNumber2;
-/*     */ 
-/*     */ 
-/*     */     
-/* 380 */     byte b = 0;
-/* 381 */     for (Monitor.ObservedObject observedObject : this.observedObjects) {
-/* 382 */       resetAlreadyNotified(observedObject, b++, 16);
-/* 383 */       GaugeMonitorObservedObject gaugeMonitorObservedObject = (GaugeMonitorObservedObject)observedObject;
-/*     */       
-/* 385 */       gaugeMonitorObservedObject.setStatus(2);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized boolean getNotifyHigh() {
-/* 399 */     return this.notifyHigh;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void setNotifyHigh(boolean paramBoolean) {
-/* 411 */     if (this.notifyHigh == paramBoolean)
-/*     */       return; 
-/* 413 */     this.notifyHigh = paramBoolean;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized boolean getNotifyLow() {
-/* 426 */     return this.notifyLow;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void setNotifyLow(boolean paramBoolean) {
-/* 438 */     if (this.notifyLow == paramBoolean)
-/*     */       return; 
-/* 440 */     this.notifyLow = paramBoolean;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized boolean getDifferenceMode() {
-/* 452 */     return this.differenceMode;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void setDifferenceMode(boolean paramBoolean) {
-/* 463 */     if (this.differenceMode == paramBoolean)
-/*     */       return; 
-/* 465 */     this.differenceMode = paramBoolean;
-/*     */ 
-/*     */ 
-/*     */     
-/* 469 */     for (Monitor.ObservedObject observedObject : this.observedObjects) {
-/* 470 */       GaugeMonitorObservedObject gaugeMonitorObservedObject = (GaugeMonitorObservedObject)observedObject;
-/*     */       
-/* 472 */       gaugeMonitorObservedObject.setStatus(2);
-/* 473 */       gaugeMonitorObservedObject.setPreviousScanGauge((Number)null);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public MBeanNotificationInfo[] getNotificationInfo() {
-/* 484 */     return (MBeanNotificationInfo[])notifsInfo.clone();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private synchronized boolean updateDerivedGauge(Object paramObject, GaugeMonitorObservedObject paramGaugeMonitorObservedObject) {
-/*     */     boolean bool;
-/* 511 */     if (this.differenceMode) {
-/*     */ 
-/*     */ 
-/*     */       
-/* 515 */       if (paramGaugeMonitorObservedObject.getPreviousScanGauge() != null) {
-/* 516 */         setDerivedGaugeWithDifference((Number)paramObject, paramGaugeMonitorObservedObject);
-/* 517 */         bool = true;
-/*     */       
-/*     */       }
-/*     */       else {
-/*     */ 
-/*     */         
-/* 523 */         bool = false;
-/*     */       } 
-/* 525 */       paramGaugeMonitorObservedObject.setPreviousScanGauge((Number)paramObject);
-/*     */     
-/*     */     }
-/*     */     else {
-/*     */       
-/* 530 */       paramGaugeMonitorObservedObject.setDerivedGauge(paramObject);
-/* 531 */       bool = true;
-/*     */     } 
-/*     */     
-/* 534 */     return bool;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private synchronized MonitorNotification updateNotifications(GaugeMonitorObservedObject paramGaugeMonitorObservedObject) {
-/* 546 */     MonitorNotification monitorNotification = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 551 */     if (paramGaugeMonitorObservedObject.getStatus() == 2) {
-/* 552 */       if (isFirstGreaterThanLast((Number)paramGaugeMonitorObservedObject.getDerivedGauge(), this.highThreshold, paramGaugeMonitorObservedObject
-/*     */           
-/* 554 */           .getType())) {
-/* 555 */         if (this.notifyHigh) {
-/* 556 */           monitorNotification = new MonitorNotification("jmx.monitor.gauge.high", this, 0L, 0L, "", null, null, null, this.highThreshold);
-/*     */         }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 567 */         paramGaugeMonitorObservedObject.setStatus(1);
-/* 568 */       } else if (isFirstGreaterThanLast(this.lowThreshold, (Number)paramGaugeMonitorObservedObject
-/* 569 */           .getDerivedGauge(), paramGaugeMonitorObservedObject
-/* 570 */           .getType())) {
-/* 571 */         if (this.notifyLow) {
-/* 572 */           monitorNotification = new MonitorNotification("jmx.monitor.gauge.low", this, 0L, 0L, "", null, null, null, this.lowThreshold);
-/*     */         }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 583 */         paramGaugeMonitorObservedObject.setStatus(0);
-/*     */       }
-/*     */     
-/* 586 */     } else if (paramGaugeMonitorObservedObject.getStatus() == 0) {
-/* 587 */       if (isFirstGreaterThanLast((Number)paramGaugeMonitorObservedObject.getDerivedGauge(), this.highThreshold, paramGaugeMonitorObservedObject
-/*     */           
-/* 589 */           .getType())) {
-/* 590 */         if (this.notifyHigh) {
-/* 591 */           monitorNotification = new MonitorNotification("jmx.monitor.gauge.high", this, 0L, 0L, "", null, null, null, this.highThreshold);
-/*     */         }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 602 */         paramGaugeMonitorObservedObject.setStatus(1);
-/*     */       } 
-/* 604 */     } else if (paramGaugeMonitorObservedObject.getStatus() == 1 && 
-/* 605 */       isFirstGreaterThanLast(this.lowThreshold, (Number)paramGaugeMonitorObservedObject
-/* 606 */         .getDerivedGauge(), paramGaugeMonitorObservedObject
-/* 607 */         .getType())) {
-/* 608 */       if (this.notifyLow) {
-/* 609 */         monitorNotification = new MonitorNotification("jmx.monitor.gauge.low", this, 0L, 0L, "", null, null, null, this.lowThreshold);
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 620 */       paramGaugeMonitorObservedObject.setStatus(0);
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 625 */     return monitorNotification;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private synchronized void setDerivedGaugeWithDifference(Number paramNumber, GaugeMonitorObservedObject paramGaugeMonitorObservedObject) {
-/*     */     Integer integer;
-/*     */     Byte byte_;
-/*     */     Short short_;
-/*     */     Long long_;
-/*     */     Float float_;
-/*     */     Double double_;
-/* 638 */     Number number = paramGaugeMonitorObservedObject.getPreviousScanGauge();
-/*     */     
-/* 640 */     switch (paramGaugeMonitorObservedObject.getType()) {
-/*     */       case INTEGER:
-/* 642 */         integer = Integer.valueOf(((Integer)paramNumber).intValue() - ((Integer)number)
-/* 643 */             .intValue());
-/*     */         break;
-/*     */       case BYTE:
-/* 646 */         byte_ = Byte.valueOf(
-/* 647 */             (byte)(((Byte)paramNumber).byteValue() - ((Byte)number).byteValue()));
-/*     */         break;
-/*     */       case SHORT:
-/* 650 */         short_ = Short.valueOf(
-/* 651 */             (short)(((Short)paramNumber).shortValue() - ((Short)number).shortValue()));
-/*     */         break;
-/*     */       case LONG:
-/* 654 */         long_ = Long.valueOf(((Long)paramNumber).longValue() - ((Long)number)
-/* 655 */             .longValue());
-/*     */         break;
-/*     */       case FLOAT:
-/* 658 */         float_ = Float.valueOf(((Float)paramNumber).floatValue() - ((Float)number)
-/* 659 */             .floatValue());
-/*     */         break;
-/*     */       case DOUBLE:
-/* 662 */         double_ = Double.valueOf(((Double)paramNumber).doubleValue() - ((Double)number)
-/* 663 */             .doubleValue());
-/*     */         break;
-/*     */       
-/*     */       default:
-/* 667 */         JmxProperties.MONITOR_LOGGER.logp(Level.FINEST, GaugeMonitor.class.getName(), "setDerivedGaugeWithDifference", "the threshold type is invalid");
-/*     */         return;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 672 */     paramGaugeMonitorObservedObject.setDerivedGauge(double_);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean isFirstGreaterThanLast(Number paramNumber1, Number paramNumber2, Monitor.NumericalType paramNumericalType) {
-/* 690 */     switch (paramNumericalType) {
-/*     */       case INTEGER:
-/*     */       case BYTE:
-/*     */       case SHORT:
-/*     */       case LONG:
-/* 695 */         return (paramNumber1.longValue() >= paramNumber2.longValue());
-/*     */       case FLOAT:
-/*     */       case DOUBLE:
-/* 698 */         return (paramNumber1.doubleValue() >= paramNumber2.doubleValue());
-/*     */     } 
-/*     */     
-/* 701 */     JmxProperties.MONITOR_LOGGER.logp(Level.FINEST, GaugeMonitor.class.getName(), "isFirstGreaterThanLast", "the threshold type is invalid");
-/*     */ 
-/*     */     
-/* 704 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean isFirstStrictlyGreaterThanLast(Number paramNumber1, Number paramNumber2, String paramString) {
-/* 722 */     if (paramString.equals("java.lang.Integer") || paramString
-/* 723 */       .equals("java.lang.Byte") || paramString
-/* 724 */       .equals("java.lang.Short") || paramString
-/* 725 */       .equals("java.lang.Long"))
-/*     */     {
-/* 727 */       return (paramNumber1.longValue() > paramNumber2.longValue());
-/*     */     }
-/* 729 */     if (paramString.equals("java.lang.Float") || paramString
-/* 730 */       .equals("java.lang.Double"))
-/*     */     {
-/* 732 */       return (paramNumber1.doubleValue() > paramNumber2.doubleValue());
-/*     */     }
-/*     */ 
-/*     */     
-/* 736 */     JmxProperties.MONITOR_LOGGER.logp(Level.FINEST, GaugeMonitor.class.getName(), "isFirstStrictlyGreaterThanLast", "the threshold type is invalid");
-/*     */ 
-/*     */     
-/* 739 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   Monitor.ObservedObject createObservedObject(ObjectName paramObjectName) {
-/* 756 */     GaugeMonitorObservedObject gaugeMonitorObservedObject = new GaugeMonitorObservedObject(paramObjectName);
-/*     */     
-/* 758 */     gaugeMonitorObservedObject.setStatus(2);
-/* 759 */     gaugeMonitorObservedObject.setPreviousScanGauge((Number)null);
-/* 760 */     return gaugeMonitorObservedObject;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   synchronized boolean isComparableTypeValid(ObjectName paramObjectName, String paramString, Comparable<?> paramComparable) {
-/* 774 */     GaugeMonitorObservedObject gaugeMonitorObservedObject = (GaugeMonitorObservedObject)getObservedObject(paramObjectName);
-/* 775 */     if (gaugeMonitorObservedObject == null) {
-/* 776 */       return false;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 781 */     if (paramComparable instanceof Integer) {
-/* 782 */       gaugeMonitorObservedObject.setType(Monitor.NumericalType.INTEGER);
-/* 783 */     } else if (paramComparable instanceof Byte) {
-/* 784 */       gaugeMonitorObservedObject.setType(Monitor.NumericalType.BYTE);
-/* 785 */     } else if (paramComparable instanceof Short) {
-/* 786 */       gaugeMonitorObservedObject.setType(Monitor.NumericalType.SHORT);
-/* 787 */     } else if (paramComparable instanceof Long) {
-/* 788 */       gaugeMonitorObservedObject.setType(Monitor.NumericalType.LONG);
-/* 789 */     } else if (paramComparable instanceof Float) {
-/* 790 */       gaugeMonitorObservedObject.setType(Monitor.NumericalType.FLOAT);
-/* 791 */     } else if (paramComparable instanceof Double) {
-/* 792 */       gaugeMonitorObservedObject.setType(Monitor.NumericalType.DOUBLE);
-/*     */     } else {
-/* 794 */       return false;
-/*     */     } 
-/* 796 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   synchronized Comparable<?> getDerivedGaugeFromComparable(ObjectName paramObjectName, String paramString, Comparable<?> paramComparable) {
-/* 805 */     GaugeMonitorObservedObject gaugeMonitorObservedObject = (GaugeMonitorObservedObject)getObservedObject(paramObjectName);
-/* 806 */     if (gaugeMonitorObservedObject == null) {
-/* 807 */       return null;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 816 */     gaugeMonitorObservedObject.setDerivedGaugeValid(updateDerivedGauge(paramComparable, gaugeMonitorObservedObject));
-/*     */     
-/* 818 */     return (Comparable)gaugeMonitorObservedObject.getDerivedGauge();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   synchronized void onErrorNotification(MonitorNotification paramMonitorNotification) {
-/* 824 */     GaugeMonitorObservedObject gaugeMonitorObservedObject = (GaugeMonitorObservedObject)getObservedObject(paramMonitorNotification.getObservedObject());
-/* 825 */     if (gaugeMonitorObservedObject == null) {
-/*     */       return;
-/*     */     }
-/*     */ 
-/*     */     
-/* 830 */     gaugeMonitorObservedObject.setStatus(2);
-/* 831 */     gaugeMonitorObservedObject.setPreviousScanGauge((Number)null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   synchronized MonitorNotification buildAlarmNotification(ObjectName paramObjectName, String paramString, Comparable<?> paramComparable) {
-/*     */     MonitorNotification monitorNotification;
-/* 840 */     GaugeMonitorObservedObject gaugeMonitorObservedObject = (GaugeMonitorObservedObject)getObservedObject(paramObjectName);
-/* 841 */     if (gaugeMonitorObservedObject == null) {
-/* 842 */       return null;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 848 */     if (gaugeMonitorObservedObject.getDerivedGaugeValid()) {
-/* 849 */       monitorNotification = updateNotifications(gaugeMonitorObservedObject);
-/*     */     } else {
-/* 851 */       monitorNotification = null;
-/* 852 */     }  return monitorNotification;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   synchronized boolean isThresholdTypeValid(ObjectName paramObjectName, String paramString, Comparable<?> paramComparable) {
-/* 876 */     GaugeMonitorObservedObject gaugeMonitorObservedObject = (GaugeMonitorObservedObject)getObservedObject(paramObjectName);
-/* 877 */     if (gaugeMonitorObservedObject == null) {
-/* 878 */       return false;
-/*     */     }
-/* 880 */     Class<? extends Number> clazz = classForType(gaugeMonitorObservedObject.getType());
-/* 881 */     return (isValidForType(this.highThreshold, clazz) && 
-/* 882 */       isValidForType(this.lowThreshold, clazz));
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\management\monitor\GaugeMonitor.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2008, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.management.monitor;
+
+import static com.sun.jmx.defaults.JmxProperties.MONITOR_LOGGER;
+import java.util.logging.Level;
+import javax.management.MBeanNotificationInfo;
+import javax.management.ObjectName;
+import static javax.management.monitor.Monitor.NumericalType.*;
+import static javax.management.monitor.MonitorNotification.*;
+
+/**
+ * Defines a monitor MBean designed to observe the values of a gauge attribute.
+ *
+ * <P> A gauge monitor observes an attribute that is continuously
+ * variable with time. A gauge monitor sends notifications as
+ * follows:
+ *
+ * <UL>
+ *
+ * <LI> if the attribute value is increasing and becomes equal to or
+ * greater than the high threshold value, a {@link
+ * MonitorNotification#THRESHOLD_HIGH_VALUE_EXCEEDED threshold high
+ * notification} is sent. The notify high flag must be set to
+ * <CODE>true</CODE>.
+ *
+ * <BR>Subsequent crossings of the high threshold value do not cause
+ * further notifications unless the attribute value becomes equal to
+ * or less than the low threshold value.</LI>
+ *
+ * <LI> if the attribute value is decreasing and becomes equal to or
+ * less than the low threshold value, a {@link
+ * MonitorNotification#THRESHOLD_LOW_VALUE_EXCEEDED threshold low
+ * notification} is sent. The notify low flag must be set to
+ * <CODE>true</CODE>.
+ *
+ * <BR>Subsequent crossings of the low threshold value do not cause
+ * further notifications unless the attribute value becomes equal to
+ * or greater than the high threshold value.</LI>
+ *
+ * </UL>
+ *
+ * This provides a hysteresis mechanism to avoid repeated triggering
+ * of notifications when the attribute value makes small oscillations
+ * around the high or low threshold value.
+ *
+ * <P> If the gauge difference mode is used, the value of the derived
+ * gauge is calculated as the difference between the observed gauge
+ * values for two successive observations.
+ *
+ * <BR>The derived gauge value (V[t]) is calculated using the following method:
+ * <UL>
+ * <LI>V[t] = gauge[t] - gauge[t-GP]</LI>
+ * </UL>
+ *
+ * This implementation of the gauge monitor requires the observed
+ * attribute to be of the type integer or floating-point
+ * (<CODE>Byte</CODE>, <CODE>Integer</CODE>, <CODE>Short</CODE>,
+ * <CODE>Long</CODE>, <CODE>Float</CODE>, <CODE>Double</CODE>).
+ *
+ *
+ * @since 1.5
+ */
+public class GaugeMonitor extends Monitor implements GaugeMonitorMBean {
+
+    /*
+     * ------------------------------------------
+     *  PACKAGE CLASSES
+     * ------------------------------------------
+     */
+
+    static class GaugeMonitorObservedObject extends ObservedObject {
+
+        public GaugeMonitorObservedObject(ObjectName observedObject) {
+            super(observedObject);
+        }
+
+        public final synchronized boolean getDerivedGaugeValid() {
+            return derivedGaugeValid;
+        }
+        public final synchronized void setDerivedGaugeValid(
+                                                 boolean derivedGaugeValid) {
+            this.derivedGaugeValid = derivedGaugeValid;
+        }
+        public final synchronized NumericalType getType() {
+            return type;
+        }
+        public final synchronized void setType(NumericalType type) {
+            this.type = type;
+        }
+        public final synchronized Number getPreviousScanGauge() {
+            return previousScanGauge;
+        }
+        public final synchronized void setPreviousScanGauge(
+                                                  Number previousScanGauge) {
+            this.previousScanGauge = previousScanGauge;
+        }
+        public final synchronized int getStatus() {
+            return status;
+        }
+        public final synchronized void setStatus(int status) {
+            this.status = status;
+        }
+
+        private boolean derivedGaugeValid;
+        private NumericalType type;
+        private Number previousScanGauge;
+        private int status;
+    }
+
+    /*
+     * ------------------------------------------
+     *  PRIVATE VARIABLES
+     * ------------------------------------------
+     */
+
+    /**
+     * Gauge high threshold.
+     *
+     * <BR>The default value is a null Integer object.
+     */
+    private Number highThreshold = INTEGER_ZERO;
+
+    /**
+     * Gauge low threshold.
+     *
+     * <BR>The default value is a null Integer object.
+     */
+    private Number lowThreshold = INTEGER_ZERO;
+
+    /**
+     * Flag indicating if the gauge monitor notifies when exceeding
+     * the high threshold.
+     *
+     * <BR>The default value is <CODE>false</CODE>.
+     */
+    private boolean notifyHigh = false;
+
+    /**
+     * Flag indicating if the gauge monitor notifies when exceeding
+     * the low threshold.
+     *
+     * <BR>The default value is <CODE>false</CODE>.
+     */
+    private boolean notifyLow = false;
+
+    /**
+     * Flag indicating if the gauge difference mode is used.  If the
+     * gauge difference mode is used, the derived gauge is the
+     * difference between two consecutive observed values.  Otherwise,
+     * the derived gauge is directly the value of the observed
+     * attribute.
+     *
+     * <BR>The default value is set to <CODE>false</CODE>.
+     */
+    private boolean differenceMode = false;
+
+    private static final String[] types = {
+        RUNTIME_ERROR,
+        OBSERVED_OBJECT_ERROR,
+        OBSERVED_ATTRIBUTE_ERROR,
+        OBSERVED_ATTRIBUTE_TYPE_ERROR,
+        THRESHOLD_ERROR,
+        THRESHOLD_HIGH_VALUE_EXCEEDED,
+        THRESHOLD_LOW_VALUE_EXCEEDED
+    };
+
+    private static final MBeanNotificationInfo[] notifsInfo = {
+        new MBeanNotificationInfo(
+            types,
+            "javax.management.monitor.MonitorNotification",
+            "Notifications sent by the GaugeMonitor MBean")
+    };
+
+    // Flags needed to implement the hysteresis mechanism.
+    //
+    private static final int RISING             = 0;
+    private static final int FALLING            = 1;
+    private static final int RISING_OR_FALLING  = 2;
+
+    /*
+     * ------------------------------------------
+     *  CONSTRUCTORS
+     * ------------------------------------------
+     */
+
+    /**
+     * Default constructor.
+     */
+    public GaugeMonitor() {
+    }
+
+    /*
+     * ------------------------------------------
+     *  PUBLIC METHODS
+     * ------------------------------------------
+     */
+
+    /**
+     * Starts the gauge monitor.
+     */
+    public synchronized void start() {
+        if (isActive()) {
+            MONITOR_LOGGER.logp(Level.FINER, GaugeMonitor.class.getName(),
+                    "start", "the monitor is already active");
+            return;
+        }
+        // Reset values.
+        //
+        for (ObservedObject o : observedObjects) {
+            final GaugeMonitorObservedObject gmo =
+                (GaugeMonitorObservedObject) o;
+            gmo.setStatus(RISING_OR_FALLING);
+            gmo.setPreviousScanGauge(null);
+        }
+        doStart();
+    }
+
+    /**
+     * Stops the gauge monitor.
+     */
+    public synchronized void stop() {
+        doStop();
+    }
+
+    // GETTERS AND SETTERS
+    //--------------------
+
+    /**
+     * Gets the derived gauge of the specified object, if this object is
+     * contained in the set of observed MBeans, or <code>null</code> otherwise.
+     *
+     * @param object the name of the MBean.
+     *
+     * @return The derived gauge of the specified object.
+     *
+     */
+    @Override
+    public synchronized Number getDerivedGauge(ObjectName object) {
+        return (Number) super.getDerivedGauge(object);
+    }
+
+    /**
+     * Gets the derived gauge timestamp of the specified object, if
+     * this object is contained in the set of observed MBeans, or
+     * <code>0</code> otherwise.
+     *
+     * @param object the name of the object whose derived gauge
+     * timestamp is to be returned.
+     *
+     * @return The derived gauge timestamp of the specified object.
+     *
+     */
+    @Override
+    public synchronized long getDerivedGaugeTimeStamp(ObjectName object) {
+        return super.getDerivedGaugeTimeStamp(object);
+    }
+
+    /**
+     * Returns the derived gauge of the first object in the set of
+     * observed MBeans.
+     *
+     * @return The derived gauge.
+     *
+     * @deprecated As of JMX 1.2, replaced by
+     * {@link #getDerivedGauge(ObjectName)}
+     */
+    @Deprecated
+    public synchronized Number getDerivedGauge() {
+        if (observedObjects.isEmpty()) {
+            return null;
+        } else {
+            return (Number) observedObjects.get(0).getDerivedGauge();
+        }
+    }
+
+    /**
+     * Gets the derived gauge timestamp of the first object in the set
+     * of observed MBeans.
+     *
+     * @return The derived gauge timestamp.
+     *
+     * @deprecated As of JMX 1.2, replaced by
+     * {@link #getDerivedGaugeTimeStamp(ObjectName)}
+     */
+    @Deprecated
+    public synchronized long getDerivedGaugeTimeStamp() {
+        if (observedObjects.isEmpty()) {
+            return 0;
+        } else {
+            return observedObjects.get(0).getDerivedGaugeTimeStamp();
+        }
+    }
+
+    /**
+     * Gets the high threshold value common to all observed MBeans.
+     *
+     * @return The high threshold value.
+     *
+     * @see #setThresholds
+     */
+    public synchronized Number getHighThreshold() {
+        return highThreshold;
+    }
+
+    /**
+     * Gets the low threshold value common to all observed MBeans.
+     *
+     * @return The low threshold value.
+     *
+     * @see #setThresholds
+     */
+    public synchronized Number getLowThreshold() {
+        return lowThreshold;
+    }
+
+    /**
+     * Sets the high and the low threshold values common to all
+     * observed MBeans.
+     *
+     * @param highValue The high threshold value.
+     * @param lowValue The low threshold value.
+     *
+     * @exception IllegalArgumentException The specified high/low
+     * threshold is null or the low threshold is greater than the high
+     * threshold or the high threshold and the low threshold are not
+     * of the same type.
+     *
+     * @see #getHighThreshold
+     * @see #getLowThreshold
+     */
+    public synchronized void setThresholds(Number highValue, Number lowValue)
+        throws IllegalArgumentException {
+
+        if ((highValue == null) || (lowValue == null)) {
+            throw new IllegalArgumentException("Null threshold value");
+        }
+
+        if (highValue.getClass() != lowValue.getClass()) {
+            throw new IllegalArgumentException("Different type " +
+                                               "threshold values");
+        }
+
+        if (isFirstStrictlyGreaterThanLast(lowValue, highValue,
+                                           highValue.getClass().getName())) {
+            throw new IllegalArgumentException("High threshold less than " +
+                                               "low threshold");
+        }
+
+        if (highThreshold.equals(highValue) && lowThreshold.equals(lowValue))
+            return;
+        highThreshold = highValue;
+        lowThreshold = lowValue;
+
+        // Reset values.
+        //
+        int index = 0;
+        for (ObservedObject o : observedObjects) {
+            resetAlreadyNotified(o, index++, THRESHOLD_ERROR_NOTIFIED);
+            final GaugeMonitorObservedObject gmo =
+                (GaugeMonitorObservedObject) o;
+            gmo.setStatus(RISING_OR_FALLING);
+        }
+    }
+
+    /**
+     * Gets the high notification's on/off switch value common to all
+     * observed MBeans.
+     *
+     * @return <CODE>true</CODE> if the gauge monitor notifies when
+     * exceeding the high threshold, <CODE>false</CODE> otherwise.
+     *
+     * @see #setNotifyHigh
+     */
+    public synchronized boolean getNotifyHigh() {
+        return notifyHigh;
+    }
+
+    /**
+     * Sets the high notification's on/off switch value common to all
+     * observed MBeans.
+     *
+     * @param value The high notification's on/off switch value.
+     *
+     * @see #getNotifyHigh
+     */
+    public synchronized void setNotifyHigh(boolean value) {
+        if (notifyHigh == value)
+            return;
+        notifyHigh = value;
+    }
+
+    /**
+     * Gets the low notification's on/off switch value common to all
+     * observed MBeans.
+     *
+     * @return <CODE>true</CODE> if the gauge monitor notifies when
+     * exceeding the low threshold, <CODE>false</CODE> otherwise.
+     *
+     * @see #setNotifyLow
+     */
+    public synchronized boolean getNotifyLow() {
+        return notifyLow;
+    }
+
+    /**
+     * Sets the low notification's on/off switch value common to all
+     * observed MBeans.
+     *
+     * @param value The low notification's on/off switch value.
+     *
+     * @see #getNotifyLow
+     */
+    public synchronized void setNotifyLow(boolean value) {
+        if (notifyLow == value)
+            return;
+        notifyLow = value;
+    }
+
+    /**
+     * Gets the difference mode flag value common to all observed MBeans.
+     *
+     * @return <CODE>true</CODE> if the difference mode is used,
+     * <CODE>false</CODE> otherwise.
+     *
+     * @see #setDifferenceMode
+     */
+    public synchronized boolean getDifferenceMode() {
+        return differenceMode;
+    }
+
+    /**
+     * Sets the difference mode flag value common to all observed MBeans.
+     *
+     * @param value The difference mode flag value.
+     *
+     * @see #getDifferenceMode
+     */
+    public synchronized void setDifferenceMode(boolean value) {
+        if (differenceMode == value)
+            return;
+        differenceMode = value;
+
+        // Reset values.
+        //
+        for (ObservedObject o : observedObjects) {
+            final GaugeMonitorObservedObject gmo =
+                (GaugeMonitorObservedObject) o;
+            gmo.setStatus(RISING_OR_FALLING);
+            gmo.setPreviousScanGauge(null);
+        }
+    }
+
+   /**
+     * Returns a <CODE>NotificationInfo</CODE> object containing the
+     * name of the Java class of the notification and the notification
+     * types sent by the gauge monitor.
+     */
+    @Override
+    public MBeanNotificationInfo[] getNotificationInfo() {
+        return notifsInfo.clone();
+    }
+
+    /*
+     * ------------------------------------------
+     *  PRIVATE METHODS
+     * ------------------------------------------
+     */
+
+    /**
+     * Updates the derived gauge attribute of the observed object.
+     *
+     * @param scanGauge The value of the observed attribute.
+     * @param o The observed object.
+     * @return <CODE>true</CODE> if the derived gauge value is valid,
+     * <CODE>false</CODE> otherwise.  The derived gauge value is
+     * invalid when the differenceMode flag is set to
+     * <CODE>true</CODE> and it is the first notification (so we
+     * haven't 2 consecutive values to update the derived gauge).
+     */
+    private synchronized boolean updateDerivedGauge(
+        Object scanGauge, GaugeMonitorObservedObject o) {
+
+        boolean is_derived_gauge_valid;
+
+        // The gauge difference mode is used.
+        //
+        if (differenceMode) {
+
+            // The previous scan gauge has been initialized.
+            //
+            if (o.getPreviousScanGauge() != null) {
+                setDerivedGaugeWithDifference((Number)scanGauge, o);
+                is_derived_gauge_valid = true;
+            }
+            // The previous scan gauge has not been initialized.
+            // We cannot update the derived gauge...
+            //
+            else {
+                is_derived_gauge_valid = false;
+            }
+            o.setPreviousScanGauge((Number)scanGauge);
+        }
+        // The gauge difference mode is not used.
+        //
+        else {
+            o.setDerivedGauge((Number)scanGauge);
+            is_derived_gauge_valid = true;
+        }
+
+        return is_derived_gauge_valid;
+    }
+
+    /**
+     * Updates the notification attribute of the observed object
+     * and notifies the listeners only once if the notify flag
+     * is set to <CODE>true</CODE>.
+     * @param o The observed object.
+     */
+    private synchronized MonitorNotification updateNotifications(
+        GaugeMonitorObservedObject o) {
+
+        MonitorNotification n = null;
+
+        // Send high notification if notifyHigh is true.
+        // Send low notification if notifyLow is true.
+        //
+        if (o.getStatus() == RISING_OR_FALLING) {
+            if (isFirstGreaterThanLast((Number)o.getDerivedGauge(),
+                                       highThreshold,
+                                       o.getType())) {
+                if (notifyHigh) {
+                    n = new MonitorNotification(
+                            THRESHOLD_HIGH_VALUE_EXCEEDED,
+                            this,
+                            0,
+                            0,
+                            "",
+                            null,
+                            null,
+                            null,
+                            highThreshold);
+                }
+                o.setStatus(FALLING);
+            } else if (isFirstGreaterThanLast(lowThreshold,
+                                              (Number)o.getDerivedGauge(),
+                                              o.getType())) {
+                if (notifyLow) {
+                    n = new MonitorNotification(
+                            THRESHOLD_LOW_VALUE_EXCEEDED,
+                            this,
+                            0,
+                            0,
+                            "",
+                            null,
+                            null,
+                            null,
+                            lowThreshold);
+                }
+                o.setStatus(RISING);
+            }
+        } else {
+            if (o.getStatus() == RISING) {
+                if (isFirstGreaterThanLast((Number)o.getDerivedGauge(),
+                                           highThreshold,
+                                           o.getType())) {
+                    if (notifyHigh) {
+                        n = new MonitorNotification(
+                                THRESHOLD_HIGH_VALUE_EXCEEDED,
+                                this,
+                                0,
+                                0,
+                                "",
+                                null,
+                                null,
+                                null,
+                                highThreshold);
+                    }
+                    o.setStatus(FALLING);
+                }
+            } else if (o.getStatus() == FALLING) {
+                if (isFirstGreaterThanLast(lowThreshold,
+                                           (Number)o.getDerivedGauge(),
+                                           o.getType())) {
+                    if (notifyLow) {
+                        n = new MonitorNotification(
+                                THRESHOLD_LOW_VALUE_EXCEEDED,
+                                this,
+                                0,
+                                0,
+                                "",
+                                null,
+                                null,
+                                null,
+                                lowThreshold);
+                    }
+                    o.setStatus(RISING);
+                }
+            }
+        }
+
+        return n;
+    }
+
+    /**
+     * Sets the derived gauge when the differenceMode flag is set to
+     * <CODE>true</CODE>.  Both integer and floating-point types are
+     * allowed.
+     *
+     * @param scanGauge The value of the observed attribute.
+     * @param o The observed object.
+     */
+    private synchronized void setDerivedGaugeWithDifference(
+        Number scanGauge, GaugeMonitorObservedObject o) {
+        Number prev = o.getPreviousScanGauge();
+        Number der;
+        switch (o.getType()) {
+        case INTEGER:
+            der = Integer.valueOf(((Integer)scanGauge).intValue() -
+                                  ((Integer)prev).intValue());
+            break;
+        case BYTE:
+            der = Byte.valueOf((byte)(((Byte)scanGauge).byteValue() -
+                                      ((Byte)prev).byteValue()));
+            break;
+        case SHORT:
+            der = Short.valueOf((short)(((Short)scanGauge).shortValue() -
+                                        ((Short)prev).shortValue()));
+            break;
+        case LONG:
+            der = Long.valueOf(((Long)scanGauge).longValue() -
+                               ((Long)prev).longValue());
+            break;
+        case FLOAT:
+            der = Float.valueOf(((Float)scanGauge).floatValue() -
+                                ((Float)prev).floatValue());
+            break;
+        case DOUBLE:
+            der = Double.valueOf(((Double)scanGauge).doubleValue() -
+                                 ((Double)prev).doubleValue());
+            break;
+        default:
+            // Should never occur...
+            MONITOR_LOGGER.logp(Level.FINEST, GaugeMonitor.class.getName(),
+                    "setDerivedGaugeWithDifference",
+                    "the threshold type is invalid");
+            return;
+        }
+        o.setDerivedGauge(der);
+    }
+
+    /**
+     * Tests if the first specified Number is greater than or equal to
+     * the last.  Both integer and floating-point types are allowed.
+     *
+     * @param greater The first Number to compare with the second.
+     * @param less The second Number to compare with the first.
+     * @param type The number type.
+     * @return <CODE>true</CODE> if the first specified Number is
+     * greater than or equal to the last, <CODE>false</CODE>
+     * otherwise.
+     */
+    private boolean isFirstGreaterThanLast(Number greater,
+                                           Number less,
+                                           NumericalType type) {
+
+        switch (type) {
+        case INTEGER:
+        case BYTE:
+        case SHORT:
+        case LONG:
+            return (greater.longValue() >= less.longValue());
+        case FLOAT:
+        case DOUBLE:
+            return (greater.doubleValue() >= less.doubleValue());
+        default:
+            // Should never occur...
+            MONITOR_LOGGER.logp(Level.FINEST, GaugeMonitor.class.getName(),
+                    "isFirstGreaterThanLast",
+                    "the threshold type is invalid");
+            return false;
+        }
+    }
+
+    /**
+     * Tests if the first specified Number is strictly greater than the last.
+     * Both integer and floating-point types are allowed.
+     *
+     * @param greater The first Number to compare with the second.
+     * @param less The second Number to compare with the first.
+     * @param className The number class name.
+     * @return <CODE>true</CODE> if the first specified Number is
+     * strictly greater than the last, <CODE>false</CODE> otherwise.
+     */
+    private boolean isFirstStrictlyGreaterThanLast(Number greater,
+                                                   Number less,
+                                                   String className) {
+
+        if (className.equals("java.lang.Integer") ||
+            className.equals("java.lang.Byte") ||
+            className.equals("java.lang.Short") ||
+            className.equals("java.lang.Long")) {
+
+            return (greater.longValue() > less.longValue());
+        }
+        else if (className.equals("java.lang.Float") ||
+                 className.equals("java.lang.Double")) {
+
+            return (greater.doubleValue() > less.doubleValue());
+        }
+        else {
+            // Should never occur...
+            MONITOR_LOGGER.logp(Level.FINEST, GaugeMonitor.class.getName(),
+                    "isFirstStrictlyGreaterThanLast",
+                    "the threshold type is invalid");
+            return false;
+        }
+    }
+
+    /*
+     * ------------------------------------------
+     *  PACKAGE METHODS
+     * ------------------------------------------
+     */
+
+    /**
+     * Factory method for ObservedObject creation.
+     *
+     * @since 1.6
+     */
+    @Override
+    ObservedObject createObservedObject(ObjectName object) {
+        final GaugeMonitorObservedObject gmo =
+            new GaugeMonitorObservedObject(object);
+        gmo.setStatus(RISING_OR_FALLING);
+        gmo.setPreviousScanGauge(null);
+        return gmo;
+    }
+
+    /**
+     * This method globally sets the derived gauge type for the given
+     * "object" and "attribute" after checking that the type of the
+     * supplied observed attribute value is one of the value types
+     * supported by this monitor.
+     */
+    @Override
+    synchronized boolean isComparableTypeValid(ObjectName object,
+                                               String attribute,
+                                               Comparable<?> value) {
+        final GaugeMonitorObservedObject o =
+            (GaugeMonitorObservedObject) getObservedObject(object);
+        if (o == null)
+            return false;
+
+        // Check that the observed attribute is either of type
+        // "Integer" or "Float".
+        //
+        if (value instanceof Integer) {
+            o.setType(INTEGER);
+        } else if (value instanceof Byte) {
+            o.setType(BYTE);
+        } else if (value instanceof Short) {
+            o.setType(SHORT);
+        } else if (value instanceof Long) {
+            o.setType(LONG);
+        } else if (value instanceof Float) {
+            o.setType(FLOAT);
+        } else if (value instanceof Double) {
+            o.setType(DOUBLE);
+        } else {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    synchronized Comparable<?> getDerivedGaugeFromComparable(
+                                                  ObjectName object,
+                                                  String attribute,
+                                                  Comparable<?> value) {
+        final GaugeMonitorObservedObject o =
+            (GaugeMonitorObservedObject) getObservedObject(object);
+        if (o == null)
+            return null;
+
+        // Update the derived gauge attributes and check the
+        // validity of the new value. The derived gauge value
+        // is invalid when the differenceMode flag is set to
+        // true and it is the first notification, i.e. we
+        // haven't got 2 consecutive values to update the
+        // derived gauge.
+        //
+        o.setDerivedGaugeValid(updateDerivedGauge(value, o));
+
+        return (Comparable<?>) o.getDerivedGauge();
+    }
+
+    @Override
+    synchronized void onErrorNotification(MonitorNotification notification) {
+        final GaugeMonitorObservedObject o = (GaugeMonitorObservedObject)
+            getObservedObject(notification.getObservedObject());
+        if (o == null)
+            return;
+
+        // Reset values.
+        //
+        o.setStatus(RISING_OR_FALLING);
+        o.setPreviousScanGauge(null);
+    }
+
+    @Override
+    synchronized MonitorNotification buildAlarmNotification(
+                                               ObjectName object,
+                                               String attribute,
+                                               Comparable<?> value) {
+        final GaugeMonitorObservedObject o =
+            (GaugeMonitorObservedObject) getObservedObject(object);
+        if (o == null)
+            return null;
+
+        // Notify the listeners if the updated derived
+        // gauge value is valid.
+        //
+        final MonitorNotification alarm;
+        if (o.getDerivedGaugeValid())
+            alarm = updateNotifications(o);
+        else
+            alarm = null;
+        return alarm;
+    }
+
+    /**
+     * Tests if the threshold high and threshold low are both of the
+     * same type as the gauge.  Both integer and floating-point types
+     * are allowed.
+     *
+     * Note:
+     *   If the optional lowThreshold or highThreshold have not been
+     *   initialized, their default value is an Integer object with
+     *   a value equal to zero.
+     *
+     * @param object The observed object.
+     * @param attribute The observed attribute.
+     * @param value The sample value.
+     * @return <CODE>true</CODE> if type is the same,
+     * <CODE>false</CODE> otherwise.
+     */
+    @Override
+    synchronized boolean isThresholdTypeValid(ObjectName object,
+                                              String attribute,
+                                              Comparable<?> value) {
+        final GaugeMonitorObservedObject o =
+            (GaugeMonitorObservedObject) getObservedObject(object);
+        if (o == null)
+            return false;
+
+        Class<? extends Number> c = classForType(o.getType());
+        return (isValidForType(highThreshold, c) &&
+                isValidForType(lowThreshold, c));
+    }
+}

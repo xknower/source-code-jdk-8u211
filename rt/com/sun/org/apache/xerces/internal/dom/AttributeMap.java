@@ -1,611 +1,606 @@
-/*     */ package com.sun.org.apache.xerces.internal.dom;
-/*     */ 
-/*     */ import java.util.ArrayList;
-/*     */ import java.util.List;
-/*     */ import org.w3c.dom.DOMException;
-/*     */ import org.w3c.dom.Node;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class AttributeMap
-/*     */   extends NamedNodeMapImpl
-/*     */ {
-/*     */   static final long serialVersionUID = 8872606282138665383L;
-/*     */   
-/*     */   protected AttributeMap(ElementImpl ownerNode, NamedNodeMapImpl defaults) {
-/*  56 */     super(ownerNode);
-/*  57 */     if (defaults != null) {
-/*     */       
-/*  59 */       cloneContent(defaults);
-/*  60 */       if (this.nodes != null) {
-/*  61 */         hasDefaults(true);
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Node setNamedItem(Node arg) throws DOMException {
-/*  78 */     boolean errCheck = (this.ownerNode.ownerDocument()).errorChecking;
-/*  79 */     if (errCheck) {
-/*  80 */       if (isReadOnly()) {
-/*  81 */         String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "NO_MODIFICATION_ALLOWED_ERR", null);
-/*  82 */         throw new DOMException((short)7, msg);
-/*     */       } 
-/*  84 */       if (arg.getOwnerDocument() != this.ownerNode.ownerDocument()) {
-/*  85 */         String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "WRONG_DOCUMENT_ERR", null);
-/*  86 */         throw new DOMException((short)4, msg);
-/*     */       } 
-/*  88 */       if (arg.getNodeType() != 2) {
-/*  89 */         String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "HIERARCHY_REQUEST_ERR", null);
-/*  90 */         throw new DOMException((short)3, msg);
-/*     */       } 
-/*     */     } 
-/*  93 */     AttrImpl argn = (AttrImpl)arg;
-/*     */     
-/*  95 */     if (argn.isOwned()) {
-/*  96 */       if (errCheck && argn.getOwnerElement() != this.ownerNode) {
-/*  97 */         String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "INUSE_ATTRIBUTE_ERR", null);
-/*  98 */         throw new DOMException((short)10, msg);
-/*     */       } 
-/*     */       
-/* 101 */       return arg;
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 106 */     argn.ownerNode = this.ownerNode;
-/* 107 */     argn.isOwned(true);
-/*     */     
-/* 109 */     int i = findNamePoint(argn.getNodeName(), 0);
-/* 110 */     AttrImpl previous = null;
-/* 111 */     if (i >= 0) {
-/* 112 */       previous = this.nodes.get(i);
-/* 113 */       this.nodes.set(i, arg);
-/* 114 */       previous.ownerNode = this.ownerNode.ownerDocument();
-/* 115 */       previous.isOwned(false);
-/*     */       
-/* 117 */       previous.isSpecified(true);
-/*     */     } else {
-/* 119 */       i = -1 - i;
-/* 120 */       if (null == this.nodes) {
-/* 121 */         this.nodes = new ArrayList(5);
-/*     */       }
-/* 123 */       this.nodes.add(i, arg);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 127 */     this.ownerNode.ownerDocument().setAttrNode(argn, previous);
-/*     */ 
-/*     */ 
-/*     */     
-/* 131 */     if (!argn.isNormalized()) {
-/* 132 */       this.ownerNode.isNormalized(false);
-/*     */     }
-/* 134 */     return previous;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Node setNamedItemNS(Node arg) throws DOMException {
-/* 148 */     boolean errCheck = (this.ownerNode.ownerDocument()).errorChecking;
-/* 149 */     if (errCheck) {
-/* 150 */       if (isReadOnly()) {
-/* 151 */         String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "NO_MODIFICATION_ALLOWED_ERR", null);
-/* 152 */         throw new DOMException((short)7, msg);
-/*     */       } 
-/* 154 */       if (arg.getOwnerDocument() != this.ownerNode.ownerDocument()) {
-/* 155 */         String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "WRONG_DOCUMENT_ERR", null);
-/* 156 */         throw new DOMException((short)4, msg);
-/*     */       } 
-/* 158 */       if (arg.getNodeType() != 2) {
-/* 159 */         String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "HIERARCHY_REQUEST_ERR", null);
-/* 160 */         throw new DOMException((short)3, msg);
-/*     */       } 
-/*     */     } 
-/* 163 */     AttrImpl argn = (AttrImpl)arg;
-/*     */     
-/* 165 */     if (argn.isOwned()) {
-/* 166 */       if (errCheck && argn.getOwnerElement() != this.ownerNode) {
-/* 167 */         String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "INUSE_ATTRIBUTE_ERR", null);
-/* 168 */         throw new DOMException((short)10, msg);
-/*     */       } 
-/*     */       
-/* 171 */       return arg;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 175 */     argn.ownerNode = this.ownerNode;
-/* 176 */     argn.isOwned(true);
-/*     */     
-/* 178 */     int i = findNamePoint(argn.getNamespaceURI(), argn.getLocalName());
-/* 179 */     AttrImpl previous = null;
-/* 180 */     if (i >= 0) {
-/* 181 */       previous = this.nodes.get(i);
-/* 182 */       this.nodes.set(i, arg);
-/* 183 */       previous.ownerNode = this.ownerNode.ownerDocument();
-/* 184 */       previous.isOwned(false);
-/*     */       
-/* 186 */       previous.isSpecified(true);
-/*     */     }
-/*     */     else {
-/*     */       
-/* 190 */       i = findNamePoint(arg.getNodeName(), 0);
-/* 191 */       if (i >= 0) {
-/* 192 */         previous = this.nodes.get(i);
-/* 193 */         this.nodes.add(i, arg);
-/*     */       } else {
-/* 195 */         i = -1 - i;
-/* 196 */         if (null == this.nodes) {
-/* 197 */           this.nodes = new ArrayList(5);
-/*     */         }
-/* 199 */         this.nodes.add(i, arg);
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 205 */     this.ownerNode.ownerDocument().setAttrNode(argn, previous);
-/*     */ 
-/*     */ 
-/*     */     
-/* 209 */     if (!argn.isNormalized()) {
-/* 210 */       this.ownerNode.isNormalized(false);
-/*     */     }
-/* 212 */     return previous;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Node removeNamedItem(String name) throws DOMException {
-/* 231 */     return internalRemoveNamedItem(name, true);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   Node safeRemoveNamedItem(String name) {
-/* 239 */     return internalRemoveNamedItem(name, false);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected Node removeItem(Node item, boolean addDefault) throws DOMException {
-/* 258 */     int index = -1;
-/* 259 */     if (this.nodes != null) {
-/* 260 */       int size = this.nodes.size();
-/* 261 */       for (int i = 0; i < size; i++) {
-/* 262 */         if (this.nodes.get(i) == item) {
-/* 263 */           index = i;
-/*     */           break;
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/* 268 */     if (index < 0) {
-/* 269 */       String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "NOT_FOUND_ERR", null);
-/* 270 */       throw new DOMException((short)8, msg);
-/*     */     } 
-/*     */     
-/* 273 */     return remove((AttrImpl)item, index, addDefault);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected final Node internalRemoveNamedItem(String name, boolean raiseEx) {
-/* 281 */     if (isReadOnly()) {
-/* 282 */       String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "NO_MODIFICATION_ALLOWED_ERR", null);
-/* 283 */       throw new DOMException((short)7, msg);
-/*     */     } 
-/* 285 */     int i = findNamePoint(name, 0);
-/* 286 */     if (i < 0) {
-/* 287 */       if (raiseEx) {
-/* 288 */         String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "NOT_FOUND_ERR", null);
-/* 289 */         throw new DOMException((short)8, msg);
-/*     */       } 
-/* 291 */       return null;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 295 */     return remove(this.nodes.get(i), i, true);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private final Node remove(AttrImpl attr, int index, boolean addDefault) {
-/* 302 */     CoreDocumentImpl ownerDocument = this.ownerNode.ownerDocument();
-/* 303 */     String name = attr.getNodeName();
-/* 304 */     if (attr.isIdAttribute()) {
-/* 305 */       ownerDocument.removeIdentifier(attr.getValue());
-/*     */     }
-/*     */     
-/* 308 */     if (hasDefaults() && addDefault) {
-/*     */ 
-/*     */       
-/* 311 */       NamedNodeMapImpl defaults = ((ElementImpl)this.ownerNode).getDefaultAttributes();
-/*     */       
-/*     */       Node d;
-/* 314 */       if (defaults != null && (
-/* 315 */         d = defaults.getNamedItem(name)) != null && 
-/* 316 */         findNamePoint(name, index + 1) < 0) {
-/* 317 */         NodeImpl clone = (NodeImpl)d.cloneNode(true);
-/* 318 */         if (d.getLocalName() != null)
-/*     */         {
-/*     */ 
-/*     */ 
-/*     */           
-/* 323 */           ((AttrNSImpl)clone).namespaceURI = attr.getNamespaceURI();
-/*     */         }
-/* 325 */         clone.ownerNode = this.ownerNode;
-/* 326 */         clone.isOwned(true);
-/* 327 */         clone.isSpecified(false);
-/*     */         
-/* 329 */         this.nodes.set(index, clone);
-/* 330 */         if (attr.isIdAttribute()) {
-/* 331 */           ownerDocument.putIdentifier(clone.getNodeValue(), (ElementImpl)this.ownerNode);
-/*     */         }
-/*     */       } else {
-/*     */         
-/* 335 */         this.nodes.remove(index);
-/*     */       } 
-/*     */     } else {
-/* 338 */       this.nodes.remove(index);
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 344 */     attr.ownerNode = ownerDocument;
-/* 345 */     attr.isOwned(false);
-/*     */ 
-/*     */ 
-/*     */     
-/* 349 */     attr.isSpecified(true);
-/* 350 */     attr.isIdAttribute(false);
-/*     */ 
-/*     */     
-/* 353 */     ownerDocument.removedAttrNode(attr, this.ownerNode, name);
-/*     */     
-/* 355 */     return attr;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Node removeNamedItemNS(String namespaceURI, String name) throws DOMException {
-/* 376 */     return internalRemoveNamedItemNS(namespaceURI, name, true);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   Node safeRemoveNamedItemNS(String namespaceURI, String name) {
-/* 384 */     return internalRemoveNamedItemNS(namespaceURI, name, false);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected final Node internalRemoveNamedItemNS(String namespaceURI, String name, boolean raiseEx) {
-/* 396 */     CoreDocumentImpl ownerDocument = this.ownerNode.ownerDocument();
-/* 397 */     if (ownerDocument.errorChecking && isReadOnly()) {
-/* 398 */       String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "NO_MODIFICATION_ALLOWED_ERR", null);
-/* 399 */       throw new DOMException((short)7, msg);
-/*     */     } 
-/* 401 */     int i = findNamePoint(namespaceURI, name);
-/* 402 */     if (i < 0) {
-/* 403 */       if (raiseEx) {
-/* 404 */         String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "NOT_FOUND_ERR", null);
-/* 405 */         throw new DOMException((short)8, msg);
-/*     */       } 
-/* 407 */       return null;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 411 */     AttrImpl n = this.nodes.get(i);
-/*     */     
-/* 413 */     if (n.isIdAttribute()) {
-/* 414 */       ownerDocument.removeIdentifier(n.getValue());
-/*     */     }
-/*     */     
-/* 417 */     String nodeName = n.getNodeName();
-/* 418 */     if (hasDefaults()) {
-/* 419 */       NamedNodeMapImpl defaults = ((ElementImpl)this.ownerNode).getDefaultAttributes();
-/*     */       Node d;
-/* 421 */       if (defaults != null && (
-/* 422 */         d = defaults.getNamedItem(nodeName)) != null) {
-/*     */         
-/* 424 */         int j = findNamePoint(nodeName, 0);
-/* 425 */         if (j >= 0 && findNamePoint(nodeName, j + 1) < 0) {
-/* 426 */           NodeImpl clone = (NodeImpl)d.cloneNode(true);
-/* 427 */           clone.ownerNode = this.ownerNode;
-/* 428 */           if (d.getLocalName() != null)
-/*     */           {
-/*     */ 
-/*     */ 
-/*     */             
-/* 433 */             ((AttrNSImpl)clone).namespaceURI = namespaceURI;
-/*     */           }
-/* 435 */           clone.isOwned(true);
-/* 436 */           clone.isSpecified(false);
-/* 437 */           this.nodes.set(i, clone);
-/* 438 */           if (clone.isIdAttribute()) {
-/* 439 */             ownerDocument.putIdentifier(clone.getNodeValue(), (ElementImpl)this.ownerNode);
-/*     */           }
-/*     */         } else {
-/*     */           
-/* 443 */           this.nodes.remove(i);
-/*     */         } 
-/*     */       } else {
-/* 446 */         this.nodes.remove(i);
-/*     */       } 
-/*     */     } else {
-/* 449 */       this.nodes.remove(i);
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 455 */     n.ownerNode = ownerDocument;
-/* 456 */     n.isOwned(false);
-/*     */ 
-/*     */     
-/* 459 */     n.isSpecified(true);
-/*     */     
-/* 461 */     n.isIdAttribute(false);
-/*     */ 
-/*     */     
-/* 464 */     ownerDocument.removedAttrNode(n, this.ownerNode, name);
-/*     */     
-/* 466 */     return n;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public NamedNodeMapImpl cloneMap(NodeImpl ownerNode) {
-/* 480 */     AttributeMap newmap = new AttributeMap((ElementImpl)ownerNode, null);
-/*     */     
-/* 482 */     newmap.hasDefaults(hasDefaults());
-/* 483 */     newmap.cloneContent(this);
-/* 484 */     return newmap;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void cloneContent(NamedNodeMapImpl srcmap) {
-/* 491 */     List<NodeImpl> srcnodes = srcmap.nodes;
-/* 492 */     if (srcnodes != null) {
-/* 493 */       int size = srcnodes.size();
-/* 494 */       if (size != 0) {
-/* 495 */         if (this.nodes == null) {
-/* 496 */           this.nodes = new ArrayList(size);
-/*     */         } else {
-/*     */           
-/* 499 */           this.nodes.clear();
-/*     */         } 
-/* 501 */         for (int i = 0; i < size; i++) {
-/* 502 */           NodeImpl n = srcnodes.get(i);
-/* 503 */           NodeImpl clone = (NodeImpl)n.cloneNode(true);
-/* 504 */           clone.isSpecified(n.isSpecified());
-/* 505 */           this.nodes.add(clone);
-/* 506 */           clone.ownerNode = this.ownerNode;
-/* 507 */           clone.isOwned(true);
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void moveSpecifiedAttributes(AttributeMap srcmap) {
-/* 518 */     int nsize = (srcmap.nodes != null) ? srcmap.nodes.size() : 0;
-/* 519 */     for (int i = nsize - 1; i >= 0; i--) {
-/* 520 */       AttrImpl attr = srcmap.nodes.get(i);
-/* 521 */       if (attr.isSpecified()) {
-/* 522 */         srcmap.remove(attr, i, false);
-/* 523 */         if (attr.getLocalName() != null) {
-/* 524 */           setNamedItem(attr);
-/*     */         } else {
-/*     */           
-/* 527 */           setNamedItemNS(attr);
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void reconcileDefaults(NamedNodeMapImpl defaults) {
-/* 541 */     int nsize = (this.nodes != null) ? this.nodes.size() : 0;
-/* 542 */     for (int i = nsize - 1; i >= 0; i--) {
-/* 543 */       AttrImpl attr = this.nodes.get(i);
-/* 544 */       if (!attr.isSpecified()) {
-/* 545 */         remove(attr, i, false);
-/*     */       }
-/*     */     } 
-/*     */     
-/* 549 */     if (defaults == null) {
-/*     */       return;
-/*     */     }
-/* 552 */     if (this.nodes == null || this.nodes.size() == 0) {
-/* 553 */       cloneContent(defaults);
-/*     */     } else {
-/*     */       
-/* 556 */       int dsize = defaults.nodes.size();
-/* 557 */       for (int n = 0; n < dsize; n++) {
-/* 558 */         AttrImpl d = defaults.nodes.get(n);
-/* 559 */         int j = findNamePoint(d.getNodeName(), 0);
-/* 560 */         if (j < 0) {
-/* 561 */           j = -1 - j;
-/* 562 */           NodeImpl clone = (NodeImpl)d.cloneNode(true);
-/* 563 */           clone.ownerNode = this.ownerNode;
-/* 564 */           clone.isOwned(true);
-/* 565 */           clone.isSpecified(false);
-/* 566 */           this.nodes.add(j, clone);
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected final int addItem(Node arg) {
-/* 575 */     AttrImpl argn = (AttrImpl)arg;
-/*     */ 
-/*     */     
-/* 578 */     argn.ownerNode = this.ownerNode;
-/* 579 */     argn.isOwned(true);
-/*     */     
-/* 581 */     int i = findNamePoint(argn.getNamespaceURI(), argn.getLocalName());
-/* 582 */     if (i >= 0) {
-/* 583 */       this.nodes.set(i, arg);
-/*     */     
-/*     */     }
-/*     */     else {
-/*     */       
-/* 588 */       i = findNamePoint(argn.getNodeName(), 0);
-/* 589 */       if (i >= 0) {
-/* 590 */         this.nodes.add(i, arg);
-/*     */       } else {
-/*     */         
-/* 593 */         i = -1 - i;
-/* 594 */         if (null == this.nodes) {
-/* 595 */           this.nodes = new ArrayList(5);
-/*     */         }
-/* 597 */         this.nodes.add(i, arg);
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */     
-/* 602 */     this.ownerNode.ownerDocument().setAttrNode(argn, null);
-/* 603 */     return i;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\dom\AttributeMap.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2000-2002,2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.dom;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.w3c.dom.DOMException;
+import org.w3c.dom.Node;
+
+/**
+ * AttributeMap inherits from NamedNodeMapImpl and extends it to deal with the
+ * specifics of storing attributes. These are:
+ * <ul>
+ *  <li>managing ownership of attribute nodes
+ *  <li>managing default attributes
+ *  <li>firing mutation events
+ * </ul>
+ * <p>
+ * This class doesn't directly support mutation events, however, it notifies
+ * the document when mutations are performed so that the document class do so.
+ *
+ * @xerces.internal
+ *
+ * @version $Id: AttributeMap.java,v 1.7 2010-11-01 04:39:37 joehw Exp $
+ */
+public class AttributeMap extends NamedNodeMapImpl {
+
+    /** Serialization version. */
+    static final long serialVersionUID = 8872606282138665383L;
+
+    //
+    // Constructors
+    //
+
+    /** Constructs a named node map. */
+    protected AttributeMap(ElementImpl ownerNode, NamedNodeMapImpl defaults) {
+        super(ownerNode);
+        if (defaults != null) {
+            // initialize map with the defaults
+            cloneContent(defaults);
+            if (nodes != null) {
+                hasDefaults(true);
+            }
+        }
+    }
+
+    /**
+     * Adds an attribute using its nodeName attribute.
+     * @see org.w3c.dom.NamedNodeMap#setNamedItem
+     * @return If the new Node replaces an existing node the replaced Node is
+     *      returned, otherwise null is returned.
+     * @param arg
+     *      An Attr node to store in this map.
+     * @exception org.w3c.dom.DOMException The exception description.
+     */
+    public Node setNamedItem(Node arg)
+    throws DOMException {
+
+        boolean errCheck = ownerNode.ownerDocument().errorChecking;
+        if (errCheck) {
+            if (isReadOnly()) {
+                String msg = DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "NO_MODIFICATION_ALLOWED_ERR", null);
+                throw new DOMException(DOMException.NO_MODIFICATION_ALLOWED_ERR, msg);
+            }
+            if (arg.getOwnerDocument() != ownerNode.ownerDocument()) {
+                String msg = DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "WRONG_DOCUMENT_ERR", null);
+                throw new DOMException(DOMException.WRONG_DOCUMENT_ERR, msg);
+            }
+            if (arg.getNodeType() != Node.ATTRIBUTE_NODE) {
+                String msg = DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "HIERARCHY_REQUEST_ERR", null);
+                throw new DOMException(DOMException.HIERARCHY_REQUEST_ERR, msg);
+            }
+        }
+        AttrImpl argn = (AttrImpl)arg;
+
+        if (argn.isOwned()){
+            if (errCheck && argn.getOwnerElement() != ownerNode) {
+                String msg = DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "INUSE_ATTRIBUTE_ERR", null);
+                throw new DOMException(DOMException.INUSE_ATTRIBUTE_ERR, msg);
+            }
+            // replacing an Attribute with itself does nothing
+            return arg;
+        }
+
+
+        // set owner
+        argn.ownerNode = ownerNode;
+        argn.isOwned(true);
+
+        int i = findNamePoint(argn.getNodeName(),0);
+        AttrImpl previous = null;
+        if (i >= 0) {
+            previous = (AttrImpl) nodes.get(i);
+            nodes.set(i, arg);
+            previous.ownerNode = ownerNode.ownerDocument();
+            previous.isOwned(false);
+            // make sure it won't be mistaken with defaults in case it's reused
+            previous.isSpecified(true);
+        } else {
+            i = -1 - i; // Insert point (may be end of list)
+            if (null == nodes) {
+                nodes = new ArrayList(5);
+            }
+            nodes.add(i, arg);
+        }
+
+        // notify document
+        ownerNode.ownerDocument().setAttrNode(argn, previous);
+
+        // If the new attribute is not normalized,
+        // the owning element is inherently not normalized.
+        if (!argn.isNormalized()) {
+            ownerNode.isNormalized(false);
+        }
+        return previous;
+
+    } // setNamedItem(Node):Node
+
+    /**
+     * Adds an attribute using its namespaceURI and localName.
+     * @see org.w3c.dom.NamedNodeMap#setNamedItem
+     * @return If the new Node replaces an existing node the replaced Node is
+     *      returned, otherwise null is returned.
+     * @param arg A node to store in a named node map.
+     */
+    public Node setNamedItemNS(Node arg)
+    throws DOMException {
+
+        boolean errCheck = ownerNode.ownerDocument().errorChecking;
+        if (errCheck) {
+            if (isReadOnly()) {
+                String msg = DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "NO_MODIFICATION_ALLOWED_ERR", null);
+                throw new DOMException(DOMException.NO_MODIFICATION_ALLOWED_ERR, msg);
+            }
+            if(arg.getOwnerDocument() != ownerNode.ownerDocument()) {
+                String msg = DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "WRONG_DOCUMENT_ERR", null);
+                throw new DOMException(DOMException.WRONG_DOCUMENT_ERR, msg);
+            }
+            if (arg.getNodeType() != Node.ATTRIBUTE_NODE) {
+                String msg = DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "HIERARCHY_REQUEST_ERR", null);
+                throw new DOMException(DOMException.HIERARCHY_REQUEST_ERR, msg);
+            }
+        }
+        AttrImpl argn = (AttrImpl)arg;
+
+        if (argn.isOwned()){
+            if (errCheck && argn.getOwnerElement() != ownerNode) {
+                String msg = DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "INUSE_ATTRIBUTE_ERR", null);
+                throw new DOMException(DOMException.INUSE_ATTRIBUTE_ERR, msg);
+            }
+            // replacing an Attribute with itself does nothing
+            return arg;
+        }
+
+        // set owner
+        argn.ownerNode = ownerNode;
+        argn.isOwned(true);
+
+        int i = findNamePoint(argn.getNamespaceURI(), argn.getLocalName());
+        AttrImpl previous = null;
+        if (i >= 0) {
+            previous = (AttrImpl) nodes.get(i);
+            nodes.set(i, arg);
+            previous.ownerNode = ownerNode.ownerDocument();
+            previous.isOwned(false);
+            // make sure it won't be mistaken with defaults in case it's reused
+            previous.isSpecified(true);
+        } else {
+            // If we can't find by namespaceURI, localName, then we find by
+            // nodeName so we know where to insert.
+            i = findNamePoint(arg.getNodeName(),0);
+            if (i >=0) {
+                previous = (AttrImpl) nodes.get(i);
+                nodes.add(i, arg);
+            } else {
+                i = -1 - i; // Insert point (may be end of list)
+                if (null == nodes) {
+                    nodes = new ArrayList(5);
+                }
+                nodes.add(i, arg);
+            }
+        }
+        //      changed(true);
+
+        // notify document
+        ownerNode.ownerDocument().setAttrNode(argn, previous);
+
+        // If the new attribute is not normalized,
+        // the owning element is inherently not normalized.
+        if (!argn.isNormalized()) {
+            ownerNode.isNormalized(false);
+        }
+        return previous;
+
+    } // setNamedItemNS(Node):Node
+
+    /**
+     * Removes an attribute specified by name.
+     * @param name
+     *      The name of a node to remove. If the
+     *      removed attribute is known to have a default value, an
+     *      attribute immediately appears containing the default value
+     *      as well as the corresponding namespace URI, local name,
+     *      and prefix when applicable.
+     * @return The node removed from the map if a node with such a name exists.
+     * @throws              NOT_FOUND_ERR: Raised if there is no node named
+     *                      name in the map.
+     */
+    /***/
+    public Node removeNamedItem(String name)
+        throws DOMException {
+        return internalRemoveNamedItem(name, true);
+    }
+
+    /**
+     * Same as removeNamedItem except that it simply returns null if the
+     * specified name is not found.
+     */
+    Node safeRemoveNamedItem(String name) {
+        return internalRemoveNamedItem(name, false);
+    }
+
+
+    /**
+     * NON-DOM: Remove the node object
+     *
+     * NOTE: Specifically removes THIS NODE -- not the node with this
+     * name, nor the node with these contents. If node does not belong to
+     * this named node map, we throw a DOMException.
+     *
+     * @param item       The node to remove
+     * @param addDefault true -- magically add default attribute
+     * @return Removed node
+     * @exception DOMException
+     */
+    protected Node removeItem(Node item, boolean addDefault)
+        throws DOMException {
+
+        int index = -1;
+        if (nodes != null) {
+            final int size = nodes.size();
+            for (int i = 0; i < size; ++i) {
+                if (nodes.get(i) == item) {
+                    index = i;
+                    break;
+                }
+            }
+        }
+        if (index < 0) {
+            String msg = DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "NOT_FOUND_ERR", null);
+            throw new DOMException(DOMException.NOT_FOUND_ERR, msg);
+        }
+
+        return remove((AttrImpl)item, index, addDefault);
+    }
+
+    /**
+     * Internal removeNamedItem method allowing to specify whether an exception
+     * must be thrown if the specified name is not found.
+     */
+    final protected Node internalRemoveNamedItem(String name, boolean raiseEx){
+        if (isReadOnly()) {
+                String msg = DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "NO_MODIFICATION_ALLOWED_ERR", null);
+                throw new DOMException(DOMException.NO_MODIFICATION_ALLOWED_ERR, msg);
+        }
+        int i = findNamePoint(name,0);
+        if (i < 0) {
+            if (raiseEx) {
+                String msg = DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "NOT_FOUND_ERR", null);
+                throw new DOMException(DOMException.NOT_FOUND_ERR, msg);
+            } else {
+                return null;
+            }
+        }
+
+        return remove((AttrImpl)nodes.get(i), i, true);
+
+    } // internalRemoveNamedItem(String,boolean):Node
+
+    private final Node remove(AttrImpl attr, int index,
+                              boolean addDefault) {
+
+        CoreDocumentImpl ownerDocument = ownerNode.ownerDocument();
+        String name = attr.getNodeName();
+        if (attr.isIdAttribute()) {
+            ownerDocument.removeIdentifier(attr.getValue());
+        }
+
+        if (hasDefaults() && addDefault) {
+            // If there's a default, add it instead
+            NamedNodeMapImpl defaults =
+                ((ElementImpl) ownerNode).getDefaultAttributes();
+
+            Node d;
+            if (defaults != null &&
+                (d = defaults.getNamedItem(name)) != null &&
+                findNamePoint(name, index+1) < 0) {
+                    NodeImpl clone = (NodeImpl)d.cloneNode(true);
+                    if (d.getLocalName() !=null){
+                            // we must rely on the name to find a default attribute
+                            // ("test:attr"), but while copying it from the DOCTYPE
+                            // we should not loose namespace URI that was assigned
+                            // to the attribute in the instance document.
+                            ((AttrNSImpl)clone).namespaceURI = attr.getNamespaceURI();
+                    }
+                    clone.ownerNode = ownerNode;
+                    clone.isOwned(true);
+                    clone.isSpecified(false);
+
+                    nodes.set(index, clone);
+                    if (attr.isIdAttribute()) {
+                        ownerDocument.putIdentifier(clone.getNodeValue(),
+                                                (ElementImpl)ownerNode);
+                    }
+            } else {
+                nodes.remove(index);
+            }
+        } else {
+            nodes.remove(index);
+        }
+
+        //        changed(true);
+
+        // remove reference to owner
+        attr.ownerNode = ownerDocument;
+        attr.isOwned(false);
+
+        // make sure it won't be mistaken with defaults in case it's
+        // reused
+        attr.isSpecified(true);
+        attr.isIdAttribute(false);
+
+        // notify document
+        ownerDocument.removedAttrNode(attr, ownerNode, name);
+
+        return attr;
+    }
+
+    /**
+     * Introduced in DOM Level 2. <p>
+     * Removes an attribute specified by local name and namespace URI.
+     * @param namespaceURI
+     *                      The namespace URI of the node to remove.
+     *                      When it is null or an empty string, this
+     *                      method behaves like removeNamedItem.
+     * @param name          The local name of the node to remove. If the
+     *                      removed attribute is known to have a default
+     *                      value, an attribute immediately appears
+     *                      containing the default value.
+     * @return Node         The node removed from the map if a node with such
+     *                      a local name and namespace URI exists.
+     * @throws              NOT_FOUND_ERR: Raised if there is no node named
+     *                      name in the map.
+     */
+    public Node removeNamedItemNS(String namespaceURI, String name)
+        throws DOMException {
+        return internalRemoveNamedItemNS(namespaceURI, name, true);
+    }
+
+    /**
+     * Same as removeNamedItem except that it simply returns null if the
+     * specified local name and namespace URI is not found.
+     */
+    Node safeRemoveNamedItemNS(String namespaceURI, String name) {
+        return internalRemoveNamedItemNS(namespaceURI, name, false);
+    }
+
+    /**
+     * Internal removeNamedItemNS method allowing to specify whether an
+     * exception must be thrown if the specified local name and namespace URI
+     * is not found.
+     */
+    final protected Node internalRemoveNamedItemNS(String namespaceURI,
+            String name,
+            boolean raiseEx) {
+
+        CoreDocumentImpl ownerDocument = ownerNode.ownerDocument();
+        if (ownerDocument.errorChecking && isReadOnly()) {
+            String msg = DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "NO_MODIFICATION_ALLOWED_ERR", null);
+            throw new DOMException(DOMException.NO_MODIFICATION_ALLOWED_ERR, msg);
+        }
+        int i = findNamePoint(namespaceURI, name);
+        if (i < 0) {
+            if (raiseEx) {
+                String msg = DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "NOT_FOUND_ERR", null);
+                throw new DOMException(DOMException.NOT_FOUND_ERR, msg);
+            } else {
+                return null;
+            }
+        }
+
+        AttrImpl n = (AttrImpl)nodes.get(i);
+
+        if (n.isIdAttribute()) {
+            ownerDocument.removeIdentifier(n.getValue());
+        }
+        // If there's a default, add it instead
+        String nodeName = n.getNodeName();
+        if (hasDefaults()) {
+            NamedNodeMapImpl defaults = ((ElementImpl) ownerNode).getDefaultAttributes();
+            Node d;
+            if (defaults != null
+                    && (d = defaults.getNamedItem(nodeName)) != null)
+            {
+                int j = findNamePoint(nodeName,0);
+                if (j>=0 && findNamePoint(nodeName, j+1) < 0) {
+                    NodeImpl clone = (NodeImpl)d.cloneNode(true);
+                    clone.ownerNode = ownerNode;
+                    if (d.getLocalName() != null) {
+                        // we must rely on the name to find a default attribute
+                        // ("test:attr"), but while copying it from the DOCTYPE
+                        // we should not loose namespace URI that was assigned
+                        // to the attribute in the instance document.
+                        ((AttrNSImpl)clone).namespaceURI = namespaceURI;
+                    }
+                    clone.isOwned(true);
+                    clone.isSpecified(false);
+                    nodes.set(i, clone);
+                    if (clone.isIdAttribute()) {
+                        ownerDocument.putIdentifier(clone.getNodeValue(),
+                                (ElementImpl)ownerNode);
+                    }
+                } else {
+                    nodes.remove(i);
+                }
+            } else {
+                nodes.remove(i);
+            }
+        } else {
+            nodes.remove(i);
+        }
+
+        //        changed(true);
+
+        // remove reference to owner
+        n.ownerNode = ownerDocument;
+        n.isOwned(false);
+        // make sure it won't be mistaken with defaults in case it's
+        // reused
+        n.isSpecified(true);
+        // update id table if needed
+        n.isIdAttribute(false);
+
+        // notify document
+        ownerDocument.removedAttrNode(n, ownerNode, name);
+
+        return n;
+
+    } // internalRemoveNamedItemNS(String,String,boolean):Node
+
+    //
+    // Public methods
+    //
+
+    /**
+     * Cloning a NamedNodeMap is a DEEP OPERATION; it always clones
+     * all the nodes contained in the map.
+     */
+
+    public NamedNodeMapImpl cloneMap(NodeImpl ownerNode) {
+        AttributeMap newmap =
+            new AttributeMap((ElementImpl) ownerNode, null);
+        newmap.hasDefaults(hasDefaults());
+        newmap.cloneContent(this);
+        return newmap;
+    } // cloneMap():AttributeMap
+
+    /**
+     * Override parent's method to set the ownerNode correctly
+     */
+    protected void cloneContent(NamedNodeMapImpl srcmap) {
+        List srcnodes = srcmap.nodes;
+        if (srcnodes != null) {
+            int size = srcnodes.size();
+            if (size != 0) {
+                if (nodes == null) {
+                    nodes = new ArrayList(size);
+                }
+                else {
+                    nodes.clear();
+                }
+                for (int i = 0; i < size; ++i) {
+                    NodeImpl n = (NodeImpl) srcnodes.get(i);
+                    NodeImpl clone = (NodeImpl) n.cloneNode(true);
+                    clone.isSpecified(n.isSpecified());
+                    nodes.add(clone);
+                    clone.ownerNode = ownerNode;
+                    clone.isOwned(true);
+                }
+            }
+        }
+    } // cloneContent():AttributeMap
+
+
+    /**
+     * Move specified attributes from the given map to this one
+     */
+    void moveSpecifiedAttributes(AttributeMap srcmap) {
+        int nsize = (srcmap.nodes != null) ? srcmap.nodes.size() : 0;
+        for (int i = nsize - 1; i >= 0; i--) {
+            AttrImpl attr = (AttrImpl) srcmap.nodes.get(i);
+            if (attr.isSpecified()) {
+                srcmap.remove(attr, i, false);
+                if (attr.getLocalName() != null) {
+                    setNamedItem(attr);
+                }
+                else {
+                    setNamedItemNS(attr);
+                }
+            }
+        }
+    } // moveSpecifiedAttributes(AttributeMap):void
+
+
+    /**
+     * Get this AttributeMap in sync with the given "defaults" map.
+     * @param defaults The default attributes map to sync with.
+     */
+    protected void reconcileDefaults(NamedNodeMapImpl defaults) {
+
+        // remove any existing default
+        int nsize = (nodes != null) ? nodes.size() : 0;
+        for (int i = nsize - 1; i >= 0; --i) {
+            AttrImpl attr = (AttrImpl) nodes.get(i);
+            if (!attr.isSpecified()) {
+                remove(attr, i, false);
+            }
+        }
+        // add the new defaults
+        if (defaults == null) {
+            return;
+        }
+        if (nodes == null || nodes.size() == 0) {
+            cloneContent(defaults);
+        }
+        else {
+            int dsize = defaults.nodes.size();
+            for (int n = 0; n < dsize; ++n) {
+                AttrImpl d = (AttrImpl) defaults.nodes.get(n);
+                int i = findNamePoint(d.getNodeName(), 0);
+                if (i < 0) {
+                        i = -1 - i;
+                    NodeImpl clone = (NodeImpl) d.cloneNode(true);
+                    clone.ownerNode = ownerNode;
+                    clone.isOwned(true);
+                    clone.isSpecified(false);
+                        nodes.add(i, clone);
+                }
+            }
+        }
+
+    } // reconcileDefaults()
+
+    protected final int addItem (Node arg) {
+
+        final AttrImpl argn = (AttrImpl) arg;
+
+        // set owner
+        argn.ownerNode = ownerNode;
+        argn.isOwned(true);
+
+        int i = findNamePoint(argn.getNamespaceURI(), argn.getLocalName());
+        if (i >= 0) {
+            nodes.set(i, arg);
+        }
+        else {
+            // If we can't find by namespaceURI, localName, then we find by
+            // nodeName so we know where to insert.
+            i = findNamePoint(argn.getNodeName(),0);
+            if (i >= 0) {
+                nodes.add(i, arg);
+            }
+            else {
+                i = -1 - i; // Insert point (may be end of list)
+                if (null == nodes) {
+                    nodes = new ArrayList(5);
+                }
+                nodes.add(i, arg);
+            }
+        }
+
+        // notify document
+        ownerNode.ownerDocument().setAttrNode(argn, null);
+        return i;
+    }
+
+} // class AttributeMap

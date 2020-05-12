@@ -1,799 +1,791 @@
-/*     */ package java.util.jar;
-/*     */ 
-/*     */ import java.io.ByteArrayInputStream;
-/*     */ import java.io.File;
-/*     */ import java.io.IOException;
-/*     */ import java.io.InputStream;
-/*     */ import java.lang.ref.SoftReference;
-/*     */ import java.net.URL;
-/*     */ import java.security.AccessController;
-/*     */ import java.security.CodeSigner;
-/*     */ import java.security.CodeSource;
-/*     */ import java.security.cert.Certificate;
-/*     */ import java.util.ArrayList;
-/*     */ import java.util.Enumeration;
-/*     */ import java.util.Iterator;
-/*     */ import java.util.List;
-/*     */ import java.util.Locale;
-/*     */ import java.util.NoSuchElementException;
-/*     */ import java.util.Spliterators;
-/*     */ import java.util.stream.Stream;
-/*     */ import java.util.stream.StreamSupport;
-/*     */ import java.util.zip.ZipEntry;
-/*     */ import java.util.zip.ZipFile;
-/*     */ import sun.misc.IOUtils;
-/*     */ import sun.misc.SharedSecrets;
-/*     */ import sun.security.action.GetPropertyAction;
-/*     */ import sun.security.util.ManifestEntryVerifier;
-/*     */ import sun.security.util.SignatureFileVerifier;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class JarFile
-/*     */   extends ZipFile
-/*     */ {
-/*     */   private SoftReference<Manifest> manRef;
-/*     */   private JarEntry manEntry;
-/*     */   private JarVerifier jv;
-/*     */   private boolean jvInitialized;
-/*     */   private boolean verify;
-/*     */   private boolean hasClassPathAttribute;
-/*     */   private volatile boolean hasCheckedSpecialAttributes;
-/*     */   public static final String MANIFEST_NAME = "META-INF/MANIFEST.MF";
-/*     */   
-/*     */   static {
-/*  85 */     SharedSecrets.setJavaUtilJarAccess(new JavaUtilJarAccessImpl());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public JarFile(String paramString) throws IOException {
-/* 103 */     this(new File(paramString), true, 1);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public JarFile(String paramString, boolean paramBoolean) throws IOException {
-/* 117 */     this(new File(paramString), paramBoolean, 1);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public JarFile(File paramFile) throws IOException {
-/* 130 */     this(paramFile, true, 1);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public JarFile(File paramFile, boolean paramBoolean) throws IOException {
-/* 145 */     this(paramFile, paramBoolean, 1);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public JarFile(File paramFile, boolean paramBoolean, int paramInt) throws IOException {
-/* 166 */     super(paramFile, paramInt);
-/* 167 */     this.verify = paramBoolean;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Manifest getManifest() throws IOException {
-/* 180 */     return getManifestFromReference();
-/*     */   }
-/*     */   
-/*     */   private Manifest getManifestFromReference() throws IOException {
-/* 184 */     Manifest manifest = (this.manRef != null) ? this.manRef.get() : null;
-/*     */     
-/* 186 */     if (manifest == null) {
-/*     */       
-/* 188 */       JarEntry jarEntry = getManEntry();
-/*     */ 
-/*     */       
-/* 191 */       if (jarEntry != null) {
-/* 192 */         if (this.verify) {
-/* 193 */           byte[] arrayOfByte = getBytes(jarEntry);
-/* 194 */           if (!this.jvInitialized) {
-/* 195 */             this.jv = new JarVerifier(arrayOfByte);
-/*     */           }
-/* 197 */           manifest = new Manifest(this.jv, new ByteArrayInputStream(arrayOfByte));
-/*     */         } else {
-/* 199 */           manifest = new Manifest(super.getInputStream(jarEntry));
-/*     */         } 
-/* 201 */         this.manRef = new SoftReference<>(manifest);
-/*     */       } 
-/*     */     } 
-/* 204 */     return manifest;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public JarEntry getJarEntry(String paramString) {
-/* 223 */     return (JarEntry)getEntry(paramString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ZipEntry getEntry(String paramString) {
-/* 240 */     ZipEntry zipEntry = super.getEntry(paramString);
-/* 241 */     if (zipEntry != null) {
-/* 242 */       return new JarFileEntry(zipEntry);
-/*     */     }
-/* 244 */     return null;
-/*     */   }
-/*     */   
-/*     */   private class JarEntryIterator
-/*     */     implements Enumeration<JarEntry>, Iterator<JarEntry>
-/*     */   {
-/* 250 */     final Enumeration<? extends ZipEntry> e = JarFile.this.entries();
-/*     */     
-/*     */     public boolean hasNext() {
-/* 253 */       return this.e.hasMoreElements();
-/*     */     }
-/*     */     
-/*     */     public JarEntry next() {
-/* 257 */       ZipEntry zipEntry = this.e.nextElement();
-/* 258 */       return new JarFile.JarFileEntry(zipEntry);
-/*     */     }
-/*     */     
-/*     */     public boolean hasMoreElements() {
-/* 262 */       return hasNext();
-/*     */     }
-/*     */     
-/*     */     public JarEntry nextElement() {
-/* 266 */       return next();
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     private JarEntryIterator() {}
-/*     */   }
-/*     */   
-/*     */   public Enumeration<JarEntry> entries() {
-/* 274 */     return new JarEntryIterator();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public Stream<JarEntry> stream() {
-/* 279 */     return StreamSupport.stream(Spliterators.spliterator(new JarEntryIterator(), 
-/* 280 */           size(), 1297), false);
-/*     */   }
-/*     */   
-/*     */   private class JarFileEntry
-/*     */     extends JarEntry
-/*     */   {
-/*     */     JarFileEntry(ZipEntry param1ZipEntry) {
-/* 287 */       super(param1ZipEntry);
-/*     */     }
-/*     */     public Attributes getAttributes() throws IOException {
-/* 290 */       Manifest manifest = JarFile.this.getManifest();
-/* 291 */       if (manifest != null) {
-/* 292 */         return manifest.getAttributes(getName());
-/*     */       }
-/* 294 */       return null;
-/*     */     }
-/*     */     
-/*     */     public Certificate[] getCertificates() {
-/*     */       try {
-/* 299 */         JarFile.this.maybeInstantiateVerifier();
-/* 300 */       } catch (IOException iOException) {
-/* 301 */         throw new RuntimeException(iOException);
-/*     */       } 
-/* 303 */       if (this.certs == null && JarFile.this.jv != null) {
-/* 304 */         this.certs = JarFile.this.jv.getCerts(JarFile.this, this);
-/*     */       }
-/* 306 */       return (this.certs == null) ? null : (Certificate[])this.certs.clone();
-/*     */     }
-/*     */     public CodeSigner[] getCodeSigners() {
-/*     */       try {
-/* 310 */         JarFile.this.maybeInstantiateVerifier();
-/* 311 */       } catch (IOException iOException) {
-/* 312 */         throw new RuntimeException(iOException);
-/*     */       } 
-/* 314 */       if (this.signers == null && JarFile.this.jv != null) {
-/* 315 */         this.signers = JarFile.this.jv.getCodeSigners(JarFile.this, this);
-/*     */       }
-/* 317 */       return (this.signers == null) ? null : (CodeSigner[])this.signers.clone();
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void maybeInstantiateVerifier() throws IOException {
-/* 328 */     if (this.jv != null) {
-/*     */       return;
-/*     */     }
-/*     */     
-/* 332 */     if (this.verify) {
-/* 333 */       String[] arrayOfString = getMetaInfEntryNames();
-/* 334 */       if (arrayOfString != null) {
-/* 335 */         for (byte b = 0; b < arrayOfString.length; b++) {
-/* 336 */           String str = arrayOfString[b].toUpperCase(Locale.ENGLISH);
-/* 337 */           if (str.endsWith(".DSA") || str
-/* 338 */             .endsWith(".RSA") || str
-/* 339 */             .endsWith(".EC") || str
-/* 340 */             .endsWith(".SF")) {
-/*     */ 
-/*     */ 
-/*     */             
-/* 344 */             getManifest();
-/*     */             
-/*     */             return;
-/*     */           } 
-/*     */         } 
-/*     */       }
-/*     */       
-/* 351 */       this.verify = false;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void initializeVerifier() {
-/* 361 */     ManifestEntryVerifier manifestEntryVerifier = null;
-/*     */ 
-/*     */     
-/*     */     try {
-/* 365 */       String[] arrayOfString = getMetaInfEntryNames();
-/* 366 */       if (arrayOfString != null) {
-/* 367 */         for (byte b = 0; b < arrayOfString.length; b++) {
-/* 368 */           String str = arrayOfString[b].toUpperCase(Locale.ENGLISH);
-/* 369 */           if ("META-INF/MANIFEST.MF".equals(str) || 
-/* 370 */             SignatureFileVerifier.isBlockOrSF(str)) {
-/* 371 */             JarEntry jarEntry = getJarEntry(arrayOfString[b]);
-/* 372 */             if (jarEntry == null) {
-/* 373 */               throw new JarException("corrupted jar file");
-/*     */             }
-/* 375 */             if (manifestEntryVerifier == null)
-/*     */             {
-/* 377 */               manifestEntryVerifier = new ManifestEntryVerifier(getManifestFromReference());
-/*     */             }
-/* 379 */             byte[] arrayOfByte = getBytes(jarEntry);
-/* 380 */             if (arrayOfByte != null && arrayOfByte.length > 0) {
-/* 381 */               this.jv.beginEntry(jarEntry, manifestEntryVerifier);
-/* 382 */               this.jv.update(arrayOfByte.length, arrayOfByte, 0, arrayOfByte.length, manifestEntryVerifier);
-/* 383 */               this.jv.update(-1, null, 0, 0, manifestEntryVerifier);
-/*     */             } 
-/*     */           } 
-/*     */         } 
-/*     */       }
-/* 388 */     } catch (IOException iOException) {
-/*     */ 
-/*     */       
-/* 391 */       this.jv = null;
-/* 392 */       this.verify = false;
-/* 393 */       if (JarVerifier.debug != null) {
-/* 394 */         JarVerifier.debug.println("jarfile parsing error!");
-/* 395 */         iOException.printStackTrace();
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 402 */     if (this.jv != null) {
-/*     */       
-/* 404 */       this.jv.doneWithMeta();
-/* 405 */       if (JarVerifier.debug != null) {
-/* 406 */         JarVerifier.debug.println("done with meta!");
-/*     */       }
-/*     */       
-/* 409 */       if (this.jv.nothingToVerify()) {
-/* 410 */         if (JarVerifier.debug != null) {
-/* 411 */           JarVerifier.debug.println("nothing to verify!");
-/*     */         }
-/* 413 */         this.jv = null;
-/* 414 */         this.verify = false;
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private byte[] getBytes(ZipEntry paramZipEntry) throws IOException {
-/* 424 */     try (InputStream null = super.getInputStream(paramZipEntry)) {
-/* 425 */       return IOUtils.readFully(inputStream, (int)paramZipEntry.getSize(), true);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized InputStream getInputStream(ZipEntry paramZipEntry) throws IOException {
-/* 445 */     maybeInstantiateVerifier();
-/* 446 */     if (this.jv == null) {
-/* 447 */       return super.getInputStream(paramZipEntry);
-/*     */     }
-/* 449 */     if (!this.jvInitialized) {
-/* 450 */       initializeVerifier();
-/* 451 */       this.jvInitialized = true;
-/*     */ 
-/*     */ 
-/*     */       
-/* 455 */       if (this.jv == null) {
-/* 456 */         return super.getInputStream(paramZipEntry);
-/*     */       }
-/*     */     } 
-/*     */     
-/* 460 */     return new JarVerifier.VerifierStream(
-/* 461 */         getManifestFromReference(), (paramZipEntry instanceof JarFileEntry) ? (JarEntry)paramZipEntry : 
-/*     */         
-/* 463 */         getJarEntry(paramZipEntry.getName()), super
-/* 464 */         .getInputStream(paramZipEntry), this.jv);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/* 469 */   private static final char[] CLASSPATH_CHARS = new char[] { 'c', 'l', 'a', 's', 's', '-', 'p', 'a', 't', 'h' };
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 476 */   private static final int[] CLASSPATH_LASTOCC = new int[128];
-/* 477 */   private static final int[] CLASSPATH_OPTOSFT = new int[10]; private static String javaHome; static {
-/* 478 */     CLASSPATH_LASTOCC[99] = 1;
-/* 479 */     CLASSPATH_LASTOCC[108] = 2;
-/* 480 */     CLASSPATH_LASTOCC[115] = 5;
-/* 481 */     CLASSPATH_LASTOCC[45] = 6;
-/* 482 */     CLASSPATH_LASTOCC[112] = 7;
-/* 483 */     CLASSPATH_LASTOCC[97] = 8;
-/* 484 */     CLASSPATH_LASTOCC[116] = 9;
-/* 485 */     CLASSPATH_LASTOCC[104] = 10;
-/* 486 */     for (byte b = 0; b < 9; b++)
-/* 487 */       CLASSPATH_OPTOSFT[b] = 10; 
-/* 488 */     CLASSPATH_OPTOSFT[9] = 1;
-/*     */   }
-/*     */   private static volatile String[] jarNames;
-/*     */   private JarEntry getManEntry() {
-/* 492 */     if (this.manEntry == null) {
-/*     */       
-/* 494 */       this.manEntry = getJarEntry("META-INF/MANIFEST.MF");
-/* 495 */       if (this.manEntry == null) {
-/*     */ 
-/*     */         
-/* 498 */         String[] arrayOfString = getMetaInfEntryNames();
-/* 499 */         if (arrayOfString != null) {
-/* 500 */           for (byte b = 0; b < arrayOfString.length; b++) {
-/* 501 */             if ("META-INF/MANIFEST.MF".equals(arrayOfString[b]
-/* 502 */                 .toUpperCase(Locale.ENGLISH))) {
-/* 503 */               this.manEntry = getJarEntry(arrayOfString[b]);
-/*     */               break;
-/*     */             } 
-/*     */           } 
-/*     */         }
-/*     */       } 
-/*     */     } 
-/* 510 */     return this.manEntry;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   boolean hasClassPathAttribute() throws IOException {
-/* 518 */     checkForSpecialAttributes();
-/* 519 */     return this.hasClassPathAttribute;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean match(char[] paramArrayOfchar, byte[] paramArrayOfbyte, int[] paramArrayOfint1, int[] paramArrayOfint2) {
-/* 528 */     int i = paramArrayOfchar.length;
-/* 529 */     int j = paramArrayOfbyte.length - i;
-/* 530 */     int k = 0;
-/*     */     
-/* 532 */     label19: while (k <= j) {
-/* 533 */       for (int m = i - 1; m >= 0; m--) {
-/* 534 */         char c = (char)paramArrayOfbyte[k + m];
-/* 535 */         c = ((c - 65 | 90 - c) >= 0) ? (char)(c + 32) : c;
-/* 536 */         if (c != paramArrayOfchar[m]) {
-/* 537 */           k += Math.max(m + 1 - paramArrayOfint1[c & 0x7F], paramArrayOfint2[m]);
-/*     */           continue label19;
-/*     */         } 
-/*     */       } 
-/* 541 */       return true;
-/*     */     } 
-/* 543 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void checkForSpecialAttributes() throws IOException {
-/* 551 */     if (this.hasCheckedSpecialAttributes)
-/* 552 */       return;  if (!isKnownNotToHaveSpecialAttributes()) {
-/* 553 */       JarEntry jarEntry = getManEntry();
-/* 554 */       if (jarEntry != null) {
-/* 555 */         byte[] arrayOfByte = getBytes(jarEntry);
-/* 556 */         if (match(CLASSPATH_CHARS, arrayOfByte, CLASSPATH_LASTOCC, CLASSPATH_OPTOSFT))
-/* 557 */           this.hasClassPathAttribute = true; 
-/*     */       } 
-/*     */     } 
-/* 560 */     this.hasCheckedSpecialAttributes = true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean isKnownNotToHaveSpecialAttributes() {
-/* 570 */     if (javaHome == null) {
-/* 571 */       javaHome = AccessController.<String>doPrivileged(new GetPropertyAction("java.home"));
-/*     */     }
-/*     */     
-/* 574 */     if (jarNames == null) {
-/* 575 */       String[] arrayOfString = new String[11];
-/* 576 */       String str = File.separator;
-/* 577 */       byte b = 0;
-/* 578 */       arrayOfString[b++] = str + "rt.jar";
-/* 579 */       arrayOfString[b++] = str + "jsse.jar";
-/* 580 */       arrayOfString[b++] = str + "jce.jar";
-/* 581 */       arrayOfString[b++] = str + "charsets.jar";
-/* 582 */       arrayOfString[b++] = str + "dnsns.jar";
-/* 583 */       arrayOfString[b++] = str + "zipfs.jar";
-/* 584 */       arrayOfString[b++] = str + "localedata.jar";
-/* 585 */       arrayOfString[b++] = str = "cldrdata.jar";
-/* 586 */       arrayOfString[b++] = str + "sunjce_provider.jar";
-/* 587 */       arrayOfString[b++] = str + "sunpkcs11.jar";
-/* 588 */       arrayOfString[b++] = str + "sunec.jar";
-/* 589 */       jarNames = arrayOfString;
-/*     */     } 
-/*     */     
-/* 592 */     String str1 = getName();
-/* 593 */     String str2 = javaHome;
-/* 594 */     if (str1.startsWith(str2)) {
-/* 595 */       String[] arrayOfString = jarNames;
-/* 596 */       for (byte b = 0; b < arrayOfString.length; b++) {
-/* 597 */         if (str1.endsWith(arrayOfString[b])) {
-/* 598 */           return true;
-/*     */         }
-/*     */       } 
-/*     */     } 
-/* 602 */     return false;
-/*     */   }
-/*     */   
-/*     */   synchronized void ensureInitialization() {
-/*     */     try {
-/* 607 */       maybeInstantiateVerifier();
-/* 608 */     } catch (IOException iOException) {
-/* 609 */       throw new RuntimeException(iOException);
-/*     */     } 
-/* 611 */     if (this.jv != null && !this.jvInitialized) {
-/* 612 */       initializeVerifier();
-/* 613 */       this.jvInitialized = true;
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   JarEntry newEntry(ZipEntry paramZipEntry) {
-/* 618 */     return new JarFileEntry(paramZipEntry);
-/*     */   }
-/*     */   
-/*     */   Enumeration<String> entryNames(CodeSource[] paramArrayOfCodeSource) {
-/* 622 */     ensureInitialization();
-/* 623 */     if (this.jv != null) {
-/* 624 */       return this.jv.entryNames(this, paramArrayOfCodeSource);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 631 */     boolean bool = false;
-/* 632 */     for (byte b = 0; b < paramArrayOfCodeSource.length; b++) {
-/* 633 */       if (paramArrayOfCodeSource[b].getCodeSigners() == null) {
-/* 634 */         bool = true;
-/*     */         break;
-/*     */       } 
-/*     */     } 
-/* 638 */     if (bool) {
-/* 639 */       return unsignedEntryNames();
-/*     */     }
-/* 641 */     return new Enumeration<String>()
-/*     */       {
-/*     */         public boolean hasMoreElements() {
-/* 644 */           return false;
-/*     */         }
-/*     */         
-/*     */         public String nextElement() {
-/* 648 */           throw new NoSuchElementException();
-/*     */         }
-/*     */       };
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   Enumeration<JarEntry> entries2() {
-/* 660 */     ensureInitialization();
-/* 661 */     if (this.jv != null) {
-/* 662 */       return this.jv.entries2(this, super.entries());
-/*     */     }
-/*     */ 
-/*     */     
-/* 666 */     final Enumeration<? extends ZipEntry> enum_ = super.entries();
-/* 667 */     return new Enumeration<JarEntry>()
-/*     */       {
-/*     */         ZipEntry entry;
-/*     */         
-/*     */         public boolean hasMoreElements() {
-/* 672 */           if (this.entry != null) {
-/* 673 */             return true;
-/*     */           }
-/* 675 */           while (enum_.hasMoreElements()) {
-/* 676 */             ZipEntry zipEntry = enum_.nextElement();
-/* 677 */             if (JarVerifier.isSigningRelated(zipEntry.getName())) {
-/*     */               continue;
-/*     */             }
-/* 680 */             this.entry = zipEntry;
-/* 681 */             return true;
-/*     */           } 
-/* 683 */           return false;
-/*     */         }
-/*     */         
-/*     */         public JarFile.JarFileEntry nextElement() {
-/* 687 */           if (hasMoreElements()) {
-/* 688 */             ZipEntry zipEntry = this.entry;
-/* 689 */             this.entry = null;
-/* 690 */             return new JarFile.JarFileEntry(zipEntry);
-/*     */           } 
-/* 692 */           throw new NoSuchElementException();
-/*     */         }
-/*     */       };
-/*     */   }
-/*     */   
-/*     */   CodeSource[] getCodeSources(URL paramURL) {
-/* 698 */     ensureInitialization();
-/* 699 */     if (this.jv != null) {
-/* 700 */       return this.jv.getCodeSources(this, paramURL);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 707 */     Enumeration<String> enumeration = unsignedEntryNames();
-/* 708 */     if (enumeration.hasMoreElements()) {
-/* 709 */       return new CodeSource[] { JarVerifier.getUnsignedCS(paramURL) };
-/*     */     }
-/* 711 */     return null;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private Enumeration<String> unsignedEntryNames() {
-/* 716 */     final Enumeration<JarEntry> entries = entries();
-/* 717 */     return new Enumeration<String>()
-/*     */       {
-/*     */         String name;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/*     */         public boolean hasMoreElements() {
-/* 726 */           if (this.name != null) {
-/* 727 */             return true;
-/*     */           }
-/* 729 */           while (entries.hasMoreElements()) {
-/*     */             
-/* 731 */             ZipEntry zipEntry = entries.nextElement();
-/* 732 */             String str = zipEntry.getName();
-/* 733 */             if (zipEntry.isDirectory() || JarVerifier.isSigningRelated(str)) {
-/*     */               continue;
-/*     */             }
-/* 736 */             this.name = str;
-/* 737 */             return true;
-/*     */           } 
-/* 739 */           return false;
-/*     */         }
-/*     */         
-/*     */         public String nextElement() {
-/* 743 */           if (hasMoreElements()) {
-/* 744 */             String str = this.name;
-/* 745 */             this.name = null;
-/* 746 */             return str;
-/*     */           } 
-/* 748 */           throw new NoSuchElementException();
-/*     */         }
-/*     */       };
-/*     */   }
-/*     */   
-/*     */   CodeSource getCodeSource(URL paramURL, String paramString) {
-/* 754 */     ensureInitialization();
-/* 755 */     if (this.jv != null) {
-/* 756 */       if (this.jv.eagerValidation) {
-/* 757 */         CodeSource codeSource = null;
-/* 758 */         JarEntry jarEntry = getJarEntry(paramString);
-/* 759 */         if (jarEntry != null) {
-/* 760 */           codeSource = this.jv.getCodeSource(paramURL, this, jarEntry);
-/*     */         } else {
-/* 762 */           codeSource = this.jv.getCodeSource(paramURL, paramString);
-/*     */         } 
-/* 764 */         return codeSource;
-/*     */       } 
-/* 766 */       return this.jv.getCodeSource(paramURL, paramString);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 770 */     return JarVerifier.getUnsignedCS(paramURL);
-/*     */   }
-/*     */   
-/*     */   void setEagerValidation(boolean paramBoolean) {
-/*     */     try {
-/* 775 */       maybeInstantiateVerifier();
-/* 776 */     } catch (IOException iOException) {
-/* 777 */       throw new RuntimeException(iOException);
-/*     */     } 
-/* 779 */     if (this.jv != null) {
-/* 780 */       this.jv.setEagerValidation(paramBoolean);
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   List<Object> getManifestDigests() {
-/* 785 */     ensureInitialization();
-/* 786 */     if (this.jv != null) {
-/* 787 */       return this.jv.getManifestDigests();
-/*     */     }
-/* 789 */     return new ArrayList();
-/*     */   }
-/*     */   
-/*     */   private native String[] getMetaInfEntryNames();
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\jar\JarFile.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.util.jar;
+
+import java.io.*;
+import java.lang.ref.SoftReference;
+import java.net.URL;
+import java.util.*;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+import java.util.zip.*;
+import java.security.CodeSigner;
+import java.security.cert.Certificate;
+import java.security.AccessController;
+import java.security.CodeSource;
+import sun.misc.IOUtils;
+import sun.security.action.GetPropertyAction;
+import sun.security.util.ManifestEntryVerifier;
+import sun.misc.SharedSecrets;
+import sun.security.util.SignatureFileVerifier;
+
+/**
+ * The <code>JarFile</code> class is used to read the contents of a jar file
+ * from any file that can be opened with <code>java.io.RandomAccessFile</code>.
+ * It extends the class <code>java.util.zip.ZipFile</code> with support
+ * for reading an optional <code>Manifest</code> entry. The
+ * <code>Manifest</code> can be used to specify meta-information about the
+ * jar file and its entries.
+ *
+ * <p> Unless otherwise noted, passing a <tt>null</tt> argument to a constructor
+ * or method in this class will cause a {@link NullPointerException} to be
+ * thrown.
+ *
+ * If the verify flag is on when opening a signed jar file, the content of the
+ * file is verified against its signature embedded inside the file. Please note
+ * that the verification process does not include validating the signer's
+ * certificate. A caller should inspect the return value of
+ * {@link JarEntry#getCodeSigners()} to further determine if the signature
+ * can be trusted.
+ *
+ * @author  David Connelly
+ * @see     Manifest
+ * @see     java.util.zip.ZipFile
+ * @see     java.util.jar.JarEntry
+ * @since   1.2
+ */
+public
+class JarFile extends ZipFile {
+    private SoftReference<Manifest> manRef;
+    private JarEntry manEntry;
+    private JarVerifier jv;
+    private boolean jvInitialized;
+    private boolean verify;
+
+    // indicates if Class-Path attribute present (only valid if hasCheckedSpecialAttributes true)
+    private boolean hasClassPathAttribute;
+    // true if manifest checked for special attributes
+    private volatile boolean hasCheckedSpecialAttributes;
+
+    // Set up JavaUtilJarAccess in SharedSecrets
+    static {
+        SharedSecrets.setJavaUtilJarAccess(new JavaUtilJarAccessImpl());
+    }
+
+    /**
+     * The JAR manifest file name.
+     */
+    public static final String MANIFEST_NAME = "META-INF/MANIFEST.MF";
+
+    /**
+     * Creates a new <code>JarFile</code> to read from the specified
+     * file <code>name</code>. The <code>JarFile</code> will be verified if
+     * it is signed.
+     * @param name the name of the jar file to be opened for reading
+     * @throws IOException if an I/O error has occurred
+     * @throws SecurityException if access to the file is denied
+     *         by the SecurityManager
+     */
+    public JarFile(String name) throws IOException {
+        this(new File(name), true, ZipFile.OPEN_READ);
+    }
+
+    /**
+     * Creates a new <code>JarFile</code> to read from the specified
+     * file <code>name</code>.
+     * @param name the name of the jar file to be opened for reading
+     * @param verify whether or not to verify the jar file if
+     * it is signed.
+     * @throws IOException if an I/O error has occurred
+     * @throws SecurityException if access to the file is denied
+     *         by the SecurityManager
+     */
+    public JarFile(String name, boolean verify) throws IOException {
+        this(new File(name), verify, ZipFile.OPEN_READ);
+    }
+
+    /**
+     * Creates a new <code>JarFile</code> to read from the specified
+     * <code>File</code> object. The <code>JarFile</code> will be verified if
+     * it is signed.
+     * @param file the jar file to be opened for reading
+     * @throws IOException if an I/O error has occurred
+     * @throws SecurityException if access to the file is denied
+     *         by the SecurityManager
+     */
+    public JarFile(File file) throws IOException {
+        this(file, true, ZipFile.OPEN_READ);
+    }
+
+
+    /**
+     * Creates a new <code>JarFile</code> to read from the specified
+     * <code>File</code> object.
+     * @param file the jar file to be opened for reading
+     * @param verify whether or not to verify the jar file if
+     * it is signed.
+     * @throws IOException if an I/O error has occurred
+     * @throws SecurityException if access to the file is denied
+     *         by the SecurityManager.
+     */
+    public JarFile(File file, boolean verify) throws IOException {
+        this(file, verify, ZipFile.OPEN_READ);
+    }
+
+
+    /**
+     * Creates a new <code>JarFile</code> to read from the specified
+     * <code>File</code> object in the specified mode.  The mode argument
+     * must be either <tt>OPEN_READ</tt> or <tt>OPEN_READ | OPEN_DELETE</tt>.
+     *
+     * @param file the jar file to be opened for reading
+     * @param verify whether or not to verify the jar file if
+     * it is signed.
+     * @param mode the mode in which the file is to be opened
+     * @throws IOException if an I/O error has occurred
+     * @throws IllegalArgumentException
+     *         if the <tt>mode</tt> argument is invalid
+     * @throws SecurityException if access to the file is denied
+     *         by the SecurityManager
+     * @since 1.3
+     */
+    public JarFile(File file, boolean verify, int mode) throws IOException {
+        super(file, mode);
+        this.verify = verify;
+    }
+
+    /**
+     * Returns the jar file manifest, or <code>null</code> if none.
+     *
+     * @return the jar file manifest, or <code>null</code> if none
+     *
+     * @throws IllegalStateException
+     *         may be thrown if the jar file has been closed
+     * @throws IOException  if an I/O error has occurred
+     */
+    public Manifest getManifest() throws IOException {
+        return getManifestFromReference();
+    }
+
+    private Manifest getManifestFromReference() throws IOException {
+        Manifest man = manRef != null ? manRef.get() : null;
+
+        if (man == null) {
+
+            JarEntry manEntry = getManEntry();
+
+            // If found then load the manifest
+            if (manEntry != null) {
+                if (verify) {
+                    byte[] b = getBytes(manEntry);
+                    if (!jvInitialized) {
+                        jv = new JarVerifier(b);
+                    }
+                    man = new Manifest(jv, new ByteArrayInputStream(b));
+                } else {
+                    man = new Manifest(super.getInputStream(manEntry));
+                }
+                manRef = new SoftReference<>(man);
+            }
+        }
+        return man;
+    }
+
+    private native String[] getMetaInfEntryNames();
+
+    /**
+     * Returns the <code>JarEntry</code> for the given entry name or
+     * <code>null</code> if not found.
+     *
+     * @param name the jar file entry name
+     * @return the <code>JarEntry</code> for the given entry name or
+     *         <code>null</code> if not found.
+     *
+     * @throws IllegalStateException
+     *         may be thrown if the jar file has been closed
+     *
+     * @see java.util.jar.JarEntry
+     */
+    public JarEntry getJarEntry(String name) {
+        return (JarEntry)getEntry(name);
+    }
+
+    /**
+     * Returns the <code>ZipEntry</code> for the given entry name or
+     * <code>null</code> if not found.
+     *
+     * @param name the jar file entry name
+     * @return the <code>ZipEntry</code> for the given entry name or
+     *         <code>null</code> if not found
+     *
+     * @throws IllegalStateException
+     *         may be thrown if the jar file has been closed
+     *
+     * @see java.util.zip.ZipEntry
+     */
+    public ZipEntry getEntry(String name) {
+        ZipEntry ze = super.getEntry(name);
+        if (ze != null) {
+            return new JarFileEntry(ze);
+        }
+        return null;
+    }
+
+    private class JarEntryIterator implements Enumeration<JarEntry>,
+            Iterator<JarEntry>
+    {
+        final Enumeration<? extends ZipEntry> e = JarFile.super.entries();
+
+        public boolean hasNext() {
+            return e.hasMoreElements();
+        }
+
+        public JarEntry next() {
+            ZipEntry ze = e.nextElement();
+            return new JarFileEntry(ze);
+        }
+
+        public boolean hasMoreElements() {
+            return hasNext();
+        }
+
+        public JarEntry nextElement() {
+            return next();
+        }
+    }
+
+    /**
+     * Returns an enumeration of the zip file entries.
+     */
+    public Enumeration<JarEntry> entries() {
+        return new JarEntryIterator();
+    }
+
+    @Override
+    public Stream<JarEntry> stream() {
+        return StreamSupport.stream(Spliterators.spliterator(
+                new JarEntryIterator(), size(),
+                Spliterator.ORDERED | Spliterator.DISTINCT |
+                        Spliterator.IMMUTABLE | Spliterator.NONNULL), false);
+    }
+
+    private class JarFileEntry extends JarEntry {
+        JarFileEntry(ZipEntry ze) {
+            super(ze);
+        }
+        public Attributes getAttributes() throws IOException {
+            Manifest man = JarFile.this.getManifest();
+            if (man != null) {
+                return man.getAttributes(getName());
+            } else {
+                return null;
+            }
+        }
+        public Certificate[] getCertificates() {
+            try {
+                maybeInstantiateVerifier();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            if (certs == null && jv != null) {
+                certs = jv.getCerts(JarFile.this, this);
+            }
+            return certs == null ? null : certs.clone();
+        }
+        public CodeSigner[] getCodeSigners() {
+            try {
+                maybeInstantiateVerifier();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            if (signers == null && jv != null) {
+                signers = jv.getCodeSigners(JarFile.this, this);
+            }
+            return signers == null ? null : signers.clone();
+        }
+    }
+
+    /*
+     * Ensures that the JarVerifier has been created if one is
+     * necessary (i.e., the jar appears to be signed.) This is done as
+     * a quick check to avoid processing of the manifest for unsigned
+     * jars.
+     */
+    private void maybeInstantiateVerifier() throws IOException {
+        if (jv != null) {
+            return;
+        }
+
+        if (verify) {
+            String[] names = getMetaInfEntryNames();
+            if (names != null) {
+                for (int i = 0; i < names.length; i++) {
+                    String name = names[i].toUpperCase(Locale.ENGLISH);
+                    if (name.endsWith(".DSA") ||
+                        name.endsWith(".RSA") ||
+                        name.endsWith(".EC") ||
+                        name.endsWith(".SF")) {
+                        // Assume since we found a signature-related file
+                        // that the jar is signed and that we therefore
+                        // need a JarVerifier and Manifest
+                        getManifest();
+                        return;
+                    }
+                }
+            }
+            // No signature-related files; don't instantiate a
+            // verifier
+            verify = false;
+        }
+    }
+
+
+    /*
+     * Initializes the verifier object by reading all the manifest
+     * entries and passing them to the verifier.
+     */
+    private void initializeVerifier() {
+        ManifestEntryVerifier mev = null;
+
+        // Verify "META-INF/" entries...
+        try {
+            String[] names = getMetaInfEntryNames();
+            if (names != null) {
+                for (int i = 0; i < names.length; i++) {
+                    String uname = names[i].toUpperCase(Locale.ENGLISH);
+                    if (MANIFEST_NAME.equals(uname)
+                            || SignatureFileVerifier.isBlockOrSF(uname)) {
+                        JarEntry e = getJarEntry(names[i]);
+                        if (e == null) {
+                            throw new JarException("corrupted jar file");
+                        }
+                        if (mev == null) {
+                            mev = new ManifestEntryVerifier
+                                (getManifestFromReference());
+                        }
+                        byte[] b = getBytes(e);
+                        if (b != null && b.length > 0) {
+                            jv.beginEntry(e, mev);
+                            jv.update(b.length, b, 0, b.length, mev);
+                            jv.update(-1, null, 0, 0, mev);
+                        }
+                    }
+                }
+            }
+        } catch (IOException ex) {
+            // if we had an error parsing any blocks, just
+            // treat the jar file as being unsigned
+            jv = null;
+            verify = false;
+            if (JarVerifier.debug != null) {
+                JarVerifier.debug.println("jarfile parsing error!");
+                ex.printStackTrace();
+            }
+        }
+
+        // if after initializing the verifier we have nothing
+        // signed, we null it out.
+
+        if (jv != null) {
+
+            jv.doneWithMeta();
+            if (JarVerifier.debug != null) {
+                JarVerifier.debug.println("done with meta!");
+            }
+
+            if (jv.nothingToVerify()) {
+                if (JarVerifier.debug != null) {
+                    JarVerifier.debug.println("nothing to verify!");
+                }
+                jv = null;
+                verify = false;
+            }
+        }
+    }
+
+    /*
+     * Reads all the bytes for a given entry. Used to process the
+     * META-INF files.
+     */
+    private byte[] getBytes(ZipEntry ze) throws IOException {
+        try (InputStream is = super.getInputStream(ze)) {
+            return IOUtils.readFully(is, (int)ze.getSize(), true);
+        }
+    }
+
+    /**
+     * Returns an input stream for reading the contents of the specified
+     * zip file entry.
+     * @param ze the zip file entry
+     * @return an input stream for reading the contents of the specified
+     *         zip file entry
+     * @throws ZipException if a zip file format error has occurred
+     * @throws IOException if an I/O error has occurred
+     * @throws SecurityException if any of the jar file entries
+     *         are incorrectly signed.
+     * @throws IllegalStateException
+     *         may be thrown if the jar file has been closed
+     */
+    public synchronized InputStream getInputStream(ZipEntry ze)
+        throws IOException
+    {
+        maybeInstantiateVerifier();
+        if (jv == null) {
+            return super.getInputStream(ze);
+        }
+        if (!jvInitialized) {
+            initializeVerifier();
+            jvInitialized = true;
+            // could be set to null after a call to
+            // initializeVerifier if we have nothing to
+            // verify
+            if (jv == null)
+                return super.getInputStream(ze);
+        }
+
+        // wrap a verifier stream around the real stream
+        return new JarVerifier.VerifierStream(
+            getManifestFromReference(),
+            ze instanceof JarFileEntry ?
+            (JarEntry) ze : getJarEntry(ze.getName()),
+            super.getInputStream(ze),
+            jv);
+    }
+
+    // Statics for hand-coded Boyer-Moore search
+    private static final char[] CLASSPATH_CHARS = {'c','l','a','s','s','-','p','a','t','h'};
+    // The bad character shift for "class-path"
+    private static final int[] CLASSPATH_LASTOCC;
+    // The good suffix shift for "class-path"
+    private static final int[] CLASSPATH_OPTOSFT;
+
+    static {
+        CLASSPATH_LASTOCC = new int[128];
+        CLASSPATH_OPTOSFT = new int[10];
+        CLASSPATH_LASTOCC[(int)'c'] = 1;
+        CLASSPATH_LASTOCC[(int)'l'] = 2;
+        CLASSPATH_LASTOCC[(int)'s'] = 5;
+        CLASSPATH_LASTOCC[(int)'-'] = 6;
+        CLASSPATH_LASTOCC[(int)'p'] = 7;
+        CLASSPATH_LASTOCC[(int)'a'] = 8;
+        CLASSPATH_LASTOCC[(int)'t'] = 9;
+        CLASSPATH_LASTOCC[(int)'h'] = 10;
+        for (int i=0; i<9; i++)
+            CLASSPATH_OPTOSFT[i] = 10;
+        CLASSPATH_OPTOSFT[9]=1;
+    }
+
+    private JarEntry getManEntry() {
+        if (manEntry == null) {
+            // First look up manifest entry using standard name
+            manEntry = getJarEntry(MANIFEST_NAME);
+            if (manEntry == null) {
+                // If not found, then iterate through all the "META-INF/"
+                // entries to find a match.
+                String[] names = getMetaInfEntryNames();
+                if (names != null) {
+                    for (int i = 0; i < names.length; i++) {
+                        if (MANIFEST_NAME.equals(
+                                                 names[i].toUpperCase(Locale.ENGLISH))) {
+                            manEntry = getJarEntry(names[i]);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        return manEntry;
+    }
+
+   /**
+    * Returns {@code true} iff this JAR file has a manifest with the
+    * Class-Path attribute
+    */
+    boolean hasClassPathAttribute() throws IOException {
+        checkForSpecialAttributes();
+        return hasClassPathAttribute;
+    }
+
+    /**
+     * Returns true if the pattern {@code src} is found in {@code b}.
+     * The {@code lastOcc} and {@code optoSft} arrays are the precomputed
+     * bad character and good suffix shifts.
+     */
+    private boolean match(char[] src, byte[] b, int[] lastOcc, int[] optoSft) {
+        int len = src.length;
+        int last = b.length - len;
+        int i = 0;
+        next:
+        while (i<=last) {
+            for (int j=(len-1); j>=0; j--) {
+                char c = (char) b[i+j];
+                c = (((c-'A')|('Z'-c)) >= 0) ? (char)(c + 32) : c;
+                if (c != src[j]) {
+                    i += Math.max(j + 1 - lastOcc[c&0x7F], optoSft[j]);
+                    continue next;
+                 }
+            }
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * On first invocation, check if the JAR file has the Class-Path
+     * attribute. A no-op on subsequent calls.
+     */
+    private void checkForSpecialAttributes() throws IOException {
+        if (hasCheckedSpecialAttributes) return;
+        if (!isKnownNotToHaveSpecialAttributes()) {
+            JarEntry manEntry = getManEntry();
+            if (manEntry != null) {
+                byte[] b = getBytes(manEntry);
+                if (match(CLASSPATH_CHARS, b, CLASSPATH_LASTOCC, CLASSPATH_OPTOSFT))
+                    hasClassPathAttribute = true;
+            }
+        }
+        hasCheckedSpecialAttributes = true;
+    }
+
+    private static String javaHome;
+    private static volatile String[] jarNames;
+    private boolean isKnownNotToHaveSpecialAttributes() {
+        // Optimize away even scanning of manifest for jar files we
+        // deliver which don't have a class-path attribute. If one of
+        // these jars is changed to include such an attribute this code
+        // must be changed.
+        if (javaHome == null) {
+            javaHome = AccessController.doPrivileged(
+                new GetPropertyAction("java.home"));
+        }
+        if (jarNames == null) {
+            String[] names = new String[11];
+            String fileSep = File.separator;
+            int i = 0;
+            names[i++] = fileSep + "rt.jar";
+            names[i++] = fileSep + "jsse.jar";
+            names[i++] = fileSep + "jce.jar";
+            names[i++] = fileSep + "charsets.jar";
+            names[i++] = fileSep + "dnsns.jar";
+            names[i++] = fileSep + "zipfs.jar";
+            names[i++] = fileSep + "localedata.jar";
+            names[i++] = fileSep = "cldrdata.jar";
+            names[i++] = fileSep + "sunjce_provider.jar";
+            names[i++] = fileSep + "sunpkcs11.jar";
+            names[i++] = fileSep + "sunec.jar";
+            jarNames = names;
+        }
+
+        String name = getName();
+        String localJavaHome = javaHome;
+        if (name.startsWith(localJavaHome)) {
+            String[] names = jarNames;
+            for (int i = 0; i < names.length; i++) {
+                if (name.endsWith(names[i])) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    synchronized void ensureInitialization() {
+        try {
+            maybeInstantiateVerifier();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        if (jv != null && !jvInitialized) {
+            initializeVerifier();
+            jvInitialized = true;
+        }
+    }
+
+    JarEntry newEntry(ZipEntry ze) {
+        return new JarFileEntry(ze);
+    }
+
+    Enumeration<String> entryNames(CodeSource[] cs) {
+        ensureInitialization();
+        if (jv != null) {
+            return jv.entryNames(this, cs);
+        }
+
+        /*
+         * JAR file has no signed content. Is there a non-signing
+         * code source?
+         */
+        boolean includeUnsigned = false;
+        for (int i = 0; i < cs.length; i++) {
+            if (cs[i].getCodeSigners() == null) {
+                includeUnsigned = true;
+                break;
+            }
+        }
+        if (includeUnsigned) {
+            return unsignedEntryNames();
+        } else {
+            return new Enumeration<String>() {
+
+                public boolean hasMoreElements() {
+                    return false;
+                }
+
+                public String nextElement() {
+                    throw new NoSuchElementException();
+                }
+            };
+        }
+    }
+
+    /**
+     * Returns an enumeration of the zip file entries
+     * excluding internal JAR mechanism entries and including
+     * signed entries missing from the ZIP directory.
+     */
+    Enumeration<JarEntry> entries2() {
+        ensureInitialization();
+        if (jv != null) {
+            return jv.entries2(this, super.entries());
+        }
+
+        // screen out entries which are never signed
+        final Enumeration<? extends ZipEntry> enum_ = super.entries();
+        return new Enumeration<JarEntry>() {
+
+            ZipEntry entry;
+
+            public boolean hasMoreElements() {
+                if (entry != null) {
+                    return true;
+                }
+                while (enum_.hasMoreElements()) {
+                    ZipEntry ze = enum_.nextElement();
+                    if (JarVerifier.isSigningRelated(ze.getName())) {
+                        continue;
+                    }
+                    entry = ze;
+                    return true;
+                }
+                return false;
+            }
+
+            public JarFileEntry nextElement() {
+                if (hasMoreElements()) {
+                    ZipEntry ze = entry;
+                    entry = null;
+                    return new JarFileEntry(ze);
+                }
+                throw new NoSuchElementException();
+            }
+        };
+    }
+
+    CodeSource[] getCodeSources(URL url) {
+        ensureInitialization();
+        if (jv != null) {
+            return jv.getCodeSources(this, url);
+        }
+
+        /*
+         * JAR file has no signed content. Is there a non-signing
+         * code source?
+         */
+        Enumeration<String> unsigned = unsignedEntryNames();
+        if (unsigned.hasMoreElements()) {
+            return new CodeSource[]{JarVerifier.getUnsignedCS(url)};
+        } else {
+            return null;
+        }
+    }
+
+    private Enumeration<String> unsignedEntryNames() {
+        final Enumeration<JarEntry> entries = entries();
+        return new Enumeration<String>() {
+
+            String name;
+
+            /*
+             * Grab entries from ZIP directory but screen out
+             * metadata.
+             */
+            public boolean hasMoreElements() {
+                if (name != null) {
+                    return true;
+                }
+                while (entries.hasMoreElements()) {
+                    String value;
+                    ZipEntry e = entries.nextElement();
+                    value = e.getName();
+                    if (e.isDirectory() || JarVerifier.isSigningRelated(value)) {
+                        continue;
+                    }
+                    name = value;
+                    return true;
+                }
+                return false;
+            }
+
+            public String nextElement() {
+                if (hasMoreElements()) {
+                    String value = name;
+                    name = null;
+                    return value;
+                }
+                throw new NoSuchElementException();
+            }
+        };
+    }
+
+    CodeSource getCodeSource(URL url, String name) {
+        ensureInitialization();
+        if (jv != null) {
+            if (jv.eagerValidation) {
+                CodeSource cs = null;
+                JarEntry je = getJarEntry(name);
+                if (je != null) {
+                    cs = jv.getCodeSource(url, this, je);
+                } else {
+                    cs = jv.getCodeSource(url, name);
+                }
+                return cs;
+            } else {
+                return jv.getCodeSource(url, name);
+            }
+        }
+
+        return JarVerifier.getUnsignedCS(url);
+    }
+
+    void setEagerValidation(boolean eager) {
+        try {
+            maybeInstantiateVerifier();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        if (jv != null) {
+            jv.setEagerValidation(eager);
+        }
+    }
+
+    List<Object> getManifestDigests() {
+        ensureInitialization();
+        if (jv != null) {
+            return jv.getManifestDigests();
+        }
+        return new ArrayList<Object>();
+    }
+}

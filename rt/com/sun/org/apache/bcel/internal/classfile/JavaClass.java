@@ -1,832 +1,826 @@
-/*     */ package com.sun.org.apache.bcel.internal.classfile;
-/*     */ 
-/*     */ import com.sun.org.apache.bcel.internal.generic.Type;
-/*     */ import com.sun.org.apache.bcel.internal.util.ClassQueue;
-/*     */ import com.sun.org.apache.bcel.internal.util.ClassVector;
-/*     */ import com.sun.org.apache.bcel.internal.util.Repository;
-/*     */ import com.sun.org.apache.bcel.internal.util.SyntheticRepository;
-/*     */ import com.sun.org.apache.xalan.internal.utils.SecuritySupport;
-/*     */ import java.io.ByteArrayOutputStream;
-/*     */ import java.io.DataOutputStream;
-/*     */ import java.io.File;
-/*     */ import java.io.FileOutputStream;
-/*     */ import java.io.IOException;
-/*     */ import java.io.OutputStream;
-/*     */ import java.lang.reflect.Method;
-/*     */ import java.util.StringTokenizer;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class JavaClass
-/*     */   extends AccessFlags
-/*     */   implements Cloneable, Node
-/*     */ {
-/*     */   private String file_name;
-/*     */   private String package_name;
-/*  88 */   private String source_file_name = "<Unknown>"; private int class_name_index;
-/*     */   private int superclass_name_index;
-/*     */   private String class_name;
-/*     */   private String superclass_name;
-/*     */   private int major;
-/*     */   private int minor;
-/*     */   private ConstantPool constant_pool;
-/*     */   private int[] interfaces;
-/*     */   private String[] interface_names;
-/*     */   private Field[] fields;
-/*     */   private Method[] methods;
-/*     */   private Attribute[] attributes;
-/* 100 */   private byte source = 1;
-/*     */   
-/*     */   public static final byte HEAP = 1;
-/*     */   
-/*     */   public static final byte FILE = 2;
-/*     */   public static final byte ZIP = 3;
-/*     */   static boolean debug = false;
-/* 107 */   static char sep = '/';
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 115 */   private transient Repository repository = SyntheticRepository.getInstance();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public JavaClass(int class_name_index, int superclass_name_index, String file_name, int major, int minor, int access_flags, ConstantPool constant_pool, int[] interfaces, Field[] fields, Method[] methods, Attribute[] attributes, byte source) {
-/* 148 */     if (interfaces == null)
-/* 149 */       interfaces = new int[0]; 
-/* 150 */     if (attributes == null)
-/* 151 */       this.attributes = new Attribute[0]; 
-/* 152 */     if (fields == null)
-/* 153 */       fields = new Field[0]; 
-/* 154 */     if (methods == null) {
-/* 155 */       methods = new Method[0];
-/*     */     }
-/* 157 */     this.class_name_index = class_name_index;
-/* 158 */     this.superclass_name_index = superclass_name_index;
-/* 159 */     this.file_name = file_name;
-/* 160 */     this.major = major;
-/* 161 */     this.minor = minor;
-/* 162 */     this.access_flags = access_flags;
-/* 163 */     this.constant_pool = constant_pool;
-/* 164 */     this.interfaces = interfaces;
-/* 165 */     this.fields = fields;
-/* 166 */     this.methods = methods;
-/* 167 */     this.attributes = attributes;
-/* 168 */     this.source = source;
-/*     */ 
-/*     */     
-/* 171 */     for (int i = 0; i < attributes.length; i++) {
-/* 172 */       if (attributes[i] instanceof SourceFile) {
-/* 173 */         this.source_file_name = ((SourceFile)attributes[i]).getSourceFileName();
-/*     */ 
-/*     */ 
-/*     */         
-/*     */         break;
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */     
-/* 182 */     this.class_name = constant_pool.getConstantString(class_name_index, (byte)7);
-/*     */     
-/* 184 */     this.class_name = Utility.compactClassName(this.class_name, false);
-/*     */     
-/* 186 */     int index = this.class_name.lastIndexOf('.');
-/* 187 */     if (index < 0) {
-/* 188 */       this.package_name = "";
-/*     */     } else {
-/* 190 */       this.package_name = this.class_name.substring(0, index);
-/*     */     } 
-/* 192 */     if (superclass_name_index > 0) {
-/* 193 */       this.superclass_name = constant_pool.getConstantString(superclass_name_index, (byte)7);
-/*     */       
-/* 195 */       this.superclass_name = Utility.compactClassName(this.superclass_name, false);
-/*     */     } else {
-/*     */       
-/* 198 */       this.superclass_name = "java.lang.Object";
-/*     */     } 
-/* 200 */     this.interface_names = new String[interfaces.length];
-/* 201 */     for (int j = 0; j < interfaces.length; j++) {
-/* 202 */       String str = constant_pool.getConstantString(interfaces[j], (byte)7);
-/* 203 */       this.interface_names[j] = Utility.compactClassName(str, false);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public JavaClass(int class_name_index, int superclass_name_index, String file_name, int major, int minor, int access_flags, ConstantPool constant_pool, int[] interfaces, Field[] fields, Method[] methods, Attribute[] attributes) {
-/* 233 */     this(class_name_index, superclass_name_index, file_name, major, minor, access_flags, constant_pool, interfaces, fields, methods, attributes, (byte)1);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void accept(Visitor v) {
-/* 246 */     v.visitJavaClass(this);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static final void Debug(String str) {
-/* 252 */     if (debug) {
-/* 253 */       System.out.println(str);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void dump(File file) throws IOException {
-/* 264 */     String parent = file.getParent();
-/*     */     
-/* 266 */     if (parent != null) {
-/* 267 */       File dir = new File(parent);
-/*     */       
-/* 269 */       if (dir != null) {
-/* 270 */         dir.mkdirs();
-/*     */       }
-/*     */     } 
-/* 273 */     dump(new DataOutputStream(new FileOutputStream(file)));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void dump(String file_name) throws IOException {
-/* 284 */     dump(new File(file_name));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public byte[] getBytes() {
-/* 291 */     ByteArrayOutputStream s = new ByteArrayOutputStream();
-/* 292 */     DataOutputStream ds = new DataOutputStream(s);
-/*     */ 
-/*     */     
-/* 295 */     try { dump(ds); }
-/* 296 */     catch (IOException e)
-/* 297 */     { e.printStackTrace(); }
-/*     */     finally { 
-/* 299 */       try { ds.close(); } catch (IOException e2) { e2.printStackTrace(); }
-/*     */        }
-/*     */     
-/* 302 */     return s.toByteArray();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void dump(OutputStream file) throws IOException {
-/* 312 */     dump(new DataOutputStream(file));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void dump(DataOutputStream file) throws IOException {
-/* 323 */     file.writeInt(-889275714);
-/* 324 */     file.writeShort(this.minor);
-/* 325 */     file.writeShort(this.major);
-/*     */     
-/* 327 */     this.constant_pool.dump(file);
-/*     */     
-/* 329 */     file.writeShort(this.access_flags);
-/* 330 */     file.writeShort(this.class_name_index);
-/* 331 */     file.writeShort(this.superclass_name_index);
-/*     */     
-/* 333 */     file.writeShort(this.interfaces.length); int i;
-/* 334 */     for (i = 0; i < this.interfaces.length; i++) {
-/* 335 */       file.writeShort(this.interfaces[i]);
-/*     */     }
-/* 337 */     file.writeShort(this.fields.length);
-/* 338 */     for (i = 0; i < this.fields.length; i++) {
-/* 339 */       this.fields[i].dump(file);
-/*     */     }
-/* 341 */     file.writeShort(this.methods.length);
-/* 342 */     for (i = 0; i < this.methods.length; i++) {
-/* 343 */       this.methods[i].dump(file);
-/*     */     }
-/* 345 */     if (this.attributes != null) {
-/* 346 */       file.writeShort(this.attributes.length);
-/* 347 */       for (i = 0; i < this.attributes.length; i++) {
-/* 348 */         this.attributes[i].dump(file);
-/*     */       }
-/*     */     } else {
-/* 351 */       file.writeShort(0);
-/*     */     } 
-/* 353 */     file.close();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Attribute[] getAttributes() {
-/* 359 */     return this.attributes;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public String getClassName() {
-/* 364 */     return this.class_name;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public String getPackageName() {
-/* 369 */     return this.package_name;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public int getClassNameIndex() {
-/* 374 */     return this.class_name_index;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public ConstantPool getConstantPool() {
-/* 379 */     return this.constant_pool;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Field[] getFields() {
-/* 386 */     return this.fields;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public String getFileName() {
-/* 391 */     return this.file_name;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public String[] getInterfaceNames() {
-/* 396 */     return this.interface_names;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public int[] getInterfaceIndices() {
-/* 401 */     return this.interfaces;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public int getMajor() {
-/* 406 */     return this.major;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public Method[] getMethods() {
-/* 411 */     return this.methods;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Method getMethod(Method m) {
-/* 418 */     for (int i = 0; i < this.methods.length; i++) {
-/* 419 */       Method method = this.methods[i];
-/*     */       
-/* 421 */       if (m.getName().equals(method.getName()) && m
-/* 422 */         .getModifiers() == method.getModifiers() && 
-/* 423 */         Type.getSignature(m).equals(method.getSignature())) {
-/* 424 */         return method;
-/*     */       }
-/*     */     } 
-/*     */     
-/* 428 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getMinor() {
-/* 434 */     return this.minor;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public String getSourceFileName() {
-/* 439 */     return this.source_file_name;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public String getSuperclassName() {
-/* 444 */     return this.superclass_name;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public int getSuperclassNameIndex() {
-/* 449 */     return this.superclass_name_index;
-/*     */   }
-/*     */   
-/*     */   static {
-/* 453 */     String debug = null, sep = null;
-/*     */     
-/*     */     try {
-/* 456 */       debug = SecuritySupport.getSystemProperty("JavaClass.debug");
-/*     */       
-/* 458 */       sep = SecuritySupport.getSystemProperty("file.separator");
-/*     */     }
-/* 460 */     catch (SecurityException securityException) {}
-/*     */ 
-/*     */ 
-/*     */     
-/* 464 */     if (debug != null) {
-/* 465 */       JavaClass.debug = (new Boolean(debug)).booleanValue();
-/*     */     }
-/* 467 */     if (sep != null) {
-/*     */       try {
-/* 469 */         JavaClass.sep = sep.charAt(0);
-/* 470 */       } catch (StringIndexOutOfBoundsException stringIndexOutOfBoundsException) {}
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setAttributes(Attribute[] attributes) {
-/* 477 */     this.attributes = attributes;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setClassName(String class_name) {
-/* 484 */     this.class_name = class_name;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setClassNameIndex(int class_name_index) {
-/* 491 */     this.class_name_index = class_name_index;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setConstantPool(ConstantPool constant_pool) {
-/* 498 */     this.constant_pool = constant_pool;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setFields(Field[] fields) {
-/* 505 */     this.fields = fields;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setFileName(String file_name) {
-/* 512 */     this.file_name = file_name;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setInterfaceNames(String[] interface_names) {
-/* 519 */     this.interface_names = interface_names;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setInterfaces(int[] interfaces) {
-/* 526 */     this.interfaces = interfaces;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setMajor(int major) {
-/* 533 */     this.major = major;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setMethods(Method[] methods) {
-/* 540 */     this.methods = methods;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setMinor(int minor) {
-/* 547 */     this.minor = minor;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setSourceFileName(String source_file_name) {
-/* 554 */     this.source_file_name = source_file_name;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setSuperclassName(String superclass_name) {
-/* 561 */     this.superclass_name = superclass_name;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setSuperclassNameIndex(int superclass_name_index) {
-/* 568 */     this.superclass_name_index = superclass_name_index;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 575 */     String access = Utility.accessToString(this.access_flags, true);
-/* 576 */     access = access.equals("") ? "" : (access + " ");
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 582 */     StringBuffer buf = new StringBuffer(access + Utility.classOrInterface(this.access_flags) + " " + this.class_name + " extends " + Utility.compactClassName(this.superclass_name, false) + '\n');
-/*     */     
-/* 584 */     int size = this.interfaces.length;
-/*     */     
-/* 586 */     if (size > 0) {
-/* 587 */       buf.append("implements\t\t");
-/*     */       
-/* 589 */       for (int i = 0; i < size; i++) {
-/* 590 */         buf.append(this.interface_names[i]);
-/* 591 */         if (i < size - 1) {
-/* 592 */           buf.append(", ");
-/*     */         }
-/*     */       } 
-/* 595 */       buf.append('\n');
-/*     */     } 
-/*     */     
-/* 598 */     buf.append("filename\t\t" + this.file_name + '\n');
-/* 599 */     buf.append("compiled from\t\t" + this.source_file_name + '\n');
-/* 600 */     buf.append("compiler version\t" + this.major + "." + this.minor + '\n');
-/* 601 */     buf.append("access flags\t\t" + this.access_flags + '\n');
-/* 602 */     buf.append("constant pool\t\t" + this.constant_pool.getLength() + " entries\n");
-/* 603 */     buf.append("ACC_SUPER flag\t\t" + isSuper() + "\n");
-/*     */     
-/* 605 */     if (this.attributes.length > 0) {
-/* 606 */       buf.append("\nAttribute(s):\n");
-/* 607 */       for (int i = 0; i < this.attributes.length; i++) {
-/* 608 */         buf.append(indent(this.attributes[i]));
-/*     */       }
-/*     */     } 
-/* 611 */     if (this.fields.length > 0) {
-/* 612 */       buf.append("\n" + this.fields.length + " fields:\n");
-/* 613 */       for (int i = 0; i < this.fields.length; i++) {
-/* 614 */         buf.append("\t" + this.fields[i] + '\n');
-/*     */       }
-/*     */     } 
-/* 617 */     if (this.methods.length > 0) {
-/* 618 */       buf.append("\n" + this.methods.length + " methods:\n");
-/* 619 */       for (int i = 0; i < this.methods.length; i++) {
-/* 620 */         buf.append("\t" + this.methods[i] + '\n');
-/*     */       }
-/*     */     } 
-/* 623 */     return buf.toString();
-/*     */   }
-/*     */   
-/*     */   private static final String indent(Object obj) {
-/* 627 */     StringTokenizer tok = new StringTokenizer(obj.toString(), "\n");
-/* 628 */     StringBuffer buf = new StringBuffer();
-/*     */     
-/* 630 */     while (tok.hasMoreTokens()) {
-/* 631 */       buf.append("\t" + tok.nextToken() + "\n");
-/*     */     }
-/* 633 */     return buf.toString();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public JavaClass copy() {
-/* 640 */     JavaClass c = null;
-/*     */     
-/*     */     try {
-/* 643 */       c = (JavaClass)clone();
-/* 644 */     } catch (CloneNotSupportedException cloneNotSupportedException) {}
-/*     */     
-/* 646 */     c.constant_pool = this.constant_pool.copy();
-/* 647 */     c.interfaces = (int[])this.interfaces.clone();
-/* 648 */     c.interface_names = (String[])this.interface_names.clone();
-/*     */     
-/* 650 */     c.fields = new Field[this.fields.length]; int i;
-/* 651 */     for (i = 0; i < this.fields.length; i++) {
-/* 652 */       c.fields[i] = this.fields[i].copy(c.constant_pool);
-/*     */     }
-/* 654 */     c.methods = new Method[this.methods.length];
-/* 655 */     for (i = 0; i < this.methods.length; i++) {
-/* 656 */       c.methods[i] = this.methods[i].copy(c.constant_pool);
-/*     */     }
-/* 658 */     c.attributes = new Attribute[this.attributes.length];
-/* 659 */     for (i = 0; i < this.attributes.length; i++) {
-/* 660 */       c.attributes[i] = this.attributes[i].copy(c.constant_pool);
-/*     */     }
-/* 662 */     return c;
-/*     */   }
-/*     */   
-/*     */   public final boolean isSuper() {
-/* 666 */     return ((this.access_flags & 0x20) != 0);
-/*     */   }
-/*     */   
-/*     */   public final boolean isClass() {
-/* 670 */     return ((this.access_flags & 0x200) == 0);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final byte getSource() {
-/* 676 */     return this.source;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Repository getRepository() {
-/* 686 */     return this.repository;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setRepository(Repository repository) {
-/* 694 */     this.repository = repository;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final boolean instanceOf(JavaClass super_class) {
-/* 702 */     if (equals(super_class)) {
-/* 703 */       return true;
-/*     */     }
-/* 705 */     JavaClass[] super_classes = getSuperClasses();
-/*     */     
-/* 707 */     for (int i = 0; i < super_classes.length; i++) {
-/* 708 */       if (super_classes[i].equals(super_class)) {
-/* 709 */         return true;
-/*     */       }
-/*     */     } 
-/*     */     
-/* 713 */     if (super_class.isInterface()) {
-/* 714 */       return implementationOf(super_class);
-/*     */     }
-/*     */     
-/* 717 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean implementationOf(JavaClass inter) {
-/* 724 */     if (!inter.isInterface()) {
-/* 725 */       throw new IllegalArgumentException(inter.getClassName() + " is no interface");
-/*     */     }
-/*     */     
-/* 728 */     if (equals(inter)) {
-/* 729 */       return true;
-/*     */     }
-/*     */     
-/* 732 */     JavaClass[] super_interfaces = getAllInterfaces();
-/*     */     
-/* 734 */     for (int i = 0; i < super_interfaces.length; i++) {
-/* 735 */       if (super_interfaces[i].equals(inter)) {
-/* 736 */         return true;
-/*     */       }
-/*     */     } 
-/*     */     
-/* 740 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public JavaClass getSuperClass() {
-/* 748 */     if ("java.lang.Object".equals(getClassName())) {
-/* 749 */       return null;
-/*     */     }
-/*     */     
-/*     */     try {
-/* 753 */       return this.repository.loadClass(getSuperclassName());
-/* 754 */     } catch (ClassNotFoundException e) {
-/* 755 */       System.err.println(e);
-/* 756 */       return null;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public JavaClass[] getSuperClasses() {
-/* 765 */     JavaClass clazz = this;
-/* 766 */     ClassVector vec = new ClassVector();
-/*     */     
-/* 768 */     for (clazz = clazz.getSuperClass(); clazz != null; 
-/* 769 */       clazz = clazz.getSuperClass())
-/*     */     {
-/* 771 */       vec.addElement(clazz);
-/*     */     }
-/*     */     
-/* 774 */     return vec.toArray();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public JavaClass[] getInterfaces() {
-/* 781 */     String[] interfaces = getInterfaceNames();
-/* 782 */     JavaClass[] classes = new JavaClass[interfaces.length];
-/*     */     
-/*     */     try {
-/* 785 */       for (int i = 0; i < interfaces.length; i++) {
-/* 786 */         classes[i] = this.repository.loadClass(interfaces[i]);
-/*     */       }
-/* 788 */     } catch (ClassNotFoundException e) {
-/* 789 */       System.err.println(e);
-/* 790 */       return null;
-/*     */     } 
-/*     */     
-/* 793 */     return classes;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public JavaClass[] getAllInterfaces() {
-/* 800 */     ClassQueue queue = new ClassQueue();
-/* 801 */     ClassVector vec = new ClassVector();
-/*     */     
-/* 803 */     queue.enqueue(this);
-/*     */     
-/* 805 */     while (!queue.empty()) {
-/* 806 */       JavaClass clazz = queue.dequeue();
-/*     */       
-/* 808 */       JavaClass souper = clazz.getSuperClass();
-/* 809 */       JavaClass[] interfaces = clazz.getInterfaces();
-/*     */       
-/* 811 */       if (clazz.isInterface()) {
-/* 812 */         vec.addElement(clazz);
-/*     */       }
-/* 814 */       else if (souper != null) {
-/* 815 */         queue.enqueue(souper);
-/*     */       } 
-/*     */ 
-/*     */       
-/* 819 */       for (int i = 0; i < interfaces.length; i++) {
-/* 820 */         queue.enqueue(interfaces[i]);
-/*     */       }
-/*     */     } 
-/*     */     
-/* 824 */     return vec.toArray();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\bcel\internal\classfile\JavaClass.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+package com.sun.org.apache.bcel.internal.classfile;
+
+/* ====================================================================
+ * The Apache Software License, Version 1.1
+ *
+ * Copyright (c) 2001 The Apache Software Foundation.  All rights
+ * reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. The end-user documentation included with the redistribution,
+ *    if any, must include the following acknowledgment:
+ *       "This product includes software developed by the
+ *        Apache Software Foundation (http://www.apache.org/)."
+ *    Alternately, this acknowledgment may appear in the software itself,
+ *    if and wherever such third-party acknowledgments normally appear.
+ *
+ * 4. The names "Apache" and "Apache Software Foundation" and
+ *    "Apache BCEL" must not be used to endorse or promote products
+ *    derived from this software without prior written permission. For
+ *    written permission, please contact apache@apache.org.
+ *
+ * 5. Products derived from this software may not be called "Apache",
+ *    "Apache BCEL", nor may "Apache" appear in their name, without
+ *    prior written permission of the Apache Software Foundation.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED.  IN NO EVENT SHALL THE APACHE SOFTWARE FOUNDATION OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+ * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+ * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals on behalf of the Apache Software Foundation.  For more
+ * information on the Apache Software Foundation, please see
+ * <http://www.apache.org/>.
+ */
+
+import  com.sun.org.apache.bcel.internal.Constants;
+import  com.sun.org.apache.bcel.internal.util.SyntheticRepository;
+import  com.sun.org.apache.bcel.internal.util.ClassVector;
+import  com.sun.org.apache.bcel.internal.util.ClassQueue;
+import  com.sun.org.apache.bcel.internal.generic.Type;
+import com.sun.org.apache.xalan.internal.utils.SecuritySupport;
+
+import  java.io.*;
+import  java.util.StringTokenizer;
+
+/**
+ * Represents a Java class, i.e., the data structures, constant pool,
+ * fields, methods and commands contained in a Java .class file.
+ * See <a href="ftp://java.sun.com/docs/specs/">JVM
+ * specification</a> for details.
+
+ * The intent of this class is to represent a parsed or otherwise existing
+ * class file.  Those interested in programatically generating classes
+ * should see the <a href="../generic/ClassGen.html">ClassGen</a> class.
+
+ * @version $Id: JavaClass.java,v 1.4 2007-07-19 04:34:42 ofung Exp $
+ * @see com.sun.org.apache.bcel.internal.generic.ClassGen
+ * @author  <A HREF="mailto:markus.dahm@berlin.de">M. Dahm</A>
+ */
+public class JavaClass extends AccessFlags implements Cloneable, Node {
+  private String       file_name;
+  private String       package_name;
+  private String       source_file_name = "<Unknown>";
+  private int          class_name_index;
+  private int          superclass_name_index;
+  private String       class_name;
+  private String       superclass_name;
+  private int          major, minor;  // Compiler version
+  private ConstantPool constant_pool; // Constant pool
+  private int[]        interfaces;    // implemented interfaces
+  private String[]     interface_names;
+  private Field[]      fields;        // Fields, i.e., variables of class
+  private Method[]     methods;       // methods defined in the class
+  private Attribute[]  attributes;    // attributes defined in the class
+  private byte         source = HEAP; // Generated in memory
+
+  public static final byte HEAP = 1;
+  public static final byte FILE = 2;
+  public static final byte ZIP  = 3;
+
+  static boolean debug = false; // Debugging on/off
+  static char    sep   = '/';   // directory separator
+
+  /**
+   * In cases where we go ahead and create something,
+   * use the default SyntheticRepository, because we
+   * don't know any better.
+   */
+  private transient com.sun.org.apache.bcel.internal.util.Repository repository =
+    SyntheticRepository.getInstance();
+
+  /**
+   * Constructor gets all contents as arguments.
+   *
+   * @param class_name_index Index into constant pool referencing a
+   * ConstantClass that represents this class.
+   * @param superclass_name_index Index into constant pool referencing a
+   * ConstantClass that represents this class's superclass.
+   * @param file_name File name
+   * @param major Major compiler version
+   * @param minor Minor compiler version
+   * @param access_flags Access rights defined by bit flags
+   * @param constant_pool Array of constants
+   * @param interfaces Implemented interfaces
+   * @param fields Class fields
+   * @param methods Class methods
+   * @param attributes Class attributes
+   * @param source Read from file or generated in memory?
+   */
+  public JavaClass(int        class_name_index,
+                   int        superclass_name_index,
+                   String     file_name,
+                   int        major,
+                   int        minor,
+                   int        access_flags,
+                   ConstantPool constant_pool,
+                   int[]      interfaces,
+                   Field[]      fields,
+                   Method[]     methods,
+                   Attribute[]  attributes,
+                   byte          source)
+  {
+    if(interfaces == null) // Allowed for backward compatibility
+      interfaces = new int[0];
+    if(attributes == null)
+      this.attributes = new Attribute[0];
+    if(fields == null)
+      fields = new Field[0];
+    if(methods == null)
+      methods = new Method[0];
+
+    this.class_name_index      = class_name_index;
+    this.superclass_name_index = superclass_name_index;
+    this.file_name             = file_name;
+    this.major                 = major;
+    this.minor                 = minor;
+    this.access_flags          = access_flags;
+    this.constant_pool         = constant_pool;
+    this.interfaces            = interfaces;
+    this.fields                = fields;
+    this.methods               = methods;
+    this.attributes            = attributes;
+    this.source                = source;
+
+    // Get source file name if available
+    for(int i=0; i < attributes.length; i++) {
+      if(attributes[i] instanceof SourceFile) {
+        source_file_name = ((SourceFile)attributes[i]).getSourceFileName();
+        break;
+      }
+    }
+
+    /* According to the specification the following entries must be of type
+     * `ConstantClass' but we check that anyway via the
+     * `ConstPool.getConstant' method.
+     */
+    class_name = constant_pool.getConstantString(class_name_index,
+                                                 Constants.CONSTANT_Class);
+    class_name = Utility.compactClassName(class_name, false);
+
+    int index = class_name.lastIndexOf('.');
+    if(index < 0)
+      package_name = "";
+    else
+      package_name = class_name.substring(0, index);
+
+    if(superclass_name_index > 0) { // May be zero -> class is java.lang.Object
+      superclass_name = constant_pool.getConstantString(superclass_name_index,
+                                                        Constants.CONSTANT_Class);
+      superclass_name = Utility.compactClassName(superclass_name, false);
+    }
+    else
+      superclass_name = "java.lang.Object";
+
+    interface_names = new String[interfaces.length];
+    for(int i=0; i < interfaces.length; i++) {
+      String str = constant_pool.getConstantString(interfaces[i], Constants.CONSTANT_Class);
+      interface_names[i] = Utility.compactClassName(str, false);
+    }
+  }
+
+  /**
+   * Constructor gets all contents as arguments.
+   *
+   * @param class_name_index Class name
+   * @param superclass_name_index Superclass name
+   * @param file_name File name
+   * @param major Major compiler version
+   * @param minor Minor compiler version
+   * @param access_flags Access rights defined by bit flags
+   * @param constant_pool Array of constants
+   * @param interfaces Implemented interfaces
+   * @param fields Class fields
+   * @param methods Class methods
+   * @param attributes Class attributes
+   */
+  public JavaClass(int        class_name_index,
+                   int        superclass_name_index,
+                   String     file_name,
+                   int        major,
+                   int        minor,
+                   int        access_flags,
+                   ConstantPool constant_pool,
+                   int[]      interfaces,
+                   Field[]      fields,
+                   Method[]     methods,
+                   Attribute[]  attributes) {
+    this(class_name_index, superclass_name_index, file_name, major, minor, access_flags,
+         constant_pool, interfaces, fields, methods, attributes, HEAP);
+  }
+
+
+  /**
+   * Called by objects that are traversing the nodes of the tree implicitely
+   * defined by the contents of a Java class. I.e., the hierarchy of methods,
+   * fields, attributes, etc. spawns a tree of objects.
+   *
+   * @param v Visitor object
+   */
+  public void accept(Visitor v) {
+    v.visitJavaClass(this);
+  }
+
+  /* Print debug information depending on `JavaClass.debug'
+   */
+  static final void Debug(String str) {
+    if(debug)
+      System.out.println(str);
+  }
+
+  /**
+   * Dump class to a file.
+   *
+   * @param file Output file
+   * @throws IOException
+   */
+  public void dump(File file) throws IOException
+  {
+    String parent = file.getParent();
+
+    if(parent != null) {
+      File dir = new File(parent);
+
+      if(dir != null)
+        dir.mkdirs();
+    }
+
+    dump(new DataOutputStream(new FileOutputStream(file)));
+  }
+
+  /**
+   * Dump class to a file named file_name.
+   *
+   * @param file_name Output file name
+   * @exception IOException
+   */
+  public void dump(String file_name) throws IOException
+  {
+    dump(new File(file_name));
+  }
+
+  /**
+   * @return class in binary format
+   */
+  public byte[] getBytes() {
+    ByteArrayOutputStream s  = new ByteArrayOutputStream();
+    DataOutputStream      ds = new DataOutputStream(s);
+
+    try {
+      dump(ds);
+    } catch(IOException e) {
+      e.printStackTrace();
+    } finally {
+      try { ds.close(); } catch(IOException e2) { e2.printStackTrace(); }
+    }
+
+    return s.toByteArray();
+  }
+
+  /**
+   * Dump Java class to output stream in binary format.
+   *
+   * @param file Output stream
+   * @exception IOException
+   */
+  public void dump(OutputStream file) throws IOException {
+    dump(new DataOutputStream(file));
+  }
+
+  /**
+   * Dump Java class to output stream in binary format.
+   *
+   * @param file Output stream
+   * @exception IOException
+   */
+  public void dump(DataOutputStream file) throws IOException
+  {
+    file.writeInt(0xcafebabe);
+    file.writeShort(minor);
+    file.writeShort(major);
+
+    constant_pool.dump(file);
+
+    file.writeShort(access_flags);
+    file.writeShort(class_name_index);
+    file.writeShort(superclass_name_index);
+
+    file.writeShort(interfaces.length);
+    for(int i=0; i < interfaces.length; i++)
+      file.writeShort(interfaces[i]);
+
+    file.writeShort(fields.length);
+    for(int i=0; i < fields.length; i++)
+      fields[i].dump(file);
+
+    file.writeShort(methods.length);
+    for(int i=0; i < methods.length; i++)
+      methods[i].dump(file);
+
+    if(attributes != null) {
+      file.writeShort(attributes.length);
+      for(int i=0; i < attributes.length; i++)
+        attributes[i].dump(file);
+    }
+    else
+      file.writeShort(0);
+
+    file.close();
+  }
+
+  /**
+   * @return Attributes of the class.
+   */
+  public Attribute[] getAttributes() { return attributes; }
+
+  /**
+   * @return Class name.
+   */
+  public String getClassName()       { return class_name; }
+
+  /**
+   * @return Package name.
+   */
+  public String getPackageName()       { return package_name; }
+
+  /**
+   * @return Class name index.
+   */
+  public int getClassNameIndex()   { return class_name_index; }
+
+  /**
+   * @return Constant pool.
+   */
+  public ConstantPool getConstantPool() { return constant_pool; }
+
+  /**
+   * @return Fields, i.e., variables of the class. Like the JVM spec
+   * mandates for the classfile format, these fields are those specific to
+   * this class, and not those of the superclass or superinterfaces.
+   */
+  public Field[] getFields()         { return fields; }
+
+  /**
+   * @return File name of class, aka SourceFile attribute value
+   */
+  public String getFileName()        { return file_name; }
+
+  /**
+   * @return Names of implemented interfaces.
+   */
+  public String[] getInterfaceNames()  { return interface_names; }
+
+  /**
+   * @return Indices in constant pool of implemented interfaces.
+   */
+  public int[] getInterfaceIndices()     { return interfaces; }
+
+  /**
+   * @return Major number of class file version.
+   */
+  public int  getMajor()           { return major; }
+
+  /**
+   * @return Methods of the class.
+   */
+  public Method[] getMethods()       { return methods; }
+
+  /**
+   * @return A com.sun.org.apache.bcel.internal.classfile.Method corresponding to
+   * java.lang.reflect.Method if any
+   */
+  public Method getMethod(java.lang.reflect.Method m) {
+    for(int i = 0; i < methods.length; i++) {
+      Method method = methods[i];
+
+      if(m.getName().equals(method.getName()) &&
+         (m.getModifiers() == method.getModifiers()) &&
+         Type.getSignature(m).equals(method.getSignature())) {
+        return method;
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * @return Minor number of class file version.
+   */
+  public int  getMinor()           { return minor; }
+
+  /**
+   * @return sbsolute path to file where this class was read from
+   */
+  public String getSourceFileName()  { return source_file_name; }
+
+  /**
+   * @return Superclass name.
+   */
+  public String getSuperclassName()  { return superclass_name; }
+
+  /**
+   * @return Class name index.
+   */
+  public int getSuperclassNameIndex() { return superclass_name_index; }
+
+  static {
+    // Debugging ... on/off
+    String debug = null, sep = null;
+
+    try {
+      debug = SecuritySupport.getSystemProperty("JavaClass.debug");
+      // Get path separator either / or \ usually
+      sep = SecuritySupport.getSystemProperty("file.separator");
+    }
+    catch (SecurityException e) {
+        // falls through
+    }
+
+    if(debug != null)
+      JavaClass.debug = new Boolean(debug).booleanValue();
+
+    if(sep != null)
+      try {
+        JavaClass.sep = sep.charAt(0);
+      } catch(StringIndexOutOfBoundsException e) {} // Never reached
+  }
+
+  /**
+   * @param attributes .
+   */
+  public void setAttributes(Attribute[] attributes) {
+    this.attributes = attributes;
+  }
+
+  /**
+   * @param class_name .
+   */
+  public void setClassName(String class_name) {
+    this.class_name = class_name;
+  }
+
+  /**
+   * @param class_name_index .
+   */
+  public void setClassNameIndex(int class_name_index) {
+    this.class_name_index = class_name_index;
+  }
+
+  /**
+   * @param constant_pool .
+   */
+  public void setConstantPool(ConstantPool constant_pool) {
+    this.constant_pool = constant_pool;
+  }
+
+  /**
+   * @param fields .
+   */
+  public void setFields(Field[] fields) {
+    this.fields = fields;
+  }
+
+  /**
+   * Set File name of class, aka SourceFile attribute value
+   */
+  public void setFileName(String file_name) {
+    this.file_name = file_name;
+  }
+
+  /**
+   * @param interface_names .
+   */
+  public void setInterfaceNames(String[] interface_names) {
+    this.interface_names = interface_names;
+  }
+
+  /**
+   * @param interfaces .
+   */
+  public void setInterfaces(int[] interfaces) {
+    this.interfaces = interfaces;
+  }
+
+  /**
+   * @param major .
+   */
+  public void setMajor(int major) {
+    this.major = major;
+  }
+
+  /**
+   * @param methods .
+   */
+  public void setMethods(Method[] methods) {
+    this.methods = methods;
+  }
+
+  /**
+   * @param minor .
+   */
+  public void setMinor(int minor) {
+    this.minor = minor;
+  }
+
+  /**
+   * Set absolute path to file this class was read from.
+   */
+  public void setSourceFileName(String source_file_name) {
+    this.source_file_name = source_file_name;
+  }
+
+  /**
+   * @param superclass_name .
+   */
+  public void setSuperclassName(String superclass_name) {
+    this.superclass_name = superclass_name;
+  }
+
+  /**
+   * @param superclass_name_index .
+   */
+  public void setSuperclassNameIndex(int superclass_name_index) {
+    this.superclass_name_index = superclass_name_index;
+  }
+
+  /**
+   * @return String representing class contents.
+   */
+  public String toString() {
+    String access = Utility.accessToString(access_flags, true);
+    access = access.equals("")? "" : (access + " ");
+
+    StringBuffer buf = new StringBuffer(access +
+                                        Utility.classOrInterface(access_flags) +
+                                        " " +
+                                        class_name + " extends " +
+                                        Utility.compactClassName(superclass_name,
+                                                                 false) + '\n');
+    int size = interfaces.length;
+
+    if(size > 0) {
+      buf.append("implements\t\t");
+
+      for(int i=0; i < size; i++) {
+        buf.append(interface_names[i]);
+        if(i < size - 1)
+          buf.append(", ");
+      }
+
+      buf.append('\n');
+    }
+
+    buf.append("filename\t\t" + file_name + '\n');
+    buf.append("compiled from\t\t" + source_file_name + '\n');
+    buf.append("compiler version\t" + major + "." + minor + '\n');
+    buf.append("access flags\t\t" + access_flags + '\n');
+    buf.append("constant pool\t\t" + constant_pool.getLength() + " entries\n");
+    buf.append("ACC_SUPER flag\t\t" + isSuper() + "\n");
+
+    if(attributes.length > 0) {
+      buf.append("\nAttribute(s):\n");
+      for(int i=0; i < attributes.length; i++)
+        buf.append(indent(attributes[i]));
+    }
+
+    if(fields.length > 0) {
+      buf.append("\n" + fields.length + " fields:\n");
+      for(int i=0; i < fields.length; i++)
+        buf.append("\t" + fields[i] + '\n');
+    }
+
+    if(methods.length > 0) {
+      buf.append("\n" + methods.length + " methods:\n");
+      for(int i=0; i < methods.length; i++)
+        buf.append("\t" + methods[i] + '\n');
+    }
+
+    return buf.toString();
+  }
+
+  private static final String indent(Object obj) {
+    StringTokenizer tok = new StringTokenizer(obj.toString(), "\n");
+    StringBuffer buf = new StringBuffer();
+
+    while(tok.hasMoreTokens())
+      buf.append("\t" + tok.nextToken() + "\n");
+
+    return buf.toString();
+  }
+
+  /**
+   * @return deep copy of this class
+   */
+  public JavaClass copy() {
+    JavaClass c = null;
+
+    try {
+      c = (JavaClass)clone();
+    } catch(CloneNotSupportedException e) {}
+
+    c.constant_pool   = constant_pool.copy();
+    c.interfaces      = (int[])interfaces.clone();
+    c.interface_names = (String[])interface_names.clone();
+
+    c.fields = new Field[fields.length];
+    for(int i=0; i < fields.length; i++)
+      c.fields[i] = fields[i].copy(c.constant_pool);
+
+    c.methods = new Method[methods.length];
+    for(int i=0; i < methods.length; i++)
+      c.methods[i] = methods[i].copy(c.constant_pool);
+
+    c.attributes = new Attribute[attributes.length];
+    for(int i=0; i < attributes.length; i++)
+      c.attributes[i] = attributes[i].copy(c.constant_pool);
+
+    return c;
+  }
+
+  public final boolean isSuper() {
+    return (access_flags & Constants.ACC_SUPER) != 0;
+  }
+
+  public final boolean isClass() {
+    return (access_flags & Constants.ACC_INTERFACE) == 0;
+  }
+
+  /** @return returns either HEAP (generated), FILE, or ZIP
+   */
+  public final byte getSource() {
+    return source;
+  }
+
+  /********************* New repository functionality *********************/
+
+  /**
+   * Gets the ClassRepository which holds its definition. By default
+   * this is the same as SyntheticRepository.getInstance();
+   */
+  public com.sun.org.apache.bcel.internal.util.Repository getRepository() {
+    return repository;
+  }
+
+  /**
+   * Sets the ClassRepository which loaded the JavaClass.
+   * Should be called immediately after parsing is done.
+   */
+  public void setRepository(com.sun.org.apache.bcel.internal.util.Repository repository) {
+    this.repository = repository;
+  }
+
+  /** Equivalent to runtime "instanceof" operator.
+   *
+   * @return true if this JavaClass is derived from teh super class
+   */
+  public final boolean instanceOf(JavaClass super_class) {
+    if(this.equals(super_class))
+      return true;
+
+    JavaClass[] super_classes = getSuperClasses();
+
+    for(int i=0; i < super_classes.length; i++) {
+      if(super_classes[i].equals(super_class)) {
+        return true;
+      }
+    }
+
+    if(super_class.isInterface()) {
+      return implementationOf(super_class);
+    }
+
+    return false;
+  }
+
+  /**
+   * @return true, if clazz is an implementation of interface inter
+   */
+  public boolean implementationOf(JavaClass inter) {
+    if(!inter.isInterface()) {
+      throw new IllegalArgumentException(inter.getClassName() + " is no interface");
+    }
+
+    if(this.equals(inter)) {
+      return true;
+    }
+
+    JavaClass[] super_interfaces = getAllInterfaces();
+
+    for(int i=0; i < super_interfaces.length; i++) {
+      if(super_interfaces[i].equals(inter)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * @return the superclass for this JavaClass object, or null if this
+   * is java.lang.Object
+   */
+  public JavaClass getSuperClass() {
+    if("java.lang.Object".equals(getClassName())) {
+      return null;
+    }
+
+    try {
+      return repository.loadClass(getSuperclassName());
+    } catch(ClassNotFoundException e) {
+      System.err.println(e);
+      return null;
+    }
+  }
+
+  /**
+   * @return list of super classes of this class in ascending order, i.e.,
+   * java.lang.Object is always the last element
+   */
+  public JavaClass[] getSuperClasses() {
+    JavaClass   clazz = this;
+    ClassVector vec   = new ClassVector();
+
+    for(clazz = clazz.getSuperClass(); clazz != null;
+        clazz = clazz.getSuperClass())
+    {
+      vec.addElement(clazz);
+    }
+
+    return vec.toArray();
+  }
+
+  /**
+   * Get interfaces directly implemented by this JavaClass.
+   */
+  public JavaClass[] getInterfaces() {
+    String[]    interfaces = getInterfaceNames();
+    JavaClass[] classes    = new JavaClass[interfaces.length];
+
+    try {
+      for(int i = 0; i < interfaces.length; i++) {
+        classes[i] = repository.loadClass(interfaces[i]);
+      }
+    } catch(ClassNotFoundException e) {
+      System.err.println(e);
+      return null;
+    }
+
+    return classes;
+  }
+
+  /**
+   * Get all interfaces implemented by this JavaClass (transitively).
+   */
+  public JavaClass[] getAllInterfaces() {
+    ClassQueue  queue = new ClassQueue();
+    ClassVector vec   = new ClassVector();
+
+    queue.enqueue(this);
+
+    while(!queue.empty()) {
+      JavaClass clazz = queue.dequeue();
+
+      JavaClass   souper     = clazz.getSuperClass();
+      JavaClass[] interfaces = clazz.getInterfaces();
+
+      if(clazz.isInterface()) {
+        vec.addElement(clazz);
+      } else {
+        if(souper != null) {
+          queue.enqueue(souper);
+        }
+      }
+
+      for(int i = 0; i < interfaces.length; i++) {
+        queue.enqueue(interfaces[i]);
+      }
+    }
+
+    return vec.toArray();
+  }
+}

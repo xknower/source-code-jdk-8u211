@@ -1,225 +1,220 @@
-/*     */ package com.sun.org.apache.xerces.internal.impl;
-/*     */ 
-/*     */ import com.sun.org.apache.xerces.internal.utils.XMLSecurityManager;
-/*     */ import com.sun.org.apache.xerces.internal.utils.XMLSecurityPropertyManager;
-/*     */ import com.sun.xml.internal.stream.StaxEntityResolverWrapper;
-/*     */ import java.util.HashMap;
-/*     */ import javax.xml.stream.XMLResolver;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class PropertyManager
-/*     */ {
-/*     */   public static final String STAX_NOTATIONS = "javax.xml.stream.notations";
-/*     */   public static final String STAX_ENTITIES = "javax.xml.stream.entities";
-/*     */   private static final String STRING_INTERNING = "http://xml.org/sax/features/string-interning";
-/*     */   private static final String SECURITY_MANAGER = "http://apache.org/xml/properties/security-manager";
-/*     */   private static final String XML_SECURITY_PROPERTY_MANAGER = "http://www.oracle.com/xml/jaxp/properties/xmlSecurityPropertyManager";
-/*  61 */   HashMap supportedProps = new HashMap<>();
-/*     */   
-/*     */   private XMLSecurityManager fSecurityManager;
-/*     */   
-/*     */   private XMLSecurityPropertyManager fSecurityPropertyMgr;
-/*     */   
-/*     */   public static final int CONTEXT_READER = 1;
-/*     */   public static final int CONTEXT_WRITER = 2;
-/*     */   
-/*     */   public PropertyManager(int context) {
-/*  71 */     switch (context) {
-/*     */       case 1:
-/*  73 */         initConfigurableReaderProperties();
-/*     */         break;
-/*     */       
-/*     */       case 2:
-/*  77 */         initWriterProps();
-/*     */         break;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public PropertyManager(PropertyManager propertyManager) {
-/*  88 */     HashMap properties = propertyManager.getProperties();
-/*  89 */     this.supportedProps.putAll(properties);
-/*  90 */     this.fSecurityManager = (XMLSecurityManager)getProperty("http://apache.org/xml/properties/security-manager");
-/*  91 */     this.fSecurityPropertyMgr = (XMLSecurityPropertyManager)getProperty("http://www.oracle.com/xml/jaxp/properties/xmlSecurityPropertyManager");
-/*     */   }
-/*     */   
-/*     */   private HashMap getProperties() {
-/*  95 */     return this.supportedProps;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void initConfigurableReaderProperties() {
-/* 107 */     this.supportedProps.put("javax.xml.stream.isNamespaceAware", Boolean.TRUE);
-/* 108 */     this.supportedProps.put("javax.xml.stream.isValidating", Boolean.FALSE);
-/* 109 */     this.supportedProps.put("javax.xml.stream.isReplacingEntityReferences", Boolean.TRUE);
-/* 110 */     this.supportedProps.put("javax.xml.stream.isSupportingExternalEntities", Boolean.TRUE);
-/* 111 */     this.supportedProps.put("javax.xml.stream.isCoalescing", Boolean.FALSE);
-/* 112 */     this.supportedProps.put("javax.xml.stream.supportDTD", Boolean.TRUE);
-/* 113 */     this.supportedProps.put("javax.xml.stream.reporter", (Object)null);
-/* 114 */     this.supportedProps.put("javax.xml.stream.resolver", (Object)null);
-/* 115 */     this.supportedProps.put("javax.xml.stream.allocator", (Object)null);
-/* 116 */     this.supportedProps.put("javax.xml.stream.notations", (Object)null);
-/*     */ 
-/*     */ 
-/*     */     
-/* 120 */     this.supportedProps.put("http://xml.org/sax/features/string-interning", new Boolean(true));
-/*     */     
-/* 122 */     this.supportedProps.put("http://apache.org/xml/features/allow-java-encodings", new Boolean(true));
-/*     */     
-/* 124 */     this.supportedProps.put("add-namespacedecl-as-attrbiute", Boolean.FALSE);
-/* 125 */     this.supportedProps.put("http://java.sun.com/xml/stream/properties/reader-in-defined-state", new Boolean(true));
-/* 126 */     this.supportedProps.put("reuse-instance", new Boolean(true));
-/* 127 */     this.supportedProps.put("http://java.sun.com/xml/stream/properties/report-cdata-event", new Boolean(false));
-/* 128 */     this.supportedProps.put("http://java.sun.com/xml/stream/properties/ignore-external-dtd", Boolean.FALSE);
-/* 129 */     this.supportedProps.put("http://apache.org/xml/features/validation/warn-on-duplicate-attdef", new Boolean(false));
-/* 130 */     this.supportedProps.put("http://apache.org/xml/features/warn-on-duplicate-entitydef", new Boolean(false));
-/* 131 */     this.supportedProps.put("http://apache.org/xml/features/validation/warn-on-undeclared-elemdef", new Boolean(false));
-/*     */     
-/* 133 */     this.fSecurityManager = new XMLSecurityManager(true);
-/* 134 */     this.supportedProps.put("http://apache.org/xml/properties/security-manager", this.fSecurityManager);
-/* 135 */     this.fSecurityPropertyMgr = new XMLSecurityPropertyManager();
-/* 136 */     this.supportedProps.put("http://www.oracle.com/xml/jaxp/properties/xmlSecurityPropertyManager", this.fSecurityPropertyMgr);
-/*     */   }
-/*     */   
-/*     */   private void initWriterProps() {
-/* 140 */     this.supportedProps.put("javax.xml.stream.isRepairingNamespaces", Boolean.FALSE);
-/*     */     
-/* 142 */     this.supportedProps.put("escapeCharacters", Boolean.TRUE);
-/* 143 */     this.supportedProps.put("reuse-instance", new Boolean(true));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean containsProperty(String property) {
-/* 152 */     return (this.supportedProps.containsKey(property) || (this.fSecurityManager != null && this.fSecurityManager
-/* 153 */       .getIndex(property) > -1) || (this.fSecurityPropertyMgr != null && this.fSecurityPropertyMgr
-/* 154 */       .getIndex(property) > -1));
-/*     */   }
-/*     */   
-/*     */   public Object getProperty(String property) {
-/* 158 */     return this.supportedProps.get(property);
-/*     */   }
-/*     */   
-/*     */   public void setProperty(String property, Object value) {
-/* 162 */     String equivalentProperty = null;
-/* 163 */     if (property == "javax.xml.stream.isNamespaceAware" || property.equals("javax.xml.stream.isNamespaceAware")) {
-/* 164 */       equivalentProperty = "http://apache.org/xml/features/namespaces";
-/*     */     }
-/* 166 */     else if (property == "javax.xml.stream.isValidating" || property.equals("javax.xml.stream.isValidating")) {
-/* 167 */       if (value instanceof Boolean && ((Boolean)value).booleanValue()) {
-/* 168 */         throw new IllegalArgumentException("true value of isValidating not supported");
-/*     */       }
-/*     */     }
-/* 171 */     else if (property == "http://xml.org/sax/features/string-interning" || property.equals("http://xml.org/sax/features/string-interning")) {
-/* 172 */       if (value instanceof Boolean && !((Boolean)value).booleanValue()) {
-/* 173 */         throw new IllegalArgumentException("false value of http://xml.org/sax/features/string-interningfeature is not supported");
-/*     */       }
-/*     */     }
-/* 176 */     else if (property == "javax.xml.stream.resolver" || property.equals("javax.xml.stream.resolver")) {
-/*     */       
-/* 178 */       this.supportedProps.put("http://apache.org/xml/properties/internal/stax-entity-resolver", new StaxEntityResolverWrapper((XMLResolver)value));
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 185 */     if (property.equals("http://apache.org/xml/properties/security-manager")) {
-/* 186 */       this.fSecurityManager = XMLSecurityManager.convert(value, this.fSecurityManager);
-/* 187 */       this.supportedProps.put("http://apache.org/xml/properties/security-manager", this.fSecurityManager);
-/*     */       return;
-/*     */     } 
-/* 190 */     if (property.equals("http://www.oracle.com/xml/jaxp/properties/xmlSecurityPropertyManager")) {
-/* 191 */       if (value == null) {
-/* 192 */         this.fSecurityPropertyMgr = new XMLSecurityPropertyManager();
-/*     */       } else {
-/* 194 */         this.fSecurityPropertyMgr = (XMLSecurityPropertyManager)value;
-/*     */       } 
-/* 196 */       this.supportedProps.put("http://www.oracle.com/xml/jaxp/properties/xmlSecurityPropertyManager", this.fSecurityPropertyMgr);
-/*     */       
-/*     */       return;
-/*     */     } 
-/*     */     
-/* 201 */     if (this.fSecurityManager == null || 
-/* 202 */       !this.fSecurityManager.setLimit(property, XMLSecurityManager.State.APIPROPERTY, value))
-/*     */     {
-/* 204 */       if (this.fSecurityPropertyMgr == null || 
-/* 205 */         !this.fSecurityPropertyMgr.setValue(property, XMLSecurityPropertyManager.State.APIPROPERTY, value))
-/*     */       {
-/* 207 */         this.supportedProps.put(property, value);
-/*     */       }
-/*     */     }
-/*     */     
-/* 211 */     if (equivalentProperty != null) {
-/* 212 */       this.supportedProps.put(equivalentProperty, value);
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   public String toString() {
-/* 217 */     return this.supportedProps.toString();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\impl\PropertyManager.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2005, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.org.apache.xerces.internal.impl;
+
+import com.sun.org.apache.xerces.internal.utils.XMLSecurityManager;
+import com.sun.org.apache.xerces.internal.utils.XMLSecurityPropertyManager;
+import com.sun.xml.internal.stream.StaxEntityResolverWrapper;
+import java.util.HashMap;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLResolver;
+
+/**
+ *  This class manages different properties related to Stax specification and its implementation.
+ * This class constructor also takes itself (PropertyManager object) as parameter and initializes the
+ * object with the property taken from the object passed.
+ *
+ * @author  Neeraj Bajaj, neeraj.bajaj@sun.com
+ * @author K.Venugopal@sun.com
+ * @author Sunitha Reddy, sunitha.reddy@sun.com
+ */
+
+public class PropertyManager {
+
+
+    public static final String STAX_NOTATIONS = "javax.xml.stream.notations";
+    public static final String STAX_ENTITIES = "javax.xml.stream.entities";
+
+    private static final String STRING_INTERNING = "http://xml.org/sax/features/string-interning";
+
+    /** Property identifier: Security manager. */
+    private static final String SECURITY_MANAGER = Constants.SECURITY_MANAGER;
+
+    /** Property identifier: Security property manager. */
+    private static final String XML_SECURITY_PROPERTY_MANAGER =
+            Constants.XML_SECURITY_PROPERTY_MANAGER;
+
+    HashMap supportedProps = new HashMap();
+
+    private XMLSecurityManager fSecurityManager;
+    private XMLSecurityPropertyManager fSecurityPropertyMgr;
+
+    public static final int CONTEXT_READER = 1;
+    public static final int CONTEXT_WRITER = 2;
+
+    /** Creates a new instance of PropertyManager */
+    public PropertyManager(int context) {
+        switch(context){
+            case CONTEXT_READER:{
+                initConfigurableReaderProperties();
+                break;
+            }
+            case CONTEXT_WRITER:{
+                initWriterProps();
+                break;
+            }
+        }
+    }
+
+    /**
+     * Initialize this object with the properties taken from passed PropertyManager object.
+     */
+    public PropertyManager(PropertyManager propertyManager){
+
+        HashMap properties = propertyManager.getProperties();
+        supportedProps.putAll(properties);
+        fSecurityManager = (XMLSecurityManager)getProperty(SECURITY_MANAGER);
+        fSecurityPropertyMgr = (XMLSecurityPropertyManager)getProperty(XML_SECURITY_PROPERTY_MANAGER);
+    }
+
+    private HashMap getProperties(){
+        return supportedProps ;
+    }
+
+
+    /**
+     * Important point:
+     * 1. We are not exposing Xerces namespace property. Application should configure namespace through
+     * Stax specific property.
+     *
+     */
+    private void initConfigurableReaderProperties(){
+        //spec default values
+        supportedProps.put(XMLInputFactory.IS_NAMESPACE_AWARE, Boolean.TRUE);
+        supportedProps.put(XMLInputFactory.IS_VALIDATING, Boolean.FALSE);
+        supportedProps.put(XMLInputFactory.IS_REPLACING_ENTITY_REFERENCES, Boolean.TRUE);
+        supportedProps.put(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, Boolean.TRUE);
+        supportedProps.put(XMLInputFactory.IS_COALESCING, Boolean.FALSE);
+        supportedProps.put(XMLInputFactory.SUPPORT_DTD, Boolean.TRUE);
+        supportedProps.put(XMLInputFactory.REPORTER, null);
+        supportedProps.put(XMLInputFactory.RESOLVER, null);
+        supportedProps.put(XMLInputFactory.ALLOCATOR, null);
+        supportedProps.put(STAX_NOTATIONS,null );
+
+        //zephyr (implementation) specific properties which can be set by the application.
+        //interning is always done
+        supportedProps.put(Constants.SAX_FEATURE_PREFIX + Constants.STRING_INTERNING_FEATURE , new Boolean(true));
+        //recognizing java encoding names by default
+        supportedProps.put(Constants.XERCES_FEATURE_PREFIX + Constants.ALLOW_JAVA_ENCODINGS_FEATURE,  new Boolean(true)) ;
+        //in stax mode, namespace declarations are not added as attributes
+        supportedProps.put(Constants.ADD_NAMESPACE_DECL_AS_ATTRIBUTE ,  Boolean.FALSE) ;
+        supportedProps.put(Constants.READER_IN_DEFINED_STATE, new Boolean(true));
+        supportedProps.put(Constants.REUSE_INSTANCE, new Boolean(true));
+        supportedProps.put(Constants.ZEPHYR_PROPERTY_PREFIX + Constants.STAX_REPORT_CDATA_EVENT , new Boolean(false));
+        supportedProps.put(Constants.ZEPHYR_PROPERTY_PREFIX + Constants.IGNORE_EXTERNAL_DTD, Boolean.FALSE);
+        supportedProps.put(Constants.XERCES_FEATURE_PREFIX + Constants.WARN_ON_DUPLICATE_ATTDEF_FEATURE, new Boolean(false));
+        supportedProps.put(Constants.XERCES_FEATURE_PREFIX + Constants.WARN_ON_DUPLICATE_ENTITYDEF_FEATURE, new Boolean(false));
+        supportedProps.put(Constants.XERCES_FEATURE_PREFIX + Constants.WARN_ON_UNDECLARED_ELEMDEF_FEATURE, new Boolean(false));
+
+        fSecurityManager = new XMLSecurityManager(true);
+        supportedProps.put(SECURITY_MANAGER, fSecurityManager);
+        fSecurityPropertyMgr = new XMLSecurityPropertyManager();
+        supportedProps.put(XML_SECURITY_PROPERTY_MANAGER, fSecurityPropertyMgr);
+    }
+
+    private void initWriterProps(){
+        supportedProps.put(XMLOutputFactory.IS_REPAIRING_NAMESPACES , Boolean.FALSE);
+        //default value of escaping characters is 'true'
+        supportedProps.put(Constants.ESCAPE_CHARACTERS , Boolean.TRUE);
+        supportedProps.put(Constants.REUSE_INSTANCE, new Boolean(true));
+    }
+
+    /**
+     * public void reset(){
+     * supportedProps.clear() ;
+     * }
+     */
+    public boolean containsProperty(String property){
+        return supportedProps.containsKey(property) ||
+                (fSecurityManager != null && fSecurityManager.getIndex(property) > -1) ||
+                (fSecurityPropertyMgr!=null && fSecurityPropertyMgr.getIndex(property) > -1) ;
+    }
+
+    public Object getProperty(String property){
+        return supportedProps.get(property);
+    }
+
+    public void setProperty(String property, Object value){
+        String equivalentProperty = null ;
+        if(property == XMLInputFactory.IS_NAMESPACE_AWARE || property.equals(XMLInputFactory.IS_NAMESPACE_AWARE)){
+            equivalentProperty = Constants.XERCES_FEATURE_PREFIX + Constants.NAMESPACES_FEATURE ;
+        }
+        else if(property == XMLInputFactory.IS_VALIDATING || property.equals(XMLInputFactory.IS_VALIDATING)){
+            if( (value instanceof Boolean) && ((Boolean)value).booleanValue()){
+                throw new java.lang.IllegalArgumentException("true value of isValidating not supported") ;
+            }
+        }
+        else if(property == STRING_INTERNING || property.equals(STRING_INTERNING)){
+            if( (value instanceof Boolean) && !((Boolean)value).booleanValue()){
+                throw new java.lang.IllegalArgumentException("false value of " + STRING_INTERNING + "feature is not supported") ;
+            }
+        }
+        else if(property == XMLInputFactory.RESOLVER || property.equals(XMLInputFactory.RESOLVER)){
+            //add internal stax property
+            supportedProps.put( Constants.XERCES_PROPERTY_PREFIX + Constants.STAX_ENTITY_RESOLVER_PROPERTY , new StaxEntityResolverWrapper((XMLResolver)value)) ;
+        }
+
+        /**
+         * It's possible for users to set a security manager through the interface.
+         * If it's the old SecurityManager, convert it to the new XMLSecurityManager
+         */
+        if (property.equals(Constants.SECURITY_MANAGER)) {
+            fSecurityManager = XMLSecurityManager.convert(value, fSecurityManager);
+            supportedProps.put(Constants.SECURITY_MANAGER, fSecurityManager);
+            return;
+        }
+        if (property.equals(Constants.XML_SECURITY_PROPERTY_MANAGER)) {
+            if (value == null) {
+                fSecurityPropertyMgr = new XMLSecurityPropertyManager();
+            } else {
+                fSecurityPropertyMgr = (XMLSecurityPropertyManager)value;
+            }
+            supportedProps.put(Constants.XML_SECURITY_PROPERTY_MANAGER, fSecurityPropertyMgr);
+            return;
+        }
+
+        //check if the property is managed by security manager
+        if (fSecurityManager == null ||
+                !fSecurityManager.setLimit(property, XMLSecurityManager.State.APIPROPERTY, value)) {
+            //check if the property is managed by security property manager
+            if (fSecurityPropertyMgr == null ||
+                    !fSecurityPropertyMgr.setValue(property, XMLSecurityPropertyManager.State.APIPROPERTY, value)) {
+                //fall back to the existing property manager
+                supportedProps.put(property, value);
+            }
+        }
+
+        if(equivalentProperty != null){
+            supportedProps.put(equivalentProperty, value ) ;
+        }
+    }
+
+    public String toString(){
+        return supportedProps.toString();
+    }
+
+}//PropertyManager

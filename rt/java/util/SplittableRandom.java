@@ -1,996 +1,991 @@
-/*     */ package java.util;
-/*     */ 
-/*     */ import java.security.AccessController;
-/*     */ import java.security.SecureRandom;
-/*     */ import java.util.concurrent.atomic.AtomicLong;
-/*     */ import java.util.function.DoubleConsumer;
-/*     */ import java.util.function.IntConsumer;
-/*     */ import java.util.function.LongConsumer;
-/*     */ import java.util.stream.DoubleStream;
-/*     */ import java.util.stream.IntStream;
-/*     */ import java.util.stream.LongStream;
-/*     */ import java.util.stream.StreamSupport;
-/*     */ import sun.security.action.GetPropertyAction;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class SplittableRandom
-/*     */ {
-/*     */   private static final long GOLDEN_GAMMA = -7046029254386353131L;
-/*     */   private static final double DOUBLE_UNIT = 1.1102230246251565E-16D;
-/*     */   private long seed;
-/*     */   private final long gamma;
-/*     */   
-/*     */   private SplittableRandom(long paramLong1, long paramLong2) {
-/* 183 */     this.seed = paramLong1;
-/* 184 */     this.gamma = paramLong2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static long mix64(long paramLong) {
-/* 191 */     paramLong = (paramLong ^ paramLong >>> 30L) * -4658895280553007687L;
-/* 192 */     paramLong = (paramLong ^ paramLong >>> 27L) * -7723592293110705685L;
-/* 193 */     return paramLong ^ paramLong >>> 31L;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static int mix32(long paramLong) {
-/* 200 */     paramLong = (paramLong ^ paramLong >>> 33L) * 7109453100751455733L;
-/* 201 */     return (int)((paramLong ^ paramLong >>> 28L) * -3808689974395783757L >>> 32L);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static long mixGamma(long paramLong) {
-/* 208 */     paramLong = (paramLong ^ paramLong >>> 33L) * -49064778989728563L;
-/* 209 */     paramLong = (paramLong ^ paramLong >>> 33L) * -4265267296055464877L;
-/* 210 */     paramLong = paramLong ^ paramLong >>> 33L | 0x1L;
-/* 211 */     int i = Long.bitCount(paramLong ^ paramLong >>> 1L);
-/* 212 */     return (i < 24) ? (paramLong ^ 0xAAAAAAAAAAAAAAAAL) : paramLong;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private long nextSeed() {
-/* 219 */     return this.seed += this.gamma;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 225 */   private static final AtomicLong defaultGen = new AtomicLong(initialSeed());
-/*     */   
-/*     */   private static long initialSeed() {
-/* 228 */     String str = AccessController.<String>doPrivileged(new GetPropertyAction("java.util.secureRandomSeed"));
-/*     */ 
-/*     */     
-/* 231 */     if (str != null && str.equalsIgnoreCase("true")) {
-/* 232 */       byte[] arrayOfByte = SecureRandom.getSeed(8);
-/* 233 */       long l = arrayOfByte[0] & 0xFFL;
-/* 234 */       for (byte b = 1; b < 8; b++)
-/* 235 */         l = l << 8L | arrayOfByte[b] & 0xFFL; 
-/* 236 */       return l;
-/*     */     } 
-/* 238 */     return mix64(System.currentTimeMillis()) ^ 
-/* 239 */       mix64(System.nanoTime());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static final String BadBound = "bound must be positive";
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static final String BadRange = "bound must be greater than origin";
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static final String BadSize = "size must be non-negative";
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   final long internalNextLong(long paramLong1, long paramLong2) {
-/* 290 */     long l = mix64(nextSeed());
-/* 291 */     if (paramLong1 < paramLong2) {
-/* 292 */       long l1 = paramLong2 - paramLong1, l2 = l1 - 1L;
-/* 293 */       if ((l1 & l2) == 0L) {
-/* 294 */         l = (l & l2) + paramLong1;
-/* 295 */       } else if (l1 > 0L) {
-/* 296 */         long l3 = l >>> 1L;
-/* 297 */         while (l3 + l2 - (l = l3 % l1) < 0L) {
-/* 298 */           l3 = mix64(nextSeed()) >>> 1L;
-/*     */         }
-/* 300 */         l += paramLong1;
-/*     */       } else {
-/*     */         
-/* 303 */         while (l < paramLong1 || l >= paramLong2)
-/* 304 */           l = mix64(nextSeed()); 
-/*     */       } 
-/*     */     } 
-/* 307 */     return l;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   final int internalNextInt(int paramInt1, int paramInt2) {
-/* 319 */     int i = mix32(nextSeed());
-/* 320 */     if (paramInt1 < paramInt2) {
-/* 321 */       int j = paramInt2 - paramInt1, k = j - 1;
-/* 322 */       if ((j & k) == 0) {
-/* 323 */         i = (i & k) + paramInt1;
-/* 324 */       } else if (j > 0) {
-/* 325 */         int m = i >>> 1;
-/* 326 */         while (m + k - (i = m % j) < 0) {
-/* 327 */           m = mix32(nextSeed()) >>> 1;
-/*     */         }
-/* 329 */         i += paramInt1;
-/*     */       } else {
-/*     */         
-/* 332 */         while (i < paramInt1 || i >= paramInt2)
-/* 333 */           i = mix32(nextSeed()); 
-/*     */       } 
-/*     */     } 
-/* 336 */     return i;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   final double internalNextDouble(double paramDouble1, double paramDouble2) {
-/* 347 */     double d = (nextLong() >>> 11L) * 1.1102230246251565E-16D;
-/* 348 */     if (paramDouble1 < paramDouble2) {
-/* 349 */       d = d * (paramDouble2 - paramDouble1) + paramDouble1;
-/* 350 */       if (d >= paramDouble2)
-/* 351 */         d = Double.longBitsToDouble(Double.doubleToLongBits(paramDouble2) - 1L); 
-/*     */     } 
-/* 353 */     return d;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SplittableRandom(long paramLong) {
-/* 366 */     this(paramLong, -7046029254386353131L);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SplittableRandom() {
-/* 376 */     long l = defaultGen.getAndAdd(4354685564936845354L);
-/* 377 */     this.seed = mix64(l);
-/* 378 */     this.gamma = mixGamma(l + -7046029254386353131L);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SplittableRandom split() {
-/* 396 */     return new SplittableRandom(nextLong(), mixGamma(nextSeed()));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int nextInt() {
-/* 405 */     return mix32(nextSeed());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int nextInt(int paramInt) {
-/* 418 */     if (paramInt <= 0) {
-/* 419 */       throw new IllegalArgumentException("bound must be positive");
-/*     */     }
-/* 421 */     int i = mix32(nextSeed());
-/* 422 */     int j = paramInt - 1;
-/* 423 */     if ((paramInt & j) == 0) {
-/* 424 */       i &= j;
-/*     */     } else {
-/* 426 */       int k = i >>> 1;
-/* 427 */       while (k + j - (i = k % paramInt) < 0) {
-/* 428 */         k = mix32(nextSeed()) >>> 1;
-/*     */       }
-/*     */     } 
-/* 431 */     return i;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int nextInt(int paramInt1, int paramInt2) {
-/* 446 */     if (paramInt1 >= paramInt2)
-/* 447 */       throw new IllegalArgumentException("bound must be greater than origin"); 
-/* 448 */     return internalNextInt(paramInt1, paramInt2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public long nextLong() {
-/* 457 */     return mix64(nextSeed());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public long nextLong(long paramLong) {
-/* 470 */     if (paramLong <= 0L) {
-/* 471 */       throw new IllegalArgumentException("bound must be positive");
-/*     */     }
-/* 473 */     long l1 = mix64(nextSeed());
-/* 474 */     long l2 = paramLong - 1L;
-/* 475 */     if ((paramLong & l2) == 0L) {
-/* 476 */       l1 &= l2;
-/*     */     } else {
-/* 478 */       long l = l1 >>> 1L;
-/* 479 */       while (l + l2 - (l1 = l % paramLong) < 0L) {
-/* 480 */         l = mix64(nextSeed()) >>> 1L;
-/*     */       }
-/*     */     } 
-/* 483 */     return l1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public long nextLong(long paramLong1, long paramLong2) {
-/* 498 */     if (paramLong1 >= paramLong2)
-/* 499 */       throw new IllegalArgumentException("bound must be greater than origin"); 
-/* 500 */     return internalNextLong(paramLong1, paramLong2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public double nextDouble() {
-/* 511 */     return (mix64(nextSeed()) >>> 11L) * 1.1102230246251565E-16D;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public double nextDouble(double paramDouble) {
-/* 524 */     if (paramDouble <= 0.0D)
-/* 525 */       throw new IllegalArgumentException("bound must be positive"); 
-/* 526 */     double d = (mix64(nextSeed()) >>> 11L) * 1.1102230246251565E-16D * paramDouble;
-/* 527 */     return (d < paramDouble) ? d : 
-/* 528 */       Double.longBitsToDouble(Double.doubleToLongBits(paramDouble) - 1L);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public double nextDouble(double paramDouble1, double paramDouble2) {
-/* 543 */     if (paramDouble1 >= paramDouble2)
-/* 544 */       throw new IllegalArgumentException("bound must be greater than origin"); 
-/* 545 */     return internalNextDouble(paramDouble1, paramDouble2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean nextBoolean() {
-/* 554 */     return (mix32(nextSeed()) < 0);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public IntStream ints(long paramLong) {
-/* 571 */     if (paramLong < 0L)
-/* 572 */       throw new IllegalArgumentException("size must be non-negative"); 
-/* 573 */     return 
-/* 574 */       StreamSupport.intStream(new RandomIntsSpliterator(this, 0L, paramLong, 2147483647, 0), false);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public IntStream ints() {
-/* 589 */     return 
-/* 590 */       StreamSupport.intStream(new RandomIntsSpliterator(this, 0L, Long.MAX_VALUE, 2147483647, 0), false);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public IntStream ints(long paramLong, int paramInt1, int paramInt2) {
-/* 612 */     if (paramLong < 0L)
-/* 613 */       throw new IllegalArgumentException("size must be non-negative"); 
-/* 614 */     if (paramInt1 >= paramInt2)
-/* 615 */       throw new IllegalArgumentException("bound must be greater than origin"); 
-/* 616 */     return 
-/* 617 */       StreamSupport.intStream(new RandomIntsSpliterator(this, 0L, paramLong, paramInt1, paramInt2), false);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public IntStream ints(int paramInt1, int paramInt2) {
-/* 638 */     if (paramInt1 >= paramInt2)
-/* 639 */       throw new IllegalArgumentException("bound must be greater than origin"); 
-/* 640 */     return 
-/* 641 */       StreamSupport.intStream(new RandomIntsSpliterator(this, 0L, Long.MAX_VALUE, paramInt1, paramInt2), false);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public LongStream longs(long paramLong) {
-/* 657 */     if (paramLong < 0L)
-/* 658 */       throw new IllegalArgumentException("size must be non-negative"); 
-/* 659 */     return 
-/* 660 */       StreamSupport.longStream(new RandomLongsSpliterator(this, 0L, paramLong, Long.MAX_VALUE, 0L), false);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public LongStream longs() {
-/* 675 */     return 
-/* 676 */       StreamSupport.longStream(new RandomLongsSpliterator(this, 0L, Long.MAX_VALUE, Long.MAX_VALUE, 0L), false);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public LongStream longs(long paramLong1, long paramLong2, long paramLong3) {
-/* 698 */     if (paramLong1 < 0L)
-/* 699 */       throw new IllegalArgumentException("size must be non-negative"); 
-/* 700 */     if (paramLong2 >= paramLong3)
-/* 701 */       throw new IllegalArgumentException("bound must be greater than origin"); 
-/* 702 */     return 
-/* 703 */       StreamSupport.longStream(new RandomLongsSpliterator(this, 0L, paramLong1, paramLong2, paramLong3), false);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public LongStream longs(long paramLong1, long paramLong2) {
-/* 724 */     if (paramLong1 >= paramLong2)
-/* 725 */       throw new IllegalArgumentException("bound must be greater than origin"); 
-/* 726 */     return 
-/* 727 */       StreamSupport.longStream(new RandomLongsSpliterator(this, 0L, Long.MAX_VALUE, paramLong1, paramLong2), false);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public DoubleStream doubles(long paramLong) {
-/* 743 */     if (paramLong < 0L)
-/* 744 */       throw new IllegalArgumentException("size must be non-negative"); 
-/* 745 */     return 
-/* 746 */       StreamSupport.doubleStream(new RandomDoublesSpliterator(this, 0L, paramLong, Double.MAX_VALUE, 0.0D), false);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public DoubleStream doubles() {
-/* 762 */     return 
-/* 763 */       StreamSupport.doubleStream(new RandomDoublesSpliterator(this, 0L, Long.MAX_VALUE, Double.MAX_VALUE, 0.0D), false);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public DoubleStream doubles(long paramLong, double paramDouble1, double paramDouble2) {
-/* 786 */     if (paramLong < 0L)
-/* 787 */       throw new IllegalArgumentException("size must be non-negative"); 
-/* 788 */     if (paramDouble1 >= paramDouble2)
-/* 789 */       throw new IllegalArgumentException("bound must be greater than origin"); 
-/* 790 */     return 
-/* 791 */       StreamSupport.doubleStream(new RandomDoublesSpliterator(this, 0L, paramLong, paramDouble1, paramDouble2), false);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public DoubleStream doubles(double paramDouble1, double paramDouble2) {
-/* 812 */     if (paramDouble1 >= paramDouble2)
-/* 813 */       throw new IllegalArgumentException("bound must be greater than origin"); 
-/* 814 */     return 
-/* 815 */       StreamSupport.doubleStream(new RandomDoublesSpliterator(this, 0L, Long.MAX_VALUE, paramDouble1, paramDouble2), false);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static final class RandomIntsSpliterator
-/*     */     implements Spliterator.OfInt
-/*     */   {
-/*     */     final SplittableRandom rng;
-/*     */ 
-/*     */     
-/*     */     long index;
-/*     */     
-/*     */     final long fence;
-/*     */     
-/*     */     final int origin;
-/*     */     
-/*     */     final int bound;
-/*     */ 
-/*     */     
-/*     */     RandomIntsSpliterator(SplittableRandom param1SplittableRandom, long param1Long1, long param1Long2, int param1Int1, int param1Int2) {
-/* 836 */       this.rng = param1SplittableRandom; this.index = param1Long1; this.fence = param1Long2;
-/* 837 */       this.origin = param1Int1; this.bound = param1Int2;
-/*     */     }
-/*     */     
-/*     */     public RandomIntsSpliterator trySplit() {
-/* 841 */       long l1 = this.index, l2 = l1 + this.fence >>> 1L;
-/* 842 */       return (l2 <= l1) ? null : new RandomIntsSpliterator(this.rng
-/* 843 */           .split(), l1, this.index = l2, this.origin, this.bound);
-/*     */     }
-/*     */     
-/*     */     public long estimateSize() {
-/* 847 */       return this.fence - this.index;
-/*     */     }
-/*     */     
-/*     */     public int characteristics() {
-/* 851 */       return 17728;
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public boolean tryAdvance(IntConsumer param1IntConsumer) {
-/* 856 */       if (param1IntConsumer == null) throw new NullPointerException(); 
-/* 857 */       long l1 = this.index, l2 = this.fence;
-/* 858 */       if (l1 < l2) {
-/* 859 */         param1IntConsumer.accept(this.rng.internalNextInt(this.origin, this.bound));
-/* 860 */         this.index = l1 + 1L;
-/* 861 */         return true;
-/*     */       } 
-/* 863 */       return false;
-/*     */     }
-/*     */     
-/*     */     public void forEachRemaining(IntConsumer param1IntConsumer) {
-/* 867 */       if (param1IntConsumer == null) throw new NullPointerException(); 
-/* 868 */       long l1 = this.index, l2 = this.fence;
-/* 869 */       if (l1 < l2) {
-/* 870 */         this.index = l2;
-/* 871 */         SplittableRandom splittableRandom = this.rng;
-/* 872 */         int i = this.origin, j = this.bound;
-/*     */         do {
-/* 874 */           param1IntConsumer.accept(splittableRandom.internalNextInt(i, j));
-/* 875 */         } while (++l1 < l2);
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   static final class RandomLongsSpliterator
-/*     */     implements Spliterator.OfLong
-/*     */   {
-/*     */     final SplittableRandom rng;
-/*     */     long index;
-/*     */     final long fence;
-/*     */     final long origin;
-/*     */     final long bound;
-/*     */     
-/*     */     RandomLongsSpliterator(SplittableRandom param1SplittableRandom, long param1Long1, long param1Long2, long param1Long3, long param1Long4) {
-/* 891 */       this.rng = param1SplittableRandom; this.index = param1Long1; this.fence = param1Long2;
-/* 892 */       this.origin = param1Long3; this.bound = param1Long4;
-/*     */     }
-/*     */     
-/*     */     public RandomLongsSpliterator trySplit() {
-/* 896 */       long l1 = this.index, l2 = l1 + this.fence >>> 1L;
-/* 897 */       return (l2 <= l1) ? null : new RandomLongsSpliterator(this.rng
-/* 898 */           .split(), l1, this.index = l2, this.origin, this.bound);
-/*     */     }
-/*     */     
-/*     */     public long estimateSize() {
-/* 902 */       return this.fence - this.index;
-/*     */     }
-/*     */     
-/*     */     public int characteristics() {
-/* 906 */       return 17728;
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public boolean tryAdvance(LongConsumer param1LongConsumer) {
-/* 911 */       if (param1LongConsumer == null) throw new NullPointerException(); 
-/* 912 */       long l1 = this.index, l2 = this.fence;
-/* 913 */       if (l1 < l2) {
-/* 914 */         param1LongConsumer.accept(this.rng.internalNextLong(this.origin, this.bound));
-/* 915 */         this.index = l1 + 1L;
-/* 916 */         return true;
-/*     */       } 
-/* 918 */       return false;
-/*     */     }
-/*     */     
-/*     */     public void forEachRemaining(LongConsumer param1LongConsumer) {
-/* 922 */       if (param1LongConsumer == null) throw new NullPointerException(); 
-/* 923 */       long l1 = this.index, l2 = this.fence;
-/* 924 */       if (l1 < l2) {
-/* 925 */         this.index = l2;
-/* 926 */         SplittableRandom splittableRandom = this.rng;
-/* 927 */         long l3 = this.origin, l4 = this.bound;
-/*     */         do {
-/* 929 */           param1LongConsumer.accept(splittableRandom.internalNextLong(l3, l4));
-/* 930 */         } while (++l1 < l2);
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   static final class RandomDoublesSpliterator
-/*     */     implements Spliterator.OfDouble
-/*     */   {
-/*     */     final SplittableRandom rng;
-/*     */     
-/*     */     long index;
-/*     */     final long fence;
-/*     */     final double origin;
-/*     */     final double bound;
-/*     */     
-/*     */     RandomDoublesSpliterator(SplittableRandom param1SplittableRandom, long param1Long1, long param1Long2, double param1Double1, double param1Double2) {
-/* 947 */       this.rng = param1SplittableRandom; this.index = param1Long1; this.fence = param1Long2;
-/* 948 */       this.origin = param1Double1; this.bound = param1Double2;
-/*     */     }
-/*     */     
-/*     */     public RandomDoublesSpliterator trySplit() {
-/* 952 */       long l1 = this.index, l2 = l1 + this.fence >>> 1L;
-/* 953 */       return (l2 <= l1) ? null : new RandomDoublesSpliterator(this.rng
-/* 954 */           .split(), l1, this.index = l2, this.origin, this.bound);
-/*     */     }
-/*     */     
-/*     */     public long estimateSize() {
-/* 958 */       return this.fence - this.index;
-/*     */     }
-/*     */     
-/*     */     public int characteristics() {
-/* 962 */       return 17728;
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public boolean tryAdvance(DoubleConsumer param1DoubleConsumer) {
-/* 967 */       if (param1DoubleConsumer == null) throw new NullPointerException(); 
-/* 968 */       long l1 = this.index, l2 = this.fence;
-/* 969 */       if (l1 < l2) {
-/* 970 */         param1DoubleConsumer.accept(this.rng.internalNextDouble(this.origin, this.bound));
-/* 971 */         this.index = l1 + 1L;
-/* 972 */         return true;
-/*     */       } 
-/* 974 */       return false;
-/*     */     }
-/*     */     
-/*     */     public void forEachRemaining(DoubleConsumer param1DoubleConsumer) {
-/* 978 */       if (param1DoubleConsumer == null) throw new NullPointerException(); 
-/* 979 */       long l1 = this.index, l2 = this.fence;
-/* 980 */       if (l1 < l2) {
-/* 981 */         this.index = l2;
-/* 982 */         SplittableRandom splittableRandom = this.rng;
-/* 983 */         double d1 = this.origin, d2 = this.bound;
-/*     */         do {
-/* 985 */           param1DoubleConsumer.accept(splittableRandom.internalNextDouble(d1, d2));
-/* 986 */         } while (++l1 < l2);
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\SplittableRandom.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.util;
+
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.IntConsumer;
+import java.util.function.LongConsumer;
+import java.util.function.DoubleConsumer;
+import java.util.stream.StreamSupport;
+import java.util.stream.IntStream;
+import java.util.stream.LongStream;
+import java.util.stream.DoubleStream;
+
+/**
+ * A generator of uniform pseudorandom values applicable for use in
+ * (among other contexts) isolated parallel computations that may
+ * generate subtasks. Class {@code SplittableRandom} supports methods for
+ * producing pseudorandom numbers of type {@code int}, {@code long},
+ * and {@code double} with similar usages as for class
+ * {@link java.util.Random} but differs in the following ways:
+ *
+ * <ul>
+ *
+ * <li>Series of generated values pass the DieHarder suite testing
+ * independence and uniformity properties of random number generators.
+ * (Most recently validated with <a
+ * href="http://www.phy.duke.edu/~rgb/General/dieharder.php"> version
+ * 3.31.1</a>.) These tests validate only the methods for certain
+ * types and ranges, but similar properties are expected to hold, at
+ * least approximately, for others as well. The <em>period</em>
+ * (length of any series of generated values before it repeats) is at
+ * least 2<sup>64</sup>. </li>
+ *
+ * <li> Method {@link #split} constructs and returns a new
+ * SplittableRandom instance that shares no mutable state with the
+ * current instance. However, with very high probability, the
+ * values collectively generated by the two objects have the same
+ * statistical properties as if the same quantity of values were
+ * generated by a single thread using a single {@code
+ * SplittableRandom} object.  </li>
+ *
+ * <li>Instances of SplittableRandom are <em>not</em> thread-safe.
+ * They are designed to be split, not shared, across threads. For
+ * example, a {@link java.util.concurrent.ForkJoinTask
+ * fork/join-style} computation using random numbers might include a
+ * construction of the form {@code new
+ * Subtask(aSplittableRandom.split()).fork()}.
+ *
+ * <li>This class provides additional methods for generating random
+ * streams, that employ the above techniques when used in {@code
+ * stream.parallel()} mode.</li>
+ *
+ * </ul>
+ *
+ * <p>Instances of {@code SplittableRandom} are not cryptographically
+ * secure.  Consider instead using {@link java.security.SecureRandom}
+ * in security-sensitive applications. Additionally,
+ * default-constructed instances do not use a cryptographically random
+ * seed unless the {@linkplain System#getProperty system property}
+ * {@code java.util.secureRandomSeed} is set to {@code true}.
+ *
+ * @author  Guy Steele
+ * @author  Doug Lea
+ * @since   1.8
+ */
+public final class SplittableRandom {
+
+    /*
+     * Implementation Overview.
+     *
+     * This algorithm was inspired by the "DotMix" algorithm by
+     * Leiserson, Schardl, and Sukha "Deterministic Parallel
+     * Random-Number Generation for Dynamic-Multithreading Platforms",
+     * PPoPP 2012, as well as those in "Parallel random numbers: as
+     * easy as 1, 2, 3" by Salmon, Morae, Dror, and Shaw, SC 2011.  It
+     * differs mainly in simplifying and cheapening operations.
+     *
+     * The primary update step (method nextSeed()) is to add a
+     * constant ("gamma") to the current (64 bit) seed, forming a
+     * simple sequence.  The seed and the gamma values for any two
+     * SplittableRandom instances are highly likely to be different.
+     *
+     * Methods nextLong, nextInt, and derivatives do not return the
+     * sequence (seed) values, but instead a hash-like bit-mix of
+     * their bits, producing more independently distributed sequences.
+     * For nextLong, the mix64 function is based on David Stafford's
+     * (http://zimbry.blogspot.com/2011/09/better-bit-mixing-improving-on.html)
+     * "Mix13" variant of the "64-bit finalizer" function in Austin
+     * Appleby's MurmurHash3 algorithm (see
+     * http://code.google.com/p/smhasher/wiki/MurmurHash3). The mix32
+     * function is based on Stafford's Mix04 mix function, but returns
+     * the upper 32 bits cast as int.
+     *
+     * The split operation uses the current generator to form the seed
+     * and gamma for another SplittableRandom.  To conservatively
+     * avoid potential correlations between seed and value generation,
+     * gamma selection (method mixGamma) uses different
+     * (Murmurhash3's) mix constants.  To avoid potential weaknesses
+     * in bit-mixing transformations, we restrict gammas to odd values
+     * with at least 24 0-1 or 1-0 bit transitions.  Rather than
+     * rejecting candidates with too few or too many bits set, method
+     * mixGamma flips some bits (which has the effect of mapping at
+     * most 4 to any given gamma value).  This reduces the effective
+     * set of 64bit odd gamma values by about 2%, and serves as an
+     * automated screening for sequence constant selection that is
+     * left as an empirical decision in some other hashing and crypto
+     * algorithms.
+     *
+     * The resulting generator thus transforms a sequence in which
+     * (typically) many bits change on each step, with an inexpensive
+     * mixer with good (but less than cryptographically secure)
+     * avalanching.
+     *
+     * The default (no-argument) constructor, in essence, invokes
+     * split() for a common "defaultGen" SplittableRandom.  Unlike
+     * other cases, this split must be performed in a thread-safe
+     * manner, so we use an AtomicLong to represent the seed rather
+     * than use an explicit SplittableRandom. To bootstrap the
+     * defaultGen, we start off using a seed based on current time
+     * unless the java.util.secureRandomSeed property is set. This
+     * serves as a slimmed-down (and insecure) variant of SecureRandom
+     * that also avoids stalls that may occur when using /dev/random.
+     *
+     * It is a relatively simple matter to apply the basic design here
+     * to use 128 bit seeds. However, emulating 128bit arithmetic and
+     * carrying around twice the state add more overhead than appears
+     * warranted for current usages.
+     *
+     * File organization: First the non-public methods that constitute
+     * the main algorithm, then the main public methods, followed by
+     * some custom spliterator classes needed for stream methods.
+     */
+
+    /**
+     * The golden ratio scaled to 64bits, used as the initial gamma
+     * value for (unsplit) SplittableRandoms.
+     */
+    private static final long GOLDEN_GAMMA = 0x9e3779b97f4a7c15L;
+
+    /**
+     * The least non-zero value returned by nextDouble(). This value
+     * is scaled by a random value of 53 bits to produce a result.
+     */
+    private static final double DOUBLE_UNIT = 0x1.0p-53; // 1.0 / (1L << 53);
+
+    /**
+     * The seed. Updated only via method nextSeed.
+     */
+    private long seed;
+
+    /**
+     * The step value.
+     */
+    private final long gamma;
+
+    /**
+     * Internal constructor used by all others except default constructor.
+     */
+    private SplittableRandom(long seed, long gamma) {
+        this.seed = seed;
+        this.gamma = gamma;
+    }
+
+    /**
+     * Computes Stafford variant 13 of 64bit mix function.
+     */
+    private static long mix64(long z) {
+        z = (z ^ (z >>> 30)) * 0xbf58476d1ce4e5b9L;
+        z = (z ^ (z >>> 27)) * 0x94d049bb133111ebL;
+        return z ^ (z >>> 31);
+    }
+
+    /**
+     * Returns the 32 high bits of Stafford variant 4 mix64 function as int.
+     */
+    private static int mix32(long z) {
+        z = (z ^ (z >>> 33)) * 0x62a9d9ed799705f5L;
+        return (int)(((z ^ (z >>> 28)) * 0xcb24d0a5c88c35b3L) >>> 32);
+    }
+
+    /**
+     * Returns the gamma value to use for a new split instance.
+     */
+    private static long mixGamma(long z) {
+        z = (z ^ (z >>> 33)) * 0xff51afd7ed558ccdL; // MurmurHash3 mix constants
+        z = (z ^ (z >>> 33)) * 0xc4ceb9fe1a85ec53L;
+        z = (z ^ (z >>> 33)) | 1L;                  // force to be odd
+        int n = Long.bitCount(z ^ (z >>> 1));       // ensure enough transitions
+        return (n < 24) ? z ^ 0xaaaaaaaaaaaaaaaaL : z;
+    }
+
+    /**
+     * Adds gamma to seed.
+     */
+    private long nextSeed() {
+        return seed += gamma;
+    }
+
+    /**
+     * The seed generator for default constructors.
+     */
+    private static final AtomicLong defaultGen = new AtomicLong(initialSeed());
+
+    private static long initialSeed() {
+        String pp = java.security.AccessController.doPrivileged(
+                new sun.security.action.GetPropertyAction(
+                        "java.util.secureRandomSeed"));
+        if (pp != null && pp.equalsIgnoreCase("true")) {
+            byte[] seedBytes = java.security.SecureRandom.getSeed(8);
+            long s = (long)(seedBytes[0]) & 0xffL;
+            for (int i = 1; i < 8; ++i)
+                s = (s << 8) | ((long)(seedBytes[i]) & 0xffL);
+            return s;
+        }
+        return (mix64(System.currentTimeMillis()) ^
+                mix64(System.nanoTime()));
+    }
+
+    // IllegalArgumentException messages
+    static final String BadBound = "bound must be positive";
+    static final String BadRange = "bound must be greater than origin";
+    static final String BadSize  = "size must be non-negative";
+
+    /*
+     * Internal versions of nextX methods used by streams, as well as
+     * the public nextX(origin, bound) methods.  These exist mainly to
+     * avoid the need for multiple versions of stream spliterators
+     * across the different exported forms of streams.
+     */
+
+    /**
+     * The form of nextLong used by LongStream Spliterators.  If
+     * origin is greater than bound, acts as unbounded form of
+     * nextLong, else as bounded form.
+     *
+     * @param origin the least value, unless greater than bound
+     * @param bound the upper bound (exclusive), must not equal origin
+     * @return a pseudorandom value
+     */
+    final long internalNextLong(long origin, long bound) {
+        /*
+         * Four Cases:
+         *
+         * 1. If the arguments indicate unbounded form, act as
+         * nextLong().
+         *
+         * 2. If the range is an exact power of two, apply the
+         * associated bit mask.
+         *
+         * 3. If the range is positive, loop to avoid potential bias
+         * when the implicit nextLong() bound (2<sup>64</sup>) is not
+         * evenly divisible by the range. The loop rejects candidates
+         * computed from otherwise over-represented values.  The
+         * expected number of iterations under an ideal generator
+         * varies from 1 to 2, depending on the bound. The loop itself
+         * takes an unlovable form. Because the first candidate is
+         * already available, we need a break-in-the-middle
+         * construction, which is concisely but cryptically performed
+         * within the while-condition of a body-less for loop.
+         *
+         * 4. Otherwise, the range cannot be represented as a positive
+         * long.  The loop repeatedly generates unbounded longs until
+         * obtaining a candidate meeting constraints (with an expected
+         * number of iterations of less than two).
+         */
+
+        long r = mix64(nextSeed());
+        if (origin < bound) {
+            long n = bound - origin, m = n - 1;
+            if ((n & m) == 0L)  // power of two
+                r = (r & m) + origin;
+            else if (n > 0L) {  // reject over-represented candidates
+                for (long u = r >>> 1;            // ensure nonnegative
+                     u + m - (r = u % n) < 0L;    // rejection check
+                     u = mix64(nextSeed()) >>> 1) // retry
+                    ;
+                r += origin;
+            }
+            else {              // range not representable as long
+                while (r < origin || r >= bound)
+                    r = mix64(nextSeed());
+            }
+        }
+        return r;
+    }
+
+    /**
+     * The form of nextInt used by IntStream Spliterators.
+     * Exactly the same as long version, except for types.
+     *
+     * @param origin the least value, unless greater than bound
+     * @param bound the upper bound (exclusive), must not equal origin
+     * @return a pseudorandom value
+     */
+    final int internalNextInt(int origin, int bound) {
+        int r = mix32(nextSeed());
+        if (origin < bound) {
+            int n = bound - origin, m = n - 1;
+            if ((n & m) == 0)
+                r = (r & m) + origin;
+            else if (n > 0) {
+                for (int u = r >>> 1;
+                     u + m - (r = u % n) < 0;
+                     u = mix32(nextSeed()) >>> 1)
+                    ;
+                r += origin;
+            }
+            else {
+                while (r < origin || r >= bound)
+                    r = mix32(nextSeed());
+            }
+        }
+        return r;
+    }
+
+    /**
+     * The form of nextDouble used by DoubleStream Spliterators.
+     *
+     * @param origin the least value, unless greater than bound
+     * @param bound the upper bound (exclusive), must not equal origin
+     * @return a pseudorandom value
+     */
+    final double internalNextDouble(double origin, double bound) {
+        double r = (nextLong() >>> 11) * DOUBLE_UNIT;
+        if (origin < bound) {
+            r = r * (bound - origin) + origin;
+            if (r >= bound) // correct for rounding
+                r = Double.longBitsToDouble(Double.doubleToLongBits(bound) - 1);
+        }
+        return r;
+    }
+
+    /* ---------------- public methods ---------------- */
+
+    /**
+     * Creates a new SplittableRandom instance using the specified
+     * initial seed. SplittableRandom instances created with the same
+     * seed in the same program generate identical sequences of values.
+     *
+     * @param seed the initial seed
+     */
+    public SplittableRandom(long seed) {
+        this(seed, GOLDEN_GAMMA);
+    }
+
+    /**
+     * Creates a new SplittableRandom instance that is likely to
+     * generate sequences of values that are statistically independent
+     * of those of any other instances in the current program; and
+     * may, and typically does, vary across program invocations.
+     */
+    public SplittableRandom() { // emulate defaultGen.split()
+        long s = defaultGen.getAndAdd(2 * GOLDEN_GAMMA);
+        this.seed = mix64(s);
+        this.gamma = mixGamma(s + GOLDEN_GAMMA);
+    }
+
+    /**
+     * Constructs and returns a new SplittableRandom instance that
+     * shares no mutable state with this instance. However, with very
+     * high probability, the set of values collectively generated by
+     * the two objects has the same statistical properties as if the
+     * same quantity of values were generated by a single thread using
+     * a single SplittableRandom object.  Either or both of the two
+     * objects may be further split using the {@code split()} method,
+     * and the same expected statistical properties apply to the
+     * entire set of generators constructed by such recursive
+     * splitting.
+     *
+     * @return the new SplittableRandom instance
+     */
+    public SplittableRandom split() {
+        return new SplittableRandom(nextLong(), mixGamma(nextSeed()));
+    }
+
+    /**
+     * Returns a pseudorandom {@code int} value.
+     *
+     * @return a pseudorandom {@code int} value
+     */
+    public int nextInt() {
+        return mix32(nextSeed());
+    }
+
+    /**
+     * Returns a pseudorandom {@code int} value between zero (inclusive)
+     * and the specified bound (exclusive).
+     *
+     * @param bound the upper bound (exclusive).  Must be positive.
+     * @return a pseudorandom {@code int} value between zero
+     *         (inclusive) and the bound (exclusive)
+     * @throws IllegalArgumentException if {@code bound} is not positive
+     */
+    public int nextInt(int bound) {
+        if (bound <= 0)
+            throw new IllegalArgumentException(BadBound);
+        // Specialize internalNextInt for origin 0
+        int r = mix32(nextSeed());
+        int m = bound - 1;
+        if ((bound & m) == 0) // power of two
+            r &= m;
+        else { // reject over-represented candidates
+            for (int u = r >>> 1;
+                 u + m - (r = u % bound) < 0;
+                 u = mix32(nextSeed()) >>> 1)
+                ;
+        }
+        return r;
+    }
+
+    /**
+     * Returns a pseudorandom {@code int} value between the specified
+     * origin (inclusive) and the specified bound (exclusive).
+     *
+     * @param origin the least value returned
+     * @param bound the upper bound (exclusive)
+     * @return a pseudorandom {@code int} value between the origin
+     *         (inclusive) and the bound (exclusive)
+     * @throws IllegalArgumentException if {@code origin} is greater than
+     *         or equal to {@code bound}
+     */
+    public int nextInt(int origin, int bound) {
+        if (origin >= bound)
+            throw new IllegalArgumentException(BadRange);
+        return internalNextInt(origin, bound);
+    }
+
+    /**
+     * Returns a pseudorandom {@code long} value.
+     *
+     * @return a pseudorandom {@code long} value
+     */
+    public long nextLong() {
+        return mix64(nextSeed());
+    }
+
+    /**
+     * Returns a pseudorandom {@code long} value between zero (inclusive)
+     * and the specified bound (exclusive).
+     *
+     * @param bound the upper bound (exclusive).  Must be positive.
+     * @return a pseudorandom {@code long} value between zero
+     *         (inclusive) and the bound (exclusive)
+     * @throws IllegalArgumentException if {@code bound} is not positive
+     */
+    public long nextLong(long bound) {
+        if (bound <= 0)
+            throw new IllegalArgumentException(BadBound);
+        // Specialize internalNextLong for origin 0
+        long r = mix64(nextSeed());
+        long m = bound - 1;
+        if ((bound & m) == 0L) // power of two
+            r &= m;
+        else { // reject over-represented candidates
+            for (long u = r >>> 1;
+                 u + m - (r = u % bound) < 0L;
+                 u = mix64(nextSeed()) >>> 1)
+                ;
+        }
+        return r;
+    }
+
+    /**
+     * Returns a pseudorandom {@code long} value between the specified
+     * origin (inclusive) and the specified bound (exclusive).
+     *
+     * @param origin the least value returned
+     * @param bound the upper bound (exclusive)
+     * @return a pseudorandom {@code long} value between the origin
+     *         (inclusive) and the bound (exclusive)
+     * @throws IllegalArgumentException if {@code origin} is greater than
+     *         or equal to {@code bound}
+     */
+    public long nextLong(long origin, long bound) {
+        if (origin >= bound)
+            throw new IllegalArgumentException(BadRange);
+        return internalNextLong(origin, bound);
+    }
+
+    /**
+     * Returns a pseudorandom {@code double} value between zero
+     * (inclusive) and one (exclusive).
+     *
+     * @return a pseudorandom {@code double} value between zero
+     *         (inclusive) and one (exclusive)
+     */
+    public double nextDouble() {
+        return (mix64(nextSeed()) >>> 11) * DOUBLE_UNIT;
+    }
+
+    /**
+     * Returns a pseudorandom {@code double} value between 0.0
+     * (inclusive) and the specified bound (exclusive).
+     *
+     * @param bound the upper bound (exclusive).  Must be positive.
+     * @return a pseudorandom {@code double} value between zero
+     *         (inclusive) and the bound (exclusive)
+     * @throws IllegalArgumentException if {@code bound} is not positive
+     */
+    public double nextDouble(double bound) {
+        if (!(bound > 0.0))
+            throw new IllegalArgumentException(BadBound);
+        double result = (mix64(nextSeed()) >>> 11) * DOUBLE_UNIT * bound;
+        return (result < bound) ?  result : // correct for rounding
+            Double.longBitsToDouble(Double.doubleToLongBits(bound) - 1);
+    }
+
+    /**
+     * Returns a pseudorandom {@code double} value between the specified
+     * origin (inclusive) and bound (exclusive).
+     *
+     * @param origin the least value returned
+     * @param bound the upper bound (exclusive)
+     * @return a pseudorandom {@code double} value between the origin
+     *         (inclusive) and the bound (exclusive)
+     * @throws IllegalArgumentException if {@code origin} is greater than
+     *         or equal to {@code bound}
+     */
+    public double nextDouble(double origin, double bound) {
+        if (!(origin < bound))
+            throw new IllegalArgumentException(BadRange);
+        return internalNextDouble(origin, bound);
+    }
+
+    /**
+     * Returns a pseudorandom {@code boolean} value.
+     *
+     * @return a pseudorandom {@code boolean} value
+     */
+    public boolean nextBoolean() {
+        return mix32(nextSeed()) < 0;
+    }
+
+    // stream methods, coded in a way intended to better isolate for
+    // maintenance purposes the small differences across forms.
+
+    /**
+     * Returns a stream producing the given {@code streamSize} number
+     * of pseudorandom {@code int} values from this generator and/or
+     * one split from it.
+     *
+     * @param streamSize the number of values to generate
+     * @return a stream of pseudorandom {@code int} values
+     * @throws IllegalArgumentException if {@code streamSize} is
+     *         less than zero
+     */
+    public IntStream ints(long streamSize) {
+        if (streamSize < 0L)
+            throw new IllegalArgumentException(BadSize);
+        return StreamSupport.intStream
+            (new RandomIntsSpliterator
+             (this, 0L, streamSize, Integer.MAX_VALUE, 0),
+             false);
+    }
+
+    /**
+     * Returns an effectively unlimited stream of pseudorandom {@code int}
+     * values from this generator and/or one split from it.
+     *
+     * @implNote This method is implemented to be equivalent to {@code
+     * ints(Long.MAX_VALUE)}.
+     *
+     * @return a stream of pseudorandom {@code int} values
+     */
+    public IntStream ints() {
+        return StreamSupport.intStream
+            (new RandomIntsSpliterator
+             (this, 0L, Long.MAX_VALUE, Integer.MAX_VALUE, 0),
+             false);
+    }
+
+    /**
+     * Returns a stream producing the given {@code streamSize} number
+     * of pseudorandom {@code int} values from this generator and/or one split
+     * from it; each value conforms to the given origin (inclusive) and bound
+     * (exclusive).
+     *
+     * @param streamSize the number of values to generate
+     * @param randomNumberOrigin the origin (inclusive) of each random value
+     * @param randomNumberBound the bound (exclusive) of each random value
+     * @return a stream of pseudorandom {@code int} values,
+     *         each with the given origin (inclusive) and bound (exclusive)
+     * @throws IllegalArgumentException if {@code streamSize} is
+     *         less than zero, or {@code randomNumberOrigin}
+     *         is greater than or equal to {@code randomNumberBound}
+     */
+    public IntStream ints(long streamSize, int randomNumberOrigin,
+                          int randomNumberBound) {
+        if (streamSize < 0L)
+            throw new IllegalArgumentException(BadSize);
+        if (randomNumberOrigin >= randomNumberBound)
+            throw new IllegalArgumentException(BadRange);
+        return StreamSupport.intStream
+            (new RandomIntsSpliterator
+             (this, 0L, streamSize, randomNumberOrigin, randomNumberBound),
+             false);
+    }
+
+    /**
+     * Returns an effectively unlimited stream of pseudorandom {@code
+     * int} values from this generator and/or one split from it; each value
+     * conforms to the given origin (inclusive) and bound (exclusive).
+     *
+     * @implNote This method is implemented to be equivalent to {@code
+     * ints(Long.MAX_VALUE, randomNumberOrigin, randomNumberBound)}.
+     *
+     * @param randomNumberOrigin the origin (inclusive) of each random value
+     * @param randomNumberBound the bound (exclusive) of each random value
+     * @return a stream of pseudorandom {@code int} values,
+     *         each with the given origin (inclusive) and bound (exclusive)
+     * @throws IllegalArgumentException if {@code randomNumberOrigin}
+     *         is greater than or equal to {@code randomNumberBound}
+     */
+    public IntStream ints(int randomNumberOrigin, int randomNumberBound) {
+        if (randomNumberOrigin >= randomNumberBound)
+            throw new IllegalArgumentException(BadRange);
+        return StreamSupport.intStream
+            (new RandomIntsSpliterator
+             (this, 0L, Long.MAX_VALUE, randomNumberOrigin, randomNumberBound),
+             false);
+    }
+
+    /**
+     * Returns a stream producing the given {@code streamSize} number
+     * of pseudorandom {@code long} values from this generator and/or
+     * one split from it.
+     *
+     * @param streamSize the number of values to generate
+     * @return a stream of pseudorandom {@code long} values
+     * @throws IllegalArgumentException if {@code streamSize} is
+     *         less than zero
+     */
+    public LongStream longs(long streamSize) {
+        if (streamSize < 0L)
+            throw new IllegalArgumentException(BadSize);
+        return StreamSupport.longStream
+            (new RandomLongsSpliterator
+             (this, 0L, streamSize, Long.MAX_VALUE, 0L),
+             false);
+    }
+
+    /**
+     * Returns an effectively unlimited stream of pseudorandom {@code
+     * long} values from this generator and/or one split from it.
+     *
+     * @implNote This method is implemented to be equivalent to {@code
+     * longs(Long.MAX_VALUE)}.
+     *
+     * @return a stream of pseudorandom {@code long} values
+     */
+    public LongStream longs() {
+        return StreamSupport.longStream
+            (new RandomLongsSpliterator
+             (this, 0L, Long.MAX_VALUE, Long.MAX_VALUE, 0L),
+             false);
+    }
+
+    /**
+     * Returns a stream producing the given {@code streamSize} number of
+     * pseudorandom {@code long} values from this generator and/or one split
+     * from it; each value conforms to the given origin (inclusive) and bound
+     * (exclusive).
+     *
+     * @param streamSize the number of values to generate
+     * @param randomNumberOrigin the origin (inclusive) of each random value
+     * @param randomNumberBound the bound (exclusive) of each random value
+     * @return a stream of pseudorandom {@code long} values,
+     *         each with the given origin (inclusive) and bound (exclusive)
+     * @throws IllegalArgumentException if {@code streamSize} is
+     *         less than zero, or {@code randomNumberOrigin}
+     *         is greater than or equal to {@code randomNumberBound}
+     */
+    public LongStream longs(long streamSize, long randomNumberOrigin,
+                            long randomNumberBound) {
+        if (streamSize < 0L)
+            throw new IllegalArgumentException(BadSize);
+        if (randomNumberOrigin >= randomNumberBound)
+            throw new IllegalArgumentException(BadRange);
+        return StreamSupport.longStream
+            (new RandomLongsSpliterator
+             (this, 0L, streamSize, randomNumberOrigin, randomNumberBound),
+             false);
+    }
+
+    /**
+     * Returns an effectively unlimited stream of pseudorandom {@code
+     * long} values from this generator and/or one split from it; each value
+     * conforms to the given origin (inclusive) and bound (exclusive).
+     *
+     * @implNote This method is implemented to be equivalent to {@code
+     * longs(Long.MAX_VALUE, randomNumberOrigin, randomNumberBound)}.
+     *
+     * @param randomNumberOrigin the origin (inclusive) of each random value
+     * @param randomNumberBound the bound (exclusive) of each random value
+     * @return a stream of pseudorandom {@code long} values,
+     *         each with the given origin (inclusive) and bound (exclusive)
+     * @throws IllegalArgumentException if {@code randomNumberOrigin}
+     *         is greater than or equal to {@code randomNumberBound}
+     */
+    public LongStream longs(long randomNumberOrigin, long randomNumberBound) {
+        if (randomNumberOrigin >= randomNumberBound)
+            throw new IllegalArgumentException(BadRange);
+        return StreamSupport.longStream
+            (new RandomLongsSpliterator
+             (this, 0L, Long.MAX_VALUE, randomNumberOrigin, randomNumberBound),
+             false);
+    }
+
+    /**
+     * Returns a stream producing the given {@code streamSize} number of
+     * pseudorandom {@code double} values from this generator and/or one split
+     * from it; each value is between zero (inclusive) and one (exclusive).
+     *
+     * @param streamSize the number of values to generate
+     * @return a stream of {@code double} values
+     * @throws IllegalArgumentException if {@code streamSize} is
+     *         less than zero
+     */
+    public DoubleStream doubles(long streamSize) {
+        if (streamSize < 0L)
+            throw new IllegalArgumentException(BadSize);
+        return StreamSupport.doubleStream
+            (new RandomDoublesSpliterator
+             (this, 0L, streamSize, Double.MAX_VALUE, 0.0),
+             false);
+    }
+
+    /**
+     * Returns an effectively unlimited stream of pseudorandom {@code
+     * double} values from this generator and/or one split from it; each value
+     * is between zero (inclusive) and one (exclusive).
+     *
+     * @implNote This method is implemented to be equivalent to {@code
+     * doubles(Long.MAX_VALUE)}.
+     *
+     * @return a stream of pseudorandom {@code double} values
+     */
+    public DoubleStream doubles() {
+        return StreamSupport.doubleStream
+            (new RandomDoublesSpliterator
+             (this, 0L, Long.MAX_VALUE, Double.MAX_VALUE, 0.0),
+             false);
+    }
+
+    /**
+     * Returns a stream producing the given {@code streamSize} number of
+     * pseudorandom {@code double} values from this generator and/or one split
+     * from it; each value conforms to the given origin (inclusive) and bound
+     * (exclusive).
+     *
+     * @param streamSize the number of values to generate
+     * @param randomNumberOrigin the origin (inclusive) of each random value
+     * @param randomNumberBound the bound (exclusive) of each random value
+     * @return a stream of pseudorandom {@code double} values,
+     *         each with the given origin (inclusive) and bound (exclusive)
+     * @throws IllegalArgumentException if {@code streamSize} is
+     *         less than zero
+     * @throws IllegalArgumentException if {@code randomNumberOrigin}
+     *         is greater than or equal to {@code randomNumberBound}
+     */
+    public DoubleStream doubles(long streamSize, double randomNumberOrigin,
+                                double randomNumberBound) {
+        if (streamSize < 0L)
+            throw new IllegalArgumentException(BadSize);
+        if (!(randomNumberOrigin < randomNumberBound))
+            throw new IllegalArgumentException(BadRange);
+        return StreamSupport.doubleStream
+            (new RandomDoublesSpliterator
+             (this, 0L, streamSize, randomNumberOrigin, randomNumberBound),
+             false);
+    }
+
+    /**
+     * Returns an effectively unlimited stream of pseudorandom {@code
+     * double} values from this generator and/or one split from it; each value
+     * conforms to the given origin (inclusive) and bound (exclusive).
+     *
+     * @implNote This method is implemented to be equivalent to {@code
+     * doubles(Long.MAX_VALUE, randomNumberOrigin, randomNumberBound)}.
+     *
+     * @param randomNumberOrigin the origin (inclusive) of each random value
+     * @param randomNumberBound the bound (exclusive) of each random value
+     * @return a stream of pseudorandom {@code double} values,
+     *         each with the given origin (inclusive) and bound (exclusive)
+     * @throws IllegalArgumentException if {@code randomNumberOrigin}
+     *         is greater than or equal to {@code randomNumberBound}
+     */
+    public DoubleStream doubles(double randomNumberOrigin, double randomNumberBound) {
+        if (!(randomNumberOrigin < randomNumberBound))
+            throw new IllegalArgumentException(BadRange);
+        return StreamSupport.doubleStream
+            (new RandomDoublesSpliterator
+             (this, 0L, Long.MAX_VALUE, randomNumberOrigin, randomNumberBound),
+             false);
+    }
+
+    /**
+     * Spliterator for int streams.  We multiplex the four int
+     * versions into one class by treating a bound less than origin as
+     * unbounded, and also by treating "infinite" as equivalent to
+     * Long.MAX_VALUE. For splits, it uses the standard divide-by-two
+     * approach. The long and double versions of this class are
+     * identical except for types.
+     */
+    static final class RandomIntsSpliterator implements Spliterator.OfInt {
+        final SplittableRandom rng;
+        long index;
+        final long fence;
+        final int origin;
+        final int bound;
+        RandomIntsSpliterator(SplittableRandom rng, long index, long fence,
+                              int origin, int bound) {
+            this.rng = rng; this.index = index; this.fence = fence;
+            this.origin = origin; this.bound = bound;
+        }
+
+        public RandomIntsSpliterator trySplit() {
+            long i = index, m = (i + fence) >>> 1;
+            return (m <= i) ? null :
+                new RandomIntsSpliterator(rng.split(), i, index = m, origin, bound);
+        }
+
+        public long estimateSize() {
+            return fence - index;
+        }
+
+        public int characteristics() {
+            return (Spliterator.SIZED | Spliterator.SUBSIZED |
+                    Spliterator.NONNULL | Spliterator.IMMUTABLE);
+        }
+
+        public boolean tryAdvance(IntConsumer consumer) {
+            if (consumer == null) throw new NullPointerException();
+            long i = index, f = fence;
+            if (i < f) {
+                consumer.accept(rng.internalNextInt(origin, bound));
+                index = i + 1;
+                return true;
+            }
+            return false;
+        }
+
+        public void forEachRemaining(IntConsumer consumer) {
+            if (consumer == null) throw new NullPointerException();
+            long i = index, f = fence;
+            if (i < f) {
+                index = f;
+                SplittableRandom r = rng;
+                int o = origin, b = bound;
+                do {
+                    consumer.accept(r.internalNextInt(o, b));
+                } while (++i < f);
+            }
+        }
+    }
+
+    /**
+     * Spliterator for long streams.
+     */
+    static final class RandomLongsSpliterator implements Spliterator.OfLong {
+        final SplittableRandom rng;
+        long index;
+        final long fence;
+        final long origin;
+        final long bound;
+        RandomLongsSpliterator(SplittableRandom rng, long index, long fence,
+                               long origin, long bound) {
+            this.rng = rng; this.index = index; this.fence = fence;
+            this.origin = origin; this.bound = bound;
+        }
+
+        public RandomLongsSpliterator trySplit() {
+            long i = index, m = (i + fence) >>> 1;
+            return (m <= i) ? null :
+                new RandomLongsSpliterator(rng.split(), i, index = m, origin, bound);
+        }
+
+        public long estimateSize() {
+            return fence - index;
+        }
+
+        public int characteristics() {
+            return (Spliterator.SIZED | Spliterator.SUBSIZED |
+                    Spliterator.NONNULL | Spliterator.IMMUTABLE);
+        }
+
+        public boolean tryAdvance(LongConsumer consumer) {
+            if (consumer == null) throw new NullPointerException();
+            long i = index, f = fence;
+            if (i < f) {
+                consumer.accept(rng.internalNextLong(origin, bound));
+                index = i + 1;
+                return true;
+            }
+            return false;
+        }
+
+        public void forEachRemaining(LongConsumer consumer) {
+            if (consumer == null) throw new NullPointerException();
+            long i = index, f = fence;
+            if (i < f) {
+                index = f;
+                SplittableRandom r = rng;
+                long o = origin, b = bound;
+                do {
+                    consumer.accept(r.internalNextLong(o, b));
+                } while (++i < f);
+            }
+        }
+
+    }
+
+    /**
+     * Spliterator for double streams.
+     */
+    static final class RandomDoublesSpliterator implements Spliterator.OfDouble {
+        final SplittableRandom rng;
+        long index;
+        final long fence;
+        final double origin;
+        final double bound;
+        RandomDoublesSpliterator(SplittableRandom rng, long index, long fence,
+                                 double origin, double bound) {
+            this.rng = rng; this.index = index; this.fence = fence;
+            this.origin = origin; this.bound = bound;
+        }
+
+        public RandomDoublesSpliterator trySplit() {
+            long i = index, m = (i + fence) >>> 1;
+            return (m <= i) ? null :
+                new RandomDoublesSpliterator(rng.split(), i, index = m, origin, bound);
+        }
+
+        public long estimateSize() {
+            return fence - index;
+        }
+
+        public int characteristics() {
+            return (Spliterator.SIZED | Spliterator.SUBSIZED |
+                    Spliterator.NONNULL | Spliterator.IMMUTABLE);
+        }
+
+        public boolean tryAdvance(DoubleConsumer consumer) {
+            if (consumer == null) throw new NullPointerException();
+            long i = index, f = fence;
+            if (i < f) {
+                consumer.accept(rng.internalNextDouble(origin, bound));
+                index = i + 1;
+                return true;
+            }
+            return false;
+        }
+
+        public void forEachRemaining(DoubleConsumer consumer) {
+            if (consumer == null) throw new NullPointerException();
+            long i = index, f = fence;
+            if (i < f) {
+                index = f;
+                SplittableRandom r = rng;
+                double o = origin, b = bound;
+                do {
+                    consumer.accept(r.internalNextDouble(o, b));
+                } while (++i < f);
+            }
+        }
+    }
+
+}

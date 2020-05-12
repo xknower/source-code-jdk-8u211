@@ -1,961 +1,955 @@
-/*     */ package java.security;
-/*     */ 
-/*     */ import java.util.ArrayList;
-/*     */ import sun.security.util.Debug;
-/*     */ import sun.security.util.SecurityConstants;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class AccessControlContext
-/*     */ {
-/*     */   private ProtectionDomain[] context;
-/*     */   private boolean isPrivileged;
-/*     */   private boolean isAuthorized = false;
-/*     */   private AccessControlContext privilegedContext;
-/*  89 */   private DomainCombiner combiner = null;
-/*     */   
-/*     */   private Permission[] permissions;
-/*     */   
-/*     */   private AccessControlContext parent;
-/*     */   
-/*     */   private boolean isWrapped;
-/*     */   
-/*     */   private boolean isLimited;
-/*     */   
-/*     */   private ProtectionDomain[] limitedContext;
-/*     */   private static boolean debugInit = false;
-/* 101 */   private static Debug debug = null;
-/*     */ 
-/*     */   
-/*     */   static Debug getDebug() {
-/* 105 */     if (debugInit) {
-/* 106 */       return debug;
-/*     */     }
-/* 108 */     if (Policy.isSet()) {
-/* 109 */       debug = Debug.getInstance("access");
-/* 110 */       debugInit = true;
-/*     */     } 
-/* 112 */     return debug;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public AccessControlContext(ProtectionDomain[] paramArrayOfProtectionDomain) {
-/* 128 */     if (paramArrayOfProtectionDomain.length == 0) {
-/* 129 */       this.context = null;
-/* 130 */     } else if (paramArrayOfProtectionDomain.length == 1) {
-/* 131 */       if (paramArrayOfProtectionDomain[0] != null) {
-/* 132 */         this.context = (ProtectionDomain[])paramArrayOfProtectionDomain.clone();
-/*     */       } else {
-/* 134 */         this.context = null;
-/*     */       } 
-/*     */     } else {
-/* 137 */       ArrayList<ProtectionDomain> arrayList = new ArrayList(paramArrayOfProtectionDomain.length);
-/* 138 */       for (byte b = 0; b < paramArrayOfProtectionDomain.length; b++) {
-/* 139 */         if (paramArrayOfProtectionDomain[b] != null && !arrayList.contains(paramArrayOfProtectionDomain[b]))
-/* 140 */           arrayList.add(paramArrayOfProtectionDomain[b]); 
-/*     */       } 
-/* 142 */       if (!arrayList.isEmpty()) {
-/* 143 */         this.context = new ProtectionDomain[arrayList.size()];
-/* 144 */         this.context = arrayList.<ProtectionDomain>toArray(this.context);
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public AccessControlContext(AccessControlContext paramAccessControlContext, DomainCombiner paramDomainCombiner) {
-/* 175 */     this(paramAccessControlContext, paramDomainCombiner, false);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   AccessControlContext(AccessControlContext paramAccessControlContext, DomainCombiner paramDomainCombiner, boolean paramBoolean) {
-/* 186 */     if (!paramBoolean) {
-/* 187 */       SecurityManager securityManager = System.getSecurityManager();
-/* 188 */       if (securityManager != null) {
-/* 189 */         securityManager.checkPermission(SecurityConstants.CREATE_ACC_PERMISSION);
-/* 190 */         this.isAuthorized = true;
-/*     */       } 
-/*     */     } else {
-/* 193 */       this.isAuthorized = true;
-/*     */     } 
-/*     */     
-/* 196 */     this.context = paramAccessControlContext.context;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 204 */     this.combiner = paramDomainCombiner;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   AccessControlContext(ProtectionDomain paramProtectionDomain, DomainCombiner paramDomainCombiner, AccessControlContext paramAccessControlContext1, AccessControlContext paramAccessControlContext2, Permission[] paramArrayOfPermission) {
-/* 221 */     ProtectionDomain[] arrayOfProtectionDomain = null;
-/* 222 */     if (paramProtectionDomain != null) {
-/* 223 */       arrayOfProtectionDomain = new ProtectionDomain[] { paramProtectionDomain };
-/*     */     }
-/* 225 */     if (paramAccessControlContext2 != null) {
-/* 226 */       if (paramDomainCombiner != null) {
-/* 227 */         this.context = paramDomainCombiner.combine(arrayOfProtectionDomain, paramAccessControlContext2.context);
-/*     */       } else {
-/* 229 */         this.context = combine(arrayOfProtectionDomain, paramAccessControlContext2.context);
-/*     */       
-/*     */       }
-/*     */ 
-/*     */     
-/*     */     }
-/* 235 */     else if (paramDomainCombiner != null) {
-/* 236 */       this.context = paramDomainCombiner.combine(arrayOfProtectionDomain, null);
-/*     */     } else {
-/* 238 */       this.context = combine(arrayOfProtectionDomain, null);
-/*     */     } 
-/*     */     
-/* 241 */     this.combiner = paramDomainCombiner;
-/*     */     
-/* 243 */     Permission[] arrayOfPermission = null;
-/* 244 */     if (paramArrayOfPermission != null) {
-/* 245 */       arrayOfPermission = new Permission[paramArrayOfPermission.length];
-/* 246 */       for (byte b = 0; b < paramArrayOfPermission.length; b++) {
-/* 247 */         if (paramArrayOfPermission[b] == null) {
-/* 248 */           throw new NullPointerException("permission can't be null");
-/*     */         }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 255 */         if (paramArrayOfPermission[b].getClass() == AllPermission.class) {
-/* 256 */           paramAccessControlContext1 = null;
-/*     */         }
-/* 258 */         arrayOfPermission[b] = paramArrayOfPermission[b];
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 271 */     if (paramAccessControlContext1 != null) {
-/* 272 */       this.limitedContext = combine(paramAccessControlContext1.context, paramAccessControlContext1.limitedContext);
-/* 273 */       this.isLimited = true;
-/* 274 */       this.isWrapped = true;
-/* 275 */       this.permissions = arrayOfPermission;
-/* 276 */       this.parent = paramAccessControlContext1;
-/* 277 */       this.privilegedContext = paramAccessControlContext2;
-/*     */     } 
-/* 279 */     this.isAuthorized = true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   AccessControlContext(ProtectionDomain[] paramArrayOfProtectionDomain, boolean paramBoolean) {
-/* 290 */     this.context = paramArrayOfProtectionDomain;
-/* 291 */     this.isPrivileged = paramBoolean;
-/* 292 */     this.isAuthorized = true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   AccessControlContext(ProtectionDomain[] paramArrayOfProtectionDomain, AccessControlContext paramAccessControlContext) {
-/* 301 */     this.context = paramArrayOfProtectionDomain;
-/* 302 */     this.privilegedContext = paramAccessControlContext;
-/* 303 */     this.isPrivileged = true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   ProtectionDomain[] getContext() {
-/* 310 */     return this.context;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   boolean isPrivileged() {
-/* 318 */     return this.isPrivileged;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   DomainCombiner getAssignedCombiner() {
-/*     */     AccessControlContext accessControlContext;
-/* 326 */     if (this.isPrivileged) {
-/* 327 */       accessControlContext = this.privilegedContext;
-/*     */     } else {
-/* 329 */       accessControlContext = AccessController.getInheritedAccessControlContext();
-/*     */     } 
-/* 331 */     if (accessControlContext != null) {
-/* 332 */       return accessControlContext.combiner;
-/*     */     }
-/* 334 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public DomainCombiner getDomainCombiner() {
-/* 354 */     SecurityManager securityManager = System.getSecurityManager();
-/* 355 */     if (securityManager != null) {
-/* 356 */       securityManager.checkPermission(SecurityConstants.GET_COMBINER_PERMISSION);
-/*     */     }
-/* 358 */     return getCombiner();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   DomainCombiner getCombiner() {
-/* 365 */     return this.combiner;
-/*     */   }
-/*     */   
-/*     */   boolean isAuthorized() {
-/* 369 */     return this.isAuthorized;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void checkPermission(Permission paramPermission) throws AccessControlException {
-/* 394 */     int i = 0;
-/*     */     
-/* 396 */     if (paramPermission == null) {
-/* 397 */       throw new NullPointerException("permission can't be null");
-/*     */     }
-/* 399 */     if (getDebug() != null) {
-/*     */       
-/* 401 */       i = !Debug.isOn("codebase=") ? 1 : 0;
-/* 402 */       if (!i)
-/*     */       {
-/*     */         
-/* 405 */         for (byte b1 = 0; this.context != null && b1 < this.context.length; b1++) {
-/* 406 */           if (this.context[b1].getCodeSource() != null && this.context[b1]
-/* 407 */             .getCodeSource().getLocation() != null && 
-/* 408 */             Debug.isOn("codebase=" + this.context[b1].getCodeSource().getLocation().toString())) {
-/* 409 */             i = 1;
-/*     */             
-/*     */             break;
-/*     */           } 
-/*     */         } 
-/*     */       }
-/* 415 */       i &= (!Debug.isOn("permission=") || 
-/* 416 */         Debug.isOn("permission=" + paramPermission.getClass().getCanonicalName())) ? 1 : 0;
-/*     */       
-/* 418 */       if (i != 0 && Debug.isOn("stack")) {
-/* 419 */         Thread.dumpStack();
-/*     */       }
-/*     */       
-/* 422 */       if (i != 0 && Debug.isOn("domain")) {
-/* 423 */         if (this.context == null) {
-/* 424 */           debug.println("domain (context is null)");
-/*     */         } else {
-/* 426 */           for (byte b1 = 0; b1 < this.context.length; b1++) {
-/* 427 */             debug.println("domain " + b1 + " " + this.context[b1]);
-/*     */           }
-/*     */         } 
-/*     */       }
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 444 */     if (this.context == null) {
-/* 445 */       checkPermission2(paramPermission);
-/*     */       
-/*     */       return;
-/*     */     } 
-/* 449 */     for (byte b = 0; b < this.context.length; b++) {
-/* 450 */       if (this.context[b] != null && !this.context[b].implies(paramPermission)) {
-/* 451 */         if (i != 0) {
-/* 452 */           debug.println("access denied " + paramPermission);
-/*     */         }
-/*     */         
-/* 455 */         if (Debug.isOn("failure") && debug != null) {
-/*     */ 
-/*     */ 
-/*     */           
-/* 459 */           if (i == 0) {
-/* 460 */             debug.println("access denied " + paramPermission);
-/*     */           }
-/* 462 */           Thread.dumpStack();
-/* 463 */           final ProtectionDomain pd = this.context[b];
-/* 464 */           final Debug db = debug;
-/* 465 */           AccessController.doPrivileged(new PrivilegedAction<Void>() {
-/*     */                 public Void run() {
-/* 467 */                   db.println("domain that failed " + pd);
-/* 468 */                   return null;
-/*     */                 }
-/*     */               });
-/*     */         } 
-/* 472 */         throw new AccessControlException("access denied " + paramPermission, paramPermission);
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */     
-/* 477 */     if (i != 0) {
-/* 478 */       debug.println("access allowed " + paramPermission);
-/*     */     }
-/*     */     
-/* 481 */     checkPermission2(paramPermission);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void checkPermission2(Permission paramPermission) {
-/* 488 */     if (!this.isLimited) {
-/*     */       return;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 495 */     if (this.privilegedContext != null) {
-/* 496 */       this.privilegedContext.checkPermission2(paramPermission);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 504 */     if (this.isWrapped) {
-/*     */       return;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 511 */     if (this.permissions != null) {
-/* 512 */       Class<?> clazz = paramPermission.getClass();
-/* 513 */       for (byte b = 0; b < this.permissions.length; b++) {
-/* 514 */         Permission permission = this.permissions[b];
-/* 515 */         if (permission.getClass().equals(clazz) && permission.implies(paramPermission)) {
-/*     */           return;
-/*     */         }
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 525 */     if (this.parent != null)
-/*     */     {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 535 */       if (this.permissions == null) {
-/* 536 */         this.parent.checkPermission2(paramPermission);
-/*     */       } else {
-/* 538 */         this.parent.checkPermission(paramPermission);
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   AccessControlContext optimize() {
-/*     */     AccessControlContext accessControlContext1;
-/*     */     ProtectionDomain[] arrayOfProtectionDomain2;
-/* 554 */     DomainCombiner domainCombiner = null;
-/* 555 */     AccessControlContext accessControlContext2 = null;
-/* 556 */     Permission[] arrayOfPermission = null;
-/*     */     
-/* 558 */     if (this.isPrivileged) {
-/* 559 */       accessControlContext1 = this.privilegedContext;
-/* 560 */       if (accessControlContext1 != null)
-/*     */       {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 566 */         if (accessControlContext1.isWrapped) {
-/* 567 */           arrayOfPermission = accessControlContext1.permissions;
-/* 568 */           accessControlContext2 = accessControlContext1.parent;
-/*     */         } 
-/*     */       }
-/*     */     } else {
-/* 572 */       accessControlContext1 = AccessController.getInheritedAccessControlContext();
-/* 573 */       if (accessControlContext1 != null)
-/*     */       {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 579 */         if (accessControlContext1.isLimited) {
-/* 580 */           accessControlContext2 = accessControlContext1;
-/*     */         }
-/*     */       }
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 587 */     boolean bool1 = (this.context == null) ? true : false;
-/*     */ 
-/*     */ 
-/*     */     
-/* 591 */     boolean bool2 = (accessControlContext1 == null || accessControlContext1.context == null) ? true : false;
-/* 592 */     ProtectionDomain[] arrayOfProtectionDomain1 = bool2 ? null : accessControlContext1.context;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 597 */     boolean bool3 = ((accessControlContext1 == null || !accessControlContext1.isWrapped) && accessControlContext2 == null) ? true : false;
-/*     */     
-/* 599 */     if (accessControlContext1 != null && accessControlContext1.combiner != null) {
-/*     */       
-/* 601 */       if (getDebug() != null) {
-/* 602 */         debug.println("AccessControlContext invoking the Combiner");
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */       
-/* 607 */       domainCombiner = accessControlContext1.combiner;
-/* 608 */       arrayOfProtectionDomain2 = domainCombiner.combine(this.context, arrayOfProtectionDomain1);
-/*     */     } else {
-/* 610 */       if (bool1) {
-/* 611 */         if (bool2) {
-/* 612 */           calculateFields(accessControlContext1, accessControlContext2, arrayOfPermission);
-/* 613 */           return this;
-/* 614 */         }  if (bool3) {
-/* 615 */           return accessControlContext1;
-/*     */         }
-/* 617 */       } else if (arrayOfProtectionDomain1 != null && 
-/* 618 */         bool3) {
-/*     */ 
-/*     */ 
-/*     */         
-/* 622 */         if (this.context.length == 1 && this.context[0] == arrayOfProtectionDomain1[0]) {
-/* 623 */           return accessControlContext1;
-/*     */         }
-/*     */       } 
-/*     */ 
-/*     */       
-/* 628 */       arrayOfProtectionDomain2 = combine(this.context, arrayOfProtectionDomain1);
-/* 629 */       if (bool3 && !bool2 && arrayOfProtectionDomain2 == arrayOfProtectionDomain1)
-/* 630 */         return accessControlContext1; 
-/* 631 */       if (bool2 && arrayOfProtectionDomain2 == this.context) {
-/* 632 */         calculateFields(accessControlContext1, accessControlContext2, arrayOfPermission);
-/* 633 */         return this;
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */     
-/* 638 */     this.context = arrayOfProtectionDomain2;
-/* 639 */     this.combiner = domainCombiner;
-/* 640 */     this.isPrivileged = false;
-/*     */     
-/* 642 */     calculateFields(accessControlContext1, accessControlContext2, arrayOfPermission);
-/* 643 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static ProtectionDomain[] combine(ProtectionDomain[] paramArrayOfProtectionDomain1, ProtectionDomain[] paramArrayOfProtectionDomain2) {
-/* 655 */     boolean bool1 = (paramArrayOfProtectionDomain1 == null) ? true : false;
-/*     */ 
-/*     */ 
-/*     */     
-/* 659 */     boolean bool2 = (paramArrayOfProtectionDomain2 == null) ? true : false;
-/*     */     
-/* 661 */     byte b1 = bool1 ? 0 : paramArrayOfProtectionDomain1.length;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 666 */     if (bool2 && b1 <= 2) {
-/* 667 */       return paramArrayOfProtectionDomain1;
-/*     */     }
-/*     */     
-/* 670 */     byte b2 = bool2 ? 0 : paramArrayOfProtectionDomain2.length;
-/*     */ 
-/*     */     
-/* 673 */     ProtectionDomain[] arrayOfProtectionDomain = new ProtectionDomain[b1 + b2];
-/*     */ 
-/*     */     
-/* 676 */     if (!bool2) {
-/* 677 */       System.arraycopy(paramArrayOfProtectionDomain2, 0, arrayOfProtectionDomain, 0, b2);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 682 */     for (byte b3 = 0; b3 < b1; b3++) {
-/* 683 */       ProtectionDomain protectionDomain = paramArrayOfProtectionDomain1[b3];
-/* 684 */       if (protectionDomain != null) {
-/* 685 */         byte b = 0; while (true) { if (b < b2) {
-/* 686 */             if (protectionDomain == arrayOfProtectionDomain[b])
-/*     */               break;  b++;
-/*     */             continue;
-/*     */           } 
-/* 690 */           arrayOfProtectionDomain[b2++] = protectionDomain;
-/*     */           break; }
-/*     */       
-/*     */       } 
-/*     */     } 
-/* 695 */     if (b2 != arrayOfProtectionDomain.length) {
-/*     */       
-/* 697 */       if (!bool2 && b2 == paramArrayOfProtectionDomain2.length)
-/* 698 */         return paramArrayOfProtectionDomain2; 
-/* 699 */       if (bool2 && b2 == b1) {
-/* 700 */         return paramArrayOfProtectionDomain1;
-/*     */       }
-/* 702 */       ProtectionDomain[] arrayOfProtectionDomain1 = new ProtectionDomain[b2];
-/* 703 */       System.arraycopy(arrayOfProtectionDomain, 0, arrayOfProtectionDomain1, 0, b2);
-/* 704 */       arrayOfProtectionDomain = arrayOfProtectionDomain1;
-/*     */     } 
-/*     */     
-/* 707 */     return arrayOfProtectionDomain;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void calculateFields(AccessControlContext paramAccessControlContext1, AccessControlContext paramAccessControlContext2, Permission[] paramArrayOfPermission) {
-/* 721 */     ProtectionDomain[] arrayOfProtectionDomain1 = null;
-/* 722 */     ProtectionDomain[] arrayOfProtectionDomain2 = null;
-/*     */ 
-/*     */     
-/* 725 */     arrayOfProtectionDomain1 = (paramAccessControlContext2 != null) ? paramAccessControlContext2.limitedContext : null;
-/* 726 */     arrayOfProtectionDomain2 = (paramAccessControlContext1 != null) ? paramAccessControlContext1.limitedContext : null;
-/* 727 */     ProtectionDomain[] arrayOfProtectionDomain3 = combine(arrayOfProtectionDomain1, arrayOfProtectionDomain2);
-/* 728 */     if (arrayOfProtectionDomain3 != null && (
-/* 729 */       this.context == null || !containsAllPDs(arrayOfProtectionDomain3, this.context))) {
-/* 730 */       this.limitedContext = arrayOfProtectionDomain3;
-/* 731 */       this.permissions = paramArrayOfPermission;
-/* 732 */       this.parent = paramAccessControlContext2;
-/* 733 */       this.isLimited = true;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean equals(Object paramObject) {
-/* 750 */     if (paramObject == this) {
-/* 751 */       return true;
-/*     */     }
-/* 753 */     if (!(paramObject instanceof AccessControlContext)) {
-/* 754 */       return false;
-/*     */     }
-/* 756 */     AccessControlContext accessControlContext = (AccessControlContext)paramObject;
-/*     */     
-/* 758 */     if (!equalContext(accessControlContext)) {
-/* 759 */       return false;
-/*     */     }
-/* 761 */     if (!equalLimitedContext(accessControlContext)) {
-/* 762 */       return false;
-/*     */     }
-/* 764 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean equalContext(AccessControlContext paramAccessControlContext) {
-/* 772 */     if (!equalPDs(this.context, paramAccessControlContext.context)) {
-/* 773 */       return false;
-/*     */     }
-/* 775 */     if (this.combiner == null && paramAccessControlContext.combiner != null) {
-/* 776 */       return false;
-/*     */     }
-/* 778 */     if (this.combiner != null && !this.combiner.equals(paramAccessControlContext.combiner)) {
-/* 779 */       return false;
-/*     */     }
-/* 781 */     return true;
-/*     */   }
-/*     */   
-/*     */   private boolean equalPDs(ProtectionDomain[] paramArrayOfProtectionDomain1, ProtectionDomain[] paramArrayOfProtectionDomain2) {
-/* 785 */     if (paramArrayOfProtectionDomain1 == null) {
-/* 786 */       return (paramArrayOfProtectionDomain2 == null);
-/*     */     }
-/*     */     
-/* 789 */     if (paramArrayOfProtectionDomain2 == null) {
-/* 790 */       return false;
-/*     */     }
-/* 792 */     if (!containsAllPDs(paramArrayOfProtectionDomain1, paramArrayOfProtectionDomain2) || !containsAllPDs(paramArrayOfProtectionDomain2, paramArrayOfProtectionDomain1)) {
-/* 793 */       return false;
-/*     */     }
-/* 795 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean equalLimitedContext(AccessControlContext paramAccessControlContext) {
-/* 804 */     if (paramAccessControlContext == null) {
-/* 805 */       return false;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 810 */     if (!this.isLimited && !paramAccessControlContext.isLimited) {
-/* 811 */       return true;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 816 */     if (!this.isLimited || !paramAccessControlContext.isLimited) {
-/* 817 */       return false;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 825 */     if ((this.isWrapped && !paramAccessControlContext.isWrapped) || (!this.isWrapped && paramAccessControlContext.isWrapped))
-/*     */     {
-/* 827 */       return false;
-/*     */     }
-/*     */     
-/* 830 */     if (this.permissions == null && paramAccessControlContext.permissions != null) {
-/* 831 */       return false;
-/*     */     }
-/* 833 */     if (this.permissions != null && paramAccessControlContext.permissions == null) {
-/* 834 */       return false;
-/*     */     }
-/* 836 */     if (!containsAllLimits(paramAccessControlContext) || !paramAccessControlContext.containsAllLimits(this)) {
-/* 837 */       return false;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 842 */     AccessControlContext accessControlContext1 = getNextPC(this);
-/* 843 */     AccessControlContext accessControlContext2 = getNextPC(paramAccessControlContext);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 851 */     if (accessControlContext1 == null && accessControlContext2 != null && accessControlContext2.isLimited) {
-/* 852 */       return false;
-/*     */     }
-/* 854 */     if (accessControlContext1 != null && !accessControlContext1.equalLimitedContext(accessControlContext2)) {
-/* 855 */       return false;
-/*     */     }
-/* 857 */     if (this.parent == null && paramAccessControlContext.parent != null) {
-/* 858 */       return false;
-/*     */     }
-/* 860 */     if (this.parent != null && !this.parent.equals(paramAccessControlContext.parent)) {
-/* 861 */       return false;
-/*     */     }
-/* 863 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static AccessControlContext getNextPC(AccessControlContext paramAccessControlContext) {
-/* 871 */     while (paramAccessControlContext != null && paramAccessControlContext.privilegedContext != null) {
-/* 872 */       paramAccessControlContext = paramAccessControlContext.privilegedContext;
-/* 873 */       if (!paramAccessControlContext.isWrapped)
-/* 874 */         return paramAccessControlContext; 
-/*     */     } 
-/* 876 */     return null;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private static boolean containsAllPDs(ProtectionDomain[] paramArrayOfProtectionDomain1, ProtectionDomain[] paramArrayOfProtectionDomain2) {
-/* 881 */     boolean bool = false;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 890 */     for (byte b = 0; b < paramArrayOfProtectionDomain1.length; b++) {
-/* 891 */       bool = false; ProtectionDomain protectionDomain;
-/* 892 */       if ((protectionDomain = paramArrayOfProtectionDomain1[b]) == null) {
-/* 893 */         for (byte b1 = 0; b1 < paramArrayOfProtectionDomain2.length && !bool; b1++) {
-/* 894 */           bool = (paramArrayOfProtectionDomain2[b1] == null) ? true : false;
-/*     */         }
-/*     */       } else {
-/* 897 */         Class<?> clazz = protectionDomain.getClass();
-/*     */         
-/* 899 */         for (byte b1 = 0; b1 < paramArrayOfProtectionDomain2.length && !bool; b1++) {
-/* 900 */           ProtectionDomain protectionDomain1 = paramArrayOfProtectionDomain2[b1];
-/*     */ 
-/*     */ 
-/*     */           
-/* 904 */           bool = (protectionDomain1 != null && clazz == protectionDomain1.getClass() && protectionDomain.equals(protectionDomain1)) ? true : false;
-/*     */         } 
-/*     */       } 
-/* 907 */       if (!bool) return false; 
-/*     */     } 
-/* 909 */     return bool;
-/*     */   }
-/*     */   
-/*     */   private boolean containsAllLimits(AccessControlContext paramAccessControlContext) {
-/* 913 */     boolean bool = false;
-/*     */ 
-/*     */     
-/* 916 */     if (this.permissions == null && paramAccessControlContext.permissions == null) {
-/* 917 */       return true;
-/*     */     }
-/* 919 */     for (byte b = 0; b < this.permissions.length; b++) {
-/* 920 */       Permission permission = this.permissions[b];
-/* 921 */       Class<?> clazz = permission.getClass();
-/* 922 */       bool = false;
-/* 923 */       for (byte b1 = 0; b1 < paramAccessControlContext.permissions.length && !bool; b1++) {
-/* 924 */         Permission permission1 = paramAccessControlContext.permissions[b1];
-/*     */         
-/* 926 */         bool = (clazz.equals(permission1.getClass()) && permission.equals(permission1)) ? true : false;
-/*     */       } 
-/* 928 */       if (!bool) return false; 
-/*     */     } 
-/* 930 */     return bool;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int hashCode() {
-/* 943 */     int i = 0;
-/*     */     
-/* 945 */     if (this.context == null) {
-/* 946 */       return i;
-/*     */     }
-/* 948 */     for (byte b = 0; b < this.context.length; b++) {
-/* 949 */       if (this.context[b] != null) {
-/* 950 */         i ^= this.context[b].hashCode();
-/*     */       }
-/*     */     } 
-/* 953 */     return i;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\security\AccessControlContext.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.security;
+
+import java.util.ArrayList;
+import java.util.List;
+import sun.security.util.Debug;
+import sun.security.util.SecurityConstants;
+
+
+/**
+ * An AccessControlContext is used to make system resource access decisions
+ * based on the context it encapsulates.
+ *
+ * <p>More specifically, it encapsulates a context and
+ * has a single method, {@code checkPermission},
+ * that is equivalent to the {@code checkPermission} method
+ * in the AccessController class, with one difference: The AccessControlContext
+ * {@code checkPermission} method makes access decisions based on the
+ * context it encapsulates,
+ * rather than that of the current execution thread.
+ *
+ * <p>Thus, the purpose of AccessControlContext is for those situations where
+ * a security check that should be made within a given context
+ * actually needs to be done from within a
+ * <i>different</i> context (for example, from within a worker thread).
+ *
+ * <p> An AccessControlContext is created by calling the
+ * {@code AccessController.getContext} method.
+ * The {@code getContext} method takes a "snapshot"
+ * of the current calling context, and places
+ * it in an AccessControlContext object, which it returns. A sample call is
+ * the following:
+ *
+ * <pre>
+ *   AccessControlContext acc = AccessController.getContext()
+ * </pre>
+ *
+ * <p>
+ * Code within a different context can subsequently call the
+ * {@code checkPermission} method on the
+ * previously-saved AccessControlContext object. A sample call is the
+ * following:
+ *
+ * <pre>
+ *   acc.checkPermission(permission)
+ * </pre>
+ *
+ * @see AccessController
+ *
+ * @author Roland Schemers
+ */
+
+public final class AccessControlContext {
+
+    private ProtectionDomain context[];
+    // isPrivileged and isAuthorized are referenced by the VM - do not remove
+    // or change their names
+    private boolean isPrivileged;
+    private boolean isAuthorized = false;
+
+    // Note: This field is directly used by the virtual machine
+    // native codes. Don't touch it.
+    private AccessControlContext privilegedContext;
+
+    private DomainCombiner combiner = null;
+
+    // limited privilege scope
+    private Permission permissions[];
+    private AccessControlContext parent;
+    private boolean isWrapped;
+
+    // is constrained by limited privilege scope?
+    private boolean isLimited;
+    private ProtectionDomain limitedContext[];
+
+    private static boolean debugInit = false;
+    private static Debug debug = null;
+
+    static Debug getDebug()
+    {
+        if (debugInit)
+            return debug;
+        else {
+            if (Policy.isSet()) {
+                debug = Debug.getInstance("access");
+                debugInit = true;
+            }
+            return debug;
+        }
+    }
+
+    /**
+     * Create an AccessControlContext with the given array of ProtectionDomains.
+     * Context must not be null. Duplicate domains will be removed from the
+     * context.
+     *
+     * @param context the ProtectionDomains associated with this context.
+     * The non-duplicate domains are copied from the array. Subsequent
+     * changes to the array will not affect this AccessControlContext.
+     * @throws NullPointerException if {@code context} is {@code null}
+     */
+    public AccessControlContext(ProtectionDomain context[])
+    {
+        if (context.length == 0) {
+            this.context = null;
+        } else if (context.length == 1) {
+            if (context[0] != null) {
+                this.context = context.clone();
+            } else {
+                this.context = null;
+            }
+        } else {
+            List<ProtectionDomain> v = new ArrayList<>(context.length);
+            for (int i =0; i< context.length; i++) {
+                if ((context[i] != null) &&  (!v.contains(context[i])))
+                    v.add(context[i]);
+            }
+            if (!v.isEmpty()) {
+                this.context = new ProtectionDomain[v.size()];
+                this.context = v.toArray(this.context);
+            }
+        }
+    }
+
+    /**
+     * Create a new {@code AccessControlContext} with the given
+     * {@code AccessControlContext} and {@code DomainCombiner}.
+     * This constructor associates the provided
+     * {@code DomainCombiner} with the provided
+     * {@code AccessControlContext}.
+     *
+     * <p>
+     *
+     * @param acc the {@code AccessControlContext} associated
+     *          with the provided {@code DomainCombiner}.
+     *
+     * @param combiner the {@code DomainCombiner} to be associated
+     *          with the provided {@code AccessControlContext}.
+     *
+     * @exception NullPointerException if the provided
+     *          {@code context} is {@code null}.
+     *
+     * @exception SecurityException if a security manager is installed and the
+     *          caller does not have the "createAccessControlContext"
+     *          {@link SecurityPermission}
+     * @since 1.3
+     */
+    public AccessControlContext(AccessControlContext acc,
+                                DomainCombiner combiner) {
+
+        this(acc, combiner, false);
+    }
+
+    /**
+     * package private to allow calls from ProtectionDomain without performing
+     * the security check for {@linkplain SecurityConstants.CREATE_ACC_PERMISSION}
+     * permission
+     */
+    AccessControlContext(AccessControlContext acc,
+                        DomainCombiner combiner,
+                        boolean preauthorized) {
+        if (!preauthorized) {
+            SecurityManager sm = System.getSecurityManager();
+            if (sm != null) {
+                sm.checkPermission(SecurityConstants.CREATE_ACC_PERMISSION);
+                this.isAuthorized = true;
+            }
+        } else {
+            this.isAuthorized = true;
+        }
+
+        this.context = acc.context;
+
+        // we do not need to run the combine method on the
+        // provided ACC.  it was already "combined" when the
+        // context was originally retrieved.
+        //
+        // at this point in time, we simply throw away the old
+        // combiner and use the newly provided one.
+        this.combiner = combiner;
+    }
+
+    /**
+     * package private for AccessController
+     *
+     * This "argument wrapper" context will be passed as the actual context
+     * parameter on an internal doPrivileged() call used in the implementation.
+     */
+    AccessControlContext(ProtectionDomain caller, DomainCombiner combiner,
+        AccessControlContext parent, AccessControlContext context,
+        Permission[] perms)
+    {
+        /*
+         * Combine the domains from the doPrivileged() context into our
+         * wrapper context, if necessary.
+         */
+        ProtectionDomain[] callerPDs = null;
+        if (caller != null) {
+             callerPDs = new ProtectionDomain[] { caller };
+        }
+        if (context != null) {
+            if (combiner != null) {
+                this.context = combiner.combine(callerPDs, context.context);
+            } else {
+                this.context = combine(callerPDs, context.context);
+            }
+        } else {
+            /*
+             * Call combiner even if there is seemingly nothing to combine.
+             */
+            if (combiner != null) {
+                this.context = combiner.combine(callerPDs, null);
+            } else {
+                this.context = combine(callerPDs, null);
+            }
+        }
+        this.combiner = combiner;
+
+        Permission[] tmp = null;
+        if (perms != null) {
+            tmp = new Permission[perms.length];
+            for (int i=0; i < perms.length; i++) {
+                if (perms[i] == null) {
+                    throw new NullPointerException("permission can't be null");
+                }
+
+                /*
+                 * An AllPermission argument is equivalent to calling
+                 * doPrivileged() without any limit permissions.
+                 */
+                if (perms[i].getClass() == AllPermission.class) {
+                    parent = null;
+                }
+                tmp[i] = perms[i];
+            }
+        }
+
+        /*
+         * For a doPrivileged() with limited privilege scope, initialize
+         * the relevant fields.
+         *
+         * The limitedContext field contains the union of all domains which
+         * are enclosed by this limited privilege scope. In other words,
+         * it contains all of the domains which could potentially be checked
+         * if none of the limiting permissions implied a requested permission.
+         */
+        if (parent != null) {
+            this.limitedContext = combine(parent.context, parent.limitedContext);
+            this.isLimited = true;
+            this.isWrapped = true;
+            this.permissions = tmp;
+            this.parent = parent;
+            this.privilegedContext = context; // used in checkPermission2()
+        }
+        this.isAuthorized = true;
+    }
+
+
+    /**
+     * package private constructor for AccessController.getContext()
+     */
+
+    AccessControlContext(ProtectionDomain context[],
+                         boolean isPrivileged)
+    {
+        this.context = context;
+        this.isPrivileged = isPrivileged;
+        this.isAuthorized = true;
+    }
+
+    /**
+     * Constructor for JavaSecurityAccess.doIntersectionPrivilege()
+     */
+    AccessControlContext(ProtectionDomain[] context,
+                         AccessControlContext privilegedContext)
+    {
+        this.context = context;
+        this.privilegedContext = privilegedContext;
+        this.isPrivileged = true;
+    }
+
+    /**
+     * Returns this context's context.
+     */
+    ProtectionDomain[] getContext() {
+        return context;
+    }
+
+    /**
+     * Returns true if this context is privileged.
+     */
+    boolean isPrivileged()
+    {
+        return isPrivileged;
+    }
+
+    /**
+     * get the assigned combiner from the privileged or inherited context
+     */
+    DomainCombiner getAssignedCombiner() {
+        AccessControlContext acc;
+        if (isPrivileged) {
+            acc = privilegedContext;
+        } else {
+            acc = AccessController.getInheritedAccessControlContext();
+        }
+        if (acc != null) {
+            return acc.combiner;
+        }
+        return null;
+    }
+
+    /**
+     * Get the {@code DomainCombiner} associated with this
+     * {@code AccessControlContext}.
+     *
+     * <p>
+     *
+     * @return the {@code DomainCombiner} associated with this
+     *          {@code AccessControlContext}, or {@code null}
+     *          if there is none.
+     *
+     * @exception SecurityException if a security manager is installed and
+     *          the caller does not have the "getDomainCombiner"
+     *          {@link SecurityPermission}
+     * @since 1.3
+     */
+    public DomainCombiner getDomainCombiner() {
+
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(SecurityConstants.GET_COMBINER_PERMISSION);
+        }
+        return getCombiner();
+    }
+
+    /**
+     * package private for AccessController
+     */
+    DomainCombiner getCombiner() {
+        return combiner;
+    }
+
+    boolean isAuthorized() {
+        return isAuthorized;
+    }
+
+    /**
+     * Determines whether the access request indicated by the
+     * specified permission should be allowed or denied, based on
+     * the security policy currently in effect, and the context in
+     * this object. The request is allowed only if every ProtectionDomain
+     * in the context implies the permission. Otherwise the request is
+     * denied.
+     *
+     * <p>
+     * This method quietly returns if the access request
+     * is permitted, or throws a suitable AccessControlException otherwise.
+     *
+     * @param perm the requested permission.
+     *
+     * @exception AccessControlException if the specified permission
+     * is not permitted, based on the current security policy and the
+     * context encapsulated by this object.
+     * @exception NullPointerException if the permission to check for is null.
+     */
+    public void checkPermission(Permission perm)
+        throws AccessControlException
+    {
+        boolean dumpDebug = false;
+
+        if (perm == null) {
+            throw new NullPointerException("permission can't be null");
+        }
+        if (getDebug() != null) {
+            // If "codebase" is not specified, we dump the info by default.
+            dumpDebug = !Debug.isOn("codebase=");
+            if (!dumpDebug) {
+                // If "codebase" is specified, only dump if the specified code
+                // value is in the stack.
+                for (int i = 0; context != null && i < context.length; i++) {
+                    if (context[i].getCodeSource() != null &&
+                        context[i].getCodeSource().getLocation() != null &&
+                        Debug.isOn("codebase=" + context[i].getCodeSource().getLocation().toString())) {
+                        dumpDebug = true;
+                        break;
+                    }
+                }
+            }
+
+            dumpDebug &= !Debug.isOn("permission=") ||
+                Debug.isOn("permission=" + perm.getClass().getCanonicalName());
+
+            if (dumpDebug && Debug.isOn("stack")) {
+                Thread.dumpStack();
+            }
+
+            if (dumpDebug && Debug.isOn("domain")) {
+                if (context == null) {
+                    debug.println("domain (context is null)");
+                } else {
+                    for (int i=0; i< context.length; i++) {
+                        debug.println("domain "+i+" "+context[i]);
+                    }
+                }
+            }
+        }
+
+        /*
+         * iterate through the ProtectionDomains in the context.
+         * Stop at the first one that doesn't allow the
+         * requested permission (throwing an exception).
+         *
+         */
+
+        /* if ctxt is null, all we had on the stack were system domains,
+           or the first domain was a Privileged system domain. This
+           is to make the common case for system code very fast */
+
+        if (context == null) {
+            checkPermission2(perm);
+            return;
+        }
+
+        for (int i=0; i< context.length; i++) {
+            if (context[i] != null &&  !context[i].implies(perm)) {
+                if (dumpDebug) {
+                    debug.println("access denied " + perm);
+                }
+
+                if (Debug.isOn("failure") && debug != null) {
+                    // Want to make sure this is always displayed for failure,
+                    // but do not want to display again if already displayed
+                    // above.
+                    if (!dumpDebug) {
+                        debug.println("access denied " + perm);
+                    }
+                    Thread.dumpStack();
+                    final ProtectionDomain pd = context[i];
+                    final Debug db = debug;
+                    AccessController.doPrivileged (new PrivilegedAction<Void>() {
+                        public Void run() {
+                            db.println("domain that failed "+pd);
+                            return null;
+                        }
+                    });
+                }
+                throw new AccessControlException("access denied "+perm, perm);
+            }
+        }
+
+        // allow if all of them allowed access
+        if (dumpDebug) {
+            debug.println("access allowed "+perm);
+        }
+
+        checkPermission2(perm);
+    }
+
+    /*
+     * Check the domains associated with the limited privilege scope.
+     */
+    private void checkPermission2(Permission perm) {
+        if (!isLimited) {
+            return;
+        }
+
+        /*
+         * Check the doPrivileged() context parameter, if present.
+         */
+        if (privilegedContext != null) {
+            privilegedContext.checkPermission2(perm);
+        }
+
+        /*
+         * Ignore the limited permissions and parent fields of a wrapper
+         * context since they were already carried down into the unwrapped
+         * context.
+         */
+        if (isWrapped) {
+            return;
+        }
+
+        /*
+         * Try to match any limited privilege scope.
+         */
+        if (permissions != null) {
+            Class<?> permClass = perm.getClass();
+            for (int i=0; i < permissions.length; i++) {
+                Permission limit = permissions[i];
+                if (limit.getClass().equals(permClass) && limit.implies(perm)) {
+                    return;
+                }
+            }
+        }
+
+        /*
+         * Check the limited privilege scope up the call stack or the inherited
+         * parent thread call stack of this ACC.
+         */
+        if (parent != null) {
+            /*
+             * As an optimization, if the parent context is the inherited call
+             * stack context from a parent thread then checking the protection
+             * domains of the parent context is redundant since they have
+             * already been merged into the child thread's context by
+             * optimize(). When parent is set to an inherited context this
+             * context was not directly created by a limited scope
+             * doPrivileged() and it does not have its own limited permissions.
+             */
+            if (permissions == null) {
+                parent.checkPermission2(perm);
+            } else {
+                parent.checkPermission(perm);
+            }
+        }
+    }
+
+    /**
+     * Take the stack-based context (this) and combine it with the
+     * privileged or inherited context, if need be. Any limited
+     * privilege scope is flagged regardless of whether the assigned
+     * context comes from an immediately enclosing limited doPrivileged().
+     * The limited privilege scope can indirectly flow from the inherited
+     * parent thread or an assigned context previously captured by getContext().
+     */
+    AccessControlContext optimize() {
+        // the assigned (privileged or inherited) context
+        AccessControlContext acc;
+        DomainCombiner combiner = null;
+        AccessControlContext parent = null;
+        Permission[] permissions = null;
+
+        if (isPrivileged) {
+            acc = privilegedContext;
+            if (acc != null) {
+                /*
+                 * If the context is from a limited scope doPrivileged() then
+                 * copy the permissions and parent fields out of the wrapper
+                 * context that was created to hold them.
+                 */
+                if (acc.isWrapped) {
+                    permissions = acc.permissions;
+                    parent = acc.parent;
+                }
+            }
+        } else {
+            acc = AccessController.getInheritedAccessControlContext();
+            if (acc != null) {
+                /*
+                 * If the inherited context is constrained by a limited scope
+                 * doPrivileged() then set it as our parent so we will process
+                 * the non-domain-related state.
+                 */
+                if (acc.isLimited) {
+                    parent = acc;
+                }
+            }
+        }
+
+        // this.context could be null if only system code is on the stack;
+        // in that case, ignore the stack context
+        boolean skipStack = (context == null);
+
+        // acc.context could be null if only system code was involved;
+        // in that case, ignore the assigned context
+        boolean skipAssigned = (acc == null || acc.context == null);
+        ProtectionDomain[] assigned = (skipAssigned) ? null : acc.context;
+        ProtectionDomain[] pd;
+
+        // if there is no enclosing limited privilege scope on the stack or
+        // inherited from a parent thread
+        boolean skipLimited = ((acc == null || !acc.isWrapped) && parent == null);
+
+        if (acc != null && acc.combiner != null) {
+            // let the assigned acc's combiner do its thing
+            if (getDebug() != null) {
+                debug.println("AccessControlContext invoking the Combiner");
+            }
+
+            // No need to clone current and assigned.context
+            // combine() will not update them
+            combiner = acc.combiner;
+            pd = combiner.combine(context, assigned);
+        } else {
+            if (skipStack) {
+                if (skipAssigned) {
+                    calculateFields(acc, parent, permissions);
+                    return this;
+                } else if (skipLimited) {
+                    return acc;
+                }
+            } else if (assigned != null) {
+                if (skipLimited) {
+                    // optimization: if there is a single stack domain and
+                    // that domain is already in the assigned context; no
+                    // need to combine
+                    if (context.length == 1 && context[0] == assigned[0]) {
+                        return acc;
+                    }
+                }
+            }
+
+            pd = combine(context, assigned);
+            if (skipLimited && !skipAssigned && pd == assigned) {
+                return acc;
+            } else if (skipAssigned && pd == context) {
+                calculateFields(acc, parent, permissions);
+                return this;
+            }
+        }
+
+        // Reuse existing ACC
+        this.context = pd;
+        this.combiner = combiner;
+        this.isPrivileged = false;
+
+        calculateFields(acc, parent, permissions);
+        return this;
+    }
+
+
+    /*
+     * Combine the current (stack) and assigned domains.
+     */
+    private static ProtectionDomain[] combine(ProtectionDomain[]current,
+        ProtectionDomain[] assigned) {
+
+        // current could be null if only system code is on the stack;
+        // in that case, ignore the stack context
+        boolean skipStack = (current == null);
+
+        // assigned could be null if only system code was involved;
+        // in that case, ignore the assigned context
+        boolean skipAssigned = (assigned == null);
+
+        int slen = (skipStack) ? 0 : current.length;
+
+        // optimization: if there is no assigned context and the stack length
+        // is less then or equal to two; there is no reason to compress the
+        // stack context, it already is
+        if (skipAssigned && slen <= 2) {
+            return current;
+        }
+
+        int n = (skipAssigned) ? 0 : assigned.length;
+
+        // now we combine both of them, and create a new context
+        ProtectionDomain pd[] = new ProtectionDomain[slen + n];
+
+        // first copy in the assigned context domains, no need to compress
+        if (!skipAssigned) {
+            System.arraycopy(assigned, 0, pd, 0, n);
+        }
+
+        // now add the stack context domains, discarding nulls and duplicates
+    outer:
+        for (int i = 0; i < slen; i++) {
+            ProtectionDomain sd = current[i];
+            if (sd != null) {
+                for (int j = 0; j < n; j++) {
+                    if (sd == pd[j]) {
+                        continue outer;
+                    }
+                }
+                pd[n++] = sd;
+            }
+        }
+
+        // if length isn't equal, we need to shorten the array
+        if (n != pd.length) {
+            // optimization: if we didn't really combine anything
+            if (!skipAssigned && n == assigned.length) {
+                return assigned;
+            } else if (skipAssigned && n == slen) {
+                return current;
+            }
+            ProtectionDomain tmp[] = new ProtectionDomain[n];
+            System.arraycopy(pd, 0, tmp, 0, n);
+            pd = tmp;
+        }
+
+        return pd;
+    }
+
+
+    /*
+     * Calculate the additional domains that could potentially be reached via
+     * limited privilege scope. Mark the context as being subject to limited
+     * privilege scope unless the reachable domains (if any) are already
+     * contained in this domain context (in which case any limited
+     * privilege scope checking would be redundant).
+     */
+    private void calculateFields(AccessControlContext assigned,
+        AccessControlContext parent, Permission[] permissions)
+    {
+        ProtectionDomain[] parentLimit = null;
+        ProtectionDomain[] assignedLimit = null;
+        ProtectionDomain[] newLimit;
+
+        parentLimit = (parent != null)? parent.limitedContext: null;
+        assignedLimit = (assigned != null)? assigned.limitedContext: null;
+        newLimit = combine(parentLimit, assignedLimit);
+        if (newLimit != null) {
+            if (context == null || !containsAllPDs(newLimit, context)) {
+                this.limitedContext = newLimit;
+                this.permissions = permissions;
+                this.parent = parent;
+                this.isLimited = true;
+            }
+        }
+    }
+
+
+    /**
+     * Checks two AccessControlContext objects for equality.
+     * Checks that <i>obj</i> is
+     * an AccessControlContext and has the same set of ProtectionDomains
+     * as this context.
+     * <P>
+     * @param obj the object we are testing for equality with this object.
+     * @return true if <i>obj</i> is an AccessControlContext, and has the
+     * same set of ProtectionDomains as this context, false otherwise.
+     */
+    public boolean equals(Object obj) {
+        if (obj == this)
+            return true;
+
+        if (! (obj instanceof AccessControlContext))
+            return false;
+
+        AccessControlContext that = (AccessControlContext) obj;
+
+        if (!equalContext(that))
+            return false;
+
+        if (!equalLimitedContext(that))
+            return false;
+
+        return true;
+    }
+
+    /*
+     * Compare for equality based on state that is free of limited
+     * privilege complications.
+     */
+    private boolean equalContext(AccessControlContext that) {
+        if (!equalPDs(this.context, that.context))
+            return false;
+
+        if (this.combiner == null && that.combiner != null)
+            return false;
+
+        if (this.combiner != null && !this.combiner.equals(that.combiner))
+            return false;
+
+        return true;
+    }
+
+    private boolean equalPDs(ProtectionDomain[] a, ProtectionDomain[] b) {
+        if (a == null) {
+            return (b == null);
+        }
+
+        if (b == null)
+            return false;
+
+        if (!(containsAllPDs(a, b) && containsAllPDs(b, a)))
+            return false;
+
+        return true;
+    }
+
+    /*
+     * Compare for equality based on state that is captured during a
+     * call to AccessController.getContext() when a limited privilege
+     * scope is in effect.
+     */
+    private boolean equalLimitedContext(AccessControlContext that) {
+        if (that == null)
+            return false;
+
+        /*
+         * If neither instance has limited privilege scope then we're done.
+         */
+        if (!this.isLimited && !that.isLimited)
+            return true;
+
+        /*
+         * If only one instance has limited privilege scope then we're done.
+         */
+         if (!(this.isLimited && that.isLimited))
+             return false;
+
+        /*
+         * Wrapped instances should never escape outside the implementation
+         * this class and AccessController so this will probably never happen
+         * but it only makes any sense to compare if they both have the same
+         * isWrapped state.
+         */
+        if ((this.isWrapped && !that.isWrapped) ||
+            (!this.isWrapped && that.isWrapped)) {
+            return false;
+        }
+
+        if (this.permissions == null && that.permissions != null)
+            return false;
+
+        if (this.permissions != null && that.permissions == null)
+            return false;
+
+        if (!(this.containsAllLimits(that) && that.containsAllLimits(this)))
+            return false;
+
+        /*
+         * Skip through any wrapped contexts.
+         */
+        AccessControlContext thisNextPC = getNextPC(this);
+        AccessControlContext thatNextPC = getNextPC(that);
+
+        /*
+         * The protection domains and combiner of a privilegedContext are
+         * not relevant because they have already been included in the context
+         * of this instance by optimize() so we only care about any limited
+         * privilege state they may have.
+         */
+        if (thisNextPC == null && thatNextPC != null && thatNextPC.isLimited)
+            return false;
+
+        if (thisNextPC != null && !thisNextPC.equalLimitedContext(thatNextPC))
+            return false;
+
+        if (this.parent == null && that.parent != null)
+            return false;
+
+        if (this.parent != null && !this.parent.equals(that.parent))
+            return false;
+
+        return true;
+    }
+
+    /*
+     * Follow the privilegedContext link making our best effort to skip
+     * through any wrapper contexts.
+     */
+    private static AccessControlContext getNextPC(AccessControlContext acc) {
+        while (acc != null && acc.privilegedContext != null) {
+            acc = acc.privilegedContext;
+            if (!acc.isWrapped)
+                return acc;
+        }
+        return null;
+    }
+
+    private static boolean containsAllPDs(ProtectionDomain[] thisContext,
+        ProtectionDomain[] thatContext) {
+        boolean match = false;
+
+        //
+        // ProtectionDomains within an ACC currently cannot be null
+        // and this is enforced by the constructor and the various
+        // optimize methods. However, historically this logic made attempts
+        // to support the notion of a null PD and therefore this logic continues
+        // to support that notion.
+        ProtectionDomain thisPd;
+        for (int i = 0; i < thisContext.length; i++) {
+            match = false;
+            if ((thisPd = thisContext[i]) == null) {
+                for (int j = 0; (j < thatContext.length) && !match; j++) {
+                    match = (thatContext[j] == null);
+                }
+            } else {
+                Class<?> thisPdClass = thisPd.getClass();
+                ProtectionDomain thatPd;
+                for (int j = 0; (j < thatContext.length) && !match; j++) {
+                    thatPd = thatContext[j];
+
+                    // Class check required to avoid PD exposure (4285406)
+                    match = (thatPd != null &&
+                        thisPdClass == thatPd.getClass() && thisPd.equals(thatPd));
+                }
+            }
+            if (!match) return false;
+        }
+        return match;
+    }
+
+    private boolean containsAllLimits(AccessControlContext that) {
+        boolean match = false;
+        Permission thisPerm;
+
+        if (this.permissions == null && that.permissions == null)
+            return true;
+
+        for (int i = 0; i < this.permissions.length; i++) {
+            Permission limit = this.permissions[i];
+            Class <?> limitClass = limit.getClass();
+            match = false;
+            for (int j = 0; (j < that.permissions.length) && !match; j++) {
+                Permission perm = that.permissions[j];
+                match = (limitClass.equals(perm.getClass()) &&
+                    limit.equals(perm));
+            }
+            if (!match) return false;
+        }
+        return match;
+    }
+
+
+    /**
+     * Returns the hash code value for this context. The hash code
+     * is computed by exclusive or-ing the hash code of all the protection
+     * domains in the context together.
+     *
+     * @return a hash code value for this context.
+     */
+
+    public int hashCode() {
+        int hashCode = 0;
+
+        if (context == null)
+            return hashCode;
+
+        for (int i =0; i < context.length; i++) {
+            if (context[i] != null)
+                hashCode ^= context[i].hashCode();
+        }
+
+        return hashCode;
+    }
+}

@@ -1,2359 +1,2353 @@
-/*      */ package javax.swing.text.html.parser;
-/*      */ 
-/*      */ import java.io.CharArrayReader;
-/*      */ import java.io.IOException;
-/*      */ import java.io.InterruptedIOException;
-/*      */ import java.io.Reader;
-/*      */ import java.util.Vector;
-/*      */ import javax.swing.text.ChangedCharSetException;
-/*      */ import javax.swing.text.SimpleAttributeSet;
-/*      */ import javax.swing.text.html.HTML;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class Parser
-/*      */   implements DTDConstants
-/*      */ {
-/*   83 */   private char[] text = new char[1024];
-/*   84 */   private int textpos = 0;
-/*      */   
-/*      */   private TagElement last;
-/*      */   private boolean space;
-/*   88 */   private char[] str = new char[128];
-/*   89 */   private int strpos = 0;
-/*      */   
-/*   91 */   protected DTD dtd = null;
-/*      */   
-/*      */   private int ch;
-/*      */   
-/*      */   private int ln;
-/*      */   private Reader in;
-/*      */   private Element recent;
-/*      */   private TagStack stack;
-/*      */   private boolean skipTag = false;
-/*  100 */   private TagElement lastFormSent = null;
-/*  101 */   private SimpleAttributeSet attributes = new SimpleAttributeSet();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean seenHtml = false;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean seenHead = false;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean seenBody = false;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean ignoreSpace;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected boolean strict = false;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int crlfCount;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int crCount;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int lfCount;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int currentBlockStartPos;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int lastBlockStartPos;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  168 */   private static final char[] cp1252Map = new char[] { '‚', 'ƒ', '„', '…', '†', '‡', 'ˆ', '‰', 'Š', '‹', 'Œ', '', '', '', '', '‘', '’', '“', '”', '•', '–', '—', '˜', '™', 'š', '›', 'œ', '', '', 'Ÿ' };
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static final String START_COMMENT = "<!--";
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static final String END_COMMENT = "-->";
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected int getCurrentLine() {
-/*  210 */     return this.ln;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   int getBlockStartPosition() {
-/*  221 */     return Math.max(0, this.lastBlockStartPos - 1);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected TagElement makeTag(Element paramElement, boolean paramBoolean) {
-/*  228 */     return new TagElement(paramElement, paramBoolean);
-/*      */   }
-/*      */   
-/*      */   protected TagElement makeTag(Element paramElement) {
-/*  232 */     return makeTag(paramElement, false);
-/*      */   }
-/*      */   
-/*      */   protected SimpleAttributeSet getAttributes() {
-/*  236 */     return this.attributes;
-/*      */   }
-/*      */   
-/*      */   protected void flushAttributes() {
-/*  240 */     this.attributes.removeAttributes(this.attributes);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void handleText(char[] paramArrayOfchar) {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void handleTitle(char[] paramArrayOfchar) {
-/*  255 */     handleText(paramArrayOfchar);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void handleComment(char[] paramArrayOfchar) {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void handleEOFInComment() {
-/*  271 */     int i = strIndexOf('\n');
-/*  272 */     if (i >= 0) {
-/*  273 */       handleComment(getChars(0, i));
-/*      */       try {
-/*  275 */         this.in.close();
-/*  276 */         this.in = new CharArrayReader(getChars(i + 1));
-/*  277 */         this.ch = 62;
-/*  278 */       } catch (IOException iOException) {
-/*  279 */         error("ioexception");
-/*      */       } 
-/*      */       
-/*  282 */       resetStrBuffer();
-/*      */     } else {
-/*      */       
-/*  285 */       error("eof.comment");
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void handleEmptyTag(TagElement paramTagElement) throws ChangedCharSetException {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void handleStartTag(TagElement paramTagElement) {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void handleEndTag(TagElement paramTagElement) {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void handleError(int paramInt, String paramString) {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void handleText(TagElement paramTagElement) {
-/*  323 */     if (paramTagElement.breaksFlow()) {
-/*  324 */       this.space = false;
-/*  325 */       if (!this.strict) {
-/*  326 */         this.ignoreSpace = true;
-/*      */       }
-/*      */     } 
-/*  329 */     if (this.textpos == 0 && (
-/*  330 */       !this.space || this.stack == null || this.last.breaksFlow() || 
-/*  331 */       !this.stack.advance(this.dtd.pcdata))) {
-/*  332 */       this.last = paramTagElement;
-/*  333 */       this.space = false;
-/*  334 */       this.lastBlockStartPos = this.currentBlockStartPos;
-/*      */       
-/*      */       return;
-/*      */     } 
-/*  338 */     if (this.space) {
-/*  339 */       if (!this.ignoreSpace) {
-/*      */         
-/*  341 */         if (this.textpos + 1 > this.text.length) {
-/*  342 */           char[] arrayOfChar1 = new char[this.text.length + 200];
-/*  343 */           System.arraycopy(this.text, 0, arrayOfChar1, 0, this.text.length);
-/*  344 */           this.text = arrayOfChar1;
-/*      */         } 
-/*      */ 
-/*      */         
-/*  348 */         this.text[this.textpos++] = ' ';
-/*  349 */         if (!this.strict && !paramTagElement.getElement().isEmpty()) {
-/*  350 */           this.ignoreSpace = true;
-/*      */         }
-/*      */       } 
-/*  353 */       this.space = false;
-/*      */     } 
-/*  355 */     char[] arrayOfChar = new char[this.textpos];
-/*  356 */     System.arraycopy(this.text, 0, arrayOfChar, 0, this.textpos);
-/*      */ 
-/*      */     
-/*  359 */     if (paramTagElement.getElement().getName().equals("title")) {
-/*  360 */       handleTitle(arrayOfChar);
-/*      */     } else {
-/*  362 */       handleText(arrayOfChar);
-/*      */     } 
-/*  364 */     this.lastBlockStartPos = this.currentBlockStartPos;
-/*  365 */     this.textpos = 0;
-/*  366 */     this.last = paramTagElement;
-/*  367 */     this.space = false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void error(String paramString1, String paramString2, String paramString3, String paramString4) {
-/*  375 */     handleError(this.ln, paramString1 + " " + paramString2 + " " + paramString3 + " " + paramString4);
-/*      */   }
-/*      */   
-/*      */   protected void error(String paramString1, String paramString2, String paramString3) {
-/*  379 */     error(paramString1, paramString2, paramString3, "?");
-/*      */   }
-/*      */   protected void error(String paramString1, String paramString2) {
-/*  382 */     error(paramString1, paramString2, "?", "?");
-/*      */   }
-/*      */   protected void error(String paramString) {
-/*  385 */     error(paramString, "?", "?", "?");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void startTag(TagElement paramTagElement) throws ChangedCharSetException {
-/*  395 */     Element element = paramTagElement.getElement();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  402 */     if (!element.isEmpty() || (this.last != null && 
-/*  403 */       !this.last.breaksFlow()) || this.textpos != 0) {
-/*      */       
-/*  405 */       handleText(paramTagElement);
-/*      */     
-/*      */     }
-/*      */     else {
-/*      */ 
-/*      */       
-/*  411 */       this.last = paramTagElement;
-/*      */ 
-/*      */       
-/*  414 */       this.space = false;
-/*      */     } 
-/*  416 */     this.lastBlockStartPos = this.currentBlockStartPos;
-/*      */ 
-/*      */     
-/*  419 */     for (AttributeList attributeList = element.atts; attributeList != null; attributeList = attributeList.next) {
-/*  420 */       if (attributeList.modifier == 2 && (this.attributes
-/*  421 */         .isEmpty() || (
-/*  422 */         !this.attributes.isDefined(attributeList.name) && 
-/*  423 */         !this.attributes.isDefined(HTML.getAttributeKey(attributeList.name))))) {
-/*  424 */         error("req.att ", attributeList.getName(), element.getName());
-/*      */       }
-/*      */     } 
-/*      */     
-/*  428 */     if (element.isEmpty()) {
-/*  429 */       handleEmptyTag(paramTagElement);
-/*      */     
-/*      */     }
-/*      */     else {
-/*      */ 
-/*      */       
-/*  435 */       this.recent = element;
-/*  436 */       this.stack = new TagStack(paramTagElement, this.stack);
-/*  437 */       handleStartTag(paramTagElement);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void endTag(boolean paramBoolean) {
-/*  446 */     handleText(this.stack.tag);
-/*      */     
-/*  448 */     if (paramBoolean && !this.stack.elem.omitEnd()) {
-/*  449 */       error("end.missing", this.stack.elem.getName());
-/*  450 */     } else if (!this.stack.terminate()) {
-/*  451 */       error("end.unexpected", this.stack.elem.getName());
-/*      */     } 
-/*      */ 
-/*      */     
-/*  455 */     handleEndTag(this.stack.tag);
-/*  456 */     this.stack = this.stack.next;
-/*  457 */     this.recent = (this.stack != null) ? this.stack.elem : null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   boolean ignoreElement(Element paramElement) {
-/*  463 */     String str1 = this.stack.elem.getName();
-/*  464 */     String str2 = paramElement.getName();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  471 */     if ((str2.equals("html") && this.seenHtml) || (str2
-/*  472 */       .equals("head") && this.seenHead) || (str2
-/*  473 */       .equals("body") && this.seenBody)) {
-/*  474 */       return true;
-/*      */     }
-/*  476 */     if (str2.equals("dt") || str2.equals("dd")) {
-/*  477 */       TagStack tagStack = this.stack;
-/*  478 */       while (tagStack != null && !tagStack.elem.getName().equals("dl")) {
-/*  479 */         tagStack = tagStack.next;
-/*      */       }
-/*  481 */       if (tagStack == null) {
-/*  482 */         return true;
-/*      */       }
-/*      */     } 
-/*      */     
-/*  486 */     if ((str1.equals("table") && 
-/*  487 */       !str2.equals("#pcdata") && !str2.equals("input")) || (str2
-/*  488 */       .equals("font") && (str1
-/*  489 */       .equals("ul") || str1.equals("ol"))) || (str2
-/*  490 */       .equals("meta") && this.stack != null) || (str2
-/*  491 */       .equals("style") && this.seenBody) || (str1
-/*  492 */       .equals("table") && str2.equals("a"))) {
-/*  493 */       return true;
-/*      */     }
-/*  495 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void markFirstTime(Element paramElement) {
-/*  504 */     String str = paramElement.getName();
-/*  505 */     if (str.equals("html")) {
-/*  506 */       this.seenHtml = true;
-/*  507 */     } else if (str.equals("head")) {
-/*  508 */       this.seenHead = true;
-/*  509 */     } else if (str.equals("body")) {
-/*  510 */       if (this.buf.length == 1) {
-/*      */         
-/*  512 */         char[] arrayOfChar = new char[256];
-/*      */         
-/*  514 */         arrayOfChar[0] = this.buf[0];
-/*  515 */         this.buf = arrayOfChar;
-/*      */       } 
-/*  517 */       this.seenBody = true;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   boolean legalElementContext(Element paramElement) throws ChangedCharSetException {
-/*  529 */     if (this.stack == null) {
-/*      */       
-/*  531 */       if (paramElement != this.dtd.html) {
-/*      */         
-/*  533 */         startTag(makeTag(this.dtd.html, true));
-/*  534 */         return legalElementContext(paramElement);
-/*      */       } 
-/*  536 */       return true;
-/*      */     } 
-/*      */ 
-/*      */     
-/*  540 */     if (this.stack.advance(paramElement)) {
-/*      */       
-/*  542 */       markFirstTime(paramElement);
-/*  543 */       return true;
-/*      */     } 
-/*  545 */     boolean bool = false;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  572 */     String str1 = this.stack.elem.getName();
-/*  573 */     String str2 = paramElement.getName();
-/*      */ 
-/*      */     
-/*  576 */     if (!this.strict && ((str1
-/*  577 */       .equals("table") && str2.equals("td")) || (str1
-/*  578 */       .equals("table") && str2.equals("th")) || (str1
-/*  579 */       .equals("tr") && !str2.equals("tr")))) {
-/*  580 */       bool = true;
-/*      */     }
-/*      */ 
-/*      */     
-/*  584 */     if (!this.strict && !bool && (this.stack.elem.getName() != paramElement.getName() || paramElement
-/*  585 */       .getName().equals("body")) && (
-/*  586 */       this.skipTag = ignoreElement(paramElement))) {
-/*  587 */       error("tag.ignore", paramElement.getName());
-/*  588 */       return this.skipTag;
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  595 */     if (!this.strict && str1.equals("table") && 
-/*  596 */       !str2.equals("tr") && !str2.equals("td") && 
-/*  597 */       !str2.equals("th") && !str2.equals("caption")) {
-/*  598 */       Element element1 = this.dtd.getElement("tr");
-/*  599 */       TagElement tagElement = makeTag(element1, true);
-/*  600 */       legalTagContext(tagElement);
-/*  601 */       startTag(tagElement);
-/*  602 */       error("start.missing", paramElement.getName());
-/*  603 */       return legalElementContext(paramElement);
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  614 */     if (!bool && this.stack.terminate() && (!this.strict || this.stack.elem.omitEnd())) {
-/*  615 */       for (TagStack tagStack = this.stack.next; tagStack != null; tagStack = tagStack.next) {
-/*  616 */         if (tagStack.advance(paramElement)) {
-/*  617 */           while (this.stack != tagStack) {
-/*  618 */             endTag(true);
-/*      */           }
-/*  620 */           return true;
-/*      */         } 
-/*  622 */         if (!tagStack.terminate() || (this.strict && !tagStack.elem.omitEnd())) {
-/*      */           break;
-/*      */         }
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  632 */     Element element = this.stack.first();
-/*  633 */     if (element != null && (!this.strict || element.omitStart()) && (element != this.dtd.head || paramElement != this.dtd.pcdata)) {
-/*      */ 
-/*      */       
-/*  636 */       TagElement tagElement = makeTag(element, true);
-/*  637 */       legalTagContext(tagElement);
-/*  638 */       startTag(tagElement);
-/*  639 */       if (!element.omitStart()) {
-/*  640 */         error("start.missing", paramElement.getName());
-/*      */       }
-/*  642 */       return legalElementContext(paramElement);
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  650 */     if (!this.strict) {
-/*  651 */       ContentModel contentModel = this.stack.contentModel();
-/*  652 */       Vector<Element> vector = new Vector();
-/*  653 */       if (contentModel != null) {
-/*  654 */         contentModel.getElements(vector);
-/*  655 */         for (Element element1 : vector) {
-/*      */ 
-/*      */ 
-/*      */           
-/*  659 */           if (this.stack.excluded(element1.getIndex())) {
-/*      */             continue;
-/*      */           }
-/*      */           
-/*  663 */           boolean bool1 = false;
-/*      */           
-/*  665 */           for (AttributeList attributeList = element1.getAttributes(); attributeList != null; attributeList = attributeList.next) {
-/*  666 */             if (attributeList.modifier == 2) {
-/*  667 */               bool1 = true;
-/*      */ 
-/*      */               
-/*      */               break;
-/*      */             } 
-/*      */           } 
-/*      */           
-/*  674 */           if (bool1) {
-/*      */             continue;
-/*      */           }
-/*      */           
-/*  678 */           ContentModel contentModel1 = element1.getContent();
-/*  679 */           if (contentModel1 != null && contentModel1.first(paramElement)) {
-/*      */             
-/*  681 */             TagElement tagElement = makeTag(element1, true);
-/*  682 */             legalTagContext(tagElement);
-/*  683 */             startTag(tagElement);
-/*  684 */             error("start.missing", element1.getName());
-/*  685 */             return legalElementContext(paramElement);
-/*      */           } 
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  695 */     if (this.stack.terminate() && this.stack.elem != this.dtd.body && (!this.strict || this.stack.elem.omitEnd())) {
-/*      */       
-/*  697 */       if (!this.stack.elem.omitEnd()) {
-/*  698 */         error("end.missing", paramElement.getName());
-/*      */       }
-/*      */       
-/*  701 */       endTag(true);
-/*  702 */       return legalElementContext(paramElement);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  706 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void legalTagContext(TagElement paramTagElement) throws ChangedCharSetException {
-/*  713 */     if (legalElementContext(paramTagElement.getElement())) {
-/*  714 */       markFirstTime(paramTagElement.getElement());
-/*      */       
-/*      */       return;
-/*      */     } 
-/*      */     
-/*  719 */     if (paramTagElement.breaksFlow() && this.stack != null && !this.stack.tag.breaksFlow()) {
-/*  720 */       endTag(true);
-/*  721 */       legalTagContext(paramTagElement);
-/*      */       
-/*      */       return;
-/*      */     } 
-/*      */     
-/*  726 */     for (TagStack tagStack = this.stack; tagStack != null; tagStack = tagStack.next) {
-/*  727 */       if (tagStack.tag.getElement() == this.dtd.head) {
-/*  728 */         while (this.stack != tagStack) {
-/*  729 */           endTag(true);
-/*      */         }
-/*  731 */         endTag(true);
-/*  732 */         legalTagContext(paramTagElement);
-/*      */         
-/*      */         return;
-/*      */       } 
-/*      */     } 
-/*      */     
-/*  738 */     error("tag.unexpected", paramTagElement.getElement().getName());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void errorContext() throws ChangedCharSetException {
-/*  746 */     for (; this.stack != null && this.stack.tag.getElement() != this.dtd.body; this.stack = this.stack.next) {
-/*  747 */       handleEndTag(this.stack.tag);
-/*      */     }
-/*  749 */     if (this.stack == null) {
-/*  750 */       legalElementContext(this.dtd.body);
-/*  751 */       startTag(makeTag(this.dtd.body, true));
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void addString(int paramInt) {
-/*  759 */     if (this.strpos == this.str.length) {
-/*  760 */       char[] arrayOfChar = new char[this.str.length + 128];
-/*  761 */       System.arraycopy(this.str, 0, arrayOfChar, 0, this.str.length);
-/*  762 */       this.str = arrayOfChar;
-/*      */     } 
-/*  764 */     this.str[this.strpos++] = (char)paramInt;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   String getString(int paramInt) {
-/*  771 */     char[] arrayOfChar = new char[this.strpos - paramInt];
-/*  772 */     System.arraycopy(this.str, paramInt, arrayOfChar, 0, this.strpos - paramInt);
-/*  773 */     this.strpos = paramInt;
-/*  774 */     return new String(arrayOfChar);
-/*      */   }
-/*      */   
-/*      */   char[] getChars(int paramInt) {
-/*  778 */     char[] arrayOfChar = new char[this.strpos - paramInt];
-/*  779 */     System.arraycopy(this.str, paramInt, arrayOfChar, 0, this.strpos - paramInt);
-/*  780 */     this.strpos = paramInt;
-/*  781 */     return arrayOfChar;
-/*      */   }
-/*      */   
-/*      */   char[] getChars(int paramInt1, int paramInt2) {
-/*  785 */     char[] arrayOfChar = new char[paramInt2 - paramInt1];
-/*  786 */     System.arraycopy(this.str, paramInt1, arrayOfChar, 0, paramInt2 - paramInt1);
-/*      */ 
-/*      */     
-/*  789 */     return arrayOfChar;
-/*      */   }
-/*      */   
-/*      */   void resetStrBuffer() {
-/*  793 */     this.strpos = 0;
-/*      */   }
-/*      */   
-/*      */   int strIndexOf(char paramChar) {
-/*  797 */     for (byte b = 0; b < this.strpos; b++) {
-/*  798 */       if (this.str[b] == paramChar) {
-/*  799 */         return b;
-/*      */       }
-/*      */     } 
-/*      */     
-/*  803 */     return -1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void skipSpace() throws IOException {
-/*      */     while (true) {
-/*  812 */       switch (this.ch) {
-/*      */         case 10:
-/*  814 */           this.ln++;
-/*  815 */           this.ch = readCh();
-/*  816 */           this.lfCount++;
-/*      */           continue;
-/*      */         
-/*      */         case 13:
-/*  820 */           this.ln++;
-/*  821 */           if ((this.ch = readCh()) == 10) {
-/*  822 */             this.ch = readCh();
-/*  823 */             this.crlfCount++;
-/*      */             continue;
-/*      */           } 
-/*  826 */           this.crCount++;
-/*      */           continue;
-/*      */         
-/*      */         case 9:
-/*      */         case 32:
-/*  831 */           this.ch = readCh();
-/*      */           continue;
-/*      */       } 
-/*      */       break;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   boolean parseIdentifier(boolean paramBoolean) throws IOException {
-/*  846 */     switch (this.ch) { case 65: case 66: case 67: case 68: case 69: case 70: case 71: case 72: case 73: case 74: case 75: case 76: case 77: case 78: case 79: case 80: case 81: case 82: case 83: case 84: case 85:
-/*      */       case 86:
-/*      */       case 87:
-/*      */       case 88:
-/*      */       case 89:
-/*      */       case 90:
-/*  852 */         if (paramBoolean)
-/*  853 */           this.ch = 97 + this.ch - 65;  break;
-/*      */       case 97: case 98: case 99: case 100: case 101: case 102: case 103: case 104: case 105: case 106: case 107: case 108: case 109: case 110: case 111: case 112: case 113: case 114: case 115:
-/*      */       case 116:
-/*      */       case 117:
-/*      */       case 118:
-/*      */       case 119:
-/*      */       case 120:
-/*      */       case 121:
-/*      */       case 122:
-/*      */         break;
-/*      */       default:
-/*  864 */         return false; }
-/*      */ 
-/*      */     
-/*      */     while (true)
-/*  868 */     { addString(this.ch);
-/*      */       
-/*  870 */       switch (this.ch = readCh()) { case 65: case 66: case 67: case 68: case 69: case 70: case 71: case 72: case 73: case 74: case 75: case 76: case 77: case 78: case 79: case 80: case 81: case 82: case 83: case 84: case 85:
-/*      */         case 86:
-/*      */         case 87:
-/*      */         case 88:
-/*      */         case 89:
-/*      */         case 90:
-/*  876 */           if (paramBoolean)
-/*  877 */             this.ch = 97 + this.ch - 65;  continue;
-/*      */         case 45: case 46: case 48: case 49: case 50: case 51: case 52: case 53: case 54: case 55: case 56: case 57: case 95: case 97: case 98: case 99: case 100: case 101: case 102: case 103: case 104: case 105: case 106:
-/*      */         case 107:
-/*      */         case 108:
-/*      */         case 109:
-/*      */         case 110:
-/*      */         case 111:
-/*      */         case 112:
-/*      */         case 113:
-/*      */         case 114:
-/*      */         case 115:
-/*      */         case 116:
-/*      */         case 117:
-/*      */         case 118:
-/*      */         case 119:
-/*      */         case 120:
-/*      */         case 121:
-/*      */         case 122:
-/*  895 */           continue; }  break; }  return true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private char[] parseEntityReference() throws IOException {
-/*  904 */     int i = this.strpos;
-/*      */     
-/*  906 */     if ((this.ch = readCh()) == 35) {
-/*  907 */       int j = 0;
-/*  908 */       this.ch = readCh();
-/*  909 */       if ((this.ch >= 48 && this.ch <= 57) || this.ch == 120 || this.ch == 88) {
-/*      */ 
-/*      */         
-/*  912 */         if (this.ch >= 48 && this.ch <= 57) {
-/*      */           
-/*  914 */           while (this.ch >= 48 && this.ch <= 57) {
-/*  915 */             j = j * 10 + this.ch - 48;
-/*  916 */             this.ch = readCh();
-/*      */           } 
-/*      */         } else {
-/*      */           
-/*  920 */           this.ch = readCh();
-/*  921 */           char c = (char)Character.toLowerCase(this.ch);
-/*  922 */           while ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f')) {
-/*      */             
-/*  924 */             if (c >= '0' && c <= '9') {
-/*  925 */               j = j * 16 + c - 48;
-/*      */             } else {
-/*  927 */               j = j * 16 + c - 97 + 10;
-/*      */             } 
-/*  929 */             this.ch = readCh();
-/*  930 */             c = (char)Character.toLowerCase(this.ch);
-/*      */           } 
-/*      */         } 
-/*  933 */         switch (this.ch) {
-/*      */           case 10:
-/*  935 */             this.ln++;
-/*  936 */             this.ch = readCh();
-/*  937 */             this.lfCount++;
-/*      */             break;
-/*      */           
-/*      */           case 13:
-/*  941 */             this.ln++;
-/*  942 */             if ((this.ch = readCh()) == 10) {
-/*  943 */               this.ch = readCh();
-/*  944 */               this.crlfCount++;
-/*      */               break;
-/*      */             } 
-/*  947 */             this.crCount++;
-/*      */             break;
-/*      */ 
-/*      */           
-/*      */           case 59:
-/*  952 */             this.ch = readCh();
-/*      */             break;
-/*      */         } 
-/*  955 */         return mapNumericReference(j);
-/*      */       } 
-/*      */       
-/*  958 */       addString(35);
-/*  959 */       if (!parseIdentifier(false)) {
-/*  960 */         error("ident.expected");
-/*  961 */         this.strpos = i;
-/*  962 */         return new char[] { '&', '#' };
-/*      */       }
-/*      */     
-/*  965 */     } else if (!parseIdentifier(false)) {
-/*  966 */       return new char[] { '&' };
-/*      */     } 
-/*      */ 
-/*      */     
-/*  970 */     boolean bool = false;
-/*      */     
-/*  972 */     switch (this.ch) {
-/*      */       case 10:
-/*  974 */         this.ln++;
-/*  975 */         this.ch = readCh();
-/*  976 */         this.lfCount++;
-/*      */         break;
-/*      */       
-/*      */       case 13:
-/*  980 */         this.ln++;
-/*  981 */         if ((this.ch = readCh()) == 10) {
-/*  982 */           this.ch = readCh();
-/*  983 */           this.crlfCount++;
-/*      */           break;
-/*      */         } 
-/*  986 */         this.crCount++;
-/*      */         break;
-/*      */ 
-/*      */       
-/*      */       case 59:
-/*  991 */         bool = true;
-/*      */         
-/*  993 */         this.ch = readCh();
-/*      */         break;
-/*      */     } 
-/*      */     
-/*  997 */     String str = getString(i);
-/*  998 */     Entity entity = this.dtd.getEntity(str);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1004 */     if (!this.strict && entity == null) {
-/* 1005 */       entity = this.dtd.getEntity(str.toLowerCase());
-/*      */     }
-/* 1007 */     if (entity == null || !entity.isGeneral()) {
-/*      */       
-/* 1009 */       if (str.length() == 0) {
-/* 1010 */         error("invalid.entref", str);
-/* 1011 */         return new char[0];
-/*      */       } 
-/*      */       
-/* 1014 */       String str1 = "&" + str + (bool ? ";" : "");
-/*      */       
-/* 1016 */       char[] arrayOfChar = new char[str1.length()];
-/* 1017 */       str1.getChars(0, arrayOfChar.length, arrayOfChar, 0);
-/* 1018 */       return arrayOfChar;
-/*      */     } 
-/* 1020 */     return entity.getData();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private char[] mapNumericReference(int paramInt) {
-/*      */     char[] arrayOfChar;
-/* 1037 */     if (paramInt >= 65535) {
-/*      */       try {
-/* 1039 */         arrayOfChar = Character.toChars(paramInt);
-/* 1040 */       } catch (IllegalArgumentException illegalArgumentException) {
-/* 1041 */         arrayOfChar = new char[0];
-/*      */       } 
-/*      */     } else {
-/* 1044 */       arrayOfChar = new char[1];
-/* 1045 */       arrayOfChar[0] = (paramInt < 130 || paramInt > 159) ? (char)paramInt : cp1252Map[paramInt - 130];
-/*      */     } 
-/* 1047 */     return arrayOfChar;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void parseComment() throws IOException {
-/*      */     while (true) {
-/* 1056 */       int i = this.ch;
-/* 1057 */       switch (i) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*      */         case 45:
-/* 1069 */           if (!this.strict && this.strpos != 0 && this.str[this.strpos - 1] == '-') {
-/* 1070 */             if ((this.ch = readCh()) == 62) {
-/*      */               return;
-/*      */             }
-/* 1073 */             if (this.ch == 33) {
-/* 1074 */               if ((this.ch = readCh()) == 62) {
-/*      */                 return;
-/*      */               }
-/*      */               
-/* 1078 */               addString(45);
-/* 1079 */               addString(33);
-/*      */               
-/*      */               continue;
-/*      */             } 
-/*      */             
-/*      */             break;
-/*      */           } 
-/* 1086 */           if ((this.ch = readCh()) == 45) {
-/* 1087 */             this.ch = readCh();
-/* 1088 */             if (this.strict || this.ch == 62) {
-/*      */               return;
-/*      */             }
-/* 1091 */             if (this.ch == 33) {
-/* 1092 */               if ((this.ch = readCh()) == 62) {
-/*      */                 return;
-/*      */               }
-/*      */               
-/* 1096 */               addString(45);
-/* 1097 */               addString(33);
-/*      */               
-/*      */               continue;
-/*      */             } 
-/*      */             
-/* 1102 */             addString(45);
-/*      */           } 
-/*      */           break;
-/*      */         
-/*      */         case -1:
-/* 1107 */           handleEOFInComment();
-/*      */           return;
-/*      */         
-/*      */         case 10:
-/* 1111 */           this.ln++;
-/* 1112 */           this.ch = readCh();
-/* 1113 */           this.lfCount++;
-/*      */           break;
-/*      */         
-/*      */         case 62:
-/* 1117 */           this.ch = readCh();
-/*      */           break;
-/*      */         
-/*      */         case 13:
-/* 1121 */           this.ln++;
-/* 1122 */           if ((this.ch = readCh()) == 10) {
-/* 1123 */             this.ch = readCh();
-/* 1124 */             this.crlfCount++;
-/*      */           } else {
-/*      */             
-/* 1127 */             this.crCount++;
-/*      */           } 
-/* 1129 */           i = 10;
-/*      */           break;
-/*      */         default:
-/* 1132 */           this.ch = readCh();
-/*      */           break;
-/*      */       } 
-/*      */       
-/* 1136 */       addString(i);
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   void parseLiteral(boolean paramBoolean) throws IOException {
-/*      */     while (true) {
-/*      */       int j;
-/*      */       byte b;
-/*      */       char[] arrayOfChar;
-/* 1145 */       int i = this.ch;
-/* 1146 */       switch (i) {
-/*      */         case -1:
-/* 1148 */           error("eof.literal", this.stack.elem.getName());
-/* 1149 */           endTag(true);
-/*      */           return;
-/*      */         
-/*      */         case 62:
-/* 1153 */           this.ch = readCh();
-/* 1154 */           j = this.textpos - this.stack.elem.name.length() + 2; b = 0;
-/*      */ 
-/*      */           
-/* 1157 */           if (j >= 0 && this.text[j++] == '<' && this.text[j] == '/') {
-/* 1158 */             while (++j < this.textpos && 
-/* 1159 */               Character.toLowerCase(this.text[j]) == this.stack.elem.name.charAt(b++));
-/* 1160 */             if (j == this.textpos) {
-/* 1161 */               this.textpos -= this.stack.elem.name.length() + 2;
-/* 1162 */               if (this.textpos > 0 && this.text[this.textpos - 1] == '\n') {
-/* 1163 */                 this.textpos--;
-/*      */               }
-/* 1165 */               endTag(false);
-/*      */               return;
-/*      */             } 
-/*      */           } 
-/*      */           break;
-/*      */         
-/*      */         case 38:
-/* 1172 */           arrayOfChar = parseEntityReference();
-/* 1173 */           if (this.textpos + arrayOfChar.length > this.text.length) {
-/* 1174 */             char[] arrayOfChar1 = new char[Math.max(this.textpos + arrayOfChar.length + 128, this.text.length * 2)];
-/* 1175 */             System.arraycopy(this.text, 0, arrayOfChar1, 0, this.text.length);
-/* 1176 */             this.text = arrayOfChar1;
-/*      */           } 
-/* 1178 */           System.arraycopy(arrayOfChar, 0, this.text, this.textpos, arrayOfChar.length);
-/* 1179 */           this.textpos += arrayOfChar.length;
-/*      */           continue;
-/*      */         
-/*      */         case 10:
-/* 1183 */           this.ln++;
-/* 1184 */           this.ch = readCh();
-/* 1185 */           this.lfCount++;
-/*      */           break;
-/*      */         
-/*      */         case 13:
-/* 1189 */           this.ln++;
-/* 1190 */           if ((this.ch = readCh()) == 10) {
-/* 1191 */             this.ch = readCh();
-/* 1192 */             this.crlfCount++;
-/*      */           } else {
-/*      */             
-/* 1195 */             this.crCount++;
-/*      */           } 
-/* 1197 */           i = 10;
-/*      */           break;
-/*      */         default:
-/* 1200 */           this.ch = readCh();
-/*      */           break;
-/*      */       } 
-/*      */ 
-/*      */       
-/* 1205 */       if (this.textpos == this.text.length) {
-/* 1206 */         char[] arrayOfChar1 = new char[this.text.length + 128];
-/* 1207 */         System.arraycopy(this.text, 0, arrayOfChar1, 0, this.text.length);
-/* 1208 */         this.text = arrayOfChar1;
-/*      */       } 
-/* 1210 */       this.text[this.textpos++] = (char)i;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   String parseAttributeValue(boolean paramBoolean) throws IOException {
-/* 1218 */     int i = -1;
-/*      */ 
-/*      */     
-/* 1221 */     switch (this.ch) {
-/*      */       case 34:
-/*      */       case 39:
-/* 1224 */         i = this.ch;
-/* 1225 */         this.ch = readCh();
-/*      */         break;
-/*      */     } 
-/*      */     while (true) {
-/*      */       char[] arrayOfChar;
-/*      */       byte b;
-/* 1231 */       int j = this.ch;
-/*      */       
-/* 1233 */       switch (j) {
-/*      */         case 10:
-/* 1235 */           this.ln++;
-/* 1236 */           this.ch = readCh();
-/* 1237 */           this.lfCount++;
-/* 1238 */           if (i < 0) {
-/* 1239 */             return getString(0);
-/*      */           }
-/*      */           break;
-/*      */         
-/*      */         case 13:
-/* 1244 */           this.ln++;
-/*      */           
-/* 1246 */           if ((this.ch = readCh()) == 10) {
-/* 1247 */             this.ch = readCh();
-/* 1248 */             this.crlfCount++;
-/*      */           } else {
-/*      */             
-/* 1251 */             this.crCount++;
-/*      */           } 
-/* 1253 */           if (i < 0) {
-/* 1254 */             return getString(0);
-/*      */           }
-/*      */           break;
-/*      */         
-/*      */         case 9:
-/* 1259 */           if (i < 0)
-/* 1260 */             j = 32; 
-/*      */         case 32:
-/* 1262 */           this.ch = readCh();
-/* 1263 */           if (i < 0) {
-/* 1264 */             return getString(0);
-/*      */           }
-/*      */           break;
-/*      */         
-/*      */         case 60:
-/*      */         case 62:
-/* 1270 */           if (i < 0) {
-/* 1271 */             return getString(0);
-/*      */           }
-/* 1273 */           this.ch = readCh();
-/*      */           break;
-/*      */         
-/*      */         case 34:
-/*      */         case 39:
-/* 1278 */           this.ch = readCh();
-/* 1279 */           if (j == i)
-/* 1280 */             return getString(0); 
-/* 1281 */           if (i == -1) {
-/* 1282 */             error("attvalerr");
-/* 1283 */             if (this.strict || this.ch == 32) {
-/* 1284 */               return getString(0);
-/*      */             }
-/*      */             continue;
-/*      */           } 
-/*      */           break;
-/*      */ 
-/*      */         
-/*      */         case 61:
-/* 1292 */           if (i < 0) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/* 1297 */             error("attvalerr");
-/*      */ 
-/*      */ 
-/*      */             
-/* 1301 */             if (this.strict) {
-/* 1302 */               return getString(0);
-/*      */             }
-/*      */           } 
-/* 1305 */           this.ch = readCh();
-/*      */           break;
-/*      */         
-/*      */         case 38:
-/* 1309 */           if (this.strict && i < 0) {
-/* 1310 */             this.ch = readCh();
-/*      */             
-/*      */             break;
-/*      */           } 
-/* 1314 */           arrayOfChar = parseEntityReference();
-/* 1315 */           for (b = 0; b < arrayOfChar.length; b++) {
-/* 1316 */             j = arrayOfChar[b];
-/* 1317 */             addString((paramBoolean && j >= 65 && j <= 90) ? (97 + j - 65) : j);
-/*      */           } 
-/*      */           continue;
-/*      */         
-/*      */         case -1:
-/* 1322 */           return getString(0);
-/*      */         
-/*      */         default:
-/* 1325 */           if (paramBoolean && j >= 65 && j <= 90) {
-/* 1326 */             j = 97 + j - 65;
-/*      */           }
-/* 1328 */           this.ch = readCh();
-/*      */           break;
-/*      */       } 
-/* 1331 */       addString(j);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void parseAttributeSpecificationList(Element paramElement) throws IOException {
-/*      */     while (true) {
-/*      */       AttributeList attributeList;
-/*      */       String str1, str2;
-/* 1342 */       skipSpace();
-/*      */       
-/* 1344 */       switch (this.ch) {
-/*      */         case -1:
-/*      */         case 47:
-/*      */         case 60:
-/*      */         case 62:
-/*      */           return;
-/*      */         
-/*      */         case 45:
-/* 1352 */           if ((this.ch = readCh()) == 45) {
-/* 1353 */             this.ch = readCh();
-/* 1354 */             parseComment();
-/* 1355 */             this.strpos = 0; continue;
-/*      */           } 
-/* 1357 */           error("invalid.tagchar", "-", paramElement.getName());
-/* 1358 */           this.ch = readCh();
-/*      */           continue;
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1367 */       if (parseIdentifier(true))
-/* 1368 */       { str1 = getString(0);
-/* 1369 */         skipSpace();
-/* 1370 */         if (this.ch == 61) {
-/* 1371 */           this.ch = readCh();
-/* 1372 */           skipSpace();
-/* 1373 */           attributeList = paramElement.getAttribute(str1);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/* 1378 */           str2 = parseAttributeValue((attributeList != null && attributeList.type != 1 && attributeList.type != 11 && attributeList.type != 7));
-/*      */         } else {
-/*      */           
-/* 1381 */           str2 = str1;
-/* 1382 */           attributeList = paramElement.getAttributeByValue(str2);
-/* 1383 */           if (attributeList == null) {
-/* 1384 */             attributeList = paramElement.getAttribute(str1);
-/* 1385 */             if (attributeList != null) {
-/* 1386 */               str2 = attributeList.getValue();
-/*      */             
-/*      */             }
-/*      */             else {
-/*      */               
-/* 1391 */               str2 = null;
-/*      */             } 
-/*      */           } 
-/*      */         }  }
-/* 1395 */       else { if (!this.strict && this.ch == 44) {
-/* 1396 */           this.ch = readCh(); continue;
-/*      */         } 
-/* 1398 */         if (!this.strict && this.ch == 34) {
-/* 1399 */           this.ch = readCh();
-/* 1400 */           skipSpace();
-/* 1401 */           if (parseIdentifier(true)) {
-/* 1402 */             str1 = getString(0);
-/* 1403 */             if (this.ch == 34) {
-/* 1404 */               this.ch = readCh();
-/*      */             }
-/* 1406 */             skipSpace();
-/* 1407 */             if (this.ch == 61) {
-/* 1408 */               this.ch = readCh();
-/* 1409 */               skipSpace();
-/* 1410 */               attributeList = paramElement.getAttribute(str1);
-/* 1411 */               str2 = parseAttributeValue((attributeList != null && attributeList.type != 1 && attributeList.type != 11));
-/*      */             }
-/*      */             else {
-/*      */               
-/* 1415 */               str2 = str1;
-/* 1416 */               attributeList = paramElement.getAttributeByValue(str2);
-/* 1417 */               if (attributeList == null) {
-/* 1418 */                 attributeList = paramElement.getAttribute(str1);
-/* 1419 */                 if (attributeList != null) {
-/* 1420 */                   str2 = attributeList.getValue();
-/*      */                 }
-/*      */               } 
-/*      */             } 
-/*      */           } else {
-/* 1425 */             char[] arrayOfChar = { (char)this.ch };
-/* 1426 */             error("invalid.tagchar", new String(arrayOfChar), paramElement.getName());
-/* 1427 */             this.ch = readCh();
-/*      */             continue;
-/*      */           } 
-/* 1430 */         } else if (!this.strict && this.attributes.isEmpty() && this.ch == 61) {
-/* 1431 */           this.ch = readCh();
-/* 1432 */           skipSpace();
-/* 1433 */           str1 = paramElement.getName();
-/* 1434 */           attributeList = paramElement.getAttribute(str1);
-/* 1435 */           str2 = parseAttributeValue((attributeList != null && attributeList.type != 1 && attributeList.type != 11));
-/*      */         } else {
-/*      */           
-/* 1438 */           if (!this.strict && this.ch == 61) {
-/* 1439 */             this.ch = readCh();
-/* 1440 */             skipSpace();
-/* 1441 */             str2 = parseAttributeValue(true);
-/* 1442 */             error("attvalerr");
-/*      */             return;
-/*      */           } 
-/* 1445 */           char[] arrayOfChar = { (char)this.ch };
-/* 1446 */           error("invalid.tagchar", new String(arrayOfChar), paramElement.getName());
-/* 1447 */           if (!this.strict) {
-/* 1448 */             this.ch = readCh();
-/*      */             
-/*      */             continue;
-/*      */           } 
-/*      */           return;
-/*      */         }  }
-/*      */       
-/* 1455 */       if (attributeList != null) {
-/* 1456 */         str1 = attributeList.getName();
-/*      */       } else {
-/* 1458 */         error("invalid.tagatt", str1, paramElement.getName());
-/*      */       } 
-/*      */ 
-/*      */       
-/* 1462 */       if (this.attributes.isDefined(str1)) {
-/* 1463 */         error("multi.tagatt", str1, paramElement.getName());
-/*      */       }
-/* 1465 */       if (str2 == null) {
-/* 1466 */         str2 = (attributeList != null && attributeList.value != null) ? attributeList.value : "#DEFAULT";
-/*      */       }
-/* 1468 */       else if (attributeList != null && attributeList.values != null && !attributeList.values.contains(str2)) {
-/* 1469 */         error("invalid.tagattval", str1, paramElement.getName());
-/*      */       } 
-/* 1471 */       HTML.Attribute attribute = HTML.getAttributeKey(str1);
-/* 1472 */       if (attribute == null) {
-/* 1473 */         this.attributes.addAttribute(str1, str2); continue;
-/*      */       } 
-/* 1475 */       this.attributes.addAttribute(attribute, str2);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String parseDTDMarkup() throws IOException {
-/* 1486 */     StringBuilder stringBuilder = new StringBuilder();
-/* 1487 */     this.ch = readCh();
-/*      */     while (true) {
-/* 1489 */       switch (this.ch) {
-/*      */         case 62:
-/* 1491 */           this.ch = readCh();
-/* 1492 */           return stringBuilder.toString();
-/*      */         case -1:
-/* 1494 */           error("invalid.markup");
-/* 1495 */           return stringBuilder.toString();
-/*      */         case 10:
-/* 1497 */           this.ln++;
-/* 1498 */           this.ch = readCh();
-/* 1499 */           this.lfCount++;
-/*      */           continue;
-/*      */         case 34:
-/* 1502 */           this.ch = readCh();
-/*      */           continue;
-/*      */         case 13:
-/* 1505 */           this.ln++;
-/* 1506 */           if ((this.ch = readCh()) == 10) {
-/* 1507 */             this.ch = readCh();
-/* 1508 */             this.crlfCount++;
-/*      */             continue;
-/*      */           } 
-/* 1511 */           this.crCount++;
-/*      */           continue;
-/*      */       } 
-/*      */       
-/* 1515 */       stringBuilder.append((char)(this.ch & 0xFF));
-/* 1516 */       this.ch = readCh();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected boolean parseMarkupDeclarations(StringBuffer paramStringBuffer) throws IOException {
-/* 1530 */     if (paramStringBuffer.length() == "DOCTYPE".length() && paramStringBuffer
-/* 1531 */       .toString().toUpperCase().equals("DOCTYPE")) {
-/* 1532 */       parseDTDMarkup();
-/* 1533 */       return true;
-/*      */     } 
-/* 1535 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void parseInvalidTag() throws IOException {
-/*      */     while (true) {
-/* 1544 */       skipSpace();
-/* 1545 */       switch (this.ch) {
-/*      */         case -1:
-/*      */         case 62:
-/* 1548 */           this.ch = readCh();
-/*      */           return;
-/*      */         case 60:
-/*      */           return;
-/*      */       } 
-/* 1553 */       this.ch = readCh();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   void parseTag() throws IOException {
-/*      */     Element element;
-/*      */     StringBuffer stringBuffer;
-/*      */     String str1;
-/*      */     TagStack tagStack;
-/*      */     String str2;
-/* 1564 */     boolean bool1 = false;
-/* 1565 */     boolean bool2 = false;
-/* 1566 */     boolean bool3 = false;
-/*      */     
-/* 1568 */     switch (this.ch = readCh()) {
-/*      */       case 33:
-/* 1570 */         switch (this.ch = readCh()) {
-/*      */           
-/*      */           case 45:
-/*      */             while (true) {
-/* 1574 */               if (this.ch == 45) {
-/* 1575 */                 if (!this.strict || (this.ch = readCh()) == 45) {
-/* 1576 */                   this.ch = readCh();
-/* 1577 */                   if (!this.strict && this.ch == 45) {
-/* 1578 */                     this.ch = readCh();
-/*      */                   }
-/*      */ 
-/*      */ 
-/*      */                   
-/* 1583 */                   if (this.textpos != 0) {
-/* 1584 */                     char[] arrayOfChar = new char[this.textpos];
-/* 1585 */                     System.arraycopy(this.text, 0, arrayOfChar, 0, this.textpos);
-/* 1586 */                     handleText(arrayOfChar);
-/* 1587 */                     this.lastBlockStartPos = this.currentBlockStartPos;
-/* 1588 */                     this.textpos = 0;
-/*      */                   } 
-/* 1590 */                   parseComment();
-/* 1591 */                   this.last = makeTag(this.dtd.getElement("comment"), true);
-/* 1592 */                   handleComment(getChars(0)); continue;
-/*      */                 } 
-/* 1594 */                 if (!bool2) {
-/* 1595 */                   bool2 = true;
-/* 1596 */                   error("invalid.commentchar", "-");
-/*      */                 } 
-/*      */               } 
-/* 1599 */               skipSpace();
-/* 1600 */               switch (this.ch) {
-/*      */                 case 45:
-/*      */                   continue;
-/*      */                 case 62:
-/* 1604 */                   this.ch = readCh();
-/*      */                 case -1:
-/*      */                   return;
-/*      */               } 
-/* 1608 */               this.ch = readCh();
-/* 1609 */               if (!bool2) {
-/* 1610 */                 bool2 = true;
-/* 1611 */                 error("invalid.commentchar", 
-/* 1612 */                     String.valueOf((char)this.ch));
-/*      */               } 
-/*      */             } 
-/*      */         } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1620 */         stringBuffer = new StringBuffer();
-/*      */         while (true) {
-/* 1622 */           stringBuffer.append((char)this.ch);
-/* 1623 */           if (parseMarkupDeclarations(stringBuffer)) {
-/*      */             return;
-/*      */           }
-/* 1626 */           switch (this.ch) {
-/*      */             case 62:
-/* 1628 */               this.ch = readCh();
-/*      */             case -1:
-/* 1630 */               error("invalid.markup");
-/*      */               return;
-/*      */             case 10:
-/* 1633 */               this.ln++;
-/* 1634 */               this.ch = readCh();
-/* 1635 */               this.lfCount++;
-/*      */               continue;
-/*      */             case 13:
-/* 1638 */               this.ln++;
-/* 1639 */               if ((this.ch = readCh()) == 10) {
-/* 1640 */                 this.ch = readCh();
-/* 1641 */                 this.crlfCount++;
-/*      */                 continue;
-/*      */               } 
-/* 1644 */               this.crCount++;
-/*      */               continue;
-/*      */           } 
-/*      */ 
-/*      */           
-/* 1649 */           this.ch = readCh();
-/*      */         } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       case 47:
-/* 1657 */         switch (this.ch = readCh()) {
-/*      */           case 62:
-/* 1659 */             this.ch = readCh();
-/*      */           
-/*      */           case 60:
-/* 1662 */             if (this.recent == null) {
-/* 1663 */               error("invalid.shortend");
-/*      */               return;
-/*      */             } 
-/* 1666 */             element = this.recent;
-/*      */             break;
-/*      */           
-/*      */           default:
-/* 1670 */             if (!parseIdentifier(true)) {
-/* 1671 */               error("expected.endtagname");
-/*      */               return;
-/*      */             } 
-/* 1674 */             skipSpace();
-/* 1675 */             switch (this.ch) {
-/*      */               case 62:
-/* 1677 */                 this.ch = readCh();
-/*      */                 break;
-/*      */               case 60:
-/*      */                 break;
-/*      */               default:
-/* 1682 */                 error("expected", "'>'");
-/* 1683 */                 while (this.ch != -1 && this.ch != 10 && this.ch != 62) {
-/* 1684 */                   this.ch = readCh();
-/*      */                 }
-/* 1686 */                 if (this.ch == 62) {
-/* 1687 */                   this.ch = readCh();
-/*      */                 }
-/*      */                 break;
-/*      */             } 
-/* 1691 */             str1 = getString(0);
-/* 1692 */             if (!this.dtd.elementExists(str1)) {
-/* 1693 */               error("end.unrecognized", str1);
-/*      */               
-/* 1695 */               if (this.textpos > 0 && this.text[this.textpos - 1] == '\n') {
-/* 1696 */                 this.textpos--;
-/*      */               }
-/* 1698 */               element = this.dtd.getElement("unknown");
-/* 1699 */               element.name = str1;
-/* 1700 */               bool3 = true; break;
-/*      */             } 
-/* 1702 */             element = this.dtd.getElement(str1);
-/*      */             break;
-/*      */         } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1711 */         if (this.stack == null) {
-/* 1712 */           error("end.extra.tag", element.getName());
-/*      */           
-/*      */           return;
-/*      */         } 
-/*      */         
-/* 1717 */         if (this.textpos > 0 && this.text[this.textpos - 1] == '\n')
-/*      */         {
-/*      */ 
-/*      */ 
-/*      */           
-/* 1722 */           if (this.stack.pre) {
-/* 1723 */             if (this.textpos > 1 && this.text[this.textpos - 2] != '\n') {
-/* 1724 */               this.textpos--;
-/*      */             }
-/*      */           } else {
-/* 1727 */             this.textpos--;
-/*      */           } 
-/*      */         }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1748 */         if (bool3) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/* 1754 */           TagElement tagElement1 = makeTag(element);
-/* 1755 */           handleText(tagElement1);
-/* 1756 */           this.attributes.addAttribute(HTML.Attribute.ENDTAG, "true");
-/* 1757 */           handleEmptyTag(makeTag(element));
-/* 1758 */           bool3 = false;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           return;
-/*      */         } 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1768 */         if (!this.strict) {
-/* 1769 */           str1 = this.stack.elem.getName();
-/*      */           
-/* 1771 */           if (str1.equals("table"))
-/*      */           {
-/*      */             
-/* 1774 */             if (!element.getName().equals(str1)) {
-/* 1775 */               error("tag.ignore", element.getName());
-/*      */ 
-/*      */               
-/*      */               return;
-/*      */             } 
-/*      */           }
-/*      */           
-/* 1782 */           if ((str1.equals("tr") || str1
-/* 1783 */             .equals("td")) && 
-/* 1784 */             !element.getName().equals("table") && 
-/* 1785 */             !element.getName().equals(str1)) {
-/* 1786 */             error("tag.ignore", element.getName());
-/*      */             
-/*      */             return;
-/*      */           } 
-/*      */         } 
-/* 1791 */         tagStack = this.stack;
-/*      */         
-/* 1793 */         while (tagStack != null && element != tagStack.elem) {
-/* 1794 */           tagStack = tagStack.next;
-/*      */         }
-/* 1796 */         if (tagStack == null) {
-/* 1797 */           error("unmatched.endtag", element.getName());
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           return;
-/*      */         } 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1806 */         str2 = element.getName();
-/* 1807 */         if (this.stack != tagStack && (str2
-/* 1808 */           .equals("font") || str2
-/* 1809 */           .equals("center"))) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/* 1816 */           if (str2.equals("center")) {
-/* 1817 */             while (this.stack.elem.omitEnd() && this.stack != tagStack) {
-/* 1818 */               endTag(true);
-/*      */             }
-/* 1820 */             if (this.stack.elem == element) {
-/* 1821 */               endTag(false);
-/*      */             }
-/*      */           } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           return;
-/*      */         } 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1833 */         while (this.stack != tagStack) {
-/* 1834 */           endTag(true);
-/*      */         }
-/*      */         
-/* 1837 */         endTag(false);
-/*      */         return;
-/*      */       
-/*      */       case -1:
-/* 1841 */         error("eof");
-/*      */         return;
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1846 */     if (!parseIdentifier(true)) {
-/* 1847 */       element = this.recent;
-/* 1848 */       if (this.ch != 62 || element == null) {
-/* 1849 */         error("expected.tagname");
-/*      */         return;
-/*      */       } 
-/*      */     } else {
-/* 1853 */       String str = getString(0);
-/*      */       
-/* 1855 */       if (str.equals("image")) {
-/* 1856 */         str = "img";
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */       
-/* 1861 */       if (!this.dtd.elementExists(str)) {
-/*      */         
-/* 1863 */         error("tag.unrecognized ", str);
-/* 1864 */         element = this.dtd.getElement("unknown");
-/* 1865 */         element.name = str;
-/* 1866 */         bool3 = true;
-/*      */       } else {
-/* 1868 */         element = this.dtd.getElement(str);
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1873 */     parseAttributeSpecificationList(element);
-/*      */     
-/* 1875 */     switch (this.ch) {
-/*      */       case 47:
-/* 1877 */         bool1 = true;
-/*      */       case 62:
-/* 1879 */         this.ch = readCh();
-/* 1880 */         if (this.ch == 62 && bool1) {
-/* 1881 */           this.ch = readCh();
-/*      */         }
-/*      */         break;
-/*      */       case 60:
-/*      */         break;
-/*      */       default:
-/* 1887 */         error("expected", "'>'");
-/*      */         break;
-/*      */     } 
-/*      */     
-/* 1891 */     if (!this.strict && 
-/* 1892 */       element.getName().equals("script")) {
-/* 1893 */       error("javascript.unsupported");
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1899 */     if (!element.isEmpty()) {
-/* 1900 */       if (this.ch == 10) {
-/* 1901 */         this.ln++;
-/* 1902 */         this.lfCount++;
-/* 1903 */         this.ch = readCh();
-/* 1904 */       } else if (this.ch == 13) {
-/* 1905 */         this.ln++;
-/* 1906 */         if ((this.ch = readCh()) == 10) {
-/* 1907 */           this.ch = readCh();
-/* 1908 */           this.crlfCount++;
-/*      */         } else {
-/*      */           
-/* 1911 */           this.crCount++;
-/*      */         } 
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */     
-/* 1917 */     TagElement tagElement = makeTag(element, false);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1940 */     if (!bool3) {
-/* 1941 */       legalTagContext(tagElement);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1947 */       if (!this.strict && this.skipTag) {
-/* 1948 */         this.skipTag = false;
-/*      */ 
-/*      */         
-/*      */         return;
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1956 */     startTag(tagElement);
-/*      */     
-/* 1958 */     if (!element.isEmpty()) {
-/* 1959 */       switch (element.getType()) {
-/*      */         case 1:
-/* 1961 */           parseLiteral(false);
-/*      */           return;
-/*      */         case 16:
-/* 1964 */           parseLiteral(true);
-/*      */           return;
-/*      */       } 
-/* 1967 */       if (this.stack != null) {
-/* 1968 */         this.stack.net = bool1;
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/* 1977 */   private static final char[] SCRIPT_END_TAG = "</script>".toCharArray();
-/* 1978 */   private static final char[] SCRIPT_END_TAG_UPPER_CASE = "</SCRIPT>"
-/* 1979 */     .toCharArray(); private char[] buf; private int pos; private int len; private int currentPosition;
-/*      */   
-/*      */   void parseScript() throws IOException {
-/* 1982 */     char[] arrayOfChar = new char[SCRIPT_END_TAG.length];
-/* 1983 */     boolean bool = false;
-/*      */ 
-/*      */     
-/*      */     while (true) {
-/* 1987 */       byte b = 0;
-/* 1988 */       while (!bool && b < SCRIPT_END_TAG.length && (SCRIPT_END_TAG[b] == this.ch || SCRIPT_END_TAG_UPPER_CASE[b] == this.ch)) {
-/*      */ 
-/*      */         
-/* 1991 */         arrayOfChar[b] = (char)this.ch;
-/* 1992 */         this.ch = readCh();
-/* 1993 */         b++;
-/*      */       } 
-/* 1995 */       if (b == SCRIPT_END_TAG.length) {
-/*      */         return;
-/*      */       }
-/*      */       
-/* 1999 */       if (!bool && b == 1 && arrayOfChar[0] == "<!--".charAt(0)) {
-/*      */         
-/* 2001 */         while (b < "<!--".length() && "<!--"
-/* 2002 */           .charAt(b) == this.ch) {
-/* 2003 */           arrayOfChar[b] = (char)this.ch;
-/* 2004 */           this.ch = readCh();
-/* 2005 */           b++;
-/*      */         } 
-/* 2007 */         if (b == "<!--".length()) {
-/* 2008 */           bool = true;
-/*      */         }
-/*      */       } 
-/* 2011 */       if (bool) {
-/* 2012 */         while (b < "-->".length() && "-->"
-/* 2013 */           .charAt(b) == this.ch) {
-/* 2014 */           arrayOfChar[b] = (char)this.ch;
-/* 2015 */           this.ch = readCh();
-/* 2016 */           b++;
-/*      */         } 
-/* 2018 */         if (b == "-->".length()) {
-/* 2019 */           bool = false;
-/*      */         }
-/*      */       } 
-/*      */ 
-/*      */       
-/* 2024 */       if (b > 0) {
-/* 2025 */         for (byte b1 = 0; b1 < b; b1++) {
-/* 2026 */           addString(arrayOfChar[b1]);
-/*      */         }
-/*      */         continue;
-/*      */       } 
-/* 2030 */       switch (this.ch) {
-/*      */         case -1:
-/* 2032 */           error("eof.script");
-/*      */           return;
-/*      */         case 10:
-/* 2035 */           this.ln++;
-/* 2036 */           this.ch = readCh();
-/* 2037 */           this.lfCount++;
-/* 2038 */           addString(10);
-/*      */           continue;
-/*      */         case 13:
-/* 2041 */           this.ln++;
-/* 2042 */           if ((this.ch = readCh()) == 10) {
-/* 2043 */             this.ch = readCh();
-/* 2044 */             this.crlfCount++;
-/*      */           } else {
-/* 2046 */             this.crCount++;
-/*      */           } 
-/* 2048 */           addString(10);
-/*      */           continue;
-/*      */       } 
-/* 2051 */       addString(this.ch);
-/* 2052 */       this.ch = readCh();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void parseContent() throws IOException {
-/* 2062 */     Thread thread = Thread.currentThread();
-/*      */     while (true) {
-/*      */       char[] arrayOfChar;
-/* 2065 */       if (thread.isInterrupted()) {
-/* 2066 */         thread.interrupt();
-/*      */         
-/*      */         break;
-/*      */       } 
-/* 2070 */       int i = this.ch;
-/* 2071 */       this.currentBlockStartPos = this.currentPosition;
-/*      */       
-/* 2073 */       if (this.recent == this.dtd.script) {
-/*      */ 
-/*      */         
-/* 2076 */         parseScript();
-/* 2077 */         this.last = makeTag(this.dtd.getElement("comment"), true);
-/*      */ 
-/*      */         
-/* 2080 */         String str = (new String(getChars(0))).trim();
-/* 2081 */         int j = "<!--".length() + "-->".length();
-/* 2082 */         if (str.startsWith("<!--") && str.endsWith("-->") && str
-/* 2083 */           .length() >= j) {
-/* 2084 */           str = str.substring("<!--".length(), str
-/* 2085 */               .length() - "-->".length());
-/*      */         }
-/*      */ 
-/*      */         
-/* 2089 */         handleComment(str.toCharArray());
-/* 2090 */         endTag(false);
-/* 2091 */         this.lastBlockStartPos = this.currentPosition;
-/*      */         
-/*      */         continue;
-/*      */       } 
-/* 2095 */       switch (i) {
-/*      */         case 60:
-/* 2097 */           parseTag();
-/* 2098 */           this.lastBlockStartPos = this.currentPosition;
-/*      */           continue;
-/*      */         
-/*      */         case 47:
-/* 2102 */           this.ch = readCh();
-/* 2103 */           if (this.stack != null && this.stack.net) {
-/*      */             
-/* 2105 */             endTag(false); continue;
-/*      */           } 
-/* 2107 */           if (this.textpos == 0) {
-/* 2108 */             if (!legalElementContext(this.dtd.pcdata)) {
-/* 2109 */               error("unexpected.pcdata");
-/*      */             }
-/* 2111 */             if (this.last.breaksFlow()) {
-/* 2112 */               this.space = false;
-/*      */             }
-/*      */           } 
-/*      */           break;
-/*      */         
-/*      */         case -1:
-/*      */           return;
-/*      */         
-/*      */         case 38:
-/* 2121 */           if (this.textpos == 0) {
-/* 2122 */             if (!legalElementContext(this.dtd.pcdata)) {
-/* 2123 */               error("unexpected.pcdata");
-/*      */             }
-/* 2125 */             if (this.last.breaksFlow()) {
-/* 2126 */               this.space = false;
-/*      */             }
-/*      */           } 
-/* 2129 */           arrayOfChar = parseEntityReference();
-/* 2130 */           if (this.textpos + arrayOfChar.length + 1 > this.text.length) {
-/* 2131 */             char[] arrayOfChar1 = new char[Math.max(this.textpos + arrayOfChar.length + 128, this.text.length * 2)];
-/* 2132 */             System.arraycopy(this.text, 0, arrayOfChar1, 0, this.text.length);
-/* 2133 */             this.text = arrayOfChar1;
-/*      */           } 
-/* 2135 */           if (this.space) {
-/* 2136 */             this.space = false;
-/* 2137 */             this.text[this.textpos++] = ' ';
-/*      */           } 
-/* 2139 */           System.arraycopy(arrayOfChar, 0, this.text, this.textpos, arrayOfChar.length);
-/* 2140 */           this.textpos += arrayOfChar.length;
-/* 2141 */           this.ignoreSpace = false;
-/*      */           continue;
-/*      */         
-/*      */         case 10:
-/* 2145 */           this.ln++;
-/* 2146 */           this.lfCount++;
-/* 2147 */           this.ch = readCh();
-/* 2148 */           if (this.stack != null && this.stack.pre) {
-/*      */             break;
-/*      */           }
-/* 2151 */           if (this.textpos == 0) {
-/* 2152 */             this.lastBlockStartPos = this.currentPosition;
-/*      */           }
-/* 2154 */           if (!this.ignoreSpace) {
-/* 2155 */             this.space = true;
-/*      */           }
-/*      */           continue;
-/*      */         
-/*      */         case 13:
-/* 2160 */           this.ln++;
-/* 2161 */           i = 10;
-/* 2162 */           if ((this.ch = readCh()) == 10) {
-/* 2163 */             this.ch = readCh();
-/* 2164 */             this.crlfCount++;
-/*      */           } else {
-/*      */             
-/* 2167 */             this.crCount++;
-/*      */           } 
-/* 2169 */           if (this.stack != null && this.stack.pre) {
-/*      */             break;
-/*      */           }
-/* 2172 */           if (this.textpos == 0) {
-/* 2173 */             this.lastBlockStartPos = this.currentPosition;
-/*      */           }
-/* 2175 */           if (!this.ignoreSpace) {
-/* 2176 */             this.space = true;
-/*      */           }
-/*      */           continue;
-/*      */ 
-/*      */         
-/*      */         case 9:
-/*      */         case 32:
-/* 2183 */           this.ch = readCh();
-/* 2184 */           if (this.stack != null && this.stack.pre) {
-/*      */             break;
-/*      */           }
-/* 2187 */           if (this.textpos == 0) {
-/* 2188 */             this.lastBlockStartPos = this.currentPosition;
-/*      */           }
-/* 2190 */           if (!this.ignoreSpace) {
-/* 2191 */             this.space = true;
-/*      */           }
-/*      */           continue;
-/*      */         
-/*      */         default:
-/* 2196 */           if (this.textpos == 0) {
-/* 2197 */             if (!legalElementContext(this.dtd.pcdata)) {
-/* 2198 */               error("unexpected.pcdata");
-/*      */             }
-/* 2200 */             if (this.last.breaksFlow()) {
-/* 2201 */               this.space = false;
-/*      */             }
-/*      */           } 
-/* 2204 */           this.ch = readCh();
-/*      */           break;
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2210 */       if (this.textpos + 2 > this.text.length) {
-/* 2211 */         arrayOfChar = new char[this.text.length + 128];
-/* 2212 */         System.arraycopy(this.text, 0, arrayOfChar, 0, this.text.length);
-/* 2213 */         this.text = arrayOfChar;
-/*      */       } 
-/*      */ 
-/*      */       
-/* 2217 */       if (this.space) {
-/* 2218 */         if (this.textpos == 0) {
-/* 2219 */           this.lastBlockStartPos--;
-/*      */         }
-/* 2221 */         this.text[this.textpos++] = ' ';
-/* 2222 */         this.space = false;
-/*      */       } 
-/* 2224 */       this.text[this.textpos++] = (char)i;
-/* 2225 */       this.ignoreSpace = false;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   String getEndOfLineString() {
-/* 2234 */     if (this.crlfCount >= this.crCount) {
-/* 2235 */       if (this.lfCount >= this.crlfCount) {
-/* 2236 */         return "\n";
-/*      */       }
-/*      */       
-/* 2239 */       return "\r\n";
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2243 */     if (this.crCount > this.lfCount) {
-/* 2244 */       return "\r";
-/*      */     }
-/*      */     
-/* 2247 */     return "\n";
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public synchronized void parse(Reader paramReader) throws IOException {
-/* 2256 */     this.in = paramReader;
-/*      */     
-/* 2258 */     this.ln = 1;
-/*      */     
-/* 2260 */     this.seenHtml = false;
-/* 2261 */     this.seenHead = false;
-/* 2262 */     this.seenBody = false;
-/*      */     
-/* 2264 */     this.crCount = this.lfCount = this.crlfCount = 0;
-/*      */     
-/*      */     try {
-/* 2267 */       this.ch = readCh();
-/* 2268 */       this.text = new char[1024];
-/* 2269 */       this.str = new char[128];
-/*      */       
-/* 2271 */       parseContent();
-/*      */ 
-/*      */       
-/* 2274 */       while (this.stack != null) {
-/* 2275 */         endTag(true);
-/*      */       }
-/* 2277 */       paramReader.close();
-/* 2278 */     } catch (IOException iOException) {
-/* 2279 */       errorContext();
-/* 2280 */       error("ioexception");
-/* 2281 */       throw iOException;
-/* 2282 */     } catch (Exception exception) {
-/* 2283 */       errorContext();
-/* 2284 */       error("exception", exception.getClass().getName(), exception.getMessage());
-/* 2285 */       exception.printStackTrace();
-/* 2286 */     } catch (ThreadDeath threadDeath) {
-/* 2287 */       errorContext();
-/* 2288 */       error("terminated");
-/* 2289 */       threadDeath.printStackTrace();
-/* 2290 */       throw threadDeath;
-/*      */     } finally {
-/* 2292 */       for (; this.stack != null; this.stack = this.stack.next) {
-/* 2293 */         handleEndTag(this.stack.tag);
-/*      */       }
-/*      */       
-/* 2296 */       this.text = null;
-/* 2297 */       this.str = null;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Parser(DTD paramDTD) {
-/* 2314 */     this.buf = new char[1];
-/*      */     this.dtd = paramDTD;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private final int readCh() throws IOException {
-/* 2326 */     if (this.pos >= this.len) {
-/*      */ 
-/*      */       
-/*      */       try {
-/*      */ 
-/*      */         
-/* 2332 */         this.len = this.in.read(this.buf);
-/*      */       }
-/* 2334 */       catch (InterruptedIOException interruptedIOException) {
-/* 2335 */         throw interruptedIOException;
-/*      */       } 
-/*      */ 
-/*      */       
-/* 2339 */       if (this.len <= 0) {
-/* 2340 */         return -1;
-/*      */       }
-/* 2342 */       this.pos = 0;
-/*      */     } 
-/* 2344 */     this.currentPosition++;
-/*      */     
-/* 2346 */     return this.buf[this.pos++];
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   protected int getCurrentPos() {
-/* 2351 */     return this.currentPosition;
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\text\html\parser\Parser.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2014, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.text.html.parser;
+
+import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.html.HTML;
+import javax.swing.text.ChangedCharSetException;
+import java.io.*;
+import java.util.Hashtable;
+import java.util.Properties;
+import java.util.Vector;
+import java.util.Enumeration;
+import java.net.URL;
+
+import sun.misc.MessageUtils;
+
+/**
+ * A simple DTD-driven HTML parser. The parser reads an
+ * HTML file from an InputStream and calls various methods
+ * (which should be overridden in a subclass) when tags and
+ * data are encountered.
+ * <p>
+ * Unfortunately there are many badly implemented HTML parsers
+ * out there, and as a result there are many badly formatted
+ * HTML files. This parser attempts to parse most HTML files.
+ * This means that the implementation sometimes deviates from
+ * the SGML specification in favor of HTML.
+ * <p>
+ * The parser treats \r and \r\n as \n. Newlines after starttags
+ * and before end tags are ignored just as specified in the SGML/HTML
+ * specification.
+ * <p>
+ * The html spec does not specify how spaces are to be coalesced very well.
+ * Specifically, the following scenarios are not discussed (note that a
+ * space should be used here, but I am using &amp;nbsp to force the space to
+ * be displayed):
+ * <p>
+ * '&lt;b&gt;blah&nbsp;&lt;i&gt;&nbsp;&lt;strike&gt;&nbsp;foo' which can be treated as:
+ * '&lt;b&gt;blah&nbsp;&lt;i&gt;&lt;strike&gt;foo'
+ * <p>as well as:
+ * '&lt;p&gt;&lt;a href="xx"&gt;&nbsp;&lt;em&gt;Using&lt;/em&gt;&lt;/a&gt;&lt;/p&gt;'
+ * which appears to be treated as:
+ * '&lt;p&gt;&lt;a href="xx"&gt;&lt;em&gt;Using&lt;/em&gt;&lt;/a&gt;&lt;/p&gt;'
+ * <p>
+ * If <code>strict</code> is false, when a tag that breaks flow,
+ * (<code>TagElement.breaksFlows</code>) or trailing whitespace is
+ * encountered, all whitespace will be ignored until a non whitespace
+ * character is encountered. This appears to give behavior closer to
+ * the popular browsers.
+ *
+ * @see DTD
+ * @see TagElement
+ * @see SimpleAttributeSet
+ * @author Arthur van Hoff
+ * @author Sunita Mani
+ */
+public
+class Parser implements DTDConstants {
+
+    private char text[] = new char[1024];
+    private int textpos = 0;
+    private TagElement last;
+    private boolean space;
+
+    private char str[] = new char[128];
+    private int strpos = 0;
+
+    protected DTD dtd = null;
+
+    private int ch;
+    private int ln;
+    private Reader in;
+
+    private Element recent;
+    private TagStack stack;
+    private boolean skipTag = false;
+    private TagElement lastFormSent = null;
+    private SimpleAttributeSet attributes = new SimpleAttributeSet();
+
+    // State for <html>, <head> and <body>.  Since people like to slap
+    // together HTML documents without thinking, occasionally they
+    // have multiple instances of these tags.  These booleans track
+    // the first sightings of these tags so they can be safely ignored
+    // by the parser if repeated.
+    private boolean seenHtml = false;
+    private boolean seenHead = false;
+    private boolean seenBody = false;
+
+    /**
+     * The html spec does not specify how spaces are coalesced very well.
+     * If strict == false, ignoreSpace is used to try and mimic the behavior
+     * of the popular browsers.
+     * <p>
+     * The problematic scenarios are:
+     * '&lt;b>blah &lt;i> &lt;strike> foo' which can be treated as:
+     * '&lt;b>blah &lt;i>&lt;strike>foo'
+     * as well as:
+     * '&lt;p>&lt;a href="xx"> &lt;em>Using&lt;/em>&lt;/a>&lt;/p>'
+     * which appears to be treated as:
+     * '&lt;p>&lt;a href="xx">&lt;em>Using&lt;/em>&lt;/a>&lt;/p>'
+     * <p>
+     * When a tag that breaks flow, or trailing whitespace is encountered
+     * ignoreSpace is set to true. From then on, all whitespace will be
+     * ignored.
+     * ignoreSpace will be set back to false the first time a
+     * non whitespace character is encountered. This appears to give
+     * behavior closer to the popular browsers.
+     */
+    private boolean ignoreSpace;
+
+    /**
+     * This flag determines whether or not the Parser will be strict
+     * in enforcing SGML compatibility.  If false, it will be lenient
+     * with certain common classes of erroneous HTML constructs.
+     * Strict or not, in either case an error will be recorded.
+     *
+     */
+    protected boolean strict = false;
+
+
+    /** Number of \r\n's encountered. */
+    private int crlfCount;
+    /** Number of \r's encountered. A \r\n will not increment this. */
+    private int crCount;
+    /** Number of \n's encountered. A \r\n will not increment this. */
+    private int lfCount;
+
+    //
+    // To correctly identify the start of a tag/comment/text we need two
+    // ivars. Two are needed as handleText isn't invoked until the tag
+    // after the text has been parsed, that is the parser parses the text,
+    // then a tag, then invokes handleText followed by handleStart.
+    //
+    /** The start position of the current block. Block is overloaded here,
+     * it really means the current start position for the current comment,
+     * tag, text. Use getBlockStartPosition to access this. */
+    private int currentBlockStartPos;
+    /** Start position of the last block. */
+    private int lastBlockStartPos;
+
+    /**
+     * array for mapping numeric references in range
+     * 130-159 to displayable Unicode characters.
+     */
+    private static final char[] cp1252Map = {
+        8218,  // &#130;
+        402,   // &#131;
+        8222,  // &#132;
+        8230,  // &#133;
+        8224,  // &#134;
+        8225,  // &#135;
+        710,   // &#136;
+        8240,  // &#137;
+        352,   // &#138;
+        8249,  // &#139;
+        338,   // &#140;
+        141,   // &#141;
+        142,   // &#142;
+        143,   // &#143;
+        144,   // &#144;
+        8216,  // &#145;
+        8217,  // &#146;
+        8220,  // &#147;
+        8221,  // &#148;
+        8226,  // &#149;
+        8211,  // &#150;
+        8212,  // &#151;
+        732,   // &#152;
+        8482,  // &#153;
+        353,   // &#154;
+        8250,  // &#155;
+        339,   // &#156;
+        157,   // &#157;
+        158,   // &#158;
+        376    // &#159;
+    };
+
+    public Parser(DTD dtd) {
+        this.dtd = dtd;
+    }
+
+
+    /**
+     * @return the line number of the line currently being parsed
+     */
+    protected int getCurrentLine() {
+        return ln;
+    }
+
+    /**
+     * Returns the start position of the current block. Block is
+     * overloaded here, it really means the current start position for
+     * the current comment tag, text, block.... This is provided for
+     * subclassers that wish to know the start of the current block when
+     * called with one of the handleXXX methods.
+     */
+    int getBlockStartPosition() {
+        return Math.max(0, lastBlockStartPos - 1);
+    }
+
+    /**
+     * Makes a TagElement.
+     */
+    protected TagElement makeTag(Element elem, boolean fictional) {
+        return new TagElement(elem, fictional);
+    }
+
+    protected TagElement makeTag(Element elem) {
+        return makeTag(elem, false);
+    }
+
+    protected SimpleAttributeSet getAttributes() {
+        return attributes;
+    }
+
+    protected void flushAttributes() {
+        attributes.removeAttributes(attributes);
+    }
+
+    /**
+     * Called when PCDATA is encountered.
+     */
+    protected void handleText(char text[]) {
+    }
+
+    /**
+     * Called when an HTML title tag is encountered.
+     */
+    protected void handleTitle(char text[]) {
+        // default behavior is to call handleText. Subclasses
+        // can override if necessary.
+        handleText(text);
+    }
+
+    /**
+     * Called when an HTML comment is encountered.
+     */
+    protected void handleComment(char text[]) {
+    }
+
+    protected void handleEOFInComment() {
+        // We've reached EOF.  Our recovery strategy is to
+        // see if we have more than one line in the comment;
+        // if so, we pretend that the comment was an unterminated
+        // single line comment, and reparse the lines after the
+        // first line as normal HTML content.
+
+        int commentEndPos = strIndexOf('\n');
+        if (commentEndPos >= 0) {
+            handleComment(getChars(0, commentEndPos));
+            try {
+                in.close();
+                in = new CharArrayReader(getChars(commentEndPos + 1));
+                ch = '>';
+            } catch (IOException e) {
+                error("ioexception");
+            }
+
+            resetStrBuffer();
+        } else {
+            // no newline, so signal an error
+            error("eof.comment");
+        }
+    }
+
+    /**
+     * Called when an empty tag is encountered.
+     */
+    protected void handleEmptyTag(TagElement tag) throws ChangedCharSetException {
+    }
+
+    /**
+     * Called when a start tag is encountered.
+     */
+    protected void handleStartTag(TagElement tag) {
+    }
+
+    /**
+     * Called when an end tag is encountered.
+     */
+    protected void handleEndTag(TagElement tag) {
+    }
+
+    /**
+     * An error has occurred.
+     */
+    protected void handleError(int ln, String msg) {
+        /*
+        Thread.dumpStack();
+        System.out.println("**** " + stack);
+        System.out.println("line " + ln + ": error: " + msg);
+        System.out.println();
+        */
+    }
+
+    /**
+     * Output text.
+     */
+    void handleText(TagElement tag) {
+        if (tag.breaksFlow()) {
+            space = false;
+            if (!strict) {
+                ignoreSpace = true;
+            }
+        }
+        if (textpos == 0) {
+            if ((!space) || (stack == null) || last.breaksFlow() ||
+                !stack.advance(dtd.pcdata)) {
+                last = tag;
+                space = false;
+                lastBlockStartPos = currentBlockStartPos;
+                return;
+            }
+        }
+        if (space) {
+            if (!ignoreSpace) {
+                // enlarge buffer if needed
+                if (textpos + 1 > text.length) {
+                    char newtext[] = new char[text.length + 200];
+                    System.arraycopy(text, 0, newtext, 0, text.length);
+                    text = newtext;
+                }
+
+                // output pending space
+                text[textpos++] = ' ';
+                if (!strict && !tag.getElement().isEmpty()) {
+                    ignoreSpace = true;
+                }
+            }
+            space = false;
+        }
+        char newtext[] = new char[textpos];
+        System.arraycopy(text, 0, newtext, 0, textpos);
+        // Handles cases of bad html where the title tag
+        // was getting lost when we did error recovery.
+        if (tag.getElement().getName().equals("title")) {
+            handleTitle(newtext);
+        } else {
+            handleText(newtext);
+        }
+        lastBlockStartPos = currentBlockStartPos;
+        textpos = 0;
+        last = tag;
+        space = false;
+    }
+
+    /**
+     * Invoke the error handler.
+     */
+    protected void error(String err, String arg1, String arg2,
+        String arg3) {
+        handleError(ln, err + " " + arg1 + " " + arg2 + " " + arg3);
+    }
+
+    protected void error(String err, String arg1, String arg2) {
+        error(err, arg1, arg2, "?");
+    }
+    protected void error(String err, String arg1) {
+        error(err, arg1, "?", "?");
+    }
+    protected void error(String err) {
+        error(err, "?", "?", "?");
+    }
+
+
+    /**
+     * Handle a start tag. The new tag is pushed
+     * onto the tag stack. The attribute list is
+     * checked for required attributes.
+     */
+    protected void startTag(TagElement tag) throws ChangedCharSetException {
+        Element elem = tag.getElement();
+
+        // If the tag is an empty tag and texpos != 0
+        // this implies that there is text before the
+        // start tag that needs to be processed before
+        // handling the tag.
+        //
+        if (!elem.isEmpty() ||
+                    ((last != null) && !last.breaksFlow()) ||
+                    (textpos != 0)) {
+            handleText(tag);
+        } else {
+            // this variable gets updated in handleText().
+            // Since in this case we do not call handleText()
+            // we need to update it here.
+            //
+            last = tag;
+            // Note that we should really check last.breakFlows before
+            // assuming this should be false.
+            space = false;
+        }
+        lastBlockStartPos = currentBlockStartPos;
+
+        // check required attributes
+        for (AttributeList a = elem.atts ; a != null ; a = a.next) {
+            if ((a.modifier == REQUIRED) &&
+                ((attributes.isEmpty()) ||
+                 ((!attributes.isDefined(a.name)) &&
+                  (!attributes.isDefined(HTML.getAttributeKey(a.name)))))) {
+                error("req.att ", a.getName(), elem.getName());
+            }
+        }
+
+        if (elem.isEmpty()) {
+            handleEmptyTag(tag);
+            /*
+        } else if (elem.getName().equals("form")) {
+            handleStartTag(tag);
+            */
+        } else {
+            recent = elem;
+            stack = new TagStack(tag, stack);
+            handleStartTag(tag);
+        }
+    }
+
+    /**
+     * Handle an end tag. The end tag is popped
+     * from the tag stack.
+     */
+    protected void endTag(boolean omitted) {
+        handleText(stack.tag);
+
+        if (omitted && !stack.elem.omitEnd()) {
+            error("end.missing", stack.elem.getName());
+        } else if (!stack.terminate()) {
+            error("end.unexpected", stack.elem.getName());
+        }
+
+        // handle the tag
+        handleEndTag(stack.tag);
+        stack = stack.next;
+        recent = (stack != null) ? stack.elem : null;
+    }
+
+
+    boolean ignoreElement(Element elem) {
+
+        String stackElement = stack.elem.getName();
+        String elemName = elem.getName();
+        /* We ignore all elements that are not valid in the context of
+           a table except <td>, <th> (these we handle in
+           legalElementContext()) and #pcdata.  We also ignore the
+           <font> tag in the context of <ul> and <ol> We additonally
+           ignore the <meta> and the <style> tag if the body tag has
+           been seen. **/
+        if ((elemName.equals("html") && seenHtml) ||
+            (elemName.equals("head") && seenHead) ||
+            (elemName.equals("body") && seenBody)) {
+            return true;
+        }
+        if (elemName.equals("dt") || elemName.equals("dd")) {
+            TagStack s = stack;
+            while (s != null && !s.elem.getName().equals("dl")) {
+                s = s.next;
+            }
+            if (s == null) {
+                return true;
+            }
+        }
+
+        if (((stackElement.equals("table")) &&
+             (!elemName.equals("#pcdata")) && (!elemName.equals("input"))) ||
+            ((elemName.equals("font")) &&
+             (stackElement.equals("ul") || stackElement.equals("ol"))) ||
+            (elemName.equals("meta") && stack != null) ||
+            (elemName.equals("style") && seenBody) ||
+            (stackElement.equals("table") && elemName.equals("a"))) {
+            return true;
+        }
+        return false;
+    }
+
+
+    /**
+     * Marks the first time a tag has been seen in a document
+     */
+
+    protected void markFirstTime(Element elem) {
+        String elemName = elem.getName();
+        if (elemName.equals("html")) {
+            seenHtml = true;
+        } else if (elemName.equals("head")) {
+            seenHead = true;
+        } else if (elemName.equals("body")) {
+            if (buf.length == 1) {
+                // Refer to note in definition of buf for details on this.
+                char[] newBuf = new char[256];
+
+                newBuf[0] = buf[0];
+                buf = newBuf;
+            }
+            seenBody = true;
+        }
+    }
+
+    /**
+     * Create a legal content for an element.
+     */
+    boolean legalElementContext(Element elem) throws ChangedCharSetException {
+
+        // System.out.println("-- legalContext -- " + elem);
+
+        // Deal with the empty stack
+        if (stack == null) {
+            // System.out.println("-- stack is empty");
+            if (elem != dtd.html) {
+                // System.out.println("-- pushing html");
+                startTag(makeTag(dtd.html, true));
+                return legalElementContext(elem);
+            }
+            return true;
+        }
+
+        // Is it allowed in the current context
+        if (stack.advance(elem)) {
+            // System.out.println("-- legal context");
+            markFirstTime(elem);
+            return true;
+        }
+        boolean insertTag = false;
+
+        // The use of all error recovery strategies are contingent
+        // on the value of the strict property.
+        //
+        // These are commonly occurring errors.  if insertTag is true,
+        // then we want to adopt an error recovery strategy that
+        // involves attempting to insert an additional tag to
+        // legalize the context.  The two errors addressed here
+        // are:
+        // 1) when a <td> or <th> is seen soon after a <table> tag.
+        //    In this case we insert a <tr>.
+        // 2) when any other tag apart from a <tr> is seen
+        //    in the context of a <tr>.  In this case we would
+        //    like to add a <td>.  If a <tr> is seen within a
+        //    <tr> context, then we will close out the current
+        //    <tr>.
+        //
+        // This insertion strategy is handled later in the method.
+        // The reason for checking this now, is that in other cases
+        // we would like to apply other error recovery strategies for example
+        // ignoring tags.
+        //
+        // In certain cases it is better to ignore a tag than try to
+        // fix the situation.  So the first test is to see if this
+        // is what we need to do.
+        //
+        String stackElemName = stack.elem.getName();
+        String elemName = elem.getName();
+
+
+        if (!strict &&
+            ((stackElemName.equals("table") && elemName.equals("td")) ||
+             (stackElemName.equals("table") && elemName.equals("th")) ||
+             (stackElemName.equals("tr") && !elemName.equals("tr")))){
+             insertTag = true;
+        }
+
+
+        if (!strict && !insertTag && (stack.elem.getName() != elem.getName() ||
+                                      elem.getName().equals("body"))) {
+            if (skipTag = ignoreElement(elem)) {
+                error("tag.ignore", elem.getName());
+                return skipTag;
+            }
+        }
+
+        // Check for anything after the start of the table besides tr, td, th
+        // or caption, and if those aren't there, insert the <tr> and call
+        // legalElementContext again.
+        if (!strict && stackElemName.equals("table") &&
+            !elemName.equals("tr") && !elemName.equals("td") &&
+            !elemName.equals("th") && !elemName.equals("caption")) {
+            Element e = dtd.getElement("tr");
+            TagElement t = makeTag(e, true);
+            legalTagContext(t);
+            startTag(t);
+            error("start.missing", elem.getName());
+            return legalElementContext(elem);
+        }
+
+        // They try to find a legal context by checking if the current
+        // tag is valid in an enclosing context.  If so
+        // close out the tags by outputing end tags and then
+        // insert the current tag.  If the tags that are
+        // being closed out do not have an optional end tag
+        // specification in the DTD then an html error is
+        // reported.
+        //
+        if (!insertTag && stack.terminate() && (!strict || stack.elem.omitEnd())) {
+            for (TagStack s = stack.next ; s != null ; s = s.next) {
+                if (s.advance(elem)) {
+                    while (stack != s) {
+                        endTag(true);
+                    }
+                    return true;
+                }
+                if (!s.terminate() || (strict && !s.elem.omitEnd())) {
+                    break;
+                }
+            }
+        }
+
+        // Check if we know what tag is expected next.
+        // If so insert the tag.  Report an error if the
+        // tag does not have its start tag spec in the DTD as optional.
+        //
+        Element next = stack.first();
+        if (next != null && (!strict || next.omitStart()) &&
+           !(next==dtd.head && elem==dtd.pcdata) ) {
+            // System.out.println("-- omitting start tag: " + next);
+            TagElement t = makeTag(next, true);
+            legalTagContext(t);
+            startTag(t);
+            if (!next.omitStart()) {
+                error("start.missing", elem.getName());
+            }
+            return legalElementContext(elem);
+        }
+
+
+        // Traverse the list of expected elements and determine if adding
+        // any of these elements would make for a legal context.
+        //
+
+        if (!strict) {
+            ContentModel content = stack.contentModel();
+            Vector<Element> elemVec = new Vector<Element>();
+            if (content != null) {
+                content.getElements(elemVec);
+                for (Element e : elemVec) {
+                    // Ensure that this element has not been included as
+                    // part of the exclusions in the DTD.
+                    //
+                    if (stack.excluded(e.getIndex())) {
+                        continue;
+                    }
+
+                    boolean reqAtts = false;
+
+                    for (AttributeList a = e.getAttributes(); a != null ; a = a.next) {
+                        if (a.modifier == REQUIRED) {
+                            reqAtts = true;
+                            break;
+                        }
+                    }
+                    // Ensure that no tag that has required attributes
+                    // gets inserted.
+                    //
+                    if (reqAtts) {
+                        continue;
+                    }
+
+                    ContentModel m = e.getContent();
+                    if (m != null && m.first(elem)) {
+                        // System.out.println("-- adding a legal tag: " + e);
+                        TagElement t = makeTag(e, true);
+                        legalTagContext(t);
+                        startTag(t);
+                        error("start.missing", e.getName());
+                        return legalElementContext(elem);
+                    }
+                }
+            }
+        }
+
+        // Check if the stack can be terminated.  If so add the appropriate
+        // end tag.  Report an error if the tag being ended does not have its
+        // end tag spec in the DTD as optional.
+        //
+        if (stack.terminate() && (stack.elem != dtd.body) && (!strict || stack.elem.omitEnd())) {
+            // System.out.println("-- omitting end tag: " + stack.elem);
+            if (!stack.elem.omitEnd()) {
+                error("end.missing", elem.getName());
+            }
+
+            endTag(true);
+            return legalElementContext(elem);
+        }
+
+        // At this point we know that something is screwed up.
+        return false;
+    }
+
+    /**
+     * Create a legal context for a tag.
+     */
+    void legalTagContext(TagElement tag) throws ChangedCharSetException {
+        if (legalElementContext(tag.getElement())) {
+            markFirstTime(tag.getElement());
+            return;
+        }
+
+        // Avoid putting a block tag in a flow tag.
+        if (tag.breaksFlow() && (stack != null) && !stack.tag.breaksFlow()) {
+            endTag(true);
+            legalTagContext(tag);
+            return;
+        }
+
+        // Avoid putting something wierd in the head of the document.
+        for (TagStack s = stack ; s != null ; s = s.next) {
+            if (s.tag.getElement() == dtd.head) {
+                while (stack != s) {
+                    endTag(true);
+                }
+                endTag(true);
+                legalTagContext(tag);
+                return;
+            }
+        }
+
+        // Everything failed
+        error("tag.unexpected", tag.getElement().getName());
+    }
+
+    /**
+     * Error context. Something went wrong, make sure we are in
+     * the document's body context
+     */
+    void errorContext() throws ChangedCharSetException {
+        for (; (stack != null) && (stack.tag.getElement() != dtd.body) ; stack = stack.next) {
+            handleEndTag(stack.tag);
+        }
+        if (stack == null) {
+            legalElementContext(dtd.body);
+            startTag(makeTag(dtd.body, true));
+        }
+    }
+
+    /**
+     * Add a char to the string buffer.
+     */
+    void addString(int c) {
+        if (strpos  == str.length) {
+            char newstr[] = new char[str.length + 128];
+            System.arraycopy(str, 0, newstr, 0, str.length);
+            str = newstr;
+        }
+        str[strpos++] = (char)c;
+    }
+
+    /**
+     * Get the string that's been accumulated.
+     */
+    String getString(int pos) {
+        char newStr[] = new char[strpos - pos];
+        System.arraycopy(str, pos, newStr, 0, strpos - pos);
+        strpos = pos;
+        return new String(newStr);
+    }
+
+    char[] getChars(int pos) {
+        char newStr[] = new char[strpos - pos];
+        System.arraycopy(str, pos, newStr, 0, strpos - pos);
+        strpos = pos;
+        return newStr;
+    }
+
+    char[] getChars(int pos, int endPos) {
+        char newStr[] = new char[endPos - pos];
+        System.arraycopy(str, pos, newStr, 0, endPos - pos);
+        // REMIND: it's not clear whether this version should set strpos or not
+        // strpos = pos;
+        return newStr;
+    }
+
+    void resetStrBuffer() {
+        strpos = 0;
+    }
+
+    int strIndexOf(char target) {
+        for (int i = 0; i < strpos; i++) {
+            if (str[i] == target) {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    /**
+     * Skip space.
+     * [5] 297:5
+     */
+    void skipSpace() throws IOException {
+        while (true) {
+            switch (ch) {
+              case '\n':
+                ln++;
+                ch = readCh();
+                lfCount++;
+                break;
+
+              case '\r':
+                ln++;
+                if ((ch = readCh()) == '\n') {
+                    ch = readCh();
+                    crlfCount++;
+                }
+                else {
+                    crCount++;
+                }
+                break;
+              case ' ':
+              case '\t':
+                ch = readCh();
+                break;
+
+              default:
+                return;
+            }
+        }
+    }
+
+    /**
+     * Parse identifier. Uppercase characters are folded
+     * to lowercase when lower is true. Returns falsed if
+     * no identifier is found. [55] 346:17
+     */
+    boolean parseIdentifier(boolean lower) throws IOException {
+        switch (ch) {
+          case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
+          case 'G': case 'H': case 'I': case 'J': case 'K': case 'L':
+          case 'M': case 'N': case 'O': case 'P': case 'Q': case 'R':
+          case 'S': case 'T': case 'U': case 'V': case 'W': case 'X':
+          case 'Y': case 'Z':
+            if (lower) {
+                ch = 'a' + (ch - 'A');
+            }
+
+          case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
+          case 'g': case 'h': case 'i': case 'j': case 'k': case 'l':
+          case 'm': case 'n': case 'o': case 'p': case 'q': case 'r':
+          case 's': case 't': case 'u': case 'v': case 'w': case 'x':
+          case 'y': case 'z':
+            break;
+
+          default:
+            return false;
+        }
+
+        while (true) {
+            addString(ch);
+
+            switch (ch = readCh()) {
+              case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
+              case 'G': case 'H': case 'I': case 'J': case 'K': case 'L':
+              case 'M': case 'N': case 'O': case 'P': case 'Q': case 'R':
+              case 'S': case 'T': case 'U': case 'V': case 'W': case 'X':
+              case 'Y': case 'Z':
+                if (lower) {
+                    ch = 'a' + (ch - 'A');
+                }
+
+              case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
+              case 'g': case 'h': case 'i': case 'j': case 'k': case 'l':
+              case 'm': case 'n': case 'o': case 'p': case 'q': case 'r':
+              case 's': case 't': case 'u': case 'v': case 'w': case 'x':
+              case 'y': case 'z':
+
+              case '0': case '1': case '2': case '3': case '4':
+              case '5': case '6': case '7': case '8': case '9':
+
+              case '.': case '-':
+
+              case '_': // not officially allowed
+                break;
+
+              default:
+                return true;
+            }
+        }
+    }
+
+    /**
+     * Parse an entity reference. [59] 350:17
+     */
+    private char[] parseEntityReference() throws IOException {
+        int pos = strpos;
+
+        if ((ch = readCh()) == '#') {
+            int n = 0;
+            ch = readCh();
+            if ((ch >= '0') && (ch <= '9') ||
+                    ch == 'x' || ch == 'X') {
+
+                if ((ch >= '0') && (ch <= '9')) {
+                    // parse decimal reference
+                    while ((ch >= '0') && (ch <= '9')) {
+                        n = (n * 10) + ch - '0';
+                        ch = readCh();
+                    }
+                } else {
+                    // parse hexadecimal reference
+                    ch = readCh();
+                    char lch = (char) Character.toLowerCase(ch);
+                    while ((lch >= '0') && (lch <= '9') ||
+                            (lch >= 'a') && (lch <= 'f')) {
+                        if (lch >= '0' && lch <= '9') {
+                            n = (n * 16) + lch - '0';
+                        } else {
+                            n = (n * 16) + lch - 'a' + 10;
+                        }
+                        ch = readCh();
+                        lch = (char) Character.toLowerCase(ch);
+                    }
+                }
+                switch (ch) {
+                    case '\n':
+                        ln++;
+                        ch = readCh();
+                        lfCount++;
+                        break;
+
+                    case '\r':
+                        ln++;
+                        if ((ch = readCh()) == '\n') {
+                            ch = readCh();
+                            crlfCount++;
+                        }
+                        else {
+                            crCount++;
+                        }
+                        break;
+
+                    case ';':
+                        ch = readCh();
+                        break;
+                }
+                char data[] = mapNumericReference(n);
+                return data;
+            }
+            addString('#');
+            if (!parseIdentifier(false)) {
+                error("ident.expected");
+                strpos = pos;
+                char data[] = {'&', '#'};
+                return data;
+            }
+        } else if (!parseIdentifier(false)) {
+            char data[] = {'&'};
+            return data;
+        }
+
+        boolean semicolon = false;
+
+        switch (ch) {
+          case '\n':
+            ln++;
+            ch = readCh();
+            lfCount++;
+            break;
+
+          case '\r':
+            ln++;
+            if ((ch = readCh()) == '\n') {
+                ch = readCh();
+                crlfCount++;
+            }
+            else {
+                crCount++;
+            }
+            break;
+
+          case ';':
+            semicolon = true;
+
+            ch = readCh();
+            break;
+        }
+
+        String nm = getString(pos);
+        Entity ent = dtd.getEntity(nm);
+
+        // entities are case sensitive - however if strict
+        // is false then we will try to make a match by
+        // converting the string to all lowercase.
+        //
+        if (!strict && (ent == null)) {
+            ent = dtd.getEntity(nm.toLowerCase());
+        }
+        if ((ent == null) || !ent.isGeneral()) {
+
+            if (nm.length() == 0) {
+                error("invalid.entref", nm);
+                return new char[0];
+            }
+            /* given that there is not a match restore the entity reference */
+            String str = "&" + nm + (semicolon ? ";" : "");
+
+            char b[] = new char[str.length()];
+            str.getChars(0, b.length, b, 0);
+            return b;
+        }
+        return ent.getData();
+    }
+
+    /**
+     * Converts numeric character reference to char array.
+     *
+     * Normally the code in a reference should be always converted
+     * to the Unicode character with the same code, but due to
+     * wide usage of Cp1252 charset most browsers map numeric references
+     * in the range 130-159 (which are control chars in Unicode set)
+     * to displayable characters with other codes.
+     *
+     * @param c the code of numeric character reference.
+     * @return a char array corresponding to the reference code.
+     */
+    private char[] mapNumericReference(int c) {
+        char[] data;
+        if (c >= 0xffff) { // outside unicode BMP.
+            try {
+                data = Character.toChars(c);
+            } catch (IllegalArgumentException e) {
+                data = new char[0];
+            }
+        } else {
+            data = new char[1];
+            data[0] = (c < 130 || c > 159) ? (char) c : cp1252Map[c - 130];
+        }
+        return data;
+    }
+
+    /**
+     * Parse a comment. [92] 391:7
+     */
+    void parseComment() throws IOException {
+
+        while (true) {
+            int c = ch;
+            switch (c) {
+              case '-':
+                  /** Presuming that the start string of a comment "<!--" has
+                      already been parsed, the '-' character is valid only as
+                      part of a comment termination and further more it must
+                      be present in even numbers. Hence if strict is true, we
+                      presume the comment has been terminated and return.
+                      However if strict is false, then there is no even number
+                      requirement and this character can appear anywhere in the
+                      comment.  The parser reads on until it sees the following
+                      pattern: "-->" or "--!>".
+                   **/
+                if (!strict && (strpos != 0) && (str[strpos - 1] == '-')) {
+                    if ((ch = readCh()) == '>') {
+                        return;
+                    }
+                    if (ch == '!') {
+                        if ((ch = readCh()) == '>') {
+                            return;
+                        } else {
+                            /* to account for extra read()'s that happened */
+                            addString('-');
+                            addString('!');
+                            continue;
+                        }
+                    }
+                    break;
+                }
+
+                if ((ch = readCh()) == '-') {
+                    ch = readCh();
+                    if (strict || ch == '>') {
+                        return;
+                    }
+                    if (ch == '!') {
+                        if ((ch = readCh()) == '>') {
+                            return;
+                        } else {
+                            /* to account for extra read()'s that happened */
+                            addString('-');
+                            addString('!');
+                            continue;
+                        }
+                    }
+                    /* to account for the extra read() */
+                    addString('-');
+                }
+                break;
+
+              case -1:
+                  handleEOFInComment();
+                  return;
+
+              case '\n':
+                ln++;
+                ch = readCh();
+                lfCount++;
+                break;
+
+              case '>':
+                ch = readCh();
+                break;
+
+              case '\r':
+                ln++;
+                if ((ch = readCh()) == '\n') {
+                    ch = readCh();
+                    crlfCount++;
+                }
+                else {
+                    crCount++;
+                }
+                c = '\n';
+                break;
+              default:
+                ch = readCh();
+                break;
+            }
+
+            addString(c);
+        }
+    }
+
+    /**
+     * Parse literal content. [46] 343:1 and [47] 344:1
+     */
+    void parseLiteral(boolean replace) throws IOException {
+        while (true) {
+            int c = ch;
+            switch (c) {
+              case -1:
+                error("eof.literal", stack.elem.getName());
+                endTag(true);
+                return;
+
+              case '>':
+                ch = readCh();
+                int i = textpos - (stack.elem.name.length() + 2), j = 0;
+
+                // match end tag
+                if ((i >= 0) && (text[i++] == '<') && (text[i] == '/')) {
+                    while ((++i < textpos) &&
+                           (Character.toLowerCase(text[i]) == stack.elem.name.charAt(j++)));
+                    if (i == textpos) {
+                        textpos -= (stack.elem.name.length() + 2);
+                        if ((textpos > 0) && (text[textpos-1] == '\n')) {
+                            textpos--;
+                        }
+                        endTag(false);
+                        return;
+                    }
+                }
+                break;
+
+              case '&':
+                char data[] = parseEntityReference();
+                if (textpos + data.length > text.length) {
+                    char newtext[] = new char[Math.max(textpos + data.length + 128, text.length * 2)];
+                    System.arraycopy(text, 0, newtext, 0, text.length);
+                    text = newtext;
+                }
+                System.arraycopy(data, 0, text, textpos, data.length);
+                textpos += data.length;
+                continue;
+
+              case '\n':
+                ln++;
+                ch = readCh();
+                lfCount++;
+                break;
+
+              case '\r':
+                ln++;
+                if ((ch = readCh()) == '\n') {
+                    ch = readCh();
+                    crlfCount++;
+                }
+                else {
+                    crCount++;
+                }
+                c = '\n';
+                break;
+              default:
+                ch = readCh();
+                break;
+            }
+
+            // output character
+            if (textpos == text.length) {
+                char newtext[] = new char[text.length + 128];
+                System.arraycopy(text, 0, newtext, 0, text.length);
+                text = newtext;
+            }
+            text[textpos++] = (char)c;
+        }
+    }
+
+    /**
+     * Parse attribute value. [33] 331:1
+     */
+    String parseAttributeValue(boolean lower) throws IOException {
+        int delim = -1;
+
+        // Check for a delimiter
+        switch(ch) {
+          case '\'':
+          case '"':
+            delim = ch;
+            ch = readCh();
+            break;
+        }
+
+        // Parse the rest of the value
+        while (true) {
+            int c = ch;
+
+            switch (c) {
+              case '\n':
+                ln++;
+                ch = readCh();
+                lfCount++;
+                if (delim < 0) {
+                    return getString(0);
+                }
+                break;
+
+              case '\r':
+                ln++;
+
+                if ((ch = readCh()) == '\n') {
+                    ch = readCh();
+                    crlfCount++;
+                }
+                else {
+                    crCount++;
+                }
+                if (delim < 0) {
+                    return getString(0);
+                }
+                break;
+
+              case '\t':
+                  if (delim < 0)
+                      c = ' ';
+              case ' ':
+                ch = readCh();
+                if (delim < 0) {
+                    return getString(0);
+                }
+                break;
+
+              case '>':
+              case '<':
+                if (delim < 0) {
+                    return getString(0);
+                }
+                ch = readCh();
+                break;
+
+              case '\'':
+              case '"':
+                ch = readCh();
+                if (c == delim) {
+                    return getString(0);
+                } else if (delim == -1) {
+                    error("attvalerr");
+                    if (strict || ch == ' ') {
+                        return getString(0);
+                    } else {
+                        continue;
+                    }
+                }
+                break;
+
+            case '=':
+                if (delim < 0) {
+                    /* In SGML a construct like <img src=/cgi-bin/foo?x=1>
+                       is considered invalid since an = sign can only be contained
+                       in an attributes value if the string is quoted.
+                       */
+                    error("attvalerr");
+                    /* If strict is true then we return with the string we have thus far.
+                       Otherwise we accept the = sign as part of the attribute's value and
+                       process the rest of the img tag. */
+                    if (strict) {
+                        return getString(0);
+                    }
+                }
+                ch = readCh();
+                break;
+
+              case '&':
+                if (strict && delim < 0) {
+                    ch = readCh();
+                    break;
+                }
+
+                char data[] = parseEntityReference();
+                for (int i = 0 ; i < data.length ; i++) {
+                    c = data[i];
+                    addString((lower && (c >= 'A') && (c <= 'Z')) ? 'a' + c - 'A' : c);
+                }
+                continue;
+
+              case -1:
+                return getString(0);
+
+              default:
+                if (lower && (c >= 'A') && (c <= 'Z')) {
+                    c = 'a' + c - 'A';
+                }
+                ch = readCh();
+                break;
+            }
+            addString(c);
+        }
+    }
+
+
+    /**
+     * Parse attribute specification List. [31] 327:17
+     */
+    void parseAttributeSpecificationList(Element elem) throws IOException {
+
+        while (true) {
+            skipSpace();
+
+            switch (ch) {
+              case '/':
+              case '>':
+              case '<':
+              case -1:
+                return;
+
+              case '-':
+                if ((ch = readCh()) == '-') {
+                    ch = readCh();
+                    parseComment();
+                    strpos = 0;
+                } else {
+                    error("invalid.tagchar", "-", elem.getName());
+                    ch = readCh();
+                }
+                continue;
+            }
+
+            AttributeList att;
+            String attname;
+            String attvalue;
+
+            if (parseIdentifier(true)) {
+                attname = getString(0);
+                skipSpace();
+                if (ch == '=') {
+                    ch = readCh();
+                    skipSpace();
+                    att = elem.getAttribute(attname);
+//  Bug ID 4102750
+//  Load the NAME of an Attribute Case Sensitive
+//  The case of the NAME  must be intact
+//  MG 021898
+                    attvalue = parseAttributeValue((att != null) && (att.type != CDATA) && (att.type != NOTATION) && (att.type != NAME));
+//                  attvalue = parseAttributeValue((att != null) && (att.type != CDATA) && (att.type != NOTATION));
+                } else {
+                    attvalue = attname;
+                    att = elem.getAttributeByValue(attvalue);
+                    if (att == null) {
+                        att = elem.getAttribute(attname);
+                        if (att != null) {
+                            attvalue = att.getValue();
+                        }
+                        else {
+                            // Make it null so that NULL_ATTRIBUTE_VALUE is
+                            // used
+                            attvalue = null;
+                        }
+                    }
+                }
+            } else if (!strict && ch == ',') { // allows for comma separated attribute-value pairs
+                ch = readCh();
+                continue;
+            } else if (!strict && ch == '"') { // allows for quoted attributes
+                ch = readCh();
+                skipSpace();
+                if (parseIdentifier(true)) {
+                    attname = getString(0);
+                    if (ch == '"') {
+                        ch = readCh();
+                    }
+                    skipSpace();
+                    if (ch == '=') {
+                        ch = readCh();
+                        skipSpace();
+                        att = elem.getAttribute(attname);
+                        attvalue = parseAttributeValue((att != null) &&
+                                                (att.type != CDATA) &&
+                                                (att.type != NOTATION));
+                    } else {
+                        attvalue = attname;
+                        att = elem.getAttributeByValue(attvalue);
+                        if (att == null) {
+                            att = elem.getAttribute(attname);
+                            if (att != null) {
+                                attvalue = att.getValue();
+                            }
+                        }
+                    }
+                } else {
+                    char str[] = {(char)ch};
+                    error("invalid.tagchar", new String(str), elem.getName());
+                    ch = readCh();
+                    continue;
+                }
+            } else if (!strict && (attributes.isEmpty()) && (ch == '=')) {
+                ch = readCh();
+                skipSpace();
+                attname = elem.getName();
+                att = elem.getAttribute(attname);
+                attvalue = parseAttributeValue((att != null) &&
+                                               (att.type != CDATA) &&
+                                               (att.type != NOTATION));
+            } else if (!strict && (ch == '=')) {
+                ch = readCh();
+                skipSpace();
+                attvalue = parseAttributeValue(true);
+                error("attvalerr");
+                return;
+            } else {
+                char str[] = {(char)ch};
+                error("invalid.tagchar", new String(str), elem.getName());
+                if (!strict) {
+                    ch = readCh();
+                    continue;
+                } else {
+                    return;
+                }
+            }
+
+            if (att != null) {
+                attname = att.getName();
+            } else {
+                error("invalid.tagatt", attname, elem.getName());
+            }
+
+            // Check out the value
+            if (attributes.isDefined(attname)) {
+                error("multi.tagatt", attname, elem.getName());
+            }
+            if (attvalue == null) {
+                attvalue = ((att != null) && (att.value != null)) ? att.value :
+                    HTML.NULL_ATTRIBUTE_VALUE;
+            } else if ((att != null) && (att.values != null) && !att.values.contains(attvalue)) {
+                error("invalid.tagattval", attname, elem.getName());
+            }
+            HTML.Attribute attkey = HTML.getAttributeKey(attname);
+            if (attkey == null) {
+                attributes.addAttribute(attname, attvalue);
+            } else {
+                attributes.addAttribute(attkey, attvalue);
+            }
+        }
+    }
+
+    /**
+     * Parses th Document Declaration Type markup declaration.
+     * Currently ignores it.
+     */
+    public String parseDTDMarkup() throws IOException {
+
+        StringBuilder strBuff = new StringBuilder();
+        ch = readCh();
+        while(true) {
+            switch (ch) {
+            case '>':
+                ch = readCh();
+                return strBuff.toString();
+            case -1:
+                error("invalid.markup");
+                return strBuff.toString();
+            case '\n':
+                ln++;
+                ch = readCh();
+                lfCount++;
+                break;
+            case '"':
+                ch = readCh();
+                break;
+            case '\r':
+                ln++;
+                if ((ch = readCh()) == '\n') {
+                    ch = readCh();
+                    crlfCount++;
+                }
+                else {
+                    crCount++;
+                }
+                break;
+            default:
+                strBuff.append((char)(ch & 0xFF));
+                ch = readCh();
+                break;
+            }
+        }
+    }
+
+    /**
+     * Parse markup declarations.
+     * Currently only handles the Document Type Declaration markup.
+     * Returns true if it is a markup declaration false otherwise.
+     */
+    protected boolean parseMarkupDeclarations(StringBuffer strBuff) throws IOException {
+
+        /* Currently handles only the DOCTYPE */
+        if ((strBuff.length() == "DOCTYPE".length()) &&
+            (strBuff.toString().toUpperCase().equals("DOCTYPE"))) {
+            parseDTDMarkup();
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Parse an invalid tag.
+     */
+    void parseInvalidTag() throws IOException {
+        // ignore all data upto the close bracket '>'
+        while (true) {
+            skipSpace();
+            switch (ch) {
+              case '>':
+              case -1:
+                  ch = readCh();
+                return;
+              case '<':
+                  return;
+              default:
+                  ch = readCh();
+
+            }
+        }
+    }
+
+    /**
+     * Parse a start or end tag.
+     */
+    void parseTag() throws IOException {
+        Element elem;
+        boolean net = false;
+        boolean warned = false;
+        boolean unknown = false;
+
+        switch (ch = readCh()) {
+          case '!':
+            switch (ch = readCh()) {
+              case '-':
+                // Parse comment. [92] 391:7
+                while (true) {
+                    if (ch == '-') {
+                        if (!strict || ((ch = readCh()) == '-')) {
+                            ch = readCh();
+                            if (!strict && ch == '-') {
+                                ch = readCh();
+                            }
+                            // send over any text you might see
+                            // before parsing and sending the
+                            // comment
+                            if (textpos != 0) {
+                                char newtext[] = new char[textpos];
+                                System.arraycopy(text, 0, newtext, 0, textpos);
+                                handleText(newtext);
+                                lastBlockStartPos = currentBlockStartPos;
+                                textpos = 0;
+                            }
+                            parseComment();
+                            last = makeTag(dtd.getElement("comment"), true);
+                            handleComment(getChars(0));
+                            continue;
+                        } else if (!warned) {
+                            warned = true;
+                            error("invalid.commentchar", "-");
+                        }
+                    }
+                    skipSpace();
+                    switch (ch) {
+                      case '-':
+                        continue;
+                      case '>':
+                        ch = readCh();
+                      case -1:
+                        return;
+                      default:
+                        ch = readCh();
+                        if (!warned) {
+                            warned = true;
+                            error("invalid.commentchar",
+                                  String.valueOf((char)ch));
+                        }
+                        break;
+                    }
+                }
+
+              default:
+                // deal with marked sections
+                StringBuffer strBuff = new StringBuffer();
+                while (true) {
+                    strBuff.append((char)ch);
+                    if (parseMarkupDeclarations(strBuff)) {
+                        return;
+                    }
+                    switch(ch) {
+                      case '>':
+                        ch = readCh();
+                      case -1:
+                        error("invalid.markup");
+                        return;
+                      case '\n':
+                        ln++;
+                        ch = readCh();
+                        lfCount++;
+                        break;
+                      case '\r':
+                        ln++;
+                        if ((ch = readCh()) == '\n') {
+                            ch = readCh();
+                            crlfCount++;
+                        }
+                        else {
+                            crCount++;
+                        }
+                        break;
+
+                      default:
+                        ch = readCh();
+                        break;
+                    }
+                }
+            }
+
+          case '/':
+            // parse end tag [19] 317:4
+            switch (ch = readCh()) {
+              case '>':
+                ch = readCh();
+              case '<':
+                // empty end tag. either </> or </<
+                if (recent == null) {
+                    error("invalid.shortend");
+                    return;
+                }
+                elem = recent;
+                break;
+
+              default:
+                if (!parseIdentifier(true)) {
+                    error("expected.endtagname");
+                    return;
+                }
+                skipSpace();
+                switch (ch) {
+                  case '>':
+                    ch = readCh();
+                  case '<':
+                    break;
+
+                  default:
+                    error("expected", "'>'");
+                    while ((ch != -1) && (ch != '\n') && (ch != '>')) {
+                        ch = readCh();
+                    }
+                    if (ch == '>') {
+                        ch = readCh();
+                    }
+                    break;
+                }
+                String elemStr = getString(0);
+                if (!dtd.elementExists(elemStr)) {
+                    error("end.unrecognized", elemStr);
+                    // Ignore RE before end tag
+                    if ((textpos > 0) && (text[textpos-1] == '\n')) {
+                        textpos--;
+                    }
+                    elem = dtd.getElement("unknown");
+                    elem.name = elemStr;
+                    unknown = true;
+                } else {
+                    elem = dtd.getElement(elemStr);
+                }
+                break;
+            }
+
+
+            // If the stack is null, we're seeing end tags without any begin
+            // tags.  Ignore them.
+
+            if (stack == null) {
+                error("end.extra.tag", elem.getName());
+                return;
+            }
+
+            // Ignore RE before end tag
+            if ((textpos > 0) && (text[textpos-1] == '\n')) {
+                // In a pre tag, if there are blank lines
+                // we do not want to remove the newline
+                // before the end tag.  Hence this code.
+                //
+                if (stack.pre) {
+                    if ((textpos > 1) && (text[textpos-2] != '\n')) {
+                        textpos--;
+                    }
+                } else {
+                    textpos--;
+                }
+            }
+
+            // If the end tag is a form, since we did not put it
+            // on the tag stack, there is no corresponding start
+            // start tag to find. Hence do not touch the tag stack.
+            //
+
+            /*
+            if (!strict && elem.getName().equals("form")) {
+                if (lastFormSent != null) {
+                    handleEndTag(lastFormSent);
+                    return;
+                } else {
+                    // do nothing.
+                    return;
+                }
+            }
+            */
+
+            if (unknown) {
+                // we will not see a corresponding start tag
+                // on the the stack.  If we are seeing an
+                // end tag, lets send this on as an empty
+                // tag with the end tag attribute set to
+                // true.
+                TagElement t = makeTag(elem);
+                handleText(t);
+                attributes.addAttribute(HTML.Attribute.ENDTAG, "true");
+                handleEmptyTag(makeTag(elem));
+                unknown = false;
+                return;
+            }
+
+            // find the corresponding start tag
+
+            // A commonly occurring error appears to be the insertion
+            // of extra end tags in a table.  The intent here is ignore
+            // such extra end tags.
+            //
+            if (!strict) {
+                String stackElem = stack.elem.getName();
+
+                if (stackElem.equals("table")) {
+                    // If it is not a valid end tag ignore it and return
+                    //
+                    if (!elem.getName().equals(stackElem)) {
+                        error("tag.ignore", elem.getName());
+                        return;
+                    }
+                }
+
+
+
+                if (stackElem.equals("tr") ||
+                    stackElem.equals("td")) {
+                    if ((!elem.getName().equals("table")) &&
+                        (!elem.getName().equals(stackElem))) {
+                        error("tag.ignore", elem.getName());
+                        return;
+                    }
+                }
+            }
+            TagStack sp = stack;
+
+            while ((sp != null) && (elem != sp.elem)) {
+                sp = sp.next;
+            }
+            if (sp == null) {
+                error("unmatched.endtag", elem.getName());
+                return;
+            }
+
+            // People put font ending tags in the darndest places.
+            // Don't close other contexts based on them being between
+            // a font tag and the corresponding end tag.  Instead,
+            // ignore the end tag like it doesn't exist and allow the end
+            // of the document to close us out.
+            String elemName = elem.getName();
+            if (stack != sp &&
+                (elemName.equals("font") ||
+                 elemName.equals("center"))) {
+
+                // Since closing out a center tag can have real wierd
+                // effects on the formatting,  make sure that tags
+                // for which omitting an end tag is legimitate
+                // get closed out.
+                //
+                if (elemName.equals("center")) {
+                    while(stack.elem.omitEnd() && stack != sp) {
+                        endTag(true);
+                    }
+                    if (stack.elem == elem) {
+                        endTag(false);
+                    }
+                }
+                return;
+            }
+            // People do the same thing with center tags.  In this
+            // case we would like to close off the center tag but
+            // not necessarily all enclosing tags.
+
+
+
+            // end tags
+            while (stack != sp) {
+                endTag(true);
+            }
+
+            endTag(false);
+            return;
+
+          case -1:
+            error("eof");
+            return;
+        }
+
+        // start tag [14] 314:1
+        if (!parseIdentifier(true)) {
+            elem = recent;
+            if ((ch != '>') || (elem == null)) {
+                error("expected.tagname");
+                return;
+            }
+        } else {
+            String elemStr = getString(0);
+
+            if (elemStr.equals("image")) {
+                elemStr = "img";
+            }
+
+            /* determine if this element is part of the dtd. */
+
+            if (!dtd.elementExists(elemStr)) {
+                //              parseInvalidTag();
+                error("tag.unrecognized ", elemStr);
+                elem = dtd.getElement("unknown");
+                elem.name = elemStr;
+                unknown = true;
+            } else {
+                elem = dtd.getElement(elemStr);
+            }
+        }
+
+        // Parse attributes
+        parseAttributeSpecificationList(elem);
+
+        switch (ch) {
+          case '/':
+            net = true;
+          case '>':
+            ch = readCh();
+            if (ch == '>' && net) {
+                ch = readCh();
+            }
+          case '<':
+            break;
+
+          default:
+            error("expected", "'>'");
+            break;
+        }
+
+        if (!strict) {
+          if (elem.getName().equals("script")) {
+            error("javascript.unsupported");
+          }
+        }
+
+        // ignore RE after start tag
+        //
+        if (!elem.isEmpty())  {
+            if (ch == '\n') {
+                ln++;
+                lfCount++;
+                ch = readCh();
+            } else if (ch == '\r') {
+                ln++;
+                if ((ch = readCh()) == '\n') {
+                    ch = readCh();
+                    crlfCount++;
+                }
+                else {
+                    crCount++;
+                }
+            }
+        }
+
+        // ensure a legal context for the tag
+        TagElement tag = makeTag(elem, false);
+
+
+        /** In dealing with forms, we have decided to treat
+            them as legal in any context.  Also, even though
+            they do have a start and an end tag, we will
+            not put this tag on the stack.  This is to deal
+            several pages in the web oasis that choose to
+            start and end forms in any possible location. **/
+
+        /*
+        if (!strict && elem.getName().equals("form")) {
+            if (lastFormSent == null) {
+                lastFormSent = tag;
+            } else {
+                handleEndTag(lastFormSent);
+                lastFormSent = tag;
+            }
+        } else {
+        */
+            // Smlly, if a tag is unknown, we will apply
+            // no legalTagContext logic to it.
+            //
+            if (!unknown) {
+                legalTagContext(tag);
+
+                // If skip tag is true,  this implies that
+                // the tag was illegal and that the error
+                // recovery strategy adopted is to ignore
+                // the tag.
+                if (!strict && skipTag) {
+                    skipTag = false;
+                    return;
+                }
+            }
+            /*
+        }
+            */
+
+        startTag(tag);
+
+        if (!elem.isEmpty()) {
+            switch (elem.getType()) {
+              case CDATA:
+                parseLiteral(false);
+                break;
+              case RCDATA:
+                parseLiteral(true);
+                break;
+              default:
+                if (stack != null) {
+                    stack.net = net;
+                }
+                break;
+            }
+        }
+    }
+
+    private static final String START_COMMENT = "<!--";
+    private static final String END_COMMENT = "-->";
+    private static final char[] SCRIPT_END_TAG = "</script>".toCharArray();
+    private static final char[] SCRIPT_END_TAG_UPPER_CASE =
+                                        "</SCRIPT>".toCharArray();
+
+    void parseScript() throws IOException {
+        char[] charsToAdd = new char[SCRIPT_END_TAG.length];
+        boolean insideComment = false;
+
+        /* Here, ch should be the first character after <script> */
+        while (true) {
+            int i = 0;
+            while (!insideComment && i < SCRIPT_END_TAG.length
+                    && (SCRIPT_END_TAG[i] == ch
+                    || SCRIPT_END_TAG_UPPER_CASE[i] == ch)) {
+                charsToAdd[i] = (char) ch;
+                ch = readCh();
+                i++;
+            }
+            if (i == SCRIPT_END_TAG.length) {
+                return;
+            }
+
+            if (!insideComment && i == 1 && charsToAdd[0] == START_COMMENT.charAt(0)) {
+                // it isn't end script tag, but may be it's start comment tag?
+                while (i < START_COMMENT.length()
+                        && START_COMMENT.charAt(i) == ch) {
+                    charsToAdd[i] = (char) ch;
+                    ch = readCh();
+                    i++;
+                }
+                if (i == START_COMMENT.length()) {
+                    insideComment = true;
+                }
+            }
+            if (insideComment) {
+                while (i < END_COMMENT.length()
+                        && END_COMMENT.charAt(i) == ch) {
+                    charsToAdd[i] = (char) ch;
+                    ch = readCh();
+                    i++;
+                }
+                if (i == END_COMMENT.length()) {
+                    insideComment = false;
+                }
+            }
+
+            /* To account for extra read()'s that happened */
+            if (i > 0) {
+                for (int j = 0; j < i; j++) {
+                    addString(charsToAdd[j]);
+                }
+                continue;
+            }
+            switch (ch) {
+            case -1:
+                error("eof.script");
+                return;
+            case '\n':
+                ln++;
+                ch = readCh();
+                lfCount++;
+                addString('\n');
+                break;
+            case '\r':
+                ln++;
+                if ((ch = readCh()) == '\n') {
+                    ch = readCh();
+                    crlfCount++;
+                } else {
+                    crCount++;
+                }
+                addString('\n');
+                break;
+            default:
+                addString(ch);
+                ch = readCh();
+                break;
+            } // switch
+        } // while
+    }
+
+    /**
+     * Parse Content. [24] 320:1
+     */
+    void parseContent() throws IOException {
+        Thread curThread = Thread.currentThread();
+
+        for (;;) {
+            if (curThread.isInterrupted()) {
+                curThread.interrupt(); // resignal the interrupt
+                break;
+            }
+
+            int c = ch;
+            currentBlockStartPos = currentPosition;
+
+            if (recent == dtd.script) { // means: if after starting <script> tag
+
+                /* Here, ch has to be the first character after <script> */
+                parseScript();
+                last = makeTag(dtd.getElement("comment"), true);
+
+                /* Remove leading and trailing HTML comment declarations */
+                String str = new String(getChars(0)).trim();
+                int minLength = START_COMMENT.length() + END_COMMENT.length();
+                if (str.startsWith(START_COMMENT) && str.endsWith(END_COMMENT)
+                       && str.length() >= (minLength)) {
+                    str = str.substring(START_COMMENT.length(),
+                                      str.length() - END_COMMENT.length());
+                }
+
+                /* Handle resulting chars as comment */
+                handleComment(str.toCharArray());
+                endTag(false);
+                lastBlockStartPos = currentPosition;
+
+                continue;
+            } else {
+                switch (c) {
+                  case '<':
+                    parseTag();
+                    lastBlockStartPos = currentPosition;
+                    continue;
+
+                  case '/':
+                    ch = readCh();
+                    if ((stack != null) && stack.net) {
+                        // null end tag.
+                        endTag(false);
+                        continue;
+                    } else if (textpos == 0) {
+                        if (!legalElementContext(dtd.pcdata)) {
+                            error("unexpected.pcdata");
+                        }
+                        if (last.breaksFlow()) {
+                            space = false;
+                        }
+                    }
+                    break;
+
+                  case -1:
+                    return;
+
+                  case '&':
+                    if (textpos == 0) {
+                        if (!legalElementContext(dtd.pcdata)) {
+                            error("unexpected.pcdata");
+                        }
+                        if (last.breaksFlow()) {
+                            space = false;
+                        }
+                    }
+                    char data[] = parseEntityReference();
+                    if (textpos + data.length + 1 > text.length) {
+                        char newtext[] = new char[Math.max(textpos + data.length + 128, text.length * 2)];
+                        System.arraycopy(text, 0, newtext, 0, text.length);
+                        text = newtext;
+                    }
+                    if (space) {
+                        space = false;
+                        text[textpos++] = ' ';
+                    }
+                    System.arraycopy(data, 0, text, textpos, data.length);
+                    textpos += data.length;
+                    ignoreSpace = false;
+                    continue;
+
+                  case '\n':
+                    ln++;
+                    lfCount++;
+                    ch = readCh();
+                    if ((stack != null) && stack.pre) {
+                        break;
+                    }
+                    if (textpos == 0) {
+                        lastBlockStartPos = currentPosition;
+                    }
+                    if (!ignoreSpace) {
+                        space = true;
+                    }
+                    continue;
+
+                  case '\r':
+                    ln++;
+                    c = '\n';
+                    if ((ch = readCh()) == '\n') {
+                        ch = readCh();
+                        crlfCount++;
+                    }
+                    else {
+                        crCount++;
+                    }
+                    if ((stack != null) && stack.pre) {
+                        break;
+                    }
+                    if (textpos == 0) {
+                        lastBlockStartPos = currentPosition;
+                    }
+                    if (!ignoreSpace) {
+                        space = true;
+                    }
+                    continue;
+
+
+                  case '\t':
+                  case ' ':
+                    ch = readCh();
+                    if ((stack != null) && stack.pre) {
+                        break;
+                    }
+                    if (textpos == 0) {
+                        lastBlockStartPos = currentPosition;
+                    }
+                    if (!ignoreSpace) {
+                        space = true;
+                    }
+                    continue;
+
+                  default:
+                    if (textpos == 0) {
+                        if (!legalElementContext(dtd.pcdata)) {
+                            error("unexpected.pcdata");
+                        }
+                        if (last.breaksFlow()) {
+                            space = false;
+                        }
+                    }
+                    ch = readCh();
+                    break;
+                }
+            }
+
+            // enlarge buffer if needed
+            if (textpos + 2 > text.length) {
+                char newtext[] = new char[text.length + 128];
+                System.arraycopy(text, 0, newtext, 0, text.length);
+                text = newtext;
+            }
+
+            // output pending space
+            if (space) {
+                if (textpos == 0) {
+                    lastBlockStartPos--;
+                }
+                text[textpos++] = ' ';
+                space = false;
+            }
+            text[textpos++] = (char)c;
+            ignoreSpace = false;
+        }
+    }
+
+    /**
+     * Returns the end of line string. This will return the end of line
+     * string that has been encountered the most, one of \r, \n or \r\n.
+     */
+    String getEndOfLineString() {
+        if (crlfCount >= crCount) {
+            if (lfCount >= crlfCount) {
+                return "\n";
+            }
+            else {
+                return "\r\n";
+            }
+        }
+        else {
+            if (crCount > lfCount) {
+                return "\r";
+            }
+            else {
+                return "\n";
+            }
+        }
+    }
+
+    /**
+     * Parse an HTML stream, given a DTD.
+     */
+    public synchronized void parse(Reader in) throws IOException {
+        this.in = in;
+
+        this.ln = 1;
+
+        seenHtml = false;
+        seenHead = false;
+        seenBody = false;
+
+        crCount = lfCount = crlfCount = 0;
+
+        try {
+            ch = readCh();
+            text = new char[1024];
+            str = new char[128];
+
+            parseContent();
+            // NOTE: interruption may have occurred.  Control flows out
+            // of here normally.
+            while (stack != null) {
+                endTag(true);
+            }
+            in.close();
+        } catch (IOException e) {
+            errorContext();
+            error("ioexception");
+            throw e;
+        } catch (Exception e) {
+            errorContext();
+            error("exception", e.getClass().getName(), e.getMessage());
+            e.printStackTrace();
+        } catch (ThreadDeath e) {
+            errorContext();
+            error("terminated");
+            e.printStackTrace();
+            throw e;
+        } finally {
+            for (; stack != null ; stack = stack.next) {
+                handleEndTag(stack.tag);
+            }
+
+            text = null;
+            str = null;
+        }
+
+    }
+
+
+    /*
+     * Input cache.  This is much faster than calling down to a synchronized
+     * method of BufferedReader for each byte.  Measurements done 5/30/97
+     * show that there's no point in having a bigger buffer:  Increasing
+     * the buffer to 8192 had no measurable impact for a program discarding
+     * one character at a time (reading from an http URL to a local machine).
+     * NOTE: If the current encoding is bogus, and we read too much
+     * (past the content-type) we may suffer a MalformedInputException. For
+     * this reason the initial size is 1 and when the body is encountered the
+     * size is adjusted to 256.
+     */
+    private char buf[] = new char[1];
+    private int pos;
+    private int len;
+    /*
+        tracks position relative to the beginning of the
+        document.
+    */
+    private int currentPosition;
+
+
+    private final int readCh() throws IOException {
+
+        if (pos >= len) {
+
+            // This loop allows us to ignore interrupts if the flag
+            // says so
+            for (;;) {
+                try {
+                    len = in.read(buf);
+                    break;
+                } catch (InterruptedIOException ex) {
+                    throw ex;
+                }
+            }
+
+            if (len <= 0) {
+                return -1;      // eof
+            }
+            pos = 0;
+        }
+        ++currentPosition;
+
+        return buf[pos++];
+    }
+
+
+    protected int getCurrentPos() {
+        return currentPosition;
+    }
+}

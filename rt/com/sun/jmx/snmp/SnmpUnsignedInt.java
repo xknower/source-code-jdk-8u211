@@ -1,124 +1,125 @@
-/*     */ package com.sun.jmx.snmp;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public abstract class SnmpUnsignedInt
-/*     */   extends SnmpInt
-/*     */ {
-/*     */   public static final long MAX_VALUE = 4294967295L;
-/*     */   static final String name = "Unsigned32";
-/*     */   
-/*     */   public SnmpUnsignedInt(int paramInt) throws IllegalArgumentException {
-/*  54 */     super(paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SnmpUnsignedInt(Integer paramInteger) throws IllegalArgumentException {
-/*  64 */     super(paramInteger);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SnmpUnsignedInt(long paramLong) throws IllegalArgumentException {
-/*  74 */     super(paramLong);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SnmpUnsignedInt(Long paramLong) throws IllegalArgumentException {
-/*  84 */     super(paramLong);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getTypeName() {
-/*  94 */     return "Unsigned32";
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   boolean isInitValueValid(int paramInt) {
-/* 102 */     if (paramInt < 0 || paramInt > 4294967295L) {
-/* 103 */       return false;
-/*     */     }
-/* 105 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   boolean isInitValueValid(long paramLong) {
-/* 113 */     if (paramLong < 0L || paramLong > 4294967295L) {
-/* 114 */       return false;
-/*     */     }
-/* 116 */     return true;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\jmx\snmp\SnmpUnsignedInt.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2007, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+
+package com.sun.jmx.snmp;
+
+
+
+/**
+ * Is the base for all SNMP syntaxes based on unsigned integers.
+ *
+ * <p><b>This API is a Sun Microsystems internal API  and is subject
+ * to change without notice.</b></p>
+ */
+
+public abstract class SnmpUnsignedInt extends SnmpInt {
+
+    /**
+     * The largest value of the type <code>unsigned int</code> (2^32 - 1).
+     */
+    public static final long   MAX_VALUE = 0x0ffffffffL;
+
+    // CONSTRUCTORS
+    //-------------
+    /**
+     * Constructs a new <CODE>SnmpUnsignedInt</CODE> from the specified integer value.
+     * @param v The initialization value.
+     * @exception IllegalArgumentException The specified value is negative
+     * or larger than {@link #MAX_VALUE SnmpUnsignedInt.MAX_VALUE}.
+     */
+    public SnmpUnsignedInt(int v) throws IllegalArgumentException {
+        super(v);
+    }
+
+    /**
+     * Constructs a new <CODE>SnmpUnsignedInt</CODE> from the specified <CODE>Integer</CODE> value.
+     * @param v The initialization value.
+     * @exception IllegalArgumentException The specified value is negative
+     * or larger than {@link #MAX_VALUE SnmpUnsignedInt.MAX_VALUE}.
+     */
+    public SnmpUnsignedInt(Integer v) throws IllegalArgumentException {
+        super(v);
+    }
+
+    /**
+     * Constructs a new <CODE>SnmpUnsignedInt</CODE> from the specified long value.
+     * @param v The initialization value.
+     * @exception IllegalArgumentException The specified value is negative
+     * or larger than {@link #MAX_VALUE SnmpUnsignedInt.MAX_VALUE}.
+     */
+    public SnmpUnsignedInt(long v) throws IllegalArgumentException {
+        super(v);
+    }
+
+    /**
+     * Constructs a new <CODE>SnmpUnsignedInt</CODE> from the specified <CODE>Long</CODE> value.
+     * @param v The initialization value.
+     * @exception IllegalArgumentException The specified value is negative
+     * or larger than {@link #MAX_VALUE SnmpUnsignedInt.MAX_VALUE}.
+     */
+    public SnmpUnsignedInt(Long v) throws IllegalArgumentException {
+        super(v);
+    }
+
+    // PUBLIC METHODS
+    //---------------
+    /**
+     * Returns a textual description of the type object.
+     * @return ASN.1 textual description.
+     */
+    public String getTypeName() {
+        return name ;
+    }
+
+    /**
+     * This method has been defined to allow the sub-classes
+     * of SnmpInt to perform their own control at intialization time.
+     */
+    boolean isInitValueValid(int v) {
+        if ((v < 0) || (v > SnmpUnsignedInt.MAX_VALUE)) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * This method has been defined to allow the sub-classes
+     * of SnmpInt to perform their own control at intialization time.
+     */
+    boolean isInitValueValid(long v) {
+        if ((v < 0) || (v > SnmpUnsignedInt.MAX_VALUE)) {
+            return false;
+        }
+        return true;
+    }
+
+    // VARIABLES
+    //----------
+    /**
+     * Name of the type.
+     */
+    final static String name = "Unsigned32" ;
+}

@@ -1,13 +1,46 @@
+/*
+ * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
 package java.beans.beancontext;
+
+import java.beans.beancontext.BeanContextServiceRevokedEvent;
 
 import java.util.EventListener;
 
-public interface BeanContextServiceRevokedListener extends EventListener {
-  void serviceRevoked(BeanContextServiceRevokedEvent paramBeanContextServiceRevokedEvent);
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\beans\beancontext\BeanContextServiceRevokedListener.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ *  The listener interface for receiving
+ * <code>BeanContextServiceRevokedEvent</code> objects. A class that is
+ * interested in processing a <code>BeanContextServiceRevokedEvent</code>
+ * implements this interface.
  */
+public interface BeanContextServiceRevokedListener extends EventListener {
+
+    /**
+     * The service named has been revoked. getService requests for
+     * this service will no longer be satisfied.
+     * @param bcsre the <code>BeanContextServiceRevokedEvent</code> received
+     * by this listener.
+     */
+    void serviceRevoked(BeanContextServiceRevokedEvent bcsre);
+}

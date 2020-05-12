@@ -1,473 +1,364 @@
-/*     */ package javax.imageio.stream;
-/*     */ 
-/*     */ import java.io.IOException;
-/*     */ import java.io.InputStream;
-/*     */ import java.io.OutputStream;
-/*     */ import java.util.ArrayList;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class MemoryCache
-/*     */ {
-/*     */   private static final int BUFFER_LENGTH = 8192;
-/*  61 */   private ArrayList cache = new ArrayList();
-/*     */   
-/*  63 */   private long cacheStart = 0L;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  68 */   private long length = 0L;
-/*     */   
-/*     */   private byte[] getCacheBlock(long paramLong) throws IOException {
-/*  71 */     long l = paramLong - this.cacheStart;
-/*  72 */     if (l > 2147483647L)
-/*     */     {
-/*     */       
-/*  75 */       throw new IOException("Cache addressing limit exceeded!");
-/*     */     }
-/*  77 */     return this.cache.get((int)l);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public long loadFromStream(InputStream paramInputStream, long paramLong) throws IOException {
-/*  89 */     if (paramLong < this.length) {
-/*  90 */       return paramLong;
-/*     */     }
-/*     */     
-/*  93 */     int i = (int)(this.length % 8192L);
-/*  94 */     byte[] arrayOfByte = null;
-/*     */     
-/*  96 */     long l = paramLong - this.length;
-/*  97 */     if (i != 0) {
-/*  98 */       arrayOfByte = getCacheBlock(this.length / 8192L);
-/*     */     }
-/*     */     
-/* 101 */     while (l > 0L) {
-/* 102 */       if (arrayOfByte == null) {
-/*     */         try {
-/* 104 */           arrayOfByte = new byte[8192];
-/* 105 */         } catch (OutOfMemoryError outOfMemoryError) {
-/* 106 */           throw new IOException("No memory left for cache!");
-/*     */         } 
-/* 108 */         i = 0;
-/*     */       } 
-/*     */       
-/* 111 */       int j = 8192 - i;
-/* 112 */       int k = (int)Math.min(l, j);
-/* 113 */       k = paramInputStream.read(arrayOfByte, i, k);
-/* 114 */       if (k == -1) {
-/* 115 */         return this.length;
-/*     */       }
-/*     */       
-/* 118 */       if (i == 0) {
-/* 119 */         this.cache.add(arrayOfByte);
-/*     */       }
-/*     */       
-/* 122 */       l -= k;
-/* 123 */       this.length += k;
-/* 124 */       i += k;
-/*     */       
-/* 126 */       if (i >= 8192)
-/*     */       {
-/*     */         
-/* 129 */         arrayOfByte = null;
-/*     */       }
-/*     */     } 
-/*     */     
-/* 133 */     return paramLong;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void writeToStream(OutputStream paramOutputStream, long paramLong1, long paramLong2) throws IOException {
-/* 149 */     if (paramLong1 + paramLong2 > this.length) {
-/* 150 */       throw new IndexOutOfBoundsException("Argument out of cache");
-/*     */     }
-/* 152 */     if (paramLong1 < 0L || paramLong2 < 0L) {
-/* 153 */       throw new IndexOutOfBoundsException("Negative pos or len");
-/*     */     }
-/* 155 */     if (paramLong2 == 0L) {
-/*     */       return;
-/*     */     }
-/*     */     
-/* 159 */     long l = paramLong1 / 8192L;
-/* 160 */     if (l < this.cacheStart) {
-/* 161 */       throw new IndexOutOfBoundsException("pos already disposed");
-/*     */     }
-/* 163 */     int i = (int)(paramLong1 % 8192L);
-/*     */     
-/* 165 */     byte[] arrayOfByte = getCacheBlock(l++);
-/* 166 */     while (paramLong2 > 0L) {
-/* 167 */       if (arrayOfByte == null) {
-/* 168 */         arrayOfByte = getCacheBlock(l++);
-/* 169 */         i = 0;
-/*     */       } 
-/* 171 */       int j = (int)Math.min(paramLong2, (8192 - i));
-/* 172 */       paramOutputStream.write(arrayOfByte, i, j);
-/* 173 */       arrayOfByte = null;
-/* 174 */       paramLong2 -= j;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void pad(long paramLong) throws IOException {
-/* 182 */     long l1 = this.cacheStart + this.cache.size() - 1L;
-/* 183 */     long l2 = paramLong / 8192L;
-/* 184 */     long l3 = l2 - l1; long l4;
-/* 185 */     for (l4 = 0L; l4 < l3; l4++) {
-/*     */       try {
-/* 187 */         this.cache.add(new byte[8192]);
-/* 188 */       } catch (OutOfMemoryError outOfMemoryError) {
-/* 189 */         throw new IOException("No memory left for cache!");
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void write(byte[] paramArrayOfbyte, int paramInt1, int paramInt2, long paramLong) throws IOException {
-/* 211 */     if (paramArrayOfbyte == null) {
-/* 212 */       throw new NullPointerException("b == null!");
-/*     */     }
-/*     */     
-/* 215 */     if (paramInt1 < 0 || paramInt2 < 0 || paramLong < 0L || paramInt1 + paramInt2 > paramArrayOfbyte.length || paramInt1 + paramInt2 < 0)
-/*     */     {
-/* 217 */       throw new IndexOutOfBoundsException();
-/*     */     }
-/*     */ 
-/*     */     
-/* 221 */     long l = paramLong + paramInt2 - 1L;
-/* 222 */     if (l >= this.length) {
-/* 223 */       pad(l);
-/* 224 */       this.length = l + 1L;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 228 */     int i = (int)(paramLong % 8192L);
-/* 229 */     while (paramInt2 > 0) {
-/* 230 */       byte[] arrayOfByte = getCacheBlock(paramLong / 8192L);
-/* 231 */       int j = Math.min(paramInt2, 8192 - i);
-/* 232 */       System.arraycopy(paramArrayOfbyte, paramInt1, arrayOfByte, i, j);
-/*     */       
-/* 234 */       paramLong += j;
-/* 235 */       paramInt1 += j;
-/* 236 */       paramInt2 -= j;
-/* 237 */       i = 0;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void write(int paramInt, long paramLong) throws IOException {
-/* 253 */     if (paramLong < 0L) {
-/* 254 */       throw new ArrayIndexOutOfBoundsException("pos < 0");
-/*     */     }
-/*     */ 
-/*     */     
-/* 258 */     if (paramLong >= this.length) {
-/* 259 */       pad(paramLong);
-/* 260 */       this.length = paramLong + 1L;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 264 */     byte[] arrayOfByte = getCacheBlock(paramLong / 8192L);
-/* 265 */     int i = (int)(paramLong % 8192L);
-/* 266 */     arrayOfByte[i] = (byte)paramInt;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public long getLength() {
-/* 275 */     return this.length;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int read(long paramLong) throws IOException {
-/* 284 */     if (paramLong >= this.length) {
-/* 285 */       return -1;
-/*     */     }
-/*     */     
-/* 288 */     byte[] arrayOfByte = getCacheBlock(paramLong / 8192L);
-/* 289 */     if (arrayOfByte == null) {
-/* 290 */       return -1;
-/*     */     }
-/*     */     
-/* 293 */     return arrayOfByte[(int)(paramLong % 8192L)] & 0xFF;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void read(byte[] paramArrayOfbyte, int paramInt1, int paramInt2, long paramLong) throws IOException {
-/*     */     // Byte code:
-/*     */     //   0: aload_1
-/*     */     //   1: ifnonnull -> 14
-/*     */     //   4: new java/lang/NullPointerException
-/*     */     //   7: dup
-/*     */     //   8: ldc 'b == null!'
-/*     */     //   10: invokespecial <init> : (Ljava/lang/String;)V
-/*     */     //   13: athrow
-/*     */     //   14: iload_2
-/*     */     //   15: iflt -> 43
-/*     */     //   18: iload_3
-/*     */     //   19: iflt -> 43
-/*     */     //   22: lload #4
-/*     */     //   24: lconst_0
-/*     */     //   25: lcmp
-/*     */     //   26: iflt -> 43
-/*     */     //   29: iload_2
-/*     */     //   30: iload_3
-/*     */     //   31: iadd
-/*     */     //   32: aload_1
-/*     */     //   33: arraylength
-/*     */     //   34: if_icmpgt -> 43
-/*     */     //   37: iload_2
-/*     */     //   38: iload_3
-/*     */     //   39: iadd
-/*     */     //   40: ifge -> 51
-/*     */     //   43: new java/lang/IndexOutOfBoundsException
-/*     */     //   46: dup
-/*     */     //   47: invokespecial <init> : ()V
-/*     */     //   50: athrow
-/*     */     //   51: lload #4
-/*     */     //   53: iload_3
-/*     */     //   54: i2l
-/*     */     //   55: ladd
-/*     */     //   56: aload_0
-/*     */     //   57: getfield length : J
-/*     */     //   60: lcmp
-/*     */     //   61: ifle -> 72
-/*     */     //   64: new java/lang/IndexOutOfBoundsException
-/*     */     //   67: dup
-/*     */     //   68: invokespecial <init> : ()V
-/*     */     //   71: athrow
-/*     */     //   72: lload #4
-/*     */     //   74: ldc2_w 8192
-/*     */     //   77: ldiv
-/*     */     //   78: lstore #6
-/*     */     //   80: lload #4
-/*     */     //   82: l2i
-/*     */     //   83: sipush #8192
-/*     */     //   86: irem
-/*     */     //   87: istore #8
-/*     */     //   89: iload_3
-/*     */     //   90: ifle -> 145
-/*     */     //   93: iload_3
-/*     */     //   94: sipush #8192
-/*     */     //   97: iload #8
-/*     */     //   99: isub
-/*     */     //   100: invokestatic min : (II)I
-/*     */     //   103: istore #9
-/*     */     //   105: aload_0
-/*     */     //   106: lload #6
-/*     */     //   108: dup2
-/*     */     //   109: lconst_1
-/*     */     //   110: ladd
-/*     */     //   111: lstore #6
-/*     */     //   113: invokespecial getCacheBlock : (J)[B
-/*     */     //   116: astore #10
-/*     */     //   118: aload #10
-/*     */     //   120: iload #8
-/*     */     //   122: aload_1
-/*     */     //   123: iload_2
-/*     */     //   124: iload #9
-/*     */     //   126: invokestatic arraycopy : (Ljava/lang/Object;ILjava/lang/Object;II)V
-/*     */     //   129: iload_3
-/*     */     //   130: iload #9
-/*     */     //   132: isub
-/*     */     //   133: istore_3
-/*     */     //   134: iload_2
-/*     */     //   135: iload #9
-/*     */     //   137: iadd
-/*     */     //   138: istore_2
-/*     */     //   139: iconst_0
-/*     */     //   140: istore #8
-/*     */     //   142: goto -> 89
-/*     */     //   145: return
-/*     */     // Line number table:
-/*     */     //   Java source line number -> byte code offset
-/*     */     //   #310	-> 0
-/*     */     //   #311	-> 4
-/*     */     //   #314	-> 14
-/*     */     //   #316	-> 43
-/*     */     //   #318	-> 51
-/*     */     //   #319	-> 64
-/*     */     //   #322	-> 72
-/*     */     //   #323	-> 80
-/*     */     //   #324	-> 89
-/*     */     //   #325	-> 93
-/*     */     //   #326	-> 105
-/*     */     //   #327	-> 118
-/*     */     //   #329	-> 129
-/*     */     //   #330	-> 134
-/*     */     //   #331	-> 139
-/*     */     //   #332	-> 142
-/*     */     //   #333	-> 145
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void disposeBefore(long paramLong) {
-/* 343 */     long l1 = paramLong / 8192L;
-/* 344 */     if (l1 < this.cacheStart) {
-/* 345 */       throw new IndexOutOfBoundsException("pos already disposed");
-/*     */     }
-/* 347 */     long l2 = Math.min(l1 - this.cacheStart, this.cache.size()); long l3;
-/* 348 */     for (l3 = 0L; l3 < l2; l3++) {
-/* 349 */       this.cache.remove(0);
-/*     */     }
-/* 351 */     this.cacheStart = l1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void reset() {
-/* 360 */     this.cache.clear();
-/* 361 */     this.cacheStart = 0L;
-/* 362 */     this.length = 0L;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\imageio\stream\MemoryCache.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.imageio.stream;
+
+import java.util.ArrayList;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.IOException;
+
+/**
+ * Package-visible class consolidating common code for
+ * <code>MemoryCacheImageInputStream</code> and
+ * <code>MemoryCacheImageOutputStream</code>.
+ * This class keeps an <code>ArrayList</code> of 8K blocks,
+ * loaded sequentially.  Blocks may only be disposed of
+ * from the index 0 forward.  As blocks are freed, the
+ * corresponding entries in the array list are set to
+ * <code>null</code>, but no compacting is performed.
+ * This allows the index for each block to never change,
+ * and the length of the cache is always the same as the
+ * total amount of data ever cached.  Cached data is
+ * therefore always contiguous from the point of last
+ * disposal to the current length.
+ *
+ * <p> The total number of blocks resident in the cache must not
+ * exceed <code>Integer.MAX_VALUE</code>.  In practice, the limit of
+ * available memory will be exceeded long before this becomes an
+ * issue, since a full cache would contain 8192*2^31 = 16 terabytes of
+ * data.
+ *
+ * A <code>MemoryCache</code> may be reused after a call
+ * to <code>reset()</code>.
+ */
+class MemoryCache {
+
+    private static final int BUFFER_LENGTH = 8192;
+
+    private ArrayList cache = new ArrayList();
+
+    private long cacheStart = 0L;
+
+    /**
+     * The largest position ever written to the cache.
+     */
+    private long length = 0L;
+
+    private byte[] getCacheBlock(long blockNum) throws IOException {
+        long blockOffset = blockNum - cacheStart;
+        if (blockOffset > Integer.MAX_VALUE) {
+            // This can only happen when the cache hits 16 terabytes of
+            // contiguous data...
+            throw new IOException("Cache addressing limit exceeded!");
+        }
+        return (byte[])cache.get((int)blockOffset);
+    }
+
+    /**
+     * Ensures that at least <code>pos</code> bytes are cached,
+     * or the end of the source is reached.  The return value
+     * is equal to the smaller of <code>pos</code> and the
+     * length of the source.
+     */
+    public long loadFromStream(InputStream stream, long pos)
+        throws IOException {
+        // We've already got enough data cached
+        if (pos < length) {
+            return pos;
+        }
+
+        int offset = (int)(length % BUFFER_LENGTH);
+        byte [] buf = null;
+
+        long len = pos - length;
+        if (offset != 0) {
+            buf = getCacheBlock(length/BUFFER_LENGTH);
+        }
+
+        while (len > 0) {
+            if (buf == null) {
+                try {
+                    buf = new byte[BUFFER_LENGTH];
+                } catch (OutOfMemoryError e) {
+                    throw new IOException("No memory left for cache!");
+                }
+                offset = 0;
+            }
+
+            int left = BUFFER_LENGTH - offset;
+            int nbytes = (int)Math.min(len, (long)left);
+            nbytes = stream.read(buf, offset, nbytes);
+            if (nbytes == -1) {
+                return length; // EOF
+            }
+
+            if (offset == 0) {
+                cache.add(buf);
+            }
+
+            len -= nbytes;
+            length += nbytes;
+            offset += nbytes;
+
+            if (offset >= BUFFER_LENGTH) {
+                // we've filled the current buffer, so a new one will be
+                // allocated next time around (and offset will be reset to 0)
+                buf = null;
+            }
+        }
+
+        return pos;
+    }
+
+    /**
+     * Writes out a portion of the cache to an <code>OutputStream</code>.
+     * This method preserves no state about the output stream, and does
+     * not dispose of any blocks containing bytes written.  To dispose
+     * blocks, use {@link #disposeBefore <code>disposeBefore()</code>}.
+     *
+     * @exception IndexOutOfBoundsException if any portion of
+     * the requested data is not in the cache (including if <code>pos</code>
+     * is in a block already disposed), or if either <code>pos</code> or
+     * <code>len</code> is < 0.
+     */
+    public void writeToStream(OutputStream stream, long pos, long len)
+        throws IOException {
+        if (pos + len > length) {
+            throw new IndexOutOfBoundsException("Argument out of cache");
+        }
+        if ((pos < 0) || (len < 0)) {
+            throw new IndexOutOfBoundsException("Negative pos or len");
+        }
+        if (len == 0) {
+            return;
+        }
+
+        long bufIndex = pos/BUFFER_LENGTH;
+        if (bufIndex < cacheStart) {
+            throw new IndexOutOfBoundsException("pos already disposed");
+        }
+        int offset = (int)(pos % BUFFER_LENGTH);
+
+        byte[] buf = getCacheBlock(bufIndex++);
+        while (len > 0) {
+            if (buf == null) {
+                buf = getCacheBlock(bufIndex++);
+                offset = 0;
+            }
+            int nbytes = (int)Math.min(len, (long)(BUFFER_LENGTH - offset));
+            stream.write(buf, offset, nbytes);
+            buf = null;
+            len -= nbytes;
+        }
+    }
+
+    /**
+     * Ensure that there is space to write a byte at the given position.
+     */
+    private void pad(long pos) throws IOException {
+        long currIndex = cacheStart + cache.size() - 1;
+        long lastIndex = pos/BUFFER_LENGTH;
+        long numNewBuffers = lastIndex - currIndex;
+        for (long i = 0; i < numNewBuffers; i++) {
+            try {
+                cache.add(new byte[BUFFER_LENGTH]);
+            } catch (OutOfMemoryError e) {
+                throw new IOException("No memory left for cache!");
+            }
+        }
+    }
+
+    /**
+     * Overwrites and/or appends the cache from a byte array.
+     * The length of the cache will be extended as needed to hold
+     * the incoming data.
+     *
+     * @param b an array of bytes containing data to be written.
+     * @param off the starting offset withing the data array.
+     * @param len the number of bytes to be written.
+     * @param pos the cache position at which to begin writing.
+     *
+     * @exception NullPointerException if <code>b</code> is <code>null</code>.
+     * @exception IndexOutOfBoundsException if <code>off</code>,
+     * <code>len</code>, or <code>pos</code> are negative,
+     * or if <code>off+len > b.length</code>.
+     */
+    public void write(byte[] b, int off, int len, long pos)
+        throws IOException {
+        if (b == null) {
+            throw new NullPointerException("b == null!");
+        }
+        // Fix 4430357 - if off + len < 0, overflow occurred
+        if ((off < 0) || (len < 0) || (pos < 0) ||
+            (off + len > b.length) || (off + len < 0)) {
+            throw new IndexOutOfBoundsException();
+        }
+
+        // Ensure there is space for the incoming data
+        long lastPos = pos + len - 1;
+        if (lastPos >= length) {
+            pad(lastPos);
+            length = lastPos + 1;
+        }
+
+        // Copy the data into the cache, block by block
+        int offset = (int)(pos % BUFFER_LENGTH);
+        while (len > 0) {
+            byte[] buf = getCacheBlock(pos/BUFFER_LENGTH);
+            int nbytes = Math.min(len, BUFFER_LENGTH - offset);
+            System.arraycopy(b, off, buf, offset, nbytes);
+
+            pos += nbytes;
+            off += nbytes;
+            len -= nbytes;
+            offset = 0; // Always after the first time
+        }
+    }
+
+    /**
+     * Overwrites or appends a single byte to the cache.
+     * The length of the cache will be extended as needed to hold
+     * the incoming data.
+     *
+     * @param b an <code>int</code> whose 8 least significant bits
+     * will be written.
+     * @param pos the cache position at which to begin writing.
+     *
+     * @exception IndexOutOfBoundsException if <code>pos</code> is negative.
+     */
+    public void write(int b, long pos) throws IOException {
+        if (pos < 0) {
+            throw new ArrayIndexOutOfBoundsException("pos < 0");
+        }
+
+        // Ensure there is space for the incoming data
+        if (pos >= length) {
+            pad(pos);
+            length = pos + 1;
+        }
+
+        // Insert the data.
+        byte[] buf = getCacheBlock(pos/BUFFER_LENGTH);
+        int offset = (int)(pos % BUFFER_LENGTH);
+        buf[offset] = (byte)b;
+    }
+
+    /**
+     * Returns the total length of data that has been cached,
+     * regardless of whether any early blocks have been disposed.
+     * This value will only ever increase.
+     */
+    public long getLength() {
+        return length;
+    }
+
+    /**
+     * Returns the single byte at the given position, as an
+     * <code>int</code>.  Returns -1 if this position has
+     * not been cached or has been disposed.
+     */
+    public int read(long pos) throws IOException {
+        if (pos >= length) {
+            return -1;
+        }
+
+        byte[] buf = getCacheBlock(pos/BUFFER_LENGTH);
+        if (buf == null) {
+            return -1;
+        }
+
+        return buf[(int)(pos % BUFFER_LENGTH)] & 0xff;
+    }
+
+    /**
+     * Copy <code>len</code> bytes from the cache, starting
+     * at cache position <code>pos</code>, into the array
+     * <code>b</code> at offset <code>off</code>.
+     *
+     * @exception NullPointerException if b is <code>null</code>
+     * @exception IndexOutOfBoundsException if <code>off</code>,
+     * <code>len</code> or <code>pos</code> are negative or if
+     * <code>off + len > b.length</code> or if any portion of the
+     * requested data is not in the cache (including if
+     * <code>pos</code> is in a block that has already been disposed).
+     */
+    public void read(byte[] b, int off, int len, long pos)
+        throws IOException {
+        if (b == null) {
+            throw new NullPointerException("b == null!");
+        }
+        // Fix 4430357 - if off + len < 0, overflow occurred
+        if ((off < 0) || (len < 0) || (pos < 0) ||
+            (off + len > b.length) || (off + len < 0)) {
+            throw new IndexOutOfBoundsException();
+        }
+        if (pos + len > length) {
+            throw new IndexOutOfBoundsException();
+        }
+
+        long index = pos/BUFFER_LENGTH;
+        int offset = (int)pos % BUFFER_LENGTH;
+        while (len > 0) {
+            int nbytes = Math.min(len, BUFFER_LENGTH - offset);
+            byte[] buf = getCacheBlock(index++);
+            System.arraycopy(buf, offset, b, off, nbytes);
+
+            len -= nbytes;
+            off += nbytes;
+            offset = 0; // Always after the first time
+        }
+    }
+
+    /**
+     * Free the blocks up to the position <code>pos</code>.
+     * The byte at <code>pos</code> remains available.
+     *
+     * @exception IndexOutOfBoundsException if <code>pos</code>
+     * is in a block that has already been disposed.
+     */
+    public void disposeBefore(long pos) {
+        long index = pos/BUFFER_LENGTH;
+        if (index < cacheStart) {
+            throw new IndexOutOfBoundsException("pos already disposed");
+        }
+        long numBlocks = Math.min(index - cacheStart, cache.size());
+        for (long i = 0; i < numBlocks; i++) {
+            cache.remove(0);
+        }
+        this.cacheStart = index;
+    }
+
+    /**
+     * Erase the entire cache contents and reset the length to 0.
+     * The cache object may subsequently be reused as though it had just
+     * been allocated.
+     */
+    public void reset() {
+        cache.clear();
+        cacheStart = 0;
+        length = 0L;
+    }
+ }

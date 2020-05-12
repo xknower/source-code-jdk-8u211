@@ -1,259 +1,255 @@
-/*     */ package java.awt.image;
-/*     */ 
-/*     */ import java.util.Hashtable;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class ReplicateScaleFilter
-/*     */   extends ImageFilter
-/*     */ {
-/*     */   protected int srcWidth;
-/*     */   protected int srcHeight;
-/*     */   protected int destWidth;
-/*     */   protected int destHeight;
-/*     */   protected int[] srcrows;
-/*     */   protected int[] srccols;
-/*     */   protected Object outpixbuf;
-/*     */   
-/*     */   public ReplicateScaleFilter(int paramInt1, int paramInt2) {
-/* 101 */     if (paramInt1 == 0 || paramInt2 == 0) {
-/* 102 */       throw new IllegalArgumentException("Width (" + paramInt1 + ") and height (" + paramInt2 + ") must be non-zero");
-/*     */     }
-/*     */ 
-/*     */     
-/* 106 */     this.destWidth = paramInt1;
-/* 107 */     this.destHeight = paramInt2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setProperties(Hashtable<?, ?> paramHashtable) {
-/* 124 */     Hashtable<String, String> hashtable = (Hashtable)paramHashtable.clone();
-/* 125 */     String str1 = "rescale";
-/* 126 */     String str2 = this.destWidth + "x" + this.destHeight;
-/* 127 */     Object object = hashtable.get(str1);
-/* 128 */     if (object != null && object instanceof String) {
-/* 129 */       str2 = (String)object + ", " + str2;
-/*     */     }
-/* 131 */     hashtable.put(str1, str2);
-/* 132 */     super.setProperties(hashtable);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setDimensions(int paramInt1, int paramInt2) {
-/* 148 */     this.srcWidth = paramInt1;
-/* 149 */     this.srcHeight = paramInt2;
-/* 150 */     if (this.destWidth < 0) {
-/* 151 */       if (this.destHeight < 0) {
-/* 152 */         this.destWidth = this.srcWidth;
-/* 153 */         this.destHeight = this.srcHeight;
-/*     */       } else {
-/* 155 */         this.destWidth = this.srcWidth * this.destHeight / this.srcHeight;
-/*     */       } 
-/* 157 */     } else if (this.destHeight < 0) {
-/* 158 */       this.destHeight = this.srcHeight * this.destWidth / this.srcWidth;
-/*     */     } 
-/* 160 */     this.consumer.setDimensions(this.destWidth, this.destHeight);
-/*     */   }
-/*     */   
-/*     */   private void calculateMaps() {
-/* 164 */     this.srcrows = new int[this.destHeight + 1]; byte b;
-/* 165 */     for (b = 0; b <= this.destHeight; b++) {
-/* 166 */       this.srcrows[b] = (2 * b * this.srcHeight + this.srcHeight) / 2 * this.destHeight;
-/*     */     }
-/* 168 */     this.srccols = new int[this.destWidth + 1];
-/* 169 */     for (b = 0; b <= this.destWidth; b++) {
-/* 170 */       this.srccols[b] = (2 * b * this.srcWidth + this.srcWidth) / 2 * this.destWidth;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setPixels(int paramInt1, int paramInt2, int paramInt3, int paramInt4, ColorModel paramColorModel, byte[] paramArrayOfbyte, int paramInt5, int paramInt6) {
-/*     */     byte[] arrayOfByte;
-/* 189 */     if (this.srcrows == null || this.srccols == null) {
-/* 190 */       calculateMaps();
-/*     */     }
-/*     */     
-/* 193 */     int j = (2 * paramInt1 * this.destWidth + this.srcWidth - 1) / 2 * this.srcWidth;
-/* 194 */     int k = (2 * paramInt2 * this.destHeight + this.srcHeight - 1) / 2 * this.srcHeight;
-/*     */     
-/* 196 */     if (this.outpixbuf != null && this.outpixbuf instanceof byte[]) {
-/* 197 */       arrayOfByte = (byte[])this.outpixbuf;
-/*     */     } else {
-/* 199 */       arrayOfByte = new byte[this.destWidth];
-/* 200 */       this.outpixbuf = arrayOfByte;
-/*     */     }  int i;
-/* 202 */     for (int m = k; (i = this.srcrows[m]) < paramInt2 + paramInt4; m++) {
-/* 203 */       int i1 = paramInt5 + paramInt6 * (i - paramInt2);
-/*     */       int n, i2;
-/* 205 */       for (i2 = j; (n = this.srccols[i2]) < paramInt1 + paramInt3; i2++) {
-/* 206 */         arrayOfByte[i2] = paramArrayOfbyte[i1 + n - paramInt1];
-/*     */       }
-/* 208 */       if (i2 > j) {
-/* 209 */         this.consumer.setPixels(j, m, i2 - j, 1, paramColorModel, arrayOfByte, j, this.destWidth);
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setPixels(int paramInt1, int paramInt2, int paramInt3, int paramInt4, ColorModel paramColorModel, int[] paramArrayOfint, int paramInt5, int paramInt6) {
-/*     */     int[] arrayOfInt;
-/* 230 */     if (this.srcrows == null || this.srccols == null) {
-/* 231 */       calculateMaps();
-/*     */     }
-/*     */     
-/* 234 */     int j = (2 * paramInt1 * this.destWidth + this.srcWidth - 1) / 2 * this.srcWidth;
-/* 235 */     int k = (2 * paramInt2 * this.destHeight + this.srcHeight - 1) / 2 * this.srcHeight;
-/*     */     
-/* 237 */     if (this.outpixbuf != null && this.outpixbuf instanceof int[]) {
-/* 238 */       arrayOfInt = (int[])this.outpixbuf;
-/*     */     } else {
-/* 240 */       arrayOfInt = new int[this.destWidth];
-/* 241 */       this.outpixbuf = arrayOfInt;
-/*     */     }  int i;
-/* 243 */     for (int m = k; (i = this.srcrows[m]) < paramInt2 + paramInt4; m++) {
-/* 244 */       int i1 = paramInt5 + paramInt6 * (i - paramInt2);
-/*     */       int n, i2;
-/* 246 */       for (i2 = j; (n = this.srccols[i2]) < paramInt1 + paramInt3; i2++) {
-/* 247 */         arrayOfInt[i2] = paramArrayOfint[i1 + n - paramInt1];
-/*     */       }
-/* 249 */       if (i2 > j)
-/* 250 */         this.consumer.setPixels(j, m, i2 - j, 1, paramColorModel, arrayOfInt, j, this.destWidth); 
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\awt\image\ReplicateScaleFilter.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1996, 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.awt.image;
+
+import java.awt.image.ImageConsumer;
+import java.awt.image.ColorModel;
+import java.util.Hashtable;
+import java.awt.Rectangle;
+
+/**
+ * An ImageFilter class for scaling images using the simplest algorithm.
+ * This class extends the basic ImageFilter Class to scale an existing
+ * image and provide a source for a new image containing the resampled
+ * image.  The pixels in the source image are sampled to produce pixels
+ * for an image of the specified size by replicating rows and columns of
+ * pixels to scale up or omitting rows and columns of pixels to scale
+ * down.
+ * <p>It is meant to be used in conjunction with a FilteredImageSource
+ * object to produce scaled versions of existing images.  Due to
+ * implementation dependencies, there may be differences in pixel values
+ * of an image filtered on different platforms.
+ *
+ * @see FilteredImageSource
+ * @see ImageFilter
+ *
+ * @author      Jim Graham
+ */
+public class ReplicateScaleFilter extends ImageFilter {
+
+    /**
+     * The width of the source image.
+     */
+    protected int srcWidth;
+
+    /**
+     * The height of the source image.
+     */
+    protected int srcHeight;
+
+    /**
+     * The target width to scale the image.
+     */
+    protected int destWidth;
+
+    /**
+     * The target height to scale the image.
+     */
+    protected int destHeight;
+
+    /**
+     * An <code>int</code> array containing information about a
+     * row of pixels.
+     */
+    protected int srcrows[];
+
+    /**
+     * An <code>int</code> array containing information about a
+     * column of pixels.
+     */
+    protected int srccols[];
+
+    /**
+     * A <code>byte</code> array initialized with a size of
+     * {@link #destWidth} and used to deliver a row of pixel
+     * data to the {@link ImageConsumer}.
+     */
+    protected Object outpixbuf;
+
+    /**
+     * Constructs a ReplicateScaleFilter that scales the pixels from
+     * its source Image as specified by the width and height parameters.
+     * @param width the target width to scale the image
+     * @param height the target height to scale the image
+     * @throws IllegalArgumentException if <code>width</code> equals
+     *         zero or <code>height</code> equals zero
+     */
+    public ReplicateScaleFilter(int width, int height) {
+        if (width == 0 || height == 0) {
+            throw new IllegalArgumentException("Width ("+width+
+                                                ") and height ("+height+
+                                                ") must be non-zero");
+        }
+        destWidth = width;
+        destHeight = height;
+    }
+
+    /**
+     * Passes along the properties from the source object after adding a
+     * property indicating the scale applied.
+     * This method invokes <code>super.setProperties</code>,
+     * which might result in additional properties being added.
+     * <p>
+     * Note: This method is intended to be called by the
+     * <code>ImageProducer</code> of the <code>Image</code> whose pixels
+     * are being filtered. Developers using
+     * this class to filter pixels from an image should avoid calling
+     * this method directly since that operation could interfere
+     * with the filtering operation.
+     */
+    public void setProperties(Hashtable<?,?> props) {
+        Hashtable<Object,Object> p = (Hashtable<Object,Object>)props.clone();
+        String key = "rescale";
+        String val = destWidth + "x" + destHeight;
+        Object o = p.get(key);
+        if (o != null && o instanceof String) {
+            val = ((String) o) + ", " + val;
+        }
+        p.put(key, val);
+        super.setProperties(p);
+    }
+
+    /**
+     * Override the dimensions of the source image and pass the dimensions
+     * of the new scaled size to the ImageConsumer.
+     * <p>
+     * Note: This method is intended to be called by the
+     * <code>ImageProducer</code> of the <code>Image</code> whose pixels
+     * are being filtered. Developers using
+     * this class to filter pixels from an image should avoid calling
+     * this method directly since that operation could interfere
+     * with the filtering operation.
+     * @see ImageConsumer
+     */
+    public void setDimensions(int w, int h) {
+        srcWidth = w;
+        srcHeight = h;
+        if (destWidth < 0) {
+            if (destHeight < 0) {
+                destWidth = srcWidth;
+                destHeight = srcHeight;
+            } else {
+                destWidth = srcWidth * destHeight / srcHeight;
+            }
+        } else if (destHeight < 0) {
+            destHeight = srcHeight * destWidth / srcWidth;
+        }
+        consumer.setDimensions(destWidth, destHeight);
+    }
+
+    private void calculateMaps() {
+        srcrows = new int[destHeight + 1];
+        for (int y = 0; y <= destHeight; y++) {
+            srcrows[y] = (2 * y * srcHeight + srcHeight) / (2 * destHeight);
+        }
+        srccols = new int[destWidth + 1];
+        for (int x = 0; x <= destWidth; x++) {
+            srccols[x] = (2 * x * srcWidth + srcWidth) / (2 * destWidth);
+        }
+    }
+
+    /**
+     * Choose which rows and columns of the delivered byte pixels are
+     * needed for the destination scaled image and pass through just
+     * those rows and columns that are needed, replicated as necessary.
+     * <p>
+     * Note: This method is intended to be called by the
+     * <code>ImageProducer</code> of the <code>Image</code> whose pixels
+     * are being filtered. Developers using
+     * this class to filter pixels from an image should avoid calling
+     * this method directly since that operation could interfere
+     * with the filtering operation.
+     */
+    public void setPixels(int x, int y, int w, int h,
+                          ColorModel model, byte pixels[], int off,
+                          int scansize) {
+        if (srcrows == null || srccols == null) {
+            calculateMaps();
+        }
+        int sx, sy;
+        int dx1 = (2 * x * destWidth + srcWidth - 1) / (2 * srcWidth);
+        int dy1 = (2 * y * destHeight + srcHeight - 1) / (2 * srcHeight);
+        byte outpix[];
+        if (outpixbuf != null && outpixbuf instanceof byte[]) {
+            outpix = (byte[]) outpixbuf;
+        } else {
+            outpix = new byte[destWidth];
+            outpixbuf = outpix;
+        }
+        for (int dy = dy1; (sy = srcrows[dy]) < y + h; dy++) {
+            int srcoff = off + scansize * (sy - y);
+            int dx;
+            for (dx = dx1; (sx = srccols[dx]) < x + w; dx++) {
+                outpix[dx] = pixels[srcoff + sx - x];
+            }
+            if (dx > dx1) {
+                consumer.setPixels(dx1, dy, dx - dx1, 1,
+                                   model, outpix, dx1, destWidth);
+            }
+        }
+    }
+
+    /**
+     * Choose which rows and columns of the delivered int pixels are
+     * needed for the destination scaled image and pass through just
+     * those rows and columns that are needed, replicated as necessary.
+     * <p>
+     * Note: This method is intended to be called by the
+     * <code>ImageProducer</code> of the <code>Image</code> whose pixels
+     * are being filtered. Developers using
+     * this class to filter pixels from an image should avoid calling
+     * this method directly since that operation could interfere
+     * with the filtering operation.
+     */
+    public void setPixels(int x, int y, int w, int h,
+                          ColorModel model, int pixels[], int off,
+                          int scansize) {
+        if (srcrows == null || srccols == null) {
+            calculateMaps();
+        }
+        int sx, sy;
+        int dx1 = (2 * x * destWidth + srcWidth - 1) / (2 * srcWidth);
+        int dy1 = (2 * y * destHeight + srcHeight - 1) / (2 * srcHeight);
+        int outpix[];
+        if (outpixbuf != null && outpixbuf instanceof int[]) {
+            outpix = (int[]) outpixbuf;
+        } else {
+            outpix = new int[destWidth];
+            outpixbuf = outpix;
+        }
+        for (int dy = dy1; (sy = srcrows[dy]) < y + h; dy++) {
+            int srcoff = off + scansize * (sy - y);
+            int dx;
+            for (dx = dx1; (sx = srccols[dx]) < x + w; dx++) {
+                outpix[dx] = pixels[srcoff + sx - x];
+            }
+            if (dx > dx1) {
+                consumer.setPixels(dx1, dy, dx - dx1, 1,
+                                   model, outpix, dx1, destWidth);
+            }
+        }
+    }
+}

@@ -1,1184 +1,1178 @@
-/*      */ package com.sun.org.apache.xerces.internal.impl.dv.xs;
-/*      */ 
-/*      */ import com.sun.org.apache.xerces.internal.jaxp.datatype.DatatypeFactoryImpl;
-/*      */ import com.sun.org.apache.xerces.internal.xs.datatypes.XSDateTime;
-/*      */ import java.math.BigDecimal;
-/*      */ import javax.xml.datatype.DatatypeFactory;
-/*      */ import javax.xml.datatype.Duration;
-/*      */ import javax.xml.datatype.XMLGregorianCalendar;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public abstract class AbstractDateTimeDV
-/*      */   extends TypeValidator
-/*      */ {
-/*      */   private static final boolean DEBUG = false;
-/*      */   protected static final int YEAR = 2000;
-/*      */   protected static final int MONTH = 1;
-/*      */   protected static final int DAY = 1;
-/*   62 */   protected static final DatatypeFactory datatypeFactory = new DatatypeFactoryImpl();
-/*      */ 
-/*      */   
-/*      */   public short getAllowedFacets() {
-/*   66 */     return 2552;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isIdentical(Object value1, Object value2) {
-/*   74 */     if (!(value1 instanceof DateTimeData) || !(value2 instanceof DateTimeData)) {
-/*   75 */       return false;
-/*      */     }
-/*      */     
-/*   78 */     DateTimeData v1 = (DateTimeData)value1;
-/*   79 */     DateTimeData v2 = (DateTimeData)value2;
-/*      */ 
-/*      */ 
-/*      */     
-/*   83 */     if (v1.timezoneHr == v2.timezoneHr && v1.timezoneMin == v2.timezoneMin) {
-/*   84 */       return v1.equals(v2);
-/*      */     }
-/*      */     
-/*   87 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int compare(Object value1, Object value2) {
-/*   93 */     return compareDates((DateTimeData)value1, (DateTimeData)value2, true);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected short compareDates(DateTimeData date1, DateTimeData date2, boolean strict) {
-/*  107 */     if (date1.utc == date2.utc) {
-/*  108 */       return compareOrder(date1, date2);
-/*      */     }
-/*      */ 
-/*      */     
-/*  112 */     DateTimeData tempDate = new DateTimeData(null, this);
-/*      */     
-/*  114 */     if (date1.utc == 90) {
-/*      */ 
-/*      */ 
-/*      */       
-/*  118 */       cloneDate(date2, tempDate);
-/*  119 */       tempDate.timezoneHr = 14;
-/*  120 */       tempDate.timezoneMin = 0;
-/*  121 */       tempDate.utc = 43;
-/*  122 */       normalize(tempDate);
-/*  123 */       short c1 = compareOrder(date1, tempDate);
-/*  124 */       if (c1 == -1) {
-/*  125 */         return c1;
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */       
-/*  130 */       cloneDate(date2, tempDate);
-/*  131 */       tempDate.timezoneHr = -14;
-/*  132 */       tempDate.timezoneMin = 0;
-/*  133 */       tempDate.utc = 45;
-/*  134 */       normalize(tempDate);
-/*  135 */       short c2 = compareOrder(date1, tempDate);
-/*  136 */       if (c2 == 1) {
-/*  137 */         return c2;
-/*      */       }
-/*      */       
-/*  140 */       return 2;
-/*  141 */     }  if (date2.utc == 90) {
-/*      */ 
-/*      */ 
-/*      */       
-/*  145 */       cloneDate(date1, tempDate);
-/*  146 */       tempDate.timezoneHr = -14;
-/*  147 */       tempDate.timezoneMin = 0;
-/*  148 */       tempDate.utc = 45;
-/*      */ 
-/*      */ 
-/*      */       
-/*  152 */       normalize(tempDate);
-/*  153 */       short c1 = compareOrder(tempDate, date2);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  158 */       if (c1 == -1) {
-/*  159 */         return c1;
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */       
-/*  164 */       cloneDate(date1, tempDate);
-/*  165 */       tempDate.timezoneHr = 14;
-/*  166 */       tempDate.timezoneMin = 0;
-/*  167 */       tempDate.utc = 43;
-/*  168 */       normalize(tempDate);
-/*  169 */       short c2 = compareOrder(tempDate, date2);
-/*      */ 
-/*      */ 
-/*      */       
-/*  173 */       if (c2 == 1) {
-/*  174 */         return c2;
-/*      */       }
-/*      */       
-/*  177 */       return 2;
-/*      */     } 
-/*  179 */     return 2;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected short compareOrder(DateTimeData date1, DateTimeData date2) {
-/*  193 */     if (date1.position < 1) {
-/*  194 */       if (date1.year < date2.year) {
-/*  195 */         return -1;
-/*      */       }
-/*  197 */       if (date1.year > date2.year) {
-/*  198 */         return 1;
-/*      */       }
-/*      */     } 
-/*  201 */     if (date1.position < 2) {
-/*  202 */       if (date1.month < date2.month) {
-/*  203 */         return -1;
-/*      */       }
-/*  205 */       if (date1.month > date2.month) {
-/*  206 */         return 1;
-/*      */       }
-/*      */     } 
-/*  209 */     if (date1.day < date2.day) {
-/*  210 */       return -1;
-/*      */     }
-/*  212 */     if (date1.day > date2.day) {
-/*  213 */       return 1;
-/*      */     }
-/*  215 */     if (date1.hour < date2.hour) {
-/*  216 */       return -1;
-/*      */     }
-/*  218 */     if (date1.hour > date2.hour) {
-/*  219 */       return 1;
-/*      */     }
-/*  221 */     if (date1.minute < date2.minute) {
-/*  222 */       return -1;
-/*      */     }
-/*  224 */     if (date1.minute > date2.minute) {
-/*  225 */       return 1;
-/*      */     }
-/*  227 */     if (date1.second < date2.second) {
-/*  228 */       return -1;
-/*      */     }
-/*  230 */     if (date1.second > date2.second) {
-/*  231 */       return 1;
-/*      */     }
-/*  233 */     if (date1.utc < date2.utc) {
-/*  234 */       return -1;
-/*      */     }
-/*  236 */     if (date1.utc > date2.utc) {
-/*  237 */       return 1;
-/*      */     }
-/*  239 */     return 0;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void getTime(String buffer, int start, int end, DateTimeData data) throws RuntimeException {
-/*  252 */     int stop = start + 2;
-/*      */ 
-/*      */     
-/*  255 */     data.hour = parseInt(buffer, start, stop);
-/*      */ 
-/*      */ 
-/*      */     
-/*  259 */     if (buffer.charAt(stop++) != ':') {
-/*  260 */       throw new RuntimeException("Error in parsing time zone");
-/*      */     }
-/*  262 */     start = stop;
-/*  263 */     stop += 2;
-/*  264 */     data.minute = parseInt(buffer, start, stop);
-/*      */ 
-/*      */     
-/*  267 */     if (buffer.charAt(stop++) != ':') {
-/*  268 */       throw new RuntimeException("Error in parsing time zone");
-/*      */     }
-/*      */ 
-/*      */     
-/*  272 */     int sign = findUTCSign(buffer, start, end);
-/*      */ 
-/*      */     
-/*  275 */     start = stop;
-/*  276 */     stop = (sign < 0) ? end : sign;
-/*  277 */     data.second = parseSecond(buffer, start, stop);
-/*      */ 
-/*      */     
-/*  280 */     if (sign > 0) {
-/*  281 */       getTimeZone(buffer, data, sign, end);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected int getDate(String buffer, int start, int end, DateTimeData date) throws RuntimeException {
-/*  296 */     start = getYearMonth(buffer, start, end, date);
-/*      */     
-/*  298 */     if (buffer.charAt(start++) != '-') {
-/*  299 */       throw new RuntimeException("CCYY-MM must be followed by '-' sign");
-/*      */     }
-/*  301 */     int stop = start + 2;
-/*  302 */     date.day = parseInt(buffer, start, stop);
-/*  303 */     return stop;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected int getYearMonth(String buffer, int start, int end, DateTimeData date) throws RuntimeException {
-/*  317 */     if (buffer.charAt(0) == '-')
-/*      */     {
-/*      */ 
-/*      */       
-/*  321 */       start++;
-/*      */     }
-/*  323 */     int i = indexOf(buffer, start, end, '-');
-/*  324 */     if (i == -1) {
-/*  325 */       throw new RuntimeException("Year separator is missing or misplaced");
-/*      */     }
-/*  327 */     int length = i - start;
-/*  328 */     if (length < 4)
-/*  329 */       throw new RuntimeException("Year must have 'CCYY' format"); 
-/*  330 */     if (length > 4 && buffer.charAt(start) == '0') {
-/*  331 */       throw new RuntimeException("Leading zeros are required if the year value would otherwise have fewer than four digits; otherwise they are forbidden");
-/*      */     }
-/*  333 */     date.year = parseIntYear(buffer, i);
-/*  334 */     if (buffer.charAt(i) != '-') {
-/*  335 */       throw new RuntimeException("CCYY must be followed by '-' sign");
-/*      */     }
-/*  337 */     start = ++i;
-/*  338 */     i = start + 2;
-/*  339 */     date.month = parseInt(buffer, start, i);
-/*  340 */     return i;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void parseTimeZone(String buffer, int start, int end, DateTimeData date) throws RuntimeException {
-/*  355 */     if (start < end) {
-/*  356 */       if (!isNextCharUTCSign(buffer, start, end)) {
-/*  357 */         throw new RuntimeException("Error in month parsing");
-/*      */       }
-/*  359 */       getTimeZone(buffer, date, start, end);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void getTimeZone(String buffer, DateTimeData data, int sign, int end) throws RuntimeException {
-/*  372 */     data.utc = buffer.charAt(sign);
-/*      */     
-/*  374 */     if (buffer.charAt(sign) == 'Z') {
-/*  375 */       if (end > ++sign) {
-/*  376 */         throw new RuntimeException("Error in parsing time zone");
-/*      */       }
-/*      */       return;
-/*      */     } 
-/*  380 */     if (sign <= end - 6) {
-/*      */       
-/*  382 */       int negate = (buffer.charAt(sign) == '-') ? -1 : 1;
-/*      */       
-/*  384 */       int stop = ++sign + 2;
-/*  385 */       data.timezoneHr = negate * parseInt(buffer, sign, stop);
-/*  386 */       if (buffer.charAt(stop++) != ':') {
-/*  387 */         throw new RuntimeException("Error in parsing time zone");
-/*      */       }
-/*      */ 
-/*      */       
-/*  391 */       data.timezoneMin = negate * parseInt(buffer, stop, stop + 2);
-/*      */       
-/*  393 */       if (stop + 2 != end) {
-/*  394 */         throw new RuntimeException("Error in parsing time zone");
-/*      */       }
-/*  396 */       if (data.timezoneHr != 0 || data.timezoneMin != 0) {
-/*  397 */         data.normalized = false;
-/*      */       }
-/*      */     } else {
-/*  400 */       throw new RuntimeException("Error in parsing time zone");
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected int indexOf(String buffer, int start, int end, char ch) {
-/*  416 */     for (int i = start; i < end; i++) {
-/*  417 */       if (buffer.charAt(i) == ch) {
-/*  418 */         return i;
-/*      */       }
-/*      */     } 
-/*  421 */     return -1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void validateDateTime(DateTimeData data) {
-/*  438 */     if (data.year == 0) {
-/*  439 */       throw new RuntimeException("The year \"0000\" is an illegal year value");
-/*      */     }
-/*      */ 
-/*      */     
-/*  443 */     if (data.month < 1 || data.month > 12) {
-/*  444 */       throw new RuntimeException("The month must have values 1 to 12");
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*  449 */     if (data.day > maxDayInMonthFor(data.year, data.month) || data.day < 1) {
-/*  450 */       throw new RuntimeException("The day must have values 1 to 31");
-/*      */     }
-/*      */ 
-/*      */     
-/*  454 */     if (data.hour > 23 || data.hour < 0) {
-/*  455 */       if (data.hour == 24 && data.minute == 0 && data.second == 0.0D) {
-/*  456 */         data.hour = 0;
-/*      */         
-/*  458 */         data.day = 1;
-/*      */         
-/*  460 */         data.month = 1;
-/*      */ 
-/*      */         
-/*  463 */         if (++data.day > maxDayInMonthFor(data.year, data.month) && ++data.month > 12 && ++data.year == 0) {
-/*  464 */           data.year = 1;
-/*      */         }
-/*      */       }
-/*      */       else {
-/*      */         
-/*  469 */         throw new RuntimeException("Hour must have values 0-23, unless 24:00:00");
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */     
-/*  474 */     if (data.minute > 59 || data.minute < 0) {
-/*  475 */       throw new RuntimeException("Minute must have values 0-59");
-/*      */     }
-/*      */ 
-/*      */     
-/*  479 */     if (data.second >= 60.0D || data.second < 0.0D) {
-/*  480 */       throw new RuntimeException("Second must have values 0-59");
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*  485 */     if (data.timezoneHr > 14 || data.timezoneHr < -14) {
-/*  486 */       throw new RuntimeException("Time zone should have range -14:00 to +14:00");
-/*      */     }
-/*  488 */     if ((data.timezoneHr == 14 || data.timezoneHr == -14) && data.timezoneMin != 0)
-/*  489 */       throw new RuntimeException("Time zone should have range -14:00 to +14:00"); 
-/*  490 */     if (data.timezoneMin > 59 || data.timezoneMin < -59) {
-/*  491 */       throw new RuntimeException("Minute must have values 0-59");
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected int findUTCSign(String buffer, int start, int end) {
-/*  506 */     for (int i = start; i < end; i++) {
-/*  507 */       int c = buffer.charAt(i);
-/*  508 */       if (c == 90 || c == 43 || c == 45) {
-/*  509 */         return i;
-/*      */       }
-/*      */     } 
-/*      */     
-/*  513 */     return -1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected final boolean isNextCharUTCSign(String buffer, int start, int end) {
-/*  521 */     if (start < end) {
-/*  522 */       char c = buffer.charAt(start);
-/*  523 */       return (c == 'Z' || c == '+' || c == '-');
-/*      */     } 
-/*  525 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected int parseInt(String buffer, int start, int end) throws NumberFormatException {
-/*  539 */     int radix = 10;
-/*  540 */     int result = 0;
-/*  541 */     int digit = 0;
-/*  542 */     int limit = -2147483647;
-/*  543 */     int multmin = limit / radix;
-/*  544 */     int i = start;
-/*      */     while (true) {
-/*  546 */       digit = getDigit(buffer.charAt(i));
-/*  547 */       if (digit < 0) {
-/*  548 */         throw new NumberFormatException("'" + buffer + "' has wrong format");
-/*      */       }
-/*  550 */       if (result < multmin) {
-/*  551 */         throw new NumberFormatException("'" + buffer + "' has wrong format");
-/*      */       }
-/*  553 */       result *= radix;
-/*  554 */       if (result < limit + digit) {
-/*  555 */         throw new NumberFormatException("'" + buffer + "' has wrong format");
-/*      */       }
-/*  557 */       result -= digit;
-/*      */       
-/*  559 */       if (++i >= end)
-/*  560 */         return -result; 
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   protected int parseIntYear(String buffer, int end) {
-/*  565 */     int limit, radix = 10;
-/*  566 */     int result = 0;
-/*  567 */     boolean negative = false;
-/*  568 */     int i = 0;
-/*      */ 
-/*      */     
-/*  571 */     int digit = 0;
-/*      */     
-/*  573 */     if (buffer.charAt(0) == '-') {
-/*  574 */       negative = true;
-/*  575 */       limit = Integer.MIN_VALUE;
-/*  576 */       i++;
-/*      */     } else {
-/*      */       
-/*  579 */       limit = -2147483647;
-/*      */     } 
-/*  581 */     int multmin = limit / radix;
-/*  582 */     while (i < end) {
-/*  583 */       digit = getDigit(buffer.charAt(i++));
-/*  584 */       if (digit < 0) {
-/*  585 */         throw new NumberFormatException("'" + buffer + "' has wrong format");
-/*      */       }
-/*  587 */       if (result < multmin) {
-/*  588 */         throw new NumberFormatException("'" + buffer + "' has wrong format");
-/*      */       }
-/*  590 */       result *= radix;
-/*  591 */       if (result < limit + digit) {
-/*  592 */         throw new NumberFormatException("'" + buffer + "' has wrong format");
-/*      */       }
-/*  594 */       result -= digit;
-/*      */     } 
-/*      */     
-/*  597 */     if (negative) {
-/*  598 */       if (i > 1) {
-/*  599 */         return result;
-/*      */       }
-/*  601 */       throw new NumberFormatException("'" + buffer + "' has wrong format");
-/*      */     } 
-/*      */     
-/*  604 */     return -result;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void normalize(DateTimeData date) {
-/*  621 */     int negate = -1;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  627 */     int temp = date.minute + negate * date.timezoneMin;
-/*  628 */     int carry = fQuotient(temp, 60);
-/*  629 */     date.minute = mod(temp, 60, carry);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  635 */     temp = date.hour + negate * date.timezoneHr + carry;
-/*  636 */     carry = fQuotient(temp, 24);
-/*  637 */     date.hour = mod(temp, 24, carry);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  643 */     date.day += carry;
-/*      */     
-/*      */     while (true) {
-/*  646 */       temp = maxDayInMonthFor(date.year, date.month);
-/*  647 */       if (date.day < 1) {
-/*  648 */         date.day += maxDayInMonthFor(date.year, date.month - 1);
-/*  649 */         carry = -1;
-/*  650 */       } else if (date.day > temp) {
-/*  651 */         date.day -= temp;
-/*  652 */         carry = 1;
-/*      */       } else {
-/*      */         break;
-/*      */       } 
-/*  656 */       temp = date.month + carry;
-/*  657 */       date.month = modulo(temp, 1, 13);
-/*  658 */       date.year += fQuotient(temp, 1, 13);
-/*  659 */       if (date.year == 0) {
-/*  660 */         date.year = (date.timezoneHr < 0 || date.timezoneMin < 0) ? 1 : -1;
-/*      */       }
-/*      */     } 
-/*  663 */     date.utc = 90;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void saveUnnormalized(DateTimeData date) {
-/*  670 */     date.unNormYear = date.year;
-/*  671 */     date.unNormMonth = date.month;
-/*  672 */     date.unNormDay = date.day;
-/*  673 */     date.unNormHour = date.hour;
-/*  674 */     date.unNormMinute = date.minute;
-/*  675 */     date.unNormSecond = date.second;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void resetDateObj(DateTimeData data) {
-/*  684 */     data.year = 0;
-/*  685 */     data.month = 0;
-/*  686 */     data.day = 0;
-/*  687 */     data.hour = 0;
-/*  688 */     data.minute = 0;
-/*  689 */     data.second = 0.0D;
-/*  690 */     data.utc = 0;
-/*  691 */     data.timezoneHr = 0;
-/*  692 */     data.timezoneMin = 0;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected int maxDayInMonthFor(int year, int month) {
-/*  704 */     if (month == 4 || month == 6 || month == 9 || month == 11)
-/*  705 */       return 30; 
-/*  706 */     if (month == 2) {
-/*  707 */       if (isLeapYear(year)) {
-/*  708 */         return 29;
-/*      */       }
-/*  710 */       return 28;
-/*      */     } 
-/*      */     
-/*  713 */     return 31;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean isLeapYear(int year) {
-/*  720 */     return (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected int mod(int a, int b, int quotient) {
-/*  728 */     return a - quotient * b;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected int fQuotient(int a, int b) {
-/*  737 */     return (int)Math.floor((a / b));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected int modulo(int temp, int low, int high) {
-/*  745 */     int a = temp - low;
-/*  746 */     int b = high - low;
-/*  747 */     return mod(a, b, fQuotient(a, b)) + low;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected int fQuotient(int temp, int low, int high) {
-/*  756 */     return fQuotient(temp - low, high - low);
-/*      */   }
-/*      */   
-/*      */   protected String dateToString(DateTimeData date) {
-/*  760 */     StringBuffer message = new StringBuffer(25);
-/*  761 */     append(message, date.year, 4);
-/*  762 */     message.append('-');
-/*  763 */     append(message, date.month, 2);
-/*  764 */     message.append('-');
-/*  765 */     append(message, date.day, 2);
-/*  766 */     message.append('T');
-/*  767 */     append(message, date.hour, 2);
-/*  768 */     message.append(':');
-/*  769 */     append(message, date.minute, 2);
-/*  770 */     message.append(':');
-/*  771 */     append(message, date.second);
-/*  772 */     append(message, (char)date.utc, 0);
-/*  773 */     return message.toString();
-/*      */   }
-/*      */   
-/*      */   protected final void append(StringBuffer message, int value, int nch) {
-/*  777 */     if (value == Integer.MIN_VALUE) {
-/*  778 */       message.append(value);
-/*      */       return;
-/*      */     } 
-/*  781 */     if (value < 0) {
-/*  782 */       message.append('-');
-/*  783 */       value = -value;
-/*      */     } 
-/*  785 */     if (nch == 4) {
-/*  786 */       if (value < 10) {
-/*  787 */         message.append("000");
-/*  788 */       } else if (value < 100) {
-/*  789 */         message.append("00");
-/*  790 */       } else if (value < 1000) {
-/*  791 */         message.append('0');
-/*      */       } 
-/*  793 */       message.append(value);
-/*  794 */     } else if (nch == 2) {
-/*  795 */       if (value < 10) {
-/*  796 */         message.append('0');
-/*      */       }
-/*  798 */       message.append(value);
-/*      */     }
-/*  800 */     else if (value != 0) {
-/*  801 */       message.append((char)value);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   protected final void append(StringBuffer message, double value) {
-/*  807 */     if (value < 0.0D) {
-/*  808 */       message.append('-');
-/*  809 */       value = -value;
-/*      */     } 
-/*  811 */     if (value < 10.0D) {
-/*  812 */       message.append('0');
-/*      */     }
-/*  814 */     append2(message, value);
-/*      */   }
-/*      */   
-/*      */   protected final void append2(StringBuffer message, double value) {
-/*  818 */     int intValue = (int)value;
-/*  819 */     if (value == intValue) {
-/*  820 */       message.append(intValue);
-/*      */     } else {
-/*  822 */       append3(message, value);
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   private void append3(StringBuffer message, double value) {
-/*  827 */     String d = String.valueOf(value);
-/*  828 */     int eIndex = d.indexOf('E');
-/*  829 */     if (eIndex == -1) {
-/*  830 */       message.append(d);
-/*      */       
-/*      */       return;
-/*      */     } 
-/*  834 */     if (value < 1.0D) {
-/*      */       int exp;
-/*      */       
-/*      */       try {
-/*  838 */         exp = parseInt(d, eIndex + 2, d.length());
-/*      */       
-/*      */       }
-/*  841 */       catch (Exception e) {
-/*  842 */         message.append(d);
-/*      */         return;
-/*      */       } 
-/*  845 */       message.append("0.");
-/*  846 */       for (int i = 1; i < exp; i++) {
-/*  847 */         message.append('0');
-/*      */       }
-/*      */       
-/*  850 */       int end = eIndex - 1;
-/*  851 */       while (end > 0) {
-/*  852 */         char c = d.charAt(end);
-/*  853 */         if (c != '0') {
-/*      */           break;
-/*      */         }
-/*  856 */         end--;
-/*      */       } 
-/*      */       
-/*  859 */       for (int j = 0; j <= end; j++) {
-/*  860 */         char c = d.charAt(j);
-/*  861 */         if (c != '.') {
-/*  862 */           message.append(c);
-/*      */         }
-/*      */       } 
-/*      */     } else {
-/*      */       int exp;
-/*      */       
-/*      */       try {
-/*  869 */         exp = parseInt(d, eIndex + 1, d.length());
-/*      */       
-/*      */       }
-/*  872 */       catch (Exception e) {
-/*  873 */         message.append(d);
-/*      */         return;
-/*      */       } 
-/*  876 */       int integerEnd = exp + 2; int i;
-/*  877 */       for (i = 0; i < eIndex; i++) {
-/*  878 */         char c = d.charAt(i);
-/*  879 */         if (c != '.') {
-/*  880 */           if (i == integerEnd) {
-/*  881 */             message.append('.');
-/*      */           }
-/*  883 */           message.append(c);
-/*      */         } 
-/*      */       } 
-/*      */       
-/*  887 */       for (i = integerEnd - eIndex; i > 0; i--) {
-/*  888 */         message.append('0');
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   protected double parseSecond(String buffer, int start, int end) throws NumberFormatException {
-/*  895 */     int dot = -1;
-/*  896 */     for (int i = start; i < end; i++) {
-/*  897 */       char ch = buffer.charAt(i);
-/*  898 */       if (ch == '.') {
-/*  899 */         dot = i;
-/*  900 */       } else if (ch > '9' || ch < '0') {
-/*  901 */         throw new NumberFormatException("'" + buffer + "' has wrong format");
-/*      */       } 
-/*      */     } 
-/*  904 */     if (dot == -1) {
-/*  905 */       if (start + 2 != end) {
-/*  906 */         throw new NumberFormatException("'" + buffer + "' has wrong format");
-/*      */       }
-/*  908 */     } else if (start + 2 != dot || dot + 1 == end) {
-/*  909 */       throw new NumberFormatException("'" + buffer + "' has wrong format");
-/*      */     } 
-/*  911 */     return Double.parseDouble(buffer.substring(start, end));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void cloneDate(DateTimeData finalValue, DateTimeData tempDate) {
-/*  918 */     tempDate.year = finalValue.year;
-/*  919 */     tempDate.month = finalValue.month;
-/*  920 */     tempDate.day = finalValue.day;
-/*  921 */     tempDate.hour = finalValue.hour;
-/*  922 */     tempDate.minute = finalValue.minute;
-/*  923 */     tempDate.second = finalValue.second;
-/*  924 */     tempDate.utc = finalValue.utc;
-/*  925 */     tempDate.timezoneHr = finalValue.timezoneHr;
-/*  926 */     tempDate.timezoneMin = finalValue.timezoneMin;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   static final class DateTimeData
-/*      */     implements XSDateTime
-/*      */   {
-/*      */     int year;
-/*      */     int month;
-/*      */     int day;
-/*      */     int hour;
-/*      */     int minute;
-/*      */     int utc;
-/*      */     double second;
-/*      */     int timezoneHr;
-/*      */     int timezoneMin;
-/*      */     private String originalValue;
-/*      */     boolean normalized = true;
-/*      */     int unNormYear;
-/*      */     int unNormMonth;
-/*      */     int unNormDay;
-/*      */     int unNormHour;
-/*      */     int unNormMinute;
-/*      */     double unNormSecond;
-/*      */     int position;
-/*      */     final AbstractDateTimeDV type;
-/*      */     private volatile String canonical;
-/*      */     
-/*      */     public DateTimeData(String originalValue, AbstractDateTimeDV type) {
-/*  955 */       this.originalValue = originalValue;
-/*  956 */       this.type = type;
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public DateTimeData(int year, int month, int day, int hour, int minute, double second, int utc, String originalValue, boolean normalized, AbstractDateTimeDV type) {
-/*  961 */       this.year = year;
-/*  962 */       this.month = month;
-/*  963 */       this.day = day;
-/*  964 */       this.hour = hour;
-/*  965 */       this.minute = minute;
-/*  966 */       this.second = second;
-/*  967 */       this.utc = utc;
-/*  968 */       this.type = type;
-/*  969 */       this.originalValue = originalValue;
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public boolean equals(Object obj) {
-/*  974 */       if (!(obj instanceof DateTimeData)) {
-/*  975 */         return false;
-/*      */       }
-/*  977 */       return (this.type.compareDates(this, (DateTimeData)obj, true) == 0);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int hashCode() {
-/*  988 */       DateTimeData tempDate = new DateTimeData(null, this.type);
-/*  989 */       this.type.cloneDate(this, tempDate);
-/*  990 */       this.type.normalize(tempDate);
-/*  991 */       return this.type.dateToString(tempDate).hashCode();
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public String toString() {
-/*  996 */       if (this.canonical == null) {
-/*  997 */         this.canonical = this.type.dateToString(this);
-/*      */       }
-/*  999 */       return this.canonical;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getYears() {
-/* 1007 */       if (this.type instanceof DurationDV) {
-/* 1008 */         return 0;
-/*      */       }
-/* 1010 */       return this.normalized ? this.year : this.unNormYear;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getMonths() {
-/* 1018 */       if (this.type instanceof DurationDV) {
-/* 1019 */         return this.year * 12 + this.month;
-/*      */       }
-/* 1021 */       return this.normalized ? this.month : this.unNormMonth;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getDays() {
-/* 1029 */       if (this.type instanceof DurationDV) {
-/* 1030 */         return 0;
-/*      */       }
-/* 1032 */       return this.normalized ? this.day : this.unNormDay;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getHours() {
-/* 1040 */       if (this.type instanceof DurationDV) {
-/* 1041 */         return 0;
-/*      */       }
-/* 1043 */       return this.normalized ? this.hour : this.unNormHour;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getMinutes() {
-/* 1051 */       if (this.type instanceof DurationDV) {
-/* 1052 */         return 0;
-/*      */       }
-/* 1054 */       return this.normalized ? this.minute : this.unNormMinute;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public double getSeconds() {
-/* 1062 */       if (this.type instanceof DurationDV) {
-/* 1063 */         return (this.day * 24 * 60 * 60 + this.hour * 60 * 60 + this.minute * 60) + this.second;
-/*      */       }
-/* 1065 */       return this.normalized ? this.second : this.unNormSecond;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public boolean hasTimeZone() {
-/* 1073 */       return (this.utc != 0);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getTimeZoneHours() {
-/* 1081 */       return this.timezoneHr;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getTimeZoneMinutes() {
-/* 1089 */       return this.timezoneMin;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public String getLexicalValue() {
-/* 1097 */       return this.originalValue;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public XSDateTime normalize() {
-/* 1105 */       if (!this.normalized) {
-/* 1106 */         DateTimeData dt = (DateTimeData)clone();
-/* 1107 */         dt.normalized = true;
-/* 1108 */         return dt;
-/*      */       } 
-/* 1110 */       return this;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public boolean isNormalized() {
-/* 1118 */       return this.normalized;
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public Object clone() {
-/* 1123 */       DateTimeData dt = new DateTimeData(this.year, this.month, this.day, this.hour, this.minute, this.second, this.utc, this.originalValue, this.normalized, this.type);
-/*      */       
-/* 1125 */       dt.canonical = this.canonical;
-/* 1126 */       dt.position = this.position;
-/* 1127 */       dt.timezoneHr = this.timezoneHr;
-/* 1128 */       dt.timezoneMin = this.timezoneMin;
-/* 1129 */       dt.unNormYear = this.unNormYear;
-/* 1130 */       dt.unNormMonth = this.unNormMonth;
-/* 1131 */       dt.unNormDay = this.unNormDay;
-/* 1132 */       dt.unNormHour = this.unNormHour;
-/* 1133 */       dt.unNormMinute = this.unNormMinute;
-/* 1134 */       dt.unNormSecond = this.unNormSecond;
-/* 1135 */       return dt;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public XMLGregorianCalendar getXMLGregorianCalendar() {
-/* 1143 */       return this.type.getXMLGregorianCalendar(this);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Duration getDuration() {
-/* 1151 */       return this.type.getDuration(this);
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   protected XMLGregorianCalendar getXMLGregorianCalendar(DateTimeData data) {
-/* 1156 */     return null;
-/*      */   }
-/*      */   
-/*      */   protected Duration getDuration(DateTimeData data) {
-/* 1160 */     return null;
-/*      */   }
-/*      */   
-/*      */   protected final BigDecimal getFractionalSecondsAsBigDecimal(DateTimeData data) {
-/* 1164 */     StringBuffer buf = new StringBuffer();
-/* 1165 */     append3(buf, data.unNormSecond);
-/* 1166 */     String value = buf.toString();
-/* 1167 */     int index = value.indexOf('.');
-/* 1168 */     if (index == -1) {
-/* 1169 */       return null;
-/*      */     }
-/* 1171 */     value = value.substring(index);
-/* 1172 */     BigDecimal _val = new BigDecimal(value);
-/* 1173 */     if (_val.compareTo(BigDecimal.valueOf(0L)) == 0) {
-/* 1174 */       return null;
-/*      */     }
-/* 1176 */     return _val;
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\impl\dv\xs\AbstractDateTimeDV.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2005 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.impl.dv.xs;
+
+import java.math.BigDecimal;
+
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.Duration;
+import javax.xml.datatype.XMLGregorianCalendar;
+
+import com.sun.org.apache.xerces.internal.impl.Constants;
+import com.sun.org.apache.xerces.internal.jaxp.datatype.DatatypeFactoryImpl;
+import com.sun.org.apache.xerces.internal.xs.datatypes.XSDateTime;
+
+/**
+ * This is the base class of all date/time datatype validators.
+ * It implements common code for parsing, validating and comparing datatypes.
+ * Classes that extend this class, must implement parse() method.
+ *
+ * REVISIT: There are many instance variables, which would cause problems
+ *          when we support grammar caching. A grammar is possibly used by
+ *          two parser instances at the same time, then the same simple type
+ *          decl object can be used to validate two strings at the same time.
+ *          -SG
+ *
+ * @xerces.internal
+ *
+ * @author Elena Litani
+ * @author Len Berman
+ * @author Gopal Sharma, SUN Microsystems Inc.
+ *
+ * @version $Id: AbstractDateTimeDV.java,v 1.7 2010-11-01 04:39:46 joehw Exp $
+ */
+public abstract class AbstractDateTimeDV extends TypeValidator {
+
+    //debugging
+    private static final boolean DEBUG = false;
+    //define shared variables for date/time
+    //define constants to be used in assigning default values for
+    //all date/time excluding duration
+    protected final static int YEAR = 2000;
+    protected final static int MONTH = 01;
+    protected final static int DAY = 01;
+    protected static final DatatypeFactory datatypeFactory = new DatatypeFactoryImpl();
+
+    @Override
+    public short getAllowedFacets() {
+        return (XSSimpleTypeDecl.FACET_PATTERN | XSSimpleTypeDecl.FACET_WHITESPACE | XSSimpleTypeDecl.FACET_ENUMERATION | XSSimpleTypeDecl.FACET_MAXINCLUSIVE | XSSimpleTypeDecl.FACET_MININCLUSIVE | XSSimpleTypeDecl.FACET_MAXEXCLUSIVE | XSSimpleTypeDecl.FACET_MINEXCLUSIVE);
+    }//getAllowedFacets()
+
+    // distinguishes between identity and equality for date/time values
+    // ie: two values representing the same "moment in time" but with different
+    // remembered timezones are now equal but not identical.
+    @Override
+    public boolean isIdentical(Object value1, Object value2) {
+        if (!(value1 instanceof DateTimeData) || !(value2 instanceof DateTimeData)) {
+            return false;
+        }
+
+        DateTimeData v1 = (DateTimeData) value1;
+        DateTimeData v2 = (DateTimeData) value2;
+
+        // original timezones must be the same in addition to date/time values
+        // being 'equal'
+        if ((v1.timezoneHr == v2.timezoneHr) && (v1.timezoneMin == v2.timezoneMin)) {
+            return v1.equals(v2);
+        }
+
+        return false;
+    }//isIdentical()
+
+    // the parameters are in compiled form (from getActualValue)
+    @Override
+    public int compare(Object value1, Object value2) {
+        return compareDates(((DateTimeData) value1),
+                ((DateTimeData) value2), true);
+    }//compare()
+
+    /**
+     * Compare algorithm described in dateDime (3.2.7). Duration datatype
+     * overwrites this method
+     *
+     * @param date1 normalized date representation of the first value
+     * @param date2 normalized date representation of the second value
+     * @param strict
+     * @return less, greater, less_equal, greater_equal, equal
+     */
+    protected short compareDates(DateTimeData date1, DateTimeData date2, boolean strict) {
+        if (date1.utc == date2.utc) {
+            return compareOrder(date1, date2);
+        }
+        short c1, c2;
+
+        DateTimeData tempDate = new DateTimeData(null, this);
+
+        if (date1.utc == 'Z') {
+
+            //compare date1<=date1<=(date2 with time zone -14)
+            //
+            cloneDate(date2, tempDate); //clones date1 value to global temporary storage: fTempDate
+            tempDate.timezoneHr = 14;
+            tempDate.timezoneMin = 0;
+            tempDate.utc = '+';
+            normalize(tempDate);
+            c1 = compareOrder(date1, tempDate);
+            if (c1 == LESS_THAN) {
+                return c1;
+            }
+
+            //compare date1>=(date2 with time zone +14)
+            //
+            cloneDate(date2, tempDate); //clones date1 value to global temporary storage: tempDate
+            tempDate.timezoneHr = -14;
+            tempDate.timezoneMin = 0;
+            tempDate.utc = '-';
+            normalize(tempDate);
+            c2 = compareOrder(date1, tempDate);
+            if (c2 == GREATER_THAN) {
+                return c2;
+            }
+
+            return INDETERMINATE;
+        } else if (date2.utc == 'Z') {
+
+            //compare (date1 with time zone -14)<=date2
+            //
+            cloneDate(date1, tempDate); //clones date1 value to global temporary storage: tempDate
+            tempDate.timezoneHr = -14;
+            tempDate.timezoneMin = 0;
+            tempDate.utc = '-';
+            if (DEBUG) {
+                System.out.println("tempDate=" + dateToString(tempDate));
+            }
+            normalize(tempDate);
+            c1 = compareOrder(tempDate, date2);
+            if (DEBUG) {
+                System.out.println("date=" + dateToString(date2));
+                System.out.println("tempDate=" + dateToString(tempDate));
+            }
+            if (c1 == LESS_THAN) {
+                return c1;
+            }
+
+            //compare (date1 with time zone +14)<=date2
+            //
+            cloneDate(date1, tempDate); //clones date1 value to global temporary storage: tempDate
+            tempDate.timezoneHr = 14;
+            tempDate.timezoneMin = 0;
+            tempDate.utc = '+';
+            normalize(tempDate);
+            c2 = compareOrder(tempDate, date2);
+            if (DEBUG) {
+                System.out.println("tempDate=" + dateToString(tempDate));
+            }
+            if (c2 == GREATER_THAN) {
+                return c2;
+            }
+
+            return INDETERMINATE;
+        }
+        return INDETERMINATE;
+
+    }
+
+    /**
+     * Given normalized values, determines order-relation between give date/time
+     * objects.
+     *
+     * @param date1 date/time object
+     * @param date2 date/time object
+     * @return 0 if date1 and date2 are equal, a value less than 0 if date1 is
+     * less than date2, a value greater than 0 if date1 is greater than date2
+     */
+    protected short compareOrder(DateTimeData date1, DateTimeData date2) {
+        if (date1.position < 1) {
+            if (date1.year < date2.year) {
+                return -1;
+            }
+            if (date1.year > date2.year) {
+                return 1;
+            }
+        }
+        if (date1.position < 2) {
+            if (date1.month < date2.month) {
+                return -1;
+            }
+            if (date1.month > date2.month) {
+                return 1;
+            }
+        }
+        if (date1.day < date2.day) {
+            return -1;
+        }
+        if (date1.day > date2.day) {
+            return 1;
+        }
+        if (date1.hour < date2.hour) {
+            return -1;
+        }
+        if (date1.hour > date2.hour) {
+            return 1;
+        }
+        if (date1.minute < date2.minute) {
+            return -1;
+        }
+        if (date1.minute > date2.minute) {
+            return 1;
+        }
+        if (date1.second < date2.second) {
+            return -1;
+        }
+        if (date1.second > date2.second) {
+            return 1;
+        }
+        if (date1.utc < date2.utc) {
+            return -1;
+        }
+        if (date1.utc > date2.utc) {
+            return 1;
+        }
+        return 0;
+    }
+
+    /**
+     * Parses time hh:mm:ss.sss and time zone if any
+     *
+     * @param start
+     * @param end
+     * @param data
+     * @exception RuntimeException
+     */
+    protected void getTime(String buffer, int start, int end, DateTimeData data) throws RuntimeException {
+
+        int stop = start + 2;
+
+        //get hours (hh)
+        data.hour = parseInt(buffer, start, stop);
+
+        //get minutes (mm)
+
+        if (buffer.charAt(stop++) != ':') {
+            throw new RuntimeException("Error in parsing time zone");
+        }
+        start = stop;
+        stop = stop + 2;
+        data.minute = parseInt(buffer, start, stop);
+
+        //get seconds (ss)
+        if (buffer.charAt(stop++) != ':') {
+            throw new RuntimeException("Error in parsing time zone");
+        }
+
+        //find UTC sign if any
+        int sign = findUTCSign(buffer, start, end);
+
+        //get seconds (ms)
+        start = stop;
+        stop = sign < 0 ? end : sign;
+        data.second = parseSecond(buffer, start, stop);
+
+        //parse UTC time zone (hh:mm)
+        if (sign > 0) {
+            getTimeZone(buffer, data, sign, end);
+        }
+    }
+
+    /**
+     * Parses date CCYY-MM-DD
+     *
+     * @param buffer
+     * @param start start position
+     * @param end end position
+     * @param date
+     * @exception RuntimeException
+     */
+    protected int getDate(String buffer, int start, int end, DateTimeData date) throws RuntimeException {
+
+        start = getYearMonth(buffer, start, end, date);
+
+        if (buffer.charAt(start++) != '-') {
+            throw new RuntimeException("CCYY-MM must be followed by '-' sign");
+        }
+        int stop = start + 2;
+        date.day = parseInt(buffer, start, stop);
+        return stop;
+    }
+
+    /**
+     * Parses date CCYY-MM
+     *
+     * @param buffer
+     * @param start start position
+     * @param end end position
+     * @param date
+     * @exception RuntimeException
+     */
+    protected int getYearMonth(String buffer, int start, int end, DateTimeData date) throws RuntimeException {
+
+        if (buffer.charAt(0) == '-') {
+            // REVISIT: date starts with preceding '-' sign
+            //          do we have to do anything with it?
+            //
+            start++;
+        }
+        int i = indexOf(buffer, start, end, '-');
+        if (i == -1) {
+            throw new RuntimeException("Year separator is missing or misplaced");
+        }
+        int length = i - start;
+        if (length < 4) {
+            throw new RuntimeException("Year must have 'CCYY' format");
+        } else if (length > 4 && buffer.charAt(start) == '0') {
+            throw new RuntimeException("Leading zeros are required if the year value would otherwise have fewer than four digits; otherwise they are forbidden");
+        }
+        date.year = parseIntYear(buffer, i);
+        if (buffer.charAt(i) != '-') {
+            throw new RuntimeException("CCYY must be followed by '-' sign");
+        }
+        start = ++i;
+        i = start + 2;
+        date.month = parseInt(buffer, start, i);
+        return i; //fStart points right after the MONTH
+    }
+
+    /**
+     * Shared code from Date and YearMonth datatypes. Finds if time zone sign is
+     * present
+     *
+     * @param end
+     * @param date
+     * @exception RuntimeException
+     */
+    protected void parseTimeZone(String buffer, int start, int end, DateTimeData date) throws RuntimeException {
+
+        //fStart points right after the date
+
+        if (start < end) {
+            if (!isNextCharUTCSign(buffer, start, end)) {
+                throw new RuntimeException("Error in month parsing");
+            } else {
+                getTimeZone(buffer, date, start, end);
+            }
+        }
+    }
+
+    /**
+     * Parses time zone: 'Z' or {+,-} followed by hh:mm
+     *
+     * @param data
+     * @param sign
+     * @exception RuntimeException
+     */
+    protected void getTimeZone(String buffer, DateTimeData data, int sign, int end) throws RuntimeException {
+        data.utc = buffer.charAt(sign);
+
+        if (buffer.charAt(sign) == 'Z') {
+            if (end > (++sign)) {
+                throw new RuntimeException("Error in parsing time zone");
+            }
+            return;
+        }
+        if (sign <= (end - 6)) {
+
+            int negate = buffer.charAt(sign) == '-' ? -1 : 1;
+            //parse hr
+            int stop = ++sign + 2;
+            data.timezoneHr = negate * parseInt(buffer, sign, stop);
+            if (buffer.charAt(stop++) != ':') {
+                throw new RuntimeException("Error in parsing time zone");
+            }
+
+            //parse min
+            data.timezoneMin = negate * parseInt(buffer, stop, stop + 2);
+
+            if (stop + 2 != end) {
+                throw new RuntimeException("Error in parsing time zone");
+            }
+            if (data.timezoneHr != 0 || data.timezoneMin != 0) {
+                data.normalized = false;
+            }
+        } else {
+            throw new RuntimeException("Error in parsing time zone");
+        }
+        if (DEBUG) {
+            System.out.println("time[hh]=" + data.timezoneHr + " time[mm]=" + data.timezoneMin);
+        }
+    }
+
+    /**
+     * Computes index of given char within StringBuffer
+     *
+     * @param start
+     * @param end
+     * @param ch character to look for in StringBuffer
+     * @return index of ch within StringBuffer
+     */
+    protected int indexOf(String buffer, int start, int end, char ch) {
+        for (int i = start; i < end; i++) {
+            if (buffer.charAt(i) == ch) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Validates given date/time object accoring to W3C PR Schema [D.1 ISO 8601
+     * Conventions]
+     *
+     * @param data
+     */
+    protected void validateDateTime(DateTimeData data) {
+
+        //REVISIT: should we throw an exception for not valid dates
+        //          or reporting an error message should be sufficient?
+
+        /**
+         * XML Schema 1.1 - RQ-123: Allow year 0000 in date related types.
+         */
+        if (!Constants.SCHEMA_1_1_SUPPORT && data.year == 0) {
+            throw new RuntimeException("The year \"0000\" is an illegal year value");
+
+        }
+
+        if (data.month < 1 || data.month > 12) {
+            throw new RuntimeException("The month must have values 1 to 12");
+
+        }
+
+        //validate days
+        if (data.day > maxDayInMonthFor(data.year, data.month) || data.day < 1) {
+            throw new RuntimeException("The day must have values 1 to 31");
+        }
+
+        //validate hours
+        if (data.hour > 23 || data.hour < 0) {
+            if (data.hour == 24 && data.minute == 0 && data.second == 0) {
+                data.hour = 0;
+                if (++data.day > maxDayInMonthFor(data.year, data.month)) {
+                    data.day = 1;
+                    if (++data.month > 12) {
+                        data.month = 1;
+                        if (Constants.SCHEMA_1_1_SUPPORT) {
+                            ++data.year;
+                        } else if (++data.year == 0) {
+                            data.year = 1;
+                        }
+                    }
+                }
+            } else {
+                throw new RuntimeException("Hour must have values 0-23, unless 24:00:00");
+            }
+        }
+
+        //validate
+        if (data.minute > 59 || data.minute < 0) {
+            throw new RuntimeException("Minute must have values 0-59");
+        }
+
+        //validate
+        if (data.second >= 60 || data.second < 0) {
+            throw new RuntimeException("Second must have values 0-59");
+
+        }
+
+        //validate
+        if (data.timezoneHr > 14 || data.timezoneHr < -14) {
+            throw new RuntimeException("Time zone should have range -14:00 to +14:00");
+        } else {
+            if ((data.timezoneHr == 14 || data.timezoneHr == -14) && data.timezoneMin != 0) {
+                throw new RuntimeException("Time zone should have range -14:00 to +14:00");
+            } else if (data.timezoneMin > 59 || data.timezoneMin < -59) {
+                throw new RuntimeException("Minute must have values 0-59");
+            }
+        }
+
+    }
+
+    /**
+     * Return index of UTC char: 'Z', '+', '-'
+     *
+     * @param start
+     * @param end
+     * @return index of the UTC character that was found
+     */
+    protected int findUTCSign(String buffer, int start, int end) {
+        int c;
+        for (int i = start; i < end; i++) {
+            c = buffer.charAt(i);
+            if (c == 'Z' || c == '+' || c == '-') {
+                return i;
+            }
+
+        }
+        return -1;
+    }
+
+    /**
+     * Returns
+     * <code>true</code> if the character at start is 'Z', '+' or '-'.
+     */
+    protected final boolean isNextCharUTCSign(String buffer, int start, int end) {
+        if (start < end) {
+            char c = buffer.charAt(start);
+            return (c == 'Z' || c == '+' || c == '-');
+        }
+        return false;
+    }
+
+    /**
+     * Given start and end position, parses string value
+     *
+     * @param buffer string to parse
+     * @param start start position
+     * @param end end position
+     * @return return integer representation of characters
+     */
+    protected int parseInt(String buffer, int start, int end)
+            throws NumberFormatException {
+        //REVISIT: more testing on this parsing needs to be done.
+        int radix = 10;
+        int result = 0;
+        int digit = 0;
+        int limit = -Integer.MAX_VALUE;
+        int multmin = limit / radix;
+        int i = start;
+        do {
+            digit = getDigit(buffer.charAt(i));
+            if (digit < 0) {
+                throw new NumberFormatException("'" + buffer + "' has wrong format");
+            }
+            if (result < multmin) {
+                throw new NumberFormatException("'" + buffer + "' has wrong format");
+            }
+            result *= radix;
+            if (result < limit + digit) {
+                throw new NumberFormatException("'" + buffer + "' has wrong format");
+            }
+            result -= digit;
+
+        } while (++i < end);
+        return -result;
+    }
+
+    // parse Year differently to support negative value.
+    protected int parseIntYear(String buffer, int end) {
+        int radix = 10;
+        int result = 0;
+        boolean negative = false;
+        int i = 0;
+        int limit;
+        int multmin;
+        int digit = 0;
+
+        if (buffer.charAt(0) == '-') {
+            negative = true;
+            limit = Integer.MIN_VALUE;
+            i++;
+
+        } else {
+            limit = -Integer.MAX_VALUE;
+        }
+        multmin = limit / radix;
+        while (i < end) {
+            digit = getDigit(buffer.charAt(i++));
+            if (digit < 0) {
+                throw new NumberFormatException("'" + buffer + "' has wrong format");
+            }
+            if (result < multmin) {
+                throw new NumberFormatException("'" + buffer + "' has wrong format");
+            }
+            result *= radix;
+            if (result < limit + digit) {
+                throw new NumberFormatException("'" + buffer + "' has wrong format");
+            }
+            result -= digit;
+        }
+
+        if (negative) {
+            if (i > 1) {
+                return result;
+            } else {
+                throw new NumberFormatException("'" + buffer + "' has wrong format");
+            }
+        }
+        return -result;
+
+    }
+
+    /**
+     * If timezone present - normalize dateTime [E Adding durations to
+     * dateTimes]
+     *
+     * @param date CCYY-MM-DDThh:mm:ss+03
+     */
+    protected void normalize(DateTimeData date) {
+
+        // REVISIT: we have common code in addDuration() for durations
+        //          should consider reorganizing it.
+        //
+
+        //add minutes (from time zone)
+        int negate = -1;
+
+        if (DEBUG) {
+            System.out.println("==>date.minute" + date.minute);
+            System.out.println("==>date.timezoneMin" + date.timezoneMin);
+        }
+        int temp = date.minute + negate * date.timezoneMin;
+        int carry = fQuotient(temp, 60);
+        date.minute = mod(temp, 60, carry);
+
+        if (DEBUG) {
+            System.out.println("==>carry: " + carry);
+        }
+        //add hours
+        temp = date.hour + negate * date.timezoneHr + carry;
+        carry = fQuotient(temp, 24);
+        date.hour = mod(temp, 24, carry);
+        if (DEBUG) {
+            System.out.println("==>date.hour" + date.hour);
+            System.out.println("==>carry: " + carry);
+        }
+
+        date.day = date.day + carry;
+
+        while (true) {
+            temp = maxDayInMonthFor(date.year, date.month);
+            if (date.day < 1) {
+                date.day = date.day + maxDayInMonthFor(date.year, date.month - 1);
+                carry = -1;
+            } else if (date.day > temp) {
+                date.day = date.day - temp;
+                carry = 1;
+            } else {
+                break;
+            }
+            temp = date.month + carry;
+            date.month = modulo(temp, 1, 13);
+            date.year = date.year + fQuotient(temp, 1, 13);
+            if (date.year == 0 && !Constants.SCHEMA_1_1_SUPPORT) {
+                date.year = (date.timezoneHr < 0 || date.timezoneMin < 0) ? 1 : -1;
+            }
+        }
+        date.utc = 'Z';
+    }
+
+    /**
+     * @param date
+     */
+    protected void saveUnnormalized(DateTimeData date) {
+        date.unNormYear = date.year;
+        date.unNormMonth = date.month;
+        date.unNormDay = date.day;
+        date.unNormHour = date.hour;
+        date.unNormMinute = date.minute;
+        date.unNormSecond = date.second;
+    }
+
+    /**
+     * Resets object representation of date/time
+     *
+     * @param data date/time object
+     */
+    protected void resetDateObj(DateTimeData data) {
+        data.year = 0;
+        data.month = 0;
+        data.day = 0;
+        data.hour = 0;
+        data.minute = 0;
+        data.second = 0;
+        data.utc = 0;
+        data.timezoneHr = 0;
+        data.timezoneMin = 0;
+    }
+
+    /**
+     * Given {year,month} computes maximum number of days for given month
+     *
+     * @param year
+     * @param month
+     * @return integer containg the number of days in a given month
+     */
+    protected int maxDayInMonthFor(int year, int month) {
+        //validate days
+        if (month == 4 || month == 6 || month == 9 || month == 11) {
+            return 30;
+        } else if (month == 2) {
+            if (isLeapYear(year)) {
+                return 29;
+            } else {
+                return 28;
+            }
+        } else {
+            return 31;
+        }
+    }
+
+    private boolean isLeapYear(int year) {
+
+        //REVISIT: should we take care about Julian calendar?
+        return ((year % 4 == 0) && ((year % 100 != 0) || (year % 400 == 0)));
+    }
+
+    //
+    // help function described in W3C PR Schema [E Adding durations to dateTimes]
+    //
+    protected int mod(int a, int b, int quotient) {
+        //modulo(a, b) = a - fQuotient(a,b)*b
+        return (a - quotient * b);
+    }
+
+    //
+    // help function described in W3C PR Schema [E Adding durations to dateTimes]
+    //
+    protected int fQuotient(int a, int b) {
+
+        //fQuotient(a, b) = the greatest integer less than or equal to a/b
+        return (int) Math.floor((float) a / b);
+    }
+
+    //
+    // help function described in W3C PR Schema [E Adding durations to dateTimes]
+    //
+    protected int modulo(int temp, int low, int high) {
+        //modulo(a - low, high - low) + low
+        int a = temp - low;
+        int b = high - low;
+        return (mod(a, b, fQuotient(a, b)) + low);
+    }
+
+    //
+    // help function described in W3C PR Schema [E Adding durations to dateTimes]
+    //
+    protected int fQuotient(int temp, int low, int high) {
+        //fQuotient(a - low, high - low)
+
+        return fQuotient(temp - low, high - low);
+    }
+
+    protected String dateToString(DateTimeData date) {
+        StringBuffer message = new StringBuffer(25);
+        append(message, date.year, 4);
+        message.append('-');
+        append(message, date.month, 2);
+        message.append('-');
+        append(message, date.day, 2);
+        message.append('T');
+        append(message, date.hour, 2);
+        message.append(':');
+        append(message, date.minute, 2);
+        message.append(':');
+        append(message, date.second);
+        append(message, (char) date.utc, 0);
+        return message.toString();
+    }
+
+    protected final void append(StringBuffer message, int value, int nch) {
+        if (value == Integer.MIN_VALUE) {
+            message.append(value);
+            return;
+        }
+        if (value < 0) {
+            message.append('-');
+            value = -value;
+        }
+        if (nch == 4) {
+            if (value < 10) {
+                message.append("000");
+            } else if (value < 100) {
+                message.append("00");
+            } else if (value < 1000) {
+                message.append('0');
+            }
+            message.append(value);
+        } else if (nch == 2) {
+            if (value < 10) {
+                message.append('0');
+            }
+            message.append(value);
+        } else {
+            if (value != 0) {
+                message.append((char) value);
+            }
+        }
+    }
+
+    protected final void append(StringBuffer message, double value) {
+        if (value < 0) {
+            message.append('-');
+            value = -value;
+        }
+        if (value < 10) {
+            message.append('0');
+        }
+        append2(message, value);
+    }
+
+    protected final void append2(StringBuffer message, double value) {
+        final int intValue = (int) value;
+        if (value == intValue) {
+            message.append(intValue);
+        } else {
+            append3(message, value);
+        }
+    }
+
+    private void append3(StringBuffer message, double value) {
+        String d = String.valueOf(value);
+        int eIndex = d.indexOf('E');
+        if (eIndex == -1) {
+            message.append(d);
+            return;
+        }
+        int exp;
+        if (value < 1) {
+            // Need to convert from scientific notation of the form
+            // n.nnn...E-N (N >= 4) to a normal decimal value.
+            try {
+                exp = parseInt(d, eIndex + 2, d.length());
+            } // This should never happen.
+            // It's only possible if String.valueOf(double) is broken.
+            catch (Exception e) {
+                message.append(d);
+                return;
+            }
+            message.append("0.");
+            for (int i = 1; i < exp; ++i) {
+                message.append('0');
+            }
+            // Remove trailing zeros.
+            int end = eIndex - 1;
+            while (end > 0) {
+                char c = d.charAt(end);
+                if (c != '0') {
+                    break;
+                }
+                --end;
+            }
+            // Now append the digits to the end. Skip over the decimal point.
+            for (int i = 0; i <= end; ++i) {
+                char c = d.charAt(i);
+                if (c != '.') {
+                    message.append(c);
+                }
+            }
+        } else {
+            // Need to convert from scientific notation of the form
+            // n.nnn...EN (N >= 7) to a normal decimal value.
+            try {
+                exp = parseInt(d, eIndex + 1, d.length());
+            } // This should never happen.
+            // It's only possible if String.valueOf(double) is broken.
+            catch (Exception e) {
+                message.append(d);
+                return;
+            }
+            final int integerEnd = exp + 2;
+            for (int i = 0; i < eIndex; ++i) {
+                char c = d.charAt(i);
+                if (c != '.') {
+                    if (i == integerEnd) {
+                        message.append('.');
+                    }
+                    message.append(c);
+                }
+            }
+            // Append trailing zeroes if necessary.
+            for (int i = integerEnd - eIndex; i > 0; --i) {
+                message.append('0');
+            }
+        }
+    }
+
+    protected double parseSecond(String buffer, int start, int end)
+            throws NumberFormatException {
+        int dot = -1;
+        for (int i = start; i < end; i++) {
+            char ch = buffer.charAt(i);
+            if (ch == '.') {
+                dot = i;
+            } else if (ch > '9' || ch < '0') {
+                throw new NumberFormatException("'" + buffer + "' has wrong format");
+            }
+        }
+        if (dot == -1) {
+            if (start + 2 != end) {
+                throw new NumberFormatException("'" + buffer + "' has wrong format");
+            }
+        } else if (start + 2 != dot || dot + 1 == end) {
+            throw new NumberFormatException("'" + buffer + "' has wrong format");
+        }
+        return Double.parseDouble(buffer.substring(start, end));
+    }
+
+    //
+    //Private help functions
+    //
+    private void cloneDate(DateTimeData finalValue, DateTimeData tempDate) {
+        tempDate.year = finalValue.year;
+        tempDate.month = finalValue.month;
+        tempDate.day = finalValue.day;
+        tempDate.hour = finalValue.hour;
+        tempDate.minute = finalValue.minute;
+        tempDate.second = finalValue.second;
+        tempDate.utc = finalValue.utc;
+        tempDate.timezoneHr = finalValue.timezoneHr;
+        tempDate.timezoneMin = finalValue.timezoneMin;
+    }
+
+    /**
+     * Represents date time data
+     */
+    static final class DateTimeData implements XSDateTime {
+
+        int year, month, day, hour, minute, utc;
+        double second;
+        int timezoneHr, timezoneMin;
+        private String originalValue;
+        boolean normalized = true;
+        int unNormYear;
+        int unNormMonth;
+        int unNormDay;
+        int unNormHour;
+        int unNormMinute;
+        double unNormSecond;
+        // used for comparisons - to decide the 'interesting' portions of
+        // a date/time based data type.
+        int position;
+        // a pointer to the type that was used go generate this data
+        // note that this is not the actual simple type, but one of the
+        // statically created XXXDV objects, so this won't cause any GC problem.
+        final AbstractDateTimeDV type;
+        private volatile String canonical;
+
+        public DateTimeData(String originalValue, AbstractDateTimeDV type) {
+            this.originalValue = originalValue;
+            this.type = type;
+        }
+
+        public DateTimeData(int year, int month, int day, int hour, int minute,
+                double second, int utc, String originalValue, boolean normalized, AbstractDateTimeDV type) {
+            this.year = year;
+            this.month = month;
+            this.day = day;
+            this.hour = hour;
+            this.minute = minute;
+            this.second = second;
+            this.utc = utc;
+            this.type = type;
+            this.originalValue = originalValue;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (!(obj instanceof DateTimeData)) {
+                return false;
+            }
+            return type.compareDates(this, (DateTimeData) obj, true) == 0;
+        }
+
+        // If two DateTimeData are equals - then they should have the same
+        // hashcode. This means we need to convert the date to UTC before
+        // we return its hashcode.
+        // The DateTimeData is unfortunately mutable - so we cannot
+        // cache the result of the conversion...
+        //
+        @Override
+        public int hashCode() {
+            final DateTimeData tempDate = new DateTimeData(null, type);
+            type.cloneDate(this, tempDate);
+            type.normalize(tempDate);
+            return type.dateToString(tempDate).hashCode();
+        }
+
+        @Override
+        public String toString() {
+            if (canonical == null) {
+                canonical = type.dateToString(this);
+            }
+            return canonical;
+        }
+        /* (non-Javadoc)
+         * @see org.apache.xerces.xs.datatypes.XSDateTime#getYear()
+         */
+
+        @Override
+        public int getYears() {
+            if (type instanceof DurationDV) {
+                return 0;
+            }
+            return normalized ? year : unNormYear;
+        }
+        /* (non-Javadoc)
+         * @see org.apache.xerces.xs.datatypes.XSDateTime#getMonth()
+         */
+
+        @Override
+        public int getMonths() {
+            if (type instanceof DurationDV) {
+                return year * 12 + month;
+            }
+            return normalized ? month : unNormMonth;
+        }
+        /* (non-Javadoc)
+         * @see org.apache.xerces.xs.datatypes.XSDateTime#getDay()
+         */
+
+        @Override
+        public int getDays() {
+            if (type instanceof DurationDV) {
+                return 0;
+            }
+            return normalized ? day : unNormDay;
+        }
+        /* (non-Javadoc)
+         * @see org.apache.xerces.xs.datatypes.XSDateTime#getHour()
+         */
+
+        @Override
+        public int getHours() {
+            if (type instanceof DurationDV) {
+                return 0;
+            }
+            return normalized ? hour : unNormHour;
+        }
+        /* (non-Javadoc)
+         * @see org.apache.xerces.xs.datatypes.XSDateTime#getMinutes()
+         */
+
+        @Override
+        public int getMinutes() {
+            if (type instanceof DurationDV) {
+                return 0;
+            }
+            return normalized ? minute : unNormMinute;
+        }
+        /* (non-Javadoc)
+         * @see org.apache.xerces.xs.datatypes.XSDateTime#getSeconds()
+         */
+
+        @Override
+        public double getSeconds() {
+            if (type instanceof DurationDV) {
+                return day * 24 * 60 * 60 + hour * 60 * 60 + minute * 60 + second;
+            }
+            return normalized ? second : unNormSecond;
+        }
+        /* (non-Javadoc)
+         * @see org.apache.xerces.xs.datatypes.XSDateTime#hasTimeZone()
+         */
+
+        @Override
+        public boolean hasTimeZone() {
+            return utc != 0;
+        }
+        /* (non-Javadoc)
+         * @see org.apache.xerces.xs.datatypes.XSDateTime#getTimeZoneHours()
+         */
+
+        @Override
+        public int getTimeZoneHours() {
+            return timezoneHr;
+        }
+        /* (non-Javadoc)
+         * @see org.apache.xerces.xs.datatypes.XSDateTime#getTimeZoneMinutes()
+         */
+
+        @Override
+        public int getTimeZoneMinutes() {
+            return timezoneMin;
+        }
+        /* (non-Javadoc)
+         * @see org.apache.xerces.xs.datatypes.XSDateTime#getLexicalValue()
+         */
+
+        @Override
+        public String getLexicalValue() {
+            return originalValue;
+        }
+        /* (non-Javadoc)
+         * @see org.apache.xerces.xs.datatypes.XSDateTime#normalize()
+         */
+
+        @Override
+        public XSDateTime normalize() {
+            if (!normalized) {
+                DateTimeData dt = (DateTimeData) this.clone();
+                dt.normalized = true;
+                return dt;
+            }
+            return this;
+        }
+        /* (non-Javadoc)
+         * @see org.apache.xerces.xs.datatypes.XSDateTime#isNormalized()
+         */
+
+        @Override
+        public boolean isNormalized() {
+            return normalized;
+        }
+
+        @Override
+        public Object clone() {
+            DateTimeData dt = new DateTimeData(this.year, this.month, this.day, this.hour,
+                    this.minute, this.second, this.utc, this.originalValue, this.normalized, this.type);
+            dt.canonical = this.canonical;
+            dt.position = position;
+            dt.timezoneHr = this.timezoneHr;
+            dt.timezoneMin = this.timezoneMin;
+            dt.unNormYear = this.unNormYear;
+            dt.unNormMonth = this.unNormMonth;
+            dt.unNormDay = this.unNormDay;
+            dt.unNormHour = this.unNormHour;
+            dt.unNormMinute = this.unNormMinute;
+            dt.unNormSecond = this.unNormSecond;
+            return dt;
+        }
+
+        /* (non-Javadoc)
+         * @see org.apache.xerces.xs.datatypes.XSDateTime#getXMLGregorianCalendar()
+         */
+        @Override
+        public XMLGregorianCalendar getXMLGregorianCalendar() {
+            return type.getXMLGregorianCalendar(this);
+        }
+        /* (non-Javadoc)
+         * @see org.apache.xerces.xs.datatypes.XSDateTime#getDuration()
+         */
+
+        @Override
+        public Duration getDuration() {
+            return type.getDuration(this);
+        }
+    }
+
+    protected XMLGregorianCalendar getXMLGregorianCalendar(DateTimeData data) {
+        return null;
+    }
+
+    protected Duration getDuration(DateTimeData data) {
+        return null;
+    }
+
+    protected final BigDecimal getFractionalSecondsAsBigDecimal(DateTimeData data) {
+        final StringBuffer buf = new StringBuffer();
+        append3(buf, data.unNormSecond);
+        String value = buf.toString();
+        final int index = value.indexOf('.');
+        if (index == -1) {
+            return null;
+        }
+        value = value.substring(index);
+        final BigDecimal _val = new BigDecimal(value);
+        if (_val.compareTo(BigDecimal.valueOf(0)) == 0) {
+            return null;
+        }
+        return _val;
+    }
+}

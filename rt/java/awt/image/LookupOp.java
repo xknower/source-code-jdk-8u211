@@ -1,573 +1,567 @@
-/*     */ package java.awt.image;
-/*     */ 
-/*     */ import java.awt.RenderingHints;
-/*     */ import java.awt.geom.Point2D;
-/*     */ import java.awt.geom.Rectangle2D;
-/*     */ import sun.awt.image.ImagingLib;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class LookupOp
-/*     */   implements BufferedImageOp, RasterOp
-/*     */ {
-/*     */   private LookupTable ltable;
-/*     */   private int numComponents;
-/*     */   RenderingHints hints;
-/*     */   
-/*     */   public LookupOp(LookupTable paramLookupTable, RenderingHints paramRenderingHints) {
-/*  91 */     this.ltable = paramLookupTable;
-/*  92 */     this.hints = paramRenderingHints;
-/*  93 */     this.numComponents = this.ltable.getNumComponents();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final LookupTable getTable() {
-/* 102 */     return this.ltable;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final BufferedImage filter(BufferedImage paramBufferedImage1, BufferedImage paramBufferedImage2) {
-/* 126 */     ColorModel colorModel2, colorModel1 = paramBufferedImage1.getColorModel();
-/* 127 */     int i = colorModel1.getNumColorComponents();
-/*     */     
-/* 129 */     if (colorModel1 instanceof IndexColorModel) {
-/* 130 */       throw new IllegalArgumentException("LookupOp cannot be performed on an indexed image");
-/*     */     }
-/*     */ 
-/*     */     
-/* 134 */     int j = this.ltable.getNumComponents();
-/* 135 */     if (j != 1 && j != colorModel1
-/* 136 */       .getNumComponents() && j != colorModel1
-/* 137 */       .getNumColorComponents())
-/*     */     {
-/* 139 */       throw new IllegalArgumentException("Number of arrays in the  lookup table (" + j + " is not compatible with the  src image: " + paramBufferedImage1);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 147 */     boolean bool = false;
-/*     */     
-/* 149 */     int k = paramBufferedImage1.getWidth();
-/* 150 */     int m = paramBufferedImage1.getHeight();
-/*     */     
-/* 152 */     if (paramBufferedImage2 == null) {
-/* 153 */       paramBufferedImage2 = createCompatibleDestImage(paramBufferedImage1, null);
-/* 154 */       colorModel2 = colorModel1;
-/*     */     } else {
-/*     */       
-/* 157 */       if (k != paramBufferedImage2.getWidth()) {
-/* 158 */         throw new IllegalArgumentException("Src width (" + k + ") not equal to dst width (" + paramBufferedImage2
-/*     */ 
-/*     */             
-/* 161 */             .getWidth() + ")");
-/*     */       }
-/* 163 */       if (m != paramBufferedImage2.getHeight()) {
-/* 164 */         throw new IllegalArgumentException("Src height (" + m + ") not equal to dst height (" + paramBufferedImage2
-/*     */ 
-/*     */             
-/* 167 */             .getHeight() + ")");
-/*     */       }
-/*     */       
-/* 170 */       colorModel2 = paramBufferedImage2.getColorModel();
-/* 171 */       if (colorModel1.getColorSpace().getType() != colorModel2
-/* 172 */         .getColorSpace().getType()) {
-/*     */         
-/* 174 */         bool = true;
-/* 175 */         paramBufferedImage2 = createCompatibleDestImage(paramBufferedImage1, null);
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */     
-/* 180 */     BufferedImage bufferedImage = paramBufferedImage2;
-/*     */     
-/* 182 */     if (ImagingLib.filter(this, paramBufferedImage1, paramBufferedImage2) == null) {
-/*     */       
-/* 184 */       WritableRaster writableRaster1 = paramBufferedImage1.getRaster();
-/* 185 */       WritableRaster writableRaster2 = paramBufferedImage2.getRaster();
-/*     */       
-/* 187 */       if (colorModel1.hasAlpha() && (
-/* 188 */         i - 1 == j || j == 1)) {
-/* 189 */         int n = writableRaster1.getMinX();
-/* 190 */         int i1 = writableRaster1.getMinY();
-/* 191 */         int[] arrayOfInt = new int[i - 1];
-/* 192 */         for (byte b = 0; b < i - 1; b++) {
-/* 193 */           arrayOfInt[b] = b;
-/*     */         }
-/*     */         
-/* 196 */         writableRaster1 = writableRaster1.createWritableChild(n, i1, writableRaster1
-/* 197 */             .getWidth(), writableRaster1
-/* 198 */             .getHeight(), n, i1, arrayOfInt);
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */       
-/* 203 */       if (colorModel2.hasAlpha()) {
-/* 204 */         int n = writableRaster2.getNumBands();
-/* 205 */         if (n - 1 == j || j == 1) {
-/* 206 */           int i1 = writableRaster2.getMinX();
-/* 207 */           int i2 = writableRaster2.getMinY();
-/* 208 */           int[] arrayOfInt = new int[i - 1];
-/* 209 */           for (byte b = 0; b < i - 1; b++) {
-/* 210 */             arrayOfInt[b] = b;
-/*     */           }
-/*     */           
-/* 213 */           writableRaster2 = writableRaster2.createWritableChild(i1, i2, writableRaster2
-/* 214 */               .getWidth(), writableRaster2
-/* 215 */               .getHeight(), i1, i2, arrayOfInt);
-/*     */         } 
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */       
-/* 221 */       filter(writableRaster1, writableRaster2);
-/*     */     } 
-/*     */     
-/* 224 */     if (bool) {
-/*     */       
-/* 226 */       ColorConvertOp colorConvertOp = new ColorConvertOp(this.hints);
-/* 227 */       colorConvertOp.filter(paramBufferedImage2, bufferedImage);
-/*     */     } 
-/*     */     
-/* 230 */     return bufferedImage;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final WritableRaster filter(Raster paramRaster, WritableRaster paramWritableRaster) {
-/* 254 */     int i = paramRaster.getNumBands();
-/* 255 */     int j = paramWritableRaster.getNumBands();
-/* 256 */     int k = paramRaster.getHeight();
-/* 257 */     int m = paramRaster.getWidth();
-/* 258 */     int[] arrayOfInt = new int[i];
-/*     */ 
-/*     */ 
-/*     */     
-/* 262 */     if (paramWritableRaster == null) {
-/* 263 */       paramWritableRaster = createCompatibleDestRaster(paramRaster);
-/*     */     }
-/* 265 */     else if (k != paramWritableRaster.getHeight() || m != paramWritableRaster.getWidth()) {
-/* 266 */       throw new IllegalArgumentException("Width or height of Rasters do not match");
-/*     */     } 
-/*     */ 
-/*     */     
-/* 270 */     j = paramWritableRaster.getNumBands();
-/*     */     
-/* 272 */     if (i != j) {
-/* 273 */       throw new IllegalArgumentException("Number of channels in the src (" + i + ") does not match number of channels in the destination (" + j + ")");
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 280 */     int n = this.ltable.getNumComponents();
-/* 281 */     if (n != 1 && n != paramRaster.getNumBands()) {
-/* 282 */       throw new IllegalArgumentException("Number of arrays in the  lookup table (" + n + " is not compatible with the  src Raster: " + paramRaster);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 290 */     if (ImagingLib.filter(this, paramRaster, paramWritableRaster) != null) {
-/* 291 */       return paramWritableRaster;
-/*     */     }
-/*     */ 
-/*     */     
-/* 295 */     if (this.ltable instanceof ByteLookupTable) {
-/* 296 */       byteFilter((ByteLookupTable)this.ltable, paramRaster, paramWritableRaster, m, k, i);
-/*     */     
-/*     */     }
-/* 299 */     else if (this.ltable instanceof ShortLookupTable) {
-/* 300 */       shortFilter((ShortLookupTable)this.ltable, paramRaster, paramWritableRaster, m, k, i);
-/*     */     
-/*     */     }
-/*     */     else {
-/*     */       
-/* 305 */       int i1 = paramRaster.getMinX();
-/* 306 */       int i2 = paramRaster.getMinY();
-/* 307 */       int i3 = paramWritableRaster.getMinX();
-/* 308 */       int i4 = paramWritableRaster.getMinY();
-/* 309 */       for (byte b = 0; b < k; b++, i2++, i4++) {
-/* 310 */         int i5 = i1;
-/* 311 */         int i6 = i3;
-/* 312 */         for (byte b1 = 0; b1 < m; b1++, i5++, i6++) {
-/*     */           
-/* 314 */           paramRaster.getPixel(i5, i2, arrayOfInt);
-/*     */ 
-/*     */           
-/* 317 */           this.ltable.lookupPixel(arrayOfInt, arrayOfInt);
-/*     */ 
-/*     */           
-/* 320 */           paramWritableRaster.setPixel(i6, i4, arrayOfInt);
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 325 */     return paramWritableRaster;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final Rectangle2D getBounds2D(BufferedImage paramBufferedImage) {
-/* 336 */     return getBounds2D(paramBufferedImage.getRaster());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final Rectangle2D getBounds2D(Raster paramRaster) {
-/* 347 */     return paramRaster.getBounds();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public BufferedImage createCompatibleDestImage(BufferedImage paramBufferedImage, ColorModel paramColorModel) {
-/*     */     BufferedImage bufferedImage;
-/* 363 */     int i = paramBufferedImage.getWidth();
-/* 364 */     int j = paramBufferedImage.getHeight();
-/* 365 */     boolean bool = false;
-/* 366 */     if (paramColorModel == null) {
-/* 367 */       ColorModel colorModel = paramBufferedImage.getColorModel();
-/* 368 */       WritableRaster writableRaster = paramBufferedImage.getRaster();
-/* 369 */       if (colorModel instanceof ComponentColorModel) {
-/* 370 */         DataBuffer dataBuffer = writableRaster.getDataBuffer();
-/* 371 */         boolean bool1 = colorModel.hasAlpha();
-/* 372 */         boolean bool2 = colorModel.isAlphaPremultiplied();
-/* 373 */         int k = colorModel.getTransparency();
-/* 374 */         int[] arrayOfInt = null;
-/* 375 */         if (this.ltable instanceof ByteLookupTable) {
-/* 376 */           if (dataBuffer.getDataType() == 1)
-/*     */           {
-/* 378 */             if (bool1) {
-/* 379 */               arrayOfInt = new int[2];
-/* 380 */               if (k == 2) {
-/* 381 */                 arrayOfInt[1] = 1;
-/*     */               } else {
-/*     */                 
-/* 384 */                 arrayOfInt[1] = 8;
-/*     */               } 
-/*     */             } else {
-/*     */               
-/* 388 */               arrayOfInt = new int[1];
-/*     */             } 
-/* 390 */             arrayOfInt[0] = 8;
-/*     */           }
-/*     */         
-/*     */         } else {
-/*     */           
-/* 395 */           bool = true;
-/* 396 */           if (this.ltable instanceof ShortLookupTable && dataBuffer.getDataType() == 0) {
-/* 397 */             if (bool1) {
-/* 398 */               arrayOfInt = new int[2];
-/* 399 */               if (k == 2) {
-/* 400 */                 arrayOfInt[1] = 1;
-/*     */               } else {
-/*     */                 
-/* 403 */                 arrayOfInt[1] = 16;
-/*     */               } 
-/*     */             } else {
-/*     */               
-/* 407 */               arrayOfInt = new int[1];
-/*     */             } 
-/* 409 */             arrayOfInt[0] = 16;
-/*     */           } 
-/*     */         } 
-/* 412 */         if (arrayOfInt != null) {
-/* 413 */           colorModel = new ComponentColorModel(colorModel.getColorSpace(), arrayOfInt, bool1, bool2, k, bool);
-/*     */         }
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 420 */       bufferedImage = new BufferedImage(colorModel, colorModel.createCompatibleWritableRaster(i, j), colorModel.isAlphaPremultiplied(), null);
-/*     */ 
-/*     */     
-/*     */     }
-/*     */     else {
-/*     */ 
-/*     */       
-/* 427 */       bufferedImage = new BufferedImage(paramColorModel, paramColorModel.createCompatibleWritableRaster(i, j), paramColorModel.isAlphaPremultiplied(), null);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 431 */     return bufferedImage;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public WritableRaster createCompatibleDestRaster(Raster paramRaster) {
-/* 441 */     return paramRaster.createCompatibleWritableRaster();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final Point2D getPoint2D(Point2D paramPoint2D1, Point2D paramPoint2D2) {
-/* 458 */     if (paramPoint2D2 == null) {
-/* 459 */       paramPoint2D2 = new Point2D.Float();
-/*     */     }
-/* 461 */     paramPoint2D2.setLocation(paramPoint2D1.getX(), paramPoint2D1.getY());
-/*     */     
-/* 463 */     return paramPoint2D2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final RenderingHints getRenderingHints() {
-/* 472 */     return this.hints;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private final void byteFilter(ByteLookupTable paramByteLookupTable, Raster paramRaster, WritableRaster paramWritableRaster, int paramInt1, int paramInt2, int paramInt3) {
-/* 478 */     int[] arrayOfInt = null;
-/*     */ 
-/*     */     
-/* 481 */     byte[][] arrayOfByte = paramByteLookupTable.getTable();
-/* 482 */     int i = paramByteLookupTable.getOffset();
-/*     */     
-/* 484 */     byte b1 = 1;
-/*     */ 
-/*     */     
-/* 487 */     if (arrayOfByte.length == 1) {
-/* 488 */       b1 = 0;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 494 */     int j = (arrayOfByte[0]).length;
-/*     */ 
-/*     */     
-/* 497 */     for (byte b2 = 0; b2 < paramInt2; b2++) {
-/* 498 */       int k = 0;
-/* 499 */       for (byte b = 0; b < paramInt3; b++, k += b1) {
-/*     */         
-/* 501 */         arrayOfInt = paramRaster.getSamples(0, b2, paramInt1, 1, b, arrayOfInt);
-/*     */         
-/* 503 */         for (byte b3 = 0; b3 < paramInt1; b3++) {
-/* 504 */           int m = arrayOfInt[b3] - i;
-/* 505 */           if (m < 0 || m > j) {
-/* 506 */             throw new IllegalArgumentException("index (" + m + "(out of range:  srcPix[" + b3 + "]=" + arrayOfInt[b3] + " offset=" + i);
-/*     */           }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */           
-/* 514 */           arrayOfInt[b3] = arrayOfByte[k][m];
-/*     */         } 
-/*     */         
-/* 517 */         paramWritableRaster.setSamples(0, b2, paramInt1, 1, b, arrayOfInt);
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private final void shortFilter(ShortLookupTable paramShortLookupTable, Raster paramRaster, WritableRaster paramWritableRaster, int paramInt1, int paramInt2, int paramInt3) {
-/* 526 */     int[] arrayOfInt = null;
-/*     */ 
-/*     */     
-/* 529 */     short[][] arrayOfShort = paramShortLookupTable.getTable();
-/* 530 */     int i = paramShortLookupTable.getOffset();
-/*     */     
-/* 532 */     byte b1 = 1;
-/*     */ 
-/*     */     
-/* 535 */     if (arrayOfShort.length == 1) {
-/* 536 */       b1 = 0;
-/*     */     }
-/*     */     
-/* 539 */     byte b2 = 0;
-/* 540 */     byte b3 = 0;
-/*     */     
-/* 542 */     char c = '￿';
-/*     */     
-/* 544 */     for (b3 = 0; b3 < paramInt2; b3++) {
-/* 545 */       int j = 0;
-/* 546 */       for (byte b = 0; b < paramInt3; b++, j += b1) {
-/*     */         
-/* 548 */         arrayOfInt = paramRaster.getSamples(0, b3, paramInt1, 1, b, arrayOfInt);
-/*     */         
-/* 550 */         for (b2 = 0; b2 < paramInt1; b2++) {
-/* 551 */           int k = arrayOfInt[b2] - i;
-/* 552 */           if (k < 0 || k > c) {
-/* 553 */             throw new IllegalArgumentException("index out of range " + k + " x is " + b2 + "srcPix[x]=" + arrayOfInt[b2] + " offset=" + i);
-/*     */           }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */           
-/* 560 */           arrayOfInt[b2] = arrayOfShort[j][k];
-/*     */         } 
-/*     */         
-/* 563 */         paramWritableRaster.setSamples(0, b3, paramInt1, 1, b, arrayOfInt);
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\awt\image\LookupOp.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2000, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+
+package java.awt.image;
+
+import java.awt.color.ColorSpace;
+import java.awt.geom.Rectangle2D;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.geom.Point2D;
+import sun.awt.image.ImagingLib;
+
+/**
+ * This class implements a lookup operation from the source
+ * to the destination.  The LookupTable object may contain a single array
+ * or multiple arrays, subject to the restrictions below.
+ * <p>
+ * For Rasters, the lookup operates on bands.  The number of
+ * lookup arrays may be one, in which case the same array is
+ * applied to all bands, or it must equal the number of Source
+ * Raster bands.
+ * <p>
+ * For BufferedImages, the lookup operates on color and alpha components.
+ * The number of lookup arrays may be one, in which case the
+ * same array is applied to all color (but not alpha) components.
+ * Otherwise, the number of lookup arrays may
+ * equal the number of Source color components, in which case no
+ * lookup of the alpha component (if present) is performed.
+ * If neither of these cases apply, the number of lookup arrays
+ * must equal the number of Source color components plus alpha components,
+ * in which case lookup is performed for all color and alpha components.
+ * This allows non-uniform rescaling of multi-band BufferedImages.
+ * <p>
+ * BufferedImage sources with premultiplied alpha data are treated in the same
+ * manner as non-premultiplied images for purposes of the lookup.  That is,
+ * the lookup is done per band on the raw data of the BufferedImage source
+ * without regard to whether the data is premultiplied.  If a color conversion
+ * is required to the destination ColorModel, the premultiplied state of
+ * both source and destination will be taken into account for this step.
+ * <p>
+ * Images with an IndexColorModel cannot be used.
+ * <p>
+ * If a RenderingHints object is specified in the constructor, the
+ * color rendering hint and the dithering hint may be used when color
+ * conversion is required.
+ * <p>
+ * This class allows the Source to be the same as the Destination.
+ *
+ * @see LookupTable
+ * @see java.awt.RenderingHints#KEY_COLOR_RENDERING
+ * @see java.awt.RenderingHints#KEY_DITHERING
+ */
+
+public class LookupOp implements BufferedImageOp, RasterOp {
+    private LookupTable ltable;
+    private int numComponents;
+    RenderingHints hints;
+
+    /**
+     * Constructs a <code>LookupOp</code> object given the lookup
+     * table and a <code>RenderingHints</code> object, which might
+     * be <code>null</code>.
+     * @param lookup the specified <code>LookupTable</code>
+     * @param hints the specified <code>RenderingHints</code>,
+     *        or <code>null</code>
+     */
+    public LookupOp(LookupTable lookup, RenderingHints hints) {
+        this.ltable = lookup;
+        this.hints  = hints;
+        numComponents = ltable.getNumComponents();
+    }
+
+    /**
+     * Returns the <code>LookupTable</code>.
+     * @return the <code>LookupTable</code> of this
+     *         <code>LookupOp</code>.
+     */
+    public final LookupTable getTable() {
+        return ltable;
+    }
+
+    /**
+     * Performs a lookup operation on a <code>BufferedImage</code>.
+     * If the color model in the source image is not the same as that
+     * in the destination image, the pixels will be converted
+     * in the destination.  If the destination image is <code>null</code>,
+     * a <code>BufferedImage</code> will be created with an appropriate
+     * <code>ColorModel</code>.  An <code>IllegalArgumentException</code>
+     * might be thrown if the number of arrays in the
+     * <code>LookupTable</code> does not meet the restrictions
+     * stated in the class comment above, or if the source image
+     * has an <code>IndexColorModel</code>.
+     * @param src the <code>BufferedImage</code> to be filtered
+     * @param dst the <code>BufferedImage</code> in which to
+     *            store the results of the filter operation
+     * @return the filtered <code>BufferedImage</code>.
+     * @throws IllegalArgumentException if the number of arrays in the
+     *         <code>LookupTable</code> does not meet the restrictions
+     *         described in the class comments, or if the source image
+     *         has an <code>IndexColorModel</code>.
+     */
+    public final BufferedImage filter(BufferedImage src, BufferedImage dst) {
+        ColorModel srcCM = src.getColorModel();
+        int numBands = srcCM.getNumColorComponents();
+        ColorModel dstCM;
+        if (srcCM instanceof IndexColorModel) {
+            throw new
+                IllegalArgumentException("LookupOp cannot be "+
+                                         "performed on an indexed image");
+        }
+        int numComponents = ltable.getNumComponents();
+        if (numComponents != 1 &&
+            numComponents != srcCM.getNumComponents() &&
+            numComponents != srcCM.getNumColorComponents())
+        {
+            throw new IllegalArgumentException("Number of arrays in the "+
+                                               " lookup table ("+
+                                               numComponents+
+                                               " is not compatible with the "+
+                                               " src image: "+src);
+        }
+
+
+        boolean needToConvert = false;
+
+        int width = src.getWidth();
+        int height = src.getHeight();
+
+        if (dst == null) {
+            dst = createCompatibleDestImage(src, null);
+            dstCM = srcCM;
+        }
+        else {
+            if (width != dst.getWidth()) {
+                throw new
+                    IllegalArgumentException("Src width ("+width+
+                                             ") not equal to dst width ("+
+                                             dst.getWidth()+")");
+            }
+            if (height != dst.getHeight()) {
+                throw new
+                    IllegalArgumentException("Src height ("+height+
+                                             ") not equal to dst height ("+
+                                             dst.getHeight()+")");
+            }
+
+            dstCM = dst.getColorModel();
+            if (srcCM.getColorSpace().getType() !=
+                dstCM.getColorSpace().getType())
+            {
+                needToConvert = true;
+                dst = createCompatibleDestImage(src, null);
+            }
+
+        }
+
+        BufferedImage origDst = dst;
+
+        if (ImagingLib.filter(this, src, dst) == null) {
+            // Do it the slow way
+            WritableRaster srcRaster = src.getRaster();
+            WritableRaster dstRaster = dst.getRaster();
+
+            if (srcCM.hasAlpha()) {
+                if (numBands-1 == numComponents || numComponents == 1) {
+                    int minx = srcRaster.getMinX();
+                    int miny = srcRaster.getMinY();
+                    int[] bands = new int[numBands-1];
+                    for (int i=0; i < numBands-1; i++) {
+                        bands[i] = i;
+                    }
+                    srcRaster =
+                        srcRaster.createWritableChild(minx, miny,
+                                                      srcRaster.getWidth(),
+                                                      srcRaster.getHeight(),
+                                                      minx, miny,
+                                                      bands);
+                }
+            }
+            if (dstCM.hasAlpha()) {
+                int dstNumBands = dstRaster.getNumBands();
+                if (dstNumBands-1 == numComponents || numComponents == 1) {
+                    int minx = dstRaster.getMinX();
+                    int miny = dstRaster.getMinY();
+                    int[] bands = new int[numBands-1];
+                    for (int i=0; i < numBands-1; i++) {
+                        bands[i] = i;
+                    }
+                    dstRaster =
+                        dstRaster.createWritableChild(minx, miny,
+                                                      dstRaster.getWidth(),
+                                                      dstRaster.getHeight(),
+                                                      minx, miny,
+                                                      bands);
+                }
+            }
+
+            filter(srcRaster, dstRaster);
+        }
+
+        if (needToConvert) {
+            // ColorModels are not the same
+            ColorConvertOp ccop = new ColorConvertOp(hints);
+            ccop.filter(dst, origDst);
+        }
+
+        return origDst;
+    }
+
+    /**
+     * Performs a lookup operation on a <code>Raster</code>.
+     * If the destination <code>Raster</code> is <code>null</code>,
+     * a new <code>Raster</code> will be created.
+     * The <code>IllegalArgumentException</code> might be thrown
+     * if the source <code>Raster</code> and the destination
+     * <code>Raster</code> do not have the same
+     * number of bands or if the number of arrays in the
+     * <code>LookupTable</code> does not meet the
+     * restrictions stated in the class comment above.
+     * @param src the source <code>Raster</code> to filter
+     * @param dst the destination <code>WritableRaster</code> for the
+     *            filtered <code>src</code>
+     * @return the filtered <code>WritableRaster</code>.
+     * @throws IllegalArgumentException if the source and destinations
+     *         rasters do not have the same number of bands, or the
+     *         number of arrays in the <code>LookupTable</code> does
+     *         not meet the restrictions described in the class comments.
+     *
+     */
+    public final WritableRaster filter (Raster src, WritableRaster dst) {
+        int numBands  = src.getNumBands();
+        int dstLength = dst.getNumBands();
+        int height    = src.getHeight();
+        int width     = src.getWidth();
+        int srcPix[]  = new int[numBands];
+
+        // Create a new destination Raster, if needed
+
+        if (dst == null) {
+            dst = createCompatibleDestRaster(src);
+        }
+        else if (height != dst.getHeight() || width != dst.getWidth()) {
+            throw new
+                IllegalArgumentException ("Width or height of Rasters do not "+
+                                          "match");
+        }
+        dstLength = dst.getNumBands();
+
+        if (numBands != dstLength) {
+            throw new
+                IllegalArgumentException ("Number of channels in the src ("
+                                          + numBands +
+                                          ") does not match number of channels"
+                                          + " in the destination ("
+                                          + dstLength + ")");
+        }
+        int numComponents = ltable.getNumComponents();
+        if (numComponents != 1 && numComponents != src.getNumBands()) {
+            throw new IllegalArgumentException("Number of arrays in the "+
+                                               " lookup table ("+
+                                               numComponents+
+                                               " is not compatible with the "+
+                                               " src Raster: "+src);
+        }
+
+
+        if (ImagingLib.filter(this, src, dst) != null) {
+            return dst;
+        }
+
+        // Optimize for cases we know about
+        if (ltable instanceof ByteLookupTable) {
+            byteFilter ((ByteLookupTable) ltable, src, dst,
+                        width, height, numBands);
+        }
+        else if (ltable instanceof ShortLookupTable) {
+            shortFilter ((ShortLookupTable) ltable, src, dst, width,
+                         height, numBands);
+        }
+        else {
+            // Not one we recognize so do it slowly
+            int sminX = src.getMinX();
+            int sY = src.getMinY();
+            int dminX = dst.getMinX();
+            int dY = dst.getMinY();
+            for (int y=0; y < height; y++, sY++, dY++) {
+                int sX = sminX;
+                int dX = dminX;
+                for (int x=0; x < width; x++, sX++, dX++) {
+                    // Find data for all bands at this x,y position
+                    src.getPixel(sX, sY, srcPix);
+
+                    // Lookup the data for all bands at this x,y position
+                    ltable.lookupPixel(srcPix, srcPix);
+
+                    // Put it back for all bands
+                    dst.setPixel(dX, dY, srcPix);
+                }
+            }
+        }
+
+        return dst;
+    }
+
+    /**
+     * Returns the bounding box of the filtered destination image.  Since
+     * this is not a geometric operation, the bounding box does not
+     * change.
+     * @param src the <code>BufferedImage</code> to be filtered
+     * @return the bounds of the filtered definition image.
+     */
+    public final Rectangle2D getBounds2D (BufferedImage src) {
+        return getBounds2D(src.getRaster());
+    }
+
+    /**
+     * Returns the bounding box of the filtered destination Raster.  Since
+     * this is not a geometric operation, the bounding box does not
+     * change.
+     * @param src the <code>Raster</code> to be filtered
+     * @return the bounds of the filtered definition <code>Raster</code>.
+     */
+    public final Rectangle2D getBounds2D (Raster src) {
+        return src.getBounds();
+
+    }
+
+    /**
+     * Creates a zeroed destination image with the correct size and number of
+     * bands.  If destCM is <code>null</code>, an appropriate
+     * <code>ColorModel</code> will be used.
+     * @param src       Source image for the filter operation.
+     * @param destCM    the destination's <code>ColorModel</code>, which
+     *                  can be <code>null</code>.
+     * @return a filtered destination <code>BufferedImage</code>.
+     */
+    public BufferedImage createCompatibleDestImage (BufferedImage src,
+                                                    ColorModel destCM) {
+        BufferedImage image;
+        int w = src.getWidth();
+        int h = src.getHeight();
+        int transferType = DataBuffer.TYPE_BYTE;
+        if (destCM == null) {
+            ColorModel cm = src.getColorModel();
+            Raster raster = src.getRaster();
+            if (cm instanceof ComponentColorModel) {
+                DataBuffer db = raster.getDataBuffer();
+                boolean hasAlpha = cm.hasAlpha();
+                boolean isPre    = cm.isAlphaPremultiplied();
+                int trans        = cm.getTransparency();
+                int[] nbits = null;
+                if (ltable instanceof ByteLookupTable) {
+                    if (db.getDataType() == db.TYPE_USHORT) {
+                        // Dst raster should be of type byte
+                        if (hasAlpha) {
+                            nbits = new int[2];
+                            if (trans == cm.BITMASK) {
+                                nbits[1] = 1;
+                            }
+                            else {
+                                nbits[1] = 8;
+                            }
+                        }
+                        else {
+                            nbits = new int[1];
+                        }
+                        nbits[0] = 8;
+                    }
+                    // For byte, no need to change the cm
+                }
+                else if (ltable instanceof ShortLookupTable) {
+                    transferType = DataBuffer.TYPE_USHORT;
+                    if (db.getDataType() == db.TYPE_BYTE) {
+                        if (hasAlpha) {
+                            nbits = new int[2];
+                            if (trans == cm.BITMASK) {
+                                nbits[1] = 1;
+                            }
+                            else {
+                                nbits[1] = 16;
+                            }
+                        }
+                        else {
+                            nbits = new int[1];
+                        }
+                        nbits[0] = 16;
+                    }
+                }
+                if (nbits != null) {
+                    cm = new ComponentColorModel(cm.getColorSpace(),
+                                                 nbits, hasAlpha, isPre,
+                                                 trans, transferType);
+                }
+            }
+            image = new BufferedImage(cm,
+                                      cm.createCompatibleWritableRaster(w, h),
+                                      cm.isAlphaPremultiplied(),
+                                      null);
+        }
+        else {
+            image = new BufferedImage(destCM,
+                                      destCM.createCompatibleWritableRaster(w,
+                                                                            h),
+                                      destCM.isAlphaPremultiplied(),
+                                      null);
+        }
+
+        return image;
+    }
+
+    /**
+     * Creates a zeroed-destination <code>Raster</code> with the
+     * correct size and number of bands, given this source.
+     * @param src the <code>Raster</code> to be transformed
+     * @return the zeroed-destination <code>Raster</code>.
+     */
+    public WritableRaster createCompatibleDestRaster (Raster src) {
+        return src.createCompatibleWritableRaster();
+    }
+
+    /**
+     * Returns the location of the destination point given a
+     * point in the source.  If <code>dstPt</code> is not
+     * <code>null</code>, it will be used to hold the return value.
+     * Since this is not a geometric operation, the <code>srcPt</code>
+     * will equal the <code>dstPt</code>.
+     * @param srcPt a <code>Point2D</code> that represents a point
+     *        in the source image
+     * @param dstPt a <code>Point2D</code>that represents the location
+     *        in the destination
+     * @return the <code>Point2D</code> in the destination that
+     *         corresponds to the specified point in the source.
+     */
+    public final Point2D getPoint2D (Point2D srcPt, Point2D dstPt) {
+        if (dstPt == null) {
+            dstPt = new Point2D.Float();
+        }
+        dstPt.setLocation(srcPt.getX(), srcPt.getY());
+
+        return dstPt;
+    }
+
+    /**
+     * Returns the rendering hints for this op.
+     * @return the <code>RenderingHints</code> object associated
+     *         with this op.
+     */
+    public final RenderingHints getRenderingHints() {
+        return hints;
+    }
+
+    private final void byteFilter(ByteLookupTable lookup, Raster src,
+                                  WritableRaster dst,
+                                  int width, int height, int numBands) {
+        int[] srcPix = null;
+
+        // Find the ref to the table and the offset
+        byte[][] table = lookup.getTable();
+        int offset = lookup.getOffset();
+        int tidx;
+        int step=1;
+
+        // Check if it is one lookup applied to all bands
+        if (table.length == 1) {
+            step=0;
+        }
+
+        int x;
+        int y;
+        int band;
+        int len = table[0].length;
+
+        // Loop through the data
+        for ( y=0; y < height; y++) {
+            tidx = 0;
+            for ( band=0; band < numBands; band++, tidx+=step) {
+                // Find data for this band, scanline
+                srcPix = src.getSamples(0, y, width, 1, band, srcPix);
+
+                for ( x=0; x < width; x++) {
+                    int index = srcPix[x]-offset;
+                    if (index < 0 || index > len) {
+                        throw new
+                            IllegalArgumentException("index ("+index+
+                                                     "(out of range: "+
+                                                     " srcPix["+x+
+                                                     "]="+ srcPix[x]+
+                                                     " offset="+ offset);
+                    }
+                    // Do the lookup
+                    srcPix[x] = table[tidx][index];
+                }
+                // Put it back
+                dst.setSamples(0, y, width, 1, band, srcPix);
+            }
+        }
+    }
+
+    private final void shortFilter(ShortLookupTable lookup, Raster src,
+                                   WritableRaster dst,
+                                   int width, int height, int numBands) {
+        int band;
+        int[] srcPix = null;
+
+        // Find the ref to the table and the offset
+        short[][] table = lookup.getTable();
+        int offset = lookup.getOffset();
+        int tidx;
+        int step=1;
+
+        // Check if it is one lookup applied to all bands
+        if (table.length == 1) {
+            step=0;
+        }
+
+        int x = 0;
+        int y = 0;
+        int index;
+        int maxShort = (1<<16)-1;
+        // Loop through the data
+        for (y=0; y < height; y++) {
+            tidx = 0;
+            for ( band=0; band < numBands; band++, tidx+=step) {
+                // Find data for this band, scanline
+                srcPix = src.getSamples(0, y, width, 1, band, srcPix);
+
+                for ( x=0; x < width; x++) {
+                    index = srcPix[x]-offset;
+                    if (index < 0 || index > maxShort) {
+                        throw new
+                            IllegalArgumentException("index out of range "+
+                                                     index+" x is "+x+
+                                                     "srcPix[x]="+srcPix[x]
+                                                     +" offset="+ offset);
+                    }
+                    // Do the lookup
+                    srcPix[x] = table[tidx][index];
+                }
+                // Put it back
+                dst.setSamples(0, y, width, 1, band, srcPix);
+            }
+        }
+    }
+}

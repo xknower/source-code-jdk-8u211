@@ -1,93 +1,88 @@
-/*    */ package com.sun.imageio.plugins.jpeg;
-/*    */ 
-/*    */ import java.io.IOException;
-/*    */ import java.util.Locale;
-/*    */ import javax.imageio.IIOException;
-/*    */ import javax.imageio.ImageReader;
-/*    */ import javax.imageio.spi.ImageReaderSpi;
-/*    */ import javax.imageio.stream.ImageInputStream;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class JPEGImageReaderSpi
-/*    */   extends ImageReaderSpi
-/*    */ {
-/* 39 */   private static String[] writerSpiNames = new String[] { "com.sun.imageio.plugins.jpeg.JPEGImageWriterSpi" };
-/*    */ 
-/*    */   
-/*    */   public JPEGImageReaderSpi() {
-/* 43 */     super("Oracle Corporation", "0.5", JPEG.names, JPEG.suffixes, JPEG.MIMETypes, "com.sun.imageio.plugins.jpeg.JPEGImageReader", new Class[] { ImageInputStream.class }, writerSpiNames, true, "javax_imageio_jpeg_stream_1.0", "com.sun.imageio.plugins.jpeg.JPEGStreamMetadataFormat", null, null, true, "javax_imageio_jpeg_image_1.0", "com.sun.imageio.plugins.jpeg.JPEGImageMetadataFormat", null, null);
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public String getDescription(Locale paramLocale) {
-/* 63 */     return "Standard JPEG Image Reader";
-/*    */   }
-/*    */   
-/*    */   public boolean canDecodeInput(Object paramObject) throws IOException {
-/* 67 */     if (!(paramObject instanceof ImageInputStream)) {
-/* 68 */       return false;
-/*    */     }
-/* 70 */     ImageInputStream imageInputStream = (ImageInputStream)paramObject;
-/* 71 */     imageInputStream.mark();
-/*    */ 
-/*    */     
-/* 74 */     int i = imageInputStream.read();
-/* 75 */     int j = imageInputStream.read();
-/* 76 */     imageInputStream.reset();
-/* 77 */     if (i == 255 && j == 216) {
-/* 78 */       return true;
-/*    */     }
-/* 80 */     return false;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public ImageReader createReaderInstance(Object paramObject) throws IIOException {
-/* 85 */     return new JPEGImageReader(this);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\imageio\plugins\jpeg\JPEGImageReaderSpi.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.imageio.plugins.jpeg;
+
+import java.util.Locale;
+import javax.imageio.spi.ImageReaderSpi;
+import javax.imageio.stream.ImageInputStream;
+import javax.imageio.spi.IIORegistry;
+import javax.imageio.spi.ServiceRegistry;
+import java.io.IOException;
+import javax.imageio.ImageReader;
+import javax.imageio.IIOException;
+
+public class JPEGImageReaderSpi extends ImageReaderSpi {
+
+    private static String [] writerSpiNames =
+        {"com.sun.imageio.plugins.jpeg.JPEGImageWriterSpi"};
+
+    public JPEGImageReaderSpi() {
+        super(JPEG.vendor,
+              JPEG.version,
+              JPEG.names,
+              JPEG.suffixes,
+              JPEG.MIMETypes,
+              "com.sun.imageio.plugins.jpeg.JPEGImageReader",
+              new Class[] { ImageInputStream.class },
+              writerSpiNames,
+              true,
+              JPEG.nativeStreamMetadataFormatName,
+              JPEG.nativeStreamMetadataFormatClassName,
+              null, null,
+              true,
+              JPEG.nativeImageMetadataFormatName,
+              JPEG.nativeImageMetadataFormatClassName,
+              null, null
+              );
+    }
+
+    public String getDescription(Locale locale) {
+        return "Standard JPEG Image Reader";
+    }
+
+    public boolean canDecodeInput(Object source) throws IOException {
+        if (!(source instanceof ImageInputStream)) {
+            return false;
+        }
+        ImageInputStream iis = (ImageInputStream) source;
+        iis.mark();
+        // If the first two bytes are a JPEG SOI marker, it's probably
+        // a JPEG file.  If they aren't, it definitely isn't a JPEG file.
+        int byte1 = iis.read();
+        int byte2 = iis.read();
+        iis.reset();
+        if ((byte1 == 0xFF) && (byte2 == JPEG.SOI)) {
+            return true;
+        }
+        return false;
+    }
+
+    public ImageReader createReaderInstance(Object extension)
+        throws IIOException {
+        return new JPEGImageReader(this);
+    }
+
+}

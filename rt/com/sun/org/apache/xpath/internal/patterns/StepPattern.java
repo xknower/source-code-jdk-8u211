@@ -1,1059 +1,1055 @@
-/*      */ package com.sun.org.apache.xpath.internal.patterns;
-/*      */ 
-/*      */ import com.sun.org.apache.xml.internal.dtm.Axis;
-/*      */ import com.sun.org.apache.xml.internal.dtm.DTM;
-/*      */ import com.sun.org.apache.xml.internal.dtm.DTMAxisTraverser;
-/*      */ import com.sun.org.apache.xpath.internal.Expression;
-/*      */ import com.sun.org.apache.xpath.internal.ExpressionOwner;
-/*      */ import com.sun.org.apache.xpath.internal.XPathContext;
-/*      */ import com.sun.org.apache.xpath.internal.XPathVisitor;
-/*      */ import com.sun.org.apache.xpath.internal.axes.SubContextList;
-/*      */ import com.sun.org.apache.xpath.internal.objects.XObject;
-/*      */ import java.util.Vector;
-/*      */ import javax.xml.transform.TransformerException;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class StepPattern
-/*      */   extends NodeTest
-/*      */   implements SubContextList, ExpressionOwner
-/*      */ {
-/*      */   static final long serialVersionUID = 9071668960168152644L;
-/*      */   protected int m_axis;
-/*      */   String m_targetString;
-/*      */   StepPattern m_relativePathPattern;
-/*      */   Expression[] m_predicates;
-/*      */   private static final boolean DEBUG_MATCHES = false;
-/*      */   
-/*      */   public StepPattern(int whatToShow, String namespace, String name, int axis, int axisForPredicate) {
-/*   62 */     super(whatToShow, namespace, name);
-/*      */     
-/*   64 */     this.m_axis = axis;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public StepPattern(int whatToShow, int axis, int axisForPredicate) {
-/*   78 */     super(whatToShow);
-/*      */     
-/*   80 */     this.m_axis = axis;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void calcTargetString() {
-/*   98 */     int whatToShow = getWhatToShow();
-/*      */     
-/*  100 */     switch (whatToShow) {
-/*      */       
-/*      */       case 128:
-/*  103 */         this.m_targetString = "#comment";
-/*      */         return;
-/*      */       case 4:
-/*      */       case 8:
-/*      */       case 12:
-/*  108 */         this.m_targetString = "#text";
-/*      */         return;
-/*      */       case -1:
-/*  111 */         this.m_targetString = "*";
-/*      */         return;
-/*      */       case 256:
-/*      */       case 1280:
-/*  115 */         this.m_targetString = "/";
-/*      */         return;
-/*      */       case 1:
-/*  118 */         this; if ("*" == this.m_name) {
-/*  119 */           this.m_targetString = "*";
-/*      */         } else {
-/*  121 */           this.m_targetString = this.m_name;
-/*      */         }  return;
-/*      */     } 
-/*  124 */     this.m_targetString = "*";
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getTargetString() {
-/*  139 */     return this.m_targetString;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void fixupVariables(Vector vars, int globalsSize) {
-/*  163 */     super.fixupVariables(vars, globalsSize);
-/*      */     
-/*  165 */     if (null != this.m_predicates)
-/*      */     {
-/*  167 */       for (int i = 0; i < this.m_predicates.length; i++)
-/*      */       {
-/*  169 */         this.m_predicates[i].fixupVariables(vars, globalsSize);
-/*      */       }
-/*      */     }
-/*      */     
-/*  173 */     if (null != this.m_relativePathPattern)
-/*      */     {
-/*  175 */       this.m_relativePathPattern.fixupVariables(vars, globalsSize);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setRelativePathPattern(StepPattern expr) {
-/*  189 */     this.m_relativePathPattern = expr;
-/*  190 */     expr.exprSetParent(this);
-/*      */     
-/*  192 */     calcScore();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public StepPattern getRelativePathPattern() {
-/*  204 */     return this.m_relativePathPattern;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Expression[] getPredicates() {
-/*  222 */     return this.m_predicates;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean canTraverseOutsideSubtree() {
-/*  243 */     int n = getPredicateCount();
-/*      */     
-/*  245 */     for (int i = 0; i < n; i++) {
-/*      */       
-/*  247 */       if (getPredicate(i).canTraverseOutsideSubtree()) {
-/*  248 */         return true;
-/*      */       }
-/*      */     } 
-/*  251 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Expression getPredicate(int i) {
-/*  264 */     return this.m_predicates[i];
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final int getPredicateCount() {
-/*  275 */     return (null == this.m_predicates) ? 0 : this.m_predicates.length;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setPredicates(Expression[] predicates) {
-/*  288 */     this.m_predicates = predicates;
-/*  289 */     if (null != predicates)
-/*      */     {
-/*  291 */       for (int i = 0; i < predicates.length; i++)
-/*      */       {
-/*  293 */         predicates[i].exprSetParent(this);
-/*      */       }
-/*      */     }
-/*      */     
-/*  297 */     calcScore();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void calcScore() {
-/*  306 */     if (getPredicateCount() > 0 || null != this.m_relativePathPattern) {
-/*      */       
-/*  308 */       this.m_score = SCORE_OTHER;
-/*      */     } else {
-/*      */       
-/*  311 */       super.calcScore();
-/*      */     } 
-/*  313 */     if (null == this.m_targetString) {
-/*  314 */       calcTargetString();
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public XObject execute(XPathContext xctxt, int currentNode) throws TransformerException {
-/*  336 */     DTM dtm = xctxt.getDTM(currentNode);
-/*      */     
-/*  338 */     if (dtm != null) {
-/*      */       
-/*  340 */       int expType = dtm.getExpandedTypeID(currentNode);
-/*      */       
-/*  342 */       return execute(xctxt, currentNode, dtm, expType);
-/*      */     } 
-/*      */     
-/*  345 */     return NodeTest.SCORE_NONE;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public XObject execute(XPathContext xctxt) throws TransformerException {
-/*  365 */     return execute(xctxt, xctxt.getCurrentNode());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public XObject execute(XPathContext xctxt, int currentNode, DTM dtm, int expType) throws TransformerException {
-/*  388 */     if (this.m_whatToShow == 65536) {
-/*      */       
-/*  390 */       if (null != this.m_relativePathPattern)
-/*      */       {
-/*  392 */         return this.m_relativePathPattern.execute(xctxt);
-/*      */       }
-/*      */       
-/*  395 */       return NodeTest.SCORE_NONE;
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/*  400 */     XObject score = super.execute(xctxt, currentNode, dtm, expType);
-/*      */     
-/*  402 */     if (score == NodeTest.SCORE_NONE) {
-/*  403 */       return NodeTest.SCORE_NONE;
-/*      */     }
-/*  405 */     if (getPredicateCount() != 0)
-/*      */     {
-/*  407 */       if (!executePredicates(xctxt, dtm, currentNode)) {
-/*  408 */         return NodeTest.SCORE_NONE;
-/*      */       }
-/*      */     }
-/*  411 */     if (null != this.m_relativePathPattern) {
-/*  412 */       return this.m_relativePathPattern.executeRelativePathPattern(xctxt, dtm, currentNode);
-/*      */     }
-/*      */     
-/*  415 */     return score;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private final boolean checkProximityPosition(XPathContext xctxt, int predPos, DTM dtm, int context, int pos) {
-/*      */     try {
-/*  437 */       DTMAxisTraverser traverser = dtm.getAxisTraverser(12);
-/*      */       int child;
-/*  439 */       for (child = traverser.first(context); -1 != child; 
-/*  440 */         child = traverser.next(context, child)) {
-/*      */ 
-/*      */ 
-/*      */         
-/*  444 */         try { xctxt.pushCurrentNode(child);
-/*      */           
-/*  446 */           if (NodeTest.SCORE_NONE != super.execute(xctxt, child)) {
-/*      */             
-/*  448 */             boolean pass = true;
-/*      */ 
-/*      */             
-/*      */             try {
-/*  452 */               xctxt.pushSubContextList(this);
-/*      */               
-/*  454 */               for (int i = 0; i < predPos; i++)
-/*      */               {
-/*  456 */                 xctxt.pushPredicatePos(i);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */               
-/*      */               }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/*      */             }
-/*      */             finally {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */               
-/*  487 */               xctxt.popSubContextList();
-/*      */             } 
-/*      */             
-/*  490 */             if (pass) {
-/*  491 */               pos--;
-/*      */             }
-/*  493 */             if (pos < 1) {
-/*  494 */               return false;
-/*      */             }
-/*      */           } 
-/*      */ 
-/*      */           
-/*  499 */           xctxt.popCurrentNode(); } finally { xctxt.popCurrentNode(); }
-/*      */ 
-/*      */       
-/*      */       } 
-/*  503 */     } catch (TransformerException se) {
-/*      */ 
-/*      */ 
-/*      */       
-/*  507 */       throw new RuntimeException(se.getMessage());
-/*      */     } 
-/*      */     
-/*  510 */     return (pos == 1);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private final int getProximityPosition(XPathContext xctxt, int predPos, boolean findLast) {
-/*  529 */     int pos = 0;
-/*  530 */     int context = xctxt.getCurrentNode();
-/*  531 */     DTM dtm = xctxt.getDTM(context);
-/*  532 */     int parent = dtm.getParent(context);
-/*      */ 
-/*      */     
-/*      */     try {
-/*  536 */       DTMAxisTraverser traverser = dtm.getAxisTraverser(3);
-/*      */       int child;
-/*  538 */       for (child = traverser.first(parent); -1 != child; 
-/*  539 */         child = traverser.next(parent, child)) {
-/*      */ 
-/*      */ 
-/*      */         
-/*  543 */         try { xctxt.pushCurrentNode(child);
-/*      */           
-/*  545 */           if (NodeTest.SCORE_NONE != super.execute(xctxt, child)) {
-/*      */             
-/*  547 */             boolean pass = true;
-/*      */ 
-/*      */             
-/*      */             try {
-/*  551 */               xctxt.pushSubContextList(this);
-/*      */               
-/*  553 */               for (int i = 0; i < predPos; i++)
-/*      */               {
-/*  555 */                 xctxt.pushPredicatePos(i);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */               
-/*      */               }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/*      */             }
-/*      */             finally {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */               
-/*  591 */               xctxt.popSubContextList();
-/*      */             } 
-/*      */             
-/*  594 */             if (pass) {
-/*  595 */               pos++;
-/*      */             }
-/*  597 */             if (!findLast && child == context)
-/*      */             {
-/*  599 */               return pos;
-/*      */             }
-/*      */           } 
-/*      */ 
-/*      */ 
-/*      */           
-/*  605 */           xctxt.popCurrentNode(); } finally { xctxt.popCurrentNode(); }
-/*      */ 
-/*      */       
-/*      */       } 
-/*  609 */     } catch (TransformerException se) {
-/*      */ 
-/*      */ 
-/*      */       
-/*  613 */       throw new RuntimeException(se.getMessage());
-/*      */     } 
-/*      */     
-/*  616 */     return pos;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getProximityPosition(XPathContext xctxt) {
-/*  631 */     return getProximityPosition(xctxt, xctxt.getPredicatePos(), false);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getLastPos(XPathContext xctxt) {
-/*  647 */     return getProximityPosition(xctxt, xctxt.getPredicatePos(), true);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected final XObject executeRelativePathPattern(XPathContext xctxt, DTM dtm, int currentNode) throws TransformerException {
-/*  671 */     XObject score = NodeTest.SCORE_NONE;
-/*  672 */     int context = currentNode;
-/*      */ 
-/*      */     
-/*  675 */     DTMAxisTraverser traverser = dtm.getAxisTraverser(this.m_axis);
-/*      */     int relative;
-/*  677 */     for (relative = traverser.first(context); -1 != relative; 
-/*  678 */       relative = traverser.next(context, relative)) {
-/*      */ 
-/*      */ 
-/*      */       
-/*  682 */       try { xctxt.pushCurrentNode(relative);
-/*      */         
-/*  684 */         score = execute(xctxt);
-/*      */         
-/*  686 */         if (score != NodeTest.SCORE_NONE)
-/*      */         
-/*      */         { 
-/*      */ 
-/*      */           
-/*  691 */           xctxt.popCurrentNode(); break; }  xctxt.popCurrentNode(); } finally { xctxt.popCurrentNode(); }
-/*      */     
-/*      */     } 
-/*      */     
-/*  695 */     return score;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected final boolean executePredicates(XPathContext xctxt, DTM dtm, int currentNode) throws TransformerException {
-/*  715 */     boolean result = true;
-/*  716 */     boolean positionAlreadySeen = false;
-/*  717 */     int n = getPredicateCount();
-/*      */ 
-/*      */     
-/*      */     try {
-/*  721 */       xctxt.pushSubContextList(this);
-/*      */       
-/*  723 */       for (int i = 0; i < n; i++)
-/*      */       {
-/*  725 */         xctxt.pushPredicatePos(i);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     }
-/*      */     finally {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  776 */       xctxt.popSubContextList();
-/*      */     } 
-/*      */     
-/*  779 */     return result;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String toString() {
-/*  792 */     StringBuffer buf = new StringBuffer();
-/*      */     
-/*  794 */     for (StepPattern pat = this; pat != null; pat = pat.m_relativePathPattern) {
-/*      */       
-/*  796 */       if (pat != this) {
-/*  797 */         buf.append("/");
-/*      */       }
-/*  799 */       buf.append(Axis.getNames(pat.m_axis));
-/*  800 */       buf.append("::");
-/*      */       
-/*  802 */       if (20480 == pat.m_whatToShow) {
-/*      */         
-/*  804 */         buf.append("doc()");
-/*      */       }
-/*  806 */       else if (65536 == pat.m_whatToShow) {
-/*      */         
-/*  808 */         buf.append("function()");
-/*      */       }
-/*  810 */       else if (-1 == pat.m_whatToShow) {
-/*      */         
-/*  812 */         buf.append("node()");
-/*      */       }
-/*  814 */       else if (4 == pat.m_whatToShow) {
-/*      */         
-/*  816 */         buf.append("text()");
-/*      */       }
-/*  818 */       else if (64 == pat.m_whatToShow) {
-/*      */         
-/*  820 */         buf.append("processing-instruction(");
-/*      */         
-/*  822 */         if (null != pat.m_name)
-/*      */         {
-/*  824 */           buf.append(pat.m_name);
-/*      */         }
-/*      */         
-/*  827 */         buf.append(")");
-/*      */       }
-/*  829 */       else if (128 == pat.m_whatToShow) {
-/*      */         
-/*  831 */         buf.append("comment()");
-/*      */       }
-/*  833 */       else if (null != pat.m_name) {
-/*      */         
-/*  835 */         if (2 == pat.m_whatToShow)
-/*      */         {
-/*  837 */           buf.append("@");
-/*      */         }
-/*      */         
-/*  840 */         if (null != pat.m_namespace) {
-/*      */           
-/*  842 */           buf.append("{");
-/*  843 */           buf.append(pat.m_namespace);
-/*  844 */           buf.append("}");
-/*      */         } 
-/*      */         
-/*  847 */         buf.append(pat.m_name);
-/*      */       }
-/*  849 */       else if (2 == pat.m_whatToShow) {
-/*      */         
-/*  851 */         buf.append("@");
-/*      */       }
-/*  853 */       else if (1280 == pat.m_whatToShow) {
-/*      */ 
-/*      */         
-/*  856 */         buf.append("doc-root()");
-/*      */       }
-/*      */       else {
-/*      */         
-/*  860 */         buf.append('?').append(Integer.toHexString(pat.m_whatToShow));
-/*      */       } 
-/*      */       
-/*  863 */       if (null != pat.m_predicates)
-/*      */       {
-/*  865 */         for (int i = 0; i < pat.m_predicates.length; i++) {
-/*      */           
-/*  867 */           buf.append("[");
-/*  868 */           buf.append(pat.m_predicates[i]);
-/*  869 */           buf.append("]");
-/*      */         } 
-/*      */       }
-/*      */     } 
-/*      */     
-/*  874 */     return buf.toString();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public double getMatchScore(XPathContext xctxt, int context) throws TransformerException {
-/*  898 */     xctxt.pushCurrentNode(context);
-/*  899 */     xctxt.pushCurrentExpressionNode(context);
-/*      */ 
-/*      */     
-/*      */     try {
-/*  903 */       XObject score = execute(xctxt);
-/*      */       
-/*  905 */       return score.num();
-/*      */     }
-/*      */     finally {
-/*      */       
-/*  909 */       xctxt.popCurrentNode();
-/*  910 */       xctxt.popCurrentExpressionNode();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setAxis(int axis) {
-/*  924 */     this.m_axis = axis;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getAxis() {
-/*  935 */     return this.m_axis;
-/*      */   }
-/*      */   
-/*      */   class PredOwner
-/*      */     implements ExpressionOwner
-/*      */   {
-/*      */     int m_index;
-/*      */     
-/*      */     PredOwner(int index) {
-/*  944 */       this.m_index = index;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Expression getExpression() {
-/*  952 */       return StepPattern.this.m_predicates[this.m_index];
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void setExpression(Expression exp) {
-/*  961 */       exp.exprSetParent(StepPattern.this);
-/*  962 */       StepPattern.this.m_predicates[this.m_index] = exp;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void callVisitors(ExpressionOwner owner, XPathVisitor visitor) {
-/*  971 */     if (visitor.visitMatchPattern(owner, this))
-/*      */     {
-/*  973 */       callSubtreeVisitors(visitor);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void callSubtreeVisitors(XPathVisitor visitor) {
-/*  983 */     if (null != this.m_predicates) {
-/*      */       
-/*  985 */       int n = this.m_predicates.length;
-/*  986 */       for (int i = 0; i < n; i++) {
-/*      */         
-/*  988 */         ExpressionOwner predOwner = new PredOwner(i);
-/*  989 */         if (visitor.visitPredicate(predOwner, this.m_predicates[i]))
-/*      */         {
-/*  991 */           this.m_predicates[i].callVisitors(predOwner, visitor);
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*  995 */     if (null != this.m_relativePathPattern)
-/*      */     {
-/*  997 */       this.m_relativePathPattern.callVisitors(this, visitor);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Expression getExpression() {
-/* 1007 */     return this.m_relativePathPattern;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setExpression(Expression exp) {
-/* 1015 */     exp.exprSetParent(this);
-/* 1016 */     this.m_relativePathPattern = (StepPattern)exp;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean deepEquals(Expression expr) {
-/* 1024 */     if (!super.deepEquals(expr)) {
-/* 1025 */       return false;
-/*      */     }
-/* 1027 */     StepPattern sp = (StepPattern)expr;
-/*      */     
-/* 1029 */     if (null != this.m_predicates) {
-/*      */       
-/* 1031 */       int n = this.m_predicates.length;
-/* 1032 */       if (null == sp.m_predicates || sp.m_predicates.length != n)
-/* 1033 */         return false; 
-/* 1034 */       for (int i = 0; i < n; i++) {
-/*      */         
-/* 1036 */         if (!this.m_predicates[i].deepEquals(sp.m_predicates[i])) {
-/* 1037 */           return false;
-/*      */         }
-/*      */       } 
-/* 1040 */     } else if (null != sp.m_predicates) {
-/* 1041 */       return false;
-/*      */     } 
-/* 1043 */     if (null != this.m_relativePathPattern) {
-/*      */       
-/* 1045 */       if (!this.m_relativePathPattern.deepEquals(sp.m_relativePathPattern)) {
-/* 1046 */         return false;
-/*      */       }
-/* 1048 */     } else if (sp.m_relativePathPattern != null) {
-/* 1049 */       return false;
-/*      */     } 
-/* 1051 */     return true;
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xpath\internal\patterns\StepPattern.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: StepPattern.java,v 1.2.4.2 2005/09/15 00:21:16 jeffsuttor Exp $
+ */
+package com.sun.org.apache.xpath.internal.patterns;
+
+import com.sun.org.apache.xml.internal.dtm.Axis;
+import com.sun.org.apache.xml.internal.dtm.DTM;
+import com.sun.org.apache.xml.internal.dtm.DTMAxisTraverser;
+import com.sun.org.apache.xml.internal.dtm.DTMFilter;
+import com.sun.org.apache.xpath.internal.Expression;
+import com.sun.org.apache.xpath.internal.ExpressionOwner;
+import com.sun.org.apache.xpath.internal.XPathContext;
+import com.sun.org.apache.xpath.internal.XPathVisitor;
+import com.sun.org.apache.xpath.internal.axes.SubContextList;
+import com.sun.org.apache.xpath.internal.compiler.PsuedoNames;
+import com.sun.org.apache.xpath.internal.objects.XObject;
+
+/**
+ * This class represents a single pattern match step.
+ * @xsl.usage advanced
+ */
+public class StepPattern extends NodeTest implements SubContextList, ExpressionOwner
+{
+    static final long serialVersionUID = 9071668960168152644L;
+
+  /** The axis for this test. */
+  protected int m_axis;
+
+  /**
+   * Construct a StepPattern that tests for namespaces and node names.
+   *
+   *
+   * @param whatToShow Bit set defined mainly by {@link org.w3c.dom.traversal.NodeFilter}.
+   * @param namespace The namespace to be tested.
+   * @param name The local name to be tested.
+   * @param axis The Axis for this test, one of of Axes.ANCESTORORSELF, etc.
+   * @param axisForPredicate No longer used.
+   */
+  public StepPattern(int whatToShow, String namespace, String name, int axis,
+                     int axisForPredicate)
+  {
+
+    super(whatToShow, namespace, name);
+
+    m_axis = axis;
+  }
+
+  /**
+   * Construct a StepPattern that doesn't test for node names.
+   *
+   *
+   * @param whatToShow Bit set defined mainly by {@link org.w3c.dom.traversal.NodeFilter}.
+   * @param axis The Axis for this test, one of of Axes.ANCESTORORSELF, etc.
+   * @param axisForPredicate No longer used.
+   */
+  public StepPattern(int whatToShow, int axis, int axisForPredicate)
+  {
+
+    super(whatToShow);
+
+    m_axis = axis;
+  }
+
+  /**
+   * The target local name or psuedo name, for hash table lookup optimization.
+   *  @serial
+   */
+  String m_targetString;  // only calculate on head
+
+  /**
+   * Calculate the local name or psuedo name of the node that this pattern will test,
+   * for hash table lookup optimization.
+   *
+   * @see com.sun.org.apache.xpath.internal.compiler.PsuedoNames
+   */
+  public void calcTargetString()
+  {
+
+    int whatToShow = getWhatToShow();
+
+    switch (whatToShow)
+    {
+    case DTMFilter.SHOW_COMMENT :
+      m_targetString = PsuedoNames.PSEUDONAME_COMMENT;
+      break;
+    case DTMFilter.SHOW_TEXT :
+    case DTMFilter.SHOW_CDATA_SECTION :
+    case (DTMFilter.SHOW_TEXT | DTMFilter.SHOW_CDATA_SECTION) :
+      m_targetString = PsuedoNames.PSEUDONAME_TEXT;
+      break;
+    case DTMFilter.SHOW_ALL :
+      m_targetString = PsuedoNames.PSEUDONAME_ANY;
+      break;
+    case DTMFilter.SHOW_DOCUMENT :
+    case DTMFilter.SHOW_DOCUMENT | DTMFilter.SHOW_DOCUMENT_FRAGMENT :
+      m_targetString = PsuedoNames.PSEUDONAME_ROOT;
+      break;
+    case DTMFilter.SHOW_ELEMENT :
+      if (this.WILD == m_name)
+        m_targetString = PsuedoNames.PSEUDONAME_ANY;
+      else
+        m_targetString = m_name;
+      break;
+    default :
+      m_targetString = PsuedoNames.PSEUDONAME_ANY;
+      break;
+    }
+  }
+
+  /**
+   * Get the local name or psuedo name of the node that this pattern will test,
+   * for hash table lookup optimization.
+   *
+   *
+   * @return local name or psuedo name of the node.
+   * @see com.sun.org.apache.xpath.internal.compiler.PsuedoNames
+   */
+  public String getTargetString()
+  {
+    return m_targetString;
+  }
+
+  /**
+   * Reference to nodetest and predicate for
+   * parent or ancestor.
+   * @serial
+   */
+  StepPattern m_relativePathPattern;
+
+  /**
+   * This function is used to fixup variables from QNames to stack frame
+   * indexes at stylesheet build time.
+   * @param vars List of QNames that correspond to variables.  This list
+   * should be searched backwards for the first qualified name that
+   * corresponds to the variable reference qname.  The position of the
+   * QName in the vector from the start of the vector will be its position
+   * in the stack frame (but variables above the globalsTop value will need
+   * to be offset to the current stack frame).
+   * @param globalsSize The number of variables in the global variable area.
+   */
+  public void fixupVariables(java.util.Vector vars, int globalsSize)
+  {
+
+    super.fixupVariables(vars, globalsSize);
+
+    if (null != m_predicates)
+    {
+      for (int i = 0; i < m_predicates.length; i++)
+      {
+        m_predicates[i].fixupVariables(vars, globalsSize);
+      }
+    }
+
+    if (null != m_relativePathPattern)
+    {
+      m_relativePathPattern.fixupVariables(vars, globalsSize);
+    }
+  }
+
+  /**
+   * Set the reference to nodetest and predicate for
+   * parent or ancestor.
+   *
+   *
+   * @param expr The relative pattern expression.
+   */
+  public void setRelativePathPattern(StepPattern expr)
+  {
+
+    m_relativePathPattern = expr;
+    expr.exprSetParent(this);
+
+    calcScore();
+  }
+
+  /**
+   * Get the reference to nodetest and predicate for
+   * parent or ancestor.
+   *
+   *
+   * @return The relative pattern expression.
+   */
+  public StepPattern getRelativePathPattern()
+  {
+    return m_relativePathPattern;
+  }
+
+  //  /**
+  //   * Set the list of predicate expressions for this pattern step.
+  //   * @param predicates List of expression objects.
+  //   */
+  //  public void setPredicates(Expression[] predicates)
+  //  {
+  //    m_predicates = predicates;
+  //  }
+
+  /**
+   * Set the list of predicate expressions for this pattern step.
+   * @return List of expression objects.
+   */
+  public Expression[] getPredicates()
+  {
+    return m_predicates;
+  }
+
+  /**
+   * The list of predicate expressions for this pattern step.
+   *  @serial
+   */
+  Expression[] m_predicates;
+
+  /**
+   * Tell if this expression or it's subexpressions can traverse outside
+   * the current subtree.
+   *
+   * NOTE: Ancestors tests with predicates are problematic, and will require
+   * special treatment.
+   *
+   * @return true if traversal outside the context node's subtree can occur.
+   */
+  public boolean canTraverseOutsideSubtree()
+  {
+
+    int n = getPredicateCount();
+
+    for (int i = 0; i < n; i++)
+    {
+      if (getPredicate(i).canTraverseOutsideSubtree())
+        return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Get a predicate expression.
+   *
+   *
+   * @param i The index of the predicate.
+   *
+   * @return A predicate expression.
+   */
+  public Expression getPredicate(int i)
+  {
+    return m_predicates[i];
+  }
+
+  /**
+   * Get the number of predicates for this match pattern step.
+   *
+   *
+   * @return the number of predicates for this match pattern step.
+   */
+  public final int getPredicateCount()
+  {
+    return (null == m_predicates) ? 0 : m_predicates.length;
+  }
+
+  /**
+   * Set the predicates for this match pattern step.
+   *
+   *
+   * @param predicates An array of expressions that define predicates
+   *                   for this step.
+   */
+  public void setPredicates(Expression[] predicates)
+  {
+
+    m_predicates = predicates;
+    if(null != predicates)
+    {
+        for(int i = 0; i < predicates.length; i++)
+        {
+                predicates[i].exprSetParent(this);
+        }
+    }
+
+    calcScore();
+  }
+
+  /**
+   * Static calc of match score.
+   */
+  public void calcScore()
+  {
+
+    if ((getPredicateCount() > 0) || (null != m_relativePathPattern))
+    {
+      m_score = SCORE_OTHER;
+    }
+    else
+      super.calcScore();
+
+    if (null == m_targetString)
+      calcTargetString();
+  }
+
+  /**
+   * Execute this pattern step, including predicates.
+   *
+   *
+   * @param xctxt XPath runtime context.
+   * @param currentNode The current node context.
+   *
+   * @return {@link com.sun.org.apache.xpath.internal.patterns.NodeTest#SCORE_NODETEST},
+   *         {@link com.sun.org.apache.xpath.internal.patterns.NodeTest#SCORE_NONE},
+   *         {@link com.sun.org.apache.xpath.internal.patterns.NodeTest#SCORE_NSWILD},
+   *         {@link com.sun.org.apache.xpath.internal.patterns.NodeTest#SCORE_QNAME}, or
+   *         {@link com.sun.org.apache.xpath.internal.patterns.NodeTest#SCORE_OTHER}.
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  public XObject execute(XPathContext xctxt, int currentNode)
+          throws javax.xml.transform.TransformerException
+  {
+
+    DTM dtm = xctxt.getDTM(currentNode);
+
+    if (dtm != null)
+    {
+      int expType = dtm.getExpandedTypeID(currentNode);
+
+      return execute(xctxt, currentNode, dtm, expType);
+    }
+
+    return NodeTest.SCORE_NONE;
+  }
+
+  /**
+   * Execute this pattern step, including predicates.
+   *
+   *
+   * @param xctxt XPath runtime context.
+   *
+   * @return {@link com.sun.org.apache.xpath.internal.patterns.NodeTest#SCORE_NODETEST},
+   *         {@link com.sun.org.apache.xpath.internal.patterns.NodeTest#SCORE_NONE},
+   *         {@link com.sun.org.apache.xpath.internal.patterns.NodeTest#SCORE_NSWILD},
+   *         {@link com.sun.org.apache.xpath.internal.patterns.NodeTest#SCORE_QNAME}, or
+   *         {@link com.sun.org.apache.xpath.internal.patterns.NodeTest#SCORE_OTHER}.
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  public XObject execute(XPathContext xctxt)
+          throws javax.xml.transform.TransformerException
+  {
+    return execute(xctxt, xctxt.getCurrentNode());
+  }
+
+  /**
+   * Execute an expression in the XPath runtime context, and return the
+   * result of the expression.
+   *
+   *
+   * @param xctxt The XPath runtime context.
+   * @param currentNode The currentNode.
+   * @param dtm The DTM of the current node.
+   * @param expType The expanded type ID of the current node.
+   *
+   * @return The result of the expression in the form of a <code>XObject</code>.
+   *
+   * @throws javax.xml.transform.TransformerException if a runtime exception
+   *         occurs.
+   */
+  public XObject execute(
+          XPathContext xctxt, int currentNode, DTM dtm, int expType)
+            throws javax.xml.transform.TransformerException
+  {
+
+    if (m_whatToShow == NodeTest.SHOW_BYFUNCTION)
+    {
+      if (null != m_relativePathPattern)
+      {
+        return m_relativePathPattern.execute(xctxt);
+      }
+      else
+        return NodeTest.SCORE_NONE;
+    }
+
+    XObject score;
+
+    score = super.execute(xctxt, currentNode, dtm, expType);
+
+    if (score == NodeTest.SCORE_NONE)
+      return NodeTest.SCORE_NONE;
+
+    if (getPredicateCount() != 0)
+    {
+      if (!executePredicates(xctxt, dtm, currentNode))
+        return NodeTest.SCORE_NONE;
+    }
+
+    if (null != m_relativePathPattern)
+      return m_relativePathPattern.executeRelativePathPattern(xctxt, dtm,
+              currentNode);
+
+    return score;
+  }
+
+  /**
+   * New Method to check whether the current node satisfies a position predicate
+   *
+   * @param xctxt The XPath runtime context.
+   * @param predPos Which predicate we're evaluating of foo[1][2][3].
+   * @param dtm The DTM of the current node.
+   * @param context The currentNode.
+   * @param pos The position being requested, i.e. the value returned by
+   *            m_predicates[predPos].execute(xctxt).
+   *
+   * @return true of the position of the context matches pos, false otherwise.
+   */
+  private final boolean checkProximityPosition(XPathContext xctxt,
+          int predPos, DTM dtm, int context, int pos)
+  {
+
+    try
+    {
+      DTMAxisTraverser traverser =
+        dtm.getAxisTraverser(Axis.PRECEDINGSIBLING);
+
+      for (int child = traverser.first(context); DTM.NULL != child;
+              child = traverser.next(context, child))
+      {
+        try
+        {
+          xctxt.pushCurrentNode(child);
+
+          if (NodeTest.SCORE_NONE != super.execute(xctxt, child))
+          {
+            boolean pass = true;
+
+            try
+            {
+              xctxt.pushSubContextList(this);
+
+              for (int i = 0; i < predPos; i++)
+              {
+                xctxt.pushPredicatePos(i);
+                try
+                {
+                  XObject pred = m_predicates[i].execute(xctxt);
+
+                  try
+                  {
+                    if (XObject.CLASS_NUMBER == pred.getType())
+                    {
+                      throw new Error("Why: Should never have been called");
+                    }
+                    else if (!pred.boolWithSideEffects())
+                    {
+                      pass = false;
+
+                      break;
+                    }
+                  }
+                  finally
+                  {
+                    pred.detach();
+                  }
+                }
+                finally
+                {
+                  xctxt.popPredicatePos();
+                }
+              }
+            }
+            finally
+            {
+              xctxt.popSubContextList();
+            }
+
+            if (pass)
+              pos--;
+
+            if (pos < 1)
+              return false;
+          }
+        }
+        finally
+        {
+          xctxt.popCurrentNode();
+        }
+      }
+    }
+    catch (javax.xml.transform.TransformerException se)
+    {
+
+      // TODO: should keep throw sax exception...
+      throw new java.lang.RuntimeException(se.getMessage());
+    }
+
+    return (pos == 1);
+  }
+
+  /**
+   * Get the proximity position index of the current node based on this
+   * node test.
+   *
+   *
+   * @param xctxt XPath runtime context.
+   * @param predPos Which predicate we're evaluating of foo[1][2][3].
+   * @param findLast If true, don't terminate when the context node is found.
+   *
+   * @return the proximity position index of the current node based on the
+   *         node test.
+   */
+  private final int getProximityPosition(XPathContext xctxt, int predPos,
+                    boolean findLast)
+  {
+
+    int pos = 0;
+    int context = xctxt.getCurrentNode();
+    DTM dtm = xctxt.getDTM(context);
+    int parent = dtm.getParent(context);
+
+    try
+    {
+      DTMAxisTraverser traverser = dtm.getAxisTraverser(Axis.CHILD);
+
+      for (int child = traverser.first(parent); DTM.NULL != child;
+              child = traverser.next(parent, child))
+      {
+        try
+        {
+          xctxt.pushCurrentNode(child);
+
+          if (NodeTest.SCORE_NONE != super.execute(xctxt, child))
+          {
+            boolean pass = true;
+
+            try
+            {
+              xctxt.pushSubContextList(this);
+
+              for (int i = 0; i < predPos; i++)
+              {
+                xctxt.pushPredicatePos(i);
+                try
+                {
+                  XObject pred = m_predicates[i].execute(xctxt);
+
+                  try
+                  {
+                    if (XObject.CLASS_NUMBER == pred.getType())
+                    {
+                      if ((pos + 1) != (int) pred.numWithSideEffects())
+                      {
+                        pass = false;
+
+                        break;
+                      }
+                    }
+                    else if (!pred.boolWithSideEffects())
+                    {
+                      pass = false;
+
+                      break;
+                    }
+                  }
+                  finally
+                  {
+                    pred.detach();
+                  }
+                }
+                finally
+                {
+                  xctxt.popPredicatePos();
+                }
+              }
+            }
+            finally
+            {
+              xctxt.popSubContextList();
+            }
+
+            if (pass)
+              pos++;
+
+            if (!findLast && child == context)
+            {
+              return pos;
+            }
+          }
+        }
+        finally
+        {
+          xctxt.popCurrentNode();
+        }
+      }
+    }
+    catch (javax.xml.transform.TransformerException se)
+    {
+
+      // TODO: should keep throw sax exception...
+      throw new java.lang.RuntimeException(se.getMessage());
+    }
+
+    return pos;
+  }
+
+  /**
+   * Get the proximity position index of the current node based on this
+   * node test.
+   *
+   *
+   * @param xctxt XPath runtime context.
+   *
+   * @return the proximity position index of the current node based on the
+   *         node test.
+   */
+  public int getProximityPosition(XPathContext xctxt)
+  {
+    return getProximityPosition(xctxt, xctxt.getPredicatePos(), false);
+  }
+
+  /**
+   * Get the count of the nodes that match the test, which is the proximity
+   * position of the last node that can pass this test in the sub context
+   * selection.  In XSLT 1-based indexing, this count is the index of the last
+   * node.
+   *
+   *
+   * @param xctxt XPath runtime context.
+   *
+   * @return the count of the nodes that match the test.
+   */
+  public int getLastPos(XPathContext xctxt)
+  {
+    return getProximityPosition(xctxt, xctxt.getPredicatePos(), true);
+  }
+
+  /**
+   * Execute the match pattern step relative to another step.
+   *
+   *
+   * @param xctxt The XPath runtime context.
+   * @param dtm The DTM of the current node.
+   * @param currentNode The current node context.
+   *
+   * @return {@link com.sun.org.apache.xpath.internal.patterns.NodeTest#SCORE_NODETEST},
+   *         {@link com.sun.org.apache.xpath.internal.patterns.NodeTest#SCORE_NONE},
+   *         {@link com.sun.org.apache.xpath.internal.patterns.NodeTest#SCORE_NSWILD},
+   *         {@link com.sun.org.apache.xpath.internal.patterns.NodeTest#SCORE_QNAME}, or
+   *         {@link com.sun.org.apache.xpath.internal.patterns.NodeTest#SCORE_OTHER}.
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  protected final XObject executeRelativePathPattern(
+          XPathContext xctxt, DTM dtm, int currentNode)
+            throws javax.xml.transform.TransformerException
+  {
+
+    XObject score = NodeTest.SCORE_NONE;
+    int context = currentNode;
+    DTMAxisTraverser traverser;
+
+    traverser = dtm.getAxisTraverser(m_axis);
+
+    for (int relative = traverser.first(context); DTM.NULL != relative;
+            relative = traverser.next(context, relative))
+    {
+      try
+      {
+        xctxt.pushCurrentNode(relative);
+
+        score = execute(xctxt);
+
+        if (score != NodeTest.SCORE_NONE)
+          break;
+      }
+      finally
+      {
+        xctxt.popCurrentNode();
+      }
+    }
+
+    return score;
+  }
+
+  /**
+   * Execute the predicates on this step to determine if the current node
+   * should be filtered or accepted.
+   *
+   * @param xctxt The XPath runtime context.
+   * @param dtm The DTM of the current node.
+   * @param currentNode The current node context.
+   *
+   * @return true if the node should be accepted, false otherwise.
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  protected final boolean executePredicates(
+          XPathContext xctxt, DTM dtm, int currentNode)
+            throws javax.xml.transform.TransformerException
+  {
+
+    boolean result = true;
+    boolean positionAlreadySeen = false;
+    int n = getPredicateCount();
+
+    try
+    {
+      xctxt.pushSubContextList(this);
+
+      for (int i = 0; i < n; i++)
+      {
+        xctxt.pushPredicatePos(i);
+
+        try
+        {
+          XObject pred = m_predicates[i].execute(xctxt);
+
+          try
+          {
+            if (XObject.CLASS_NUMBER == pred.getType())
+            {
+              int pos = (int) pred.num();
+
+              if (positionAlreadySeen)
+              {
+                result = (pos == 1);
+
+                break;
+              }
+              else
+              {
+                positionAlreadySeen = true;
+
+                if (!checkProximityPosition(xctxt, i, dtm, currentNode, pos))
+                {
+                  result = false;
+
+                  break;
+                }
+              }
+
+            }
+            else if (!pred.boolWithSideEffects())
+            {
+              result = false;
+
+              break;
+            }
+          }
+          finally
+          {
+            pred.detach();
+          }
+        }
+        finally
+        {
+          xctxt.popPredicatePos();
+        }
+      }
+    }
+    finally
+    {
+      xctxt.popSubContextList();
+    }
+
+    return result;
+  }
+
+  /**
+   * Get the string represenentation of this step for diagnostic purposes.
+   *
+   *
+   * @return A string representation of this step, built by reverse-engineering
+   * the contained info.
+   */
+  public String toString()
+  {
+
+    StringBuffer buf = new StringBuffer();
+
+    for (StepPattern pat = this; pat != null; pat = pat.m_relativePathPattern)
+    {
+      if (pat != this)
+        buf.append("/");
+
+      buf.append(Axis.getNames(pat.m_axis));
+      buf.append("::");
+
+      if (0x000005000 == pat.m_whatToShow)
+      {
+        buf.append("doc()");
+      }
+      else if (DTMFilter.SHOW_BYFUNCTION == pat.m_whatToShow)
+      {
+        buf.append("function()");
+      }
+      else if (DTMFilter.SHOW_ALL == pat.m_whatToShow)
+      {
+        buf.append("node()");
+      }
+      else if (DTMFilter.SHOW_TEXT == pat.m_whatToShow)
+      {
+        buf.append("text()");
+      }
+      else if (DTMFilter.SHOW_PROCESSING_INSTRUCTION == pat.m_whatToShow)
+      {
+        buf.append("processing-instruction(");
+
+        if (null != pat.m_name)
+        {
+          buf.append(pat.m_name);
+        }
+
+        buf.append(")");
+      }
+      else if (DTMFilter.SHOW_COMMENT == pat.m_whatToShow)
+      {
+        buf.append("comment()");
+      }
+      else if (null != pat.m_name)
+      {
+        if (DTMFilter.SHOW_ATTRIBUTE == pat.m_whatToShow)
+        {
+          buf.append("@");
+        }
+
+        if (null != pat.m_namespace)
+        {
+          buf.append("{");
+          buf.append(pat.m_namespace);
+          buf.append("}");
+        }
+
+        buf.append(pat.m_name);
+      }
+      else if (DTMFilter.SHOW_ATTRIBUTE == pat.m_whatToShow)
+      {
+        buf.append("@");
+      }
+      else if ((DTMFilter.SHOW_DOCUMENT | DTMFilter.SHOW_DOCUMENT_FRAGMENT)
+               == pat.m_whatToShow)
+      {
+        buf.append("doc-root()");
+      }
+      else
+      {
+        buf.append('?').append(Integer.toHexString(pat.m_whatToShow));
+      }
+
+      if (null != pat.m_predicates)
+      {
+        for (int i = 0; i < pat.m_predicates.length; i++)
+        {
+          buf.append("[");
+          buf.append(pat.m_predicates[i]);
+          buf.append("]");
+        }
+      }
+    }
+
+    return buf.toString();
+  }
+
+  /** Set to true to send diagnostics about pattern matches to the consol. */
+  private static final boolean DEBUG_MATCHES = false;
+
+  /**
+   * Get the match score of the given node.
+   *
+   * @param xctxt The XPath runtime context.
+   * @param context The node to be tested.
+   *
+   * @return {@link com.sun.org.apache.xpath.internal.patterns.NodeTest#SCORE_NODETEST},
+   *         {@link com.sun.org.apache.xpath.internal.patterns.NodeTest#SCORE_NONE},
+   *         {@link com.sun.org.apache.xpath.internal.patterns.NodeTest#SCORE_NSWILD},
+   *         {@link com.sun.org.apache.xpath.internal.patterns.NodeTest#SCORE_QNAME}, or
+   *         {@link com.sun.org.apache.xpath.internal.patterns.NodeTest#SCORE_OTHER}.
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  public double getMatchScore(XPathContext xctxt, int context)
+          throws javax.xml.transform.TransformerException
+  {
+
+    xctxt.pushCurrentNode(context);
+    xctxt.pushCurrentExpressionNode(context);
+
+    try
+    {
+      XObject score = execute(xctxt);
+
+      return score.num();
+    }
+    finally
+    {
+      xctxt.popCurrentNode();
+      xctxt.popCurrentExpressionNode();
+    }
+
+    // return XPath.MATCH_SCORE_NONE;
+  }
+
+  /**
+   * Set the axis that this step should follow.
+   *
+   *
+   * @param axis The Axis for this test, one of of Axes.ANCESTORORSELF, etc.
+   */
+  public void setAxis(int axis)
+  {
+    m_axis = axis;
+  }
+
+  /**
+   * Get the axis that this step follows.
+   *
+   *
+   * @return The Axis for this test, one of of Axes.ANCESTORORSELF, etc.
+   */
+  public int getAxis()
+  {
+    return m_axis;
+  }
+
+  class PredOwner implements ExpressionOwner
+  {
+        int m_index;
+
+        PredOwner(int index)
+        {
+                m_index = index;
+        }
+
+    /**
+     * @see ExpressionOwner#getExpression()
+     */
+    public Expression getExpression()
+    {
+      return m_predicates[m_index];
+    }
+
+
+    /**
+     * @see ExpressionOwner#setExpression(Expression)
+     */
+    public void setExpression(Expression exp)
+    {
+        exp.exprSetParent(StepPattern.this);
+        m_predicates[m_index] = exp;
+    }
+  }
+
+  /**
+   * @see com.sun.org.apache.xpath.internal.XPathVisitable#callVisitors(ExpressionOwner, XPathVisitor)
+   */
+  public void callVisitors(ExpressionOwner owner, XPathVisitor visitor)
+  {
+                if(visitor.visitMatchPattern(owner, this))
+                {
+                        callSubtreeVisitors(visitor);
+                }
+  }
+
+  /**
+   * Call the visitors on the subtree.  Factored out from callVisitors
+   * so it may be called by derived classes.
+   */
+  protected void callSubtreeVisitors(XPathVisitor visitor)
+  {
+    if (null != m_predicates)
+    {
+      int n = m_predicates.length;
+      for (int i = 0; i < n; i++)
+      {
+        ExpressionOwner predOwner = new PredOwner(i);
+        if (visitor.visitPredicate(predOwner, m_predicates[i]))
+        {
+          m_predicates[i].callVisitors(predOwner, visitor);
+        }
+      }
+    }
+    if (null != m_relativePathPattern)
+    {
+      m_relativePathPattern.callVisitors(this, visitor);
+    }
+  }
+
+
+  /**
+   * @see ExpressionOwner#getExpression()
+   */
+  public Expression getExpression()
+  {
+    return m_relativePathPattern;
+  }
+
+  /**
+   * @see ExpressionOwner#setExpression(Expression)
+   */
+  public void setExpression(Expression exp)
+  {
+    exp.exprSetParent(this);
+        m_relativePathPattern = (StepPattern)exp;
+  }
+
+  /**
+   * @see Expression#deepEquals(Expression)
+   */
+  public boolean deepEquals(Expression expr)
+  {
+        if(!super.deepEquals(expr))
+                return false;
+
+        StepPattern sp = (StepPattern)expr;
+
+    if (null != m_predicates)
+    {
+        int n = m_predicates.length;
+        if ((null == sp.m_predicates) || (sp.m_predicates.length != n))
+              return false;
+        for (int i = 0; i < n; i++)
+        {
+          if (!m_predicates[i].deepEquals(sp.m_predicates[i]))
+                return false;
+        }
+    }
+    else if (null != sp.m_predicates)
+        return false;
+
+        if(null != m_relativePathPattern)
+        {
+                if(!m_relativePathPattern.deepEquals(sp.m_relativePathPattern))
+                        return false;
+        }
+        else if(sp.m_relativePathPattern != null)
+                return false;
+
+        return true;
+  }
+
+
+}

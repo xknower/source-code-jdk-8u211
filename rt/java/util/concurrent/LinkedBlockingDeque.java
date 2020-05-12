@@ -1,1403 +1,1333 @@
-/*      */ package java.util.concurrent;
-/*      */ 
-/*      */ import java.io.IOException;
-/*      */ import java.io.ObjectInputStream;
-/*      */ import java.io.ObjectOutputStream;
-/*      */ import java.io.Serializable;
-/*      */ import java.lang.reflect.Array;
-/*      */ import java.util.AbstractQueue;
-/*      */ import java.util.Collection;
-/*      */ import java.util.Iterator;
-/*      */ import java.util.NoSuchElementException;
-/*      */ import java.util.Spliterator;
-/*      */ import java.util.Spliterators;
-/*      */ import java.util.concurrent.locks.Condition;
-/*      */ import java.util.concurrent.locks.ReentrantLock;
-/*      */ import java.util.function.Consumer;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class LinkedBlockingDeque<E>
-/*      */   extends AbstractQueue<E>
-/*      */   implements BlockingDeque<E>, Serializable
-/*      */ {
-/*      */   private static final long serialVersionUID = -387911632671998426L;
-/*      */   transient Node<E> first;
-/*      */   transient Node<E> last;
-/*      */   private transient int count;
-/*      */   private final int capacity;
-/*      */   
-/*      */   static final class Node<E>
-/*      */   {
-/*      */     E item;
-/*      */     Node<E> prev;
-/*      */     Node<E> next;
-/*      */     
-/*      */     Node(E param1E) {
-/*  133 */       this.item = param1E;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  158 */   final ReentrantLock lock = new ReentrantLock();
-/*      */ 
-/*      */   
-/*  161 */   private final Condition notEmpty = this.lock.newCondition();
-/*      */ 
-/*      */   
-/*  164 */   private final Condition notFull = this.lock.newCondition();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public LinkedBlockingDeque() {
-/*  171 */     this(2147483647);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public LinkedBlockingDeque(int paramInt) {
-/*  181 */     if (paramInt <= 0) throw new IllegalArgumentException(); 
-/*  182 */     this.capacity = paramInt;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public LinkedBlockingDeque(Collection<? extends E> paramCollection) {
-/*      */     // Byte code:
-/*      */     //   0: aload_0
-/*      */     //   1: ldc 2147483647
-/*      */     //   3: invokespecial <init> : (I)V
-/*      */     //   6: aload_0
-/*      */     //   7: getfield lock : Ljava/util/concurrent/locks/ReentrantLock;
-/*      */     //   10: astore_2
-/*      */     //   11: aload_2
-/*      */     //   12: invokevirtual lock : ()V
-/*      */     //   15: aload_1
-/*      */     //   16: invokeinterface iterator : ()Ljava/util/Iterator;
-/*      */     //   21: astore_3
-/*      */     //   22: aload_3
-/*      */     //   23: invokeinterface hasNext : ()Z
-/*      */     //   28: ifeq -> 81
-/*      */     //   31: aload_3
-/*      */     //   32: invokeinterface next : ()Ljava/lang/Object;
-/*      */     //   37: astore #4
-/*      */     //   39: aload #4
-/*      */     //   41: ifnonnull -> 52
-/*      */     //   44: new java/lang/NullPointerException
-/*      */     //   47: dup
-/*      */     //   48: invokespecial <init> : ()V
-/*      */     //   51: athrow
-/*      */     //   52: aload_0
-/*      */     //   53: new java/util/concurrent/LinkedBlockingDeque$Node
-/*      */     //   56: dup
-/*      */     //   57: aload #4
-/*      */     //   59: invokespecial <init> : (Ljava/lang/Object;)V
-/*      */     //   62: invokespecial linkLast : (Ljava/util/concurrent/LinkedBlockingDeque$Node;)Z
-/*      */     //   65: ifne -> 78
-/*      */     //   68: new java/lang/IllegalStateException
-/*      */     //   71: dup
-/*      */     //   72: ldc 'Deque full'
-/*      */     //   74: invokespecial <init> : (Ljava/lang/String;)V
-/*      */     //   77: athrow
-/*      */     //   78: goto -> 22
-/*      */     //   81: aload_2
-/*      */     //   82: invokevirtual unlock : ()V
-/*      */     //   85: goto -> 97
-/*      */     //   88: astore #5
-/*      */     //   90: aload_2
-/*      */     //   91: invokevirtual unlock : ()V
-/*      */     //   94: aload #5
-/*      */     //   96: athrow
-/*      */     //   97: return
-/*      */     // Line number table:
-/*      */     //   Java source line number -> byte code offset
-/*      */     //   #196	-> 0
-/*      */     //   #197	-> 6
-/*      */     //   #198	-> 11
-/*      */     //   #200	-> 15
-/*      */     //   #201	-> 39
-/*      */     //   #202	-> 44
-/*      */     //   #203	-> 52
-/*      */     //   #204	-> 68
-/*      */     //   #205	-> 78
-/*      */     //   #207	-> 81
-/*      */     //   #208	-> 85
-/*      */     //   #207	-> 88
-/*      */     //   #208	-> 94
-/*      */     //   #209	-> 97
-/*      */     // Exception table:
-/*      */     //   from	to	target	type
-/*      */     //   15	81	88	finally
-/*      */     //   88	90	88	finally
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean linkFirst(Node<E> paramNode) {
-/*  219 */     if (this.count >= this.capacity)
-/*  220 */       return false; 
-/*  221 */     Node<E> node = this.first;
-/*  222 */     paramNode.next = node;
-/*  223 */     this.first = paramNode;
-/*  224 */     if (this.last == null) {
-/*  225 */       this.last = paramNode;
-/*      */     } else {
-/*  227 */       node.prev = paramNode;
-/*  228 */     }  this.count++;
-/*  229 */     this.notEmpty.signal();
-/*  230 */     return true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean linkLast(Node<E> paramNode) {
-/*  238 */     if (this.count >= this.capacity)
-/*  239 */       return false; 
-/*  240 */     Node<E> node = this.last;
-/*  241 */     paramNode.prev = node;
-/*  242 */     this.last = paramNode;
-/*  243 */     if (this.first == null) {
-/*  244 */       this.first = paramNode;
-/*      */     } else {
-/*  246 */       node.next = paramNode;
-/*  247 */     }  this.count++;
-/*  248 */     this.notEmpty.signal();
-/*  249 */     return true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private E unlinkFirst() {
-/*  257 */     Node<E> node1 = this.first;
-/*  258 */     if (node1 == null)
-/*  259 */       return null; 
-/*  260 */     Node<E> node2 = node1.next;
-/*  261 */     E e = node1.item;
-/*  262 */     node1.item = null;
-/*  263 */     node1.next = node1;
-/*  264 */     this.first = node2;
-/*  265 */     if (node2 == null) {
-/*  266 */       this.last = null;
-/*      */     } else {
-/*  268 */       node2.prev = null;
-/*  269 */     }  this.count--;
-/*  270 */     this.notFull.signal();
-/*  271 */     return e;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private E unlinkLast() {
-/*  279 */     Node<E> node1 = this.last;
-/*  280 */     if (node1 == null)
-/*  281 */       return null; 
-/*  282 */     Node<E> node2 = node1.prev;
-/*  283 */     E e = node1.item;
-/*  284 */     node1.item = null;
-/*  285 */     node1.prev = node1;
-/*  286 */     this.last = node2;
-/*  287 */     if (node2 == null) {
-/*  288 */       this.first = null;
-/*      */     } else {
-/*  290 */       node2.next = null;
-/*  291 */     }  this.count--;
-/*  292 */     this.notFull.signal();
-/*  293 */     return e;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void unlink(Node<E> paramNode) {
-/*  301 */     Node<E> node1 = paramNode.prev;
-/*  302 */     Node<E> node2 = paramNode.next;
-/*  303 */     if (node1 == null) {
-/*  304 */       unlinkFirst();
-/*  305 */     } else if (node2 == null) {
-/*  306 */       unlinkLast();
-/*      */     } else {
-/*  308 */       node1.next = node2;
-/*  309 */       node2.prev = node1;
-/*  310 */       paramNode.item = null;
-/*      */ 
-/*      */       
-/*  313 */       this.count--;
-/*  314 */       this.notFull.signal();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void addFirst(E paramE) {
-/*  325 */     if (!offerFirst(paramE)) {
-/*  326 */       throw new IllegalStateException("Deque full");
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void addLast(E paramE) {
-/*  334 */     if (!offerLast(paramE)) {
-/*  335 */       throw new IllegalStateException("Deque full");
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean offerFirst(E paramE) {
-/*  342 */     if (paramE == null) throw new NullPointerException(); 
-/*  343 */     Node<E> node = new Node<>(paramE);
-/*  344 */     ReentrantLock reentrantLock = this.lock;
-/*  345 */     reentrantLock.lock();
-/*      */     try {
-/*  347 */       return linkFirst(node);
-/*      */     } finally {
-/*  349 */       reentrantLock.unlock();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean offerLast(E paramE) {
-/*  357 */     if (paramE == null) throw new NullPointerException(); 
-/*  358 */     Node<E> node = new Node<>(paramE);
-/*  359 */     ReentrantLock reentrantLock = this.lock;
-/*  360 */     reentrantLock.lock();
-/*      */     try {
-/*  362 */       return linkLast(node);
-/*      */     } finally {
-/*  364 */       reentrantLock.unlock();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void putFirst(E paramE) throws InterruptedException {
-/*  373 */     if (paramE == null) throw new NullPointerException(); 
-/*  374 */     Node<E> node = new Node<>(paramE);
-/*  375 */     ReentrantLock reentrantLock = this.lock;
-/*  376 */     reentrantLock.lock();
-/*      */     try {
-/*  378 */       while (!linkFirst(node))
-/*  379 */         this.notFull.await(); 
-/*      */     } finally {
-/*  381 */       reentrantLock.unlock();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void putLast(E paramE) throws InterruptedException {
-/*  390 */     if (paramE == null) throw new NullPointerException(); 
-/*  391 */     Node<E> node = new Node<>(paramE);
-/*  392 */     ReentrantLock reentrantLock = this.lock;
-/*  393 */     reentrantLock.lock();
-/*      */     try {
-/*  395 */       while (!linkLast(node))
-/*  396 */         this.notFull.await(); 
-/*      */     } finally {
-/*  398 */       reentrantLock.unlock();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean offerFirst(E paramE, long paramLong, TimeUnit paramTimeUnit) throws InterruptedException {
-/*  408 */     if (paramE == null) throw new NullPointerException(); 
-/*  409 */     Node<E> node = new Node<>(paramE);
-/*  410 */     long l = paramTimeUnit.toNanos(paramLong);
-/*  411 */     ReentrantLock reentrantLock = this.lock;
-/*  412 */     reentrantLock.lockInterruptibly();
-/*      */     try {
-/*  414 */       while (!linkFirst(node)) {
-/*  415 */         if (l <= 0L)
-/*  416 */           return false; 
-/*  417 */         l = this.notFull.awaitNanos(l);
-/*      */       } 
-/*  419 */       return true;
-/*      */     } finally {
-/*  421 */       reentrantLock.unlock();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean offerLast(E paramE, long paramLong, TimeUnit paramTimeUnit) throws InterruptedException {
-/*  431 */     if (paramE == null) throw new NullPointerException(); 
-/*  432 */     Node<E> node = new Node<>(paramE);
-/*  433 */     long l = paramTimeUnit.toNanos(paramLong);
-/*  434 */     ReentrantLock reentrantLock = this.lock;
-/*  435 */     reentrantLock.lockInterruptibly();
-/*      */     try {
-/*  437 */       while (!linkLast(node)) {
-/*  438 */         if (l <= 0L)
-/*  439 */           return false; 
-/*  440 */         l = this.notFull.awaitNanos(l);
-/*      */       } 
-/*  442 */       return true;
-/*      */     } finally {
-/*  444 */       reentrantLock.unlock();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public E removeFirst() {
-/*  452 */     E e = pollFirst();
-/*  453 */     if (e == null) throw new NoSuchElementException(); 
-/*  454 */     return e;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public E removeLast() {
-/*  461 */     E e = pollLast();
-/*  462 */     if (e == null) throw new NoSuchElementException(); 
-/*  463 */     return e;
-/*      */   }
-/*      */   
-/*      */   public E pollFirst() {
-/*  467 */     ReentrantLock reentrantLock = this.lock;
-/*  468 */     reentrantLock.lock();
-/*      */     try {
-/*  470 */       return unlinkFirst();
-/*      */     } finally {
-/*  472 */       reentrantLock.unlock();
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   public E pollLast() {
-/*  477 */     ReentrantLock reentrantLock = this.lock;
-/*  478 */     reentrantLock.lock();
-/*      */     try {
-/*  480 */       return unlinkLast();
-/*      */     } finally {
-/*  482 */       reentrantLock.unlock();
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   public E takeFirst() throws InterruptedException {
-/*  487 */     ReentrantLock reentrantLock = this.lock;
-/*  488 */     reentrantLock.lock();
-/*      */     try {
-/*      */       E e;
-/*  491 */       while ((e = unlinkFirst()) == null)
-/*  492 */         this.notEmpty.await(); 
-/*  493 */       return e;
-/*      */     } finally {
-/*  495 */       reentrantLock.unlock();
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   public E takeLast() throws InterruptedException {
-/*  500 */     ReentrantLock reentrantLock = this.lock;
-/*  501 */     reentrantLock.lock();
-/*      */     try {
-/*      */       E e;
-/*  504 */       while ((e = unlinkLast()) == null)
-/*  505 */         this.notEmpty.await(); 
-/*  506 */       return e;
-/*      */     } finally {
-/*  508 */       reentrantLock.unlock();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public E pollFirst(long paramLong, TimeUnit paramTimeUnit) throws InterruptedException {
-/*  514 */     long l = paramTimeUnit.toNanos(paramLong);
-/*  515 */     ReentrantLock reentrantLock = this.lock;
-/*  516 */     reentrantLock.lockInterruptibly();
-/*      */     try {
-/*      */       E e;
-/*  519 */       while ((e = unlinkFirst()) == null) {
-/*  520 */         if (l <= 0L)
-/*  521 */           return null; 
-/*  522 */         l = this.notEmpty.awaitNanos(l);
-/*      */       } 
-/*  524 */       return e;
-/*      */     } finally {
-/*  526 */       reentrantLock.unlock();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public E pollLast(long paramLong, TimeUnit paramTimeUnit) throws InterruptedException {
-/*  532 */     long l = paramTimeUnit.toNanos(paramLong);
-/*  533 */     ReentrantLock reentrantLock = this.lock;
-/*  534 */     reentrantLock.lockInterruptibly();
-/*      */     try {
-/*      */       E e;
-/*  537 */       while ((e = unlinkLast()) == null) {
-/*  538 */         if (l <= 0L)
-/*  539 */           return null; 
-/*  540 */         l = this.notEmpty.awaitNanos(l);
-/*      */       } 
-/*  542 */       return e;
-/*      */     } finally {
-/*  544 */       reentrantLock.unlock();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public E getFirst() {
-/*  552 */     E e = peekFirst();
-/*  553 */     if (e == null) throw new NoSuchElementException(); 
-/*  554 */     return e;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public E getLast() {
-/*  561 */     E e = peekLast();
-/*  562 */     if (e == null) throw new NoSuchElementException(); 
-/*  563 */     return e;
-/*      */   }
-/*      */   
-/*      */   public E peekFirst() {
-/*  567 */     ReentrantLock reentrantLock = this.lock;
-/*  568 */     reentrantLock.lock();
-/*      */     try {
-/*  570 */       return (this.first == null) ? null : this.first.item;
-/*      */     } finally {
-/*  572 */       reentrantLock.unlock();
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   public E peekLast() {
-/*  577 */     ReentrantLock reentrantLock = this.lock;
-/*  578 */     reentrantLock.lock();
-/*      */     try {
-/*  580 */       return (this.last == null) ? null : this.last.item;
-/*      */     } finally {
-/*  582 */       reentrantLock.unlock();
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   public boolean removeFirstOccurrence(Object paramObject) {
-/*  587 */     if (paramObject == null) return false; 
-/*  588 */     ReentrantLock reentrantLock = this.lock;
-/*  589 */     reentrantLock.lock();
-/*      */     try {
-/*  591 */       for (Node<E> node = this.first; node != null; node = node.next) {
-/*  592 */         if (paramObject.equals(node.item)) {
-/*  593 */           unlink(node);
-/*  594 */           return true;
-/*      */         } 
-/*      */       } 
-/*  597 */       return false;
-/*      */     } finally {
-/*  599 */       reentrantLock.unlock();
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   public boolean removeLastOccurrence(Object paramObject) {
-/*  604 */     if (paramObject == null) return false; 
-/*  605 */     ReentrantLock reentrantLock = this.lock;
-/*  606 */     reentrantLock.lock();
-/*      */     try {
-/*  608 */       for (Node<E> node = this.last; node != null; node = node.prev) {
-/*  609 */         if (paramObject.equals(node.item)) {
-/*  610 */           unlink(node);
-/*  611 */           return true;
-/*      */         } 
-/*      */       } 
-/*  614 */       return false;
-/*      */     } finally {
-/*  616 */       reentrantLock.unlock();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean add(E paramE) {
-/*  633 */     addLast(paramE);
-/*  634 */     return true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean offer(E paramE) {
-/*  641 */     return offerLast(paramE);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void put(E paramE) throws InterruptedException {
-/*  649 */     putLast(paramE);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean offer(E paramE, long paramLong, TimeUnit paramTimeUnit) throws InterruptedException {
-/*  658 */     return offerLast(paramE, paramLong, paramTimeUnit);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public E remove() {
-/*  672 */     return removeFirst();
-/*      */   }
-/*      */   
-/*      */   public E poll() {
-/*  676 */     return pollFirst();
-/*      */   }
-/*      */   
-/*      */   public E take() throws InterruptedException {
-/*  680 */     return takeFirst();
-/*      */   }
-/*      */   
-/*      */   public E poll(long paramLong, TimeUnit paramTimeUnit) throws InterruptedException {
-/*  684 */     return pollFirst(paramLong, paramTimeUnit);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public E element() {
-/*  698 */     return getFirst();
-/*      */   }
-/*      */   
-/*      */   public E peek() {
-/*  702 */     return peekFirst();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int remainingCapacity() {
-/*  717 */     ReentrantLock reentrantLock = this.lock;
-/*  718 */     reentrantLock.lock();
-/*      */     try {
-/*  720 */       return this.capacity - this.count;
-/*      */     } finally {
-/*  722 */       reentrantLock.unlock();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int drainTo(Collection<? super E> paramCollection) {
-/*  733 */     return drainTo(paramCollection, 2147483647);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int drainTo(Collection<? super E> paramCollection, int paramInt) {
-/*  743 */     if (paramCollection == null)
-/*  744 */       throw new NullPointerException(); 
-/*  745 */     if (paramCollection == this)
-/*  746 */       throw new IllegalArgumentException(); 
-/*  747 */     if (paramInt <= 0)
-/*  748 */       return 0; 
-/*  749 */     ReentrantLock reentrantLock = this.lock;
-/*  750 */     reentrantLock.lock();
-/*      */     try {
-/*  752 */       int i = Math.min(paramInt, this.count); int j;
-/*  753 */       for (j = 0; j < i; j++) {
-/*  754 */         paramCollection.add(this.first.item);
-/*  755 */         unlinkFirst();
-/*      */       } 
-/*  757 */       j = i; return j;
-/*      */     } finally {
-/*  759 */       reentrantLock.unlock();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void push(E paramE) {
-/*  770 */     addFirst(paramE);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public E pop() {
-/*  777 */     return removeFirst();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean remove(Object paramObject) {
-/*  797 */     return removeFirstOccurrence(paramObject);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int size() {
-/*  806 */     ReentrantLock reentrantLock = this.lock;
-/*  807 */     reentrantLock.lock();
-/*      */     try {
-/*  809 */       return this.count;
-/*      */     } finally {
-/*  811 */       reentrantLock.unlock();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean contains(Object paramObject) {
-/*  824 */     if (paramObject == null) return false; 
-/*  825 */     ReentrantLock reentrantLock = this.lock;
-/*  826 */     reentrantLock.lock();
-/*      */     try {
-/*  828 */       for (Node<E> node = this.first; node != null; node = node.next) {
-/*  829 */         if (paramObject.equals(node.item))
-/*  830 */           return true; 
-/*  831 */       }  return false;
-/*      */     } finally {
-/*  833 */       reentrantLock.unlock();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object[] toArray() {
-/*  893 */     ReentrantLock reentrantLock = this.lock;
-/*  894 */     reentrantLock.lock();
-/*      */     try {
-/*  896 */       Object[] arrayOfObject = new Object[this.count];
-/*  897 */       byte b = 0;
-/*  898 */       for (Node<E> node = this.first; node != null; node = node.next)
-/*  899 */         arrayOfObject[b++] = node.item; 
-/*  900 */       return arrayOfObject;
-/*      */     } finally {
-/*  902 */       reentrantLock.unlock();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public <T> T[] toArray(T[] paramArrayOfT) {
-/*  943 */     ReentrantLock reentrantLock = this.lock;
-/*  944 */     reentrantLock.lock();
-/*      */     try {
-/*  946 */       if (paramArrayOfT.length < this.count)
-/*      */       {
-/*  948 */         paramArrayOfT = (T[])Array.newInstance(paramArrayOfT.getClass().getComponentType(), this.count);
-/*      */       }
-/*  950 */       byte b = 0;
-/*  951 */       for (Node<E> node = this.first; node != null; node = node.next)
-/*  952 */         paramArrayOfT[b++] = (T)node.item; 
-/*  953 */       if (paramArrayOfT.length > b)
-/*  954 */         paramArrayOfT[b] = null; 
-/*  955 */       return paramArrayOfT;
-/*      */     } finally {
-/*  957 */       reentrantLock.unlock();
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   public String toString() {
-/*  962 */     ReentrantLock reentrantLock = this.lock;
-/*  963 */     reentrantLock.lock();
-/*      */     try {
-/*  965 */       Node<E> node = this.first;
-/*  966 */       if (node == null) {
-/*  967 */         return "[]";
-/*      */       }
-/*  969 */       StringBuilder stringBuilder = new StringBuilder();
-/*  970 */       stringBuilder.append('[');
-/*      */       while (true) {
-/*  972 */         E e = node.item;
-/*  973 */         stringBuilder.append((e == this) ? "(this Collection)" : e);
-/*  974 */         node = node.next;
-/*  975 */         if (node == null)
-/*  976 */           return stringBuilder.append(']').toString(); 
-/*  977 */         stringBuilder.append(',').append(' ');
-/*      */       } 
-/*      */     } finally {
-/*  980 */       reentrantLock.unlock();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void clear() {
-/*  989 */     ReentrantLock reentrantLock = this.lock;
-/*  990 */     reentrantLock.lock();
-/*      */     try {
-/*  992 */       for (Node<E> node = this.first; node != null; ) {
-/*  993 */         node.item = null;
-/*  994 */         Node<E> node1 = node.next;
-/*  995 */         node.prev = null;
-/*  996 */         node.next = null;
-/*  997 */         node = node1;
-/*      */       } 
-/*  999 */       this.first = this.last = null;
-/* 1000 */       this.count = 0;
-/* 1001 */       this.notFull.signalAll();
-/*      */     } finally {
-/* 1003 */       reentrantLock.unlock();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Iterator<E> iterator() {
-/* 1017 */     return new Itr();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Iterator<E> descendingIterator() {
-/* 1031 */     return new DescendingItr();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private abstract class AbstractItr
-/*      */     implements Iterator<E>
-/*      */   {
-/*      */     LinkedBlockingDeque.Node<E> next;
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     E nextItem;
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private LinkedBlockingDeque.Node<E> lastRet;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     abstract LinkedBlockingDeque.Node<E> firstNode();
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     abstract LinkedBlockingDeque.Node<E> nextNode(LinkedBlockingDeque.Node<E> param1Node);
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     AbstractItr() {
-/* 1062 */       ReentrantLock reentrantLock = LinkedBlockingDeque.this.lock;
-/* 1063 */       reentrantLock.lock();
-/*      */       try {
-/* 1065 */         this.next = firstNode();
-/* 1066 */         this.nextItem = (this.next == null) ? null : this.next.item;
-/*      */       } finally {
-/* 1068 */         reentrantLock.unlock();
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private LinkedBlockingDeque.Node<E> succ(LinkedBlockingDeque.Node<E> param1Node) {
-/*      */       while (true) {
-/* 1080 */         LinkedBlockingDeque.Node<E> node = nextNode(param1Node);
-/* 1081 */         if (node == null)
-/* 1082 */           return null; 
-/* 1083 */         if (node.item != null)
-/* 1084 */           return node; 
-/* 1085 */         if (node == param1Node) {
-/* 1086 */           return firstNode();
-/*      */         }
-/* 1088 */         param1Node = node;
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     void advance() {
-/* 1096 */       ReentrantLock reentrantLock = LinkedBlockingDeque.this.lock;
-/* 1097 */       reentrantLock.lock();
-/*      */       
-/*      */       try {
-/* 1100 */         this.next = succ(this.next);
-/* 1101 */         this.nextItem = (this.next == null) ? null : this.next.item;
-/*      */       } finally {
-/* 1103 */         reentrantLock.unlock();
-/*      */       } 
-/*      */     }
-/*      */     
-/*      */     public boolean hasNext() {
-/* 1108 */       return (this.next != null);
-/*      */     }
-/*      */     
-/*      */     public E next() {
-/* 1112 */       if (this.next == null)
-/* 1113 */         throw new NoSuchElementException(); 
-/* 1114 */       this.lastRet = this.next;
-/* 1115 */       E e = this.nextItem;
-/* 1116 */       advance();
-/* 1117 */       return e;
-/*      */     }
-/*      */     
-/*      */     public void remove() {
-/* 1121 */       LinkedBlockingDeque.Node<E> node = this.lastRet;
-/* 1122 */       if (node == null)
-/* 1123 */         throw new IllegalStateException(); 
-/* 1124 */       this.lastRet = null;
-/* 1125 */       ReentrantLock reentrantLock = LinkedBlockingDeque.this.lock;
-/* 1126 */       reentrantLock.lock();
-/*      */       try {
-/* 1128 */         if (node.item != null)
-/* 1129 */           LinkedBlockingDeque.this.unlink(node); 
-/*      */       } finally {
-/* 1131 */         reentrantLock.unlock();
-/*      */       } 
-/*      */     } }
-/*      */   
-/*      */   private class Itr extends AbstractItr {
-/*      */     private Itr() {}
-/*      */     
-/* 1138 */     LinkedBlockingDeque.Node<E> firstNode() { return LinkedBlockingDeque.this.first; } LinkedBlockingDeque.Node<E> nextNode(LinkedBlockingDeque.Node<E> param1Node) {
-/* 1139 */       return param1Node.next;
-/*      */     }
-/*      */   }
-/*      */   private class DescendingItr extends AbstractItr { private DescendingItr() {}
-/*      */     
-/* 1144 */     LinkedBlockingDeque.Node<E> firstNode() { return LinkedBlockingDeque.this.last; } LinkedBlockingDeque.Node<E> nextNode(LinkedBlockingDeque.Node<E> param1Node) {
-/* 1145 */       return param1Node.prev;
-/*      */     } }
-/*      */   
-/*      */   static final class LBDSpliterator<E> implements Spliterator<E> {
-/*      */     static final int MAX_BATCH = 33554432;
-/*      */     final LinkedBlockingDeque<E> queue;
-/*      */     LinkedBlockingDeque.Node<E> current;
-/*      */     int batch;
-/*      */     boolean exhausted;
-/*      */     long est;
-/*      */     
-/*      */     LBDSpliterator(LinkedBlockingDeque<E> param1LinkedBlockingDeque) {
-/* 1157 */       this.queue = param1LinkedBlockingDeque;
-/* 1158 */       this.est = param1LinkedBlockingDeque.size();
-/*      */     }
-/*      */     public long estimateSize() {
-/* 1161 */       return this.est;
-/*      */     }
-/*      */     
-/*      */     public Spliterator<E> trySplit() {
-/* 1165 */       LinkedBlockingDeque<E> linkedBlockingDeque = this.queue;
-/* 1166 */       int i = this.batch;
-/* 1167 */       byte b = (i <= 0) ? 1 : ((i >= 33554432) ? 33554432 : (i + 1)); LinkedBlockingDeque.Node<E> node;
-/* 1168 */       if (!this.exhausted && ((node = this.current) != null || (node = linkedBlockingDeque.first) != null) && node.next != null) {
-/*      */ 
-/*      */         
-/* 1171 */         Object[] arrayOfObject = new Object[b];
-/* 1172 */         ReentrantLock reentrantLock = linkedBlockingDeque.lock;
-/* 1173 */         byte b1 = 0;
-/* 1174 */         LinkedBlockingDeque.Node<E> node1 = this.current;
-/* 1175 */         reentrantLock.lock();
-/*      */         try {
-/* 1177 */           if (node1 != null || (node1 = linkedBlockingDeque.first) != null) {
-/*      */             do {
-/* 1179 */               arrayOfObject[b1] = node1.item; if (node1.item == null)
-/* 1180 */                 continue;  b1++;
-/* 1181 */             } while ((node1 = node1.next) != null && b1 < b);
-/*      */           }
-/*      */         } finally {
-/* 1184 */           reentrantLock.unlock();
-/*      */         } 
-/* 1186 */         if ((this.current = node1) == null) {
-/* 1187 */           this.est = 0L;
-/* 1188 */           this.exhausted = true;
-/*      */         }
-/* 1190 */         else if ((this.est -= b1) < 0L) {
-/* 1191 */           this.est = 0L;
-/* 1192 */         }  if (b1 > 0) {
-/* 1193 */           this.batch = b1;
-/* 1194 */           return 
-/* 1195 */             Spliterators.spliterator(arrayOfObject, 0, b1, 4368);
-/*      */         } 
-/*      */       } 
-/*      */       
-/* 1199 */       return null;
-/*      */     }
-/*      */     
-/*      */     public void forEachRemaining(Consumer<? super E> param1Consumer) {
-/* 1203 */       if (param1Consumer == null) throw new NullPointerException(); 
-/* 1204 */       LinkedBlockingDeque<E> linkedBlockingDeque = this.queue;
-/* 1205 */       ReentrantLock reentrantLock = linkedBlockingDeque.lock;
-/* 1206 */       if (!this.exhausted) {
-/* 1207 */         this.exhausted = true;
-/* 1208 */         LinkedBlockingDeque.Node<E> node = this.current; do {
-/*      */           E e;
-/* 1210 */           Object object = null;
-/* 1211 */           reentrantLock.lock();
-/*      */           try {
-/* 1213 */             if (node == null)
-/* 1214 */               node = linkedBlockingDeque.first; 
-/* 1215 */             while (node != null) {
-/* 1216 */               e = node.item;
-/* 1217 */               node = node.next;
-/* 1218 */               if (e != null)
-/*      */                 break; 
-/*      */             } 
-/*      */           } finally {
-/* 1222 */             reentrantLock.unlock();
-/*      */           } 
-/* 1224 */           if (e == null)
-/* 1225 */             continue;  param1Consumer.accept(e);
-/* 1226 */         } while (node != null);
-/*      */       } 
-/*      */     }
-/*      */     
-/*      */     public boolean tryAdvance(Consumer<? super E> param1Consumer) {
-/* 1231 */       if (param1Consumer == null) throw new NullPointerException(); 
-/* 1232 */       LinkedBlockingDeque<E> linkedBlockingDeque = this.queue;
-/* 1233 */       ReentrantLock reentrantLock = linkedBlockingDeque.lock;
-/* 1234 */       if (!this.exhausted) {
-/* 1235 */         E e; Object object = null;
-/* 1236 */         reentrantLock.lock();
-/*      */         try {
-/* 1238 */           if (this.current == null)
-/* 1239 */             this.current = linkedBlockingDeque.first; 
-/* 1240 */           while (this.current != null) {
-/* 1241 */             e = this.current.item;
-/* 1242 */             this.current = this.current.next;
-/* 1243 */             if (e != null)
-/*      */               break; 
-/*      */           } 
-/*      */         } finally {
-/* 1247 */           reentrantLock.unlock();
-/*      */         } 
-/* 1249 */         if (this.current == null)
-/* 1250 */           this.exhausted = true; 
-/* 1251 */         if (e != null) {
-/* 1252 */           param1Consumer.accept(e);
-/* 1253 */           return true;
-/*      */         } 
-/*      */       } 
-/* 1256 */       return false;
-/*      */     }
-/*      */     
-/*      */     public int characteristics() {
-/* 1260 */       return 4368;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Spliterator<E> spliterator() {
-/* 1282 */     return new LBDSpliterator<>(this);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void writeObject(ObjectOutputStream paramObjectOutputStream) throws IOException {
-/* 1295 */     ReentrantLock reentrantLock = this.lock;
-/* 1296 */     reentrantLock.lock();
-/*      */     
-/*      */     try {
-/* 1299 */       paramObjectOutputStream.defaultWriteObject();
-/*      */       
-/* 1301 */       for (Node<E> node = this.first; node != null; node = node.next) {
-/* 1302 */         paramObjectOutputStream.writeObject(node.item);
-/*      */       }
-/* 1304 */       paramObjectOutputStream.writeObject(null);
-/*      */     } finally {
-/* 1306 */       reentrantLock.unlock();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void readObject(ObjectInputStream paramObjectInputStream) throws IOException, ClassNotFoundException {
-/* 1319 */     paramObjectInputStream.defaultReadObject();
-/* 1320 */     this.count = 0;
-/* 1321 */     this.first = null;
-/* 1322 */     this.last = null;
-/*      */ 
-/*      */     
-/*      */     while (true) {
-/* 1326 */       Object object = paramObjectInputStream.readObject();
-/* 1327 */       if (object == null)
-/*      */         break; 
-/* 1329 */       add((E)object);
-/*      */     } 
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\concurrent\LinkedBlockingDeque.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+/*
+ *
+ *
+ *
+ *
+ *
+ * Written by Doug Lea with assistance from members of JCP JSR-166
+ * Expert Group and released to the public domain, as explained at
+ * http://creativecommons.org/publicdomain/zero/1.0/
+ */
+
+package java.util.concurrent;
+
+import java.util.AbstractQueue;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.function.Consumer;
+
+/**
+ * An optionally-bounded {@linkplain BlockingDeque blocking deque} based on
+ * linked nodes.
+ *
+ * <p>The optional capacity bound constructor argument serves as a
+ * way to prevent excessive expansion. The capacity, if unspecified,
+ * is equal to {@link Integer#MAX_VALUE}.  Linked nodes are
+ * dynamically created upon each insertion unless this would bring the
+ * deque above capacity.
+ *
+ * <p>Most operations run in constant time (ignoring time spent
+ * blocking).  Exceptions include {@link #remove(Object) remove},
+ * {@link #removeFirstOccurrence removeFirstOccurrence}, {@link
+ * #removeLastOccurrence removeLastOccurrence}, {@link #contains
+ * contains}, {@link #iterator iterator.remove()}, and the bulk
+ * operations, all of which run in linear time.
+ *
+ * <p>This class and its iterator implement all of the
+ * <em>optional</em> methods of the {@link Collection} and {@link
+ * Iterator} interfaces.
+ *
+ * <p>This class is a member of the
+ * <a href="{@docRoot}/../technotes/guides/collections/index.html">
+ * Java Collections Framework</a>.
+ *
+ * @since 1.6
+ * @author  Doug Lea
+ * @param <E> the type of elements held in this collection
+ */
+public class LinkedBlockingDeque<E>
+    extends AbstractQueue<E>
+    implements BlockingDeque<E>, java.io.Serializable {
+
+    /*
+     * Implemented as a simple doubly-linked list protected by a
+     * single lock and using conditions to manage blocking.
+     *
+     * To implement weakly consistent iterators, it appears we need to
+     * keep all Nodes GC-reachable from a predecessor dequeued Node.
+     * That would cause two problems:
+     * - allow a rogue Iterator to cause unbounded memory retention
+     * - cause cross-generational linking of old Nodes to new Nodes if
+     *   a Node was tenured while live, which generational GCs have a
+     *   hard time dealing with, causing repeated major collections.
+     * However, only non-deleted Nodes need to be reachable from
+     * dequeued Nodes, and reachability does not necessarily have to
+     * be of the kind understood by the GC.  We use the trick of
+     * linking a Node that has just been dequeued to itself.  Such a
+     * self-link implicitly means to jump to "first" (for next links)
+     * or "last" (for prev links).
+     */
+
+    /*
+     * We have "diamond" multiple interface/abstract class inheritance
+     * here, and that introduces ambiguities. Often we want the
+     * BlockingDeque javadoc combined with the AbstractQueue
+     * implementation, so a lot of method specs are duplicated here.
+     */
+
+    private static final long serialVersionUID = -387911632671998426L;
+
+    /** Doubly-linked list node class */
+    static final class Node<E> {
+        /**
+         * The item, or null if this node has been removed.
+         */
+        E item;
+
+        /**
+         * One of:
+         * - the real predecessor Node
+         * - this Node, meaning the predecessor is tail
+         * - null, meaning there is no predecessor
+         */
+        Node<E> prev;
+
+        /**
+         * One of:
+         * - the real successor Node
+         * - this Node, meaning the successor is head
+         * - null, meaning there is no successor
+         */
+        Node<E> next;
+
+        Node(E x) {
+            item = x;
+        }
+    }
+
+    /**
+     * Pointer to first node.
+     * Invariant: (first == null && last == null) ||
+     *            (first.prev == null && first.item != null)
+     */
+    transient Node<E> first;
+
+    /**
+     * Pointer to last node.
+     * Invariant: (first == null && last == null) ||
+     *            (last.next == null && last.item != null)
+     */
+    transient Node<E> last;
+
+    /** Number of items in the deque */
+    private transient int count;
+
+    /** Maximum number of items in the deque */
+    private final int capacity;
+
+    /** Main lock guarding all access */
+    final ReentrantLock lock = new ReentrantLock();
+
+    /** Condition for waiting takes */
+    private final Condition notEmpty = lock.newCondition();
+
+    /** Condition for waiting puts */
+    private final Condition notFull = lock.newCondition();
+
+    /**
+     * Creates a {@code LinkedBlockingDeque} with a capacity of
+     * {@link Integer#MAX_VALUE}.
+     */
+    public LinkedBlockingDeque() {
+        this(Integer.MAX_VALUE);
+    }
+
+    /**
+     * Creates a {@code LinkedBlockingDeque} with the given (fixed) capacity.
+     *
+     * @param capacity the capacity of this deque
+     * @throws IllegalArgumentException if {@code capacity} is less than 1
+     */
+    public LinkedBlockingDeque(int capacity) {
+        if (capacity <= 0) throw new IllegalArgumentException();
+        this.capacity = capacity;
+    }
+
+    /**
+     * Creates a {@code LinkedBlockingDeque} with a capacity of
+     * {@link Integer#MAX_VALUE}, initially containing the elements of
+     * the given collection, added in traversal order of the
+     * collection's iterator.
+     *
+     * @param c the collection of elements to initially contain
+     * @throws NullPointerException if the specified collection or any
+     *         of its elements are null
+     */
+    public LinkedBlockingDeque(Collection<? extends E> c) {
+        this(Integer.MAX_VALUE);
+        final ReentrantLock lock = this.lock;
+        lock.lock(); // Never contended, but necessary for visibility
+        try {
+            for (E e : c) {
+                if (e == null)
+                    throw new NullPointerException();
+                if (!linkLast(new Node<E>(e)))
+                    throw new IllegalStateException("Deque full");
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+
+    // Basic linking and unlinking operations, called only while holding lock
+
+    /**
+     * Links node as first element, or returns false if full.
+     */
+    private boolean linkFirst(Node<E> node) {
+        // assert lock.isHeldByCurrentThread();
+        if (count >= capacity)
+            return false;
+        Node<E> f = first;
+        node.next = f;
+        first = node;
+        if (last == null)
+            last = node;
+        else
+            f.prev = node;
+        ++count;
+        notEmpty.signal();
+        return true;
+    }
+
+    /**
+     * Links node as last element, or returns false if full.
+     */
+    private boolean linkLast(Node<E> node) {
+        // assert lock.isHeldByCurrentThread();
+        if (count >= capacity)
+            return false;
+        Node<E> l = last;
+        node.prev = l;
+        last = node;
+        if (first == null)
+            first = node;
+        else
+            l.next = node;
+        ++count;
+        notEmpty.signal();
+        return true;
+    }
+
+    /**
+     * Removes and returns first element, or null if empty.
+     */
+    private E unlinkFirst() {
+        // assert lock.isHeldByCurrentThread();
+        Node<E> f = first;
+        if (f == null)
+            return null;
+        Node<E> n = f.next;
+        E item = f.item;
+        f.item = null;
+        f.next = f; // help GC
+        first = n;
+        if (n == null)
+            last = null;
+        else
+            n.prev = null;
+        --count;
+        notFull.signal();
+        return item;
+    }
+
+    /**
+     * Removes and returns last element, or null if empty.
+     */
+    private E unlinkLast() {
+        // assert lock.isHeldByCurrentThread();
+        Node<E> l = last;
+        if (l == null)
+            return null;
+        Node<E> p = l.prev;
+        E item = l.item;
+        l.item = null;
+        l.prev = l; // help GC
+        last = p;
+        if (p == null)
+            first = null;
+        else
+            p.next = null;
+        --count;
+        notFull.signal();
+        return item;
+    }
+
+    /**
+     * Unlinks x.
+     */
+    void unlink(Node<E> x) {
+        // assert lock.isHeldByCurrentThread();
+        Node<E> p = x.prev;
+        Node<E> n = x.next;
+        if (p == null) {
+            unlinkFirst();
+        } else if (n == null) {
+            unlinkLast();
+        } else {
+            p.next = n;
+            n.prev = p;
+            x.item = null;
+            // Don't mess with x's links.  They may still be in use by
+            // an iterator.
+            --count;
+            notFull.signal();
+        }
+    }
+
+    // BlockingDeque methods
+
+    /**
+     * @throws IllegalStateException if this deque is full
+     * @throws NullPointerException {@inheritDoc}
+     */
+    public void addFirst(E e) {
+        if (!offerFirst(e))
+            throw new IllegalStateException("Deque full");
+    }
+
+    /**
+     * @throws IllegalStateException if this deque is full
+     * @throws NullPointerException  {@inheritDoc}
+     */
+    public void addLast(E e) {
+        if (!offerLast(e))
+            throw new IllegalStateException("Deque full");
+    }
+
+    /**
+     * @throws NullPointerException {@inheritDoc}
+     */
+    public boolean offerFirst(E e) {
+        if (e == null) throw new NullPointerException();
+        Node<E> node = new Node<E>(e);
+        final ReentrantLock lock = this.lock;
+        lock.lock();
+        try {
+            return linkFirst(node);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * @throws NullPointerException {@inheritDoc}
+     */
+    public boolean offerLast(E e) {
+        if (e == null) throw new NullPointerException();
+        Node<E> node = new Node<E>(e);
+        final ReentrantLock lock = this.lock;
+        lock.lock();
+        try {
+            return linkLast(node);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * @throws NullPointerException {@inheritDoc}
+     * @throws InterruptedException {@inheritDoc}
+     */
+    public void putFirst(E e) throws InterruptedException {
+        if (e == null) throw new NullPointerException();
+        Node<E> node = new Node<E>(e);
+        final ReentrantLock lock = this.lock;
+        lock.lock();
+        try {
+            while (!linkFirst(node))
+                notFull.await();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * @throws NullPointerException {@inheritDoc}
+     * @throws InterruptedException {@inheritDoc}
+     */
+    public void putLast(E e) throws InterruptedException {
+        if (e == null) throw new NullPointerException();
+        Node<E> node = new Node<E>(e);
+        final ReentrantLock lock = this.lock;
+        lock.lock();
+        try {
+            while (!linkLast(node))
+                notFull.await();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * @throws NullPointerException {@inheritDoc}
+     * @throws InterruptedException {@inheritDoc}
+     */
+    public boolean offerFirst(E e, long timeout, TimeUnit unit)
+        throws InterruptedException {
+        if (e == null) throw new NullPointerException();
+        Node<E> node = new Node<E>(e);
+        long nanos = unit.toNanos(timeout);
+        final ReentrantLock lock = this.lock;
+        lock.lockInterruptibly();
+        try {
+            while (!linkFirst(node)) {
+                if (nanos <= 0)
+                    return false;
+                nanos = notFull.awaitNanos(nanos);
+            }
+            return true;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * @throws NullPointerException {@inheritDoc}
+     * @throws InterruptedException {@inheritDoc}
+     */
+    public boolean offerLast(E e, long timeout, TimeUnit unit)
+        throws InterruptedException {
+        if (e == null) throw new NullPointerException();
+        Node<E> node = new Node<E>(e);
+        long nanos = unit.toNanos(timeout);
+        final ReentrantLock lock = this.lock;
+        lock.lockInterruptibly();
+        try {
+            while (!linkLast(node)) {
+                if (nanos <= 0)
+                    return false;
+                nanos = notFull.awaitNanos(nanos);
+            }
+            return true;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * @throws NoSuchElementException {@inheritDoc}
+     */
+    public E removeFirst() {
+        E x = pollFirst();
+        if (x == null) throw new NoSuchElementException();
+        return x;
+    }
+
+    /**
+     * @throws NoSuchElementException {@inheritDoc}
+     */
+    public E removeLast() {
+        E x = pollLast();
+        if (x == null) throw new NoSuchElementException();
+        return x;
+    }
+
+    public E pollFirst() {
+        final ReentrantLock lock = this.lock;
+        lock.lock();
+        try {
+            return unlinkFirst();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public E pollLast() {
+        final ReentrantLock lock = this.lock;
+        lock.lock();
+        try {
+            return unlinkLast();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public E takeFirst() throws InterruptedException {
+        final ReentrantLock lock = this.lock;
+        lock.lock();
+        try {
+            E x;
+            while ( (x = unlinkFirst()) == null)
+                notEmpty.await();
+            return x;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public E takeLast() throws InterruptedException {
+        final ReentrantLock lock = this.lock;
+        lock.lock();
+        try {
+            E x;
+            while ( (x = unlinkLast()) == null)
+                notEmpty.await();
+            return x;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public E pollFirst(long timeout, TimeUnit unit)
+        throws InterruptedException {
+        long nanos = unit.toNanos(timeout);
+        final ReentrantLock lock = this.lock;
+        lock.lockInterruptibly();
+        try {
+            E x;
+            while ( (x = unlinkFirst()) == null) {
+                if (nanos <= 0)
+                    return null;
+                nanos = notEmpty.awaitNanos(nanos);
+            }
+            return x;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public E pollLast(long timeout, TimeUnit unit)
+        throws InterruptedException {
+        long nanos = unit.toNanos(timeout);
+        final ReentrantLock lock = this.lock;
+        lock.lockInterruptibly();
+        try {
+            E x;
+            while ( (x = unlinkLast()) == null) {
+                if (nanos <= 0)
+                    return null;
+                nanos = notEmpty.awaitNanos(nanos);
+            }
+            return x;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * @throws NoSuchElementException {@inheritDoc}
+     */
+    public E getFirst() {
+        E x = peekFirst();
+        if (x == null) throw new NoSuchElementException();
+        return x;
+    }
+
+    /**
+     * @throws NoSuchElementException {@inheritDoc}
+     */
+    public E getLast() {
+        E x = peekLast();
+        if (x == null) throw new NoSuchElementException();
+        return x;
+    }
+
+    public E peekFirst() {
+        final ReentrantLock lock = this.lock;
+        lock.lock();
+        try {
+            return (first == null) ? null : first.item;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public E peekLast() {
+        final ReentrantLock lock = this.lock;
+        lock.lock();
+        try {
+            return (last == null) ? null : last.item;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public boolean removeFirstOccurrence(Object o) {
+        if (o == null) return false;
+        final ReentrantLock lock = this.lock;
+        lock.lock();
+        try {
+            for (Node<E> p = first; p != null; p = p.next) {
+                if (o.equals(p.item)) {
+                    unlink(p);
+                    return true;
+                }
+            }
+            return false;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public boolean removeLastOccurrence(Object o) {
+        if (o == null) return false;
+        final ReentrantLock lock = this.lock;
+        lock.lock();
+        try {
+            for (Node<E> p = last; p != null; p = p.prev) {
+                if (o.equals(p.item)) {
+                    unlink(p);
+                    return true;
+                }
+            }
+            return false;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    // BlockingQueue methods
+
+    /**
+     * Inserts the specified element at the end of this deque unless it would
+     * violate capacity restrictions.  When using a capacity-restricted deque,
+     * it is generally preferable to use method {@link #offer(Object) offer}.
+     *
+     * <p>This method is equivalent to {@link #addLast}.
+     *
+     * @throws IllegalStateException if this deque is full
+     * @throws NullPointerException if the specified element is null
+     */
+    public boolean add(E e) {
+        addLast(e);
+        return true;
+    }
+
+    /**
+     * @throws NullPointerException if the specified element is null
+     */
+    public boolean offer(E e) {
+        return offerLast(e);
+    }
+
+    /**
+     * @throws NullPointerException {@inheritDoc}
+     * @throws InterruptedException {@inheritDoc}
+     */
+    public void put(E e) throws InterruptedException {
+        putLast(e);
+    }
+
+    /**
+     * @throws NullPointerException {@inheritDoc}
+     * @throws InterruptedException {@inheritDoc}
+     */
+    public boolean offer(E e, long timeout, TimeUnit unit)
+        throws InterruptedException {
+        return offerLast(e, timeout, unit);
+    }
+
+    /**
+     * Retrieves and removes the head of the queue represented by this deque.
+     * This method differs from {@link #poll poll} only in that it throws an
+     * exception if this deque is empty.
+     *
+     * <p>This method is equivalent to {@link #removeFirst() removeFirst}.
+     *
+     * @return the head of the queue represented by this deque
+     * @throws NoSuchElementException if this deque is empty
+     */
+    public E remove() {
+        return removeFirst();
+    }
+
+    public E poll() {
+        return pollFirst();
+    }
+
+    public E take() throws InterruptedException {
+        return takeFirst();
+    }
+
+    public E poll(long timeout, TimeUnit unit) throws InterruptedException {
+        return pollFirst(timeout, unit);
+    }
+
+    /**
+     * Retrieves, but does not remove, the head of the queue represented by
+     * this deque.  This method differs from {@link #peek peek} only in that
+     * it throws an exception if this deque is empty.
+     *
+     * <p>This method is equivalent to {@link #getFirst() getFirst}.
+     *
+     * @return the head of the queue represented by this deque
+     * @throws NoSuchElementException if this deque is empty
+     */
+    public E element() {
+        return getFirst();
+    }
+
+    public E peek() {
+        return peekFirst();
+    }
+
+    /**
+     * Returns the number of additional elements that this deque can ideally
+     * (in the absence of memory or resource constraints) accept without
+     * blocking. This is always equal to the initial capacity of this deque
+     * less the current {@code size} of this deque.
+     *
+     * <p>Note that you <em>cannot</em> always tell if an attempt to insert
+     * an element will succeed by inspecting {@code remainingCapacity}
+     * because it may be the case that another thread is about to
+     * insert or remove an element.
+     */
+    public int remainingCapacity() {
+        final ReentrantLock lock = this.lock;
+        lock.lock();
+        try {
+            return capacity - count;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * @throws UnsupportedOperationException {@inheritDoc}
+     * @throws ClassCastException            {@inheritDoc}
+     * @throws NullPointerException          {@inheritDoc}
+     * @throws IllegalArgumentException      {@inheritDoc}
+     */
+    public int drainTo(Collection<? super E> c) {
+        return drainTo(c, Integer.MAX_VALUE);
+    }
+
+    /**
+     * @throws UnsupportedOperationException {@inheritDoc}
+     * @throws ClassCastException            {@inheritDoc}
+     * @throws NullPointerException          {@inheritDoc}
+     * @throws IllegalArgumentException      {@inheritDoc}
+     */
+    public int drainTo(Collection<? super E> c, int maxElements) {
+        if (c == null)
+            throw new NullPointerException();
+        if (c == this)
+            throw new IllegalArgumentException();
+        if (maxElements <= 0)
+            return 0;
+        final ReentrantLock lock = this.lock;
+        lock.lock();
+        try {
+            int n = Math.min(maxElements, count);
+            for (int i = 0; i < n; i++) {
+                c.add(first.item);   // In this order, in case add() throws.
+                unlinkFirst();
+            }
+            return n;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    // Stack methods
+
+    /**
+     * @throws IllegalStateException if this deque is full
+     * @throws NullPointerException {@inheritDoc}
+     */
+    public void push(E e) {
+        addFirst(e);
+    }
+
+    /**
+     * @throws NoSuchElementException {@inheritDoc}
+     */
+    public E pop() {
+        return removeFirst();
+    }
+
+    // Collection methods
+
+    /**
+     * Removes the first occurrence of the specified element from this deque.
+     * If the deque does not contain the element, it is unchanged.
+     * More formally, removes the first element {@code e} such that
+     * {@code o.equals(e)} (if such an element exists).
+     * Returns {@code true} if this deque contained the specified element
+     * (or equivalently, if this deque changed as a result of the call).
+     *
+     * <p>This method is equivalent to
+     * {@link #removeFirstOccurrence(Object) removeFirstOccurrence}.
+     *
+     * @param o element to be removed from this deque, if present
+     * @return {@code true} if this deque changed as a result of the call
+     */
+    public boolean remove(Object o) {
+        return removeFirstOccurrence(o);
+    }
+
+    /**
+     * Returns the number of elements in this deque.
+     *
+     * @return the number of elements in this deque
+     */
+    public int size() {
+        final ReentrantLock lock = this.lock;
+        lock.lock();
+        try {
+            return count;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Returns {@code true} if this deque contains the specified element.
+     * More formally, returns {@code true} if and only if this deque contains
+     * at least one element {@code e} such that {@code o.equals(e)}.
+     *
+     * @param o object to be checked for containment in this deque
+     * @return {@code true} if this deque contains the specified element
+     */
+    public boolean contains(Object o) {
+        if (o == null) return false;
+        final ReentrantLock lock = this.lock;
+        lock.lock();
+        try {
+            for (Node<E> p = first; p != null; p = p.next)
+                if (o.equals(p.item))
+                    return true;
+            return false;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /*
+     * TODO: Add support for more efficient bulk operations.
+     *
+     * We don't want to acquire the lock for every iteration, but we
+     * also want other threads a chance to interact with the
+     * collection, especially when count is close to capacity.
+     */
+
+//     /**
+//      * Adds all of the elements in the specified collection to this
+//      * queue.  Attempts to addAll of a queue to itself result in
+//      * {@code IllegalArgumentException}. Further, the behavior of
+//      * this operation is undefined if the specified collection is
+//      * modified while the operation is in progress.
+//      *
+//      * @param c collection containing elements to be added to this queue
+//      * @return {@code true} if this queue changed as a result of the call
+//      * @throws ClassCastException            {@inheritDoc}
+//      * @throws NullPointerException          {@inheritDoc}
+//      * @throws IllegalArgumentException      {@inheritDoc}
+//      * @throws IllegalStateException if this deque is full
+//      * @see #add(Object)
+//      */
+//     public boolean addAll(Collection<? extends E> c) {
+//         if (c == null)
+//             throw new NullPointerException();
+//         if (c == this)
+//             throw new IllegalArgumentException();
+//         final ReentrantLock lock = this.lock;
+//         lock.lock();
+//         try {
+//             boolean modified = false;
+//             for (E e : c)
+//                 if (linkLast(e))
+//                     modified = true;
+//             return modified;
+//         } finally {
+//             lock.unlock();
+//         }
+//     }
+
+    /**
+     * Returns an array containing all of the elements in this deque, in
+     * proper sequence (from first to last element).
+     *
+     * <p>The returned array will be "safe" in that no references to it are
+     * maintained by this deque.  (In other words, this method must allocate
+     * a new array).  The caller is thus free to modify the returned array.
+     *
+     * <p>This method acts as bridge between array-based and collection-based
+     * APIs.
+     *
+     * @return an array containing all of the elements in this deque
+     */
+    @SuppressWarnings("unchecked")
+    public Object[] toArray() {
+        final ReentrantLock lock = this.lock;
+        lock.lock();
+        try {
+            Object[] a = new Object[count];
+            int k = 0;
+            for (Node<E> p = first; p != null; p = p.next)
+                a[k++] = p.item;
+            return a;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Returns an array containing all of the elements in this deque, in
+     * proper sequence; the runtime type of the returned array is that of
+     * the specified array.  If the deque fits in the specified array, it
+     * is returned therein.  Otherwise, a new array is allocated with the
+     * runtime type of the specified array and the size of this deque.
+     *
+     * <p>If this deque fits in the specified array with room to spare
+     * (i.e., the array has more elements than this deque), the element in
+     * the array immediately following the end of the deque is set to
+     * {@code null}.
+     *
+     * <p>Like the {@link #toArray()} method, this method acts as bridge between
+     * array-based and collection-based APIs.  Further, this method allows
+     * precise control over the runtime type of the output array, and may,
+     * under certain circumstances, be used to save allocation costs.
+     *
+     * <p>Suppose {@code x} is a deque known to contain only strings.
+     * The following code can be used to dump the deque into a newly
+     * allocated array of {@code String}:
+     *
+     *  <pre> {@code String[] y = x.toArray(new String[0]);}</pre>
+     *
+     * Note that {@code toArray(new Object[0])} is identical in function to
+     * {@code toArray()}.
+     *
+     * @param a the array into which the elements of the deque are to
+     *          be stored, if it is big enough; otherwise, a new array of the
+     *          same runtime type is allocated for this purpose
+     * @return an array containing all of the elements in this deque
+     * @throws ArrayStoreException if the runtime type of the specified array
+     *         is not a supertype of the runtime type of every element in
+     *         this deque
+     * @throws NullPointerException if the specified array is null
+     */
+    @SuppressWarnings("unchecked")
+    public <T> T[] toArray(T[] a) {
+        final ReentrantLock lock = this.lock;
+        lock.lock();
+        try {
+            if (a.length < count)
+                a = (T[])java.lang.reflect.Array.newInstance
+                    (a.getClass().getComponentType(), count);
+
+            int k = 0;
+            for (Node<E> p = first; p != null; p = p.next)
+                a[k++] = (T)p.item;
+            if (a.length > k)
+                a[k] = null;
+            return a;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public String toString() {
+        final ReentrantLock lock = this.lock;
+        lock.lock();
+        try {
+            Node<E> p = first;
+            if (p == null)
+                return "[]";
+
+            StringBuilder sb = new StringBuilder();
+            sb.append('[');
+            for (;;) {
+                E e = p.item;
+                sb.append(e == this ? "(this Collection)" : e);
+                p = p.next;
+                if (p == null)
+                    return sb.append(']').toString();
+                sb.append(',').append(' ');
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Atomically removes all of the elements from this deque.
+     * The deque will be empty after this call returns.
+     */
+    public void clear() {
+        final ReentrantLock lock = this.lock;
+        lock.lock();
+        try {
+            for (Node<E> f = first; f != null; ) {
+                f.item = null;
+                Node<E> n = f.next;
+                f.prev = null;
+                f.next = null;
+                f = n;
+            }
+            first = last = null;
+            count = 0;
+            notFull.signalAll();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Returns an iterator over the elements in this deque in proper sequence.
+     * The elements will be returned in order from first (head) to last (tail).
+     *
+     * <p>The returned iterator is
+     * <a href="package-summary.html#Weakly"><i>weakly consistent</i></a>.
+     *
+     * @return an iterator over the elements in this deque in proper sequence
+     */
+    public Iterator<E> iterator() {
+        return new Itr();
+    }
+
+    /**
+     * Returns an iterator over the elements in this deque in reverse
+     * sequential order.  The elements will be returned in order from
+     * last (tail) to first (head).
+     *
+     * <p>The returned iterator is
+     * <a href="package-summary.html#Weakly"><i>weakly consistent</i></a>.
+     *
+     * @return an iterator over the elements in this deque in reverse order
+     */
+    public Iterator<E> descendingIterator() {
+        return new DescendingItr();
+    }
+
+    /**
+     * Base class for Iterators for LinkedBlockingDeque
+     */
+    private abstract class AbstractItr implements Iterator<E> {
+        /**
+         * The next node to return in next()
+         */
+        Node<E> next;
+
+        /**
+         * nextItem holds on to item fields because once we claim that
+         * an element exists in hasNext(), we must return item read
+         * under lock (in advance()) even if it was in the process of
+         * being removed when hasNext() was called.
+         */
+        E nextItem;
+
+        /**
+         * Node returned by most recent call to next. Needed by remove.
+         * Reset to null if this element is deleted by a call to remove.
+         */
+        private Node<E> lastRet;
+
+        abstract Node<E> firstNode();
+        abstract Node<E> nextNode(Node<E> n);
+
+        AbstractItr() {
+            // set to initial position
+            final ReentrantLock lock = LinkedBlockingDeque.this.lock;
+            lock.lock();
+            try {
+                next = firstNode();
+                nextItem = (next == null) ? null : next.item;
+            } finally {
+                lock.unlock();
+            }
+        }
+
+        /**
+         * Returns the successor node of the given non-null, but
+         * possibly previously deleted, node.
+         */
+        private Node<E> succ(Node<E> n) {
+            // Chains of deleted nodes ending in null or self-links
+            // are possible if multiple interior nodes are removed.
+            for (;;) {
+                Node<E> s = nextNode(n);
+                if (s == null)
+                    return null;
+                else if (s.item != null)
+                    return s;
+                else if (s == n)
+                    return firstNode();
+                else
+                    n = s;
+            }
+        }
+
+        /**
+         * Advances next.
+         */
+        void advance() {
+            final ReentrantLock lock = LinkedBlockingDeque.this.lock;
+            lock.lock();
+            try {
+                // assert next != null;
+                next = succ(next);
+                nextItem = (next == null) ? null : next.item;
+            } finally {
+                lock.unlock();
+            }
+        }
+
+        public boolean hasNext() {
+            return next != null;
+        }
+
+        public E next() {
+            if (next == null)
+                throw new NoSuchElementException();
+            lastRet = next;
+            E x = nextItem;
+            advance();
+            return x;
+        }
+
+        public void remove() {
+            Node<E> n = lastRet;
+            if (n == null)
+                throw new IllegalStateException();
+            lastRet = null;
+            final ReentrantLock lock = LinkedBlockingDeque.this.lock;
+            lock.lock();
+            try {
+                if (n.item != null)
+                    unlink(n);
+            } finally {
+                lock.unlock();
+            }
+        }
+    }
+
+    /** Forward iterator */
+    private class Itr extends AbstractItr {
+        Node<E> firstNode() { return first; }
+        Node<E> nextNode(Node<E> n) { return n.next; }
+    }
+
+    /** Descending iterator */
+    private class DescendingItr extends AbstractItr {
+        Node<E> firstNode() { return last; }
+        Node<E> nextNode(Node<E> n) { return n.prev; }
+    }
+
+    /** A customized variant of Spliterators.IteratorSpliterator */
+    static final class LBDSpliterator<E> implements Spliterator<E> {
+        static final int MAX_BATCH = 1 << 25;  // max batch array size;
+        final LinkedBlockingDeque<E> queue;
+        Node<E> current;    // current node; null until initialized
+        int batch;          // batch size for splits
+        boolean exhausted;  // true when no more nodes
+        long est;           // size estimate
+        LBDSpliterator(LinkedBlockingDeque<E> queue) {
+            this.queue = queue;
+            this.est = queue.size();
+        }
+
+        public long estimateSize() { return est; }
+
+        public Spliterator<E> trySplit() {
+            Node<E> h;
+            final LinkedBlockingDeque<E> q = this.queue;
+            int b = batch;
+            int n = (b <= 0) ? 1 : (b >= MAX_BATCH) ? MAX_BATCH : b + 1;
+            if (!exhausted &&
+                ((h = current) != null || (h = q.first) != null) &&
+                h.next != null) {
+                Object[] a = new Object[n];
+                final ReentrantLock lock = q.lock;
+                int i = 0;
+                Node<E> p = current;
+                lock.lock();
+                try {
+                    if (p != null || (p = q.first) != null) {
+                        do {
+                            if ((a[i] = p.item) != null)
+                                ++i;
+                        } while ((p = p.next) != null && i < n);
+                    }
+                } finally {
+                    lock.unlock();
+                }
+                if ((current = p) == null) {
+                    est = 0L;
+                    exhausted = true;
+                }
+                else if ((est -= i) < 0L)
+                    est = 0L;
+                if (i > 0) {
+                    batch = i;
+                    return Spliterators.spliterator
+                        (a, 0, i, Spliterator.ORDERED | Spliterator.NONNULL |
+                         Spliterator.CONCURRENT);
+                }
+            }
+            return null;
+        }
+
+        public void forEachRemaining(Consumer<? super E> action) {
+            if (action == null) throw new NullPointerException();
+            final LinkedBlockingDeque<E> q = this.queue;
+            final ReentrantLock lock = q.lock;
+            if (!exhausted) {
+                exhausted = true;
+                Node<E> p = current;
+                do {
+                    E e = null;
+                    lock.lock();
+                    try {
+                        if (p == null)
+                            p = q.first;
+                        while (p != null) {
+                            e = p.item;
+                            p = p.next;
+                            if (e != null)
+                                break;
+                        }
+                    } finally {
+                        lock.unlock();
+                    }
+                    if (e != null)
+                        action.accept(e);
+                } while (p != null);
+            }
+        }
+
+        public boolean tryAdvance(Consumer<? super E> action) {
+            if (action == null) throw new NullPointerException();
+            final LinkedBlockingDeque<E> q = this.queue;
+            final ReentrantLock lock = q.lock;
+            if (!exhausted) {
+                E e = null;
+                lock.lock();
+                try {
+                    if (current == null)
+                        current = q.first;
+                    while (current != null) {
+                        e = current.item;
+                        current = current.next;
+                        if (e != null)
+                            break;
+                    }
+                } finally {
+                    lock.unlock();
+                }
+                if (current == null)
+                    exhausted = true;
+                if (e != null) {
+                    action.accept(e);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public int characteristics() {
+            return Spliterator.ORDERED | Spliterator.NONNULL |
+                Spliterator.CONCURRENT;
+        }
+    }
+
+    /**
+     * Returns a {@link Spliterator} over the elements in this deque.
+     *
+     * <p>The returned spliterator is
+     * <a href="package-summary.html#Weakly"><i>weakly consistent</i></a>.
+     *
+     * <p>The {@code Spliterator} reports {@link Spliterator#CONCURRENT},
+     * {@link Spliterator#ORDERED}, and {@link Spliterator#NONNULL}.
+     *
+     * @implNote
+     * The {@code Spliterator} implements {@code trySplit} to permit limited
+     * parallelism.
+     *
+     * @return a {@code Spliterator} over the elements in this deque
+     * @since 1.8
+     */
+    public Spliterator<E> spliterator() {
+        return new LBDSpliterator<E>(this);
+    }
+
+    /**
+     * Saves this deque to a stream (that is, serializes it).
+     *
+     * @param s the stream
+     * @throws java.io.IOException if an I/O error occurs
+     * @serialData The capacity (int), followed by elements (each an
+     * {@code Object}) in the proper order, followed by a null
+     */
+    private void writeObject(java.io.ObjectOutputStream s)
+        throws java.io.IOException {
+        final ReentrantLock lock = this.lock;
+        lock.lock();
+        try {
+            // Write out capacity and any hidden stuff
+            s.defaultWriteObject();
+            // Write out all elements in the proper order.
+            for (Node<E> p = first; p != null; p = p.next)
+                s.writeObject(p.item);
+            // Use trailing null as sentinel
+            s.writeObject(null);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Reconstitutes this deque from a stream (that is, deserializes it).
+     * @param s the stream
+     * @throws ClassNotFoundException if the class of a serialized object
+     *         could not be found
+     * @throws java.io.IOException if an I/O error occurs
+     */
+    private void readObject(java.io.ObjectInputStream s)
+        throws java.io.IOException, ClassNotFoundException {
+        s.defaultReadObject();
+        count = 0;
+        first = null;
+        last = null;
+        // Read in all elements and place in queue
+        for (;;) {
+            @SuppressWarnings("unchecked")
+            E item = (E)s.readObject();
+            if (item == null)
+                break;
+            add(item);
+        }
+    }
+
+}

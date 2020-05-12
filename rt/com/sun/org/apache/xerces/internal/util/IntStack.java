@@ -1,121 +1,116 @@
-/*     */ package com.sun.org.apache.xerces.internal.util;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class IntStack
-/*     */ {
-/*     */   private int fDepth;
-/*     */   private int[] fData;
-/*     */   
-/*     */   public int size() {
-/*  49 */     return this.fDepth;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void push(int value) {
-/*  54 */     ensureCapacity(this.fDepth + 1);
-/*  55 */     this.fData[this.fDepth++] = value;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public int peek() {
-/*  60 */     return this.fData[this.fDepth - 1];
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public int elementAt(int depth) {
-/*  65 */     return this.fData[depth];
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public int pop() {
-/*  70 */     return this.fData[--this.fDepth];
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void clear() {
-/*  75 */     this.fDepth = 0;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void print() {
-/*  82 */     System.out.print('(');
-/*  83 */     System.out.print(this.fDepth);
-/*  84 */     System.out.print(") {");
-/*  85 */     for (int i = 0; i < this.fDepth; i++) {
-/*  86 */       if (i == 3) {
-/*  87 */         System.out.print(" ...");
-/*     */         break;
-/*     */       } 
-/*  90 */       System.out.print(' ');
-/*  91 */       System.out.print(this.fData[i]);
-/*  92 */       if (i < this.fDepth - 1) {
-/*  93 */         System.out.print(',');
-/*     */       }
-/*     */     } 
-/*  96 */     System.out.print(" }");
-/*  97 */     System.out.println();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void ensureCapacity(int size) {
-/* 106 */     if (this.fData == null) {
-/* 107 */       this.fData = new int[32];
-/*     */     }
-/* 109 */     else if (this.fData.length <= size) {
-/* 110 */       int[] newdata = new int[this.fData.length * 2];
-/* 111 */       System.arraycopy(this.fData, 0, newdata, 0, this.fData.length);
-/* 112 */       this.fData = newdata;
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\interna\\util\IntStack.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2000-2002,2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.util;
+
+/**
+ * A simple integer based stack.
+ *
+ * moved to com.sun.org.apache.xerces.internal.util by neilg to support the
+ * XPathMatcher.
+ * @author  Andy Clark, IBM
+ *
+ */
+public final class IntStack {
+
+    //
+    // Data
+    //
+
+    /** Stack depth. */
+    private int fDepth;
+
+    /** Stack data. */
+    private int[] fData;
+
+    //
+    // Public methods
+    //
+
+    /** Returns the size of the stack. */
+    public int size() {
+        return fDepth;
+    }
+
+    /** Pushes a value onto the stack. */
+    public void push(int value) {
+        ensureCapacity(fDepth + 1);
+        fData[fDepth++] = value;
+    }
+
+    /** Peeks at the top of the stack. */
+    public int peek() {
+        return fData[fDepth - 1];
+    }
+
+    /** Returns the element at the specified depth in the stack. */
+    public int elementAt(int depth) {
+        return fData[depth];
+    }
+
+    /** Pops a value off of the stack. */
+    public int pop() {
+        return fData[--fDepth];
+    }
+
+    /** Clears the stack. */
+    public void clear() {
+        fDepth = 0;
+    }
+
+    // debugging
+
+    /** Prints the stack. */
+    public void print() {
+        System.out.print('(');
+        System.out.print(fDepth);
+        System.out.print(") {");
+        for (int i = 0; i < fDepth; i++) {
+            if (i == 3) {
+                System.out.print(" ...");
+                break;
+            }
+            System.out.print(' ');
+            System.out.print(fData[i]);
+            if (i < fDepth - 1) {
+                System.out.print(',');
+            }
+        }
+        System.out.print(" }");
+        System.out.println();
+    }
+
+    //
+    // Private methods
+    //
+
+    /** Ensures capacity. */
+    private void ensureCapacity(int size) {
+        if (fData == null) {
+            fData = new int[32];
+        }
+        else if (fData.length <= size) {
+            int[] newdata = new int[fData.length * 2];
+            System.arraycopy(fData, 0, newdata, 0, fData.length);
+            fData = newdata;
+        }
+    }
+
+} // class IntStack

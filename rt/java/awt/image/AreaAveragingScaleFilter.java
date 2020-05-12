@@ -1,287 +1,281 @@
-/*     */ package java.awt.image;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class AreaAveragingScaleFilter
-/*     */   extends ReplicateScaleFilter
-/*     */ {
-/*  61 */   private static final ColorModel rgbmodel = ColorModel.getRGBdefault();
-/*     */   
-/*     */   private static final int neededHints = 6;
-/*     */   
-/*     */   private boolean passthrough;
-/*     */   
-/*     */   private float[] reds;
-/*     */   
-/*     */   private float[] greens;
-/*     */   
-/*     */   private float[] blues;
-/*     */   private float[] alphas;
-/*     */   private int savedy;
-/*     */   private int savedyrem;
-/*     */   
-/*     */   public AreaAveragingScaleFilter(int paramInt1, int paramInt2) {
-/*  77 */     super(paramInt1, paramInt2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setHints(int paramInt) {
-/*  93 */     this.passthrough = ((paramInt & 0x6) != 6);
-/*  94 */     super.setHints(paramInt);
-/*     */   }
-/*     */   
-/*     */   private void makeAccumBuffers() {
-/*  98 */     this.reds = new float[this.destWidth];
-/*  99 */     this.greens = new float[this.destWidth];
-/* 100 */     this.blues = new float[this.destWidth];
-/* 101 */     this.alphas = new float[this.destWidth];
-/*     */   }
-/*     */   
-/*     */   private int[] calcRow() {
-/* 105 */     float f = this.srcWidth * this.srcHeight;
-/* 106 */     if (this.outpixbuf == null || !(this.outpixbuf instanceof int[])) {
-/* 107 */       this.outpixbuf = new int[this.destWidth];
-/*     */     }
-/* 109 */     int[] arrayOfInt = (int[])this.outpixbuf;
-/* 110 */     for (byte b = 0; b < this.destWidth; b++) {
-/* 111 */       float f1 = f;
-/* 112 */       int i = Math.round(this.alphas[b] / f1);
-/* 113 */       if (i <= 0) {
-/* 114 */         i = 0;
-/* 115 */       } else if (i >= 255) {
-/* 116 */         i = 255;
-/*     */       
-/*     */       }
-/*     */       else {
-/*     */         
-/* 121 */         f1 = this.alphas[b] / 255.0F;
-/*     */       } 
-/* 123 */       int j = Math.round(this.reds[b] / f1);
-/* 124 */       int k = Math.round(this.greens[b] / f1);
-/* 125 */       int m = Math.round(this.blues[b] / f1);
-/* 126 */       if (j < 0) { j = 0; } else if (j > 255) { j = 255; }
-/* 127 */        if (k < 0) { k = 0; } else if (k > 255) { k = 255; }
-/* 128 */        if (m < 0) { m = 0; } else if (m > 255) { m = 255; }
-/* 129 */        arrayOfInt[b] = i << 24 | j << 16 | k << 8 | m;
-/*     */     } 
-/* 131 */     return arrayOfInt;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void accumPixels(int paramInt1, int paramInt2, int paramInt3, int paramInt4, ColorModel paramColorModel, Object paramObject, int paramInt5, int paramInt6) {
-/*     */     int k, m;
-/* 137 */     if (this.reds == null) {
-/* 138 */       makeAccumBuffers();
-/*     */     }
-/* 140 */     int i = paramInt2;
-/* 141 */     int j = this.destHeight;
-/*     */     
-/* 143 */     if (i == 0) {
-/* 144 */       k = 0;
-/* 145 */       m = 0;
-/*     */     } else {
-/* 147 */       k = this.savedy;
-/* 148 */       m = this.savedyrem;
-/*     */     } 
-/* 150 */     while (i < paramInt2 + paramInt4) {
-/*     */       int n;
-/* 152 */       if (m == 0) {
-/* 153 */         for (byte b = 0; b < this.destWidth; b++) {
-/* 154 */           this.blues[b] = 0.0F; this.greens[b] = 0.0F; this.reds[b] = 0.0F; this.alphas[b] = 0.0F;
-/*     */         } 
-/* 156 */         m = this.srcHeight;
-/*     */       } 
-/* 158 */       if (j < m) {
-/* 159 */         n = j;
-/*     */       } else {
-/* 161 */         n = m;
-/*     */       } 
-/* 163 */       byte b1 = 0;
-/* 164 */       byte b2 = 0;
-/* 165 */       int i1 = 0;
-/* 166 */       int i2 = this.srcWidth;
-/* 167 */       float f1 = 0.0F, f2 = 0.0F, f3 = 0.0F, f4 = 0.0F;
-/* 168 */       while (b1 < paramInt3) {
-/* 169 */         int i3; if (!i1) {
-/* 170 */           i1 = this.destWidth;
-/*     */           
-/* 172 */           if (paramObject instanceof byte[]) {
-/* 173 */             i3 = ((byte[])paramObject)[paramInt5 + b1] & 0xFF;
-/*     */           } else {
-/* 175 */             i3 = ((int[])paramObject)[paramInt5 + b1];
-/*     */           } 
-/*     */           
-/* 178 */           i3 = paramColorModel.getRGB(i3);
-/* 179 */           f1 = (i3 >>> 24);
-/* 180 */           f2 = (i3 >> 16 & 0xFF);
-/* 181 */           f3 = (i3 >> 8 & 0xFF);
-/* 182 */           f4 = (i3 & 0xFF);
-/*     */           
-/* 184 */           if (f1 != 255.0F) {
-/* 185 */             float f5 = f1 / 255.0F;
-/* 186 */             f2 *= f5;
-/* 187 */             f3 *= f5;
-/* 188 */             f4 *= f5;
-/*     */           } 
-/*     */         } 
-/*     */         
-/* 192 */         if (i1 < i2) {
-/* 193 */           i3 = i1;
-/*     */         } else {
-/* 195 */           i3 = i2;
-/*     */         } 
-/* 197 */         float f = i3 * n;
-/* 198 */         this.alphas[b2] = this.alphas[b2] + f * f1;
-/* 199 */         this.reds[b2] = this.reds[b2] + f * f2;
-/* 200 */         this.greens[b2] = this.greens[b2] + f * f3;
-/* 201 */         this.blues[b2] = this.blues[b2] + f * f4;
-/* 202 */         if ((i1 -= i3) == 0) {
-/* 203 */           b1++;
-/*     */         }
-/* 205 */         if ((i2 -= i3) == 0) {
-/* 206 */           b2++;
-/* 207 */           i2 = this.srcWidth;
-/*     */         } 
-/*     */       } 
-/* 210 */       if ((m -= n) == 0) {
-/* 211 */         int[] arrayOfInt = calcRow();
-/*     */         do {
-/* 213 */           this.consumer.setPixels(0, k, this.destWidth, 1, rgbmodel, arrayOfInt, 0, this.destWidth);
-/*     */           
-/* 215 */           k++;
-/* 216 */         } while ((j -= n) >= n && n == this.srcHeight);
-/*     */       } else {
-/* 218 */         j -= n;
-/*     */       } 
-/* 220 */       if (j == 0) {
-/* 221 */         j = this.destHeight;
-/* 222 */         i++;
-/* 223 */         paramInt5 += paramInt6;
-/*     */       } 
-/*     */     } 
-/* 226 */     this.savedyrem = m;
-/* 227 */     this.savedy = k;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setPixels(int paramInt1, int paramInt2, int paramInt3, int paramInt4, ColorModel paramColorModel, byte[] paramArrayOfbyte, int paramInt5, int paramInt6) {
-/* 249 */     if (this.passthrough) {
-/* 250 */       super.setPixels(paramInt1, paramInt2, paramInt3, paramInt4, paramColorModel, paramArrayOfbyte, paramInt5, paramInt6);
-/*     */     } else {
-/* 252 */       accumPixels(paramInt1, paramInt2, paramInt3, paramInt4, paramColorModel, paramArrayOfbyte, paramInt5, paramInt6);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setPixels(int paramInt1, int paramInt2, int paramInt3, int paramInt4, ColorModel paramColorModel, int[] paramArrayOfint, int paramInt5, int paramInt6) {
-/* 275 */     if (this.passthrough) {
-/* 276 */       super.setPixels(paramInt1, paramInt2, paramInt3, paramInt4, paramColorModel, paramArrayOfint, paramInt5, paramInt6);
-/*     */     } else {
-/* 278 */       accumPixels(paramInt1, paramInt2, paramInt3, paramInt4, paramColorModel, paramArrayOfint, paramInt5, paramInt6);
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\awt\image\AreaAveragingScaleFilter.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1996, 2002, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.awt.image;
+
+import java.awt.image.ImageConsumer;
+import java.awt.image.ColorModel;
+import java.util.Hashtable;
+import java.awt.Rectangle;
+
+/**
+ * An ImageFilter class for scaling images using a simple area averaging
+ * algorithm that produces smoother results than the nearest neighbor
+ * algorithm.
+ * <p>This class extends the basic ImageFilter Class to scale an existing
+ * image and provide a source for a new image containing the resampled
+ * image.  The pixels in the source image are blended to produce pixels
+ * for an image of the specified size.  The blending process is analogous
+ * to scaling up the source image to a multiple of the destination size
+ * using pixel replication and then scaling it back down to the destination
+ * size by simply averaging all the pixels in the supersized image that
+ * fall within a given pixel of the destination image.  If the data from
+ * the source is not delivered in TopDownLeftRight order then the filter
+ * will back off to a simple pixel replication behavior and utilize the
+ * requestTopDownLeftRightResend() method to refilter the pixels in a
+ * better way at the end.
+ * <p>It is meant to be used in conjunction with a FilteredImageSource
+ * object to produce scaled versions of existing images.  Due to
+ * implementation dependencies, there may be differences in pixel values
+ * of an image filtered on different platforms.
+ *
+ * @see FilteredImageSource
+ * @see ReplicateScaleFilter
+ * @see ImageFilter
+ *
+ * @author      Jim Graham
+ */
+public class AreaAveragingScaleFilter extends ReplicateScaleFilter {
+    private static final ColorModel rgbmodel = ColorModel.getRGBdefault();
+    private static final int neededHints = (TOPDOWNLEFTRIGHT
+                                            | COMPLETESCANLINES);
+
+    private boolean passthrough;
+    private float reds[], greens[], blues[], alphas[];
+    private int savedy;
+    private int savedyrem;
+
+    /**
+     * Constructs an AreaAveragingScaleFilter that scales the pixels from
+     * its source Image as specified by the width and height parameters.
+     * @param width the target width to scale the image
+     * @param height the target height to scale the image
+     */
+    public AreaAveragingScaleFilter(int width, int height) {
+        super(width, height);
+    }
+
+    /**
+     * Detect if the data is being delivered with the necessary hints
+     * to allow the averaging algorithm to do its work.
+     * <p>
+     * Note: This method is intended to be called by the
+     * <code>ImageProducer</code> of the <code>Image</code> whose
+     * pixels are being filtered.  Developers using
+     * this class to filter pixels from an image should avoid calling
+     * this method directly since that operation could interfere
+     * with the filtering operation.
+     * @see ImageConsumer#setHints
+     */
+    public void setHints(int hints) {
+        passthrough = ((hints & neededHints) != neededHints);
+        super.setHints(hints);
+    }
+
+    private void makeAccumBuffers() {
+        reds = new float[destWidth];
+        greens = new float[destWidth];
+        blues = new float[destWidth];
+        alphas = new float[destWidth];
+    }
+
+    private int[] calcRow() {
+        float origmult = ((float) srcWidth) * srcHeight;
+        if (outpixbuf == null || !(outpixbuf instanceof int[])) {
+            outpixbuf = new int[destWidth];
+        }
+        int[] outpix = (int[]) outpixbuf;
+        for (int x = 0; x < destWidth; x++) {
+            float mult = origmult;
+            int a = Math.round(alphas[x] / mult);
+            if (a <= 0) {
+                a = 0;
+            } else if (a >= 255) {
+                a = 255;
+            } else {
+                // un-premultiply the components (by modifying mult here, we
+                // are effectively doing the divide by mult and divide by
+                // alpha in the same step)
+                mult = alphas[x] / 255;
+            }
+            int r = Math.round(reds[x] / mult);
+            int g = Math.round(greens[x] / mult);
+            int b = Math.round(blues[x] / mult);
+            if (r < 0) {r = 0;} else if (r > 255) {r = 255;}
+            if (g < 0) {g = 0;} else if (g > 255) {g = 255;}
+            if (b < 0) {b = 0;} else if (b > 255) {b = 255;}
+            outpix[x] = (a << 24 | r << 16 | g << 8 | b);
+        }
+        return outpix;
+    }
+
+    private void accumPixels(int x, int y, int w, int h,
+                             ColorModel model, Object pixels, int off,
+                             int scansize) {
+        if (reds == null) {
+            makeAccumBuffers();
+        }
+        int sy = y;
+        int syrem = destHeight;
+        int dy, dyrem;
+        if (sy == 0) {
+            dy = 0;
+            dyrem = 0;
+        } else {
+            dy = savedy;
+            dyrem = savedyrem;
+        }
+        while (sy < y + h) {
+            int amty;
+            if (dyrem == 0) {
+                for (int i = 0; i < destWidth; i++) {
+                    alphas[i] = reds[i] = greens[i] = blues[i] = 0f;
+                }
+                dyrem = srcHeight;
+            }
+            if (syrem < dyrem) {
+                amty = syrem;
+            } else {
+                amty = dyrem;
+            }
+            int sx = 0;
+            int dx = 0;
+            int sxrem = 0;
+            int dxrem = srcWidth;
+            float a = 0f, r = 0f, g = 0f, b = 0f;
+            while (sx < w) {
+                if (sxrem == 0) {
+                    sxrem = destWidth;
+                    int rgb;
+                    if (pixels instanceof byte[]) {
+                        rgb = ((byte[]) pixels)[off + sx] & 0xff;
+                    } else {
+                        rgb = ((int[]) pixels)[off + sx];
+                    }
+                    // getRGB() always returns non-premultiplied components
+                    rgb = model.getRGB(rgb);
+                    a = rgb >>> 24;
+                    r = (rgb >> 16) & 0xff;
+                    g = (rgb >>  8) & 0xff;
+                    b = rgb & 0xff;
+                    // premultiply the components if necessary
+                    if (a != 255.0f) {
+                        float ascale = a / 255.0f;
+                        r *= ascale;
+                        g *= ascale;
+                        b *= ascale;
+                    }
+                }
+                int amtx;
+                if (sxrem < dxrem) {
+                    amtx = sxrem;
+                } else {
+                    amtx = dxrem;
+                }
+                float mult = ((float) amtx) * amty;
+                alphas[dx] += mult * a;
+                reds[dx] += mult * r;
+                greens[dx] += mult * g;
+                blues[dx] += mult * b;
+                if ((sxrem -= amtx) == 0) {
+                    sx++;
+                }
+                if ((dxrem -= amtx) == 0) {
+                    dx++;
+                    dxrem = srcWidth;
+                }
+            }
+            if ((dyrem -= amty) == 0) {
+                int outpix[] = calcRow();
+                do {
+                    consumer.setPixels(0, dy, destWidth, 1,
+                                       rgbmodel, outpix, 0, destWidth);
+                    dy++;
+                } while ((syrem -= amty) >= amty && amty == srcHeight);
+            } else {
+                syrem -= amty;
+            }
+            if (syrem == 0) {
+                syrem = destHeight;
+                sy++;
+                off += scansize;
+            }
+        }
+        savedyrem = dyrem;
+        savedy = dy;
+    }
+
+    /**
+     * Combine the components for the delivered byte pixels into the
+     * accumulation arrays and send on any averaged data for rows of
+     * pixels that are complete.  If the correct hints were not
+     * specified in the setHints call then relay the work to our
+     * superclass which is capable of scaling pixels regardless of
+     * the delivery hints.
+     * <p>
+     * Note: This method is intended to be called by the
+     * <code>ImageProducer</code> of the <code>Image</code>
+     * whose pixels are being filtered.  Developers using
+     * this class to filter pixels from an image should avoid calling
+     * this method directly since that operation could interfere
+     * with the filtering operation.
+     * @see ReplicateScaleFilter
+     */
+    public void setPixels(int x, int y, int w, int h,
+                          ColorModel model, byte pixels[], int off,
+                          int scansize) {
+        if (passthrough) {
+            super.setPixels(x, y, w, h, model, pixels, off, scansize);
+        } else {
+            accumPixels(x, y, w, h, model, pixels, off, scansize);
+        }
+    }
+
+    /**
+     * Combine the components for the delivered int pixels into the
+     * accumulation arrays and send on any averaged data for rows of
+     * pixels that are complete.  If the correct hints were not
+     * specified in the setHints call then relay the work to our
+     * superclass which is capable of scaling pixels regardless of
+     * the delivery hints.
+     * <p>
+     * Note: This method is intended to be called by the
+     * <code>ImageProducer</code> of the <code>Image</code>
+     * whose pixels are being filtered.  Developers using
+     * this class to filter pixels from an image should avoid calling
+     * this method directly since that operation could interfere
+     * with the filtering operation.
+     * @see ReplicateScaleFilter
+     */
+    public void setPixels(int x, int y, int w, int h,
+                          ColorModel model, int pixels[], int off,
+                          int scansize) {
+        if (passthrough) {
+            super.setPixels(x, y, w, h, model, pixels, off, scansize);
+        } else {
+            accumPixels(x, y, w, h, model, pixels, off, scansize);
+        }
+    }
+}

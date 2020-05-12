@@ -1,454 +1,448 @@
-/*     */ package java.net;
-/*     */ 
-/*     */ import java.io.IOException;
-/*     */ import java.util.ArrayList;
-/*     */ import java.util.Collections;
-/*     */ import java.util.Comparator;
-/*     */ import java.util.HashMap;
-/*     */ import java.util.List;
-/*     */ import java.util.Map;
-/*     */ import sun.util.logging.PlatformLogger;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class CookieManager
-/*     */   extends CookieHandler
-/*     */ {
-/*     */   private CookiePolicy policyCallback;
-/* 124 */   private CookieStore cookieJar = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public CookieManager() {
-/* 137 */     this(null, null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public CookieManager(CookieStore paramCookieStore, CookiePolicy paramCookiePolicy) {
-/* 156 */     this.policyCallback = (paramCookiePolicy == null) ? CookiePolicy.ACCEPT_ORIGINAL_SERVER : paramCookiePolicy;
-/*     */ 
-/*     */ 
-/*     */     
-/* 160 */     if (paramCookieStore == null) {
-/* 161 */       this.cookieJar = new InMemoryCookieStore();
-/*     */     } else {
-/* 163 */       this.cookieJar = paramCookieStore;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setCookiePolicy(CookiePolicy paramCookiePolicy) {
-/* 181 */     if (paramCookiePolicy != null) this.policyCallback = paramCookiePolicy;
-/*     */   
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public CookieStore getCookieStore() {
-/* 191 */     return this.cookieJar;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Map<String, List<String>> get(URI paramURI, Map<String, List<String>> paramMap) throws IOException {
-/* 200 */     if (paramURI == null || paramMap == null) {
-/* 201 */       throw new IllegalArgumentException("Argument is null");
-/*     */     }
-/*     */     
-/* 204 */     HashMap<Object, Object> hashMap = new HashMap<>();
-/*     */ 
-/*     */     
-/* 207 */     if (this.cookieJar == null) {
-/* 208 */       return (Map)Collections.unmodifiableMap(hashMap);
-/*     */     }
-/* 210 */     boolean bool = "https".equalsIgnoreCase(paramURI.getScheme());
-/* 211 */     ArrayList<HttpCookie> arrayList = new ArrayList();
-/* 212 */     String str = paramURI.getPath();
-/* 213 */     if (str == null || str.isEmpty()) {
-/* 214 */       str = "/";
-/*     */     }
-/* 216 */     for (HttpCookie httpCookie : this.cookieJar.get(paramURI)) {
-/*     */ 
-/*     */ 
-/*     */       
-/* 220 */       if (pathMatches(str, httpCookie.getPath()) && (bool || 
-/* 221 */         !httpCookie.getSecure())) {
-/*     */         
-/* 223 */         if (httpCookie.isHttpOnly()) {
-/* 224 */           String str2 = paramURI.getScheme();
-/* 225 */           if (!"http".equalsIgnoreCase(str2) && !"https".equalsIgnoreCase(str2)) {
-/*     */             continue;
-/*     */           }
-/*     */         } 
-/*     */         
-/* 230 */         String str1 = httpCookie.getPortlist();
-/* 231 */         if (str1 != null && !str1.isEmpty()) {
-/* 232 */           int i = paramURI.getPort();
-/* 233 */           if (i == -1) {
-/* 234 */             i = "https".equals(paramURI.getScheme()) ? 443 : 80;
-/*     */           }
-/* 236 */           if (isInPortList(str1, i))
-/* 237 */             arrayList.add(httpCookie); 
-/*     */           continue;
-/*     */         } 
-/* 240 */         arrayList.add(httpCookie);
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 246 */     List<String> list = sortByPath(arrayList);
-/*     */     
-/* 248 */     hashMap.put("Cookie", list);
-/* 249 */     return (Map)Collections.unmodifiableMap(hashMap);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void put(URI paramURI, Map<String, List<String>> paramMap) throws IOException {
-/* 257 */     if (paramURI == null || paramMap == null) {
-/* 258 */       throw new IllegalArgumentException("Argument is null");
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 263 */     if (this.cookieJar == null) {
-/*     */       return;
-/*     */     }
-/* 266 */     PlatformLogger platformLogger = PlatformLogger.getLogger("java.net.CookieManager");
-/* 267 */     for (String str : paramMap.keySet()) {
-/*     */ 
-/*     */       
-/* 270 */       if (str == null || (
-/* 271 */         !str.equalsIgnoreCase("Set-Cookie2") && 
-/* 272 */         !str.equalsIgnoreCase("Set-Cookie"))) {
-/*     */         continue;
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 279 */       for (String str1 : paramMap.get(str)) {
-/*     */         try {
-/*     */           List<?> list;
-/*     */           try {
-/* 283 */             list = HttpCookie.parse(str1);
-/* 284 */           } catch (IllegalArgumentException illegalArgumentException) {
-/*     */             
-/* 286 */             list = Collections.emptyList();
-/* 287 */             if (platformLogger.isLoggable(PlatformLogger.Level.SEVERE)) {
-/* 288 */               platformLogger.severe("Invalid cookie for " + paramURI + ": " + str1);
-/*     */             }
-/*     */           } 
-/* 291 */           for (HttpCookie httpCookie : list) {
-/* 292 */             if (httpCookie.getPath() == null) {
-/*     */ 
-/*     */               
-/* 295 */               String str3 = paramURI.getPath();
-/* 296 */               if (!str3.endsWith("/")) {
-/* 297 */                 int i = str3.lastIndexOf("/");
-/* 298 */                 if (i > 0) {
-/* 299 */                   str3 = str3.substring(0, i + 1);
-/*     */                 } else {
-/* 301 */                   str3 = "/";
-/*     */                 } 
-/*     */               } 
-/* 304 */               httpCookie.setPath(str3);
-/*     */             } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */             
-/* 311 */             if (httpCookie.getDomain() == null) {
-/* 312 */               String str3 = paramURI.getHost();
-/* 313 */               if (str3 != null && !str3.contains("."))
-/* 314 */                 str3 = str3 + ".local"; 
-/* 315 */               httpCookie.setDomain(str3);
-/*     */             } 
-/* 317 */             String str2 = httpCookie.getPortlist();
-/* 318 */             if (str2 != null) {
-/* 319 */               int i = paramURI.getPort();
-/* 320 */               if (i == -1) {
-/* 321 */                 i = "https".equals(paramURI.getScheme()) ? 443 : 80;
-/*     */               }
-/* 323 */               if (str2.isEmpty()) {
-/*     */ 
-/*     */                 
-/* 326 */                 httpCookie.setPortlist("" + i);
-/* 327 */                 if (shouldAcceptInternal(paramURI, httpCookie)) {
-/* 328 */                   this.cookieJar.add(paramURI, httpCookie);
-/*     */                 }
-/*     */                 
-/*     */                 continue;
-/*     */               } 
-/*     */               
-/* 334 */               if (isInPortList(str2, i) && 
-/* 335 */                 shouldAcceptInternal(paramURI, httpCookie)) {
-/* 336 */                 this.cookieJar.add(paramURI, httpCookie);
-/*     */               }
-/*     */               continue;
-/*     */             } 
-/* 340 */             if (shouldAcceptInternal(paramURI, httpCookie)) {
-/* 341 */               this.cookieJar.add(paramURI, httpCookie);
-/*     */             }
-/*     */           }
-/*     */         
-/* 345 */         } catch (IllegalArgumentException illegalArgumentException) {}
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean shouldAcceptInternal(URI paramURI, HttpCookie paramHttpCookie) {
-/*     */     try {
-/* 359 */       return this.policyCallback.shouldAccept(paramURI, paramHttpCookie);
-/* 360 */     } catch (Exception exception) {
-/* 361 */       return false;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private static boolean isInPortList(String paramString, int paramInt) {
-/* 367 */     int i = paramString.indexOf(",");
-/* 368 */     int j = -1;
-/* 369 */     while (i > 0) {
-/*     */       try {
-/* 371 */         j = Integer.parseInt(paramString.substring(0, i));
-/* 372 */         if (j == paramInt) {
-/* 373 */           return true;
-/*     */         }
-/* 375 */       } catch (NumberFormatException numberFormatException) {}
-/*     */       
-/* 377 */       paramString = paramString.substring(i + 1);
-/* 378 */       i = paramString.indexOf(",");
-/*     */     } 
-/* 380 */     if (!paramString.isEmpty()) {
-/*     */       try {
-/* 382 */         j = Integer.parseInt(paramString);
-/* 383 */         if (j == paramInt) {
-/* 384 */           return true;
-/*     */         }
-/* 386 */       } catch (NumberFormatException numberFormatException) {}
-/*     */     }
-/*     */     
-/* 389 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean pathMatches(String paramString1, String paramString2) {
-/* 396 */     if (paramString1 == paramString2)
-/* 397 */       return true; 
-/* 398 */     if (paramString1 == null || paramString2 == null)
-/* 399 */       return false; 
-/* 400 */     if (paramString1.startsWith(paramString2)) {
-/* 401 */       return true;
-/*     */     }
-/* 403 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private List<String> sortByPath(List<HttpCookie> paramList) {
-/* 412 */     Collections.sort(paramList, new CookiePathComparator());
-/*     */     
-/* 414 */     ArrayList<String> arrayList = new ArrayList();
-/* 415 */     for (HttpCookie httpCookie : paramList) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 420 */       if (paramList.indexOf(httpCookie) == 0 && httpCookie.getVersion() > 0) {
-/* 421 */         arrayList.add("$Version=\"1\"");
-/*     */       }
-/*     */       
-/* 424 */       arrayList.add(httpCookie.toString());
-/*     */     } 
-/* 426 */     return arrayList;
-/*     */   }
-/*     */   
-/*     */   static class CookiePathComparator
-/*     */     implements Comparator<HttpCookie> {
-/*     */     public int compare(HttpCookie param1HttpCookie1, HttpCookie param1HttpCookie2) {
-/* 432 */       if (param1HttpCookie1 == param1HttpCookie2) return 0; 
-/* 433 */       if (param1HttpCookie1 == null) return -1; 
-/* 434 */       if (param1HttpCookie2 == null) return 1;
-/*     */ 
-/*     */       
-/* 437 */       if (!param1HttpCookie1.getName().equals(param1HttpCookie2.getName())) return 0;
-/*     */ 
-/*     */       
-/* 440 */       if (param1HttpCookie1.getPath().startsWith(param1HttpCookie2.getPath()))
-/* 441 */         return -1; 
-/* 442 */       if (param1HttpCookie2.getPath().startsWith(param1HttpCookie1.getPath())) {
-/* 443 */         return 1;
-/*     */       }
-/* 445 */       return 0;
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\net\CookieManager.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2005, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.net;
+
+import java.util.Map;
+import java.util.List;
+import java.util.Collections;
+import java.util.Comparator;
+import java.io.IOException;
+import sun.util.logging.PlatformLogger;
+
+/**
+ * CookieManager provides a concrete implementation of {@link CookieHandler},
+ * which separates the storage of cookies from the policy surrounding accepting
+ * and rejecting cookies. A CookieManager is initialized with a {@link CookieStore}
+ * which manages storage, and a {@link CookiePolicy} object, which makes
+ * policy decisions on cookie acceptance/rejection.
+ *
+ * <p> The HTTP cookie management in java.net package looks like:
+ * <blockquote>
+ * <pre>{@code
+ *                  use
+ * CookieHandler <------- HttpURLConnection
+ *       ^
+ *       | impl
+ *       |         use
+ * CookieManager -------> CookiePolicy
+ *             |   use
+ *             |--------> HttpCookie
+ *             |              ^
+ *             |              | use
+ *             |   use        |
+ *             |--------> CookieStore
+ *                            ^
+ *                            | impl
+ *                            |
+ *                  Internal in-memory implementation
+ * }</pre>
+ * <ul>
+ *   <li>
+ *     CookieHandler is at the core of cookie management. User can call
+ *     CookieHandler.setDefault to set a concrete CookieHanlder implementation
+ *     to be used.
+ *   </li>
+ *   <li>
+ *     CookiePolicy.shouldAccept will be called by CookieManager.put to see whether
+ *     or not one cookie should be accepted and put into cookie store. User can use
+ *     any of three pre-defined CookiePolicy, namely ACCEPT_ALL, ACCEPT_NONE and
+ *     ACCEPT_ORIGINAL_SERVER, or user can define his own CookiePolicy implementation
+ *     and tell CookieManager to use it.
+ *   </li>
+ *   <li>
+ *     CookieStore is the place where any accepted HTTP cookie is stored in.
+ *     If not specified when created, a CookieManager instance will use an internal
+ *     in-memory implementation. Or user can implements one and tell CookieManager
+ *     to use it.
+ *   </li>
+ *   <li>
+ *     Currently, only CookieStore.add(URI, HttpCookie) and CookieStore.get(URI)
+ *     are used by CookieManager. Others are for completeness and might be needed
+ *     by a more sophisticated CookieStore implementation, e.g. a NetscapeCookieSotre.
+ *   </li>
+ * </ul>
+ * </blockquote>
+ *
+ * <p>There're various ways user can hook up his own HTTP cookie management behavior, e.g.
+ * <blockquote>
+ * <ul>
+ *   <li>Use CookieHandler.setDefault to set a brand new {@link CookieHandler} implementation
+ *   <li>Let CookieManager be the default {@link CookieHandler} implementation,
+ *       but implement user's own {@link CookieStore} and {@link CookiePolicy}
+ *       and tell default CookieManager to use them:
+ *     <blockquote><pre>
+ *       // this should be done at the beginning of an HTTP session
+ *       CookieHandler.setDefault(new CookieManager(new MyCookieStore(), new MyCookiePolicy()));
+ *     </pre></blockquote>
+ *   <li>Let CookieManager be the default {@link CookieHandler} implementation, but
+ *       use customized {@link CookiePolicy}:
+ *     <blockquote><pre>
+ *       // this should be done at the beginning of an HTTP session
+ *       CookieHandler.setDefault(new CookieManager());
+ *       // this can be done at any point of an HTTP session
+ *       ((CookieManager)CookieHandler.getDefault()).setCookiePolicy(new MyCookiePolicy());
+ *     </pre></blockquote>
+ * </ul>
+ * </blockquote>
+ *
+ * <p>The implementation conforms to <a href="http://www.ietf.org/rfc/rfc2965.txt">RFC 2965</a>, section 3.3.
+ *
+ * @see CookiePolicy
+ * @author Edward Wang
+ * @since 1.6
+ */
+public class CookieManager extends CookieHandler
+{
+    /* ---------------- Fields -------------- */
+
+    private CookiePolicy policyCallback;
+
+
+    private CookieStore cookieJar = null;
+
+
+    /* ---------------- Ctors -------------- */
+
+    /**
+     * Create a new cookie manager.
+     *
+     * <p>This constructor will create new cookie manager with default
+     * cookie store and accept policy. The effect is same as
+     * {@code CookieManager(null, null)}.
+     */
+    public CookieManager() {
+        this(null, null);
+    }
+
+
+    /**
+     * Create a new cookie manager with specified cookie store and cookie policy.
+     *
+     * @param store     a {@code CookieStore} to be used by cookie manager.
+     *                  if {@code null}, cookie manager will use a default one,
+     *                  which is an in-memory CookieStore implementation.
+     * @param cookiePolicy      a {@code CookiePolicy} instance
+     *                          to be used by cookie manager as policy callback.
+     *                          if {@code null}, ACCEPT_ORIGINAL_SERVER will
+     *                          be used.
+     */
+    public CookieManager(CookieStore store,
+                         CookiePolicy cookiePolicy)
+    {
+        // use default cookie policy if not specify one
+        policyCallback = (cookiePolicy == null) ? CookiePolicy.ACCEPT_ORIGINAL_SERVER
+                                                : cookiePolicy;
+
+        // if not specify CookieStore to use, use default one
+        if (store == null) {
+            cookieJar = new InMemoryCookieStore();
+        } else {
+            cookieJar = store;
+        }
+    }
+
+
+    /* ---------------- Public operations -------------- */
+
+    /**
+     * To set the cookie policy of this cookie manager.
+     *
+     * <p> A instance of {@code CookieManager} will have
+     * cookie policy ACCEPT_ORIGINAL_SERVER by default. Users always
+     * can call this method to set another cookie policy.
+     *
+     * @param cookiePolicy      the cookie policy. Can be {@code null}, which
+     *                          has no effects on current cookie policy.
+     */
+    public void setCookiePolicy(CookiePolicy cookiePolicy) {
+        if (cookiePolicy != null) policyCallback = cookiePolicy;
+    }
+
+
+    /**
+     * To retrieve current cookie store.
+     *
+     * @return  the cookie store currently used by cookie manager.
+     */
+    public CookieStore getCookieStore() {
+        return cookieJar;
+    }
+
+
+    public Map<String, List<String>>
+        get(URI uri, Map<String, List<String>> requestHeaders)
+        throws IOException
+    {
+        // pre-condition check
+        if (uri == null || requestHeaders == null) {
+            throw new IllegalArgumentException("Argument is null");
+        }
+
+        Map<String, List<String>> cookieMap =
+                        new java.util.HashMap<String, List<String>>();
+        // if there's no default CookieStore, no way for us to get any cookie
+        if (cookieJar == null)
+            return Collections.unmodifiableMap(cookieMap);
+
+        boolean secureLink = "https".equalsIgnoreCase(uri.getScheme());
+        List<HttpCookie> cookies = new java.util.ArrayList<HttpCookie>();
+        String path = uri.getPath();
+        if (path == null || path.isEmpty()) {
+            path = "/";
+        }
+        for (HttpCookie cookie : cookieJar.get(uri)) {
+            // apply path-matches rule (RFC 2965 sec. 3.3.4)
+            // and check for the possible "secure" tag (i.e. don't send
+            // 'secure' cookies over unsecure links)
+            if (pathMatches(path, cookie.getPath()) &&
+                    (secureLink || !cookie.getSecure())) {
+                // Enforce httponly attribute
+                if (cookie.isHttpOnly()) {
+                    String s = uri.getScheme();
+                    if (!"http".equalsIgnoreCase(s) && !"https".equalsIgnoreCase(s)) {
+                        continue;
+                    }
+                }
+                // Let's check the authorize port list if it exists
+                String ports = cookie.getPortlist();
+                if (ports != null && !ports.isEmpty()) {
+                    int port = uri.getPort();
+                    if (port == -1) {
+                        port = "https".equals(uri.getScheme()) ? 443 : 80;
+                    }
+                    if (isInPortList(ports, port)) {
+                        cookies.add(cookie);
+                    }
+                } else {
+                    cookies.add(cookie);
+                }
+            }
+        }
+
+        // apply sort rule (RFC 2965 sec. 3.3.4)
+        List<String> cookieHeader = sortByPath(cookies);
+
+        cookieMap.put("Cookie", cookieHeader);
+        return Collections.unmodifiableMap(cookieMap);
+    }
+
+    public void
+        put(URI uri, Map<String, List<String>> responseHeaders)
+        throws IOException
+    {
+        // pre-condition check
+        if (uri == null || responseHeaders == null) {
+            throw new IllegalArgumentException("Argument is null");
+        }
+
+
+        // if there's no default CookieStore, no need to remember any cookie
+        if (cookieJar == null)
+            return;
+
+    PlatformLogger logger = PlatformLogger.getLogger("java.net.CookieManager");
+        for (String headerKey : responseHeaders.keySet()) {
+            // RFC 2965 3.2.2, key must be 'Set-Cookie2'
+            // we also accept 'Set-Cookie' here for backward compatibility
+            if (headerKey == null
+                || !(headerKey.equalsIgnoreCase("Set-Cookie2")
+                     || headerKey.equalsIgnoreCase("Set-Cookie")
+                    )
+                )
+            {
+                continue;
+            }
+
+            for (String headerValue : responseHeaders.get(headerKey)) {
+                try {
+                    List<HttpCookie> cookies;
+                    try {
+                        cookies = HttpCookie.parse(headerValue);
+                    } catch (IllegalArgumentException e) {
+                        // Bogus header, make an empty list and log the error
+                        cookies = java.util.Collections.emptyList();
+                        if (logger.isLoggable(PlatformLogger.Level.SEVERE)) {
+                            logger.severe("Invalid cookie for " + uri + ": " + headerValue);
+                        }
+                    }
+                    for (HttpCookie cookie : cookies) {
+                        if (cookie.getPath() == null) {
+                            // If no path is specified, then by default
+                            // the path is the directory of the page/doc
+                            String path = uri.getPath();
+                            if (!path.endsWith("/")) {
+                                int i = path.lastIndexOf("/");
+                                if (i > 0) {
+                                    path = path.substring(0, i + 1);
+                                } else {
+                                    path = "/";
+                                }
+                            }
+                            cookie.setPath(path);
+                        }
+
+                        // As per RFC 2965, section 3.3.1:
+                        // Domain  Defaults to the effective request-host.  (Note that because
+                        // there is no dot at the beginning of effective request-host,
+                        // the default Domain can only domain-match itself.)
+                        if (cookie.getDomain() == null) {
+                            String host = uri.getHost();
+                            if (host != null && !host.contains("."))
+                                host += ".local";
+                            cookie.setDomain(host);
+                        }
+                        String ports = cookie.getPortlist();
+                        if (ports != null) {
+                            int port = uri.getPort();
+                            if (port == -1) {
+                                port = "https".equals(uri.getScheme()) ? 443 : 80;
+                            }
+                            if (ports.isEmpty()) {
+                                // Empty port list means this should be restricted
+                                // to the incoming URI port
+                                cookie.setPortlist("" + port );
+                                if (shouldAcceptInternal(uri, cookie)) {
+                                    cookieJar.add(uri, cookie);
+                                }
+                            } else {
+                                // Only store cookies with a port list
+                                // IF the URI port is in that list, as per
+                                // RFC 2965 section 3.3.2
+                                if (isInPortList(ports, port) &&
+                                        shouldAcceptInternal(uri, cookie)) {
+                                    cookieJar.add(uri, cookie);
+                                }
+                            }
+                        } else {
+                            if (shouldAcceptInternal(uri, cookie)) {
+                                cookieJar.add(uri, cookie);
+                            }
+                        }
+                    }
+                } catch (IllegalArgumentException e) {
+                    // invalid set-cookie header string
+                    // no-op
+                }
+            }
+        }
+    }
+
+
+    /* ---------------- Private operations -------------- */
+
+    // to determine whether or not accept this cookie
+    private boolean shouldAcceptInternal(URI uri, HttpCookie cookie) {
+        try {
+            return policyCallback.shouldAccept(uri, cookie);
+        } catch (Exception ignored) { // pretect against malicious callback
+            return false;
+        }
+    }
+
+
+    static private boolean isInPortList(String lst, int port) {
+        int i = lst.indexOf(",");
+        int val = -1;
+        while (i > 0) {
+            try {
+                val = Integer.parseInt(lst.substring(0, i));
+                if (val == port) {
+                    return true;
+                }
+            } catch (NumberFormatException numberFormatException) {
+            }
+            lst = lst.substring(i+1);
+            i = lst.indexOf(",");
+        }
+        if (!lst.isEmpty()) {
+            try {
+                val = Integer.parseInt(lst);
+                if (val == port) {
+                    return true;
+                }
+            } catch (NumberFormatException numberFormatException) {
+            }
+        }
+        return false;
+    }
+
+    /*
+     * path-matches algorithm, as defined by RFC 2965
+     */
+    private boolean pathMatches(String path, String pathToMatchWith) {
+        if (path == pathToMatchWith)
+            return true;
+        if (path == null || pathToMatchWith == null)
+            return false;
+        if (path.startsWith(pathToMatchWith))
+            return true;
+
+        return false;
+    }
+
+
+    /*
+     * sort cookies with respect to their path: those with more specific Path attributes
+     * precede those with less specific, as defined in RFC 2965 sec. 3.3.4
+     */
+    private List<String> sortByPath(List<HttpCookie> cookies) {
+        Collections.sort(cookies, new CookiePathComparator());
+
+        List<String> cookieHeader = new java.util.ArrayList<String>();
+        for (HttpCookie cookie : cookies) {
+            // Netscape cookie spec and RFC 2965 have different format of Cookie
+            // header; RFC 2965 requires a leading $Version="1" string while Netscape
+            // does not.
+            // The workaround here is to add a $Version="1" string in advance
+            if (cookies.indexOf(cookie) == 0 && cookie.getVersion() > 0) {
+                cookieHeader.add("$Version=\"1\"");
+            }
+
+            cookieHeader.add(cookie.toString());
+        }
+        return cookieHeader;
+    }
+
+
+    static class CookiePathComparator implements Comparator<HttpCookie> {
+        public int compare(HttpCookie c1, HttpCookie c2) {
+            if (c1 == c2) return 0;
+            if (c1 == null) return -1;
+            if (c2 == null) return 1;
+
+            // path rule only applies to the cookies with same name
+            if (!c1.getName().equals(c2.getName())) return 0;
+
+            // those with more specific Path attributes precede those with less specific
+            if (c1.getPath().startsWith(c2.getPath()))
+                return -1;
+            else if (c2.getPath().startsWith(c1.getPath()))
+                return 1;
+            else
+                return 0;
+        }
+    }
+}

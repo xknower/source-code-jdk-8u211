@@ -1,392 +1,415 @@
-/*     */ package com.sun.corba.se.spi.servicecontext;
-/*     */ 
-/*     */ import com.sun.corba.se.impl.encoding.CDRInputStream;
-/*     */ import com.sun.corba.se.impl.encoding.EncapsInputStream;
-/*     */ import com.sun.corba.se.impl.logging.ORBUtilSystemException;
-/*     */ import com.sun.corba.se.impl.orbutil.ORBUtility;
-/*     */ import com.sun.corba.se.impl.util.Utility;
-/*     */ import com.sun.corba.se.spi.ior.iiop.GIOPVersion;
-/*     */ import com.sun.corba.se.spi.orb.ORB;
-/*     */ import com.sun.org.omg.SendingContext.CodeBase;
-/*     */ import java.util.HashMap;
-/*     */ import java.util.Iterator;
-/*     */ import java.util.Map;
-/*     */ import org.omg.CORBA.CompletionStatus;
-/*     */ import org.omg.CORBA.OctetSeqHelper;
-/*     */ import org.omg.CORBA_2_3.portable.InputStream;
-/*     */ import org.omg.CORBA_2_3.portable.OutputStream;
-/*     */ import sun.corba.EncapsInputStreamFactory;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class ServiceContexts
-/*     */ {
-/*     */   private static final int JAVAIDL_ALIGN_SERVICE_ID = -1106033203;
-/*     */   private ORB orb;
-/*     */   private Map scMap;
-/*     */   private boolean addAlignmentOnWrite;
-/*     */   private CodeBase codeBase;
-/*     */   private GIOPVersion giopVersion;
-/*     */   private ORBUtilSystemException wrapper;
-/*     */   
-/*     */   private static boolean isDebugging(OutputStream paramOutputStream) {
-/*  67 */     ORB oRB = (ORB)paramOutputStream.orb();
-/*  68 */     if (oRB == null)
-/*  69 */       return false; 
-/*  70 */     return oRB.serviceContextDebugFlag;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private static boolean isDebugging(InputStream paramInputStream) {
-/*  75 */     ORB oRB = (ORB)paramInputStream.orb();
-/*  76 */     if (oRB == null)
-/*  77 */       return false; 
-/*  78 */     return oRB.serviceContextDebugFlag;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void dprint(String paramString) {
-/*  83 */     ORBUtility.dprint(this, paramString);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public static void writeNullServiceContext(OutputStream paramOutputStream) {
-/*  88 */     if (isDebugging(paramOutputStream))
-/*  89 */       ORBUtility.dprint("ServiceContexts", "Writing null service context"); 
-/*  90 */     paramOutputStream.write_long(0);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void createMapFromInputStream(InputStream paramInputStream) {
-/* 105 */     this.orb = (ORB)paramInputStream.orb();
-/* 106 */     if (this.orb.serviceContextDebugFlag) {
-/* 107 */       dprint("Constructing ServiceContexts from input stream");
-/*     */     }
-/* 109 */     int i = paramInputStream.read_long();
-/*     */     
-/* 111 */     if (this.orb.serviceContextDebugFlag) {
-/* 112 */       dprint("Number of service contexts = " + i);
-/*     */     }
-/* 114 */     for (byte b = 0; b < i; b++) {
-/* 115 */       int j = paramInputStream.read_long();
-/*     */       
-/* 117 */       if (this.orb.serviceContextDebugFlag) {
-/* 118 */         dprint("Reading service context id " + j);
-/*     */       }
-/* 120 */       byte[] arrayOfByte = OctetSeqHelper.read(paramInputStream);
-/*     */       
-/* 122 */       if (this.orb.serviceContextDebugFlag) {
-/* 123 */         dprint("Service context" + j + " length: " + arrayOfByte.length);
-/*     */       }
-/* 125 */       this.scMap.put(new Integer(j), arrayOfByte);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public ServiceContexts(ORB paramORB) {
-/* 131 */     this.orb = paramORB;
-/* 132 */     this.wrapper = ORBUtilSystemException.get(paramORB, "rpc.protocol");
-/*     */ 
-/*     */     
-/* 135 */     this.addAlignmentOnWrite = false;
-/*     */     
-/* 137 */     this.scMap = new HashMap<>();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 142 */     this.giopVersion = paramORB.getORBData().getGIOPVersion();
-/* 143 */     this.codeBase = null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ServiceContexts(InputStream paramInputStream) {
-/* 151 */     this((ORB)paramInputStream.orb());
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 157 */     this.codeBase = ((CDRInputStream)paramInputStream).getCodeBase();
-/*     */     
-/* 159 */     createMapFromInputStream(paramInputStream);
-/*     */ 
-/*     */     
-/* 162 */     this.giopVersion = ((CDRInputStream)paramInputStream).getGIOPVersion();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private ServiceContext unmarshal(Integer paramInteger, byte[] paramArrayOfbyte) {
-/* 171 */     ServiceContextRegistry serviceContextRegistry = this.orb.getServiceContextRegistry();
-/*     */     
-/* 173 */     ServiceContextData serviceContextData = serviceContextRegistry.findServiceContextData(paramInteger.intValue());
-/* 174 */     ServiceContext serviceContext = null;
-/*     */     
-/* 176 */     if (serviceContextData == null) {
-/* 177 */       if (this.orb.serviceContextDebugFlag) {
-/* 178 */         dprint("Could not find ServiceContextData for " + paramInteger + " using UnknownServiceContext");
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */       
-/* 183 */       serviceContext = new UnknownServiceContext(paramInteger.intValue(), paramArrayOfbyte);
-/*     */     }
-/*     */     else {
-/*     */       
-/* 187 */       if (this.orb.serviceContextDebugFlag) {
-/* 188 */         dprint("Found " + serviceContextData);
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 204 */       EncapsInputStream encapsInputStream = EncapsInputStreamFactory.newEncapsInputStream(this.orb, paramArrayOfbyte, paramArrayOfbyte.length, this.giopVersion, this.codeBase);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 209 */       encapsInputStream.consumeEndian();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 216 */       serviceContext = serviceContextData.makeServiceContext(encapsInputStream, this.giopVersion);
-/* 217 */       if (serviceContext == null) {
-/* 218 */         throw this.wrapper.svcctxUnmarshalError(CompletionStatus.COMPLETED_MAYBE);
-/*     */       }
-/*     */     } 
-/*     */     
-/* 222 */     return serviceContext;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addAlignmentPadding() {
-/* 232 */     this.addAlignmentOnWrite = true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void write(OutputStream paramOutputStream, GIOPVersion paramGIOPVersion) {
-/* 249 */     if (isDebugging(paramOutputStream)) {
-/* 250 */       dprint("Writing service contexts to output stream");
-/* 251 */       Utility.printStackTrace();
-/*     */     } 
-/*     */     
-/* 254 */     int i = this.scMap.size();
-/*     */     
-/* 256 */     if (this.addAlignmentOnWrite) {
-/* 257 */       if (isDebugging(paramOutputStream)) {
-/* 258 */         dprint("Adding alignment padding");
-/*     */       }
-/* 260 */       i++;
-/*     */     } 
-/*     */     
-/* 263 */     if (isDebugging(paramOutputStream)) {
-/* 264 */       dprint("Service context has " + i + " components");
-/*     */     }
-/* 266 */     paramOutputStream.write_long(i);
-/*     */     
-/* 268 */     writeServiceContextsInOrder(paramOutputStream, paramGIOPVersion);
-/*     */     
-/* 270 */     if (this.addAlignmentOnWrite) {
-/* 271 */       if (isDebugging(paramOutputStream)) {
-/* 272 */         dprint("Writing alignment padding");
-/*     */       }
-/* 274 */       paramOutputStream.write_long(-1106033203);
-/* 275 */       paramOutputStream.write_long(4);
-/* 276 */       paramOutputStream.write_octet((byte)0);
-/* 277 */       paramOutputStream.write_octet((byte)0);
-/* 278 */       paramOutputStream.write_octet((byte)0);
-/* 279 */       paramOutputStream.write_octet((byte)0);
-/*     */     } 
-/*     */     
-/* 282 */     if (isDebugging(paramOutputStream)) {
-/* 283 */       dprint("Service context writing complete");
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void writeServiceContextsInOrder(OutputStream paramOutputStream, GIOPVersion paramGIOPVersion) {
-/* 294 */     Integer integer = new Integer(9);
-/*     */ 
-/*     */     
-/* 297 */     Object object = this.scMap.remove(integer);
-/*     */     
-/* 299 */     Iterator<Integer> iterator = this.scMap.keySet().iterator();
-/*     */     
-/* 301 */     while (iterator.hasNext()) {
-/* 302 */       Integer integer1 = iterator.next();
-/*     */       
-/* 304 */       writeMapEntry(paramOutputStream, integer1, this.scMap.get(integer1), paramGIOPVersion);
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 310 */     if (object != null) {
-/* 311 */       writeMapEntry(paramOutputStream, integer, object, paramGIOPVersion);
-/*     */       
-/* 313 */       this.scMap.put(integer, object);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void writeMapEntry(OutputStream paramOutputStream, Integer paramInteger, Object paramObject, GIOPVersion paramGIOPVersion) {
-/* 328 */     if (paramObject instanceof byte[]) {
-/* 329 */       if (isDebugging(paramOutputStream)) {
-/* 330 */         dprint("Writing service context bytes for id " + paramInteger);
-/*     */       }
-/* 332 */       OctetSeqHelper.write(paramOutputStream, (byte[])paramObject);
-/*     */     
-/*     */     }
-/*     */     else {
-/*     */ 
-/*     */       
-/* 338 */       ServiceContext serviceContext = (ServiceContext)paramObject;
-/*     */       
-/* 340 */       if (isDebugging(paramOutputStream)) {
-/* 341 */         dprint("Writing service context " + serviceContext);
-/*     */       }
-/* 343 */       serviceContext.write(paramOutputStream, paramGIOPVersion);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void put(ServiceContext paramServiceContext) {
-/* 352 */     Integer integer = new Integer(paramServiceContext.getId());
-/* 353 */     this.scMap.put(integer, paramServiceContext);
-/*     */   }
-/*     */   
-/*     */   public void delete(int paramInt) {
-/* 357 */     delete(new Integer(paramInt));
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void delete(Integer paramInteger) {
-/* 362 */     this.scMap.remove(paramInteger);
-/*     */   }
-/*     */   
-/*     */   public ServiceContext get(int paramInt) {
-/* 366 */     return get(new Integer(paramInt));
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public ServiceContext get(Integer paramInteger) {
-/* 371 */     Object object = this.scMap.get(paramInteger);
-/* 372 */     if (object == null) {
-/* 373 */       return null;
-/*     */     }
-/*     */     
-/* 376 */     if (object instanceof byte[]) {
-/*     */       
-/* 378 */       ServiceContext serviceContext = unmarshal(paramInteger, (byte[])object);
-/*     */       
-/* 380 */       this.scMap.put(paramInteger, serviceContext);
-/*     */       
-/* 382 */       return serviceContext;
-/*     */     } 
-/* 384 */     return (ServiceContext)object;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\spi\servicecontext\ServiceContexts.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.spi.servicecontext;
+
+import java.lang.reflect.InvocationTargetException ;
+import java.lang.reflect.Modifier ;
+import java.lang.reflect.Field ;
+import java.lang.reflect.Constructor ;
+import java.util.*;
+
+import org.omg.CORBA.OctetSeqHelper;
+import org.omg.CORBA.SystemException;
+import org.omg.CORBA.INTERNAL;
+import org.omg.CORBA.CompletionStatus;
+import org.omg.CORBA_2_3.portable.OutputStream ;
+import org.omg.CORBA_2_3.portable.InputStream ;
+
+import com.sun.org.omg.SendingContext.CodeBase;
+
+import com.sun.corba.se.spi.ior.iiop.GIOPVersion;
+
+import com.sun.corba.se.spi.orb.ORB ;
+
+import com.sun.corba.se.spi.logging.CORBALogDomains;
+
+
+import com.sun.corba.se.spi.servicecontext.ServiceContext ;
+import com.sun.corba.se.spi.servicecontext.ServiceContextRegistry ;
+import com.sun.corba.se.spi.servicecontext.ServiceContextData ;
+import com.sun.corba.se.spi.servicecontext.UnknownServiceContext ;
+
+import com.sun.corba.se.impl.encoding.CDRInputStream;
+import com.sun.corba.se.impl.encoding.EncapsInputStream ;
+import com.sun.corba.se.impl.orbutil.ORBUtility ;
+import com.sun.corba.se.impl.util.Utility ;
+import com.sun.corba.se.impl.logging.ORBUtilSystemException ;
+
+import sun.corba.EncapsInputStreamFactory;
+
+
+public class ServiceContexts {
+    private static boolean isDebugging( OutputStream os )
+    {
+        ORB orb = (ORB)(os.orb()) ;
+        if (orb==null)
+            return false ;
+        return orb.serviceContextDebugFlag ;
+    }
+
+    private static boolean isDebugging( InputStream is )
+    {
+        ORB orb = (ORB)(is.orb()) ;
+        if (orb==null)
+            return false ;
+        return orb.serviceContextDebugFlag ;
+    }
+
+    private void dprint( String msg )
+    {
+        ORBUtility.dprint( this, msg ) ;
+    }
+
+    public static void writeNullServiceContext( OutputStream os )
+    {
+        if (isDebugging(os))
+            ORBUtility.dprint( "ServiceContexts", "Writing null service context" ) ;
+        os.write_long( 0 ) ;
+    }
+
+    /**
+     * Given the input stream, this fills our service
+     * context map.  See the definition of scMap for
+     * details.  Creates a HashMap.
+     *
+     * Note that we don't actually unmarshal the
+     * bytes of the service contexts here.  That is
+     * done when they are actually requested via
+     * get(int).
+     */
+    private void createMapFromInputStream(InputStream is)
+    {
+        orb = (ORB)(is.orb()) ;
+        if (orb.serviceContextDebugFlag)
+            dprint( "Constructing ServiceContexts from input stream" ) ;
+
+        int numValid = is.read_long() ;
+
+        if (orb.serviceContextDebugFlag)
+            dprint("Number of service contexts = " + numValid);
+
+        for (int ctr = 0; ctr < numValid; ctr++) {
+            int scId = is.read_long();
+
+            if (orb.serviceContextDebugFlag)
+                dprint("Reading service context id " + scId);
+
+            byte[] data = OctetSeqHelper.read(is);
+
+            if (orb.serviceContextDebugFlag)
+                dprint("Service context" + scId + " length: " + data.length);
+
+            scMap.put(new Integer(scId), data);
+        }
+    }
+
+    public ServiceContexts( ORB orb )
+    {
+        this.orb = orb ;
+        wrapper = ORBUtilSystemException.get( orb,
+            CORBALogDomains.RPC_PROTOCOL ) ;
+
+        addAlignmentOnWrite = false ;
+
+        scMap = new HashMap();
+
+        // Use the GIOP version of the ORB.  Should
+        // be specified in ServiceContext.
+        // See REVISIT below concerning giopVersion.
+        giopVersion = orb.getORBData().getGIOPVersion();
+        codeBase = null ;
+    }
+
+    /**
+     * Read the Service contexts from the input stream.
+     */
+    public ServiceContexts(InputStream s)
+    {
+        this( (ORB)(s.orb()) ) ;
+
+        // We need to store this so that we can have access
+        // to the CodeBase for unmarshaling possible
+        // RMI-IIOP valuetype data within an encapsulation.
+        // (Known case: UnknownExceptionInfo)
+        codeBase = ((CDRInputStream)s).getCodeBase();
+
+        createMapFromInputStream(s);
+
+        // Fix for bug 4904723
+        giopVersion = ((CDRInputStream)s).getGIOPVersion();
+    }
+
+    /**
+     * Find the ServiceContextData for a given scId and unmarshal
+     * the bytes.
+     */
+    private ServiceContext unmarshal(Integer scId, byte[] data) {
+
+        ServiceContextRegistry scr = orb.getServiceContextRegistry();
+
+        ServiceContextData scd = scr.findServiceContextData(scId.intValue());
+        ServiceContext sc = null;
+
+        if (scd == null) {
+            if (orb.serviceContextDebugFlag) {
+                dprint("Could not find ServiceContextData for "
+                       + scId
+                       + " using UnknownServiceContext");
+            }
+
+            sc = new UnknownServiceContext(scId.intValue(), data);
+
+        } else {
+
+            if (orb.serviceContextDebugFlag) {
+                dprint("Found " + scd);
+            }
+
+            // REVISIT.  GIOP version should be specified as
+            // part of a service context's definition, so should
+            // be accessible from ServiceContextData via
+            // its ServiceContext implementation class.
+            //
+            // Since we don't have that, yet, I'm using the GIOP
+            // version of the input stream, presuming that someone
+            // can't send a service context of a later GIOP
+            // version than its stream version.
+            //
+            // Note:  As of Jan 2001, no standard OMG or Sun service contexts
+            // ship wchar data or are defined as using anything but GIOP 1.0 CDR.
+            EncapsInputStream eis
+                = EncapsInputStreamFactory.newEncapsInputStream(orb,
+                                    data,
+                                    data.length,
+                                    giopVersion,
+                                    codeBase);
+            eis.consumeEndian();
+
+            // Now the input stream passed to a ServiceContext
+            // constructor is already the encapsulation input
+            // stream with the endianness read off, so the
+            // service context should just unmarshal its own
+            // data.
+            sc = scd.makeServiceContext(eis, giopVersion);
+            if (sc == null)
+                throw wrapper.svcctxUnmarshalError(
+                    CompletionStatus.COMPLETED_MAYBE);
+        }
+
+        return sc;
+    }
+
+    public void addAlignmentPadding()
+    {
+        // Make service context 12 bytes longer by adding
+        // JAVAIDL_ALIGN_SERVICE_ID service context at end.
+        // The exact length
+        // must be >8 (minimum service context size) and
+        // =4 mod 8, so 12 is the minimum.
+        addAlignmentOnWrite = true ;
+    }
+
+    /**
+     * Hopefully unused scid:  This should be changed to a proper
+     * VMCID aligned value.  REVISIT!
+     */
+    private static final int JAVAIDL_ALIGN_SERVICE_ID = 0xbe1345cd ;
+
+    /**
+     * Write the service contexts to the output stream.
+     *
+     * If they haven't been unmarshaled, we don't have to
+     * unmarshal them.
+     */
+    public void write(OutputStream os, GIOPVersion gv)
+    {
+        if (isDebugging(os)) {
+            dprint( "Writing service contexts to output stream" ) ;
+            Utility.printStackTrace() ;
+        }
+
+        int numsc = scMap.size();
+
+        if (addAlignmentOnWrite) {
+            if (isDebugging(os))
+                dprint( "Adding alignment padding" ) ;
+
+            numsc++ ;
+        }
+
+        if (isDebugging(os))
+            dprint( "Service context has " + numsc + " components"  ) ;
+
+        os.write_long( numsc ) ;
+
+        writeServiceContextsInOrder(os, gv);
+
+        if (addAlignmentOnWrite) {
+            if (isDebugging(os))
+                dprint( "Writing alignment padding" ) ;
+
+            os.write_long( JAVAIDL_ALIGN_SERVICE_ID ) ;
+            os.write_long( 4 ) ;
+            os.write_octet( (byte)0 ) ;
+            os.write_octet( (byte)0 ) ;
+            os.write_octet( (byte)0 ) ;
+            os.write_octet( (byte)0 ) ;
+        }
+
+        if (isDebugging(os))
+            dprint( "Service context writing complete" ) ;
+    }
+
+    /**
+     * Write the service contexts in scMap in a desired order.
+     * Right now, the only special case we have is UnknownExceptionInfo,
+     * so I'm merely writing it last if present.
+     */
+    private void writeServiceContextsInOrder(OutputStream os, GIOPVersion gv) {
+
+        // Temporarily remove this rather than check it per iteration
+        Integer ueInfoId
+            = new Integer(UEInfoServiceContext.SERVICE_CONTEXT_ID);
+
+        Object unknownExceptionInfo = scMap.remove(ueInfoId);
+
+        Iterator iter = scMap.keySet().iterator();
+
+        while (iter.hasNext()) {
+            Integer id = (Integer)iter.next();
+
+            writeMapEntry(os, id, scMap.get(id), gv);
+        }
+
+        // Write the UnknownExceptionInfo service context last
+        // (so it will be after the CodeBase) and restore it in
+        // the map.
+        if (unknownExceptionInfo != null) {
+            writeMapEntry(os, ueInfoId, unknownExceptionInfo, gv);
+
+            scMap.put(ueInfoId, unknownExceptionInfo);
+        }
+    }
+
+    /**
+     * Write the given entry from the scMap to the OutputStream.
+     * See note on giopVersion.  The service context should
+     * know the GIOP version it is meant for.
+     */
+    private void writeMapEntry(OutputStream os, Integer id, Object scObj, GIOPVersion gv) {
+
+        // If it's still in byte[] form, we don't need to
+        // unmarshal it here, just copy the bytes into
+        // the new stream.
+
+        if (scObj instanceof byte[]) {
+            if (isDebugging(os))
+                dprint( "Writing service context bytes for id " + id);
+
+            OctetSeqHelper.write(os, (byte[])scObj);
+
+        } else {
+
+            // We actually unmarshaled it into a ServiceContext
+            // at some point.
+            ServiceContext sc = (ServiceContext)scObj;
+
+            if (isDebugging(os))
+                dprint( "Writing service context " + sc ) ;
+
+            sc.write(os, gv);
+        }
+    }
+
+    /** Add a service context to the stream, if there is not already
+     * a service context in this object with the same id as sc.
+     */
+    public void put( ServiceContext sc )
+    {
+        Integer id = new Integer(sc.getId());
+        scMap.put(id, sc);
+    }
+
+    public void delete( int scId ) {
+        this.delete(new Integer(scId));
+    }
+
+    public void delete(Integer id)
+    {
+        scMap.remove(id)  ;
+    }
+
+    public ServiceContext get(int scId) {
+        return this.get(new Integer(scId));
+    }
+
+    public ServiceContext get(Integer id)
+    {
+        Object result = scMap.get(id);
+        if (result == null)
+            return null ;
+
+        // Lazy unmarshaling on first use.
+        if (result instanceof byte[]) {
+
+            ServiceContext sc = unmarshal(id, (byte[])result);
+
+            scMap.put(id, sc);
+
+            return sc;
+        } else {
+            return (ServiceContext)result;
+        }
+    }
+
+    private ORB orb ;
+
+    /**
+     * Map of all ServiceContext objects in this container.
+     *
+     * Keys are java.lang.Integers for service context IDs.
+     * Values are either instances of ServiceContext or the
+     * unmarshaled byte arrays (unmarshaled on first use).
+     *
+     * This provides a mild optimization if we don't happen to
+     * use a given service context, but it's main advantage is
+     * that it allows us to change the order in which we
+     * unmarshal them.  We need to do the UnknownExceptionInfo service
+     * context after the SendingContextRunTime service context so that we can
+     * get the CodeBase if necessary.
+     */
+    private Map scMap;
+
+    /**
+     * If true, write out a special alignment service context to force the
+     * correct alignment on re-marshalling.
+     */
+    private boolean addAlignmentOnWrite ;
+
+    private CodeBase codeBase;
+    private GIOPVersion giopVersion;
+    private ORBUtilSystemException wrapper ;
+}

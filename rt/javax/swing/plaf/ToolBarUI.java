@@ -1,9 +1,38 @@
+/*
+ * Copyright (c) 1997, 1998, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package javax.swing.plaf;
 
-public abstract class ToolBarUI extends ComponentUI {}
+import java.awt.Insets;
+import javax.swing.JToolBar;
 
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\ToolBarUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * Pluggable look and feel interface for JToolBar.
+ *
+ * @author Georges Saab
  */
+
+public abstract class ToolBarUI extends ComponentUI {
+}

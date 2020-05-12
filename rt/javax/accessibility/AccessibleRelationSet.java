@@ -1,250 +1,244 @@
-/*     */ package javax.accessibility;
-/*     */ 
-/*     */ import java.util.Vector;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class AccessibleRelationSet
-/*     */ {
-/*  56 */   protected Vector<AccessibleRelation> relations = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public AccessibleRelationSet() {
-/*  62 */     this.relations = null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public AccessibleRelationSet(AccessibleRelation[] paramArrayOfAccessibleRelation) {
-/*  73 */     if (paramArrayOfAccessibleRelation.length != 0) {
-/*  74 */       this.relations = new Vector<>(paramArrayOfAccessibleRelation.length);
-/*  75 */       for (byte b = 0; b < paramArrayOfAccessibleRelation.length; b++) {
-/*  76 */         add(paramArrayOfAccessibleRelation[b]);
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean add(AccessibleRelation paramAccessibleRelation) {
-/*  92 */     if (this.relations == null) {
-/*  93 */       this.relations = new Vector<>();
-/*     */     }
-/*     */ 
-/*     */     
-/*  97 */     AccessibleRelation accessibleRelation = get(paramAccessibleRelation.getKey());
-/*  98 */     if (accessibleRelation == null) {
-/*  99 */       this.relations.addElement(paramAccessibleRelation);
-/* 100 */       return true;
-/*     */     } 
-/* 102 */     Object[] arrayOfObject1 = accessibleRelation.getTarget();
-/* 103 */     Object[] arrayOfObject2 = paramAccessibleRelation.getTarget();
-/* 104 */     int i = arrayOfObject1.length + arrayOfObject2.length;
-/* 105 */     Object[] arrayOfObject3 = new Object[i]; int j;
-/* 106 */     for (j = 0; j < arrayOfObject1.length; j++) {
-/* 107 */       arrayOfObject3[j] = arrayOfObject1[j];
-/*     */     }
-/* 109 */     j = arrayOfObject1.length; byte b = 0;
-/* 110 */     for (; j < i; 
-/* 111 */       j++, b++) {
-/* 112 */       arrayOfObject3[j] = arrayOfObject2[b];
-/*     */     }
-/* 114 */     accessibleRelation.setTarget(arrayOfObject3);
-/*     */     
-/* 116 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addAll(AccessibleRelation[] paramArrayOfAccessibleRelation) {
-/* 126 */     if (paramArrayOfAccessibleRelation.length != 0) {
-/* 127 */       if (this.relations == null) {
-/* 128 */         this.relations = new Vector<>(paramArrayOfAccessibleRelation.length);
-/*     */       }
-/* 130 */       for (byte b = 0; b < paramArrayOfAccessibleRelation.length; b++) {
-/* 131 */         add(paramArrayOfAccessibleRelation[b]);
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean remove(AccessibleRelation paramAccessibleRelation) {
-/* 148 */     if (this.relations == null) {
-/* 149 */       return false;
-/*     */     }
-/* 151 */     return this.relations.removeElement(paramAccessibleRelation);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void clear() {
-/* 159 */     if (this.relations != null) {
-/* 160 */       this.relations.removeAllElements();
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int size() {
-/* 169 */     if (this.relations == null) {
-/* 170 */       return 0;
-/*     */     }
-/* 172 */     return this.relations.size();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean contains(String paramString) {
-/* 183 */     return (get(paramString) != null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public AccessibleRelation get(String paramString) {
-/* 193 */     if (this.relations == null) {
-/* 194 */       return null;
-/*     */     }
-/* 196 */     int i = this.relations.size();
-/* 197 */     for (byte b = 0; b < i; b++) {
-/*     */       
-/* 199 */       AccessibleRelation accessibleRelation = this.relations.elementAt(b);
-/* 200 */       if (accessibleRelation != null && accessibleRelation.getKey().equals(paramString)) {
-/* 201 */         return accessibleRelation;
-/*     */       }
-/*     */     } 
-/* 204 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public AccessibleRelation[] toArray() {
-/* 213 */     if (this.relations == null) {
-/* 214 */       return new AccessibleRelation[0];
-/*     */     }
-/*     */     
-/* 217 */     AccessibleRelation[] arrayOfAccessibleRelation = new AccessibleRelation[this.relations.size()];
-/* 218 */     for (byte b = 0; b < arrayOfAccessibleRelation.length; b++) {
-/* 219 */       arrayOfAccessibleRelation[b] = this.relations.elementAt(b);
-/*     */     }
-/* 221 */     return arrayOfAccessibleRelation;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 233 */     String str = "";
-/* 234 */     if (this.relations != null && this.relations.size() > 0) {
-/* 235 */       str = ((AccessibleRelation)this.relations.elementAt(0)).toDisplayString();
-/* 236 */       for (byte b = 1; b < this.relations.size(); b++)
-/*     */       {
-/*     */         
-/* 239 */         str = str + "," + ((AccessibleRelation)this.relations.elementAt(b)).toDisplayString();
-/*     */       }
-/*     */     } 
-/* 242 */     return str;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\accessibility\AccessibleRelationSet.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.accessibility;
+
+import java.util.Vector;
+import java.util.Locale;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
+
+/**
+ * Class AccessibleRelationSet determines a component's relation set.  The
+ * relation set of a component is a set of AccessibleRelation objects that
+ * describe the component's relationships with other components.
+ *
+ * @see AccessibleRelation
+ *
+ * @author      Lynn Monsanto
+ * @since 1.3
+ */
+public class AccessibleRelationSet {
+
+    /**
+     * Each entry in the Vector represents an AccessibleRelation.
+     * @see #add
+     * @see #addAll
+     * @see #remove
+     * @see #contains
+     * @see #get
+     * @see #size
+     * @see #toArray
+     * @see #clear
+     */
+    protected Vector<AccessibleRelation> relations = null;
+
+    /**
+     * Creates a new empty relation set.
+     */
+    public AccessibleRelationSet() {
+        relations = null;
+    }
+
+    /**
+     * Creates a new relation with the initial set of relations contained in
+     * the array of relations passed in.  Duplicate entries are ignored.
+     *
+     * @param relations an array of AccessibleRelation describing the
+     * relation set.
+     */
+    public AccessibleRelationSet(AccessibleRelation[] relations) {
+        if (relations.length != 0) {
+            this.relations = new Vector(relations.length);
+            for (int i = 0; i < relations.length; i++) {
+                add(relations[i]);
+            }
+        }
+    }
+
+    /**
+     * Adds a new relation to the current relation set.  If the relation
+     * is already in the relation set, the target(s) of the specified
+     * relation is merged with the target(s) of the existing relation.
+     * Otherwise,  the new relation is added to the relation set.
+     *
+     * @param relation the relation to add to the relation set
+     * @return true if relation is added to the relation set; false if the
+     * relation set is unchanged
+     */
+    public boolean add(AccessibleRelation relation) {
+        if (relations == null) {
+            relations = new Vector();
+        }
+
+        // Merge the relation targets if the key exists
+        AccessibleRelation existingRelation = get(relation.getKey());
+        if (existingRelation == null) {
+            relations.addElement(relation);
+            return true;
+        } else {
+            Object [] existingTarget = existingRelation.getTarget();
+            Object [] newTarget = relation.getTarget();
+            int mergedLength = existingTarget.length + newTarget.length;
+            Object [] mergedTarget = new Object[mergedLength];
+            for (int i = 0; i < existingTarget.length; i++) {
+                mergedTarget[i] = existingTarget[i];
+            }
+            for (int i = existingTarget.length, j = 0;
+                 i < mergedLength;
+                 i++, j++) {
+                mergedTarget[i] = newTarget[j];
+            }
+            existingRelation.setTarget(mergedTarget);
+        }
+        return true;
+    }
+
+    /**
+     * Adds all of the relations to the existing relation set.  Duplicate
+     * entries are ignored.
+     *
+     * @param relations  AccessibleRelation array describing the relation set.
+     */
+    public void addAll(AccessibleRelation[] relations) {
+        if (relations.length != 0) {
+            if (this.relations == null) {
+                this.relations = new Vector(relations.length);
+            }
+            for (int i = 0; i < relations.length; i++) {
+                add(relations[i]);
+            }
+        }
+    }
+
+    /**
+     * Removes a relation from the current relation set.  If the relation
+     * is not in the set, the relation set will be unchanged and the
+     * return value will be false.  If the relation is in the relation
+     * set, it will be removed from the set and the return value will be
+     * true.
+     *
+     * @param relation the relation to remove from the relation set
+     * @return true if the relation is in the relation set; false if the
+     * relation set is unchanged
+     */
+    public boolean remove(AccessibleRelation relation) {
+        if (relations == null) {
+            return false;
+        } else {
+            return relations.removeElement(relation);
+        }
+    }
+
+    /**
+     * Removes all the relations from the current relation set.
+     */
+    public void clear() {
+        if (relations != null) {
+            relations.removeAllElements();
+        }
+    }
+
+    /**
+     * Returns the number of relations in the relation set.
+     * @return the number of relations in the relation set
+     */
+    public int size() {
+        if (relations == null) {
+            return 0;
+        } else {
+            return relations.size();
+        }
+    }
+
+    /**
+     * Returns whether the relation set contains a relation
+     * that matches the specified key.
+     * @param key the AccessibleRelation key
+     * @return true if the relation is in the relation set; otherwise false
+     */
+    public boolean contains(String key) {
+        return get(key) != null;
+    }
+
+    /**
+     * Returns the relation that matches the specified key.
+     * @param key the AccessibleRelation key
+     * @return the relation, if one exists, that matches the specified key.
+     * Otherwise, null is returned.
+     */
+    public AccessibleRelation get(String key) {
+        if (relations == null) {
+            return null;
+        } else {
+            int len = relations.size();
+            for (int i = 0; i < len; i++) {
+                AccessibleRelation relation =
+                    (AccessibleRelation)relations.elementAt(i);
+                if (relation != null && relation.getKey().equals(key)) {
+                    return relation;
+                }
+            }
+            return null;
+        }
+    }
+
+    /**
+     * Returns the current relation set as an array of AccessibleRelation
+     * @return AccessibleRelation array contacting the current relation.
+     */
+    public AccessibleRelation[] toArray() {
+        if (relations == null) {
+            return new AccessibleRelation[0];
+        } else {
+            AccessibleRelation[] relationArray
+                = new AccessibleRelation[relations.size()];
+            for (int i = 0; i < relationArray.length; i++) {
+                relationArray[i] = (AccessibleRelation) relations.elementAt(i);
+            }
+            return relationArray;
+        }
+    }
+
+    /**
+     * Creates a localized String representing all the relations in the set
+     * using the default locale.
+     *
+     * @return comma separated localized String
+     * @see AccessibleBundle#toDisplayString
+     */
+    public String toString() {
+        String ret = "";
+        if ((relations != null) && (relations.size() > 0)) {
+            ret = ((AccessibleRelation) (relations.elementAt(0))).toDisplayString();
+            for (int i = 1; i < relations.size(); i++) {
+                ret = ret + ","
+                        + ((AccessibleRelation) (relations.elementAt(i))).
+                                              toDisplayString();
+            }
+        }
+        return ret;
+    }
+}

@@ -1,58 +1,52 @@
-/*    */ package javax.management.timer;
-/*    */ 
-/*    */ import javax.management.Notification;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ class TimerAlarmClockNotification
-/*    */   extends Notification
-/*    */ {
-/*    */   private static final long serialVersionUID = -4841061275673620641L;
-/*    */   
-/*    */   public TimerAlarmClockNotification(TimerAlarmClock paramTimerAlarmClock) {
-/* 50 */     super("", paramTimerAlarmClock, 0L);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\management\timer\TimerAlarmClockNotification.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2006, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.management.timer;
+
+/**
+ * <p>Definitions of the notifications sent by TimerAlarmClock
+ * MBeans.</p>
+ */
+class TimerAlarmClockNotification
+    extends javax.management.Notification {
+
+    /* Serial version */
+    private static final long serialVersionUID = -4841061275673620641L;
+
+    /*
+     * ------------------------------------------
+     *  CONSTRUCTORS
+     * ------------------------------------------
+     */
+
+    /**
+     * Constructor.
+     *
+     * @param source the source.
+     */
+    public TimerAlarmClockNotification(TimerAlarmClock source) {
+        super("", source, 0);
+    }
+}

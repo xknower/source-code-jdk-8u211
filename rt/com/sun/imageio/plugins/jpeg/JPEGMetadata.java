@@ -1,2422 +1,2417 @@
-/*      */ package com.sun.imageio.plugins.jpeg;
-/*      */ 
-/*      */ import java.awt.Point;
-/*      */ import java.awt.color.ColorSpace;
-/*      */ import java.awt.color.ICC_ColorSpace;
-/*      */ import java.awt.color.ICC_Profile;
-/*      */ import java.awt.image.ColorModel;
-/*      */ import java.io.IOException;
-/*      */ import java.util.ArrayList;
-/*      */ import java.util.Iterator;
-/*      */ import java.util.List;
-/*      */ import java.util.ListIterator;
-/*      */ import javax.imageio.IIOException;
-/*      */ import javax.imageio.ImageTypeSpecifier;
-/*      */ import javax.imageio.ImageWriteParam;
-/*      */ import javax.imageio.metadata.IIOInvalidTreeException;
-/*      */ import javax.imageio.metadata.IIOMetadata;
-/*      */ import javax.imageio.metadata.IIOMetadataNode;
-/*      */ import javax.imageio.plugins.jpeg.JPEGHuffmanTable;
-/*      */ import javax.imageio.plugins.jpeg.JPEGImageWriteParam;
-/*      */ import javax.imageio.stream.ImageInputStream;
-/*      */ import javax.imageio.stream.ImageOutputStream;
-/*      */ import org.w3c.dom.NamedNodeMap;
-/*      */ import org.w3c.dom.Node;
-/*      */ import org.w3c.dom.NodeList;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class JPEGMetadata
-/*      */   extends IIOMetadata
-/*      */   implements Cloneable
-/*      */ {
-/*      */   private static final boolean debug = false;
-/*   72 */   private List resetSequence = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean inThumb = false;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean hasAlpha;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  103 */   List markerSequence = new ArrayList();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   final boolean isStream;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean transparencyDone;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   JPEGMetadata(boolean paramBoolean1, boolean paramBoolean2) {
-/*  119 */     super(true, "javax_imageio_jpeg_image_1.0", "com.sun.imageio.plugins.jpeg.JPEGImageMetadataFormat", null, null);
-/*      */ 
-/*      */ 
-/*      */     
-/*  123 */     this.inThumb = paramBoolean2;
-/*      */     
-/*  125 */     this.isStream = paramBoolean1;
-/*  126 */     if (paramBoolean1) {
-/*  127 */       this.nativeMetadataFormatName = "javax_imageio_jpeg_stream_1.0";
-/*  128 */       this.nativeMetadataFormatClassName = "com.sun.imageio.plugins.jpeg.JPEGStreamMetadataFormat";
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   JPEGMetadata(boolean paramBoolean1, boolean paramBoolean2, ImageInputStream paramImageInputStream, JPEGImageReader paramJPEGImageReader) throws IOException {
-/*  151 */     this(paramBoolean1, paramBoolean2);
-/*      */     
-/*  153 */     JPEGBuffer jPEGBuffer = new JPEGBuffer(paramImageInputStream);
-/*      */     
-/*  155 */     jPEGBuffer.loadBuf(0);
-/*      */ 
-/*      */     
-/*  158 */     if ((jPEGBuffer.buf[0] & 0xFF) != 255 || (jPEGBuffer.buf[1] & 0xFF) != 216 || (jPEGBuffer.buf[2] & 0xFF) != 255)
-/*      */     {
-/*      */       
-/*  161 */       throw new IIOException("Image format error");
-/*      */     }
-/*      */     
-/*  164 */     boolean bool = false;
-/*  165 */     jPEGBuffer.bufAvail -= 2;
-/*  166 */     jPEGBuffer.bufPtr = 2;
-/*  167 */     SOFMarkerSegment sOFMarkerSegment = null;
-/*  168 */     while (!bool) {
-/*      */       DQTMarkerSegment dQTMarkerSegment; DHTMarkerSegment dHTMarkerSegment; DRIMarkerSegment dRIMarkerSegment; MarkerSegment markerSegment; byte[] arrayOfByte;
-/*      */       int i;
-/*  171 */       jPEGBuffer.loadBuf(1);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  176 */       jPEGBuffer.scanForFF(paramJPEGImageReader);
-/*  177 */       switch (jPEGBuffer.buf[jPEGBuffer.bufPtr] & 0xFF) {
-/*      */ 
-/*      */ 
-/*      */         
-/*      */         case 0:
-/*  182 */           jPEGBuffer.bufAvail--;
-/*  183 */           jPEGBuffer.bufPtr++;
-/*      */           break;
-/*      */         case 192:
-/*      */         case 193:
-/*      */         case 194:
-/*  188 */           if (paramBoolean1) {
-/*  189 */             throw new IIOException("SOF not permitted in stream metadata");
-/*      */           }
-/*      */           
-/*  192 */           sOFMarkerSegment = new SOFMarkerSegment(jPEGBuffer);
-/*      */           break;
-/*      */         case 219:
-/*  195 */           dQTMarkerSegment = new DQTMarkerSegment(jPEGBuffer);
-/*      */           break;
-/*      */         case 196:
-/*  198 */           dHTMarkerSegment = new DHTMarkerSegment(jPEGBuffer);
-/*      */           break;
-/*      */         case 221:
-/*  201 */           dRIMarkerSegment = new DRIMarkerSegment(jPEGBuffer);
-/*      */           break;
-/*      */         
-/*      */         case 224:
-/*  205 */           jPEGBuffer.loadBuf(8);
-/*  206 */           arrayOfByte = jPEGBuffer.buf;
-/*  207 */           i = jPEGBuffer.bufPtr;
-/*  208 */           if (arrayOfByte[i + 3] == 74 && arrayOfByte[i + 4] == 70 && arrayOfByte[i + 5] == 73 && arrayOfByte[i + 6] == 70 && arrayOfByte[i + 7] == 0) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/*  213 */             if (this.inThumb) {
-/*  214 */               paramJPEGImageReader
-/*  215 */                 .warningOccurred(1);
-/*      */ 
-/*      */               
-/*  218 */               JFIFMarkerSegment jFIFMarkerSegment1 = new JFIFMarkerSegment(jPEGBuffer); break;
-/*      */             } 
-/*  220 */             if (paramBoolean1) {
-/*  221 */               throw new IIOException("JFIF not permitted in stream metadata");
-/*      */             }
-/*  223 */             if (!this.markerSequence.isEmpty()) {
-/*  224 */               throw new IIOException("JFIF APP0 must be first marker after SOI");
-/*      */             }
-/*      */             
-/*  227 */             JFIFMarkerSegment jFIFMarkerSegment = new JFIFMarkerSegment(jPEGBuffer); break;
-/*      */           } 
-/*  229 */           if (arrayOfByte[i + 3] == 74 && arrayOfByte[i + 4] == 70 && arrayOfByte[i + 5] == 88 && arrayOfByte[i + 6] == 88 && arrayOfByte[i + 7] == 0) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/*  234 */             if (paramBoolean1) {
-/*  235 */               throw new IIOException("JFXX not permitted in stream metadata");
-/*      */             }
-/*      */             
-/*  238 */             if (this.inThumb) {
-/*  239 */               throw new IIOException("JFXX markers not allowed in JFIF JPEG thumbnail");
-/*      */             }
-/*      */ 
-/*      */ 
-/*      */             
-/*  244 */             JFIFMarkerSegment jFIFMarkerSegment = (JFIFMarkerSegment)findMarkerSegment(JFIFMarkerSegment.class, true);
-/*  245 */             if (jFIFMarkerSegment == null) {
-/*  246 */               throw new IIOException("JFXX encountered without prior JFIF!");
-/*      */             }
-/*      */             
-/*  249 */             jFIFMarkerSegment.addJFXX(jPEGBuffer, paramJPEGImageReader);
-/*      */             break;
-/*      */           } 
-/*  252 */           markerSegment = new MarkerSegment(jPEGBuffer);
-/*  253 */           markerSegment.loadData(jPEGBuffer);
-/*      */           break;
-/*      */ 
-/*      */         
-/*      */         case 226:
-/*  258 */           jPEGBuffer.loadBuf(15);
-/*  259 */           if (jPEGBuffer.buf[jPEGBuffer.bufPtr + 3] == 73 && jPEGBuffer.buf[jPEGBuffer.bufPtr + 4] == 67 && jPEGBuffer.buf[jPEGBuffer.bufPtr + 5] == 67 && jPEGBuffer.buf[jPEGBuffer.bufPtr + 6] == 95 && jPEGBuffer.buf[jPEGBuffer.bufPtr + 7] == 80 && jPEGBuffer.buf[jPEGBuffer.bufPtr + 8] == 82 && jPEGBuffer.buf[jPEGBuffer.bufPtr + 9] == 79 && jPEGBuffer.buf[jPEGBuffer.bufPtr + 10] == 70 && jPEGBuffer.buf[jPEGBuffer.bufPtr + 11] == 73 && jPEGBuffer.buf[jPEGBuffer.bufPtr + 12] == 76 && jPEGBuffer.buf[jPEGBuffer.bufPtr + 13] == 69 && jPEGBuffer.buf[jPEGBuffer.bufPtr + 14] == 0) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/*  272 */             if (paramBoolean1) {
-/*  273 */               throw new IIOException("ICC profiles not permitted in stream metadata");
-/*      */             }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/*  279 */             JFIFMarkerSegment jFIFMarkerSegment = (JFIFMarkerSegment)findMarkerSegment(JFIFMarkerSegment.class, true);
-/*  280 */             if (jFIFMarkerSegment == null) {
-/*  281 */               markerSegment = new MarkerSegment(jPEGBuffer);
-/*  282 */               markerSegment.loadData(jPEGBuffer); break;
-/*      */             } 
-/*  284 */             jFIFMarkerSegment.addICC(jPEGBuffer);
-/*      */             
-/*      */             break;
-/*      */           } 
-/*  288 */           markerSegment = new MarkerSegment(jPEGBuffer);
-/*  289 */           markerSegment.loadData(jPEGBuffer);
-/*      */           break;
-/*      */ 
-/*      */         
-/*      */         case 238:
-/*  294 */           jPEGBuffer.loadBuf(8);
-/*  295 */           if (jPEGBuffer.buf[jPEGBuffer.bufPtr + 3] == 65 && jPEGBuffer.buf[jPEGBuffer.bufPtr + 4] == 100 && jPEGBuffer.buf[jPEGBuffer.bufPtr + 5] == 111 && jPEGBuffer.buf[jPEGBuffer.bufPtr + 6] == 98 && jPEGBuffer.buf[jPEGBuffer.bufPtr + 7] == 101) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/*  300 */             if (paramBoolean1) {
-/*  301 */               throw new IIOException("Adobe APP14 markers not permitted in stream metadata");
-/*      */             }
-/*      */             
-/*  304 */             markerSegment = new AdobeMarkerSegment(jPEGBuffer); break;
-/*      */           } 
-/*  306 */           markerSegment = new MarkerSegment(jPEGBuffer);
-/*  307 */           markerSegment.loadData(jPEGBuffer);
-/*      */           break;
-/*      */ 
-/*      */         
-/*      */         case 254:
-/*  312 */           markerSegment = new COMMarkerSegment(jPEGBuffer);
-/*      */           break;
-/*      */         case 218:
-/*  315 */           if (paramBoolean1) {
-/*  316 */             throw new IIOException("SOS not permitted in stream metadata");
-/*      */           }
-/*      */           
-/*  319 */           markerSegment = new SOSMarkerSegment(jPEGBuffer);
-/*      */           break;
-/*      */ 
-/*      */ 
-/*      */         
-/*      */         case 208:
-/*      */         case 209:
-/*      */         case 210:
-/*      */         case 211:
-/*      */         case 212:
-/*      */         case 213:
-/*      */         case 214:
-/*      */         case 215:
-/*  332 */           jPEGBuffer.bufPtr++;
-/*  333 */           jPEGBuffer.bufAvail--;
-/*      */           break;
-/*      */         case 217:
-/*  336 */           bool = true;
-/*  337 */           jPEGBuffer.bufPtr++;
-/*  338 */           jPEGBuffer.bufAvail--;
-/*      */           break;
-/*      */         default:
-/*  341 */           markerSegment = new MarkerSegment(jPEGBuffer);
-/*  342 */           markerSegment.loadData(jPEGBuffer);
-/*  343 */           markerSegment.unknown = true;
-/*      */           break;
-/*      */       } 
-/*  346 */       if (markerSegment != null) {
-/*  347 */         this.markerSequence.add(markerSegment);
-/*      */ 
-/*      */ 
-/*      */         
-/*  351 */         markerSegment = null;
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  359 */     jPEGBuffer.pushBack();
-/*      */     
-/*  361 */     if (!isConsistent()) {
-/*  362 */       throw new IIOException("Inconsistent metadata read from stream");
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   JPEGMetadata(ImageWriteParam paramImageWriteParam, JPEGImageWriter paramJPEGImageWriter) {
-/*  371 */     this(true, false);
-/*      */     
-/*  373 */     JPEGImageWriteParam jPEGImageWriteParam = null;
-/*      */     
-/*  375 */     if (paramImageWriteParam != null && paramImageWriteParam instanceof JPEGImageWriteParam) {
-/*  376 */       jPEGImageWriteParam = (JPEGImageWriteParam)paramImageWriteParam;
-/*  377 */       if (!jPEGImageWriteParam.areTablesSet()) {
-/*  378 */         jPEGImageWriteParam = null;
-/*      */       }
-/*      */     } 
-/*  381 */     if (jPEGImageWriteParam != null) {
-/*  382 */       this.markerSequence.add(new DQTMarkerSegment(jPEGImageWriteParam.getQTables()));
-/*  383 */       this.markerSequence
-/*  384 */         .add(new DHTMarkerSegment(jPEGImageWriteParam.getDCHuffmanTables(), jPEGImageWriteParam
-/*  385 */             .getACHuffmanTables()));
-/*      */     } else {
-/*      */       
-/*  388 */       this.markerSequence.add(new DQTMarkerSegment(JPEG.getDefaultQTables()));
-/*  389 */       this.markerSequence.add(new DHTMarkerSegment(JPEG.getDefaultHuffmanTables(true), 
-/*  390 */             JPEG.getDefaultHuffmanTables(false)));
-/*      */     } 
-/*      */ 
-/*      */     
-/*  394 */     if (!isConsistent()) {
-/*  395 */       throw new InternalError("Default stream metadata is inconsistent");
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   JPEGMetadata(ImageTypeSpecifier paramImageTypeSpecifier, ImageWriteParam paramImageWriteParam, JPEGImageWriter paramJPEGImageWriter) {
-/*  406 */     this(false, false);
-/*      */     
-/*  408 */     boolean bool1 = true;
-/*  409 */     boolean bool2 = false;
-/*  410 */     byte b = 0;
-/*  411 */     boolean bool3 = true;
-/*  412 */     boolean bool4 = false;
-/*  413 */     boolean bool5 = false;
-/*  414 */     boolean bool = false;
-/*  415 */     boolean bool6 = false;
-/*  416 */     boolean bool7 = true;
-/*  417 */     boolean bool8 = true;
-/*  418 */     float f = 0.75F;
-/*  419 */     byte[] arrayOfByte = { 1, 2, 3, 4 };
-/*  420 */     int i = 0;
-/*      */     
-/*  422 */     ImageTypeSpecifier imageTypeSpecifier = null;
-/*      */     
-/*  424 */     if (paramImageWriteParam != null) {
-/*  425 */       imageTypeSpecifier = paramImageWriteParam.getDestinationType();
-/*  426 */       if (imageTypeSpecifier != null && 
-/*  427 */         paramImageTypeSpecifier != null) {
-/*      */         
-/*  429 */         paramJPEGImageWriter
-/*  430 */           .warningOccurred(0);
-/*  431 */         imageTypeSpecifier = null;
-/*      */       } 
-/*      */ 
-/*      */       
-/*  435 */       if (paramImageWriteParam.canWriteProgressive())
-/*      */       {
-/*      */         
-/*  438 */         if (paramImageWriteParam.getProgressiveMode() == 1) {
-/*  439 */           bool5 = true;
-/*  440 */           bool = true;
-/*  441 */           bool8 = false;
-/*      */         } 
-/*      */       }
-/*      */       
-/*  445 */       if (paramImageWriteParam instanceof JPEGImageWriteParam) {
-/*  446 */         JPEGImageWriteParam jPEGImageWriteParam = (JPEGImageWriteParam)paramImageWriteParam;
-/*  447 */         if (jPEGImageWriteParam.areTablesSet()) {
-/*  448 */           bool7 = false;
-/*  449 */           bool8 = false;
-/*  450 */           if ((jPEGImageWriteParam.getDCHuffmanTables()).length > 2 || (jPEGImageWriteParam
-/*  451 */             .getACHuffmanTables()).length > 2) {
-/*  452 */             bool6 = true;
-/*      */           }
-/*      */         } 
-/*      */ 
-/*      */         
-/*  457 */         if (!bool5) {
-/*  458 */           bool = jPEGImageWriteParam.getOptimizeHuffmanTables();
-/*  459 */           if (bool) {
-/*  460 */             bool8 = false;
-/*      */           }
-/*      */         } 
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  469 */       if (paramImageWriteParam.canWriteCompressed() && 
-/*  470 */         paramImageWriteParam.getCompressionMode() == 2) {
-/*  471 */         f = paramImageWriteParam.getCompressionQuality();
-/*      */       }
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  478 */     ColorSpace colorSpace = null;
-/*  479 */     if (imageTypeSpecifier != null) {
-/*  480 */       ColorModel colorModel = imageTypeSpecifier.getColorModel();
-/*  481 */       i = colorModel.getNumComponents();
-/*  482 */       boolean bool9 = (colorModel.getNumColorComponents() != i) ? true : false;
-/*  483 */       boolean bool10 = colorModel.hasAlpha();
-/*  484 */       colorSpace = colorModel.getColorSpace();
-/*  485 */       int j = colorSpace.getType();
-/*  486 */       switch (j) {
-/*      */         case 6:
-/*  488 */           bool3 = false;
-/*  489 */           if (bool9) {
-/*  490 */             bool1 = false;
-/*      */           }
-/*      */           break;
-/*      */         case 13:
-/*  494 */           if (colorSpace == JPEG.JCS.getYCC()) {
-/*  495 */             bool1 = false;
-/*  496 */             arrayOfByte[0] = 89;
-/*  497 */             arrayOfByte[1] = 67;
-/*  498 */             arrayOfByte[2] = 99;
-/*  499 */             if (bool10) {
-/*  500 */               arrayOfByte[3] = 65;
-/*      */             }
-/*      */           } 
-/*      */           break;
-/*      */         case 3:
-/*  505 */           if (bool9) {
-/*  506 */             bool1 = false;
-/*  507 */             if (!bool10) {
-/*  508 */               bool2 = true;
-/*  509 */               b = 2;
-/*      */             } 
-/*      */           } 
-/*      */           break;
-/*      */         case 5:
-/*  514 */           bool1 = false;
-/*  515 */           bool2 = true;
-/*  516 */           bool3 = false;
-/*  517 */           arrayOfByte[0] = 82;
-/*  518 */           arrayOfByte[1] = 71;
-/*  519 */           arrayOfByte[2] = 66;
-/*  520 */           if (bool10) {
-/*  521 */             arrayOfByte[3] = 65;
-/*      */           }
-/*      */           break;
-/*      */ 
-/*      */         
-/*      */         default:
-/*  527 */           bool1 = false;
-/*  528 */           bool3 = false; break;
-/*      */       } 
-/*  530 */     } else if (paramImageTypeSpecifier != null) {
-/*  531 */       ColorModel colorModel = paramImageTypeSpecifier.getColorModel();
-/*  532 */       i = colorModel.getNumComponents();
-/*  533 */       boolean bool9 = (colorModel.getNumColorComponents() != i) ? true : false;
-/*  534 */       boolean bool10 = colorModel.hasAlpha();
-/*  535 */       colorSpace = colorModel.getColorSpace();
-/*  536 */       int j = colorSpace.getType();
-/*  537 */       switch (j) {
-/*      */         case 6:
-/*  539 */           bool3 = false;
-/*  540 */           if (bool9) {
-/*  541 */             bool1 = false;
-/*      */           }
-/*      */           break;
-/*      */         
-/*      */         case 5:
-/*  546 */           if (bool10) {
-/*  547 */             bool1 = false;
-/*      */           }
-/*      */           break;
-/*      */         case 13:
-/*  551 */           bool1 = false;
-/*  552 */           bool3 = false;
-/*  553 */           if (colorSpace.equals(ColorSpace.getInstance(1002))) {
-/*  554 */             bool3 = true;
-/*  555 */             bool2 = true;
-/*  556 */             arrayOfByte[0] = 89;
-/*  557 */             arrayOfByte[1] = 67;
-/*  558 */             arrayOfByte[2] = 99;
-/*  559 */             if (bool10) {
-/*  560 */               arrayOfByte[3] = 65;
-/*      */             }
-/*      */           } 
-/*      */           break;
-/*      */         case 3:
-/*  565 */           if (bool9) {
-/*  566 */             bool1 = false;
-/*  567 */             if (!bool10) {
-/*  568 */               bool2 = true;
-/*  569 */               b = 2;
-/*      */             } 
-/*      */           } 
-/*      */           break;
-/*      */         case 9:
-/*  574 */           bool1 = false;
-/*  575 */           bool2 = true;
-/*  576 */           b = 2;
-/*      */           break;
-/*      */ 
-/*      */ 
-/*      */         
-/*      */         default:
-/*  582 */           bool1 = false;
-/*  583 */           bool3 = false;
-/*      */           break;
-/*      */       } 
-/*      */ 
-/*      */     
-/*      */     } 
-/*  589 */     if (bool1 && JPEG.isNonStandardICC(colorSpace)) {
-/*  590 */       bool4 = true;
-/*      */     }
-/*      */ 
-/*      */     
-/*  594 */     if (bool1) {
-/*  595 */       JFIFMarkerSegment jFIFMarkerSegment = new JFIFMarkerSegment();
-/*  596 */       this.markerSequence.add(jFIFMarkerSegment);
-/*  597 */       if (bool4) {
-/*      */         try {
-/*  599 */           jFIFMarkerSegment.addICC((ICC_ColorSpace)colorSpace);
-/*  600 */         } catch (IOException iOException) {}
-/*      */       }
-/*      */     } 
-/*      */     
-/*  604 */     if (bool2) {
-/*  605 */       this.markerSequence.add(new AdobeMarkerSegment(b));
-/*      */     }
-/*      */ 
-/*      */     
-/*  609 */     if (bool7) {
-/*  610 */       this.markerSequence.add(new DQTMarkerSegment(f, bool3));
-/*      */     }
-/*      */ 
-/*      */     
-/*  614 */     if (bool8) {
-/*  615 */       this.markerSequence.add(new DHTMarkerSegment(bool3));
-/*      */     }
-/*      */ 
-/*      */     
-/*  619 */     this.markerSequence.add(new SOFMarkerSegment(bool5, bool6, bool3, arrayOfByte, i));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  626 */     if (!bool5) {
-/*  627 */       this.markerSequence.add(new SOSMarkerSegment(bool3, arrayOfByte, i));
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  633 */     if (!isConsistent()) {
-/*  634 */       throw new InternalError("Default image metadata is inconsistent");
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   MarkerSegment findMarkerSegment(int paramInt) {
-/*  648 */     Iterator<MarkerSegment> iterator = this.markerSequence.iterator();
-/*  649 */     while (iterator.hasNext()) {
-/*  650 */       MarkerSegment markerSegment = iterator.next();
-/*  651 */       if (markerSegment.tag == paramInt) {
-/*  652 */         return markerSegment;
-/*      */       }
-/*      */     } 
-/*  655 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   MarkerSegment findMarkerSegment(Class paramClass, boolean paramBoolean) {
-/*  663 */     if (paramBoolean) {
-/*  664 */       Iterator<MarkerSegment> iterator = this.markerSequence.iterator();
-/*  665 */       while (iterator.hasNext()) {
-/*  666 */         MarkerSegment markerSegment = iterator.next();
-/*  667 */         if (paramClass.isInstance(markerSegment)) {
-/*  668 */           return markerSegment;
-/*      */         }
-/*      */       } 
-/*      */     } else {
-/*  672 */       ListIterator<MarkerSegment> listIterator = this.markerSequence.listIterator(this.markerSequence.size());
-/*  673 */       while (listIterator.hasPrevious()) {
-/*  674 */         MarkerSegment markerSegment = listIterator.previous();
-/*  675 */         if (paramClass.isInstance(markerSegment)) {
-/*  676 */           return markerSegment;
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*  680 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int findMarkerSegmentPosition(Class paramClass, boolean paramBoolean) {
-/*  688 */     if (paramBoolean) {
-/*  689 */       ListIterator<MarkerSegment> listIterator = this.markerSequence.listIterator();
-/*  690 */       for (byte b = 0; listIterator.hasNext(); b++) {
-/*  691 */         MarkerSegment markerSegment = listIterator.next();
-/*  692 */         if (paramClass.isInstance(markerSegment)) {
-/*  693 */           return b;
-/*      */         }
-/*      */       } 
-/*      */     } else {
-/*  697 */       ListIterator<MarkerSegment> listIterator = this.markerSequence.listIterator(this.markerSequence.size());
-/*  698 */       for (int i = this.markerSequence.size() - 1; listIterator.hasPrevious(); i--) {
-/*  699 */         MarkerSegment markerSegment = listIterator.previous();
-/*  700 */         if (paramClass.isInstance(markerSegment)) {
-/*  701 */           return i;
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*  705 */     return -1;
-/*      */   }
-/*      */   
-/*      */   private int findLastUnknownMarkerSegmentPosition() {
-/*  709 */     ListIterator<MarkerSegment> listIterator = this.markerSequence.listIterator(this.markerSequence.size());
-/*  710 */     for (int i = this.markerSequence.size() - 1; listIterator.hasPrevious(); i--) {
-/*  711 */       MarkerSegment markerSegment = listIterator.previous();
-/*  712 */       if (markerSegment.unknown == true) {
-/*  713 */         return i;
-/*      */       }
-/*      */     } 
-/*  716 */     return -1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected Object clone() {
-/*  722 */     JPEGMetadata jPEGMetadata = null;
-/*      */     try {
-/*  724 */       jPEGMetadata = (JPEGMetadata)super.clone();
-/*  725 */     } catch (CloneNotSupportedException cloneNotSupportedException) {}
-/*  726 */     if (this.markerSequence != null) {
-/*  727 */       jPEGMetadata.markerSequence = cloneSequence();
-/*      */     }
-/*  729 */     jPEGMetadata.resetSequence = null;
-/*  730 */     return jPEGMetadata;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private List cloneSequence() {
-/*  737 */     if (this.markerSequence == null) {
-/*  738 */       return null;
-/*      */     }
-/*  740 */     ArrayList<Object> arrayList = new ArrayList(this.markerSequence.size());
-/*  741 */     Iterator<MarkerSegment> iterator = this.markerSequence.iterator();
-/*  742 */     while (iterator.hasNext()) {
-/*  743 */       MarkerSegment markerSegment = iterator.next();
-/*  744 */       arrayList.add(markerSegment.clone());
-/*      */     } 
-/*      */     
-/*  747 */     return arrayList;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Node getAsTree(String paramString) {
-/*  754 */     if (paramString == null) {
-/*  755 */       throw new IllegalArgumentException("null formatName!");
-/*      */     }
-/*  757 */     if (this.isStream) {
-/*  758 */       if (paramString.equals("javax_imageio_jpeg_stream_1.0")) {
-/*  759 */         return getNativeTree();
-/*      */       }
-/*      */     } else {
-/*  762 */       if (paramString.equals("javax_imageio_jpeg_image_1.0")) {
-/*  763 */         return getNativeTree();
-/*      */       }
-/*  765 */       if (paramString
-/*  766 */         .equals("javax_imageio_1.0")) {
-/*  767 */         return getStandardTree();
-/*      */       }
-/*      */     } 
-/*  770 */     throw new IllegalArgumentException("Unsupported format name: " + paramString);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   IIOMetadataNode getNativeTree() {
-/*      */     IIOMetadataNode iIOMetadataNode1, iIOMetadataNode2;
-/*  777 */     Iterator<MarkerSegment> iterator = this.markerSequence.iterator();
-/*  778 */     if (this.isStream) {
-/*  779 */       iIOMetadataNode1 = new IIOMetadataNode("javax_imageio_jpeg_stream_1.0");
-/*  780 */       iIOMetadataNode2 = iIOMetadataNode1;
-/*      */     } else {
-/*  782 */       IIOMetadataNode iIOMetadataNode = new IIOMetadataNode("markerSequence");
-/*  783 */       if (!this.inThumb) {
-/*  784 */         iIOMetadataNode1 = new IIOMetadataNode("javax_imageio_jpeg_image_1.0");
-/*  785 */         IIOMetadataNode iIOMetadataNode3 = new IIOMetadataNode("JPEGvariety");
-/*  786 */         iIOMetadataNode1.appendChild(iIOMetadataNode3);
-/*      */         
-/*  788 */         JFIFMarkerSegment jFIFMarkerSegment = (JFIFMarkerSegment)findMarkerSegment(JFIFMarkerSegment.class, true);
-/*  789 */         if (jFIFMarkerSegment != null) {
-/*  790 */           iterator.next();
-/*  791 */           iIOMetadataNode3.appendChild(jFIFMarkerSegment.getNativeNode());
-/*      */         } 
-/*  793 */         iIOMetadataNode1.appendChild(iIOMetadataNode);
-/*      */       } else {
-/*  795 */         iIOMetadataNode1 = iIOMetadataNode;
-/*      */       } 
-/*  797 */       iIOMetadataNode2 = iIOMetadataNode;
-/*      */     } 
-/*  799 */     while (iterator.hasNext()) {
-/*  800 */       MarkerSegment markerSegment = iterator.next();
-/*  801 */       iIOMetadataNode2.appendChild(markerSegment.getNativeNode());
-/*      */     } 
-/*  803 */     return iIOMetadataNode1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected IIOMetadataNode getStandardChromaNode() {
-/*  809 */     this.hasAlpha = false;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  814 */     SOFMarkerSegment sOFMarkerSegment = (SOFMarkerSegment)findMarkerSegment(SOFMarkerSegment.class, true);
-/*  815 */     if (sOFMarkerSegment == null)
-/*      */     {
-/*  817 */       return null;
-/*      */     }
-/*      */     
-/*  820 */     IIOMetadataNode iIOMetadataNode1 = new IIOMetadataNode("Chroma");
-/*  821 */     IIOMetadataNode iIOMetadataNode2 = new IIOMetadataNode("ColorSpaceType");
-/*  822 */     iIOMetadataNode1.appendChild(iIOMetadataNode2);
-/*      */ 
-/*      */     
-/*  825 */     int i = sOFMarkerSegment.componentSpecs.length;
-/*      */     
-/*  827 */     IIOMetadataNode iIOMetadataNode3 = new IIOMetadataNode("NumChannels");
-/*  828 */     iIOMetadataNode1.appendChild(iIOMetadataNode3);
-/*  829 */     iIOMetadataNode3.setAttribute("value", Integer.toString(i));
-/*      */ 
-/*      */     
-/*  832 */     if (findMarkerSegment(JFIFMarkerSegment.class, true) != null) {
-/*  833 */       if (i == 1) {
-/*  834 */         iIOMetadataNode2.setAttribute("name", "GRAY");
-/*      */       } else {
-/*  836 */         iIOMetadataNode2.setAttribute("name", "YCbCr");
-/*      */       } 
-/*  838 */       return iIOMetadataNode1;
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/*  843 */     AdobeMarkerSegment adobeMarkerSegment = (AdobeMarkerSegment)findMarkerSegment(AdobeMarkerSegment.class, true);
-/*  844 */     if (adobeMarkerSegment != null) {
-/*  845 */       switch (adobeMarkerSegment.transform) {
-/*      */         case 2:
-/*  847 */           iIOMetadataNode2.setAttribute("name", "YCCK");
-/*      */           break;
-/*      */         case 1:
-/*  850 */           iIOMetadataNode2.setAttribute("name", "YCbCr");
-/*      */           break;
-/*      */         case 0:
-/*  853 */           if (i == 3) {
-/*  854 */             iIOMetadataNode2.setAttribute("name", "RGB"); break;
-/*  855 */           }  if (i == 4) {
-/*  856 */             iIOMetadataNode2.setAttribute("name", "CMYK");
-/*      */           }
-/*      */           break;
-/*      */       } 
-/*  860 */       return iIOMetadataNode1;
-/*      */     } 
-/*      */ 
-/*      */     
-/*  864 */     if (i < 3) {
-/*  865 */       iIOMetadataNode2.setAttribute("name", "GRAY");
-/*  866 */       if (i == 2) {
-/*  867 */         this.hasAlpha = true;
-/*      */       }
-/*  869 */       return iIOMetadataNode1;
-/*      */     } 
-/*      */     
-/*  872 */     boolean bool = true;
-/*      */     byte b1;
-/*  874 */     for (b1 = 0; b1 < sOFMarkerSegment.componentSpecs.length; b1++) {
-/*  875 */       int m = (sOFMarkerSegment.componentSpecs[b1]).componentId;
-/*  876 */       if (m < 1 || m >= sOFMarkerSegment.componentSpecs.length) {
-/*  877 */         bool = false;
-/*      */       }
-/*      */     } 
-/*      */     
-/*  881 */     if (bool) {
-/*  882 */       iIOMetadataNode2.setAttribute("name", "YCbCr");
-/*  883 */       if (i == 4) {
-/*  884 */         this.hasAlpha = true;
-/*      */       }
-/*  886 */       return iIOMetadataNode1;
-/*      */     } 
-/*      */ 
-/*      */     
-/*  890 */     if ((sOFMarkerSegment.componentSpecs[0]).componentId == 82 && (sOFMarkerSegment.componentSpecs[1]).componentId == 71 && (sOFMarkerSegment.componentSpecs[2]).componentId == 66) {
-/*      */ 
-/*      */ 
-/*      */       
-/*  894 */       iIOMetadataNode2.setAttribute("name", "RGB");
-/*  895 */       if (i == 4 && (sOFMarkerSegment.componentSpecs[3]).componentId == 65)
-/*      */       {
-/*  897 */         this.hasAlpha = true;
-/*      */       }
-/*  899 */       return iIOMetadataNode1;
-/*      */     } 
-/*      */     
-/*  902 */     if ((sOFMarkerSegment.componentSpecs[0]).componentId == 89 && (sOFMarkerSegment.componentSpecs[1]).componentId == 67 && (sOFMarkerSegment.componentSpecs[2]).componentId == 99) {
-/*      */ 
-/*      */ 
-/*      */       
-/*  906 */       iIOMetadataNode2.setAttribute("name", "PhotoYCC");
-/*  907 */       if (i == 4 && (sOFMarkerSegment.componentSpecs[3]).componentId == 65)
-/*      */       {
-/*  909 */         this.hasAlpha = true;
-/*      */       }
-/*  911 */       return iIOMetadataNode1;
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  917 */     b1 = 0;
-/*      */     
-/*  919 */     int j = (sOFMarkerSegment.componentSpecs[0]).HsamplingFactor;
-/*  920 */     int k = (sOFMarkerSegment.componentSpecs[0]).VsamplingFactor;
-/*      */     
-/*  922 */     for (byte b2 = 1; b2 < sOFMarkerSegment.componentSpecs.length; b2++) {
-/*  923 */       if ((sOFMarkerSegment.componentSpecs[b2]).HsamplingFactor != j || (sOFMarkerSegment.componentSpecs[b2]).VsamplingFactor != k) {
-/*      */         
-/*  925 */         b1 = 1;
-/*      */         
-/*      */         break;
-/*      */       } 
-/*      */     } 
-/*  930 */     if (b1 != 0) {
-/*  931 */       iIOMetadataNode2.setAttribute("name", "YCbCr");
-/*  932 */       if (i == 4) {
-/*  933 */         this.hasAlpha = true;
-/*      */       }
-/*  935 */       return iIOMetadataNode1;
-/*      */     } 
-/*      */ 
-/*      */     
-/*  939 */     if (i == 3) {
-/*  940 */       iIOMetadataNode2.setAttribute("name", "RGB");
-/*      */     } else {
-/*  942 */       iIOMetadataNode2.setAttribute("name", "CMYK");
-/*      */     } 
-/*      */     
-/*  945 */     return iIOMetadataNode1;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   protected IIOMetadataNode getStandardCompressionNode() {
-/*  950 */     IIOMetadataNode iIOMetadataNode1 = new IIOMetadataNode("Compression");
-/*      */ 
-/*      */     
-/*  953 */     IIOMetadataNode iIOMetadataNode2 = new IIOMetadataNode("CompressionTypeName");
-/*  954 */     iIOMetadataNode2.setAttribute("value", "JPEG");
-/*  955 */     iIOMetadataNode1.appendChild(iIOMetadataNode2);
-/*      */ 
-/*      */     
-/*  958 */     IIOMetadataNode iIOMetadataNode3 = new IIOMetadataNode("Lossless");
-/*  959 */     iIOMetadataNode3.setAttribute("value", "FALSE");
-/*  960 */     iIOMetadataNode1.appendChild(iIOMetadataNode3);
-/*      */ 
-/*      */     
-/*  963 */     byte b = 0;
-/*  964 */     Iterator<MarkerSegment> iterator = this.markerSequence.iterator();
-/*  965 */     while (iterator.hasNext()) {
-/*  966 */       MarkerSegment markerSegment = iterator.next();
-/*  967 */       if (markerSegment.tag == 218) {
-/*  968 */         b++;
-/*      */       }
-/*      */     } 
-/*  971 */     if (b != 0) {
-/*  972 */       IIOMetadataNode iIOMetadataNode = new IIOMetadataNode("NumProgressiveScans");
-/*  973 */       iIOMetadataNode.setAttribute("value", Integer.toString(b));
-/*  974 */       iIOMetadataNode1.appendChild(iIOMetadataNode);
-/*      */     } 
-/*      */     
-/*  977 */     return iIOMetadataNode1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected IIOMetadataNode getStandardDimensionNode() {
-/*  983 */     IIOMetadataNode iIOMetadataNode1 = new IIOMetadataNode("Dimension");
-/*  984 */     IIOMetadataNode iIOMetadataNode2 = new IIOMetadataNode("ImageOrientation");
-/*  985 */     iIOMetadataNode2.setAttribute("value", "normal");
-/*  986 */     iIOMetadataNode1.appendChild(iIOMetadataNode2);
-/*      */ 
-/*      */     
-/*  989 */     JFIFMarkerSegment jFIFMarkerSegment = (JFIFMarkerSegment)findMarkerSegment(JFIFMarkerSegment.class, true);
-/*  990 */     if (jFIFMarkerSegment != null) {
-/*      */       float f;
-/*      */ 
-/*      */       
-/*  994 */       if (jFIFMarkerSegment.resUnits == 0) {
-/*      */         
-/*  996 */         f = jFIFMarkerSegment.Xdensity / jFIFMarkerSegment.Ydensity;
-/*      */       } else {
-/*      */         
-/*  999 */         f = jFIFMarkerSegment.Ydensity / jFIFMarkerSegment.Xdensity;
-/*      */       } 
-/* 1001 */       IIOMetadataNode iIOMetadataNode = new IIOMetadataNode("PixelAspectRatio");
-/* 1002 */       iIOMetadataNode.setAttribute("value", Float.toString(f));
-/* 1003 */       iIOMetadataNode1.insertBefore(iIOMetadataNode, iIOMetadataNode2);
-/*      */ 
-/*      */       
-/* 1006 */       if (jFIFMarkerSegment.resUnits != 0) {
-/*      */         
-/* 1008 */         float f1 = (jFIFMarkerSegment.resUnits == 1) ? 25.4F : 10.0F;
-/*      */         
-/* 1010 */         IIOMetadataNode iIOMetadataNode3 = new IIOMetadataNode("HorizontalPixelSize");
-/*      */         
-/* 1012 */         iIOMetadataNode3.setAttribute("value", 
-/* 1013 */             Float.toString(f1 / jFIFMarkerSegment.Xdensity));
-/* 1014 */         iIOMetadataNode1.appendChild(iIOMetadataNode3);
-/*      */         
-/* 1016 */         IIOMetadataNode iIOMetadataNode4 = new IIOMetadataNode("VerticalPixelSize");
-/*      */         
-/* 1018 */         iIOMetadataNode4.setAttribute("value", 
-/* 1019 */             Float.toString(f1 / jFIFMarkerSegment.Ydensity));
-/* 1020 */         iIOMetadataNode1.appendChild(iIOMetadataNode4);
-/*      */       } 
-/*      */     } 
-/* 1023 */     return iIOMetadataNode1;
-/*      */   }
-/*      */   
-/*      */   protected IIOMetadataNode getStandardTextNode() {
-/* 1027 */     IIOMetadataNode iIOMetadataNode = null;
-/*      */     
-/* 1029 */     if (findMarkerSegment(254) != null) {
-/* 1030 */       iIOMetadataNode = new IIOMetadataNode("Text");
-/* 1031 */       Iterator<MarkerSegment> iterator = this.markerSequence.iterator();
-/* 1032 */       while (iterator.hasNext()) {
-/* 1033 */         MarkerSegment markerSegment = iterator.next();
-/* 1034 */         if (markerSegment.tag == 254) {
-/* 1035 */           COMMarkerSegment cOMMarkerSegment = (COMMarkerSegment)markerSegment;
-/* 1036 */           IIOMetadataNode iIOMetadataNode1 = new IIOMetadataNode("TextEntry");
-/* 1037 */           iIOMetadataNode1.setAttribute("keyword", "comment");
-/* 1038 */           iIOMetadataNode1.setAttribute("value", cOMMarkerSegment.getComment());
-/* 1039 */           iIOMetadataNode.appendChild(iIOMetadataNode1);
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/* 1043 */     return iIOMetadataNode;
-/*      */   }
-/*      */   
-/*      */   protected IIOMetadataNode getStandardTransparencyNode() {
-/* 1047 */     IIOMetadataNode iIOMetadataNode = null;
-/* 1048 */     if (this.hasAlpha == true) {
-/* 1049 */       iIOMetadataNode = new IIOMetadataNode("Transparency");
-/* 1050 */       IIOMetadataNode iIOMetadataNode1 = new IIOMetadataNode("Alpha");
-/* 1051 */       iIOMetadataNode1.setAttribute("value", "nonpremultiplied");
-/* 1052 */       iIOMetadataNode.appendChild(iIOMetadataNode1);
-/*      */     } 
-/* 1054 */     return iIOMetadataNode;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isReadOnly() {
-/* 1060 */     return false;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public void mergeTree(String paramString, Node paramNode) throws IIOInvalidTreeException {
-/* 1065 */     if (paramString == null) {
-/* 1066 */       throw new IllegalArgumentException("null formatName!");
-/*      */     }
-/* 1068 */     if (paramNode == null) {
-/* 1069 */       throw new IllegalArgumentException("null root!");
-/*      */     }
-/* 1071 */     List list = null;
-/* 1072 */     if (this.resetSequence == null) {
-/* 1073 */       this.resetSequence = cloneSequence();
-/* 1074 */       list = this.resetSequence;
-/*      */     } else {
-/* 1076 */       list = cloneSequence();
-/*      */     } 
-/* 1078 */     if (this.isStream && paramString
-/* 1079 */       .equals("javax_imageio_jpeg_stream_1.0")) {
-/* 1080 */       mergeNativeTree(paramNode);
-/* 1081 */     } else if (!this.isStream && paramString
-/* 1082 */       .equals("javax_imageio_jpeg_image_1.0")) {
-/* 1083 */       mergeNativeTree(paramNode);
-/* 1084 */     } else if (!this.isStream && paramString
-/*      */       
-/* 1086 */       .equals("javax_imageio_1.0")) {
-/* 1087 */       mergeStandardTree(paramNode);
-/*      */     } else {
-/* 1089 */       throw new IllegalArgumentException("Unsupported format name: " + paramString);
-/*      */     } 
-/*      */     
-/* 1092 */     if (!isConsistent()) {
-/* 1093 */       this.markerSequence = list;
-/* 1094 */       throw new IIOInvalidTreeException("Merged tree is invalid; original restored", paramNode);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private void mergeNativeTree(Node paramNode) throws IIOInvalidTreeException {
-/* 1100 */     String str = paramNode.getNodeName();
-/* 1101 */     if (str != (this.isStream ? "javax_imageio_jpeg_stream_1.0" : "javax_imageio_jpeg_image_1.0"))
-/*      */     {
-/* 1103 */       throw new IIOInvalidTreeException("Invalid root node name: " + str, paramNode);
-/*      */     }
-/*      */     
-/* 1106 */     if (paramNode.getChildNodes().getLength() != 2) {
-/* 1107 */       throw new IIOInvalidTreeException("JPEGvariety and markerSequence nodes must be present", paramNode);
-/*      */     }
-/*      */     
-/* 1110 */     mergeJFIFsubtree(paramNode.getFirstChild());
-/* 1111 */     mergeSequenceSubtree(paramNode.getLastChild());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void mergeJFIFsubtree(Node paramNode) throws IIOInvalidTreeException {
-/* 1123 */     if (paramNode.getChildNodes().getLength() != 0) {
-/* 1124 */       Node node = paramNode.getFirstChild();
-/*      */ 
-/*      */       
-/* 1127 */       JFIFMarkerSegment jFIFMarkerSegment = (JFIFMarkerSegment)findMarkerSegment(JFIFMarkerSegment.class, true);
-/* 1128 */       if (jFIFMarkerSegment != null) {
-/* 1129 */         jFIFMarkerSegment.updateFromNativeNode(node, false);
-/*      */       } else {
-/*      */         
-/* 1132 */         this.markerSequence.add(0, new JFIFMarkerSegment(node));
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private void mergeSequenceSubtree(Node paramNode) throws IIOInvalidTreeException {
-/* 1139 */     NodeList nodeList = paramNode.getChildNodes();
-/* 1140 */     for (byte b = 0; b < nodeList.getLength(); b++) {
-/* 1141 */       Node node = nodeList.item(b);
-/* 1142 */       String str = node.getNodeName();
-/* 1143 */       if (str.equals("dqt")) {
-/* 1144 */         mergeDQTNode(node);
-/* 1145 */       } else if (str.equals("dht")) {
-/* 1146 */         mergeDHTNode(node);
-/* 1147 */       } else if (str.equals("dri")) {
-/* 1148 */         mergeDRINode(node);
-/* 1149 */       } else if (str.equals("com")) {
-/* 1150 */         mergeCOMNode(node);
-/* 1151 */       } else if (str.equals("app14Adobe")) {
-/* 1152 */         mergeAdobeNode(node);
-/* 1153 */       } else if (str.equals("unknown")) {
-/* 1154 */         mergeUnknownNode(node);
-/* 1155 */       } else if (str.equals("sof")) {
-/* 1156 */         mergeSOFNode(node);
-/* 1157 */       } else if (str.equals("sos")) {
-/* 1158 */         mergeSOSNode(node);
-/*      */       } else {
-/* 1160 */         throw new IIOInvalidTreeException("Invalid node: " + str, node);
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void mergeDQTNode(Node paramNode) throws IIOInvalidTreeException {
-/* 1184 */     ArrayList<MarkerSegment> arrayList = new ArrayList();
-/* 1185 */     Iterator<MarkerSegment> iterator = this.markerSequence.iterator();
-/* 1186 */     while (iterator.hasNext()) {
-/* 1187 */       MarkerSegment markerSegment = iterator.next();
-/* 1188 */       if (markerSegment instanceof DQTMarkerSegment) {
-/* 1189 */         arrayList.add(markerSegment);
-/*      */       }
-/*      */     } 
-/* 1192 */     if (!arrayList.isEmpty()) {
-/* 1193 */       NodeList nodeList = paramNode.getChildNodes();
-/* 1194 */       for (byte b = 0; b < nodeList.getLength(); b++) {
-/* 1195 */         Node node = nodeList.item(b);
-/* 1196 */         int i = MarkerSegment.getAttributeValue(node, null, "qtableId", 0, 3, true);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1201 */         DQTMarkerSegment dQTMarkerSegment = null;
-/* 1202 */         byte b1 = -1;
-/* 1203 */         for (byte b2 = 0; b2 < arrayList.size(); b2++) {
-/* 1204 */           DQTMarkerSegment dQTMarkerSegment1 = (DQTMarkerSegment)arrayList.get(b2);
-/* 1205 */           for (byte b3 = 0; b3 < dQTMarkerSegment1.tables.size(); b3++) {
-/*      */             
-/* 1207 */             DQTMarkerSegment.Qtable qtable = dQTMarkerSegment1.tables.get(b3);
-/* 1208 */             if (i == qtable.tableID) {
-/* 1209 */               dQTMarkerSegment = dQTMarkerSegment1;
-/* 1210 */               b1 = b3;
-/*      */               break;
-/*      */             } 
-/*      */           } 
-/* 1214 */           if (dQTMarkerSegment != null)
-/*      */             break; 
-/* 1216 */         }  if (dQTMarkerSegment != null) {
-/* 1217 */           dQTMarkerSegment.tables.set(b1, dQTMarkerSegment.getQtableFromNode(node));
-/*      */         } else {
-/* 1219 */           dQTMarkerSegment = (DQTMarkerSegment)arrayList.get(arrayList.size() - 1);
-/* 1220 */           dQTMarkerSegment.tables.add(dQTMarkerSegment.getQtableFromNode(node));
-/*      */         } 
-/*      */       } 
-/*      */     } else {
-/* 1224 */       DQTMarkerSegment dQTMarkerSegment = new DQTMarkerSegment(paramNode);
-/* 1225 */       int i = findMarkerSegmentPosition(DHTMarkerSegment.class, true);
-/* 1226 */       int j = findMarkerSegmentPosition(SOFMarkerSegment.class, true);
-/* 1227 */       int k = findMarkerSegmentPosition(SOSMarkerSegment.class, true);
-/* 1228 */       if (i != -1) {
-/* 1229 */         this.markerSequence.add(i, dQTMarkerSegment);
-/* 1230 */       } else if (j != -1) {
-/* 1231 */         this.markerSequence.add(j, dQTMarkerSegment);
-/* 1232 */       } else if (k != -1) {
-/* 1233 */         this.markerSequence.add(k, dQTMarkerSegment);
-/*      */       } else {
-/* 1235 */         this.markerSequence.add(dQTMarkerSegment);
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void mergeDHTNode(Node paramNode) throws IIOInvalidTreeException {
-/* 1260 */     ArrayList<MarkerSegment> arrayList = new ArrayList();
-/* 1261 */     Iterator<MarkerSegment> iterator = this.markerSequence.iterator();
-/* 1262 */     while (iterator.hasNext()) {
-/* 1263 */       MarkerSegment markerSegment = iterator.next();
-/* 1264 */       if (markerSegment instanceof DHTMarkerSegment) {
-/* 1265 */         arrayList.add(markerSegment);
-/*      */       }
-/*      */     } 
-/* 1268 */     if (!arrayList.isEmpty()) {
-/* 1269 */       NodeList nodeList = paramNode.getChildNodes();
-/* 1270 */       for (byte b = 0; b < nodeList.getLength(); b++) {
-/* 1271 */         Node node = nodeList.item(b);
-/* 1272 */         NamedNodeMap namedNodeMap = node.getAttributes();
-/* 1273 */         int i = MarkerSegment.getAttributeValue(node, namedNodeMap, "htableId", 0, 3, true);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1278 */         int j = MarkerSegment.getAttributeValue(node, namedNodeMap, "class", 0, 1, true);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1283 */         DHTMarkerSegment dHTMarkerSegment = null;
-/* 1284 */         byte b1 = -1;
-/* 1285 */         for (byte b2 = 0; b2 < arrayList.size(); b2++) {
-/* 1286 */           DHTMarkerSegment dHTMarkerSegment1 = (DHTMarkerSegment)arrayList.get(b2);
-/* 1287 */           for (byte b3 = 0; b3 < dHTMarkerSegment1.tables.size(); b3++) {
-/*      */             
-/* 1289 */             DHTMarkerSegment.Htable htable = dHTMarkerSegment1.tables.get(b3);
-/* 1290 */             if (i == htable.tableID && j == htable.tableClass) {
-/*      */               
-/* 1292 */               dHTMarkerSegment = dHTMarkerSegment1;
-/* 1293 */               b1 = b3;
-/*      */               break;
-/*      */             } 
-/*      */           } 
-/* 1297 */           if (dHTMarkerSegment != null)
-/*      */             break; 
-/* 1299 */         }  if (dHTMarkerSegment != null) {
-/* 1300 */           dHTMarkerSegment.tables.set(b1, dHTMarkerSegment.getHtableFromNode(node));
-/*      */         } else {
-/* 1302 */           dHTMarkerSegment = (DHTMarkerSegment)arrayList.get(arrayList.size() - 1);
-/* 1303 */           dHTMarkerSegment.tables.add(dHTMarkerSegment.getHtableFromNode(node));
-/*      */         } 
-/*      */       } 
-/*      */     } else {
-/* 1307 */       DHTMarkerSegment dHTMarkerSegment = new DHTMarkerSegment(paramNode);
-/* 1308 */       int i = findMarkerSegmentPosition(DQTMarkerSegment.class, false);
-/* 1309 */       int j = findMarkerSegmentPosition(SOFMarkerSegment.class, true);
-/* 1310 */       int k = findMarkerSegmentPosition(SOSMarkerSegment.class, true);
-/* 1311 */       if (i != -1) {
-/* 1312 */         this.markerSequence.add(i + 1, dHTMarkerSegment);
-/* 1313 */       } else if (j != -1) {
-/* 1314 */         this.markerSequence.add(j, dHTMarkerSegment);
-/* 1315 */       } else if (k != -1) {
-/* 1316 */         this.markerSequence.add(k, dHTMarkerSegment);
-/*      */       } else {
-/* 1318 */         this.markerSequence.add(dHTMarkerSegment);
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void mergeDRINode(Node paramNode) throws IIOInvalidTreeException {
-/* 1338 */     DRIMarkerSegment dRIMarkerSegment = (DRIMarkerSegment)findMarkerSegment(DRIMarkerSegment.class, true);
-/* 1339 */     if (dRIMarkerSegment != null) {
-/* 1340 */       dRIMarkerSegment.updateFromNativeNode(paramNode, false);
-/*      */     } else {
-/* 1342 */       DRIMarkerSegment dRIMarkerSegment1 = new DRIMarkerSegment(paramNode);
-/* 1343 */       int i = findMarkerSegmentPosition(SOFMarkerSegment.class, true);
-/* 1344 */       int j = findMarkerSegmentPosition(SOSMarkerSegment.class, true);
-/* 1345 */       if (i != -1) {
-/* 1346 */         this.markerSequence.add(i, dRIMarkerSegment1);
-/* 1347 */       } else if (j != -1) {
-/* 1348 */         this.markerSequence.add(j, dRIMarkerSegment1);
-/*      */       } else {
-/* 1350 */         this.markerSequence.add(dRIMarkerSegment1);
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void mergeCOMNode(Node paramNode) throws IIOInvalidTreeException {
-/* 1361 */     COMMarkerSegment cOMMarkerSegment = new COMMarkerSegment(paramNode);
-/* 1362 */     insertCOMMarkerSegment(cOMMarkerSegment);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void insertCOMMarkerSegment(COMMarkerSegment paramCOMMarkerSegment) {
-/* 1378 */     int i = findMarkerSegmentPosition(COMMarkerSegment.class, false);
-/* 1379 */     boolean bool = (findMarkerSegment(JFIFMarkerSegment.class, true) != null) ? true : false;
-/* 1380 */     int j = findMarkerSegmentPosition(AdobeMarkerSegment.class, true);
-/* 1381 */     if (i != -1) {
-/* 1382 */       this.markerSequence.add(i + 1, paramCOMMarkerSegment);
-/* 1383 */     } else if (bool) {
-/* 1384 */       this.markerSequence.add(1, paramCOMMarkerSegment);
-/* 1385 */     } else if (j != -1) {
-/* 1386 */       this.markerSequence.add(j + 1, paramCOMMarkerSegment);
-/*      */     } else {
-/* 1388 */       this.markerSequence.add(0, paramCOMMarkerSegment);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void mergeAdobeNode(Node paramNode) throws IIOInvalidTreeException {
-/* 1401 */     AdobeMarkerSegment adobeMarkerSegment = (AdobeMarkerSegment)findMarkerSegment(AdobeMarkerSegment.class, true);
-/* 1402 */     if (adobeMarkerSegment != null) {
-/* 1403 */       adobeMarkerSegment.updateFromNativeNode(paramNode, false);
-/*      */     } else {
-/* 1405 */       AdobeMarkerSegment adobeMarkerSegment1 = new AdobeMarkerSegment(paramNode);
-/* 1406 */       insertAdobeMarkerSegment(adobeMarkerSegment1);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void insertAdobeMarkerSegment(AdobeMarkerSegment paramAdobeMarkerSegment) {
-/* 1422 */     boolean bool = (findMarkerSegment(JFIFMarkerSegment.class, true) != null) ? true : false;
-/* 1423 */     int i = findLastUnknownMarkerSegmentPosition();
-/* 1424 */     if (bool) {
-/* 1425 */       this.markerSequence.add(1, paramAdobeMarkerSegment);
-/* 1426 */     } else if (i != -1) {
-/* 1427 */       this.markerSequence.add(i + 1, paramAdobeMarkerSegment);
-/*      */     } else {
-/* 1429 */       this.markerSequence.add(0, paramAdobeMarkerSegment);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void mergeUnknownNode(Node paramNode) throws IIOInvalidTreeException {
-/* 1447 */     MarkerSegment markerSegment = new MarkerSegment(paramNode);
-/* 1448 */     int i = findLastUnknownMarkerSegmentPosition();
-/* 1449 */     boolean bool = (findMarkerSegment(JFIFMarkerSegment.class, true) != null) ? true : false;
-/* 1450 */     int j = findMarkerSegmentPosition(AdobeMarkerSegment.class, true);
-/* 1451 */     if (i != -1) {
-/* 1452 */       this.markerSequence.add(i + 1, markerSegment);
-/* 1453 */     } else if (bool) {
-/* 1454 */       this.markerSequence.add(1, markerSegment);
-/* 1455 */     }  if (j != -1) {
-/* 1456 */       this.markerSequence.add(j, markerSegment);
-/*      */     } else {
-/* 1458 */       this.markerSequence.add(0, markerSegment);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void mergeSOFNode(Node paramNode) throws IIOInvalidTreeException {
-/* 1476 */     SOFMarkerSegment sOFMarkerSegment = (SOFMarkerSegment)findMarkerSegment(SOFMarkerSegment.class, true);
-/* 1477 */     if (sOFMarkerSegment != null) {
-/* 1478 */       sOFMarkerSegment.updateFromNativeNode(paramNode, false);
-/*      */     } else {
-/* 1480 */       SOFMarkerSegment sOFMarkerSegment1 = new SOFMarkerSegment(paramNode);
-/* 1481 */       int i = findMarkerSegmentPosition(SOSMarkerSegment.class, true);
-/* 1482 */       if (i != -1) {
-/* 1483 */         this.markerSequence.add(i, sOFMarkerSegment1);
-/*      */       } else {
-/* 1485 */         this.markerSequence.add(sOFMarkerSegment1);
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void mergeSOSNode(Node paramNode) throws IIOInvalidTreeException {
-/* 1502 */     SOSMarkerSegment sOSMarkerSegment1 = (SOSMarkerSegment)findMarkerSegment(SOSMarkerSegment.class, true);
-/*      */     
-/* 1504 */     SOSMarkerSegment sOSMarkerSegment2 = (SOSMarkerSegment)findMarkerSegment(SOSMarkerSegment.class, false);
-/* 1505 */     if (sOSMarkerSegment1 != null) {
-/* 1506 */       if (sOSMarkerSegment1 != sOSMarkerSegment2) {
-/* 1507 */         throw new IIOInvalidTreeException("Can't merge SOS node into a tree with > 1 SOS node", paramNode);
-/*      */       }
-/*      */       
-/* 1510 */       sOSMarkerSegment1.updateFromNativeNode(paramNode, false);
-/*      */     } else {
-/* 1512 */       this.markerSequence.add(new SOSMarkerSegment(paramNode));
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void mergeStandardTree(Node paramNode) throws IIOInvalidTreeException {
-/* 1519 */     this.transparencyDone = false;
-/* 1520 */     NodeList nodeList = paramNode.getChildNodes();
-/* 1521 */     for (byte b = 0; b < nodeList.getLength(); b++) {
-/* 1522 */       Node node = nodeList.item(b);
-/* 1523 */       String str = node.getNodeName();
-/* 1524 */       if (str.equals("Chroma")) {
-/* 1525 */         mergeStandardChromaNode(node, nodeList);
-/* 1526 */       } else if (str.equals("Compression")) {
-/* 1527 */         mergeStandardCompressionNode(node);
-/* 1528 */       } else if (str.equals("Data")) {
-/* 1529 */         mergeStandardDataNode(node);
-/* 1530 */       } else if (str.equals("Dimension")) {
-/* 1531 */         mergeStandardDimensionNode(node);
-/* 1532 */       } else if (str.equals("Document")) {
-/* 1533 */         mergeStandardDocumentNode(node);
-/* 1534 */       } else if (str.equals("Text")) {
-/* 1535 */         mergeStandardTextNode(node);
-/* 1536 */       } else if (str.equals("Transparency")) {
-/* 1537 */         mergeStandardTransparencyNode(node);
-/*      */       } else {
-/* 1539 */         throw new IIOInvalidTreeException("Invalid node: " + str, node);
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void mergeStandardChromaNode(Node paramNode, NodeList paramNodeList) throws IIOInvalidTreeException {
-/* 1563 */     if (this.transparencyDone) {
-/* 1564 */       throw new IIOInvalidTreeException("Transparency node must follow Chroma node", paramNode);
-/*      */     }
-/*      */ 
-/*      */     
-/* 1568 */     Node node = paramNode.getFirstChild();
-/* 1569 */     if (node == null || !node.getNodeName().equals("ColorSpaceType")) {
-/*      */       return;
-/*      */     }
-/*      */ 
-/*      */     
-/* 1574 */     String str = node.getAttributes().getNamedItem("name").getNodeValue();
-/*      */     
-/* 1576 */     byte b1 = 0;
-/* 1577 */     boolean bool1 = false;
-/* 1578 */     boolean bool2 = false;
-/* 1579 */     byte b2 = 0;
-/* 1580 */     boolean bool3 = false;
-/* 1581 */     byte[] arrayOfByte = { 1, 2, 3, 4 };
-/* 1582 */     if (str.equals("GRAY")) {
-/* 1583 */       b1 = 1;
-/* 1584 */       bool1 = true;
-/* 1585 */     } else if (str.equals("YCbCr")) {
-/* 1586 */       b1 = 3;
-/* 1587 */       bool1 = true;
-/* 1588 */       bool3 = true;
-/* 1589 */     } else if (str.equals("PhotoYCC")) {
-/* 1590 */       b1 = 3;
-/* 1591 */       bool2 = true;
-/* 1592 */       b2 = 1;
-/* 1593 */       arrayOfByte[0] = 89;
-/* 1594 */       arrayOfByte[1] = 67;
-/* 1595 */       arrayOfByte[2] = 99;
-/* 1596 */     } else if (str.equals("RGB")) {
-/* 1597 */       b1 = 3;
-/* 1598 */       bool2 = true;
-/* 1599 */       b2 = 0;
-/* 1600 */       arrayOfByte[0] = 82;
-/* 1601 */       arrayOfByte[1] = 71;
-/* 1602 */       arrayOfByte[2] = 66;
-/* 1603 */     } else if (str.equals("XYZ") || str
-/* 1604 */       .equals("Lab") || str
-/* 1605 */       .equals("Luv") || str
-/* 1606 */       .equals("YxY") || str
-/* 1607 */       .equals("HSV") || str
-/* 1608 */       .equals("HLS") || str
-/* 1609 */       .equals("CMY") || str
-/* 1610 */       .equals("3CLR")) {
-/* 1611 */       b1 = 3;
-/* 1612 */     } else if (str.equals("YCCK")) {
-/* 1613 */       b1 = 4;
-/* 1614 */       bool2 = true;
-/* 1615 */       b2 = 2;
-/* 1616 */       bool3 = true;
-/* 1617 */     } else if (str.equals("CMYK")) {
-/* 1618 */       b1 = 4;
-/* 1619 */       bool2 = true;
-/* 1620 */       b2 = 0;
-/* 1621 */     } else if (str.equals("4CLR")) {
-/* 1622 */       b1 = 4;
-/*      */     } else {
-/*      */       return;
-/*      */     } 
-/*      */     
-/* 1627 */     boolean bool = false;
-/* 1628 */     for (byte b3 = 0; b3 < paramNodeList.getLength(); b3++) {
-/* 1629 */       Node node1 = paramNodeList.item(b3);
-/* 1630 */       if (node1.getNodeName().equals("Transparency")) {
-/* 1631 */         bool = wantAlpha(node1);
-/*      */         
-/*      */         break;
-/*      */       } 
-/*      */     } 
-/* 1636 */     if (bool) {
-/* 1637 */       b1++;
-/* 1638 */       bool1 = false;
-/* 1639 */       if (arrayOfByte[0] == 82) {
-/* 1640 */         arrayOfByte[3] = 65;
-/* 1641 */         bool2 = false;
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1646 */     JFIFMarkerSegment jFIFMarkerSegment = (JFIFMarkerSegment)findMarkerSegment(JFIFMarkerSegment.class, true);
-/*      */     
-/* 1648 */     AdobeMarkerSegment adobeMarkerSegment = (AdobeMarkerSegment)findMarkerSegment(AdobeMarkerSegment.class, true);
-/*      */     
-/* 1650 */     SOFMarkerSegment sOFMarkerSegment = (SOFMarkerSegment)findMarkerSegment(SOFMarkerSegment.class, true);
-/*      */     
-/* 1652 */     SOSMarkerSegment sOSMarkerSegment = (SOSMarkerSegment)findMarkerSegment(SOSMarkerSegment.class, true);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1660 */     if (sOFMarkerSegment != null && sOFMarkerSegment.tag == 194 && 
-/* 1661 */       sOFMarkerSegment.componentSpecs.length != b1 && sOSMarkerSegment != null) {
-/*      */       return;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/* 1667 */     if (!bool1 && jFIFMarkerSegment != null) {
-/* 1668 */       this.markerSequence.remove(jFIFMarkerSegment);
-/*      */     }
-/*      */ 
-/*      */     
-/* 1672 */     if (bool1 && !this.isStream) {
-/* 1673 */       this.markerSequence.add(0, new JFIFMarkerSegment());
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/* 1678 */     if (bool2) {
-/* 1679 */       if (adobeMarkerSegment == null && !this.isStream) {
-/* 1680 */         adobeMarkerSegment = new AdobeMarkerSegment(b2);
-/* 1681 */         insertAdobeMarkerSegment(adobeMarkerSegment);
-/*      */       } else {
-/* 1683 */         adobeMarkerSegment.transform = b2;
-/*      */       } 
-/* 1685 */     } else if (adobeMarkerSegment != null) {
-/* 1686 */       this.markerSequence.remove(adobeMarkerSegment);
-/*      */     } 
-/*      */     
-/* 1689 */     boolean bool4 = false;
-/* 1690 */     boolean bool5 = false;
-/*      */     
-/* 1692 */     boolean bool6 = false;
-/*      */     
-/* 1694 */     int[] arrayOfInt1 = { 0, 1, 1, 0 };
-/* 1695 */     int[] arrayOfInt2 = { 0, 0, 0, 0 };
-/*      */     
-/* 1697 */     int[] arrayOfInt3 = bool3 ? arrayOfInt1 : arrayOfInt2;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1702 */     SOFMarkerSegment.ComponentSpec[] arrayOfComponentSpec = null;
-/*      */     
-/* 1704 */     if (sOFMarkerSegment != null) {
-/* 1705 */       arrayOfComponentSpec = sOFMarkerSegment.componentSpecs;
-/* 1706 */       bool6 = (sOFMarkerSegment.tag == 194) ? true : false;
-/*      */ 
-/*      */       
-/* 1709 */       this.markerSequence.set(this.markerSequence.indexOf(sOFMarkerSegment), new SOFMarkerSegment(bool6, false, bool3, arrayOfByte, b1));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       byte b;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1721 */       for (b = 0; b < arrayOfComponentSpec.length; b++) {
-/* 1722 */         if ((arrayOfComponentSpec[b]).QtableSelector != arrayOfInt3[b]) {
-/* 1723 */           bool4 = true;
-/*      */         }
-/*      */       } 
-/*      */       
-/* 1727 */       if (bool6) {
-/*      */ 
-/*      */         
-/* 1730 */         b = 0;
-/* 1731 */         for (byte b4 = 0; b4 < arrayOfComponentSpec.length; b4++) {
-/* 1732 */           if (arrayOfByte[b4] != (arrayOfComponentSpec[b4]).componentId) {
-/* 1733 */             b = 1;
-/*      */           }
-/*      */         } 
-/* 1736 */         if (b != 0)
-/*      */         {
-/* 1738 */           for (MarkerSegment markerSegment : this.markerSequence) {
-/*      */             
-/* 1740 */             if (markerSegment instanceof SOSMarkerSegment) {
-/* 1741 */               SOSMarkerSegment sOSMarkerSegment1 = (SOSMarkerSegment)markerSegment;
-/* 1742 */               for (byte b5 = 0; b5 < sOSMarkerSegment1.componentSpecs.length; b5++) {
-/* 1743 */                 int i = (sOSMarkerSegment1.componentSpecs[b5]).componentSelector;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */                 
-/* 1751 */                 for (byte b6 = 0; b6 < arrayOfComponentSpec.length; b6++) {
-/* 1752 */                   if ((arrayOfComponentSpec[b6]).componentId == i) {
-/* 1753 */                     (sOSMarkerSegment1.componentSpecs[b5]).componentSelector = arrayOfByte[b6];
-/*      */                   }
-/*      */                 }
-/*      */               
-/*      */               }
-/*      */             
-/*      */             } 
-/*      */           } 
-/*      */         }
-/* 1762 */       } else if (sOSMarkerSegment != null) {
-/*      */ 
-/*      */         
-/* 1765 */         for (b = 0; b < sOSMarkerSegment.componentSpecs.length; b++) {
-/* 1766 */           if ((sOSMarkerSegment.componentSpecs[b]).dcHuffTable != arrayOfInt3[b] || (sOSMarkerSegment.componentSpecs[b]).acHuffTable != arrayOfInt3[b])
-/*      */           {
-/*      */ 
-/*      */             
-/* 1770 */             bool5 = true;
-/*      */           }
-/*      */         } 
-/*      */ 
-/*      */         
-/* 1775 */         this.markerSequence.set(this.markerSequence.indexOf(sOSMarkerSegment), new SOSMarkerSegment(bool3, arrayOfByte, b1));
-/*      */ 
-/*      */       
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     }
-/* 1783 */     else if (this.isStream) {
-/*      */       
-/* 1785 */       bool4 = true;
-/* 1786 */       bool5 = true;
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1790 */     if (bool4) {
-/* 1791 */       ArrayList<MarkerSegment> arrayList = new ArrayList();
-/* 1792 */       for (MarkerSegment markerSegment : this.markerSequence) {
-/*      */         
-/* 1794 */         if (markerSegment instanceof DQTMarkerSegment) {
-/* 1795 */           arrayList.add(markerSegment);
-/*      */         }
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1801 */       if (!arrayList.isEmpty() && bool3) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1808 */         boolean bool7 = false;
-/* 1809 */         for (DQTMarkerSegment dQTMarkerSegment : arrayList) {
-/*      */           
-/* 1811 */           Iterator<DQTMarkerSegment.Qtable> iterator = dQTMarkerSegment.tables.iterator();
-/* 1812 */           while (iterator.hasNext()) {
-/*      */             
-/* 1814 */             DQTMarkerSegment.Qtable qtable = iterator.next();
-/* 1815 */             if (qtable.tableID == 1) {
-/* 1816 */               bool7 = true;
-/*      */             }
-/*      */           } 
-/*      */         } 
-/* 1820 */         if (!bool7) {
-/*      */           
-/* 1822 */           DQTMarkerSegment.Qtable qtable = null;
-/* 1823 */           for (DQTMarkerSegment dQTMarkerSegment1 : arrayList) {
-/*      */             
-/* 1825 */             Iterator<DQTMarkerSegment.Qtable> iterator = dQTMarkerSegment1.tables.iterator();
-/* 1826 */             while (iterator.hasNext()) {
-/*      */               
-/* 1828 */               DQTMarkerSegment.Qtable qtable1 = iterator.next();
-/* 1829 */               if (qtable1.tableID == 0) {
-/* 1830 */                 qtable = qtable1;
-/*      */               }
-/*      */             } 
-/*      */           } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/* 1839 */           DQTMarkerSegment dQTMarkerSegment = (DQTMarkerSegment)arrayList.get(arrayList.size() - 1);
-/* 1840 */           dQTMarkerSegment.tables.add(dQTMarkerSegment.getChromaForLuma(qtable));
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*      */     
-/* 1845 */     if (bool5) {
-/* 1846 */       ArrayList<MarkerSegment> arrayList = new ArrayList();
-/* 1847 */       for (MarkerSegment markerSegment : this.markerSequence) {
-/*      */         
-/* 1849 */         if (markerSegment instanceof DHTMarkerSegment) {
-/* 1850 */           arrayList.add(markerSegment);
-/*      */         }
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1856 */       if (!arrayList.isEmpty() && bool3) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1862 */         boolean bool7 = false;
-/* 1863 */         for (DHTMarkerSegment dHTMarkerSegment : arrayList) {
-/*      */           
-/* 1865 */           Iterator<DHTMarkerSegment.Htable> iterator = dHTMarkerSegment.tables.iterator();
-/* 1866 */           while (iterator.hasNext()) {
-/*      */             
-/* 1868 */             DHTMarkerSegment.Htable htable = iterator.next();
-/* 1869 */             if (htable.tableID == 1) {
-/* 1870 */               bool7 = true;
-/*      */             }
-/*      */           } 
-/*      */         } 
-/* 1874 */         if (!bool7) {
-/*      */ 
-/*      */ 
-/*      */           
-/* 1878 */           DHTMarkerSegment dHTMarkerSegment = (DHTMarkerSegment)arrayList.get(arrayList.size() - 1);
-/* 1879 */           dHTMarkerSegment.addHtable(JPEGHuffmanTable.StdDCLuminance, true, 1);
-/* 1880 */           dHTMarkerSegment.addHtable(JPEGHuffmanTable.StdACLuminance, true, 1);
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   private boolean wantAlpha(Node paramNode) {
-/* 1887 */     boolean bool = false;
-/* 1888 */     Node node = paramNode.getFirstChild();
-/* 1889 */     if (node.getNodeName().equals("Alpha") && 
-/* 1890 */       node.hasAttributes()) {
-/*      */       
-/* 1892 */       String str = node.getAttributes().getNamedItem("value").getNodeValue();
-/* 1893 */       if (!str.equals("none")) {
-/* 1894 */         bool = true;
-/*      */       }
-/*      */     } 
-/*      */     
-/* 1898 */     this.transparencyDone = true;
-/* 1899 */     return bool;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void mergeStandardCompressionNode(Node paramNode) throws IIOInvalidTreeException {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void mergeStandardDataNode(Node paramNode) throws IIOInvalidTreeException {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void mergeStandardDimensionNode(Node paramNode) throws IIOInvalidTreeException {
-/* 1919 */     JFIFMarkerSegment jFIFMarkerSegment = (JFIFMarkerSegment)findMarkerSegment(JFIFMarkerSegment.class, true);
-/* 1920 */     if (jFIFMarkerSegment == null) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1925 */       boolean bool = false;
-/*      */       
-/* 1927 */       SOFMarkerSegment sOFMarkerSegment = (SOFMarkerSegment)findMarkerSegment(SOFMarkerSegment.class, true);
-/* 1928 */       if (sOFMarkerSegment != null) {
-/* 1929 */         int i = sOFMarkerSegment.componentSpecs.length;
-/* 1930 */         if (i == 1 || i == 3) {
-/* 1931 */           bool = true;
-/* 1932 */           for (byte b = 0; b < sOFMarkerSegment.componentSpecs.length; b++) {
-/* 1933 */             if ((sOFMarkerSegment.componentSpecs[b]).componentId != b + 1) {
-/* 1934 */               bool = false;
-/*      */             }
-/*      */           } 
-/*      */ 
-/*      */           
-/* 1939 */           AdobeMarkerSegment adobeMarkerSegment = (AdobeMarkerSegment)findMarkerSegment(AdobeMarkerSegment.class, true);
-/*      */           
-/* 1941 */           if (adobeMarkerSegment != null && 
-/* 1942 */             adobeMarkerSegment.transform != ((i == 1) ? 0 : 1))
-/*      */           {
-/*      */             
-/* 1945 */             bool = false;
-/*      */           }
-/*      */         } 
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1952 */       if (bool) {
-/* 1953 */         jFIFMarkerSegment = new JFIFMarkerSegment();
-/* 1954 */         this.markerSequence.add(0, jFIFMarkerSegment);
-/*      */       } 
-/*      */     } 
-/* 1957 */     if (jFIFMarkerSegment != null) {
-/* 1958 */       NodeList nodeList = paramNode.getChildNodes();
-/* 1959 */       for (byte b = 0; b < nodeList.getLength(); b++) {
-/* 1960 */         Node node = nodeList.item(b);
-/* 1961 */         NamedNodeMap namedNodeMap = node.getAttributes();
-/* 1962 */         String str = node.getNodeName();
-/* 1963 */         if (str.equals("PixelAspectRatio")) {
-/* 1964 */           String str1 = namedNodeMap.getNamedItem("value").getNodeValue();
-/* 1965 */           float f = Float.parseFloat(str1);
-/* 1966 */           Point point = findIntegerRatio(f);
-/* 1967 */           jFIFMarkerSegment.resUnits = 0;
-/* 1968 */           jFIFMarkerSegment.Xdensity = point.x;
-/* 1969 */           jFIFMarkerSegment.Xdensity = point.y;
-/* 1970 */         } else if (str.equals("HorizontalPixelSize")) {
-/* 1971 */           String str1 = namedNodeMap.getNamedItem("value").getNodeValue();
-/* 1972 */           float f = Float.parseFloat(str1);
-/*      */           
-/* 1974 */           int i = (int)Math.round(1.0D / f * 10.0D);
-/* 1975 */           jFIFMarkerSegment.resUnits = 2;
-/* 1976 */           jFIFMarkerSegment.Xdensity = i;
-/* 1977 */         } else if (str.equals("VerticalPixelSize")) {
-/* 1978 */           String str1 = namedNodeMap.getNamedItem("value").getNodeValue();
-/* 1979 */           float f = Float.parseFloat(str1);
-/*      */           
-/* 1981 */           int i = (int)Math.round(1.0D / f * 10.0D);
-/* 1982 */           jFIFMarkerSegment.resUnits = 2;
-/* 1983 */           jFIFMarkerSegment.Ydensity = i;
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static Point findIntegerRatio(float paramFloat) {
-/* 1995 */     float f1 = 0.005F;
-/*      */ 
-/*      */     
-/* 1998 */     paramFloat = Math.abs(paramFloat);
-/*      */ 
-/*      */     
-/* 2001 */     if (paramFloat <= f1) {
-/* 2002 */       return new Point(1, 255);
-/*      */     }
-/*      */ 
-/*      */     
-/* 2006 */     if (paramFloat >= 255.0F) {
-/* 2007 */       return new Point(255, 1);
-/*      */     }
-/*      */ 
-/*      */     
-/* 2011 */     boolean bool = false;
-/* 2012 */     if (paramFloat < 1.0D) {
-/* 2013 */       paramFloat = 1.0F / paramFloat;
-/* 2014 */       bool = true;
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2018 */     byte b = 1;
-/* 2019 */     int i = Math.round(paramFloat);
-/*      */     
-/* 2021 */     float f2 = i;
-/* 2022 */     float f3 = Math.abs(paramFloat - f2);
-/* 2023 */     while (f3 > f1) {
-/*      */       
-/* 2025 */       b++;
-/* 2026 */       i = Math.round(b * paramFloat);
-/* 2027 */       f2 = i / b;
-/* 2028 */       f3 = Math.abs(paramFloat - f2);
-/*      */     } 
-/* 2030 */     return bool ? new Point(b, i) : new Point(i, b);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void mergeStandardDocumentNode(Node paramNode) throws IIOInvalidTreeException {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void mergeStandardTextNode(Node paramNode) throws IIOInvalidTreeException {
-/* 2043 */     NodeList nodeList = paramNode.getChildNodes();
-/* 2044 */     for (byte b = 0; b < nodeList.getLength(); b++) {
-/* 2045 */       Node node1 = nodeList.item(b);
-/* 2046 */       NamedNodeMap namedNodeMap = node1.getAttributes();
-/* 2047 */       Node node2 = namedNodeMap.getNamedItem("compression");
-/* 2048 */       boolean bool = true;
-/* 2049 */       if (node2 != null) {
-/* 2050 */         String str = node2.getNodeValue();
-/* 2051 */         if (!str.equals("none")) {
-/* 2052 */           bool = false;
-/*      */         }
-/*      */       } 
-/* 2055 */       if (bool) {
-/* 2056 */         String str = namedNodeMap.getNamedItem("value").getNodeValue();
-/* 2057 */         COMMarkerSegment cOMMarkerSegment = new COMMarkerSegment(str);
-/* 2058 */         insertCOMMarkerSegment(cOMMarkerSegment);
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void mergeStandardTransparencyNode(Node paramNode) throws IIOInvalidTreeException {
-/* 2069 */     if (!this.transparencyDone && !this.isStream) {
-/* 2070 */       boolean bool = wantAlpha(paramNode);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2075 */       JFIFMarkerSegment jFIFMarkerSegment = (JFIFMarkerSegment)findMarkerSegment(JFIFMarkerSegment.class, true);
-/*      */       
-/* 2077 */       AdobeMarkerSegment adobeMarkerSegment = (AdobeMarkerSegment)findMarkerSegment(AdobeMarkerSegment.class, true);
-/*      */       
-/* 2079 */       SOFMarkerSegment sOFMarkerSegment = (SOFMarkerSegment)findMarkerSegment(SOFMarkerSegment.class, true);
-/*      */       
-/* 2081 */       SOSMarkerSegment sOSMarkerSegment = (SOSMarkerSegment)findMarkerSegment(SOSMarkerSegment.class, true);
-/*      */ 
-/*      */ 
-/*      */       
-/* 2085 */       if (sOFMarkerSegment != null && sOFMarkerSegment.tag == 194) {
-/*      */         return;
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */       
-/* 2091 */       if (sOFMarkerSegment != null) {
-/* 2092 */         int i = sOFMarkerSegment.componentSpecs.length;
-/* 2093 */         boolean bool1 = (i == 2 || i == 4);
-/*      */         
-/* 2095 */         if (bool1 != bool) {
-/* 2096 */           if (bool) {
-/* 2097 */             i++;
-/* 2098 */             if (jFIFMarkerSegment != null) {
-/* 2099 */               this.markerSequence.remove(jFIFMarkerSegment);
-/*      */             }
-/*      */ 
-/*      */             
-/* 2103 */             if (adobeMarkerSegment != null) {
-/* 2104 */               adobeMarkerSegment.transform = 0;
-/*      */             }
-/*      */ 
-/*      */             
-/* 2108 */             SOFMarkerSegment.ComponentSpec[] arrayOfComponentSpec = new SOFMarkerSegment.ComponentSpec[i];
-/*      */             byte b;
-/* 2110 */             for (b = 0; b < sOFMarkerSegment.componentSpecs.length; b++) {
-/* 2111 */               arrayOfComponentSpec[b] = sOFMarkerSegment.componentSpecs[b];
-/*      */             }
-/* 2113 */             b = (byte)(sOFMarkerSegment.componentSpecs[0]).componentId;
-/* 2114 */             byte b1 = (byte)((b > 1) ? 65 : 4);
-/* 2115 */             arrayOfComponentSpec[i - 1] = sOFMarkerSegment
-/* 2116 */               .getComponentSpec(b1, (sOFMarkerSegment.componentSpecs[0]).HsamplingFactor, (sOFMarkerSegment.componentSpecs[0]).QtableSelector);
-/*      */ 
-/*      */ 
-/*      */             
-/* 2120 */             sOFMarkerSegment.componentSpecs = arrayOfComponentSpec;
-/*      */ 
-/*      */             
-/* 2123 */             SOSMarkerSegment.ScanComponentSpec[] arrayOfScanComponentSpec = new SOSMarkerSegment.ScanComponentSpec[i];
-/*      */             
-/* 2125 */             for (byte b2 = 0; b2 < sOSMarkerSegment.componentSpecs.length; b2++) {
-/* 2126 */               arrayOfScanComponentSpec[b2] = sOSMarkerSegment.componentSpecs[b2];
-/*      */             }
-/* 2128 */             arrayOfScanComponentSpec[i - 1] = sOSMarkerSegment
-/* 2129 */               .getScanComponentSpec(b1, 0);
-/* 2130 */             sOSMarkerSegment.componentSpecs = arrayOfScanComponentSpec;
-/*      */           } else {
-/* 2132 */             i--;
-/*      */             
-/* 2134 */             SOFMarkerSegment.ComponentSpec[] arrayOfComponentSpec = new SOFMarkerSegment.ComponentSpec[i];
-/*      */             
-/* 2136 */             for (byte b1 = 0; b1 < i; b1++) {
-/* 2137 */               arrayOfComponentSpec[b1] = sOFMarkerSegment.componentSpecs[b1];
-/*      */             }
-/* 2139 */             sOFMarkerSegment.componentSpecs = arrayOfComponentSpec;
-/*      */ 
-/*      */             
-/* 2142 */             SOSMarkerSegment.ScanComponentSpec[] arrayOfScanComponentSpec = new SOSMarkerSegment.ScanComponentSpec[i];
-/*      */             
-/* 2144 */             for (byte b2 = 0; b2 < i; b2++) {
-/* 2145 */               arrayOfScanComponentSpec[b2] = sOSMarkerSegment.componentSpecs[b2];
-/*      */             }
-/* 2147 */             sOSMarkerSegment.componentSpecs = arrayOfScanComponentSpec;
-/*      */           } 
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setFromTree(String paramString, Node paramNode) throws IIOInvalidTreeException {
-/* 2157 */     if (paramString == null) {
-/* 2158 */       throw new IllegalArgumentException("null formatName!");
-/*      */     }
-/* 2160 */     if (paramNode == null) {
-/* 2161 */       throw new IllegalArgumentException("null root!");
-/*      */     }
-/* 2163 */     if (this.isStream && paramString
-/* 2164 */       .equals("javax_imageio_jpeg_stream_1.0")) {
-/* 2165 */       setFromNativeTree(paramNode);
-/* 2166 */     } else if (!this.isStream && paramString
-/* 2167 */       .equals("javax_imageio_jpeg_image_1.0")) {
-/* 2168 */       setFromNativeTree(paramNode);
-/* 2169 */     } else if (!this.isStream && paramString
-/*      */       
-/* 2171 */       .equals("javax_imageio_1.0")) {
-/*      */       
-/* 2173 */       super.setFromTree(paramString, paramNode);
-/*      */     } else {
-/* 2175 */       throw new IllegalArgumentException("Unsupported format name: " + paramString);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private void setFromNativeTree(Node paramNode) throws IIOInvalidTreeException {
-/* 2181 */     if (this.resetSequence == null) {
-/* 2182 */       this.resetSequence = this.markerSequence;
-/*      */     }
-/* 2184 */     this.markerSequence = new ArrayList();
-/*      */ 
-/*      */ 
-/*      */     
-/* 2188 */     String str = paramNode.getNodeName();
-/* 2189 */     if (str != (this.isStream ? "javax_imageio_jpeg_stream_1.0" : "javax_imageio_jpeg_image_1.0"))
-/*      */     {
-/* 2191 */       throw new IIOInvalidTreeException("Invalid root node name: " + str, paramNode);
-/*      */     }
-/*      */     
-/* 2194 */     if (!this.isStream) {
-/* 2195 */       if (paramNode.getChildNodes().getLength() != 2) {
-/* 2196 */         throw new IIOInvalidTreeException("JPEGvariety and markerSequence nodes must be present", paramNode);
-/*      */       }
-/*      */ 
-/*      */       
-/* 2200 */       Node node1 = paramNode.getFirstChild();
-/*      */       
-/* 2202 */       if (node1.getChildNodes().getLength() != 0) {
-/* 2203 */         this.markerSequence.add(new JFIFMarkerSegment(node1.getFirstChild()));
-/*      */       }
-/*      */     } 
-/*      */     
-/* 2207 */     Node node = this.isStream ? paramNode : paramNode.getLastChild();
-/* 2208 */     setFromMarkerSequenceNode(node);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void setFromMarkerSequenceNode(Node paramNode) throws IIOInvalidTreeException {
-/* 2215 */     NodeList nodeList = paramNode.getChildNodes();
-/*      */     
-/* 2217 */     for (byte b = 0; b < nodeList.getLength(); b++) {
-/* 2218 */       Node node = nodeList.item(b);
-/* 2219 */       String str = node.getNodeName();
-/* 2220 */       if (str.equals("dqt")) {
-/* 2221 */         this.markerSequence.add(new DQTMarkerSegment(node));
-/* 2222 */       } else if (str.equals("dht")) {
-/* 2223 */         this.markerSequence.add(new DHTMarkerSegment(node));
-/* 2224 */       } else if (str.equals("dri")) {
-/* 2225 */         this.markerSequence.add(new DRIMarkerSegment(node));
-/* 2226 */       } else if (str.equals("com")) {
-/* 2227 */         this.markerSequence.add(new COMMarkerSegment(node));
-/* 2228 */       } else if (str.equals("app14Adobe")) {
-/* 2229 */         this.markerSequence.add(new AdobeMarkerSegment(node));
-/* 2230 */       } else if (str.equals("unknown")) {
-/* 2231 */         this.markerSequence.add(new MarkerSegment(node));
-/* 2232 */       } else if (str.equals("sof")) {
-/* 2233 */         this.markerSequence.add(new SOFMarkerSegment(node));
-/* 2234 */       } else if (str.equals("sos")) {
-/* 2235 */         this.markerSequence.add(new SOSMarkerSegment(node));
-/*      */       } else {
-/* 2237 */         throw new IIOInvalidTreeException("Invalid " + (this.isStream ? "stream " : "image ") + "child: " + str, node);
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean isConsistent() {
-/* 2253 */     SOFMarkerSegment sOFMarkerSegment = (SOFMarkerSegment)findMarkerSegment(SOFMarkerSegment.class, true);
-/*      */ 
-/*      */     
-/* 2256 */     JFIFMarkerSegment jFIFMarkerSegment = (JFIFMarkerSegment)findMarkerSegment(JFIFMarkerSegment.class, true);
-/*      */ 
-/*      */     
-/* 2259 */     AdobeMarkerSegment adobeMarkerSegment = (AdobeMarkerSegment)findMarkerSegment(AdobeMarkerSegment.class, true);
-/*      */     
-/* 2261 */     boolean bool = true;
-/* 2262 */     if (!this.isStream) {
-/* 2263 */       if (sOFMarkerSegment != null) {
-/*      */         
-/* 2265 */         int i = sOFMarkerSegment.componentSpecs.length;
-/* 2266 */         int j = countScanBands();
-/* 2267 */         if (j != 0 && 
-/* 2268 */           j != i) {
-/* 2269 */           bool = false;
-/*      */         }
-/*      */ 
-/*      */         
-/* 2273 */         if (jFIFMarkerSegment != null) {
-/* 2274 */           if (i != 1 && i != 3) {
-/* 2275 */             bool = false;
-/*      */           }
-/* 2277 */           for (byte b = 0; b < i; b++) {
-/* 2278 */             if ((sOFMarkerSegment.componentSpecs[b]).componentId != b + 1) {
-/* 2279 */               bool = false;
-/*      */             }
-/*      */           } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/* 2286 */           if (adobeMarkerSegment != null && ((i == 1 && adobeMarkerSegment.transform != 0) || (i == 3 && adobeMarkerSegment.transform != 1)))
-/*      */           {
-/*      */ 
-/*      */ 
-/*      */             
-/* 2291 */             bool = false;
-/*      */           }
-/*      */         }
-/*      */       
-/*      */       } else {
-/*      */         
-/* 2297 */         SOSMarkerSegment sOSMarkerSegment = (SOSMarkerSegment)findMarkerSegment(SOSMarkerSegment.class, true);
-/*      */         
-/* 2299 */         if (jFIFMarkerSegment != null || adobeMarkerSegment != null || sOFMarkerSegment != null || sOSMarkerSegment != null)
-/*      */         {
-/* 2301 */           bool = false;
-/*      */         }
-/*      */       } 
-/*      */     }
-/* 2305 */     return bool;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int countScanBands() {
-/* 2313 */     ArrayList<Integer> arrayList = new ArrayList();
-/* 2314 */     Iterator<MarkerSegment> iterator = this.markerSequence.iterator();
-/* 2315 */     while (iterator.hasNext()) {
-/* 2316 */       MarkerSegment markerSegment = iterator.next();
-/* 2317 */       if (markerSegment instanceof SOSMarkerSegment) {
-/* 2318 */         SOSMarkerSegment sOSMarkerSegment = (SOSMarkerSegment)markerSegment;
-/* 2319 */         SOSMarkerSegment.ScanComponentSpec[] arrayOfScanComponentSpec = sOSMarkerSegment.componentSpecs;
-/* 2320 */         for (byte b = 0; b < arrayOfScanComponentSpec.length; b++) {
-/* 2321 */           Integer integer = new Integer((arrayOfScanComponentSpec[b]).componentSelector);
-/* 2322 */           if (!arrayList.contains(integer)) {
-/* 2323 */             arrayList.add(integer);
-/*      */           }
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*      */     
-/* 2329 */     return arrayList.size();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void writeToStream(ImageOutputStream paramImageOutputStream, boolean paramBoolean1, boolean paramBoolean2, List paramList, ICC_Profile paramICC_Profile, boolean paramBoolean3, int paramInt, JPEGImageWriter paramJPEGImageWriter) throws IOException {
-/* 2343 */     if (paramBoolean2) {
-/*      */ 
-/*      */ 
-/*      */       
-/* 2347 */       JFIFMarkerSegment.writeDefaultJFIF(paramImageOutputStream, paramList, paramICC_Profile, paramJPEGImageWriter);
-/*      */ 
-/*      */ 
-/*      */       
-/* 2351 */       if (!paramBoolean3 && paramInt != -1)
-/*      */       {
-/* 2353 */         if (paramInt != 0 && paramInt != 1) {
-/*      */ 
-/*      */           
-/* 2356 */           paramBoolean3 = true;
-/* 2357 */           paramJPEGImageWriter
-/* 2358 */             .warningOccurred(13);
-/*      */         } 
-/*      */       }
-/*      */     } 
-/*      */     
-/* 2363 */     Iterator<MarkerSegment> iterator = this.markerSequence.iterator();
-/* 2364 */     while (iterator.hasNext()) {
-/* 2365 */       MarkerSegment markerSegment = iterator.next();
-/* 2366 */       if (markerSegment instanceof JFIFMarkerSegment) {
-/* 2367 */         if (!paramBoolean1) {
-/* 2368 */           JFIFMarkerSegment jFIFMarkerSegment = (JFIFMarkerSegment)markerSegment;
-/* 2369 */           jFIFMarkerSegment.writeWithThumbs(paramImageOutputStream, paramList, paramJPEGImageWriter);
-/* 2370 */           if (paramICC_Profile != null)
-/* 2371 */             JFIFMarkerSegment.writeICC(paramICC_Profile, paramImageOutputStream); 
-/*      */         }  continue;
-/*      */       } 
-/* 2374 */       if (markerSegment instanceof AdobeMarkerSegment) {
-/* 2375 */         if (!paramBoolean3) {
-/* 2376 */           if (paramInt != -1) {
-/*      */             
-/* 2378 */             AdobeMarkerSegment adobeMarkerSegment = (AdobeMarkerSegment)markerSegment.clone();
-/* 2379 */             adobeMarkerSegment.transform = paramInt;
-/* 2380 */             adobeMarkerSegment.write(paramImageOutputStream); continue;
-/* 2381 */           }  if (paramBoolean2) {
-/*      */             
-/* 2383 */             AdobeMarkerSegment adobeMarkerSegment = (AdobeMarkerSegment)markerSegment;
-/* 2384 */             if (adobeMarkerSegment.transform == 0 || adobeMarkerSegment.transform == 1) {
-/*      */               
-/* 2386 */               adobeMarkerSegment.write(paramImageOutputStream); continue;
-/*      */             } 
-/* 2388 */             paramJPEGImageWriter
-/* 2389 */               .warningOccurred(13);
-/*      */             continue;
-/*      */           } 
-/* 2392 */           markerSegment.write(paramImageOutputStream);
-/*      */         } 
-/*      */         continue;
-/*      */       } 
-/* 2396 */       markerSegment.write(paramImageOutputStream);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void reset() {
-/* 2404 */     if (this.resetSequence != null) {
-/* 2405 */       this.markerSequence = this.resetSequence;
-/* 2406 */       this.resetSequence = null;
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   public void print() {
-/* 2411 */     for (byte b = 0; b < this.markerSequence.size(); b++) {
-/* 2412 */       MarkerSegment markerSegment = this.markerSequence.get(b);
-/* 2413 */       markerSegment.print();
-/*      */     } 
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\imageio\plugins\jpeg\JPEGMetadata.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.imageio.plugins.jpeg;
+
+import javax.imageio.ImageTypeSpecifier;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.IIOException;
+import javax.imageio.stream.ImageInputStream;
+import javax.imageio.stream.ImageOutputStream;
+import javax.imageio.metadata.IIOMetadata;
+import javax.imageio.metadata.IIOMetadataNode;
+import javax.imageio.metadata.IIOMetadataFormat;
+import javax.imageio.metadata.IIOMetadataFormatImpl;
+import javax.imageio.metadata.IIOInvalidTreeException;
+import javax.imageio.plugins.jpeg.JPEGQTable;
+import javax.imageio.plugins.jpeg.JPEGHuffmanTable;
+import javax.imageio.plugins.jpeg.JPEGImageWriteParam;
+
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.w3c.dom.NamedNodeMap;
+
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.ListIterator;
+import java.io.IOException;
+import java.awt.color.ICC_Profile;
+import java.awt.color.ICC_ColorSpace;
+import java.awt.color.ColorSpace;
+import java.awt.image.ColorModel;
+import java.awt.Point;
+
+/**
+ * Metadata for the JPEG plug-in.
+ */
+public class JPEGMetadata extends IIOMetadata implements Cloneable {
+
+    //////// Private variables
+
+    private static final boolean debug = false;
+
+    /**
+     * A copy of <code>markerSequence</code>, created the first time the
+     * <code>markerSequence</code> is modified.  This is used by reset
+     * to restore the original state.
+     */
+    private List resetSequence = null;
+
+    /**
+     * Set to <code>true</code> when reading a thumbnail stored as
+     * JPEG.  This is used to enforce the prohibition of JFIF thumbnails
+     * containing any JFIF marker segments, and to ensure generation of
+     * a correct native subtree during <code>getAsTree</code>.
+     */
+    private boolean inThumb = false;
+
+    /**
+     * Set by the chroma node construction method to signal the
+     * presence or absence of an alpha channel to the transparency
+     * node construction method.  Used only when constructing a
+     * standard metadata tree.
+     */
+    private boolean hasAlpha;
+
+    //////// end of private variables
+
+    /////// Package-access variables
+
+    /**
+     * All data is a list of <code>MarkerSegment</code> objects.
+     * When accessing the list, use the tag to identify the particular
+     * subclass.  Any JFIF marker segment must be the first element
+     * of the list if it is present, and any JFXX or APP2ICC marker
+     * segments are subordinate to the JFIF marker segment.  This
+     * list is package visible so that the writer can access it.
+     * @see #MarkerSegment
+     */
+    List markerSequence = new ArrayList();
+
+    /**
+     * Indicates whether this object represents stream or image
+     * metadata.  Package-visible so the writer can see it.
+     */
+    final boolean isStream;
+
+    /////// End of package-access variables
+
+    /////// Constructors
+
+    /**
+     * Constructor containing code shared by other constructors.
+     */
+    JPEGMetadata(boolean isStream, boolean inThumb) {
+        super(true,  // Supports standard format
+              JPEG.nativeImageMetadataFormatName,  // and a native format
+              JPEG.nativeImageMetadataFormatClassName,
+              null, null);  // No other formats
+        this.inThumb = inThumb;
+        // But if we are stream metadata, adjust the variables
+        this.isStream = isStream;
+        if (isStream) {
+            nativeMetadataFormatName = JPEG.nativeStreamMetadataFormatName;
+            nativeMetadataFormatClassName =
+                JPEG.nativeStreamMetadataFormatClassName;
+        }
+    }
+
+    /*
+     * Constructs a <code>JPEGMetadata</code> object by reading the
+     * contents of an <code>ImageInputStream</code>.  Has package-only
+     * access.
+     *
+     * @param isStream A boolean indicating whether this object will be
+     * stream or image metadata.
+     * @param isThumb A boolean indicating whether this metadata object
+     * is for an image or for a thumbnail stored as JPEG.
+     * @param iis An <code>ImageInputStream</code> from which to read
+     * the metadata.
+     * @param reader The <code>JPEGImageReader</code> calling this
+     * constructor, to which warnings should be sent.
+     */
+    JPEGMetadata(boolean isStream,
+                 boolean isThumb,
+                 ImageInputStream iis,
+                 JPEGImageReader reader) throws IOException {
+        this(isStream, isThumb);
+
+        JPEGBuffer buffer = new JPEGBuffer(iis);
+
+        buffer.loadBuf(0);
+
+        // The first three bytes should be FF, SOI, FF
+        if (((buffer.buf[0] & 0xff) != 0xff)
+            || ((buffer.buf[1] & 0xff) != JPEG.SOI)
+            || ((buffer.buf[2] & 0xff) != 0xff)) {
+            throw new IIOException ("Image format error");
+        }
+
+        boolean done = false;
+        buffer.bufAvail -=2;  // Next byte should be the ff before a marker
+        buffer.bufPtr = 2;
+        MarkerSegment newGuy = null;
+        while (!done) {
+            byte [] buf;
+            int ptr;
+            buffer.loadBuf(1);
+            if (debug) {
+                System.out.println("top of loop");
+                buffer.print(10);
+            }
+            buffer.scanForFF(reader);
+            switch (buffer.buf[buffer.bufPtr] & 0xff) {
+            case 0:
+                if (debug) {
+                    System.out.println("Skipping 0");
+                }
+                buffer.bufAvail--;
+                buffer.bufPtr++;
+                break;
+            case JPEG.SOF0:
+            case JPEG.SOF1:
+            case JPEG.SOF2:
+                if (isStream) {
+                    throw new IIOException
+                        ("SOF not permitted in stream metadata");
+                }
+                newGuy = new SOFMarkerSegment(buffer);
+                break;
+            case JPEG.DQT:
+                newGuy = new DQTMarkerSegment(buffer);
+                break;
+            case JPEG.DHT:
+                newGuy = new DHTMarkerSegment(buffer);
+                break;
+            case JPEG.DRI:
+                newGuy = new DRIMarkerSegment(buffer);
+                break;
+            case JPEG.APP0:
+                // Either JFIF, JFXX, or unknown APP0
+                buffer.loadBuf(8); // tag, length, id
+                buf = buffer.buf;
+                ptr = buffer.bufPtr;
+                if ((buf[ptr+3] == 'J')
+                    && (buf[ptr+4] == 'F')
+                    && (buf[ptr+5] == 'I')
+                    && (buf[ptr+6] == 'F')
+                    && (buf[ptr+7] == 0)) {
+                    if (inThumb) {
+                        reader.warningOccurred
+                            (JPEGImageReader.WARNING_NO_JFIF_IN_THUMB);
+                        // Leave newGuy null
+                        // Read a dummy to skip the segment
+                        JFIFMarkerSegment dummy =
+                            new JFIFMarkerSegment(buffer);
+                    } else if (isStream) {
+                        throw new IIOException
+                            ("JFIF not permitted in stream metadata");
+                    } else if (markerSequence.isEmpty() == false) {
+                        throw new IIOException
+                            ("JFIF APP0 must be first marker after SOI");
+                    } else {
+                        newGuy = new JFIFMarkerSegment(buffer);
+                    }
+                } else if ((buf[ptr+3] == 'J')
+                           && (buf[ptr+4] == 'F')
+                           && (buf[ptr+5] == 'X')
+                           && (buf[ptr+6] == 'X')
+                           && (buf[ptr+7] == 0)) {
+                    if (isStream) {
+                        throw new IIOException
+                            ("JFXX not permitted in stream metadata");
+                    }
+                    if (inThumb) {
+                        throw new IIOException
+                          ("JFXX markers not allowed in JFIF JPEG thumbnail");
+                    }
+                    JFIFMarkerSegment jfif =
+                        (JFIFMarkerSegment) findMarkerSegment
+                               (JFIFMarkerSegment.class, true);
+                    if (jfif == null) {
+                        throw new IIOException
+                            ("JFXX encountered without prior JFIF!");
+                    }
+                    jfif.addJFXX(buffer, reader);
+                    // newGuy remains null
+                } else {
+                    newGuy = new MarkerSegment(buffer);
+                    newGuy.loadData(buffer);
+                }
+                break;
+            case JPEG.APP2:
+                // Either an ICC profile or unknown APP2
+                buffer.loadBuf(15); // tag, length, id
+                if ((buffer.buf[buffer.bufPtr+3] == 'I')
+                    && (buffer.buf[buffer.bufPtr+4] == 'C')
+                    && (buffer.buf[buffer.bufPtr+5] == 'C')
+                    && (buffer.buf[buffer.bufPtr+6] == '_')
+                    && (buffer.buf[buffer.bufPtr+7] == 'P')
+                    && (buffer.buf[buffer.bufPtr+8] == 'R')
+                    && (buffer.buf[buffer.bufPtr+9] == 'O')
+                    && (buffer.buf[buffer.bufPtr+10] == 'F')
+                    && (buffer.buf[buffer.bufPtr+11] == 'I')
+                    && (buffer.buf[buffer.bufPtr+12] == 'L')
+                    && (buffer.buf[buffer.bufPtr+13] == 'E')
+                    && (buffer.buf[buffer.bufPtr+14] == 0)
+                    ) {
+                    if (isStream) {
+                        throw new IIOException
+                            ("ICC profiles not permitted in stream metadata");
+                    }
+
+                    JFIFMarkerSegment jfif =
+                        (JFIFMarkerSegment) findMarkerSegment
+                        (JFIFMarkerSegment.class, true);
+                    if (jfif == null) {
+                        newGuy = new MarkerSegment(buffer);
+                        newGuy.loadData(buffer);
+                    } else {
+                        jfif.addICC(buffer);
+                    }
+                    // newGuy remains null
+                } else {
+                    newGuy = new MarkerSegment(buffer);
+                    newGuy.loadData(buffer);
+                }
+                break;
+            case JPEG.APP14:
+                // Either Adobe or unknown APP14
+                buffer.loadBuf(8); // tag, length, id
+                if ((buffer.buf[buffer.bufPtr+3] == 'A')
+                    && (buffer.buf[buffer.bufPtr+4] == 'd')
+                    && (buffer.buf[buffer.bufPtr+5] == 'o')
+                    && (buffer.buf[buffer.bufPtr+6] == 'b')
+                    && (buffer.buf[buffer.bufPtr+7] == 'e')) {
+                    if (isStream) {
+                        throw new IIOException
+                      ("Adobe APP14 markers not permitted in stream metadata");
+                    }
+                    newGuy = new AdobeMarkerSegment(buffer);
+                } else {
+                    newGuy = new MarkerSegment(buffer);
+                    newGuy.loadData(buffer);
+                }
+
+                break;
+            case JPEG.COM:
+                newGuy = new COMMarkerSegment(buffer);
+                break;
+            case JPEG.SOS:
+                if (isStream) {
+                    throw new IIOException
+                        ("SOS not permitted in stream metadata");
+                }
+                newGuy = new SOSMarkerSegment(buffer);
+                break;
+            case JPEG.RST0:
+            case JPEG.RST1:
+            case JPEG.RST2:
+            case JPEG.RST3:
+            case JPEG.RST4:
+            case JPEG.RST5:
+            case JPEG.RST6:
+            case JPEG.RST7:
+                if (debug) {
+                    System.out.println("Restart Marker");
+                }
+                buffer.bufPtr++; // Just skip it
+                buffer.bufAvail--;
+                break;
+            case JPEG.EOI:
+                done = true;
+                buffer.bufPtr++;
+                buffer.bufAvail--;
+                break;
+            default:
+                newGuy = new MarkerSegment(buffer);
+                newGuy.loadData(buffer);
+                newGuy.unknown = true;
+                break;
+            }
+            if (newGuy != null) {
+                markerSequence.add(newGuy);
+                if (debug) {
+                    newGuy.print();
+                }
+                newGuy = null;
+            }
+        }
+
+        // Now that we've read up to the EOI, we need to push back
+        // whatever is left in the buffer, so that the next read
+        // in the native code will work.
+
+        buffer.pushBack();
+
+        if (!isConsistent()) {
+            throw new IIOException("Inconsistent metadata read from stream");
+        }
+    }
+
+    /**
+     * Constructs a default stream <code>JPEGMetadata</code> object appropriate
+     * for the given write parameters.
+     */
+    JPEGMetadata(ImageWriteParam param, JPEGImageWriter writer) {
+        this(true, false);
+
+        JPEGImageWriteParam jparam = null;
+
+        if ((param != null) && (param instanceof JPEGImageWriteParam)) {
+            jparam = (JPEGImageWriteParam) param;
+            if (!jparam.areTablesSet()) {
+                jparam = null;
+            }
+        }
+        if (jparam != null) {
+            markerSequence.add(new DQTMarkerSegment(jparam.getQTables()));
+            markerSequence.add
+                (new DHTMarkerSegment(jparam.getDCHuffmanTables(),
+                                      jparam.getACHuffmanTables()));
+        } else {
+            // default tables.
+            markerSequence.add(new DQTMarkerSegment(JPEG.getDefaultQTables()));
+            markerSequence.add(new DHTMarkerSegment(JPEG.getDefaultHuffmanTables(true),
+                                                    JPEG.getDefaultHuffmanTables(false)));
+        }
+
+        // Defensive programming
+        if (!isConsistent()) {
+            throw new InternalError("Default stream metadata is inconsistent");
+        }
+    }
+
+    /**
+     * Constructs a default image <code>JPEGMetadata</code> object appropriate
+     * for the given image type and write parameters.
+     */
+    JPEGMetadata(ImageTypeSpecifier imageType,
+                 ImageWriteParam param,
+                 JPEGImageWriter writer) {
+        this(false, false);
+
+        boolean wantJFIF = true;
+        boolean wantAdobe = false;
+        int transform = JPEG.ADOBE_UNKNOWN;
+        boolean willSubsample = true;
+        boolean wantICC = false;
+        boolean wantProg = false;
+        boolean wantOptimized = false;
+        boolean wantExtended = false;
+        boolean wantQTables = true;
+        boolean wantHTables = true;
+        float quality = JPEG.DEFAULT_QUALITY;
+        byte[] componentIDs = { 1, 2, 3, 4};
+        int numComponents = 0;
+
+        ImageTypeSpecifier destType = null;
+
+        if (param != null) {
+            destType = param.getDestinationType();
+            if (destType != null) {
+                if (imageType != null) {
+                    // Ignore the destination type.
+                    writer.warningOccurred
+                        (JPEGImageWriter.WARNING_DEST_IGNORED);
+                    destType = null;
+                }
+            }
+            // The only progressive mode that makes sense here is MODE_DEFAULT
+            if (param.canWriteProgressive()) {
+                // the param may not be one of ours, so it may return false.
+                // If so, the following would throw an exception
+                if (param.getProgressiveMode() == ImageWriteParam.MODE_DEFAULT) {
+                    wantProg = true;
+                    wantOptimized = true;
+                    wantHTables = false;
+                }
+            }
+
+            if (param instanceof JPEGImageWriteParam) {
+                JPEGImageWriteParam jparam = (JPEGImageWriteParam) param;
+                if (jparam.areTablesSet()) {
+                    wantQTables = false;  // If the param has them, metadata shouldn't
+                    wantHTables = false;
+                    if ((jparam.getDCHuffmanTables().length > 2)
+                            || (jparam.getACHuffmanTables().length > 2)) {
+                        wantExtended = true;
+                    }
+                }
+                // Progressive forces optimized, regardless of param setting
+                // so consult the param re optimized only if not progressive
+                if (!wantProg) {
+                    wantOptimized = jparam.getOptimizeHuffmanTables();
+                    if (wantOptimized) {
+                        wantHTables = false;
+                    }
+                }
+            }
+
+            // compression quality should determine the q tables.  Note that this
+            // will be ignored if we already decided not to create any.
+            // Again, the param may not be one of ours, so we must check that it
+            // supports compression settings
+            if (param.canWriteCompressed()) {
+                if (param.getCompressionMode() == ImageWriteParam.MODE_EXPLICIT) {
+                    quality = param.getCompressionQuality();
+                }
+            }
+        }
+
+        // We are done with the param, now for the image types
+
+        ColorSpace cs = null;
+        if (destType != null) {
+            ColorModel cm = destType.getColorModel();
+            numComponents = cm.getNumComponents();
+            boolean hasExtraComponents = (cm.getNumColorComponents() != numComponents);
+            boolean hasAlpha = cm.hasAlpha();
+            cs = cm.getColorSpace();
+            int type = cs.getType();
+            switch(type) {
+            case ColorSpace.TYPE_GRAY:
+                willSubsample = false;
+                if (hasExtraComponents) {  // e.g. alpha
+                    wantJFIF = false;
+                }
+                break;
+            case ColorSpace.TYPE_3CLR:
+                if (cs == JPEG.JCS.getYCC()) {
+                    wantJFIF = false;
+                    componentIDs[0] = (byte) 'Y';
+                    componentIDs[1] = (byte) 'C';
+                    componentIDs[2] = (byte) 'c';
+                    if (hasAlpha) {
+                        componentIDs[3] = (byte) 'A';
+                    }
+                }
+                break;
+            case ColorSpace.TYPE_YCbCr:
+                if (hasExtraComponents) { // e.g. K or alpha
+                    wantJFIF = false;
+                    if (!hasAlpha) { // Not alpha, so must be K
+                        wantAdobe = true;
+                        transform = JPEG.ADOBE_YCCK;
+                    }
+                }
+                break;
+            case ColorSpace.TYPE_RGB:  // with or without alpha
+                wantJFIF = false;
+                wantAdobe = true;
+                willSubsample = false;
+                componentIDs[0] = (byte) 'R';
+                componentIDs[1] = (byte) 'G';
+                componentIDs[2] = (byte) 'B';
+                if (hasAlpha) {
+                    componentIDs[3] = (byte) 'A';
+                }
+                break;
+            default:
+                // Everything else is not subsampled, gets no special marker,
+                // and component ids are 1 - N
+                wantJFIF = false;
+                willSubsample = false;
+            }
+        } else if (imageType != null) {
+            ColorModel cm = imageType.getColorModel();
+            numComponents = cm.getNumComponents();
+            boolean hasExtraComponents = (cm.getNumColorComponents() != numComponents);
+            boolean hasAlpha = cm.hasAlpha();
+            cs = cm.getColorSpace();
+            int type = cs.getType();
+            switch(type) {
+            case ColorSpace.TYPE_GRAY:
+                willSubsample = false;
+                if (hasExtraComponents) {  // e.g. alpha
+                    wantJFIF = false;
+                }
+                break;
+            case ColorSpace.TYPE_RGB:  // with or without alpha
+                // without alpha we just accept the JFIF defaults
+                if (hasAlpha) {
+                    wantJFIF = false;
+                }
+                break;
+            case ColorSpace.TYPE_3CLR:
+                wantJFIF = false;
+                willSubsample = false;
+                if (cs.equals(ColorSpace.getInstance(ColorSpace.CS_PYCC))) {
+                    willSubsample = true;
+                    wantAdobe = true;
+                    componentIDs[0] = (byte) 'Y';
+                    componentIDs[1] = (byte) 'C';
+                    componentIDs[2] = (byte) 'c';
+                    if (hasAlpha) {
+                        componentIDs[3] = (byte) 'A';
+                    }
+                }
+                break;
+            case ColorSpace.TYPE_YCbCr:
+                if (hasExtraComponents) { // e.g. K or alpha
+                    wantJFIF = false;
+                    if (!hasAlpha) {  // then it must be K
+                        wantAdobe = true;
+                        transform = JPEG.ADOBE_YCCK;
+                    }
+                }
+                break;
+            case ColorSpace.TYPE_CMYK:
+                wantJFIF = false;
+                wantAdobe = true;
+                transform = JPEG.ADOBE_YCCK;
+                break;
+
+            default:
+                // Everything else is not subsampled, gets no special marker,
+                // and component ids are 0 - N
+                wantJFIF = false;
+                willSubsample = false;
+            }
+
+        }
+
+        // do we want an ICC profile?
+        if (wantJFIF && JPEG.isNonStandardICC(cs)) {
+            wantICC = true;
+        }
+
+        // Now step through the markers, consulting our variables.
+        if (wantJFIF) {
+            JFIFMarkerSegment jfif = new JFIFMarkerSegment();
+            markerSequence.add(jfif);
+            if (wantICC) {
+                try {
+                    jfif.addICC((ICC_ColorSpace)cs);
+                } catch (IOException e) {} // Can't happen here
+            }
+        }
+        // Adobe
+        if (wantAdobe) {
+            markerSequence.add(new AdobeMarkerSegment(transform));
+        }
+
+        // dqt
+        if (wantQTables) {
+            markerSequence.add(new DQTMarkerSegment(quality, willSubsample));
+        }
+
+        // dht
+        if (wantHTables) {
+            markerSequence.add(new DHTMarkerSegment(willSubsample));
+        }
+
+        // sof
+        markerSequence.add(new SOFMarkerSegment(wantProg,
+                                                wantExtended,
+                                                willSubsample,
+                                                componentIDs,
+                                                numComponents));
+
+        // sos
+        if (!wantProg) {  // Default progression scans are done in the writer
+            markerSequence.add(new SOSMarkerSegment(willSubsample,
+                                                    componentIDs,
+                                                    numComponents));
+        }
+
+        // Defensive programming
+        if (!isConsistent()) {
+            throw new InternalError("Default image metadata is inconsistent");
+        }
+    }
+
+    ////// End of constructors
+
+    // Utilities for dealing with the marker sequence.
+    // The first ones have package access for access from the writer.
+
+    /**
+     * Returns the first MarkerSegment object in the list
+     * with the given tag, or null if none is found.
+     */
+    MarkerSegment findMarkerSegment(int tag) {
+        Iterator iter = markerSequence.iterator();
+        while (iter.hasNext()) {
+            MarkerSegment seg = (MarkerSegment)iter.next();
+            if (seg.tag == tag) {
+                return seg;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Returns the first or last MarkerSegment object in the list
+     * of the given class, or null if none is found.
+     */
+    MarkerSegment findMarkerSegment(Class cls, boolean first) {
+        if (first) {
+            Iterator iter = markerSequence.iterator();
+            while (iter.hasNext()) {
+                MarkerSegment seg = (MarkerSegment)iter.next();
+                if (cls.isInstance(seg)) {
+                    return seg;
+                }
+            }
+        } else {
+            ListIterator iter = markerSequence.listIterator(markerSequence.size());
+            while (iter.hasPrevious()) {
+                MarkerSegment seg = (MarkerSegment)iter.previous();
+                if (cls.isInstance(seg)) {
+                    return seg;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Returns the index of the first or last MarkerSegment in the list
+     * of the given class, or -1 if none is found.
+     */
+    private int findMarkerSegmentPosition(Class cls, boolean first) {
+        if (first) {
+            ListIterator iter = markerSequence.listIterator();
+            for (int i = 0; iter.hasNext(); i++) {
+                MarkerSegment seg = (MarkerSegment)iter.next();
+                if (cls.isInstance(seg)) {
+                    return i;
+                }
+            }
+        } else {
+            ListIterator iter = markerSequence.listIterator(markerSequence.size());
+            for (int i = markerSequence.size()-1; iter.hasPrevious(); i--) {
+                MarkerSegment seg = (MarkerSegment)iter.previous();
+                if (cls.isInstance(seg)) {
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
+
+    private int findLastUnknownMarkerSegmentPosition() {
+        ListIterator iter = markerSequence.listIterator(markerSequence.size());
+        for (int i = markerSequence.size()-1; iter.hasPrevious(); i--) {
+            MarkerSegment seg = (MarkerSegment)iter.previous();
+            if (seg.unknown == true) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    // Implement Cloneable, but restrict access
+
+    protected Object clone() {
+        JPEGMetadata newGuy = null;
+        try {
+            newGuy = (JPEGMetadata) super.clone();
+        } catch (CloneNotSupportedException e) {} // won't happen
+        if (markerSequence != null) {
+            newGuy.markerSequence = (List) cloneSequence();
+        }
+        newGuy.resetSequence = null;
+        return newGuy;
+    }
+
+    /**
+     * Returns a deep copy of the current marker sequence.
+     */
+    private List cloneSequence() {
+        if (markerSequence == null) {
+            return null;
+        }
+        List retval = new ArrayList(markerSequence.size());
+        Iterator iter = markerSequence.iterator();
+        while(iter.hasNext()) {
+            MarkerSegment seg = (MarkerSegment)iter.next();
+            retval.add(seg.clone());
+        }
+
+        return retval;
+    }
+
+
+    // Tree methods
+
+    public Node getAsTree(String formatName) {
+        if (formatName == null) {
+            throw new IllegalArgumentException("null formatName!");
+        }
+        if (isStream) {
+            if (formatName.equals(JPEG.nativeStreamMetadataFormatName)) {
+                return getNativeTree();
+            }
+        } else {
+            if (formatName.equals(JPEG.nativeImageMetadataFormatName)) {
+                return getNativeTree();
+            }
+            if (formatName.equals
+                    (IIOMetadataFormatImpl.standardMetadataFormatName)) {
+                return getStandardTree();
+            }
+        }
+        throw  new IllegalArgumentException("Unsupported format name: "
+                                                + formatName);
+    }
+
+    IIOMetadataNode getNativeTree() {
+        IIOMetadataNode root;
+        IIOMetadataNode top;
+        Iterator iter = markerSequence.iterator();
+        if (isStream) {
+            root = new IIOMetadataNode(JPEG.nativeStreamMetadataFormatName);
+            top = root;
+        } else {
+            IIOMetadataNode sequence = new IIOMetadataNode("markerSequence");
+            if (!inThumb) {
+                root = new IIOMetadataNode(JPEG.nativeImageMetadataFormatName);
+                IIOMetadataNode header = new IIOMetadataNode("JPEGvariety");
+                root.appendChild(header);
+                JFIFMarkerSegment jfif = (JFIFMarkerSegment)
+                    findMarkerSegment(JFIFMarkerSegment.class, true);
+                if (jfif != null) {
+                    iter.next();  // JFIF must be first, so this skips it
+                    header.appendChild(jfif.getNativeNode());
+                }
+                root.appendChild(sequence);
+            } else {
+                root = sequence;
+            }
+            top = sequence;
+        }
+        while(iter.hasNext()) {
+            MarkerSegment seg = (MarkerSegment) iter.next();
+            top.appendChild(seg.getNativeNode());
+        }
+        return root;
+    }
+
+    // Standard tree node methods
+
+    protected IIOMetadataNode getStandardChromaNode() {
+        hasAlpha = false;  // Unless we find otherwise
+
+        // Colorspace type - follow the rules in the spec
+        // First get the SOF marker segment, if there is one
+        SOFMarkerSegment sof = (SOFMarkerSegment)
+            findMarkerSegment(SOFMarkerSegment.class, true);
+        if (sof == null) {
+            // No image, so no chroma
+            return null;
+        }
+
+        IIOMetadataNode chroma = new IIOMetadataNode("Chroma");
+        IIOMetadataNode csType = new IIOMetadataNode("ColorSpaceType");
+        chroma.appendChild(csType);
+
+        // get the number of channels
+        int numChannels = sof.componentSpecs.length;
+
+        IIOMetadataNode numChanNode = new IIOMetadataNode("NumChannels");
+        chroma.appendChild(numChanNode);
+        numChanNode.setAttribute("value", Integer.toString(numChannels));
+
+        // is there a JFIF marker segment?
+        if (findMarkerSegment(JFIFMarkerSegment.class, true) != null) {
+            if (numChannels == 1) {
+                csType.setAttribute("name", "GRAY");
+            } else {
+                csType.setAttribute("name", "YCbCr");
+            }
+            return chroma;
+        }
+
+        // How about an Adobe marker segment?
+        AdobeMarkerSegment adobe =
+            (AdobeMarkerSegment) findMarkerSegment(AdobeMarkerSegment.class, true);
+        if (adobe != null){
+            switch (adobe.transform) {
+            case JPEG.ADOBE_YCCK:
+                csType.setAttribute("name", "YCCK");
+                break;
+            case JPEG.ADOBE_YCC:
+                csType.setAttribute("name", "YCbCr");
+                break;
+            case JPEG.ADOBE_UNKNOWN:
+                if (numChannels == 3) {
+                    csType.setAttribute("name", "RGB");
+                } else if (numChannels == 4) {
+                    csType.setAttribute("name", "CMYK");
+                }
+                break;
+            }
+            return chroma;
+        }
+
+        // Neither marker.  Check components
+        if (numChannels < 3) {
+            csType.setAttribute("name", "GRAY");
+            if (numChannels == 2) {
+                hasAlpha = true;
+            }
+            return chroma;
+        }
+
+        boolean idsAreJFIF = true;
+
+        for (int i = 0; i < sof.componentSpecs.length; i++) {
+            int id = sof.componentSpecs[i].componentId;
+            if ((id < 1) || (id >= sof.componentSpecs.length)) {
+                idsAreJFIF = false;
+            }
+        }
+
+        if (idsAreJFIF) {
+            csType.setAttribute("name", "YCbCr");
+            if (numChannels == 4) {
+                hasAlpha = true;
+            }
+            return chroma;
+        }
+
+        // Check against the letters
+        if ((sof.componentSpecs[0].componentId == 'R')
+            && (sof.componentSpecs[1].componentId == 'G')
+            && (sof.componentSpecs[2].componentId == 'B')){
+
+            csType.setAttribute("name", "RGB");
+            if ((numChannels == 4)
+                && (sof.componentSpecs[3].componentId == 'A')) {
+                hasAlpha = true;
+            }
+            return chroma;
+        }
+
+        if ((sof.componentSpecs[0].componentId == 'Y')
+            && (sof.componentSpecs[1].componentId == 'C')
+            && (sof.componentSpecs[2].componentId == 'c')){
+
+            csType.setAttribute("name", "PhotoYCC");
+            if ((numChannels == 4)
+                && (sof.componentSpecs[3].componentId == 'A')) {
+                hasAlpha = true;
+            }
+            return chroma;
+        }
+
+        // Finally, 3-channel subsampled are YCbCr, unsubsampled are RGB
+        // 4-channel subsampled are YCbCrA, unsubsampled are CMYK
+
+        boolean subsampled = false;
+
+        int hfactor = sof.componentSpecs[0].HsamplingFactor;
+        int vfactor = sof.componentSpecs[0].VsamplingFactor;
+
+        for (int i = 1; i<sof.componentSpecs.length; i++) {
+            if ((sof.componentSpecs[i].HsamplingFactor != hfactor)
+                || (sof.componentSpecs[i].VsamplingFactor != vfactor)){
+                subsampled = true;
+                break;
+            }
+        }
+
+        if (subsampled) {
+            csType.setAttribute("name", "YCbCr");
+            if (numChannels == 4) {
+                hasAlpha = true;
+            }
+            return chroma;
+        }
+
+        // Not subsampled.  numChannels < 3 is taken care of above
+        if (numChannels == 3) {
+            csType.setAttribute("name", "RGB");
+        } else {
+            csType.setAttribute("name", "CMYK");
+        }
+
+        return chroma;
+    }
+
+    protected IIOMetadataNode getStandardCompressionNode() {
+
+        IIOMetadataNode compression = new IIOMetadataNode("Compression");
+
+        // CompressionTypeName
+        IIOMetadataNode name = new IIOMetadataNode("CompressionTypeName");
+        name.setAttribute("value", "JPEG");
+        compression.appendChild(name);
+
+        // Lossless - false
+        IIOMetadataNode lossless = new IIOMetadataNode("Lossless");
+        lossless.setAttribute("value", "FALSE");
+        compression.appendChild(lossless);
+
+        // NumProgressiveScans - count sos segments
+        int sosCount = 0;
+        Iterator iter = markerSequence.iterator();
+        while (iter.hasNext()) {
+            MarkerSegment ms = (MarkerSegment) iter.next();
+            if (ms.tag == JPEG.SOS) {
+                sosCount++;
+            }
+        }
+        if (sosCount != 0) {
+            IIOMetadataNode prog = new IIOMetadataNode("NumProgressiveScans");
+            prog.setAttribute("value", Integer.toString(sosCount));
+            compression.appendChild(prog);
+        }
+
+        return compression;
+    }
+
+    protected IIOMetadataNode getStandardDimensionNode() {
+        // If we have a JFIF marker segment, we know a little
+        // otherwise all we know is the orientation, which is always normal
+        IIOMetadataNode dim = new IIOMetadataNode("Dimension");
+        IIOMetadataNode orient = new IIOMetadataNode("ImageOrientation");
+        orient.setAttribute("value", "normal");
+        dim.appendChild(orient);
+
+        JFIFMarkerSegment jfif =
+            (JFIFMarkerSegment) findMarkerSegment(JFIFMarkerSegment.class, true);
+        if (jfif != null) {
+
+            // Aspect Ratio is width of pixel / height of pixel
+            float aspectRatio;
+            if (jfif.resUnits == 0) {
+                // In this case they just encode aspect ratio directly
+                aspectRatio = ((float) jfif.Xdensity)/jfif.Ydensity;
+            } else {
+                // They are true densities (e.g. dpi) and must be inverted
+                aspectRatio = ((float) jfif.Ydensity)/jfif.Xdensity;
+            }
+            IIOMetadataNode aspect = new IIOMetadataNode("PixelAspectRatio");
+            aspect.setAttribute("value", Float.toString(aspectRatio));
+            dim.insertBefore(aspect, orient);
+
+            // Pixel size
+            if (jfif.resUnits != 0) {
+                // 1 == dpi, 2 == dpc
+                float scale = (jfif.resUnits == 1) ? 25.4F : 10.0F;
+
+                IIOMetadataNode horiz =
+                    new IIOMetadataNode("HorizontalPixelSize");
+                horiz.setAttribute("value",
+                                   Float.toString(scale/jfif.Xdensity));
+                dim.appendChild(horiz);
+
+                IIOMetadataNode vert =
+                    new IIOMetadataNode("VerticalPixelSize");
+                vert.setAttribute("value",
+                                  Float.toString(scale/jfif.Ydensity));
+                dim.appendChild(vert);
+            }
+        }
+        return dim;
+    }
+
+    protected IIOMetadataNode getStandardTextNode() {
+        IIOMetadataNode text = null;
+        // Add a text entry for each COM Marker Segment
+        if (findMarkerSegment(JPEG.COM) != null) {
+            text = new IIOMetadataNode("Text");
+            Iterator iter = markerSequence.iterator();
+            while (iter.hasNext()) {
+                MarkerSegment seg = (MarkerSegment) iter.next();
+                if (seg.tag == JPEG.COM) {
+                    COMMarkerSegment com = (COMMarkerSegment) seg;
+                    IIOMetadataNode entry = new IIOMetadataNode("TextEntry");
+                    entry.setAttribute("keyword", "comment");
+                    entry.setAttribute("value", com.getComment());
+                text.appendChild(entry);
+                }
+            }
+        }
+        return text;
+    }
+
+    protected IIOMetadataNode getStandardTransparencyNode() {
+        IIOMetadataNode trans = null;
+        if (hasAlpha == true) {
+            trans = new IIOMetadataNode("Transparency");
+            IIOMetadataNode alpha = new IIOMetadataNode("Alpha");
+            alpha.setAttribute("value", "nonpremultiplied"); // Always assume
+            trans.appendChild(alpha);
+        }
+        return trans;
+    }
+
+    // Editing
+
+    public boolean isReadOnly() {
+        return false;
+    }
+
+    public void mergeTree(String formatName, Node root)
+        throws IIOInvalidTreeException {
+        if (formatName == null) {
+            throw new IllegalArgumentException("null formatName!");
+        }
+        if (root == null) {
+            throw new IllegalArgumentException("null root!");
+        }
+        List copy = null;
+        if (resetSequence == null) {
+            resetSequence = cloneSequence();  // Deep copy
+            copy = resetSequence;  // Avoid cloning twice
+        } else {
+            copy = cloneSequence();
+        }
+        if (isStream &&
+            (formatName.equals(JPEG.nativeStreamMetadataFormatName))) {
+                mergeNativeTree(root);
+        } else if (!isStream &&
+                   (formatName.equals(JPEG.nativeImageMetadataFormatName))) {
+            mergeNativeTree(root);
+        } else if (!isStream &&
+                   (formatName.equals
+                    (IIOMetadataFormatImpl.standardMetadataFormatName))) {
+            mergeStandardTree(root);
+        } else {
+            throw  new IllegalArgumentException("Unsupported format name: "
+                                                + formatName);
+        }
+        if (!isConsistent()) {
+            markerSequence = copy;
+            throw new IIOInvalidTreeException
+                ("Merged tree is invalid; original restored", root);
+        }
+    }
+
+    private void mergeNativeTree(Node root) throws IIOInvalidTreeException {
+        String name = root.getNodeName();
+        if (name != ((isStream) ? JPEG.nativeStreamMetadataFormatName
+                                : JPEG.nativeImageMetadataFormatName)) {
+            throw new IIOInvalidTreeException("Invalid root node name: " + name,
+                                              root);
+        }
+        if (root.getChildNodes().getLength() != 2) { // JPEGvariety and markerSequence
+            throw new IIOInvalidTreeException(
+                "JPEGvariety and markerSequence nodes must be present", root);
+        }
+        mergeJFIFsubtree(root.getFirstChild());
+        mergeSequenceSubtree(root.getLastChild());
+    }
+
+    /**
+     * Merge a JFIF subtree into the marker sequence, if the subtree
+     * is non-empty.
+     * If a JFIF marker exists, update it from the subtree.
+     * If none exists, create one from the subtree and insert it at the
+     * beginning of the marker sequence.
+     */
+    private void mergeJFIFsubtree(Node JPEGvariety)
+        throws IIOInvalidTreeException {
+        if (JPEGvariety.getChildNodes().getLength() != 0) {
+            Node jfifNode = JPEGvariety.getFirstChild();
+            // is there already a jfif marker segment?
+            JFIFMarkerSegment jfifSeg =
+                (JFIFMarkerSegment) findMarkerSegment(JFIFMarkerSegment.class, true);
+            if (jfifSeg != null) {
+                jfifSeg.updateFromNativeNode(jfifNode, false);
+            } else {
+                // Add it as the first element in the list.
+                markerSequence.add(0, new JFIFMarkerSegment(jfifNode));
+            }
+        }
+    }
+
+    private void mergeSequenceSubtree(Node sequenceTree)
+        throws IIOInvalidTreeException {
+        NodeList children = sequenceTree.getChildNodes();
+        for (int i = 0; i < children.getLength(); i++) {
+            Node node = children.item(i);
+            String name = node.getNodeName();
+            if (name.equals("dqt")) {
+                mergeDQTNode(node);
+            } else if (name.equals("dht")) {
+                mergeDHTNode(node);
+            } else if (name.equals("dri")) {
+                mergeDRINode(node);
+            } else if (name.equals("com")) {
+                mergeCOMNode(node);
+            } else if (name.equals("app14Adobe")) {
+                mergeAdobeNode(node);
+            } else if (name.equals("unknown")) {
+                mergeUnknownNode(node);
+            } else if (name.equals("sof")) {
+                mergeSOFNode(node);
+            } else if (name.equals("sos")) {
+                mergeSOSNode(node);
+            } else {
+                throw new IIOInvalidTreeException("Invalid node: " + name, node);
+            }
+        }
+    }
+
+    /**
+     * Merge the given DQT node into the marker sequence.  If there already
+     * exist DQT marker segments in the sequence, then each table in the
+     * node replaces the first table, in any DQT segment, with the same
+     * table id.  If none of the existing DQT segments contain a table with
+     * the same id, then the table is added to the last existing DQT segment.
+     * If there are no DQT segments, then a new one is created and added
+     * as follows:
+     * If there are DHT segments, the new DQT segment is inserted before the
+     * first one.
+     * If there are no DHT segments, the new DQT segment is inserted before
+     * an SOF segment, if there is one.
+     * If there is no SOF segment, the new DQT segment is inserted before
+     * the first SOS segment, if there is one.
+     * If there is no SOS segment, the new DQT segment is added to the end
+     * of the sequence.
+     */
+    private void mergeDQTNode(Node node) throws IIOInvalidTreeException {
+        // First collect any existing DQT nodes into a local list
+        ArrayList oldDQTs = new ArrayList();
+        Iterator iter = markerSequence.iterator();
+        while (iter.hasNext()) {
+            MarkerSegment seg = (MarkerSegment) iter.next();
+            if (seg instanceof DQTMarkerSegment) {
+                oldDQTs.add(seg);
+            }
+        }
+        if (!oldDQTs.isEmpty()) {
+            NodeList children = node.getChildNodes();
+            for (int i = 0; i < children.getLength(); i++) {
+                Node child = children.item(i);
+                int childID = MarkerSegment.getAttributeValue(child,
+                                                              null,
+                                                              "qtableId",
+                                                              0, 3,
+                                                              true);
+                DQTMarkerSegment dqt = null;
+                int tableIndex = -1;
+                for (int j = 0; j < oldDQTs.size(); j++) {
+                    DQTMarkerSegment testDQT = (DQTMarkerSegment) oldDQTs.get(j);
+                    for (int k = 0; k < testDQT.tables.size(); k++) {
+                        DQTMarkerSegment.Qtable testTable =
+                            (DQTMarkerSegment.Qtable) testDQT.tables.get(k);
+                        if (childID == testTable.tableID) {
+                            dqt = testDQT;
+                            tableIndex = k;
+                            break;
+                        }
+                    }
+                    if (dqt != null) break;
+                }
+                if (dqt != null) {
+                    dqt.tables.set(tableIndex, dqt.getQtableFromNode(child));
+                } else {
+                    dqt = (DQTMarkerSegment) oldDQTs.get(oldDQTs.size()-1);
+                    dqt.tables.add(dqt.getQtableFromNode(child));
+                }
+            }
+        } else {
+            DQTMarkerSegment newGuy = new DQTMarkerSegment(node);
+            int firstDHT = findMarkerSegmentPosition(DHTMarkerSegment.class, true);
+            int firstSOF = findMarkerSegmentPosition(SOFMarkerSegment.class, true);
+            int firstSOS = findMarkerSegmentPosition(SOSMarkerSegment.class, true);
+            if (firstDHT != -1) {
+                markerSequence.add(firstDHT, newGuy);
+            } else if (firstSOF != -1) {
+                markerSequence.add(firstSOF, newGuy);
+            } else if (firstSOS != -1) {
+                markerSequence.add(firstSOS, newGuy);
+            } else {
+                markerSequence.add(newGuy);
+            }
+        }
+    }
+
+    /**
+     * Merge the given DHT node into the marker sequence.  If there already
+     * exist DHT marker segments in the sequence, then each table in the
+     * node replaces the first table, in any DHT segment, with the same
+     * table class and table id.  If none of the existing DHT segments contain
+     * a table with the same class and id, then the table is added to the last
+     * existing DHT segment.
+     * If there are no DHT segments, then a new one is created and added
+     * as follows:
+     * If there are DQT segments, the new DHT segment is inserted immediately
+     * following the last DQT segment.
+     * If there are no DQT segments, the new DHT segment is inserted before
+     * an SOF segment, if there is one.
+     * If there is no SOF segment, the new DHT segment is inserted before
+     * the first SOS segment, if there is one.
+     * If there is no SOS segment, the new DHT segment is added to the end
+     * of the sequence.
+     */
+    private void mergeDHTNode(Node node) throws IIOInvalidTreeException {
+        // First collect any existing DQT nodes into a local list
+        ArrayList oldDHTs = new ArrayList();
+        Iterator iter = markerSequence.iterator();
+        while (iter.hasNext()) {
+            MarkerSegment seg = (MarkerSegment) iter.next();
+            if (seg instanceof DHTMarkerSegment) {
+                oldDHTs.add(seg);
+            }
+        }
+        if (!oldDHTs.isEmpty()) {
+            NodeList children = node.getChildNodes();
+            for (int i = 0; i < children.getLength(); i++) {
+                Node child = children.item(i);
+                NamedNodeMap attrs = child.getAttributes();
+                int childID = MarkerSegment.getAttributeValue(child,
+                                                              attrs,
+                                                              "htableId",
+                                                              0, 3,
+                                                              true);
+                int childClass = MarkerSegment.getAttributeValue(child,
+                                                                 attrs,
+                                                                 "class",
+                                                                 0, 1,
+                                                                 true);
+                DHTMarkerSegment dht = null;
+                int tableIndex = -1;
+                for (int j = 0; j < oldDHTs.size(); j++) {
+                    DHTMarkerSegment testDHT = (DHTMarkerSegment) oldDHTs.get(j);
+                    for (int k = 0; k < testDHT.tables.size(); k++) {
+                        DHTMarkerSegment.Htable testTable =
+                            (DHTMarkerSegment.Htable) testDHT.tables.get(k);
+                        if ((childID == testTable.tableID) &&
+                            (childClass == testTable.tableClass)) {
+                            dht = testDHT;
+                            tableIndex = k;
+                            break;
+                        }
+                    }
+                    if (dht != null) break;
+                }
+                if (dht != null) {
+                    dht.tables.set(tableIndex, dht.getHtableFromNode(child));
+                } else {
+                    dht = (DHTMarkerSegment) oldDHTs.get(oldDHTs.size()-1);
+                    dht.tables.add(dht.getHtableFromNode(child));
+                }
+            }
+        } else {
+            DHTMarkerSegment newGuy = new DHTMarkerSegment(node);
+            int lastDQT = findMarkerSegmentPosition(DQTMarkerSegment.class, false);
+            int firstSOF = findMarkerSegmentPosition(SOFMarkerSegment.class, true);
+            int firstSOS = findMarkerSegmentPosition(SOSMarkerSegment.class, true);
+            if (lastDQT != -1) {
+                markerSequence.add(lastDQT+1, newGuy);
+            } else if (firstSOF != -1) {
+                markerSequence.add(firstSOF, newGuy);
+            } else if (firstSOS != -1) {
+                markerSequence.add(firstSOS, newGuy);
+            } else {
+                markerSequence.add(newGuy);
+            }
+        }
+    }
+
+    /**
+     * Merge the given DRI node into the marker sequence.
+     * If there already exists a DRI marker segment, the restart interval
+     * value is updated.
+     * If there is no DRI segment, then a new one is created and added as
+     * follows:
+     * If there is an SOF segment, the new DRI segment is inserted before
+     * it.
+     * If there is no SOF segment, the new DRI segment is inserted before
+     * the first SOS segment, if there is one.
+     * If there is no SOS segment, the new DRI segment is added to the end
+     * of the sequence.
+     */
+    private void mergeDRINode(Node node) throws IIOInvalidTreeException {
+        DRIMarkerSegment dri =
+            (DRIMarkerSegment) findMarkerSegment(DRIMarkerSegment.class, true);
+        if (dri != null) {
+            dri.updateFromNativeNode(node, false);
+        } else {
+            DRIMarkerSegment newGuy = new DRIMarkerSegment(node);
+            int firstSOF = findMarkerSegmentPosition(SOFMarkerSegment.class, true);
+            int firstSOS = findMarkerSegmentPosition(SOSMarkerSegment.class, true);
+            if (firstSOF != -1) {
+                markerSequence.add(firstSOF, newGuy);
+            } else if (firstSOS != -1) {
+                markerSequence.add(firstSOS, newGuy);
+            } else {
+                markerSequence.add(newGuy);
+            }
+        }
+    }
+
+    /**
+     * Merge the given COM node into the marker sequence.
+     * A new COM marker segment is created and added to the sequence
+     * using insertCOMMarkerSegment.
+     */
+    private void mergeCOMNode(Node node) throws IIOInvalidTreeException {
+        COMMarkerSegment newGuy = new COMMarkerSegment(node);
+        insertCOMMarkerSegment(newGuy);
+    }
+
+     /**
+      * Insert a new COM marker segment into an appropriate place in the
+      * marker sequence, as follows:
+      * If there already exist COM marker segments, the new one is inserted
+      * after the last one.
+      * If there are no COM segments, the new COM segment is inserted after the
+      * JFIF segment, if there is one.
+      * If there is no JFIF segment, the new COM segment is inserted after the
+      * Adobe marker segment, if there is one.
+      * If there is no Adobe segment, the new COM segment is inserted
+      * at the beginning of the sequence.
+      */
+    private void insertCOMMarkerSegment(COMMarkerSegment newGuy) {
+        int lastCOM = findMarkerSegmentPosition(COMMarkerSegment.class, false);
+        boolean hasJFIF = (findMarkerSegment(JFIFMarkerSegment.class, true) != null);
+        int firstAdobe = findMarkerSegmentPosition(AdobeMarkerSegment.class, true);
+        if (lastCOM != -1) {
+            markerSequence.add(lastCOM+1, newGuy);
+        } else if (hasJFIF) {
+            markerSequence.add(1, newGuy);  // JFIF is always 0
+        } else if (firstAdobe != -1) {
+            markerSequence.add(firstAdobe+1, newGuy);
+        } else {
+            markerSequence.add(0, newGuy);
+        }
+    }
+
+    /**
+     * Merge the given Adobe APP14 node into the marker sequence.
+     * If there already exists an Adobe marker segment, then its attributes
+     * are updated from the node.
+     * If there is no Adobe segment, then a new one is created and added
+     * using insertAdobeMarkerSegment.
+     */
+    private void mergeAdobeNode(Node node) throws IIOInvalidTreeException {
+        AdobeMarkerSegment adobe =
+            (AdobeMarkerSegment) findMarkerSegment(AdobeMarkerSegment.class, true);
+        if (adobe != null) {
+            adobe.updateFromNativeNode(node, false);
+        } else {
+            AdobeMarkerSegment newGuy = new AdobeMarkerSegment(node);
+            insertAdobeMarkerSegment(newGuy);
+        }
+    }
+
+    /**
+     * Insert the given AdobeMarkerSegment into the marker sequence, as
+     * follows (we assume there is no Adobe segment yet):
+     * If there is a JFIF segment, then the new Adobe segment is inserted
+     * after it.
+     * If there is no JFIF segment, the new Adobe segment is inserted after the
+     * last Unknown segment, if there are any.
+     * If there are no Unknown segments, the new Adobe segment is inserted
+     * at the beginning of the sequence.
+     */
+    private void insertAdobeMarkerSegment(AdobeMarkerSegment newGuy) {
+        boolean hasJFIF =
+            (findMarkerSegment(JFIFMarkerSegment.class, true) != null);
+        int lastUnknown = findLastUnknownMarkerSegmentPosition();
+        if (hasJFIF) {
+            markerSequence.add(1, newGuy);  // JFIF is always 0
+        } else if (lastUnknown != -1) {
+            markerSequence.add(lastUnknown+1, newGuy);
+        } else {
+            markerSequence.add(0, newGuy);
+        }
+    }
+
+    /**
+     * Merge the given Unknown node into the marker sequence.
+     * A new Unknown marker segment is created and added to the sequence as
+     * follows:
+     * If there already exist Unknown marker segments, the new one is inserted
+     * after the last one.
+     * If there are no Unknown marker segments, the new Unknown marker segment
+     * is inserted after the JFIF segment, if there is one.
+     * If there is no JFIF segment, the new Unknown segment is inserted before
+     * the Adobe marker segment, if there is one.
+     * If there is no Adobe segment, the new Unknown segment is inserted
+     * at the beginning of the sequence.
+     */
+    private void mergeUnknownNode(Node node) throws IIOInvalidTreeException {
+        MarkerSegment newGuy = new MarkerSegment(node);
+        int lastUnknown = findLastUnknownMarkerSegmentPosition();
+        boolean hasJFIF = (findMarkerSegment(JFIFMarkerSegment.class, true) != null);
+        int firstAdobe = findMarkerSegmentPosition(AdobeMarkerSegment.class, true);
+        if (lastUnknown != -1) {
+            markerSequence.add(lastUnknown+1, newGuy);
+        } else if (hasJFIF) {
+            markerSequence.add(1, newGuy);  // JFIF is always 0
+        } if (firstAdobe != -1) {
+            markerSequence.add(firstAdobe, newGuy);
+        } else {
+            markerSequence.add(0, newGuy);
+        }
+    }
+
+    /**
+     * Merge the given SOF node into the marker sequence.
+     * If there already exists an SOF marker segment in the sequence, then
+     * its values are updated from the node.
+     * If there is no SOF segment, then a new one is created and added as
+     * follows:
+     * If there are any SOS segments, the new SOF segment is inserted before
+     * the first one.
+     * If there is no SOS segment, the new SOF segment is added to the end
+     * of the sequence.
+     *
+     */
+    private void mergeSOFNode(Node node) throws IIOInvalidTreeException {
+        SOFMarkerSegment sof =
+            (SOFMarkerSegment) findMarkerSegment(SOFMarkerSegment.class, true);
+        if (sof != null) {
+            sof.updateFromNativeNode(node, false);
+        } else {
+            SOFMarkerSegment newGuy = new SOFMarkerSegment(node);
+            int firstSOS = findMarkerSegmentPosition(SOSMarkerSegment.class, true);
+            if (firstSOS != -1) {
+                markerSequence.add(firstSOS, newGuy);
+            } else {
+                markerSequence.add(newGuy);
+            }
+        }
+    }
+
+    /**
+     * Merge the given SOS node into the marker sequence.
+     * If there already exists a single SOS marker segment, then the values
+     * are updated from the node.
+     * If there are more than one existing SOS marker segments, then an
+     * IIOInvalidTreeException is thrown, as SOS segments cannot be merged
+     * into a set of progressive scans.
+     * If there are no SOS marker segments, a new one is created and added
+     * to the end of the sequence.
+     */
+    private void mergeSOSNode(Node node) throws IIOInvalidTreeException {
+        SOSMarkerSegment firstSOS =
+            (SOSMarkerSegment) findMarkerSegment(SOSMarkerSegment.class, true);
+        SOSMarkerSegment lastSOS =
+            (SOSMarkerSegment) findMarkerSegment(SOSMarkerSegment.class, false);
+        if (firstSOS != null) {
+            if (firstSOS != lastSOS) {
+                throw new IIOInvalidTreeException
+                    ("Can't merge SOS node into a tree with > 1 SOS node", node);
+            }
+            firstSOS.updateFromNativeNode(node, false);
+        } else {
+            markerSequence.add(new SOSMarkerSegment(node));
+        }
+    }
+
+    private boolean transparencyDone;
+
+    private void mergeStandardTree(Node root) throws IIOInvalidTreeException {
+        transparencyDone = false;
+        NodeList children = root.getChildNodes();
+        for (int i = 0; i < children.getLength(); i++) {
+            Node node = children.item(i);
+            String name = node.getNodeName();
+            if (name.equals("Chroma")) {
+                mergeStandardChromaNode(node, children);
+            } else if (name.equals("Compression")) {
+                mergeStandardCompressionNode(node);
+            } else if (name.equals("Data")) {
+                mergeStandardDataNode(node);
+            } else if (name.equals("Dimension")) {
+                mergeStandardDimensionNode(node);
+            } else if (name.equals("Document")) {
+                mergeStandardDocumentNode(node);
+            } else if (name.equals("Text")) {
+                mergeStandardTextNode(node);
+            } else if (name.equals("Transparency")) {
+                mergeStandardTransparencyNode(node);
+            } else {
+                throw new IIOInvalidTreeException("Invalid node: " + name, node);
+            }
+        }
+    }
+
+    /*
+     * In general, it could be possible to convert all non-pixel data to some
+     * textual form and include it in comments, but then this would create the
+     * expectation that these comment forms be recognized by the reader, thus
+     * creating a defacto extension to JPEG metadata capabilities.  This is
+     * probably best avoided, so the following convert only text nodes to
+     * comments, and lose the keywords as well.
+     */
+
+    private void mergeStandardChromaNode(Node node, NodeList siblings)
+        throws IIOInvalidTreeException {
+        // ColorSpaceType can change the target colorspace for compression
+        // This must take any transparency node into account as well, as
+        // that affects the number of channels (if alpha is present).  If
+        // a transparency node is dealt with here, set a flag to indicate
+        // this to the transparency processor below.  If we discover that
+        // the nodes are not in order, throw an exception as the tree is
+        // invalid.
+
+        if (transparencyDone) {
+            throw new IIOInvalidTreeException
+                ("Transparency node must follow Chroma node", node);
+        }
+
+        Node csType = node.getFirstChild();
+        if ((csType == null) || !csType.getNodeName().equals("ColorSpaceType")) {
+            // If there is no ColorSpaceType node, we have nothing to do
+            return;
+        }
+
+        String csName = csType.getAttributes().getNamedItem("name").getNodeValue();
+
+        int numChannels = 0;
+        boolean wantJFIF = false;
+        boolean wantAdobe = false;
+        int transform = 0;
+        boolean willSubsample = false;
+        byte [] ids = {1, 2, 3, 4};  // JFIF compatible
+        if (csName.equals("GRAY")) {
+            numChannels = 1;
+            wantJFIF = true;
+        } else if (csName.equals("YCbCr")) {
+            numChannels = 3;
+            wantJFIF = true;
+            willSubsample = true;
+        } else if (csName.equals("PhotoYCC")) {
+            numChannels = 3;
+            wantAdobe = true;
+            transform = JPEG.ADOBE_YCC;
+            ids[0] = (byte) 'Y';
+            ids[1] = (byte) 'C';
+            ids[2] = (byte) 'c';
+        } else if (csName.equals("RGB")) {
+            numChannels = 3;
+            wantAdobe = true;
+            transform = JPEG.ADOBE_UNKNOWN;
+            ids[0] = (byte) 'R';
+            ids[1] = (byte) 'G';
+            ids[2] = (byte) 'B';
+        } else if ((csName.equals("XYZ"))
+                   || (csName.equals("Lab"))
+                   || (csName.equals("Luv"))
+                   || (csName.equals("YxY"))
+                   || (csName.equals("HSV"))
+                   || (csName.equals("HLS"))
+                   || (csName.equals("CMY"))
+                   || (csName.equals("3CLR"))) {
+            numChannels = 3;
+        } else if (csName.equals("YCCK")) {
+            numChannels = 4;
+            wantAdobe = true;
+            transform = JPEG.ADOBE_YCCK;
+            willSubsample = true;
+        } else if (csName.equals("CMYK")) {
+            numChannels = 4;
+            wantAdobe = true;
+            transform = JPEG.ADOBE_UNKNOWN;
+        } else if (csName.equals("4CLR")) {
+            numChannels = 4;
+        } else { // We can't handle them, so don't modify any metadata
+            return;
+        }
+
+        boolean wantAlpha = false;
+        for (int i = 0; i < siblings.getLength(); i++) {
+            Node trans = siblings.item(i);
+            if (trans.getNodeName().equals("Transparency")) {
+                wantAlpha = wantAlpha(trans);
+                break;  // out of for
+            }
+        }
+
+        if (wantAlpha) {
+            numChannels++;
+            wantJFIF = false;
+            if (ids[0] == (byte) 'R') {
+                ids[3] = (byte) 'A';
+                wantAdobe = false;
+            }
+        }
+
+        JFIFMarkerSegment jfif =
+            (JFIFMarkerSegment) findMarkerSegment(JFIFMarkerSegment.class, true);
+        AdobeMarkerSegment adobe =
+            (AdobeMarkerSegment) findMarkerSegment(AdobeMarkerSegment.class, true);
+        SOFMarkerSegment sof =
+            (SOFMarkerSegment) findMarkerSegment(SOFMarkerSegment.class, true);
+        SOSMarkerSegment sos =
+            (SOSMarkerSegment) findMarkerSegment(SOSMarkerSegment.class, true);
+
+        // If the metadata specifies progressive, then the number of channels
+        // must match, so that we can modify all the existing SOS marker segments.
+        // If they don't match, we don't know what to do with SOS so we can't do
+        // the merge.  We then just return silently.
+        // An exception would not be appropriate.  A warning might, but we have
+        // nowhere to send it to.
+        if ((sof != null) && (sof.tag == JPEG.SOF2)) { // Progressive
+            if ((sof.componentSpecs.length != numChannels) && (sos != null)) {
+                return;
+            }
+        }
+
+        // JFIF header might be removed
+        if (!wantJFIF && (jfif != null)) {
+            markerSequence.remove(jfif);
+        }
+
+        // Now add a JFIF if we do want one, but only if it isn't stream metadata
+        if (wantJFIF && !isStream) {
+            markerSequence.add(0, new JFIFMarkerSegment());
+        }
+
+        // Adobe header might be removed or the transform modified, if it isn't
+        // stream metadata
+        if (wantAdobe) {
+            if ((adobe == null) && !isStream) {
+                adobe = new AdobeMarkerSegment(transform);
+                insertAdobeMarkerSegment(adobe);
+            } else {
+                adobe.transform = transform;
+            }
+        } else if (adobe != null) {
+            markerSequence.remove(adobe);
+        }
+
+        boolean updateQtables = false;
+        boolean updateHtables = false;
+
+        boolean progressive = false;
+
+        int [] subsampledSelectors = {0, 1, 1, 0 } ;
+        int [] nonSubsampledSelectors = { 0, 0, 0, 0};
+
+        int [] newTableSelectors = willSubsample
+                                   ? subsampledSelectors
+                                   : nonSubsampledSelectors;
+
+        // Keep the old componentSpecs array
+        SOFMarkerSegment.ComponentSpec [] oldCompSpecs = null;
+        // SOF might be modified
+        if (sof != null) {
+            oldCompSpecs = sof.componentSpecs;
+            progressive = (sof.tag == JPEG.SOF2);
+            // Now replace the SOF with a new one; it might be the same, but
+            // this is easier.
+            markerSequence.set(markerSequence.indexOf(sof),
+                               new SOFMarkerSegment(progressive,
+                                                    false, // we never need extended
+                                                    willSubsample,
+                                                    ids,
+                                                    numChannels));
+
+            // Now suss out if subsampling changed and set the boolean for
+            // updating the q tables
+            // if the old componentSpec q table selectors don't match
+            // the new ones, update the qtables.  The new selectors are already
+            // in place in the new SOF segment above.
+            for (int i = 0; i < oldCompSpecs.length; i++) {
+                if (oldCompSpecs[i].QtableSelector != newTableSelectors[i]) {
+                    updateQtables = true;
+                }
+            }
+
+            if (progressive) {
+                // if the component ids are different, update all the existing scans
+                // ignore Huffman tables
+                boolean idsDiffer = false;
+                for (int i = 0; i < oldCompSpecs.length; i++) {
+                    if (ids[i] != oldCompSpecs[i].componentId) {
+                        idsDiffer = true;
+                    }
+                }
+                if (idsDiffer) {
+                    // update the ids in each SOS marker segment
+                    for (Iterator iter = markerSequence.iterator(); iter.hasNext();) {
+                        MarkerSegment seg = (MarkerSegment) iter.next();
+                        if (seg instanceof SOSMarkerSegment) {
+                            SOSMarkerSegment target = (SOSMarkerSegment) seg;
+                            for (int i = 0; i < target.componentSpecs.length; i++) {
+                                int oldSelector =
+                                    target.componentSpecs[i].componentSelector;
+                                // Find the position in the old componentSpecs array
+                                // of the old component with the old selector
+                                // and replace the component selector with the
+                                // new id at the same position, as these match
+                                // the new component specs array in the SOF created
+                                // above.
+                                for (int j = 0; j < oldCompSpecs.length; j++) {
+                                    if (oldCompSpecs[j].componentId == oldSelector) {
+                                        target.componentSpecs[i].componentSelector =
+                                            ids[j];
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                if (sos != null) {
+                    // htables - if the old htable selectors don't match the new ones,
+                    // update the tables.
+                    for (int i = 0; i < sos.componentSpecs.length; i++) {
+                        if ((sos.componentSpecs[i].dcHuffTable
+                             != newTableSelectors[i])
+                            || (sos.componentSpecs[i].acHuffTable
+                                != newTableSelectors[i])) {
+                            updateHtables = true;
+                        }
+                    }
+
+                    // Might be the same as the old one, but this is easier.
+                    markerSequence.set(markerSequence.indexOf(sos),
+                               new SOSMarkerSegment(willSubsample,
+                                                    ids,
+                                                    numChannels));
+                }
+            }
+        } else {
+            // should be stream metadata if there isn't an SOF, but check it anyway
+            if (isStream) {
+                // update tables - routines below check if it's really necessary
+                updateQtables = true;
+                updateHtables = true;
+            }
+        }
+
+        if (updateQtables) {
+            List tableSegments = new ArrayList();
+            for (Iterator iter = markerSequence.iterator(); iter.hasNext();) {
+                MarkerSegment seg = (MarkerSegment) iter.next();
+                if (seg instanceof DQTMarkerSegment) {
+                    tableSegments.add(seg);
+                }
+            }
+            // If there are no tables, don't add them, as the metadata encodes an
+            // abbreviated stream.
+            // If we are not subsampling, we just need one, so don't do anything
+            if (!tableSegments.isEmpty() && willSubsample) {
+                // Is it really necessary?  There should be at least 2 tables.
+                // If there is only one, assume it's a scaled "standard"
+                // luminance table, extract the scaling factor, and generate a
+                // scaled "standard" chrominance table.
+
+                // Find the table with selector 1.
+                boolean found = false;
+                for (Iterator iter = tableSegments.iterator(); iter.hasNext();) {
+                    DQTMarkerSegment testdqt = (DQTMarkerSegment) iter.next();
+                    for (Iterator tabiter = testdqt.tables.iterator();
+                         tabiter.hasNext();) {
+                        DQTMarkerSegment.Qtable tab =
+                            (DQTMarkerSegment.Qtable) tabiter.next();
+                        if (tab.tableID == 1) {
+                            found = true;
+                        }
+                    }
+                }
+                if (!found) {
+                    //    find the table with selector 0.  There should be one.
+                    DQTMarkerSegment.Qtable table0 = null;
+                    for (Iterator iter = tableSegments.iterator(); iter.hasNext();) {
+                        DQTMarkerSegment testdqt = (DQTMarkerSegment) iter.next();
+                        for (Iterator tabiter = testdqt.tables.iterator();
+                             tabiter.hasNext();) {
+                            DQTMarkerSegment.Qtable tab =
+                                (DQTMarkerSegment.Qtable) tabiter.next();
+                            if (tab.tableID == 0) {
+                                table0 = tab;
+                            }
+                        }
+                    }
+
+                    // Assuming that the table with id 0 is a luminance table,
+                    // compute a new chrominance table of the same quality and
+                    // add it to the last DQT segment
+                    DQTMarkerSegment dqt =
+                        (DQTMarkerSegment) tableSegments.get(tableSegments.size()-1);
+                    dqt.tables.add(dqt.getChromaForLuma(table0));
+                }
+            }
+        }
+
+        if (updateHtables) {
+            List tableSegments = new ArrayList();
+            for (Iterator iter = markerSequence.iterator(); iter.hasNext();) {
+                MarkerSegment seg = (MarkerSegment) iter.next();
+                if (seg instanceof DHTMarkerSegment) {
+                    tableSegments.add(seg);
+                }
+            }
+            // If there are no tables, don't add them, as the metadata encodes an
+            // abbreviated stream.
+            // If we are not subsampling, we just need one, so don't do anything
+            if (!tableSegments.isEmpty() && willSubsample) {
+                // Is it really necessary?  There should be at least 2 dc and 2 ac
+                // tables.  If there is only one, add a
+                // "standard " chrominance table.
+
+                // find a table with selector 1. AC/DC is irrelevant
+                boolean found = false;
+                for (Iterator iter = tableSegments.iterator(); iter.hasNext();) {
+                    DHTMarkerSegment testdht = (DHTMarkerSegment) iter.next();
+                    for (Iterator tabiter = testdht.tables.iterator();
+                         tabiter.hasNext();) {
+                        DHTMarkerSegment.Htable tab =
+                            (DHTMarkerSegment.Htable) tabiter.next();
+                        if (tab.tableID == 1) {
+                            found = true;
+                        }
+                    }
+                }
+                if (!found) {
+                    // Create new standard dc and ac chrominance tables and add them
+                    // to the last DHT segment
+                    DHTMarkerSegment lastDHT =
+                        (DHTMarkerSegment) tableSegments.get(tableSegments.size()-1);
+                    lastDHT.addHtable(JPEGHuffmanTable.StdDCLuminance, true, 1);
+                    lastDHT.addHtable(JPEGHuffmanTable.StdACLuminance, true, 1);
+                }
+            }
+        }
+    }
+
+    private boolean wantAlpha(Node transparency) {
+        boolean returnValue = false;
+        Node alpha = transparency.getFirstChild();  // Alpha must be first if present
+        if (alpha.getNodeName().equals("Alpha")) {
+            if (alpha.hasAttributes()) {
+                String value =
+                    alpha.getAttributes().getNamedItem("value").getNodeValue();
+                if (!value.equals("none")) {
+                    returnValue = true;
+                }
+            }
+        }
+        transparencyDone = true;
+        return returnValue;
+    }
+
+    private void mergeStandardCompressionNode(Node node)
+        throws IIOInvalidTreeException {
+        // NumProgressiveScans is ignored.  Progression must be enabled on the
+        // ImageWriteParam.
+        // No-op
+    }
+
+    private void mergeStandardDataNode(Node node)
+        throws IIOInvalidTreeException {
+        // No-op
+    }
+
+    private void mergeStandardDimensionNode(Node node)
+        throws IIOInvalidTreeException {
+        // Pixel Aspect Ratio or pixel size can be incorporated if there is,
+        // or can be, a JFIF segment
+        JFIFMarkerSegment jfif =
+            (JFIFMarkerSegment) findMarkerSegment(JFIFMarkerSegment.class, true);
+        if (jfif == null) {
+            // Can there be one?
+            // Criteria:
+            // SOF must be present with 1 or 3 channels, (stream metadata fails this)
+            //     Component ids must be JFIF compatible.
+            boolean canHaveJFIF = false;
+            SOFMarkerSegment sof =
+                (SOFMarkerSegment) findMarkerSegment(SOFMarkerSegment.class, true);
+            if (sof != null) {
+                int numChannels = sof.componentSpecs.length;
+                if ((numChannels == 1) || (numChannels == 3)) {
+                    canHaveJFIF = true; // remaining tests are negative
+                    for (int i = 0; i < sof.componentSpecs.length; i++) {
+                        if (sof.componentSpecs[i].componentId != i+1)
+                            canHaveJFIF = false;
+                    }
+                    // if Adobe present, transform = ADOBE_UNKNOWN for 1-channel,
+                    //     ADOBE_YCC for 3-channel.
+                    AdobeMarkerSegment adobe =
+                        (AdobeMarkerSegment) findMarkerSegment(AdobeMarkerSegment.class,
+                                                               true);
+                    if (adobe != null) {
+                        if (adobe.transform != ((numChannels == 1)
+                                                ? JPEG.ADOBE_UNKNOWN
+                                                : JPEG.ADOBE_YCC)) {
+                            canHaveJFIF = false;
+                        }
+                    }
+                }
+            }
+            // If so, create one and insert it into the sequence.  Note that
+            // default is just pixel ratio at 1:1
+            if (canHaveJFIF) {
+                jfif = new JFIFMarkerSegment();
+                markerSequence.add(0, jfif);
+            }
+        }
+        if (jfif != null) {
+            NodeList children = node.getChildNodes();
+            for (int i = 0; i < children.getLength(); i++) {
+                Node child = children.item(i);
+                NamedNodeMap attrs = child.getAttributes();
+                String name = child.getNodeName();
+                if (name.equals("PixelAspectRatio")) {
+                    String valueString = attrs.getNamedItem("value").getNodeValue();
+                    float value = Float.parseFloat(valueString);
+                    Point p = findIntegerRatio(value);
+                    jfif.resUnits = JPEG.DENSITY_UNIT_ASPECT_RATIO;
+                    jfif.Xdensity = p.x;
+                    jfif.Xdensity = p.y;
+                } else if (name.equals("HorizontalPixelSize")) {
+                    String valueString = attrs.getNamedItem("value").getNodeValue();
+                    float value = Float.parseFloat(valueString);
+                    // Convert from mm/dot to dots/cm
+                    int dpcm = (int) Math.round(1.0/(value*10.0));
+                    jfif.resUnits = JPEG.DENSITY_UNIT_DOTS_CM;
+                    jfif.Xdensity = dpcm;
+                } else if (name.equals("VerticalPixelSize")) {
+                    String valueString = attrs.getNamedItem("value").getNodeValue();
+                    float value = Float.parseFloat(valueString);
+                    // Convert from mm/dot to dots/cm
+                    int dpcm = (int) Math.round(1.0/(value*10.0));
+                    jfif.resUnits = JPEG.DENSITY_UNIT_DOTS_CM;
+                    jfif.Ydensity = dpcm;
+                }
+
+            }
+        }
+    }
+
+    /*
+     * Return a pair of integers whose ratio (x/y) approximates the given
+     * float value.
+     */
+    private static Point findIntegerRatio(float value) {
+        float epsilon = 0.005F;
+
+        // Normalize
+        value = Math.abs(value);
+
+        // Deal with min case
+        if (value <= epsilon) {
+            return new Point(1, 255);
+        }
+
+        // Deal with max case
+        if (value >= 255) {
+            return new Point(255, 1);
+        }
+
+        // Remember if we invert
+        boolean inverted = false;
+        if (value < 1.0) {
+            value = 1.0F/value;
+            inverted = true;
+        }
+
+        // First approximation
+        int y = 1;
+        int x = (int) Math.round(value);
+
+        float ratio = (float) x;
+        float delta = Math.abs(value - ratio);
+        while (delta > epsilon) { // not close enough
+            // Increment y and compute a new x
+            y++;
+            x = (int) Math.round(y*value);
+            ratio = (float)x/(float)y;
+            delta = Math.abs(value - ratio);
+        }
+        return inverted ? new Point(y, x) : new Point(x, y);
+    }
+
+    private void mergeStandardDocumentNode(Node node)
+        throws IIOInvalidTreeException {
+        // No-op
+    }
+
+    private void mergeStandardTextNode(Node node)
+        throws IIOInvalidTreeException {
+        // Convert to comments.  For the moment ignore the encoding issue.
+        // Ignore keywords, language, and encoding (for the moment).
+        // If compression tag is present, use only entries with "none".
+        NodeList children = node.getChildNodes();
+        for (int i = 0; i < children.getLength(); i++) {
+            Node child = children.item(i);
+            NamedNodeMap attrs = child.getAttributes();
+            Node comp = attrs.getNamedItem("compression");
+            boolean copyIt = true;
+            if (comp != null) {
+                String compString = comp.getNodeValue();
+                if (!compString.equals("none")) {
+                    copyIt = false;
+                }
+            }
+            if (copyIt) {
+                String value = attrs.getNamedItem("value").getNodeValue();
+                COMMarkerSegment com = new COMMarkerSegment(value);
+                insertCOMMarkerSegment(com);
+            }
+        }
+    }
+
+    private void mergeStandardTransparencyNode(Node node)
+        throws IIOInvalidTreeException {
+        // This might indicate that an alpha channel is being added or removed.
+        // The nodes must appear in order, and a Chroma node will process any
+        // transparency, so process it here only if there was no Chroma node
+        // Do nothing for stream metadata
+        if (!transparencyDone && !isStream) {
+            boolean wantAlpha = wantAlpha(node);
+            // do we have alpha already?  If the number of channels is 2 or 4,
+            // we do, as we don't support CMYK, nor can we add alpha to it
+            // The number of channels can be determined from the SOF
+            JFIFMarkerSegment jfif = (JFIFMarkerSegment) findMarkerSegment
+                (JFIFMarkerSegment.class, true);
+            AdobeMarkerSegment adobe = (AdobeMarkerSegment) findMarkerSegment
+                (AdobeMarkerSegment.class, true);
+            SOFMarkerSegment sof = (SOFMarkerSegment) findMarkerSegment
+                (SOFMarkerSegment.class, true);
+            SOSMarkerSegment sos = (SOSMarkerSegment) findMarkerSegment
+                (SOSMarkerSegment.class, true);
+
+            // We can do nothing for progressive, as we don't know how to
+            // modify the scans.
+            if ((sof != null) && (sof.tag == JPEG.SOF2)) { // Progressive
+                return;
+            }
+
+            // Do we already have alpha?  We can tell by the number of channels
+            // We must have an sof, or we can't do anything further
+            if (sof != null) {
+                int numChannels = sof.componentSpecs.length;
+                boolean hadAlpha = (numChannels == 2) || (numChannels == 4);
+                // proceed only if the old state and the new state differ
+                if (hadAlpha != wantAlpha) {
+                    if (wantAlpha) {  // Adding alpha
+                        numChannels++;
+                        if (jfif != null) {
+                            markerSequence.remove(jfif);
+                        }
+
+                        // If an adobe marker is present, transform must be UNKNOWN
+                        if (adobe != null) {
+                            adobe.transform = JPEG.ADOBE_UNKNOWN;
+                        }
+
+                        // Add a component spec with appropriate parameters to SOF
+                        SOFMarkerSegment.ComponentSpec [] newSpecs =
+                            new SOFMarkerSegment.ComponentSpec[numChannels];
+                        for (int i = 0; i < sof.componentSpecs.length; i++) {
+                            newSpecs[i] = sof.componentSpecs[i];
+                        }
+                        byte oldFirstID = (byte) sof.componentSpecs[0].componentId;
+                        byte newID = (byte) ((oldFirstID > 1) ? 'A' : 4);
+                        newSpecs[numChannels-1] =
+                            sof.getComponentSpec(newID,
+                                sof.componentSpecs[0].HsamplingFactor,
+                                sof.componentSpecs[0].QtableSelector);
+
+                        sof.componentSpecs = newSpecs;
+
+                        // Add a component spec with appropriate parameters to SOS
+                        SOSMarkerSegment.ScanComponentSpec [] newScanSpecs =
+                            new SOSMarkerSegment.ScanComponentSpec [numChannels];
+                        for (int i = 0; i < sos.componentSpecs.length; i++) {
+                            newScanSpecs[i] = sos.componentSpecs[i];
+                        }
+                        newScanSpecs[numChannels-1] =
+                            sos.getScanComponentSpec (newID, 0);
+                        sos.componentSpecs = newScanSpecs;
+                    } else {  // Removing alpha
+                        numChannels--;
+                        // Remove a component spec from SOF
+                        SOFMarkerSegment.ComponentSpec [] newSpecs =
+                            new SOFMarkerSegment.ComponentSpec[numChannels];
+                        for (int i = 0; i < numChannels; i++) {
+                            newSpecs[i] = sof.componentSpecs[i];
+                        }
+                        sof.componentSpecs = newSpecs;
+
+                        // Remove a component spec from SOS
+                        SOSMarkerSegment.ScanComponentSpec [] newScanSpecs =
+                            new SOSMarkerSegment.ScanComponentSpec [numChannels];
+                        for (int i = 0; i < numChannels; i++) {
+                            newScanSpecs[i] = sos.componentSpecs[i];
+                        }
+                        sos.componentSpecs = newScanSpecs;
+                    }
+                }
+            }
+        }
+    }
+
+
+    public void setFromTree(String formatName, Node root)
+        throws IIOInvalidTreeException {
+        if (formatName == null) {
+            throw new IllegalArgumentException("null formatName!");
+        }
+        if (root == null) {
+            throw new IllegalArgumentException("null root!");
+        }
+        if (isStream &&
+            (formatName.equals(JPEG.nativeStreamMetadataFormatName))) {
+            setFromNativeTree(root);
+        } else if (!isStream &&
+                   (formatName.equals(JPEG.nativeImageMetadataFormatName))) {
+            setFromNativeTree(root);
+        } else if (!isStream &&
+                   (formatName.equals
+                    (IIOMetadataFormatImpl.standardMetadataFormatName))) {
+            // In this case a reset followed by a merge is correct
+            super.setFromTree(formatName, root);
+        } else {
+            throw  new IllegalArgumentException("Unsupported format name: "
+                                                + formatName);
+        }
+    }
+
+    private void setFromNativeTree(Node root) throws IIOInvalidTreeException {
+        if (resetSequence == null) {
+            resetSequence = markerSequence;
+        }
+        markerSequence = new ArrayList();
+
+        // Build a whole new marker sequence from the tree
+
+        String name = root.getNodeName();
+        if (name != ((isStream) ? JPEG.nativeStreamMetadataFormatName
+                                : JPEG.nativeImageMetadataFormatName)) {
+            throw new IIOInvalidTreeException("Invalid root node name: " + name,
+                                              root);
+        }
+        if (!isStream) {
+            if (root.getChildNodes().getLength() != 2) { // JPEGvariety and markerSequence
+                throw new IIOInvalidTreeException(
+                    "JPEGvariety and markerSequence nodes must be present", root);
+            }
+
+            Node JPEGvariety = root.getFirstChild();
+
+            if (JPEGvariety.getChildNodes().getLength() != 0) {
+                markerSequence.add(new JFIFMarkerSegment(JPEGvariety.getFirstChild()));
+            }
+        }
+
+        Node markerSequenceNode = isStream ? root : root.getLastChild();
+        setFromMarkerSequenceNode(markerSequenceNode);
+
+    }
+
+    void setFromMarkerSequenceNode(Node markerSequenceNode)
+        throws IIOInvalidTreeException{
+
+        NodeList children = markerSequenceNode.getChildNodes();
+        // for all the children, add a marker segment
+        for (int i = 0; i < children.getLength(); i++) {
+            Node node = children.item(i);
+            String childName = node.getNodeName();
+            if (childName.equals("dqt")) {
+                markerSequence.add(new DQTMarkerSegment(node));
+            } else if (childName.equals("dht")) {
+                markerSequence.add(new DHTMarkerSegment(node));
+            } else if (childName.equals("dri")) {
+                markerSequence.add(new DRIMarkerSegment(node));
+            } else if (childName.equals("com")) {
+                markerSequence.add(new COMMarkerSegment(node));
+            } else if (childName.equals("app14Adobe")) {
+                markerSequence.add(new AdobeMarkerSegment(node));
+            } else if (childName.equals("unknown")) {
+                markerSequence.add(new MarkerSegment(node));
+            } else if (childName.equals("sof")) {
+                markerSequence.add(new SOFMarkerSegment(node));
+            } else if (childName.equals("sos")) {
+                markerSequence.add(new SOSMarkerSegment(node));
+            } else {
+                throw new IIOInvalidTreeException("Invalid "
+                    + (isStream ? "stream " : "image ") + "child: "
+                    + childName, node);
+            }
+        }
+    }
+
+    /**
+     * Check that this metadata object is in a consistent state and
+     * return <code>true</code> if it is or <code>false</code>
+     * otherwise.  All the constructors and modifiers should call
+     * this method at the end to guarantee that the data is always
+     * consistent, as the writer relies on this.
+     */
+    private boolean isConsistent() {
+        SOFMarkerSegment sof =
+            (SOFMarkerSegment) findMarkerSegment(SOFMarkerSegment.class,
+                                                 true);
+        JFIFMarkerSegment jfif =
+            (JFIFMarkerSegment) findMarkerSegment(JFIFMarkerSegment.class,
+                                                  true);
+        AdobeMarkerSegment adobe =
+            (AdobeMarkerSegment) findMarkerSegment(AdobeMarkerSegment.class,
+                                                   true);
+        boolean retval = true;
+        if (!isStream) {
+            if (sof != null) {
+                // SOF numBands = total scan bands
+                int numSOFBands = sof.componentSpecs.length;
+                int numScanBands = countScanBands();
+                if (numScanBands != 0) {  // No SOS is OK
+                    if (numScanBands != numSOFBands) {
+                        retval = false;
+                    }
+                }
+                // If JFIF is present, component ids are 1-3, bands are 1 or 3
+                if (jfif != null) {
+                    if ((numSOFBands != 1) && (numSOFBands != 3)) {
+                        retval = false;
+                    }
+                    for (int i = 0; i < numSOFBands; i++) {
+                        if (sof.componentSpecs[i].componentId != i+1) {
+                            retval = false;
+                        }
+                    }
+
+                    // If both JFIF and Adobe are present,
+                    // Adobe transform == unknown for gray,
+                    // YCC for 3-chan.
+                    if ((adobe != null)
+                        && (((numSOFBands == 1)
+                             && (adobe.transform != JPEG.ADOBE_UNKNOWN))
+                            || ((numSOFBands == 3)
+                                && (adobe.transform != JPEG.ADOBE_YCC)))) {
+                        retval = false;
+                    }
+                }
+            } else {
+                // stream can't have jfif, adobe, sof, or sos
+                SOSMarkerSegment sos =
+                    (SOSMarkerSegment) findMarkerSegment(SOSMarkerSegment.class,
+                                                         true);
+                if ((jfif != null) || (adobe != null)
+                    || (sof != null) || (sos != null)) {
+                    retval = false;
+                }
+            }
+        }
+        return retval;
+    }
+
+    /**
+     * Returns the total number of bands referenced in all SOS marker
+     * segments, including 0 if there are no SOS marker segments.
+     */
+    private int countScanBands() {
+        List ids = new ArrayList();
+        Iterator iter = markerSequence.iterator();
+        while(iter.hasNext()) {
+            MarkerSegment seg = (MarkerSegment)iter.next();
+            if (seg instanceof SOSMarkerSegment) {
+                SOSMarkerSegment sos = (SOSMarkerSegment) seg;
+                SOSMarkerSegment.ScanComponentSpec [] specs = sos.componentSpecs;
+                for (int i = 0; i < specs.length; i++) {
+                    Integer id = new Integer(specs[i].componentSelector);
+                    if (!ids.contains(id)) {
+                        ids.add(id);
+                    }
+                }
+            }
+        }
+
+        return ids.size();
+    }
+
+    ///// Writer support
+
+    void writeToStream(ImageOutputStream ios,
+                       boolean ignoreJFIF,
+                       boolean forceJFIF,
+                       List thumbnails,
+                       ICC_Profile iccProfile,
+                       boolean ignoreAdobe,
+                       int newAdobeTransform,
+                       JPEGImageWriter writer)
+        throws IOException {
+        if (forceJFIF) {
+            // Write a default JFIF segment, including thumbnails
+            // This won't be duplicated below because forceJFIF will be
+            // set only if there is no JFIF present already.
+            JFIFMarkerSegment.writeDefaultJFIF(ios,
+                                               thumbnails,
+                                               iccProfile,
+                                               writer);
+            if ((ignoreAdobe == false)
+                && (newAdobeTransform != JPEG.ADOBE_IMPOSSIBLE)) {
+                if ((newAdobeTransform != JPEG.ADOBE_UNKNOWN)
+                    && (newAdobeTransform != JPEG.ADOBE_YCC)) {
+                    // Not compatible, so ignore Adobe.
+                    ignoreAdobe = true;
+                    writer.warningOccurred
+                        (JPEGImageWriter.WARNING_METADATA_ADJUSTED_FOR_THUMB);
+                }
+            }
+        }
+        // Iterate over each MarkerSegment
+        Iterator iter = markerSequence.iterator();
+        while(iter.hasNext()) {
+            MarkerSegment seg = (MarkerSegment)iter.next();
+            if (seg instanceof JFIFMarkerSegment) {
+                if (ignoreJFIF == false) {
+                    JFIFMarkerSegment jfif = (JFIFMarkerSegment) seg;
+                    jfif.writeWithThumbs(ios, thumbnails, writer);
+                    if (iccProfile != null) {
+                        JFIFMarkerSegment.writeICC(iccProfile, ios);
+                    }
+                } // Otherwise ignore it, as requested
+            } else if (seg instanceof AdobeMarkerSegment) {
+                if (ignoreAdobe == false) {
+                    if (newAdobeTransform != JPEG.ADOBE_IMPOSSIBLE) {
+                        AdobeMarkerSegment newAdobe =
+                            (AdobeMarkerSegment) seg.clone();
+                        newAdobe.transform = newAdobeTransform;
+                        newAdobe.write(ios);
+                    } else if (forceJFIF) {
+                        // If adobe isn't JFIF compatible, ignore it
+                        AdobeMarkerSegment adobe = (AdobeMarkerSegment) seg;
+                        if ((adobe.transform == JPEG.ADOBE_UNKNOWN)
+                            || (adobe.transform == JPEG.ADOBE_YCC)) {
+                            adobe.write(ios);
+                        } else {
+                            writer.warningOccurred
+                         (JPEGImageWriter.WARNING_METADATA_ADJUSTED_FOR_THUMB);
+                        }
+                    } else {
+                        seg.write(ios);
+                    }
+                } // Otherwise ignore it, as requested
+            } else {
+                seg.write(ios);
+            }
+        }
+    }
+
+    //// End of writer support
+
+    public void reset() {
+        if (resetSequence != null) {  // Otherwise no need to reset
+            markerSequence = resetSequence;
+            resetSequence = null;
+        }
+    }
+
+    public void print() {
+        for (int i = 0; i < markerSequence.size(); i++) {
+            MarkerSegment seg = (MarkerSegment) markerSequence.get(i);
+            seg.print();
+        }
+    }
+
+}

@@ -1,218 +1,212 @@
-/*     */ package java.security.spec;
-/*     */ 
-/*     */ import java.math.BigInteger;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class RSAMultiPrimePrivateCrtKeySpec
-/*     */   extends RSAPrivateKeySpec
-/*     */ {
-/*     */   private final BigInteger publicExponent;
-/*     */   private final BigInteger primeP;
-/*     */   private final BigInteger primeQ;
-/*     */   private final BigInteger primeExponentP;
-/*     */   private final BigInteger primeExponentQ;
-/*     */   private final BigInteger crtCoefficient;
-/*     */   private final RSAOtherPrimeInfo[] otherPrimeInfo;
-/*     */   
-/*     */   public RSAMultiPrimePrivateCrtKeySpec(BigInteger paramBigInteger1, BigInteger paramBigInteger2, BigInteger paramBigInteger3, BigInteger paramBigInteger4, BigInteger paramBigInteger5, BigInteger paramBigInteger6, BigInteger paramBigInteger7, BigInteger paramBigInteger8, RSAOtherPrimeInfo[] paramArrayOfRSAOtherPrimeInfo) {
-/*  98 */     super(paramBigInteger1, paramBigInteger3);
-/*  99 */     if (paramBigInteger1 == null) {
-/* 100 */       throw new NullPointerException("the modulus parameter must be non-null");
-/*     */     }
-/*     */     
-/* 103 */     if (paramBigInteger2 == null) {
-/* 104 */       throw new NullPointerException("the publicExponent parameter must be non-null");
-/*     */     }
-/*     */     
-/* 107 */     if (paramBigInteger3 == null) {
-/* 108 */       throw new NullPointerException("the privateExponent parameter must be non-null");
-/*     */     }
-/*     */     
-/* 111 */     if (paramBigInteger4 == null) {
-/* 112 */       throw new NullPointerException("the primeP parameter must be non-null");
-/*     */     }
-/*     */     
-/* 115 */     if (paramBigInteger5 == null) {
-/* 116 */       throw new NullPointerException("the primeQ parameter must be non-null");
-/*     */     }
-/*     */     
-/* 119 */     if (paramBigInteger6 == null) {
-/* 120 */       throw new NullPointerException("the primeExponentP parameter must be non-null");
-/*     */     }
-/*     */     
-/* 123 */     if (paramBigInteger7 == null) {
-/* 124 */       throw new NullPointerException("the primeExponentQ parameter must be non-null");
-/*     */     }
-/*     */     
-/* 127 */     if (paramBigInteger8 == null) {
-/* 128 */       throw new NullPointerException("the crtCoefficient parameter must be non-null");
-/*     */     }
-/*     */     
-/* 131 */     this.publicExponent = paramBigInteger2;
-/* 132 */     this.primeP = paramBigInteger4;
-/* 133 */     this.primeQ = paramBigInteger5;
-/* 134 */     this.primeExponentP = paramBigInteger6;
-/* 135 */     this.primeExponentQ = paramBigInteger7;
-/* 136 */     this.crtCoefficient = paramBigInteger8;
-/* 137 */     if (paramArrayOfRSAOtherPrimeInfo == null)
-/* 138 */     { this.otherPrimeInfo = null; }
-/* 139 */     else { if (paramArrayOfRSAOtherPrimeInfo.length == 0) {
-/* 140 */         throw new IllegalArgumentException("the otherPrimeInfo parameter must not be empty");
-/*     */       }
-/*     */       
-/* 143 */       this.otherPrimeInfo = (RSAOtherPrimeInfo[])paramArrayOfRSAOtherPrimeInfo.clone(); }
-/*     */   
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public BigInteger getPublicExponent() {
-/* 153 */     return this.publicExponent;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public BigInteger getPrimeP() {
-/* 162 */     return this.primeP;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public BigInteger getPrimeQ() {
-/* 171 */     return this.primeQ;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public BigInteger getPrimeExponentP() {
-/* 180 */     return this.primeExponentP;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public BigInteger getPrimeExponentQ() {
-/* 189 */     return this.primeExponentQ;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public BigInteger getCrtCoefficient() {
-/* 198 */     return this.crtCoefficient;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public RSAOtherPrimeInfo[] getOtherPrimeInfo() {
-/* 209 */     if (this.otherPrimeInfo == null) return null; 
-/* 210 */     return (RSAOtherPrimeInfo[])this.otherPrimeInfo.clone();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\security\spec\RSAMultiPrimePrivateCrtKeySpec.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.security.spec;
+
+import java.math.BigInteger;
+
+/**
+ * This class specifies an RSA multi-prime private key, as defined in the
+ * PKCS#1 v2.1, using the Chinese Remainder Theorem (CRT) information
+ * values for efficiency.
+ *
+ * @author Valerie Peng
+ *
+ *
+ * @see java.security.Key
+ * @see java.security.KeyFactory
+ * @see KeySpec
+ * @see PKCS8EncodedKeySpec
+ * @see RSAPrivateKeySpec
+ * @see RSAPublicKeySpec
+ * @see RSAOtherPrimeInfo
+ *
+ * @since 1.4
+ */
+
+public class RSAMultiPrimePrivateCrtKeySpec extends RSAPrivateKeySpec {
+
+    private final BigInteger publicExponent;
+    private final BigInteger primeP;
+    private final BigInteger primeQ;
+    private final BigInteger primeExponentP;
+    private final BigInteger primeExponentQ;
+    private final BigInteger crtCoefficient;
+    private final RSAOtherPrimeInfo otherPrimeInfo[];
+
+   /**
+    * Creates a new {@code RSAMultiPrimePrivateCrtKeySpec}
+    * given the modulus, publicExponent, privateExponent,
+    * primeP, primeQ, primeExponentP, primeExponentQ,
+    * crtCoefficient, and otherPrimeInfo as defined in PKCS#1 v2.1.
+    *
+    * <p>Note that the contents of {@code otherPrimeInfo}
+    * are copied to protect against subsequent modification when
+    * constructing this object.
+    *
+    * @param modulus the modulus n.
+    * @param publicExponent the public exponent e.
+    * @param privateExponent the private exponent d.
+    * @param primeP the prime factor p of n.
+    * @param primeQ the prime factor q of n.
+    * @param primeExponentP this is d mod (p-1).
+    * @param primeExponentQ this is d mod (q-1).
+    * @param crtCoefficient the Chinese Remainder Theorem
+    * coefficient q-1 mod p.
+    * @param otherPrimeInfo triplets of the rest of primes, null can be
+    * specified if there are only two prime factors (p and q).
+    * @exception NullPointerException if any of the parameters, i.e.
+    * {@code modulus},
+    * {@code publicExponent}, {@code privateExponent},
+    * {@code primeP}, {@code primeQ},
+    * {@code primeExponentP}, {@code primeExponentQ},
+    * {@code crtCoefficient}, is null.
+    * @exception IllegalArgumentException if an empty, i.e. 0-length,
+    * {@code otherPrimeInfo} is specified.
+    */
+    public RSAMultiPrimePrivateCrtKeySpec(BigInteger modulus,
+                                BigInteger publicExponent,
+                                BigInteger privateExponent,
+                                BigInteger primeP,
+                                BigInteger primeQ,
+                                BigInteger primeExponentP,
+                                BigInteger primeExponentQ,
+                                BigInteger crtCoefficient,
+                                RSAOtherPrimeInfo[] otherPrimeInfo) {
+        super(modulus, privateExponent);
+        if (modulus == null) {
+            throw new NullPointerException("the modulus parameter must be " +
+                                            "non-null");
+        }
+        if (publicExponent == null) {
+            throw new NullPointerException("the publicExponent parameter " +
+                                            "must be non-null");
+        }
+        if (privateExponent == null) {
+            throw new NullPointerException("the privateExponent parameter " +
+                                            "must be non-null");
+        }
+        if (primeP == null) {
+            throw new NullPointerException("the primeP parameter " +
+                                            "must be non-null");
+        }
+        if (primeQ == null) {
+            throw new NullPointerException("the primeQ parameter " +
+                                            "must be non-null");
+        }
+        if (primeExponentP == null) {
+            throw new NullPointerException("the primeExponentP parameter " +
+                                            "must be non-null");
+        }
+        if (primeExponentQ == null) {
+            throw new NullPointerException("the primeExponentQ parameter " +
+                                            "must be non-null");
+        }
+        if (crtCoefficient == null) {
+            throw new NullPointerException("the crtCoefficient parameter " +
+                                            "must be non-null");
+        }
+        this.publicExponent = publicExponent;
+        this.primeP = primeP;
+        this.primeQ = primeQ;
+        this.primeExponentP = primeExponentP;
+        this.primeExponentQ = primeExponentQ;
+        this.crtCoefficient = crtCoefficient;
+        if (otherPrimeInfo == null)  {
+            this.otherPrimeInfo = null;
+        } else if (otherPrimeInfo.length == 0) {
+            throw new IllegalArgumentException("the otherPrimeInfo " +
+                                                "parameter must not be empty");
+        } else {
+            this.otherPrimeInfo = otherPrimeInfo.clone();
+        }
+    }
+
+    /**
+     * Returns the public exponent.
+     *
+     * @return the public exponent.
+     */
+    public BigInteger getPublicExponent() {
+        return this.publicExponent;
+    }
+
+    /**
+     * Returns the primeP.
+     *
+     * @return the primeP.
+     */
+    public BigInteger getPrimeP() {
+        return this.primeP;
+    }
+
+    /**
+     * Returns the primeQ.
+     *
+     * @return the primeQ.
+     */
+    public BigInteger getPrimeQ() {
+        return this.primeQ;
+    }
+
+    /**
+     * Returns the primeExponentP.
+     *
+     * @return the primeExponentP.
+     */
+    public BigInteger getPrimeExponentP() {
+        return this.primeExponentP;
+    }
+
+    /**
+     * Returns the primeExponentQ.
+     *
+     * @return the primeExponentQ.
+     */
+    public BigInteger getPrimeExponentQ() {
+        return this.primeExponentQ;
+    }
+
+    /**
+     * Returns the crtCoefficient.
+     *
+     * @return the crtCoefficient.
+     */
+    public BigInteger getCrtCoefficient() {
+        return this.crtCoefficient;
+    }
+
+    /**
+     * Returns a copy of the otherPrimeInfo or null if there are
+     * only two prime factors (p and q).
+     *
+     * @return the otherPrimeInfo. Returns a new array each
+     * time this method is called.
+     */
+    public RSAOtherPrimeInfo[] getOtherPrimeInfo() {
+        if (otherPrimeInfo == null) return null;
+        return otherPrimeInfo.clone();
+    }
+}

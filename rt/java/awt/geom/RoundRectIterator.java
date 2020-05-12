@@ -1,195 +1,189 @@
-/*     */ package java.awt.geom;
-/*     */ 
-/*     */ import java.util.NoSuchElementException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class RoundRectIterator
-/*     */   implements PathIterator
-/*     */ {
-/*     */   double x;
-/*     */   double y;
-/*     */   double w;
-/*     */   double h;
-/*     */   double aw;
-/*     */   double ah;
-/*     */   AffineTransform affine;
-/*     */   int index;
-/*     */   private static final double angle = 0.7853981633974483D;
-/*     */   
-/*     */   RoundRectIterator(RoundRectangle2D paramRoundRectangle2D, AffineTransform paramAffineTransform) {
-/*  42 */     this.x = paramRoundRectangle2D.getX();
-/*  43 */     this.y = paramRoundRectangle2D.getY();
-/*  44 */     this.w = paramRoundRectangle2D.getWidth();
-/*  45 */     this.h = paramRoundRectangle2D.getHeight();
-/*  46 */     this.aw = Math.min(this.w, Math.abs(paramRoundRectangle2D.getArcWidth()));
-/*  47 */     this.ah = Math.min(this.h, Math.abs(paramRoundRectangle2D.getArcHeight()));
-/*  48 */     this.affine = paramAffineTransform;
-/*  49 */     if (this.aw < 0.0D || this.ah < 0.0D)
-/*     */     {
-/*  51 */       this.index = ctrlpts.length;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getWindingRule() {
-/*  62 */     return 1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isDone() {
-/*  70 */     return (this.index >= ctrlpts.length);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void next() {
-/*  79 */     this.index++;
-/*     */   }
-/*     */ 
-/*     */   
-/*  83 */   private static final double a = 1.0D - Math.cos(0.7853981633974483D);
-/*  84 */   private static final double b = Math.tan(0.7853981633974483D);
-/*  85 */   private static final double c = Math.sqrt(1.0D + b * b) - 1.0D + a;
-/*  86 */   private static final double cv = 1.3333333333333333D * a * b / c;
-/*  87 */   private static final double acv = (1.0D - cv) / 2.0D;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  93 */   private static double[][] ctrlpts = new double[][] { { 0.0D, 0.0D, 0.0D, 0.5D }, { 0.0D, 0.0D, 1.0D, -0.5D }, { 0.0D, 0.0D, 1.0D, -acv, 0.0D, acv, 1.0D, 0.0D, 0.0D, 0.5D, 1.0D, 0.0D }, { 1.0D, -0.5D, 1.0D, 0.0D }, { 1.0D, -acv, 1.0D, 0.0D, 1.0D, 0.0D, 1.0D, -acv, 1.0D, 0.0D, 1.0D, -0.5D }, { 1.0D, 0.0D, 0.0D, 0.5D }, { 1.0D, 0.0D, 0.0D, acv, 1.0D, -acv, 0.0D, 0.0D, 1.0D, -0.5D, 0.0D, 0.0D }, { 0.0D, 0.5D, 0.0D, 0.0D }, { 0.0D, acv, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D, acv, 0.0D, 0.0D, 0.0D, 0.5D }, {} };
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 113 */   private static int[] types = new int[] { 0, 1, 3, 1, 3, 1, 3, 1, 3, 4 };
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int currentSegment(float[] paramArrayOffloat) {
-/* 141 */     if (isDone()) {
-/* 142 */       throw new NoSuchElementException("roundrect iterator out of bounds");
-/*     */     }
-/* 144 */     double[] arrayOfDouble = ctrlpts[this.index];
-/* 145 */     byte b1 = 0;
-/* 146 */     for (byte b2 = 0; b2 < arrayOfDouble.length; b2 += 4) {
-/* 147 */       paramArrayOffloat[b1++] = (float)(this.x + arrayOfDouble[b2 + 0] * this.w + arrayOfDouble[b2 + 1] * this.aw);
-/* 148 */       paramArrayOffloat[b1++] = (float)(this.y + arrayOfDouble[b2 + 2] * this.h + arrayOfDouble[b2 + 3] * this.ah);
-/*     */     } 
-/* 150 */     if (this.affine != null) {
-/* 151 */       this.affine.transform(paramArrayOffloat, 0, paramArrayOffloat, 0, b1 / 2);
-/*     */     }
-/* 153 */     return types[this.index];
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int currentSegment(double[] paramArrayOfdouble) {
-/* 175 */     if (isDone()) {
-/* 176 */       throw new NoSuchElementException("roundrect iterator out of bounds");
-/*     */     }
-/* 178 */     double[] arrayOfDouble = ctrlpts[this.index];
-/* 179 */     byte b1 = 0;
-/* 180 */     for (byte b2 = 0; b2 < arrayOfDouble.length; b2 += 4) {
-/* 181 */       paramArrayOfdouble[b1++] = this.x + arrayOfDouble[b2 + 0] * this.w + arrayOfDouble[b2 + 1] * this.aw;
-/* 182 */       paramArrayOfdouble[b1++] = this.y + arrayOfDouble[b2 + 2] * this.h + arrayOfDouble[b2 + 3] * this.ah;
-/*     */     } 
-/* 184 */     if (this.affine != null) {
-/* 185 */       this.affine.transform(paramArrayOfdouble, 0, paramArrayOfdouble, 0, b1 / 2);
-/*     */     }
-/* 187 */     return types[this.index];
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\awt\geom\RoundRectIterator.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.awt.geom;
+
+import java.util.*;
+
+/**
+ * A utility class to iterate over the path segments of an rounded rectangle
+ * through the PathIterator interface.
+ *
+ * @author      Jim Graham
+ */
+class RoundRectIterator implements PathIterator {
+    double x, y, w, h, aw, ah;
+    AffineTransform affine;
+    int index;
+
+    RoundRectIterator(RoundRectangle2D rr, AffineTransform at) {
+        this.x = rr.getX();
+        this.y = rr.getY();
+        this.w = rr.getWidth();
+        this.h = rr.getHeight();
+        this.aw = Math.min(w, Math.abs(rr.getArcWidth()));
+        this.ah = Math.min(h, Math.abs(rr.getArcHeight()));
+        this.affine = at;
+        if (aw < 0 || ah < 0) {
+            // Don't draw anything...
+            index = ctrlpts.length;
+        }
+    }
+
+    /**
+     * Return the winding rule for determining the insideness of the
+     * path.
+     * @see #WIND_EVEN_ODD
+     * @see #WIND_NON_ZERO
+     */
+    public int getWindingRule() {
+        return WIND_NON_ZERO;
+    }
+
+    /**
+     * Tests if there are more points to read.
+     * @return true if there are more points to read
+     */
+    public boolean isDone() {
+        return index >= ctrlpts.length;
+    }
+
+    /**
+     * Moves the iterator to the next segment of the path forwards
+     * along the primary direction of traversal as long as there are
+     * more points in that direction.
+     */
+    public void next() {
+        index++;
+    }
+
+    private static final double angle = Math.PI / 4.0;
+    private static final double a = 1.0 - Math.cos(angle);
+    private static final double b = Math.tan(angle);
+    private static final double c = Math.sqrt(1.0 + b * b) - 1 + a;
+    private static final double cv = 4.0 / 3.0 * a * b / c;
+    private static final double acv = (1.0 - cv) / 2.0;
+
+    // For each array:
+    //     4 values for each point {v0, v1, v2, v3}:
+    //         point = (x + v0 * w + v1 * arcWidth,
+    //                  y + v2 * h + v3 * arcHeight);
+    private static double ctrlpts[][] = {
+        {  0.0,  0.0,  0.0,  0.5 },
+        {  0.0,  0.0,  1.0, -0.5 },
+        {  0.0,  0.0,  1.0, -acv,
+           0.0,  acv,  1.0,  0.0,
+           0.0,  0.5,  1.0,  0.0 },
+        {  1.0, -0.5,  1.0,  0.0 },
+        {  1.0, -acv,  1.0,  0.0,
+           1.0,  0.0,  1.0, -acv,
+           1.0,  0.0,  1.0, -0.5 },
+        {  1.0,  0.0,  0.0,  0.5 },
+        {  1.0,  0.0,  0.0,  acv,
+           1.0, -acv,  0.0,  0.0,
+           1.0, -0.5,  0.0,  0.0 },
+        {  0.0,  0.5,  0.0,  0.0 },
+        {  0.0,  acv,  0.0,  0.0,
+           0.0,  0.0,  0.0,  acv,
+           0.0,  0.0,  0.0,  0.5 },
+        {},
+    };
+    private static int types[] = {
+        SEG_MOVETO,
+        SEG_LINETO, SEG_CUBICTO,
+        SEG_LINETO, SEG_CUBICTO,
+        SEG_LINETO, SEG_CUBICTO,
+        SEG_LINETO, SEG_CUBICTO,
+        SEG_CLOSE,
+    };
+
+    /**
+     * Returns the coordinates and type of the current path segment in
+     * the iteration.
+     * The return value is the path segment type:
+     * SEG_MOVETO, SEG_LINETO, SEG_QUADTO, SEG_CUBICTO, or SEG_CLOSE.
+     * A float array of length 6 must be passed in and may be used to
+     * store the coordinates of the point(s).
+     * Each point is stored as a pair of float x,y coordinates.
+     * SEG_MOVETO and SEG_LINETO types will return one point,
+     * SEG_QUADTO will return two points,
+     * SEG_CUBICTO will return 3 points
+     * and SEG_CLOSE will not return any points.
+     * @see #SEG_MOVETO
+     * @see #SEG_LINETO
+     * @see #SEG_QUADTO
+     * @see #SEG_CUBICTO
+     * @see #SEG_CLOSE
+     */
+    public int currentSegment(float[] coords) {
+        if (isDone()) {
+            throw new NoSuchElementException("roundrect iterator out of bounds");
+        }
+        double ctrls[] = ctrlpts[index];
+        int nc = 0;
+        for (int i = 0; i < ctrls.length; i += 4) {
+            coords[nc++] = (float) (x + ctrls[i + 0] * w + ctrls[i + 1] * aw);
+            coords[nc++] = (float) (y + ctrls[i + 2] * h + ctrls[i + 3] * ah);
+        }
+        if (affine != null) {
+            affine.transform(coords, 0, coords, 0, nc / 2);
+        }
+        return types[index];
+    }
+
+    /**
+     * Returns the coordinates and type of the current path segment in
+     * the iteration.
+     * The return value is the path segment type:
+     * SEG_MOVETO, SEG_LINETO, SEG_QUADTO, SEG_CUBICTO, or SEG_CLOSE.
+     * A double array of length 6 must be passed in and may be used to
+     * store the coordinates of the point(s).
+     * Each point is stored as a pair of double x,y coordinates.
+     * SEG_MOVETO and SEG_LINETO types will return one point,
+     * SEG_QUADTO will return two points,
+     * SEG_CUBICTO will return 3 points
+     * and SEG_CLOSE will not return any points.
+     * @see #SEG_MOVETO
+     * @see #SEG_LINETO
+     * @see #SEG_QUADTO
+     * @see #SEG_CUBICTO
+     * @see #SEG_CLOSE
+     */
+    public int currentSegment(double[] coords) {
+        if (isDone()) {
+            throw new NoSuchElementException("roundrect iterator out of bounds");
+        }
+        double ctrls[] = ctrlpts[index];
+        int nc = 0;
+        for (int i = 0; i < ctrls.length; i += 4) {
+            coords[nc++] = (x + ctrls[i + 0] * w + ctrls[i + 1] * aw);
+            coords[nc++] = (y + ctrls[i + 2] * h + ctrls[i + 3] * ah);
+        }
+        if (affine != null) {
+            affine.transform(coords, 0, coords, 0, nc / 2);
+        }
+        return types[index];
+    }
+}

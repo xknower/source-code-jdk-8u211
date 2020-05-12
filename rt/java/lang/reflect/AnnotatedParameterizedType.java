@@ -1,13 +1,43 @@
+/*
+ * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package java.lang.reflect;
 
-import java.lang.reflect.AnnotatedType;
-
-public interface AnnotatedParameterizedType extends AnnotatedType {
-  AnnotatedType[] getAnnotatedActualTypeArguments();
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\lang\reflect\AnnotatedParameterizedType.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * {@code AnnotatedParameterizedType} represents the potentially annotated use
+ * of a parameterized type, whose type arguments may themselves represent
+ * annotated uses of types.
+ *
+ * @since 1.8
  */
+public interface AnnotatedParameterizedType extends AnnotatedType {
+
+    /**
+     * Returns the potentially annotated actual type arguments of this parameterized type.
+     *
+     * @return the potentially annotated actual type arguments of this parameterized type
+     */
+    AnnotatedType[] getAnnotatedActualTypeArguments();
+}

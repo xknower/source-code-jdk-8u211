@@ -1,389 +1,385 @@
-/*     */ package com.sun.org.apache.xerces.internal.parsers;
-/*     */ 
-/*     */ import com.sun.org.apache.xerces.internal.impl.xs.XMLSchemaValidator;
-/*     */ import com.sun.org.apache.xerces.internal.impl.xs.XSMessageFormatter;
-/*     */ import com.sun.org.apache.xerces.internal.util.FeatureState;
-/*     */ import com.sun.org.apache.xerces.internal.util.PropertyState;
-/*     */ import com.sun.org.apache.xerces.internal.util.SymbolTable;
-/*     */ import com.sun.org.apache.xerces.internal.xni.grammars.XMLGrammarPool;
-/*     */ import com.sun.org.apache.xerces.internal.xni.parser.XMLComponentManager;
-/*     */ import com.sun.org.apache.xerces.internal.xni.parser.XMLConfigurationException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class StandardParserConfiguration
-/*     */   extends DTDConfiguration
-/*     */ {
-/*     */   protected static final String NORMALIZE_DATA = "http://apache.org/xml/features/validation/schema/normalized-value";
-/*     */   protected static final String SCHEMA_ELEMENT_DEFAULT = "http://apache.org/xml/features/validation/schema/element-default";
-/*     */   protected static final String SCHEMA_AUGMENT_PSVI = "http://apache.org/xml/features/validation/schema/augment-psvi";
-/*     */   protected static final String XMLSCHEMA_VALIDATION = "http://apache.org/xml/features/validation/schema";
-/*     */   protected static final String XMLSCHEMA_FULL_CHECKING = "http://apache.org/xml/features/validation/schema-full-checking";
-/*     */   protected static final String GENERATE_SYNTHETIC_ANNOTATIONS = "http://apache.org/xml/features/generate-synthetic-annotations";
-/*     */   protected static final String VALIDATE_ANNOTATIONS = "http://apache.org/xml/features/validate-annotations";
-/*     */   protected static final String HONOUR_ALL_SCHEMALOCATIONS = "http://apache.org/xml/features/honour-all-schemaLocations";
-/*     */   protected static final String NAMESPACE_GROWTH = "http://apache.org/xml/features/namespace-growth";
-/*     */   protected static final String TOLERATE_DUPLICATES = "http://apache.org/xml/features/internal/tolerate-duplicates";
-/*     */   protected static final String SCHEMA_VALIDATOR = "http://apache.org/xml/properties/internal/validator/schema";
-/*     */   protected static final String SCHEMA_LOCATION = "http://apache.org/xml/properties/schema/external-schemaLocation";
-/*     */   protected static final String SCHEMA_NONS_LOCATION = "http://apache.org/xml/properties/schema/external-noNamespaceSchemaLocation";
-/*     */   protected static final String SCHEMA_DV_FACTORY = "http://apache.org/xml/properties/internal/validation/schema/dv-factory";
-/*     */   protected XMLSchemaValidator fSchemaValidator;
-/*     */   
-/*     */   public StandardParserConfiguration() {
-/* 154 */     this((SymbolTable)null, (XMLGrammarPool)null, (XMLComponentManager)null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StandardParserConfiguration(SymbolTable symbolTable) {
-/* 163 */     this(symbolTable, (XMLGrammarPool)null, (XMLComponentManager)null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StandardParserConfiguration(SymbolTable symbolTable, XMLGrammarPool grammarPool) {
-/* 179 */     this(symbolTable, grammarPool, (XMLComponentManager)null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StandardParserConfiguration(SymbolTable symbolTable, XMLGrammarPool grammarPool, XMLComponentManager parentSettings) {
-/* 197 */     super(symbolTable, grammarPool, parentSettings);
-/*     */ 
-/*     */     
-/* 200 */     String[] recognizedFeatures = { "http://apache.org/xml/features/validation/schema/normalized-value", "http://apache.org/xml/features/validation/schema/element-default", "http://apache.org/xml/features/validation/schema/augment-psvi", "http://apache.org/xml/features/generate-synthetic-annotations", "http://apache.org/xml/features/validate-annotations", "http://apache.org/xml/features/honour-all-schemaLocations", "http://apache.org/xml/features/namespace-growth", "http://apache.org/xml/features/internal/tolerate-duplicates", "http://apache.org/xml/features/validation/schema", "http://apache.org/xml/features/validation/schema-full-checking" };
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 216 */     addRecognizedFeatures(recognizedFeatures);
-/*     */ 
-/*     */     
-/* 219 */     setFeature("http://apache.org/xml/features/validation/schema/element-default", true);
-/* 220 */     setFeature("http://apache.org/xml/features/validation/schema/normalized-value", true);
-/* 221 */     setFeature("http://apache.org/xml/features/validation/schema/augment-psvi", true);
-/* 222 */     setFeature("http://apache.org/xml/features/generate-synthetic-annotations", false);
-/* 223 */     setFeature("http://apache.org/xml/features/validate-annotations", false);
-/* 224 */     setFeature("http://apache.org/xml/features/honour-all-schemaLocations", false);
-/* 225 */     setFeature("http://apache.org/xml/features/namespace-growth", false);
-/* 226 */     setFeature("http://apache.org/xml/features/internal/tolerate-duplicates", false);
-/*     */ 
-/*     */ 
-/*     */     
-/* 230 */     String[] recognizedProperties = { "http://apache.org/xml/properties/schema/external-schemaLocation", "http://apache.org/xml/properties/schema/external-noNamespaceSchemaLocation", "http://apache.org/xml/properties/internal/validation/schema/dv-factory" };
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 240 */     addRecognizedProperties(recognizedProperties);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void configurePipeline() {
-/* 250 */     super.configurePipeline();
-/* 251 */     if (getFeature("http://apache.org/xml/features/validation/schema")) {
-/*     */       
-/* 253 */       if (this.fSchemaValidator == null) {
-/* 254 */         this.fSchemaValidator = new XMLSchemaValidator();
-/*     */ 
-/*     */         
-/* 257 */         this.fProperties.put("http://apache.org/xml/properties/internal/validator/schema", this.fSchemaValidator);
-/* 258 */         addComponent(this.fSchemaValidator);
-/*     */         
-/* 260 */         if (this.fErrorReporter.getMessageFormatter("http://www.w3.org/TR/xml-schema-1") == null) {
-/* 261 */           XSMessageFormatter xmft = new XSMessageFormatter();
-/* 262 */           this.fErrorReporter.putMessageFormatter("http://www.w3.org/TR/xml-schema-1", xmft);
-/*     */         } 
-/*     */       } 
-/*     */       
-/* 266 */       this.fLastComponent = this.fSchemaValidator;
-/* 267 */       this.fNamespaceBinder.setDocumentHandler(this.fSchemaValidator);
-/*     */       
-/* 269 */       this.fSchemaValidator.setDocumentHandler(this.fDocumentHandler);
-/* 270 */       this.fSchemaValidator.setDocumentSource(this.fNamespaceBinder);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected FeatureState checkFeature(String featureId) throws XMLConfigurationException {
-/* 297 */     if (featureId.startsWith("http://apache.org/xml/features/")) {
-/* 298 */       int suffixLength = featureId.length() - "http://apache.org/xml/features/".length();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 304 */       if (suffixLength == "validation/schema".length() && featureId
-/* 305 */         .endsWith("validation/schema")) {
-/* 306 */         return FeatureState.RECOGNIZED;
-/*     */       }
-/*     */       
-/* 309 */       if (suffixLength == "validation/schema-full-checking".length() && featureId
-/* 310 */         .endsWith("validation/schema-full-checking")) {
-/* 311 */         return FeatureState.RECOGNIZED;
-/*     */       }
-/*     */ 
-/*     */       
-/* 315 */       if (suffixLength == "validation/schema/normalized-value".length() && featureId
-/* 316 */         .endsWith("validation/schema/normalized-value")) {
-/* 317 */         return FeatureState.RECOGNIZED;
-/*     */       }
-/*     */ 
-/*     */       
-/* 321 */       if (suffixLength == "validation/schema/element-default".length() && featureId
-/* 322 */         .endsWith("validation/schema/element-default")) {
-/* 323 */         return FeatureState.RECOGNIZED;
-/*     */       }
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 331 */     return super.checkFeature(featureId);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected PropertyState checkProperty(String propertyId) throws XMLConfigurationException {
-/* 355 */     if (propertyId.startsWith("http://apache.org/xml/properties/")) {
-/* 356 */       int suffixLength = propertyId.length() - "http://apache.org/xml/properties/".length();
-/*     */       
-/* 358 */       if (suffixLength == "schema/external-schemaLocation".length() && propertyId
-/* 359 */         .endsWith("schema/external-schemaLocation")) {
-/* 360 */         return PropertyState.RECOGNIZED;
-/*     */       }
-/* 362 */       if (suffixLength == "schema/external-noNamespaceSchemaLocation".length() && propertyId
-/* 363 */         .endsWith("schema/external-noNamespaceSchemaLocation")) {
-/* 364 */         return PropertyState.RECOGNIZED;
-/*     */       }
-/*     */     } 
-/*     */     
-/* 368 */     if (propertyId.startsWith("http://java.sun.com/xml/jaxp/properties/")) {
-/* 369 */       int suffixLength = propertyId.length() - "http://java.sun.com/xml/jaxp/properties/".length();
-/*     */       
-/* 371 */       if (suffixLength == "schemaSource".length() && propertyId
-/* 372 */         .endsWith("schemaSource")) {
-/* 373 */         return PropertyState.RECOGNIZED;
-/*     */       }
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 381 */     return super.checkProperty(propertyId);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\parsers\StandardParserConfiguration.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.parsers;
+
+import com.sun.org.apache.xerces.internal.impl.Constants;
+import com.sun.org.apache.xerces.internal.impl.xs.XMLSchemaValidator;
+import com.sun.org.apache.xerces.internal.impl.xs.XSMessageFormatter;
+import com.sun.org.apache.xerces.internal.util.FeatureState;
+import com.sun.org.apache.xerces.internal.util.PropertyState;
+import com.sun.org.apache.xerces.internal.util.Status;
+import com.sun.org.apache.xerces.internal.util.SymbolTable;
+import com.sun.org.apache.xerces.internal.xni.grammars.XMLGrammarPool;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLComponentManager;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLConfigurationException;
+
+/**
+ * This is the "standard" parser configuration. It extends the DTD
+ * configuration with the standard set of parser components.
+ * The standard set of parser components include those needed
+ * to parse and validate with DTD's, and those needed for XML
+ * Schema.</p>
+ * <p>
+ * In addition to the features and properties recognized by the base
+ * parser configuration, this class recognizes these additional
+ * features and properties:
+ * <ul>
+ * <li>Features
+ *  <ul>
+ *  <li>http://apache.org/xml/features/validation/schema</li>
+ *  <li>http://apache.org/xml/features/validation/schema-full-checking</li>
+ *  <li>http://apache.org/xml/features/validation/schema/normalized-value</li>
+ *  <li>http://apache.org/xml/features/validation/schema/element-default</li>
+ *  </ul>
+ * <li>Properties
+ *  <ul>
+ *   <li>http://apache.org/xml/properties/internal/error-reporter</li>
+ *   <li>http://apache.org/xml/properties/internal/entity-manager</li>
+ *   <li>http://apache.org/xml/properties/internal/document-scanner</li>
+ *   <li>http://apache.org/xml/properties/internal/dtd-scanner</li>
+ *   <li>http://apache.org/xml/properties/internal/grammar-pool</li>
+ *   <li>http://apache.org/xml/properties/internal/validator/dtd</li>
+ *   <li>http://apache.org/xml/properties/internal/datatype-validator-factory</li>
+ *  </ul>
+ * </ul>
+ *
+ * @author Arnaud  Le Hors, IBM
+ * @author Andy Clark, IBM
+ *
+ * @version $Id: StandardParserConfiguration.java,v 1.7 2010-11-01 04:40:10 joehw Exp $
+ */
+public class StandardParserConfiguration
+    extends DTDConfiguration {
+
+    //
+    // Constants
+    //
+
+    // feature identifiers
+
+    /** Feature identifier: expose schema normalized value */
+    protected static final String NORMALIZE_DATA =
+    Constants.XERCES_FEATURE_PREFIX + Constants.SCHEMA_NORMALIZED_VALUE;
+
+
+    /** Feature identifier: send element default value via characters() */
+    protected static final String SCHEMA_ELEMENT_DEFAULT =
+    Constants.XERCES_FEATURE_PREFIX + Constants.SCHEMA_ELEMENT_DEFAULT;
+
+
+    /** Feature identifier: augment PSVI */
+    protected static final String SCHEMA_AUGMENT_PSVI =
+    Constants.XERCES_FEATURE_PREFIX + Constants.SCHEMA_AUGMENT_PSVI;
+
+
+    /** feature identifier: XML Schema validation */
+    protected static final String XMLSCHEMA_VALIDATION =
+    Constants.XERCES_FEATURE_PREFIX + Constants.SCHEMA_VALIDATION_FEATURE;
+
+    /** feature identifier: XML Schema validation -- full checking */
+    protected static final String XMLSCHEMA_FULL_CHECKING =
+    Constants.XERCES_FEATURE_PREFIX + Constants.SCHEMA_FULL_CHECKING;
+
+    /** Feature: generate synthetic annotations */
+    protected static final String GENERATE_SYNTHETIC_ANNOTATIONS =
+        Constants.XERCES_FEATURE_PREFIX + Constants.GENERATE_SYNTHETIC_ANNOTATIONS_FEATURE;
+
+    /** Feature identifier: validate annotations */
+    protected static final String VALIDATE_ANNOTATIONS =
+        Constants.XERCES_FEATURE_PREFIX + Constants.VALIDATE_ANNOTATIONS_FEATURE;
+
+    /** Feature identifier: honour all schemaLocations */
+    protected static final String HONOUR_ALL_SCHEMALOCATIONS =
+        Constants.XERCES_FEATURE_PREFIX + Constants.HONOUR_ALL_SCHEMALOCATIONS_FEATURE;
+
+    /** Feature identifier: namespace growth */
+    protected static final String NAMESPACE_GROWTH =
+        Constants.XERCES_FEATURE_PREFIX + Constants.NAMESPACE_GROWTH_FEATURE;
+
+    /** Feature identifier: tolerate duplicates */
+    protected static final String TOLERATE_DUPLICATES =
+        Constants.XERCES_FEATURE_PREFIX + Constants.TOLERATE_DUPLICATES_FEATURE;
+
+    // property identifiers
+
+    /** Property identifier: XML Schema validator. */
+    protected static final String SCHEMA_VALIDATOR =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.SCHEMA_VALIDATOR_PROPERTY;
+
+    /** Property identifier: schema location. */
+    protected static final String SCHEMA_LOCATION =
+    Constants.XERCES_PROPERTY_PREFIX + Constants.SCHEMA_LOCATION;
+
+    /** Property identifier: no namespace schema location. */
+    protected static final String SCHEMA_NONS_LOCATION =
+    Constants.XERCES_PROPERTY_PREFIX + Constants.SCHEMA_NONS_LOCATION;
+
+    /** Property identifier: Schema DV Factory */
+    protected static final String SCHEMA_DV_FACTORY =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.SCHEMA_DV_FACTORY_PROPERTY;
+
+    //
+    // Data
+    //
+
+    // components (non-configurable)
+
+    /** XML Schema Validator. */
+    protected XMLSchemaValidator fSchemaValidator;
+
+    //
+    // Constructors
+    //
+
+    /** Default constructor. */
+    public StandardParserConfiguration() {
+        this(null, null, null);
+    } // <init>()
+
+    /**
+     * Constructs a parser configuration using the specified symbol table.
+     *
+     * @param symbolTable The symbol table to use.
+     */
+    public StandardParserConfiguration(SymbolTable symbolTable) {
+        this(symbolTable, null, null);
+    } // <init>(SymbolTable)
+
+    /**
+     * Constructs a parser configuration using the specified symbol table and
+     * grammar pool.
+     * <p>
+     * <strong>REVISIT:</strong>
+     * Grammar pool will be updated when the new validation engine is
+     * implemented.
+     *
+     * @param symbolTable The symbol table to use.
+     * @param grammarPool The grammar pool to use.
+     */
+    public StandardParserConfiguration(SymbolTable symbolTable,
+                                       XMLGrammarPool grammarPool) {
+        this(symbolTable, grammarPool, null);
+    } // <init>(SymbolTable,XMLGrammarPool)
+
+    /**
+     * Constructs a parser configuration using the specified symbol table,
+     * grammar pool, and parent settings.
+     * <p>
+     * <strong>REVISIT:</strong>
+     * Grammar pool will be updated when the new validation engine is
+     * implemented.
+     *
+     * @param symbolTable    The symbol table to use.
+     * @param grammarPool    The grammar pool to use.
+     * @param parentSettings The parent settings.
+     */
+    public StandardParserConfiguration(SymbolTable symbolTable,
+                                       XMLGrammarPool grammarPool,
+                                       XMLComponentManager parentSettings) {
+        super(symbolTable, grammarPool, parentSettings);
+
+        // add default recognized features
+        final String[] recognizedFeatures = {
+            NORMALIZE_DATA,
+            SCHEMA_ELEMENT_DEFAULT,
+            SCHEMA_AUGMENT_PSVI,
+            GENERATE_SYNTHETIC_ANNOTATIONS,
+            VALIDATE_ANNOTATIONS,
+            HONOUR_ALL_SCHEMALOCATIONS,
+            NAMESPACE_GROWTH,
+            TOLERATE_DUPLICATES,
+            // NOTE: These shouldn't really be here but since the XML Schema
+            //       validator is constructed dynamically, its recognized
+            //       features might not have been set and it would cause a
+            //       not-recognized exception to be thrown. -Ac
+            XMLSCHEMA_VALIDATION,
+            XMLSCHEMA_FULL_CHECKING,
+        };
+        addRecognizedFeatures(recognizedFeatures);
+
+        // set state for default features
+        setFeature(SCHEMA_ELEMENT_DEFAULT, true);
+        setFeature(NORMALIZE_DATA, true);
+        setFeature(SCHEMA_AUGMENT_PSVI, true);
+        setFeature(GENERATE_SYNTHETIC_ANNOTATIONS, false);
+        setFeature(VALIDATE_ANNOTATIONS, false);
+        setFeature(HONOUR_ALL_SCHEMALOCATIONS, false);
+        setFeature(NAMESPACE_GROWTH, false);
+        setFeature(TOLERATE_DUPLICATES, false);
+
+        // add default recognized properties
+
+        final String[] recognizedProperties = {
+            // NOTE: These shouldn't really be here but since the XML Schema
+            //       validator is constructed dynamically, its recognized
+            //       properties might not have been set and it would cause a
+            //       not-recognized exception to be thrown. -Ac
+            SCHEMA_LOCATION,
+            SCHEMA_NONS_LOCATION,
+            SCHEMA_DV_FACTORY,
+            };
+
+                        addRecognizedProperties(recognizedProperties);
+
+    } // <init>(SymbolTable,XMLGrammarPool)
+
+    //
+    // Public methods
+    //
+
+    /** Configures the pipeline. */
+    protected void configurePipeline() {
+        super.configurePipeline();
+        if ( getFeature(XMLSCHEMA_VALIDATION )) {
+            // If schema validator was not in the pipeline insert it.
+            if (fSchemaValidator == null) {
+                fSchemaValidator = new XMLSchemaValidator();
+
+                // add schema component
+                fProperties.put(SCHEMA_VALIDATOR, fSchemaValidator);
+                addComponent(fSchemaValidator);
+                 // add schema message formatter
+                if (fErrorReporter.getMessageFormatter(XSMessageFormatter.SCHEMA_DOMAIN) == null) {
+                    XSMessageFormatter xmft = new XSMessageFormatter();
+                    fErrorReporter.putMessageFormatter(XSMessageFormatter.SCHEMA_DOMAIN, xmft);
+                }
+
+            }
+            fLastComponent = fSchemaValidator;
+            fNamespaceBinder.setDocumentHandler(fSchemaValidator);
+
+            fSchemaValidator.setDocumentHandler(fDocumentHandler);
+            fSchemaValidator.setDocumentSource(fNamespaceBinder);
+        }
+
+
+    } // configurePipeline()
+
+    // features and properties
+
+    /**
+     * Check a feature. If feature is know and supported, this method simply
+     * returns. Otherwise, the appropriate exception is thrown.
+     *
+     * @param featureId The unique identifier (URI) of the feature.
+     *
+     * @throws XMLConfigurationException Thrown for configuration error.
+     *                                   In general, components should
+     *                                   only throw this exception if
+     *                                   it is <strong>really</strong>
+     *                                   a critical error.
+     */
+    protected FeatureState checkFeature(String featureId)
+        throws XMLConfigurationException {
+
+        //
+        // Xerces Features
+        //
+
+        if (featureId.startsWith(Constants.XERCES_FEATURE_PREFIX)) {
+            final int suffixLength = featureId.length() - Constants.XERCES_FEATURE_PREFIX.length();
+
+            //
+            // http://apache.org/xml/features/validation/schema
+            //   Lets the user turn Schema validation support on/off.
+            //
+            if (suffixLength == Constants.SCHEMA_VALIDATION_FEATURE.length() &&
+                featureId.endsWith(Constants.SCHEMA_VALIDATION_FEATURE)) {
+                return FeatureState.RECOGNIZED;
+            }
+            // activate full schema checking
+            if (suffixLength == Constants.SCHEMA_FULL_CHECKING.length() &&
+                featureId.endsWith(Constants.SCHEMA_FULL_CHECKING)) {
+                return FeatureState.RECOGNIZED;
+            }
+            // Feature identifier: expose schema normalized value
+            //  http://apache.org/xml/features/validation/schema/normalized-value
+            if (suffixLength == Constants.SCHEMA_NORMALIZED_VALUE.length() &&
+                featureId.endsWith(Constants.SCHEMA_NORMALIZED_VALUE)) {
+                return FeatureState.RECOGNIZED;
+            }
+            // Feature identifier: send element default value via characters()
+            // http://apache.org/xml/features/validation/schema/element-default
+            if (suffixLength == Constants.SCHEMA_ELEMENT_DEFAULT.length() &&
+                featureId.endsWith(Constants.SCHEMA_ELEMENT_DEFAULT)) {
+                return FeatureState.RECOGNIZED;
+            }
+        }
+
+        //
+        // Not recognized
+        //
+
+        return super.checkFeature(featureId);
+
+    } // checkFeature(String)
+
+    /**
+     * Check a property. If the property is know and supported, this method
+     * simply returns. Otherwise, the appropriate exception is thrown.
+     *
+     * @param propertyId The unique identifier (URI) of the property
+     *                   being set.
+     *
+     * @throws XMLConfigurationException Thrown for configuration error.
+     *                                   In general, components should
+     *                                   only throw this exception if
+     *                                   it is <strong>really</strong>
+     *                                   a critical error.
+     */
+    protected PropertyState checkProperty(String propertyId)
+        throws XMLConfigurationException {
+
+        //
+        // Xerces Properties
+        //
+
+        if (propertyId.startsWith(Constants.XERCES_PROPERTY_PREFIX)) {
+            final int suffixLength = propertyId.length() - Constants.XERCES_PROPERTY_PREFIX.length();
+
+            if (suffixLength == Constants.SCHEMA_LOCATION.length() &&
+                propertyId.endsWith(Constants.SCHEMA_LOCATION)) {
+                return PropertyState.RECOGNIZED;
+            }
+            if (suffixLength == Constants.SCHEMA_NONS_LOCATION.length() &&
+                propertyId.endsWith(Constants.SCHEMA_NONS_LOCATION)) {
+                return PropertyState.RECOGNIZED;
+            }
+        }
+
+        if (propertyId.startsWith(Constants.JAXP_PROPERTY_PREFIX)) {
+            final int suffixLength = propertyId.length() - Constants.JAXP_PROPERTY_PREFIX.length();
+
+            if (suffixLength == Constants.SCHEMA_SOURCE.length() &&
+                propertyId.endsWith(Constants.SCHEMA_SOURCE)) {
+                return PropertyState.RECOGNIZED;
+            }
+        }
+
+        //
+        // Not recognized
+        //
+
+        return super.checkProperty(propertyId);
+
+    } // checkProperty(String)
+
+} // class StandardParserConfiguration

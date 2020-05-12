@@ -1,69 +1,63 @@
-/*    */ package com.sun.corba.se.impl.ior;
-/*    */ 
-/*    */ import com.sun.corba.se.spi.ior.TaggedComponent;
-/*    */ import org.omg.CORBA.ORB;
-/*    */ import org.omg.CORBA_2_3.portable.InputStream;
-/*    */ import org.omg.IOP.TaggedComponent;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class GenericTaggedComponent
-/*    */   extends GenericIdentifiable
-/*    */   implements TaggedComponent
-/*    */ {
-/*    */   public GenericTaggedComponent(int paramInt, InputStream paramInputStream) {
-/* 45 */     super(paramInt, paramInputStream);
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public GenericTaggedComponent(int paramInt, byte[] paramArrayOfbyte) {
-/* 50 */     super(paramInt, paramArrayOfbyte);
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public TaggedComponent getIOPComponent(ORB paramORB) {
-/* 60 */     return new TaggedComponent(getId(), 
-/* 61 */         getData());
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\ior\GenericTaggedComponent.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.ior;
+
+import org.omg.CORBA.ORB ;
+
+import org.omg.CORBA_2_3.portable.InputStream ;
+import org.omg.CORBA_2_3.portable.OutputStream ;
+
+import com.sun.corba.se.spi.ior.iiop.GIOPVersion ;
+
+import com.sun.corba.se.spi.ior.TaggedComponent ;
+
+/**
+ * @author
+ */
+public class GenericTaggedComponent extends GenericIdentifiable
+    implements TaggedComponent
+{
+    public GenericTaggedComponent( int id, InputStream is )
+    {
+        super( id, is ) ;
+    }
+
+    public GenericTaggedComponent( int id, byte[] data )
+    {
+        super( id, data ) ;
+    }
+
+    /**
+     * @return org.omg.IOP.TaggedComponent
+     * @exception
+     * @author
+     */
+    public org.omg.IOP.TaggedComponent getIOPComponent( ORB orb )
+    {
+        return new org.omg.IOP.TaggedComponent( getId(),
+            getData() ) ;
+    }
+}

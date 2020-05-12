@@ -1,220 +1,214 @@
-/*     */ package com.sun.corba.se.impl.javax.rmi.CORBA;
-/*     */ 
-/*     */ import com.sun.corba.se.impl.ior.StubIORImpl;
-/*     */ import com.sun.corba.se.impl.logging.UtilSystemException;
-/*     */ import com.sun.corba.se.impl.presentation.rmi.StubConnectImpl;
-/*     */ import java.io.IOException;
-/*     */ import java.io.ObjectInputStream;
-/*     */ import java.io.ObjectOutputStream;
-/*     */ import java.rmi.RemoteException;
-/*     */ import javax.rmi.CORBA.Stub;
-/*     */ import javax.rmi.CORBA.StubDelegate;
-/*     */ import org.omg.CORBA.ORB;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class StubDelegateImpl
-/*     */   implements StubDelegate
-/*     */ {
-/*  65 */   static UtilSystemException wrapper = UtilSystemException.get("rmiiiop");
-/*     */ 
-/*     */   
-/*     */   private StubIORImpl ior;
-/*     */ 
-/*     */   
-/*     */   public StubIORImpl getIOR() {
-/*  72 */     return this.ior;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public StubDelegateImpl() {
-/*  77 */     this.ior = null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void init(Stub paramStub) {
-/*  87 */     if (this.ior == null) {
-/*  88 */       this.ior = new StubIORImpl(paramStub);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int hashCode(Stub paramStub) {
-/*  98 */     init(paramStub);
-/*  99 */     return this.ior.hashCode();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean equals(Stub paramStub, Object paramObject) {
-/* 111 */     if (paramStub == paramObject) {
-/* 112 */       return true;
-/*     */     }
-/*     */     
-/* 115 */     if (!(paramObject instanceof Stub)) {
-/* 116 */       return false;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 121 */     Stub stub = (Stub)paramObject;
-/* 122 */     if (stub.hashCode() != paramStub.hashCode()) {
-/* 123 */       return false;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 131 */     return paramStub.toString().equals(stub.toString());
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public boolean equals(Object paramObject) {
-/* 136 */     if (this == paramObject) {
-/* 137 */       return true;
-/*     */     }
-/* 139 */     if (!(paramObject instanceof StubDelegateImpl)) {
-/* 140 */       return false;
-/*     */     }
-/* 142 */     StubDelegateImpl stubDelegateImpl = (StubDelegateImpl)paramObject;
-/*     */     
-/* 144 */     if (this.ior == null) {
-/* 145 */       return (this.ior == stubDelegateImpl.ior);
-/*     */     }
-/* 147 */     return this.ior.equals(stubDelegateImpl.ior);
-/*     */   }
-/*     */   
-/*     */   public int hashCode() {
-/* 151 */     if (this.ior == null) {
-/* 152 */       return 0;
-/*     */     }
-/* 154 */     return this.ior.hashCode();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString(Stub paramStub) {
-/* 165 */     if (this.ior == null) {
-/* 166 */       return null;
-/*     */     }
-/* 168 */     return this.ior.toString();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void connect(Stub paramStub, ORB paramORB) throws RemoteException {
-/* 185 */     this.ior = StubConnectImpl.connect(this.ior, paramStub, paramStub, paramORB);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void readObject(Stub paramStub, ObjectInputStream paramObjectInputStream) throws IOException, ClassNotFoundException {
-/* 194 */     if (this.ior == null) {
-/* 195 */       this.ior = new StubIORImpl();
-/*     */     }
-/* 197 */     this.ior.doRead(paramObjectInputStream);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void writeObject(Stub paramStub, ObjectOutputStream paramObjectOutputStream) throws IOException {
-/* 211 */     init(paramStub);
-/* 212 */     this.ior.doWrite(paramObjectOutputStream);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\javax\rmi\CORBA\StubDelegateImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+/*
+ * Licensed Materials - Property of IBM
+ * RMI-IIOP v1.0
+ * Copyright IBM Corp. 1998 1999  All Rights Reserved
+ *
+ */
+
+package com.sun.corba.se.impl.javax.rmi.CORBA;
+
+import java.io.IOException;
+
+import java.rmi.RemoteException;
+
+import javax.rmi.CORBA.Tie;
+
+import org.omg.CORBA.ORB;
+import org.omg.CORBA.SystemException;
+import org.omg.CORBA.BAD_OPERATION;
+import org.omg.CORBA.BAD_INV_ORDER;
+
+import org.omg.CORBA.portable.Delegate;
+import org.omg.CORBA.portable.OutputStream;
+import org.omg.CORBA.portable.InputStream;
+
+import com.sun.corba.se.spi.presentation.rmi.StubAdapter;
+
+import com.sun.corba.se.spi.logging.CORBALogDomains ;
+
+import com.sun.corba.se.impl.util.Utility;
+
+import com.sun.corba.se.impl.ior.StubIORImpl ;
+import com.sun.corba.se.impl.presentation.rmi.StubConnectImpl ;
+
+import com.sun.corba.se.impl.logging.UtilSystemException ;
+
+/**
+ * Base class from which all static RMI-IIOP stubs must inherit.
+ */
+public class StubDelegateImpl implements javax.rmi.CORBA.StubDelegate
+{
+    static UtilSystemException wrapper = UtilSystemException.get(
+        CORBALogDomains.RMIIIOP ) ;
+
+    private StubIORImpl ior ;
+
+    public StubIORImpl getIOR()
+    {
+        return ior ;
+    }
+
+    public StubDelegateImpl()
+    {
+        ior = null ;
+    }
+
+    /**
+     * Sets the IOR components if not already set.
+     */
+    private void init (javax.rmi.CORBA.Stub self)
+    {
+        // If the Stub is not connected to an ORB, BAD_OPERATION exception
+        // will be raised by the code below.
+        if (ior == null)
+            ior = new StubIORImpl( self ) ;
+    }
+
+    /**
+     * Returns a hash code value for the object which is the same for all stubs
+     * that represent the same remote object.
+     * @return the hash code value.
+     */
+    public int hashCode(javax.rmi.CORBA.Stub self)
+    {
+        init(self);
+        return ior.hashCode() ;
+    }
+
+    /**
+     * Compares two stubs for equality. Returns <code>true</code> when used to compare stubs
+     * that represent the same remote object, and <code>false</code> otherwise.
+     * @param obj the reference object with which to compare.
+     * @return <code>true</code> if this object is the same as the <code>obj</code>
+     *          argument; <code>false</code> otherwise.
+     */
+    public boolean equals(javax.rmi.CORBA.Stub self, java.lang.Object obj)
+    {
+        if (self == obj) {
+            return true;
+        }
+
+        if (!(obj instanceof javax.rmi.CORBA.Stub)) {
+            return false;
+        }
+
+        // no need to call init() because of calls to hashCode() below
+
+        javax.rmi.CORBA.Stub other = (javax.rmi.CORBA.Stub) obj;
+        if (other.hashCode() != self.hashCode()) {
+            return false;
+        }
+
+        // hashCodes being the same does not mean equality. The stubs still
+        // could be pointing to different IORs. So, do a literal comparison.
+        // Apparently the ONLY way to do this (other than using private
+        // reflection)  toString, because it is not possible to directly
+        // access the StubDelegateImpl from the Stub.
+        return self.toString().equals( other.toString() ) ;
+    }
+
+    public boolean equals( Object obj )
+    {
+        if (this == obj)
+            return true ;
+
+        if (!(obj instanceof StubDelegateImpl))
+            return false ;
+
+        StubDelegateImpl other = (StubDelegateImpl)obj ;
+
+        if (ior == null)
+            return ior == other.ior ;
+        else
+            return ior.equals( other.ior ) ;
+    }
+
+    public int hashCode() {
+        if (ior == null) {
+            return 0;
+        } else {
+            return ior.hashCode();
+        }
+    }
+
+    /**
+     * Returns a string representation of this stub. Returns the same string
+     * for all stubs that represent the same remote object.
+     * @return a string representation of this stub.
+     */
+    public String toString(javax.rmi.CORBA.Stub self)
+    {
+        if (ior == null)
+            return null ;
+        else
+            return ior.toString() ;
+    }
+
+    /**
+     * Connects this stub to an ORB. Required after the stub is deserialized
+     * but not after it is demarshalled by an ORB stream. If an unconnected
+     * stub is passed to an ORB stream for marshalling, it is implicitly
+     * connected to that ORB. Application code should not call this method
+     * directly, but should call the portable wrapper method
+     * {@link javax.rmi.PortableRemoteObject#connect}.
+     * @param orb the ORB to connect to.
+     * @exception RemoteException if the stub is already connected to a different
+     * ORB, or if the stub does not represent an exported remote or local object.
+     */
+    public void connect(javax.rmi.CORBA.Stub self, ORB orb)
+        throws RemoteException
+    {
+        ior = StubConnectImpl.connect( ior, self, self, orb ) ;
+    }
+
+    /**
+     * Serialization method to restore the IOR state.
+     */
+    public void readObject(javax.rmi.CORBA.Stub self,
+        java.io.ObjectInputStream stream) throws IOException, ClassNotFoundException
+    {
+        if (ior == null)
+            ior = new StubIORImpl() ;
+
+        ior.doRead( stream ) ;
+    }
+
+    /**
+     * Serialization method to save the IOR state.
+     * @serialData The length of the IOR type ID (int), followed by the IOR type ID
+     * (byte array encoded using ISO8859-1), followed by the number of IOR profiles
+     * (int), followed by the IOR profiles.  Each IOR profile is written as a
+     * profile tag (int), followed by the length of the profile data (int), followed
+     * by the profile data (byte array).
+     */
+    public void writeObject(javax.rmi.CORBA.Stub self,
+        java.io.ObjectOutputStream stream) throws IOException
+    {
+        init(self);
+        ior.doWrite( stream ) ;
+    }
+}

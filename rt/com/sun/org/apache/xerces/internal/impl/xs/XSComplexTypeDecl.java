@@ -1,724 +1,719 @@
-/*     */ package com.sun.org.apache.xerces.internal.impl.xs;
-/*     */ 
-/*     */ import com.sun.org.apache.xerces.internal.impl.dv.XSSimpleType;
-/*     */ import com.sun.org.apache.xerces.internal.impl.dv.xs.XSSimpleTypeDecl;
-/*     */ import com.sun.org.apache.xerces.internal.impl.xs.models.CMBuilder;
-/*     */ import com.sun.org.apache.xerces.internal.impl.xs.models.XSCMValidator;
-/*     */ import com.sun.org.apache.xerces.internal.impl.xs.util.XSObjectListImpl;
-/*     */ import com.sun.org.apache.xerces.internal.xs.XSAttributeUse;
-/*     */ import com.sun.org.apache.xerces.internal.xs.XSComplexTypeDefinition;
-/*     */ import com.sun.org.apache.xerces.internal.xs.XSNamespaceItem;
-/*     */ import com.sun.org.apache.xerces.internal.xs.XSObjectList;
-/*     */ import com.sun.org.apache.xerces.internal.xs.XSParticle;
-/*     */ import com.sun.org.apache.xerces.internal.xs.XSSimpleTypeDefinition;
-/*     */ import com.sun.org.apache.xerces.internal.xs.XSTypeDefinition;
-/*     */ import com.sun.org.apache.xerces.internal.xs.XSWildcard;
-/*     */ import org.w3c.dom.TypeInfo;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class XSComplexTypeDecl
-/*     */   implements XSComplexTypeDefinition, TypeInfo
-/*     */ {
-/*  44 */   String fName = null;
-/*     */ 
-/*     */   
-/*  47 */   String fTargetNamespace = null;
-/*     */ 
-/*     */   
-/*  50 */   XSTypeDefinition fBaseType = null;
-/*     */ 
-/*     */   
-/*  53 */   short fDerivedBy = 2;
-/*     */ 
-/*     */   
-/*  56 */   short fFinal = 0;
-/*     */ 
-/*     */   
-/*  59 */   short fBlock = 0;
-/*     */ 
-/*     */ 
-/*     */   
-/*  63 */   short fMiscFlags = 0;
-/*     */ 
-/*     */   
-/*  66 */   XSAttributeGroupDecl fAttrGrp = null;
-/*     */ 
-/*     */   
-/*  69 */   short fContentType = 0;
-/*     */ 
-/*     */   
-/*  72 */   XSSimpleType fXSSimpleType = null;
-/*     */ 
-/*     */   
-/*  75 */   XSParticleDecl fParticle = null;
-/*     */ 
-/*     */   
-/*  78 */   volatile XSCMValidator fCMValidator = null;
-/*     */ 
-/*     */   
-/*  81 */   XSCMValidator fUPACMValidator = null;
-/*     */ 
-/*     */   
-/*  84 */   XSObjectListImpl fAnnotations = null;
-/*     */ 
-/*     */ 
-/*     */   
-/*  88 */   private XSNamespaceItem fNamespaceItem = null;
-/*     */   
-/*     */   static final int DERIVATION_ANY = 0;
-/*     */   
-/*     */   static final int DERIVATION_RESTRICTION = 1;
-/*     */   
-/*     */   static final int DERIVATION_EXTENSION = 2;
-/*     */   
-/*     */   static final int DERIVATION_UNION = 4;
-/*     */   
-/*     */   static final int DERIVATION_LIST = 8;
-/*     */   
-/*     */   private static final short CT_IS_ABSTRACT = 1;
-/*     */   
-/*     */   private static final short CT_HAS_TYPE_ID = 2;
-/*     */   
-/*     */   private static final short CT_IS_ANONYMOUS = 4;
-/*     */   
-/*     */   public void setValues(String name, String targetNamespace, XSTypeDefinition baseType, short derivedBy, short schemaFinal, short block, short contentType, boolean isAbstract, XSAttributeGroupDecl attrGrp, XSSimpleType simpleType, XSParticleDecl particle, XSObjectListImpl annotations) {
-/* 107 */     this.fTargetNamespace = targetNamespace;
-/* 108 */     this.fBaseType = baseType;
-/* 109 */     this.fDerivedBy = derivedBy;
-/* 110 */     this.fFinal = schemaFinal;
-/* 111 */     this.fBlock = block;
-/* 112 */     this.fContentType = contentType;
-/* 113 */     if (isAbstract)
-/* 114 */       this.fMiscFlags = (short)(this.fMiscFlags | 0x1); 
-/* 115 */     this.fAttrGrp = attrGrp;
-/* 116 */     this.fXSSimpleType = simpleType;
-/* 117 */     this.fParticle = particle;
-/* 118 */     this.fAnnotations = annotations;
-/*     */   }
-/*     */   
-/*     */   public void setName(String name) {
-/* 122 */     this.fName = name;
-/*     */   }
-/*     */   
-/*     */   public short getTypeCategory() {
-/* 126 */     return 15;
-/*     */   }
-/*     */   
-/*     */   public String getTypeName() {
-/* 130 */     return this.fName;
-/*     */   }
-/*     */   
-/*     */   public short getFinalSet() {
-/* 134 */     return this.fFinal;
-/*     */   }
-/*     */   
-/*     */   public String getTargetNamespace() {
-/* 138 */     return this.fTargetNamespace;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean containsTypeID() {
-/* 149 */     return ((this.fMiscFlags & 0x2) != 0);
-/*     */   }
-/*     */   
-/*     */   public void setIsAbstractType() {
-/* 153 */     this.fMiscFlags = (short)(this.fMiscFlags | 0x1);
-/*     */   }
-/*     */   public void setContainsTypeID() {
-/* 156 */     this.fMiscFlags = (short)(this.fMiscFlags | 0x2);
-/*     */   }
-/*     */   public void setIsAnonymous() {
-/* 159 */     this.fMiscFlags = (short)(this.fMiscFlags | 0x4);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XSCMValidator getContentModel(CMBuilder cmBuilder) {
-/* 165 */     if (this.fContentType == 1 || this.fContentType == 0)
-/*     */     {
-/* 167 */       return null;
-/*     */     }
-/* 169 */     if (this.fCMValidator == null)
-/* 170 */       synchronized (this) {
-/* 171 */         if (this.fCMValidator == null) {
-/* 172 */           this.fCMValidator = cmBuilder.getContentModel(this);
-/*     */         }
-/*     */       }  
-/* 175 */     return this.fCMValidator;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XSAttributeGroupDecl getAttrGrp() {
-/* 182 */     return this.fAttrGrp;
-/*     */   }
-/*     */   
-/*     */   public String toString() {
-/* 186 */     StringBuilder str = new StringBuilder(192);
-/* 187 */     appendTypeInfo(str);
-/* 188 */     return str.toString();
-/*     */   }
-/*     */   
-/*     */   void appendTypeInfo(StringBuilder str) {
-/* 192 */     String[] contentType = { "EMPTY", "SIMPLE", "ELEMENT", "MIXED" };
-/* 193 */     String[] derivedBy = { "EMPTY", "EXTENSION", "RESTRICTION" };
-/*     */     
-/* 195 */     str.append("Complex type name='").append(this.fTargetNamespace).append(',').append(getTypeName()).append("', ");
-/* 196 */     if (this.fBaseType != null) {
-/* 197 */       str.append(" base type name='").append(this.fBaseType.getName()).append("', ");
-/*     */     }
-/* 199 */     str.append(" content type='").append(contentType[this.fContentType]).append("', ");
-/* 200 */     str.append(" isAbstract='").append(getAbstract()).append("', ");
-/* 201 */     str.append(" hasTypeId='").append(containsTypeID()).append("', ");
-/* 202 */     str.append(" final='").append(this.fFinal).append("', ");
-/* 203 */     str.append(" block='").append(this.fBlock).append("', ");
-/* 204 */     if (this.fParticle != null) {
-/* 205 */       str.append(" particle='").append(this.fParticle.toString()).append("', ");
-/*     */     }
-/* 207 */     str.append(" derivedBy='").append(derivedBy[this.fDerivedBy]).append("'. ");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean derivedFromType(XSTypeDefinition ancestor, short derivationMethod) {
-/* 213 */     if (ancestor == null) {
-/* 214 */       return false;
-/*     */     }
-/* 216 */     if (ancestor == SchemaGrammar.fAnyType) {
-/* 217 */       return true;
-/*     */     }
-/* 219 */     XSTypeDefinition type = this;
-/* 220 */     while (type != ancestor && type != SchemaGrammar.fAnySimpleType && type != SchemaGrammar.fAnyType)
-/*     */     {
-/*     */       
-/* 223 */       type = type.getBaseType();
-/*     */     }
-/*     */     
-/* 226 */     return (type == ancestor);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public boolean derivedFrom(String ancestorNS, String ancestorName, short derivationMethod) {
-/* 231 */     if (ancestorName == null) {
-/* 232 */       return false;
-/*     */     }
-/* 234 */     if (ancestorNS != null && ancestorNS
-/* 235 */       .equals(SchemaSymbols.URI_SCHEMAFORSCHEMA) && ancestorName
-/* 236 */       .equals("anyType")) {
-/* 237 */       return true;
-/*     */     }
-/*     */ 
-/*     */     
-/* 241 */     XSTypeDefinition type = this;
-/* 242 */     while ((!ancestorName.equals(type.getName()) || ((ancestorNS != null || type
-/* 243 */       .getNamespace() != null) && (ancestorNS == null || 
-/* 244 */       !ancestorNS.equals(type.getNamespace())))) && type != SchemaGrammar.fAnySimpleType && type != SchemaGrammar.fAnyType)
-/*     */     {
-/*     */       
-/* 247 */       type = type.getBaseType();
-/*     */     }
-/*     */     
-/* 250 */     return (type != SchemaGrammar.fAnySimpleType && type != SchemaGrammar.fAnyType);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isDOMDerivedFrom(String ancestorNS, String ancestorName, int derivationMethod) {
-/* 272 */     if (ancestorName == null) {
-/* 273 */       return false;
-/*     */     }
-/*     */     
-/* 276 */     if (ancestorNS != null && ancestorNS
-/* 277 */       .equals(SchemaSymbols.URI_SCHEMAFORSCHEMA) && ancestorName
-/* 278 */       .equals("anyType") && derivationMethod == 1 && derivationMethod == 2)
-/*     */     {
-/*     */       
-/* 281 */       return true;
-/*     */     }
-/*     */ 
-/*     */     
-/* 285 */     if ((derivationMethod & 0x1) != 0 && 
-/* 286 */       isDerivedByRestriction(ancestorNS, ancestorName, derivationMethod, this))
-/*     */     {
-/* 288 */       return true;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 293 */     if ((derivationMethod & 0x2) != 0 && 
-/* 294 */       isDerivedByExtension(ancestorNS, ancestorName, derivationMethod, this))
-/*     */     {
-/* 296 */       return true;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 301 */     if (((derivationMethod & 0x8) != 0 || (derivationMethod & 0x4) != 0) && (derivationMethod & 0x1) == 0 && (derivationMethod & 0x2) == 0) {
-/*     */ 
-/*     */ 
-/*     */       
-/* 305 */       if (ancestorNS.equals(SchemaSymbols.URI_SCHEMAFORSCHEMA) && ancestorName
-/* 306 */         .equals("anyType")) {
-/* 307 */         ancestorName = "anySimpleType";
-/*     */       }
-/*     */       
-/* 310 */       if (!this.fName.equals("anyType") || 
-/* 311 */         !this.fTargetNamespace.equals(SchemaSymbols.URI_SCHEMAFORSCHEMA)) {
-/* 312 */         if (this.fBaseType != null && this.fBaseType instanceof XSSimpleTypeDecl)
-/*     */         {
-/* 314 */           return ((XSSimpleTypeDecl)this.fBaseType).isDOMDerivedFrom(ancestorNS, ancestorName, derivationMethod);
-/*     */         }
-/* 316 */         if (this.fBaseType != null && this.fBaseType instanceof XSComplexTypeDecl)
-/*     */         {
-/* 318 */           return ((XSComplexTypeDecl)this.fBaseType).isDOMDerivedFrom(ancestorNS, ancestorName, derivationMethod);
-/*     */         }
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 327 */     if ((derivationMethod & 0x2) == 0 && (derivationMethod & 0x1) == 0 && (derivationMethod & 0x8) == 0 && (derivationMethod & 0x4) == 0)
-/*     */     {
-/*     */ 
-/*     */       
-/* 331 */       return isDerivedByAny(ancestorNS, ancestorName, derivationMethod, this);
-/*     */     }
-/*     */     
-/* 334 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean isDerivedByAny(String ancestorNS, String ancestorName, int derivationMethod, XSTypeDefinition type) {
-/* 356 */     XSTypeDefinition oldType = null;
-/* 357 */     boolean derivedFrom = false;
-/* 358 */     while (type != null && type != oldType) {
-/*     */ 
-/*     */       
-/* 361 */       if (ancestorName.equals(type.getName()) && ((ancestorNS == null && type
-/* 362 */         .getNamespace() == null) || (ancestorNS != null && ancestorNS
-/* 363 */         .equals(type.getNamespace())))) {
-/* 364 */         derivedFrom = true;
-/*     */ 
-/*     */         
-/*     */         break;
-/*     */       } 
-/*     */       
-/* 370 */       if (isDerivedByRestriction(ancestorNS, ancestorName, derivationMethod, type))
-/*     */       {
-/* 372 */         return true; } 
-/* 373 */       if (!isDerivedByExtension(ancestorNS, ancestorName, derivationMethod, type))
-/*     */       {
-/* 375 */         return true;
-/*     */       }
-/* 377 */       oldType = type;
-/* 378 */       type = type.getBaseType();
-/*     */     } 
-/*     */     
-/* 381 */     return derivedFrom;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean isDerivedByRestriction(String ancestorNS, String ancestorName, int derivationMethod, XSTypeDefinition type) {
-/* 403 */     XSTypeDefinition oldType = null;
-/* 404 */     while (type != null && type != oldType) {
-/*     */ 
-/*     */       
-/* 407 */       if (ancestorNS != null && ancestorNS
-/* 408 */         .equals(SchemaSymbols.URI_SCHEMAFORSCHEMA) && ancestorName
-/* 409 */         .equals("anySimpleType")) {
-/* 410 */         return false;
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */       
-/* 415 */       if ((ancestorName.equals(type.getName()) && ancestorNS != null && ancestorNS
-/* 416 */         .equals(type.getNamespace())) || (type
-/* 417 */         .getNamespace() == null && ancestorNS == null))
-/*     */       {
-/* 419 */         return true;
-/*     */       }
-/*     */ 
-/*     */       
-/* 423 */       if (type instanceof XSSimpleTypeDecl) {
-/* 424 */         if (ancestorNS.equals(SchemaSymbols.URI_SCHEMAFORSCHEMA) && ancestorName
-/* 425 */           .equals("anyType")) {
-/* 426 */           ancestorName = "anySimpleType";
-/*     */         }
-/* 428 */         return ((XSSimpleTypeDecl)type).isDOMDerivedFrom(ancestorNS, ancestorName, derivationMethod);
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 434 */       if (((XSComplexTypeDecl)type).getDerivationMethod() != 2) {
-/* 435 */         return false;
-/*     */       }
-/*     */       
-/* 438 */       oldType = type;
-/* 439 */       type = type.getBaseType();
-/*     */     } 
-/*     */ 
-/*     */     
-/* 443 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean isDerivedByExtension(String ancestorNS, String ancestorName, int derivationMethod, XSTypeDefinition type) {
-/* 465 */     boolean extension = false;
-/* 466 */     XSTypeDefinition oldType = null;
-/* 467 */     while (type != null && type != oldType) {
-/*     */       
-/* 469 */       if (ancestorNS != null && ancestorNS
-/* 470 */         .equals(SchemaSymbols.URI_SCHEMAFORSCHEMA) && ancestorName
-/* 471 */         .equals("anySimpleType") && SchemaSymbols.URI_SCHEMAFORSCHEMA
-/* 472 */         .equals(type.getNamespace()) && "anyType"
-/* 473 */         .equals(type.getName())) {
-/*     */         break;
-/*     */       }
-/*     */       
-/* 477 */       if (ancestorName.equals(type.getName()) && ((ancestorNS == null && type
-/* 478 */         .getNamespace() == null) || (ancestorNS != null && ancestorNS
-/* 479 */         .equals(type.getNamespace()))))
-/*     */       {
-/* 481 */         return extension;
-/*     */       }
-/*     */ 
-/*     */       
-/* 485 */       if (type instanceof XSSimpleTypeDecl) {
-/* 486 */         if (ancestorNS.equals(SchemaSymbols.URI_SCHEMAFORSCHEMA) && ancestorName
-/* 487 */           .equals("anyType")) {
-/* 488 */           ancestorName = "anySimpleType";
-/*     */         }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 494 */         if ((derivationMethod & 0x2) != 0) {
-/* 495 */           return extension & ((XSSimpleTypeDecl)type)
-/* 496 */             .isDOMDerivedFrom(ancestorNS, ancestorName, derivationMethod & 0x1);
-/*     */         }
-/*     */ 
-/*     */         
-/* 500 */         return extension & ((XSSimpleTypeDecl)type)
-/* 501 */           .isDOMDerivedFrom(ancestorNS, ancestorName, derivationMethod);
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 509 */       if (((XSComplexTypeDecl)type).getDerivationMethod() == 1) {
-/* 510 */         int i = extension | true;
-/*     */       }
-/*     */       
-/* 513 */       oldType = type;
-/* 514 */       type = type.getBaseType();
-/*     */     } 
-/*     */     
-/* 517 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void reset() {
-/* 523 */     this.fName = null;
-/* 524 */     this.fTargetNamespace = null;
-/* 525 */     this.fBaseType = null;
-/* 526 */     this.fDerivedBy = 2;
-/* 527 */     this.fFinal = 0;
-/* 528 */     this.fBlock = 0;
-/*     */     
-/* 530 */     this.fMiscFlags = 0;
-/*     */ 
-/*     */     
-/* 533 */     this.fAttrGrp.reset();
-/* 534 */     this.fContentType = 0;
-/* 535 */     this.fXSSimpleType = null;
-/* 536 */     this.fParticle = null;
-/* 537 */     this.fCMValidator = null;
-/* 538 */     this.fUPACMValidator = null;
-/* 539 */     if (this.fAnnotations != null)
-/*     */     {
-/* 541 */       this.fAnnotations.clearXSObjectList();
-/*     */     }
-/* 543 */     this.fAnnotations = null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public short getType() {
-/* 550 */     return 3;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getName() {
-/* 558 */     return getAnonymous() ? null : this.fName;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean getAnonymous() {
-/* 567 */     return ((this.fMiscFlags & 0x4) != 0);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getNamespace() {
-/* 576 */     return this.fTargetNamespace;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XSTypeDefinition getBaseType() {
-/* 584 */     return this.fBaseType;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public short getDerivationMethod() {
-/* 592 */     return this.fDerivedBy;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isFinal(short derivation) {
-/* 604 */     return ((this.fFinal & derivation) != 0);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public short getFinal() {
-/* 615 */     return this.fFinal;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean getAbstract() {
-/* 624 */     return ((this.fMiscFlags & 0x1) != 0);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XSObjectList getAttributeUses() {
-/* 631 */     return this.fAttrGrp.getAttributeUses();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XSWildcard getAttributeWildcard() {
-/* 638 */     return this.fAttrGrp.getAttributeWildcard();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public short getContentType() {
-/* 647 */     return this.fContentType;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XSSimpleTypeDefinition getSimpleType() {
-/* 655 */     return this.fXSSimpleType;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XSParticle getParticle() {
-/* 663 */     return this.fParticle;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isProhibitedSubstitution(short prohibited) {
-/* 674 */     return ((this.fBlock & prohibited) != 0);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public short getProhibitedSubstitutions() {
-/* 683 */     return this.fBlock;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XSObjectList getAnnotations() {
-/* 690 */     return (this.fAnnotations != null) ? this.fAnnotations : XSObjectListImpl.EMPTY_LIST;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XSNamespaceItem getNamespaceItem() {
-/* 697 */     return this.fNamespaceItem;
-/*     */   }
-/*     */   
-/*     */   void setNamespaceItem(XSNamespaceItem namespaceItem) {
-/* 701 */     this.fNamespaceItem = namespaceItem;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XSAttributeUse getAttributeUse(String namespace, String name) {
-/* 708 */     return this.fAttrGrp.getAttributeUse(namespace, name);
-/*     */   }
-/*     */   
-/*     */   public String getTypeNamespace() {
-/* 712 */     return getNamespace();
-/*     */   }
-/*     */   
-/*     */   public boolean isDerivedFrom(String typeNamespaceArg, String typeNameArg, int derivationMethod) {
-/* 716 */     return isDOMDerivedFrom(typeNamespaceArg, typeNameArg, derivationMethod);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\impl\xs\XSComplexTypeDecl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2005 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.impl.xs;
+
+import com.sun.org.apache.xerces.internal.impl.dv.XSSimpleType;
+import com.sun.org.apache.xerces.internal.xs.*;
+import com.sun.org.apache.xerces.internal.impl.xs.models.XSCMValidator;
+import com.sun.org.apache.xerces.internal.impl.xs.models.CMBuilder;
+import com.sun.org.apache.xerces.internal.impl.xs.util.XSObjectListImpl;
+import com.sun.org.apache.xerces.internal.impl.dv.xs.XSSimpleTypeDecl;
+import org.w3c.dom.TypeInfo;
+
+/**
+ * The XML representation for a complexType
+ * schema component is a <complexType> element information item
+ *
+ * @xerces.internal
+ *
+ * @author Elena Litani, IBM
+ * @author Sandy Gao, IBM
+ * @version $Id: XSComplexTypeDecl.java,v 1.8 2010-11-01 04:39:55 joehw Exp $
+ */
+public class XSComplexTypeDecl implements XSComplexTypeDefinition, TypeInfo {
+
+    // name of the complexType
+    String fName = null;
+
+    // target namespace of the complexType
+    String fTargetNamespace = null;
+
+    // base type of the complexType
+    XSTypeDefinition fBaseType = null;
+
+    // derivation method of the complexType
+    short fDerivedBy = XSConstants.DERIVATION_RESTRICTION;
+
+    // final set of the complexType
+    short fFinal = XSConstants.DERIVATION_NONE;
+
+    // block set (prohibited substitution) of the complexType
+    short fBlock = XSConstants.DERIVATION_NONE;
+
+    // flags: whether is abstract; whether contains ID type;
+    //        whether it's an anonymous tpye
+    short fMiscFlags = 0;
+
+    // the attribute group that holds the attribute uses and attribute wildcard
+    XSAttributeGroupDecl fAttrGrp = null;
+
+    // the content type of the complexType
+    short fContentType = CONTENTTYPE_EMPTY;
+
+    // if the content type is simple, then the corresponding simpleType
+    XSSimpleType fXSSimpleType = null;
+
+    // if the content type is element or mixed, the particle
+    XSParticleDecl fParticle = null;
+
+    // if there is a particle, the content model corresponding to that particle
+    volatile XSCMValidator fCMValidator = null;
+
+    // the content model that's sufficient for computing UPA
+    XSCMValidator fUPACMValidator = null;
+
+    // list of annotations affiliated with this type
+    XSObjectListImpl fAnnotations = null;
+
+    // The namespace schema information item corresponding to the target namespace
+    // of the complex type definition, if it is globally declared; or null otherwise.
+    private XSNamespaceItem fNamespaceItem = null;
+
+    // DOM Level 3 TypeInfo Derivation Method constants
+    static final int DERIVATION_ANY = 0;
+    static final int DERIVATION_RESTRICTION = 1;
+    static final int DERIVATION_EXTENSION = 2;
+    static final int DERIVATION_UNION = 4;
+    static final int DERIVATION_LIST = 8;
+
+    public XSComplexTypeDecl() {
+        // do-nothing constructor for now.
+    }
+
+    public void setValues(String name, String targetNamespace,
+            XSTypeDefinition baseType, short derivedBy, short schemaFinal,
+            short block, short contentType,
+            boolean isAbstract, XSAttributeGroupDecl attrGrp,
+            XSSimpleType simpleType, XSParticleDecl particle,
+            XSObjectListImpl annotations) {
+        fTargetNamespace = targetNamespace;
+        fBaseType = baseType;
+        fDerivedBy = derivedBy;
+        fFinal = schemaFinal;
+        fBlock = block;
+        fContentType = contentType;
+        if(isAbstract)
+            fMiscFlags |= CT_IS_ABSTRACT;
+        fAttrGrp = attrGrp;
+        fXSSimpleType = simpleType;
+        fParticle = particle;
+        fAnnotations = annotations;
+   }
+
+   public void setName(String name) {
+        fName = name;
+   }
+
+    public short getTypeCategory() {
+        return COMPLEX_TYPE;
+    }
+
+    public String getTypeName() {
+        return fName;
+    }
+
+    public short getFinalSet(){
+        return fFinal;
+    }
+
+    public String getTargetNamespace(){
+        return fTargetNamespace;
+    }
+
+    // flags for the misc flag
+    private static final short CT_IS_ABSTRACT = 1;
+    private static final short CT_HAS_TYPE_ID = 2;
+    private static final short CT_IS_ANONYMOUS = 4;
+
+    // methods to get/set misc flag
+
+    public boolean containsTypeID () {
+        return((fMiscFlags & CT_HAS_TYPE_ID) != 0);
+    }
+
+    public void setIsAbstractType() {
+        fMiscFlags |= CT_IS_ABSTRACT;
+    }
+    public void setContainsTypeID() {
+        fMiscFlags |= CT_HAS_TYPE_ID;
+    }
+    public void setIsAnonymous() {
+        fMiscFlags |= CT_IS_ANONYMOUS;
+    }
+
+    public XSCMValidator getContentModel(CMBuilder cmBuilder) {
+        // for complex type with empty or simple content,
+        // there is no content model validator
+        if (fContentType == XSComplexTypeDecl.CONTENTTYPE_SIMPLE ||
+            fContentType == XSComplexTypeDecl.CONTENTTYPE_EMPTY) {
+            return null;
+        }
+        if (fCMValidator == null)
+            synchronized (this) {
+                if (fCMValidator == null) {
+                    fCMValidator = cmBuilder.getContentModel(this);
+                }
+            }
+        return fCMValidator;
+    }
+
+    // some utility methods:
+
+    // return the attribute group for this complex type
+    public XSAttributeGroupDecl getAttrGrp() {
+        return fAttrGrp;
+    }
+
+    public String toString() {
+        StringBuilder str = new StringBuilder(192);
+        appendTypeInfo(str);
+        return str.toString();
+    }
+
+    void appendTypeInfo(StringBuilder str) {
+        String contentType[] = {"EMPTY", "SIMPLE", "ELEMENT", "MIXED"};
+        String derivedBy[] = {"EMPTY", "EXTENSION", "RESTRICTION"};
+
+        str.append("Complex type name='").append(fTargetNamespace).append(',').append(getTypeName()).append("', ");
+        if (fBaseType != null) {
+            str.append(" base type name='").append(fBaseType.getName()).append("', ");
+        }
+        str.append(" content type='").append(contentType[fContentType]).append("', ");
+        str.append(" isAbstract='").append(getAbstract()).append("', ");
+        str.append(" hasTypeId='").append(containsTypeID()).append("', ");
+        str.append(" final='").append(fFinal).append("', ");
+        str.append(" block='").append(fBlock).append("', ");
+        if (fParticle != null) {
+            str.append(" particle='").append(fParticle.toString()).append("', ");
+        }
+        str.append(" derivedBy='").append(derivedBy[fDerivedBy]).append("'. ");
+
+    }
+
+    public boolean derivedFromType(XSTypeDefinition ancestor, short derivationMethod) {
+        // ancestor is null, retur false
+        if (ancestor == null)
+            return false;
+        // ancestor is anyType, return true
+        if (ancestor == SchemaGrammar.fAnyType)
+            return true;
+        // recursively get base, and compare it with ancestor
+        XSTypeDefinition type = this;
+        while (type != ancestor &&                     // compare with ancestor
+               type != SchemaGrammar.fAnySimpleType &&  // reached anySimpleType
+               type != SchemaGrammar.fAnyType) {        // reached anyType
+            type = type.getBaseType();
+        }
+
+        return type == ancestor;
+    }
+
+    public boolean derivedFrom(String ancestorNS, String ancestorName, short derivationMethod) {
+        // ancestor is null, retur false
+        if (ancestorName == null)
+            return false;
+        // ancestor is anyType, return true
+        if (ancestorNS != null &&
+            ancestorNS.equals(SchemaSymbols.URI_SCHEMAFORSCHEMA) &&
+            ancestorName.equals(SchemaSymbols.ATTVAL_ANYTYPE)) {
+            return true;
+        }
+
+        // recursively get base, and compare it with ancestor
+        XSTypeDefinition type = this;
+        while (!(ancestorName.equals(type.getName()) &&
+                 ((ancestorNS == null && type.getNamespace() == null) ||
+                  (ancestorNS != null && ancestorNS.equals(type.getNamespace())))) &&   // compare with ancestor
+               type != SchemaGrammar.fAnySimpleType &&  // reached anySimpleType
+               type != SchemaGrammar.fAnyType) {        // reached anyType
+            type = (XSTypeDefinition)type.getBaseType();
+        }
+
+        return type != SchemaGrammar.fAnySimpleType &&
+        type != SchemaGrammar.fAnyType;
+    }
+
+    /**
+     * Checks if a type is derived from another given the the name, namespace
+     * and derivation method. See:
+     * http://www.w3.org/TR/2004/REC-DOM-Level-3-Core-20040407/core.html#TypeInfo-isDerivedFrom
+     *
+     * @param ancestorNS
+     *            The namspace of the ancestor type declaration
+     * @param ancestorName
+     *            The name of the ancestor type declaration
+     * @param derivationMethod
+     *            The derivation method
+     *
+     * @return boolean True if the ancestor type is derived from the reference
+     *         type by the specifiied derivation method.
+     */
+    public boolean isDOMDerivedFrom(String ancestorNS, String ancestorName,
+            int derivationMethod) {
+        // ancestor is null, retur false
+        if (ancestorName == null)
+            return false;
+
+        // ancestor is anyType, return true
+        if (ancestorNS != null
+                && ancestorNS.equals(SchemaSymbols.URI_SCHEMAFORSCHEMA)
+                && ancestorName.equals(SchemaSymbols.ATTVAL_ANYTYPE)
+                && (derivationMethod == DERIVATION_RESTRICTION
+                && derivationMethod == DERIVATION_EXTENSION)) {
+            return true;
+        }
+
+        // restriction
+        if ((derivationMethod & DERIVATION_RESTRICTION) != 0) {
+            if (isDerivedByRestriction(ancestorNS, ancestorName,
+                    derivationMethod, this)) {
+                return true;
+            }
+        }
+
+        // extension
+        if ((derivationMethod & DERIVATION_EXTENSION) != 0) {
+            if (isDerivedByExtension(ancestorNS, ancestorName,
+                    derivationMethod, this)) {
+                return true;
+            }
+        }
+
+        // list or union
+        if ((((derivationMethod & DERIVATION_LIST) != 0) || ((derivationMethod & DERIVATION_UNION) != 0))
+                && ((derivationMethod & DERIVATION_RESTRICTION) == 0)
+                && ((derivationMethod & DERIVATION_EXTENSION) == 0)) {
+
+            if (ancestorNS.equals(SchemaSymbols.URI_SCHEMAFORSCHEMA)
+                    && ancestorName.equals(SchemaSymbols.ATTVAL_ANYTYPE)) {
+                ancestorName = SchemaSymbols.ATTVAL_ANYSIMPLETYPE;
+            }
+
+            if(!(fName.equals(SchemaSymbols.ATTVAL_ANYTYPE)
+                            && fTargetNamespace.equals(SchemaSymbols.URI_SCHEMAFORSCHEMA))){
+                if (fBaseType != null && fBaseType instanceof XSSimpleTypeDecl) {
+
+                    return ((XSSimpleTypeDecl) fBaseType).isDOMDerivedFrom(ancestorNS,
+                            ancestorName, derivationMethod);
+                } else if (fBaseType != null
+                        && fBaseType instanceof XSComplexTypeDecl) {
+                    return ((XSComplexTypeDecl) fBaseType).isDOMDerivedFrom(
+                            ancestorNS, ancestorName, derivationMethod);
+                }
+            }
+        }
+
+        // If the value of the parameter is 0 i.e. no bit (corresponding to
+        // restriction, list, extension or union) is set to 1 for the
+        // derivationMethod parameter.
+        if (((derivationMethod  & DERIVATION_EXTENSION) == 0)
+                && (((derivationMethod & DERIVATION_RESTRICTION) == 0)
+                        && ((derivationMethod & DERIVATION_LIST) == 0)
+                        && ((derivationMethod & DERIVATION_UNION) == 0))) {
+            return isDerivedByAny(ancestorNS, ancestorName, derivationMethod, this);
+        }
+
+        return false;
+    }
+
+    /**
+     * Checks if a type is derived from another by any combination of
+     * restriction, list ir union. See:
+     * http://www.w3.org/TR/2004/REC-DOM-Level-3-Core-20040407/core.html#TypeInfo-isDerivedFrom
+     *
+     * @param ancestorNS
+     *            The namspace of the ancestor type declaration
+     * @param ancestorName
+     *            The name of the ancestor type declaration
+     * @param derivationMethod
+     *            A short indication the method of derivation
+     * @param type
+     *            The reference type definition
+     *
+     * @return boolean True if the type is derived by any method for the
+     *         reference type
+     */
+    private boolean isDerivedByAny(String ancestorNS, String ancestorName,
+            int derivationMethod, XSTypeDefinition type) {
+        XSTypeDefinition oldType = null;
+        boolean derivedFrom = false;
+        while (type != null && type != oldType) {
+
+            // If the ancestor type is reached or is the same as this type.
+            if ((ancestorName.equals(type.getName()))
+                    && ((ancestorNS == null && type.getNamespace() == null)
+                        || (ancestorNS != null && ancestorNS.equals(type.getNamespace())))) {
+                derivedFrom = true;
+                break;
+            }
+
+            // Check if this type is derived from the base by restriction or
+            // extension
+            if (isDerivedByRestriction(ancestorNS, ancestorName,
+                    derivationMethod, type)) {
+                return true;
+            } else if (!isDerivedByExtension(ancestorNS, ancestorName,
+                    derivationMethod, type)) {
+                return true;
+            }
+            oldType = type;
+            type = type.getBaseType();
+        }
+
+        return derivedFrom;
+    }
+
+    /**
+     * Checks if a type is derived from another by restriction. See:
+     * http://www.w3.org/TR/2004/REC-DOM-Level-3-Core-20040407/core.html#TypeInfo-isDerivedFrom
+     *
+     * @param ancestorNS
+     *            The namspace of the ancestor type declaration
+     * @param ancestorName
+     *            The name of the ancestor type declaration
+     * @param derivationMethod
+     *            A short indication the method of derivation *
+     * @param type
+     *            The reference type definition
+     *
+     * @return boolean True if the type is derived by restriciton for the
+     *         reference type
+     */
+    private boolean isDerivedByRestriction(String ancestorNS,
+            String ancestorName, int derivationMethod, XSTypeDefinition type) {
+
+        XSTypeDefinition oldType = null;
+        while (type != null && type != oldType) {
+
+            // ancestor is anySimpleType, return false
+            if (ancestorNS != null
+                    && ancestorNS.equals(SchemaSymbols.URI_SCHEMAFORSCHEMA)
+                    && ancestorName.equals(SchemaSymbols.ATTVAL_ANYSIMPLETYPE)) {
+                return false;
+            }
+
+            // if the name and namespace of this type is the same as the
+            // ancestor return true
+            if ((ancestorName.equals(type.getName()))
+                    && (ancestorNS != null && ancestorNS.equals(type.getNamespace()))
+                            || ((type.getNamespace() == null && ancestorNS == null))) {
+
+                return true;
+            }
+
+            // If the base type is a complexType with simpleContent
+            if (type instanceof XSSimpleTypeDecl) {
+                if (ancestorNS.equals(SchemaSymbols.URI_SCHEMAFORSCHEMA)
+                        && ancestorName.equals(SchemaSymbols.ATTVAL_ANYTYPE)) {
+                    ancestorName = SchemaSymbols.ATTVAL_ANYSIMPLETYPE;
+                }
+                return ((XSSimpleTypeDecl) type).isDOMDerivedFrom(ancestorNS,
+                        ancestorName, derivationMethod);
+            } else {
+                // If the base type is a complex type
+                // Every derivation step till the base type should be
+                // restriction. If not return false
+                if (((XSComplexTypeDecl) type).getDerivationMethod() != XSConstants.DERIVATION_RESTRICTION) {
+                    return false;
+                }
+            }
+            oldType = type;
+            type = type.getBaseType();
+
+        }
+
+        return false;
+    }
+
+    /**
+     * Checks if a type is derived from another by extension. See:
+     * http://www.w3.org/TR/2004/REC-DOM-Level-3-Core-20040407/core.html#TypeInfo-isDerivedFrom
+     *
+     * @param ancestorNS
+     *            The namspace of the ancestor type declaration
+     * @param ancestorName
+     *            The name of the ancestor type declaration
+     * @param derivationMethod
+     *            A short indication the method of derivation
+     * @param type
+     *            The reference type definition
+     *
+     * @return boolean True if the type is derived by extension for the
+     *         reference type
+     */
+    private boolean isDerivedByExtension(String ancestorNS,
+            String ancestorName, int derivationMethod, XSTypeDefinition type) {
+
+        boolean extension = false;
+        XSTypeDefinition oldType = null;
+        while (type != null && type != oldType) {
+            // If ancestor is anySimpleType return false.
+            if (ancestorNS != null
+                    && ancestorNS.equals(SchemaSymbols.URI_SCHEMAFORSCHEMA)
+                    && ancestorName.equals(SchemaSymbols.ATTVAL_ANYSIMPLETYPE)
+                    && SchemaSymbols.URI_SCHEMAFORSCHEMA.equals(type.getNamespace())
+                            && SchemaSymbols.ATTVAL_ANYTYPE.equals(type.getName())) {
+                break;
+            }
+
+            if ((ancestorName.equals(type.getName()))
+                    && ((ancestorNS == null && type.getNamespace() == null)
+                        || (ancestorNS != null && ancestorNS.equals(type.getNamespace())))) {
+                // returns true if atleast one derivation step was extension
+                return extension;
+            }
+
+            // If the base type is a complexType with simpleContent
+            if (type instanceof XSSimpleTypeDecl) {
+                if (ancestorNS.equals(SchemaSymbols.URI_SCHEMAFORSCHEMA)
+                        && ancestorName.equals(SchemaSymbols.ATTVAL_ANYTYPE)) {
+                    ancestorName = SchemaSymbols.ATTVAL_ANYSIMPLETYPE;
+                }
+
+                // derivationMethod extension will always return false for a
+                // simpleType,
+                // we treat it like a restriction
+                if ((derivationMethod & DERIVATION_EXTENSION) != 0) {
+                    return extension
+                    & ((XSSimpleTypeDecl) type).isDOMDerivedFrom(
+                            ancestorNS, ancestorName,
+                            (derivationMethod & DERIVATION_RESTRICTION));
+                } else {
+                    return extension
+                    & ((XSSimpleTypeDecl) type).isDOMDerivedFrom(
+                            ancestorNS, ancestorName, derivationMethod);
+                }
+
+            } else {
+                // If the base type is a complex type
+                // At least one derivation step upto the ancestor type should be
+                // extension.
+                if (((XSComplexTypeDecl) type).getDerivationMethod() == XSConstants.DERIVATION_EXTENSION) {
+                    extension = extension | true;
+                }
+            }
+            oldType = type;
+            type = type.getBaseType();
+        }
+
+        return false;
+    }
+
+
+
+    public void reset(){
+        fName = null;
+        fTargetNamespace = null;
+        fBaseType = null;
+        fDerivedBy = XSConstants.DERIVATION_RESTRICTION;
+        fFinal = XSConstants.DERIVATION_NONE;
+        fBlock = XSConstants.DERIVATION_NONE;
+
+        fMiscFlags = 0;
+
+        // reset attribute group
+        fAttrGrp.reset();
+        fContentType = CONTENTTYPE_EMPTY;
+        fXSSimpleType = null;
+        fParticle = null;
+        fCMValidator = null;
+        fUPACMValidator = null;
+        if(fAnnotations != null) {
+            // help out the garbage collector
+            fAnnotations.clearXSObjectList();
+        }
+        fAnnotations = null;
+    }
+
+    /**
+     * Get the type of the object, i.e ELEMENT_DECLARATION.
+     */
+    public short getType() {
+        return XSConstants.TYPE_DEFINITION;
+    }
+
+    /**
+     * The <code>name</code> of this <code>XSObject</code> depending on the
+     * <code>XSObject</code> type.
+     */
+    public String getName() {
+        return getAnonymous() ? null : fName;
+    }
+
+    /**
+     * A boolean that specifies if the type definition is anonymous.
+     * Convenience attribute. This is a field is not part of
+     * XML Schema component model.
+     */
+    public boolean getAnonymous() {
+        return((fMiscFlags & CT_IS_ANONYMOUS) != 0);
+    }
+
+    /**
+     * The namespace URI of this node, or <code>null</code> if it is
+     * unspecified.  defines how a namespace URI is attached to schema
+     * components.
+     */
+    public String getNamespace() {
+        return fTargetNamespace;
+    }
+
+    /**
+     * {base type definition} Either a simple type definition or a complex
+     * type definition.
+     */
+    public XSTypeDefinition getBaseType() {
+        return fBaseType;
+    }
+
+    /**
+     * {derivation method} Either extension or restriction. The valid constant
+     * value for this <code>XSConstants</code> EXTENTION, RESTRICTION.
+     */
+    public short getDerivationMethod() {
+        return fDerivedBy;
+    }
+
+    /**
+     * {final} For complex type definition it is a subset of {extension,
+     * restriction}. For simple type definition it is a subset of
+     * {extension, list, restriction, union}.
+     * @param derivation  Extension, restriction, list, union constants
+     *   (defined in <code>XSConstants</code>).
+     * @return True if derivation is in the final set, otherwise false.
+     */
+    public boolean isFinal(short derivation) {
+        return (fFinal & derivation) != 0;
+    }
+
+    /**
+     * {final} For complex type definition it is a subset of {extension, restriction}.
+     *
+     * @return A bit flag that represents:
+     *         {extension, restriction) or none for complexTypes;
+     *         {extension, list, restriction, union} or none for simpleTypes;
+     */
+    public short getFinal() {
+        return fFinal;
+    }
+
+    /**
+     * {abstract} A boolean. Complex types for which {abstract} is true must
+     * not be used as the {type definition} for the validation of element
+     * information items.
+     */
+    public boolean getAbstract() {
+        return((fMiscFlags & CT_IS_ABSTRACT) != 0);
+    }
+
+    /**
+     *  {attribute uses} A set of attribute uses.
+     */
+    public XSObjectList getAttributeUses() {
+        return fAttrGrp.getAttributeUses();
+    }
+
+    /**
+     * {attribute wildcard} Optional. A wildcard.
+     */
+    public XSWildcard getAttributeWildcard() {
+        return fAttrGrp.getAttributeWildcard();
+    }
+
+    /**
+     * {content type} One of empty, a simple type definition (see
+     * <code>simpleType</code>, or mixed, element-only (see
+     * <code>cmParticle</code>).
+     */
+    public short getContentType() {
+        return fContentType;
+    }
+
+    /**
+     * A simple type definition corresponding to simple content model,
+     * otherwise <code>null</code>
+     */
+    public XSSimpleTypeDefinition getSimpleType() {
+        return fXSSimpleType;
+    }
+
+    /**
+     * A particle for mixed or element-only content model, otherwise
+     * <code>null</code>
+     */
+    public XSParticle getParticle() {
+        return fParticle;
+    }
+
+    /**
+     * {prohibited substitutions} A subset of {extension, restriction}.
+     * @param prohibited  extention or restriction constants (defined in
+     *   <code>XSConstants</code>).
+     * @return True if prohibited is a prohibited substitution, otherwise
+     *   false.
+     */
+    public boolean isProhibitedSubstitution(short prohibited) {
+        return (fBlock & prohibited) != 0;
+    }
+
+    /**
+     * {prohibited substitutions}
+     *
+     * @return A bit flag corresponding to prohibited substitutions
+     */
+    public short getProhibitedSubstitutions() {
+        return fBlock;
+    }
+
+    /**
+     * Optional. Annotation.
+     */
+    public XSObjectList getAnnotations() {
+        return (fAnnotations != null) ? fAnnotations : XSObjectListImpl.EMPTY_LIST;
+    }
+
+    /**
+     * @see org.apache.xerces.xs.XSObject#getNamespaceItem()
+     */
+    public XSNamespaceItem getNamespaceItem() {
+        return fNamespaceItem;
+    }
+
+    void setNamespaceItem(XSNamespaceItem namespaceItem) {
+        fNamespaceItem = namespaceItem;
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.xerces.xs.XSComplexTypeDefinition#getAttributeUse(java.lang.String, java.lang.String)
+     */
+    public XSAttributeUse getAttributeUse(String namespace, String name) {
+         return fAttrGrp.getAttributeUse(namespace, name);
+    }
+
+    public String getTypeNamespace() {
+        return getNamespace();
+    }
+
+    public boolean isDerivedFrom(String typeNamespaceArg, String typeNameArg, int derivationMethod) {
+        return isDOMDerivedFrom(typeNamespaceArg, typeNameArg, derivationMethod);
+    }
+
+} // class XSComplexTypeDecl

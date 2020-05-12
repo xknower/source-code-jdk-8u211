@@ -1,50 +1,45 @@
-/*    */ package javax.swing.text;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ class StateInvariantError
-/*    */   extends Error
-/*    */ {
-/*    */   public StateInvariantError(String paramString) {
-/* 42 */     super(paramString);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\text\StateInvariantError.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 1998, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.text;
+
+/**
+ * This exception is to report the failure of state invarient
+ * assertion that was made.  This indicates an internal error
+ * has occurred.
+ *
+ * @author  Timothy Prinzing
+ */
+class StateInvariantError extends Error
+{
+    /**
+     * Creates a new StateInvariantFailure object.
+     *
+     * @param s         a string indicating the assertion that failed
+     */
+    public StateInvariantError(String s) {
+        super(s);
+    }
+
+}

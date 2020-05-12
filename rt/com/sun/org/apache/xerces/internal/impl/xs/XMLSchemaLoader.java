@@ -1,1396 +1,1391 @@
-/*      */ package com.sun.org.apache.xerces.internal.impl.xs;
-/*      */ 
-/*      */ import com.sun.org.apache.xerces.internal.dom.DOMErrorImpl;
-/*      */ import com.sun.org.apache.xerces.internal.dom.DOMMessageFormatter;
-/*      */ import com.sun.org.apache.xerces.internal.dom.DOMStringListImpl;
-/*      */ import com.sun.org.apache.xerces.internal.impl.XMLEntityManager;
-/*      */ import com.sun.org.apache.xerces.internal.impl.XMLErrorReporter;
-/*      */ import com.sun.org.apache.xerces.internal.impl.dv.InvalidDatatypeValueException;
-/*      */ import com.sun.org.apache.xerces.internal.impl.dv.SchemaDVFactory;
-/*      */ import com.sun.org.apache.xerces.internal.impl.dv.ValidatedInfo;
-/*      */ import com.sun.org.apache.xerces.internal.impl.dv.ValidationContext;
-/*      */ import com.sun.org.apache.xerces.internal.impl.dv.xs.SchemaDVFactoryImpl;
-/*      */ import com.sun.org.apache.xerces.internal.impl.xs.models.CMBuilder;
-/*      */ import com.sun.org.apache.xerces.internal.impl.xs.models.CMNodeFactory;
-/*      */ import com.sun.org.apache.xerces.internal.impl.xs.traversers.XSDHandler;
-/*      */ import com.sun.org.apache.xerces.internal.util.DOMEntityResolverWrapper;
-/*      */ import com.sun.org.apache.xerces.internal.util.DOMErrorHandlerWrapper;
-/*      */ import com.sun.org.apache.xerces.internal.util.DefaultErrorHandler;
-/*      */ import com.sun.org.apache.xerces.internal.util.ParserConfigurationSettings;
-/*      */ import com.sun.org.apache.xerces.internal.util.Status;
-/*      */ import com.sun.org.apache.xerces.internal.util.SymbolTable;
-/*      */ import com.sun.org.apache.xerces.internal.util.XMLSymbols;
-/*      */ import com.sun.org.apache.xerces.internal.utils.SecuritySupport;
-/*      */ import com.sun.org.apache.xerces.internal.utils.XMLSecurityManager;
-/*      */ import com.sun.org.apache.xerces.internal.utils.XMLSecurityPropertyManager;
-/*      */ import com.sun.org.apache.xerces.internal.xni.XNIException;
-/*      */ import com.sun.org.apache.xerces.internal.xni.grammars.Grammar;
-/*      */ import com.sun.org.apache.xerces.internal.xni.grammars.XMLGrammarLoader;
-/*      */ import com.sun.org.apache.xerces.internal.xni.grammars.XMLGrammarPool;
-/*      */ import com.sun.org.apache.xerces.internal.xni.grammars.XSGrammar;
-/*      */ import com.sun.org.apache.xerces.internal.xni.parser.XMLComponent;
-/*      */ import com.sun.org.apache.xerces.internal.xni.parser.XMLComponentManager;
-/*      */ import com.sun.org.apache.xerces.internal.xni.parser.XMLConfigurationException;
-/*      */ import com.sun.org.apache.xerces.internal.xni.parser.XMLEntityResolver;
-/*      */ import com.sun.org.apache.xerces.internal.xni.parser.XMLErrorHandler;
-/*      */ import com.sun.org.apache.xerces.internal.xni.parser.XMLInputSource;
-/*      */ import com.sun.org.apache.xerces.internal.xs.LSInputList;
-/*      */ import com.sun.org.apache.xerces.internal.xs.StringList;
-/*      */ import com.sun.org.apache.xerces.internal.xs.XSLoader;
-/*      */ import com.sun.org.apache.xerces.internal.xs.XSModel;
-/*      */ import java.io.BufferedInputStream;
-/*      */ import java.io.File;
-/*      */ import java.io.FileInputStream;
-/*      */ import java.io.FileNotFoundException;
-/*      */ import java.io.IOException;
-/*      */ import java.io.InputStream;
-/*      */ import java.io.Reader;
-/*      */ import java.io.StringReader;
-/*      */ import java.util.HashMap;
-/*      */ import java.util.Locale;
-/*      */ import java.util.Map;
-/*      */ import java.util.StringTokenizer;
-/*      */ import java.util.Vector;
-/*      */ import org.w3c.dom.DOMConfiguration;
-/*      */ import org.w3c.dom.DOMErrorHandler;
-/*      */ import org.w3c.dom.DOMException;
-/*      */ import org.w3c.dom.DOMStringList;
-/*      */ import org.w3c.dom.ls.LSInput;
-/*      */ import org.w3c.dom.ls.LSResourceResolver;
-/*      */ import org.xml.sax.InputSource;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class XMLSchemaLoader
-/*      */   implements XMLGrammarLoader, XMLComponent, XSLoader, DOMConfiguration
-/*      */ {
-/*      */   protected static final String SCHEMA_FULL_CHECKING = "http://apache.org/xml/features/validation/schema-full-checking";
-/*      */   protected static final String CONTINUE_AFTER_FATAL_ERROR = "http://apache.org/xml/features/continue-after-fatal-error";
-/*      */   protected static final String ALLOW_JAVA_ENCODINGS = "http://apache.org/xml/features/allow-java-encodings";
-/*      */   protected static final String STANDARD_URI_CONFORMANT_FEATURE = "http://apache.org/xml/features/standard-uri-conformant";
-/*      */   protected static final String VALIDATE_ANNOTATIONS = "http://apache.org/xml/features/validate-annotations";
-/*      */   protected static final String DISALLOW_DOCTYPE = "http://apache.org/xml/features/disallow-doctype-decl";
-/*      */   protected static final String GENERATE_SYNTHETIC_ANNOTATIONS = "http://apache.org/xml/features/generate-synthetic-annotations";
-/*      */   protected static final String HONOUR_ALL_SCHEMALOCATIONS = "http://apache.org/xml/features/honour-all-schemaLocations";
-/*      */   protected static final String AUGMENT_PSVI = "http://apache.org/xml/features/validation/schema/augment-psvi";
-/*      */   protected static final String PARSER_SETTINGS = "http://apache.org/xml/features/internal/parser-settings";
-/*      */   protected static final String NAMESPACE_GROWTH = "http://apache.org/xml/features/namespace-growth";
-/*      */   protected static final String TOLERATE_DUPLICATES = "http://apache.org/xml/features/internal/tolerate-duplicates";
-/*      */   protected static final String SCHEMA_DV_FACTORY = "http://apache.org/xml/properties/internal/validation/schema/dv-factory";
-/*      */   protected static final String OVERRIDE_PARSER = "jdk.xml.overrideDefaultParser";
-/*  162 */   private static final String[] RECOGNIZED_FEATURES = new String[] { "http://apache.org/xml/features/validation/schema-full-checking", "http://apache.org/xml/features/validation/schema/augment-psvi", "http://apache.org/xml/features/continue-after-fatal-error", "http://apache.org/xml/features/allow-java-encodings", "http://apache.org/xml/features/standard-uri-conformant", "http://apache.org/xml/features/disallow-doctype-decl", "http://apache.org/xml/features/generate-synthetic-annotations", "http://apache.org/xml/features/validate-annotations", "http://apache.org/xml/features/honour-all-schemaLocations", "http://apache.org/xml/features/namespace-growth", "http://apache.org/xml/features/internal/tolerate-duplicates", "jdk.xml.overrideDefaultParser" };
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final String SYMBOL_TABLE = "http://apache.org/xml/properties/internal/symbol-table";
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final String ERROR_REPORTER = "http://apache.org/xml/properties/internal/error-reporter";
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected static final String ERROR_HANDLER = "http://apache.org/xml/properties/internal/error-handler";
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final String ENTITY_RESOLVER = "http://apache.org/xml/properties/internal/entity-resolver";
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final String XMLGRAMMAR_POOL = "http://apache.org/xml/properties/internal/grammar-pool";
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected static final String SCHEMA_LOCATION = "http://apache.org/xml/properties/schema/external-schemaLocation";
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected static final String SCHEMA_NONS_LOCATION = "http://apache.org/xml/properties/schema/external-noNamespaceSchemaLocation";
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected static final String JAXP_SCHEMA_SOURCE = "http://java.sun.com/xml/jaxp/properties/schemaSource";
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected static final String SECURITY_MANAGER = "http://apache.org/xml/properties/security-manager";
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected static final String LOCALE = "http://apache.org/xml/properties/locale";
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected static final String ENTITY_MANAGER = "http://apache.org/xml/properties/internal/entity-manager";
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static final String XML_SECURITY_PROPERTY_MANAGER = "http://www.oracle.com/xml/jaxp/properties/xmlSecurityPropertyManager";
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final String ACCESS_EXTERNAL_DTD = "http://javax.xml.XMLConstants/property/accessExternalDTD";
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final String ACCESS_EXTERNAL_SCHEMA = "http://javax.xml.XMLConstants/property/accessExternalSchema";
-/*      */ 
-/*      */ 
-/*      */   
-/*  232 */   private static final String[] RECOGNIZED_PROPERTIES = new String[] { "http://apache.org/xml/properties/internal/entity-manager", "http://apache.org/xml/properties/internal/symbol-table", "http://apache.org/xml/properties/internal/error-reporter", "http://apache.org/xml/properties/internal/error-handler", "http://apache.org/xml/properties/internal/entity-resolver", "http://apache.org/xml/properties/internal/grammar-pool", "http://apache.org/xml/properties/schema/external-schemaLocation", "http://apache.org/xml/properties/schema/external-noNamespaceSchemaLocation", "http://java.sun.com/xml/jaxp/properties/schemaSource", "http://apache.org/xml/properties/security-manager", "http://apache.org/xml/properties/locale", "http://apache.org/xml/properties/internal/validation/schema/dv-factory", "http://www.oracle.com/xml/jaxp/properties/xmlSecurityPropertyManager" };
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  251 */   private ParserConfigurationSettings fLoaderConfig = new ParserConfigurationSettings();
-/*  252 */   private SymbolTable fSymbolTable = null;
-/*  253 */   private XMLErrorReporter fErrorReporter = new XMLErrorReporter();
-/*  254 */   private XMLEntityManager fEntityManager = null;
-/*  255 */   private XMLEntityResolver fUserEntityResolver = null;
-/*  256 */   private XMLGrammarPool fGrammarPool = null;
-/*  257 */   private String fExternalSchemas = null;
-/*  258 */   private String fExternalNoNSSchema = null;
-/*      */   
-/*  260 */   private Object fJAXPSource = null;
-/*      */   
-/*      */   private boolean fIsCheckedFully = false;
-/*      */   
-/*      */   private boolean fJAXPProcessed = false;
-/*      */   
-/*      */   private boolean fSettingsChanged = true;
-/*      */   
-/*      */   private XSDHandler fSchemaHandler;
-/*      */   
-/*      */   private XSGrammarBucket fGrammarBucket;
-/*  271 */   private XSDeclarationPool fDeclPool = null;
-/*      */   private SubstitutionGroupHandler fSubGroupHandler;
-/*  273 */   private final CMNodeFactory fNodeFactory = new CMNodeFactory();
-/*      */   private CMBuilder fCMBuilder;
-/*  275 */   private XSDDescription fXSDDescription = new XSDDescription();
-/*  276 */   private String faccessExternalSchema = "all";
-/*      */   
-/*      */   private Map fJAXPCache;
-/*  279 */   private Locale fLocale = Locale.getDefault();
-/*      */ 
-/*      */   
-/*  282 */   private DOMStringList fRecognizedParameters = null;
-/*      */ 
-/*      */   
-/*  285 */   private DOMErrorHandlerWrapper fErrorHandler = null;
-/*      */ 
-/*      */   
-/*  288 */   private DOMEntityResolverWrapper fResourceResolver = null;
-/*      */ 
-/*      */   
-/*      */   public XMLSchemaLoader() {
-/*  292 */     this(new SymbolTable(), null, new XMLEntityManager(), null, null, null);
-/*      */   }
-/*      */   
-/*      */   public XMLSchemaLoader(SymbolTable symbolTable) {
-/*  296 */     this(symbolTable, null, new XMLEntityManager(), null, null, null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   XMLSchemaLoader(XMLErrorReporter errorReporter, XSGrammarBucket grammarBucket, SubstitutionGroupHandler sHandler, CMBuilder builder) {
-/*  309 */     this(null, errorReporter, null, grammarBucket, sHandler, builder);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   XMLSchemaLoader(SymbolTable symbolTable, XMLErrorReporter errorReporter, XMLEntityManager entityResolver, XSGrammarBucket grammarBucket, SubstitutionGroupHandler sHandler, CMBuilder builder) {
-/*  317 */     this.fLoaderConfig.addRecognizedFeatures(RECOGNIZED_FEATURES);
-/*  318 */     this.fLoaderConfig.addRecognizedProperties(RECOGNIZED_PROPERTIES);
-/*  319 */     if (symbolTable != null) {
-/*  320 */       this.fLoaderConfig.setProperty("http://apache.org/xml/properties/internal/symbol-table", symbolTable);
-/*      */     }
-/*      */     
-/*  323 */     if (errorReporter == null) {
-/*  324 */       errorReporter = new XMLErrorReporter();
-/*  325 */       errorReporter.setLocale(this.fLocale);
-/*  326 */       errorReporter.setProperty("http://apache.org/xml/properties/internal/error-handler", new DefaultErrorHandler());
-/*      */     } 
-/*      */     
-/*  329 */     this.fErrorReporter = errorReporter;
-/*      */     
-/*  331 */     if (this.fErrorReporter.getMessageFormatter("http://www.w3.org/TR/xml-schema-1") == null) {
-/*  332 */       this.fErrorReporter.putMessageFormatter("http://www.w3.org/TR/xml-schema-1", new XSMessageFormatter());
-/*      */     }
-/*  334 */     this.fLoaderConfig.setProperty("http://apache.org/xml/properties/internal/error-reporter", this.fErrorReporter);
-/*  335 */     this.fEntityManager = entityResolver;
-/*      */     
-/*  337 */     if (this.fEntityManager != null) {
-/*  338 */       this.fLoaderConfig.setProperty("http://apache.org/xml/properties/internal/entity-manager", this.fEntityManager);
-/*      */     }
-/*      */ 
-/*      */     
-/*  342 */     this.fLoaderConfig.setFeature("http://apache.org/xml/features/validation/schema/augment-psvi", true);
-/*      */     
-/*  344 */     if (grammarBucket == null) {
-/*  345 */       grammarBucket = new XSGrammarBucket();
-/*      */     }
-/*  347 */     this.fGrammarBucket = grammarBucket;
-/*  348 */     if (sHandler == null) {
-/*  349 */       sHandler = new SubstitutionGroupHandler(this.fGrammarBucket);
-/*      */     }
-/*  351 */     this.fSubGroupHandler = sHandler;
-/*      */     
-/*  353 */     if (builder == null) {
-/*  354 */       builder = new CMBuilder(this.fNodeFactory);
-/*      */     }
-/*  356 */     this.fCMBuilder = builder;
-/*  357 */     this.fSchemaHandler = new XSDHandler(this.fGrammarBucket);
-/*  358 */     if (this.fDeclPool != null) {
-/*  359 */       this.fDeclPool.reset();
-/*      */     }
-/*  361 */     this.fJAXPCache = new HashMap<>();
-/*      */     
-/*  363 */     this.fSettingsChanged = true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String[] getRecognizedFeatures() {
-/*  372 */     return (String[])RECOGNIZED_FEATURES.clone();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean getFeature(String featureId) throws XMLConfigurationException {
-/*  384 */     return this.fLoaderConfig.getFeature(featureId);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setFeature(String featureId, boolean state) throws XMLConfigurationException {
-/*  398 */     this.fSettingsChanged = true;
-/*  399 */     if (featureId.equals("http://apache.org/xml/features/continue-after-fatal-error")) {
-/*  400 */       this.fErrorReporter.setFeature("http://apache.org/xml/features/continue-after-fatal-error", state);
-/*      */     }
-/*  402 */     else if (featureId.equals("http://apache.org/xml/features/generate-synthetic-annotations")) {
-/*  403 */       this.fSchemaHandler.setGenerateSyntheticAnnotations(state);
-/*      */     } 
-/*  405 */     this.fLoaderConfig.setFeature(featureId, state);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String[] getRecognizedProperties() {
-/*  414 */     return (String[])RECOGNIZED_PROPERTIES.clone();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object getProperty(String propertyId) throws XMLConfigurationException {
-/*  426 */     return this.fLoaderConfig.getProperty(propertyId);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setProperty(String propertyId, Object state) throws XMLConfigurationException {
-/*  440 */     this.fSettingsChanged = true;
-/*  441 */     this.fLoaderConfig.setProperty(propertyId, state);
-/*  442 */     if (propertyId.equals("http://java.sun.com/xml/jaxp/properties/schemaSource")) {
-/*  443 */       this.fJAXPSource = state;
-/*  444 */       this.fJAXPProcessed = false;
-/*      */     }
-/*  446 */     else if (propertyId.equals("http://apache.org/xml/properties/internal/grammar-pool")) {
-/*  447 */       this.fGrammarPool = (XMLGrammarPool)state;
-/*      */     }
-/*  449 */     else if (propertyId.equals("http://apache.org/xml/properties/schema/external-schemaLocation")) {
-/*  450 */       this.fExternalSchemas = (String)state;
-/*      */     }
-/*  452 */     else if (propertyId.equals("http://apache.org/xml/properties/schema/external-noNamespaceSchemaLocation")) {
-/*  453 */       this.fExternalNoNSSchema = (String)state;
-/*      */     }
-/*  455 */     else if (propertyId.equals("http://apache.org/xml/properties/locale")) {
-/*  456 */       setLocale((Locale)state);
-/*      */     }
-/*  458 */     else if (propertyId.equals("http://apache.org/xml/properties/internal/entity-resolver")) {
-/*  459 */       this.fEntityManager.setProperty("http://apache.org/xml/properties/internal/entity-resolver", state);
-/*      */     }
-/*  461 */     else if (propertyId.equals("http://apache.org/xml/properties/internal/error-reporter")) {
-/*  462 */       this.fErrorReporter = (XMLErrorReporter)state;
-/*  463 */       if (this.fErrorReporter.getMessageFormatter("http://www.w3.org/TR/xml-schema-1") == null) {
-/*  464 */         this.fErrorReporter.putMessageFormatter("http://www.w3.org/TR/xml-schema-1", new XSMessageFormatter());
-/*      */       }
-/*      */     }
-/*  467 */     else if (propertyId.equals("http://www.oracle.com/xml/jaxp/properties/xmlSecurityPropertyManager")) {
-/*  468 */       XMLSecurityPropertyManager spm = (XMLSecurityPropertyManager)state;
-/*  469 */       this.faccessExternalSchema = spm.getValue(XMLSecurityPropertyManager.Property.ACCESS_EXTERNAL_SCHEMA);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setLocale(Locale locale) {
-/*  482 */     this.fLocale = locale;
-/*  483 */     this.fErrorReporter.setLocale(locale);
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public Locale getLocale() {
-/*  488 */     return this.fLocale;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setErrorHandler(XMLErrorHandler errorHandler) {
-/*  497 */     this.fErrorReporter.setProperty("http://apache.org/xml/properties/internal/error-handler", errorHandler);
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public XMLErrorHandler getErrorHandler() {
-/*  502 */     return this.fErrorReporter.getErrorHandler();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setEntityResolver(XMLEntityResolver entityResolver) {
-/*  511 */     this.fUserEntityResolver = entityResolver;
-/*  512 */     this.fLoaderConfig.setProperty("http://apache.org/xml/properties/internal/entity-resolver", entityResolver);
-/*  513 */     this.fEntityManager.setProperty("http://apache.org/xml/properties/internal/entity-resolver", entityResolver);
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public XMLEntityResolver getEntityResolver() {
-/*  518 */     return this.fUserEntityResolver;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void loadGrammar(XMLInputSource[] source) throws IOException, XNIException {
-/*  533 */     int numSource = source.length;
-/*  534 */     for (int i = 0; i < numSource; i++) {
-/*  535 */       loadGrammar(source[i]);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Grammar loadGrammar(XMLInputSource source) throws IOException, XNIException {
-/*  556 */     reset(this.fLoaderConfig);
-/*  557 */     this.fSettingsChanged = false;
-/*  558 */     XSDDescription desc = new XSDDescription();
-/*  559 */     desc.fContextType = 3;
-/*  560 */     desc.setBaseSystemId(source.getBaseSystemId());
-/*  561 */     desc.setLiteralSystemId(source.getSystemId());
-/*      */     
-/*  563 */     Map<Object, Object> locationPairs = new HashMap<>();
-/*      */ 
-/*      */ 
-/*      */     
-/*  567 */     processExternalHints(this.fExternalSchemas, this.fExternalNoNSSchema, (Map)locationPairs, this.fErrorReporter);
-/*      */     
-/*  569 */     SchemaGrammar grammar = loadSchema(desc, source, (Map)locationPairs);
-/*      */     
-/*  571 */     if (grammar != null && this.fGrammarPool != null) {
-/*  572 */       this.fGrammarPool.cacheGrammars("http://www.w3.org/2001/XMLSchema", (Grammar[])this.fGrammarBucket.getGrammars());
-/*      */ 
-/*      */       
-/*  575 */       if (this.fIsCheckedFully && this.fJAXPCache.get(grammar) != grammar) {
-/*  576 */         XSConstraints.fullSchemaChecking(this.fGrammarBucket, this.fSubGroupHandler, this.fCMBuilder, this.fErrorReporter);
-/*      */       }
-/*      */     } 
-/*  579 */     return grammar;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   SchemaGrammar loadSchema(XSDDescription desc, XMLInputSource source, Map<String, LocationArray> locationPairs) throws IOException, XNIException {
-/*  598 */     if (!this.fJAXPProcessed) {
-/*  599 */       processJAXPSchemaSource(locationPairs);
-/*      */     }
-/*      */     
-/*  602 */     if (desc.isExternal()) {
-/*  603 */       String accessError = SecuritySupport.checkAccess(desc.getExpandedSystemId(), this.faccessExternalSchema, "all");
-/*  604 */       if (accessError != null) {
-/*  605 */         throw new XNIException(this.fErrorReporter.reportError("http://www.w3.org/TR/xml-schema-1", "schema_reference.access", new Object[] {
-/*      */                 
-/*  607 */                 SecuritySupport.sanitizePath(desc.getExpandedSystemId()), accessError }, (short)1));
-/*      */       }
-/*      */     } 
-/*  610 */     SchemaGrammar grammar = this.fSchemaHandler.parseSchema(source, desc, locationPairs);
-/*      */     
-/*  612 */     return grammar;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static XMLInputSource resolveDocument(XSDDescription desc, Map<String, LocationArray> locationPairs, XMLEntityResolver entityResolver) throws IOException {
-/*  630 */     String loc = null;
-/*      */     
-/*  632 */     if (desc.getContextType() == 2 || desc
-/*  633 */       .fromInstance()) {
-/*      */       
-/*  635 */       String namespace = desc.getTargetNamespace();
-/*  636 */       String ns = (namespace == null) ? XMLSymbols.EMPTY_STRING : namespace;
-/*      */       
-/*  638 */       LocationArray tempLA = locationPairs.get(ns);
-/*  639 */       if (tempLA != null) {
-/*  640 */         loc = tempLA.getFirstLocation();
-/*      */       }
-/*      */     } 
-/*      */ 
-/*      */     
-/*  645 */     if (loc == null) {
-/*  646 */       String[] hints = desc.getLocationHints();
-/*  647 */       if (hints != null && hints.length > 0) {
-/*  648 */         loc = hints[0];
-/*      */       }
-/*      */     } 
-/*  651 */     String expandedLoc = XMLEntityManager.expandSystemId(loc, desc.getBaseSystemId(), false);
-/*  652 */     desc.setLiteralSystemId(loc);
-/*  653 */     desc.setExpandedSystemId(expandedLoc);
-/*  654 */     return entityResolver.resolveEntity(desc);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static void processExternalHints(String sl, String nsl, Map<String, LocationArray> locations, XMLErrorReporter er) {
-/*  661 */     if (sl != null) {
-/*      */       
-/*      */       try {
-/*      */ 
-/*      */         
-/*  666 */         XSAttributeDecl attrDecl = SchemaGrammar.SG_XSI.getGlobalAttributeDecl(SchemaSymbols.XSI_SCHEMALOCATION);
-/*      */         
-/*  668 */         attrDecl.fType.validate(sl, (ValidationContext)null, (ValidatedInfo)null);
-/*  669 */         if (!tokenizeSchemaLocationStr(sl, locations))
-/*      */         {
-/*  671 */           er.reportError("http://www.w3.org/TR/xml-schema-1", "SchemaLocation", new Object[] { sl }, (short)0);
-/*      */ 
-/*      */         
-/*      */         }
-/*      */       
-/*      */       }
-/*  677 */       catch (InvalidDatatypeValueException ex) {
-/*      */         
-/*  679 */         er.reportError("http://www.w3.org/TR/xml-schema-1", ex
-/*  680 */             .getKey(), ex.getArgs(), (short)0);
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */     
-/*  685 */     if (nsl != null) {
-/*      */       
-/*      */       try {
-/*  688 */         XSAttributeDecl attrDecl = SchemaGrammar.SG_XSI.getGlobalAttributeDecl(SchemaSymbols.XSI_NONAMESPACESCHEMALOCATION);
-/*  689 */         attrDecl.fType.validate(nsl, (ValidationContext)null, (ValidatedInfo)null);
-/*  690 */         LocationArray la = locations.get(XMLSymbols.EMPTY_STRING);
-/*  691 */         if (la == null) {
-/*  692 */           la = new LocationArray();
-/*  693 */           locations.put(XMLSymbols.EMPTY_STRING, la);
-/*      */         } 
-/*  695 */         la.addLocation(nsl);
-/*      */       }
-/*  697 */       catch (InvalidDatatypeValueException ex) {
-/*      */         
-/*  699 */         er.reportError("http://www.w3.org/TR/xml-schema-1", ex
-/*  700 */             .getKey(), ex.getArgs(), (short)0);
-/*      */       } 
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static boolean tokenizeSchemaLocationStr(String schemaStr, Map<String, LocationArray> locations) {
-/*  714 */     if (schemaStr != null) {
-/*  715 */       StringTokenizer t = new StringTokenizer(schemaStr, " \n\t\r");
-/*      */       
-/*  717 */       while (t.hasMoreTokens()) {
-/*  718 */         String namespace = t.nextToken();
-/*  719 */         if (!t.hasMoreTokens()) {
-/*  720 */           return false;
-/*      */         }
-/*  722 */         String location = t.nextToken();
-/*  723 */         LocationArray la = locations.get(namespace);
-/*  724 */         if (la == null) {
-/*  725 */           la = new LocationArray();
-/*  726 */           locations.put(namespace, la);
-/*      */         } 
-/*  728 */         la.addLocation(location);
-/*      */       } 
-/*      */     } 
-/*  731 */     return true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void processJAXPSchemaSource(Map<String, LocationArray> locationPairs) throws IOException {
-/*  746 */     this.fJAXPProcessed = true;
-/*  747 */     if (this.fJAXPSource == null) {
-/*      */       return;
-/*      */     }
-/*      */     
-/*  751 */     Class<?> componentType = this.fJAXPSource.getClass().getComponentType();
-/*  752 */     XMLInputSource xis = null;
-/*  753 */     String sid = null;
-/*  754 */     if (componentType == null) {
-/*      */       
-/*  756 */       if (this.fJAXPSource instanceof InputStream || this.fJAXPSource instanceof InputSource) {
-/*      */         
-/*  758 */         SchemaGrammar schemaGrammar = (SchemaGrammar)this.fJAXPCache.get(this.fJAXPSource);
-/*  759 */         if (schemaGrammar != null) {
-/*  760 */           this.fGrammarBucket.putGrammar(schemaGrammar);
-/*      */           return;
-/*      */         } 
-/*      */       } 
-/*  764 */       this.fXSDDescription.reset();
-/*  765 */       xis = xsdToXMLInputSource(this.fJAXPSource);
-/*  766 */       sid = xis.getSystemId();
-/*  767 */       this.fXSDDescription.fContextType = 3;
-/*  768 */       if (sid != null) {
-/*  769 */         this.fXSDDescription.setBaseSystemId(xis.getBaseSystemId());
-/*  770 */         this.fXSDDescription.setLiteralSystemId(sid);
-/*  771 */         this.fXSDDescription.setExpandedSystemId(sid);
-/*  772 */         this.fXSDDescription.fLocationHints = new String[] { sid };
-/*      */       } 
-/*  774 */       SchemaGrammar g = loadSchema(this.fXSDDescription, xis, locationPairs);
-/*      */       
-/*  776 */       if (g != null) {
-/*  777 */         if (this.fJAXPSource instanceof InputStream || this.fJAXPSource instanceof InputSource) {
-/*      */           
-/*  779 */           this.fJAXPCache.put(this.fJAXPSource, g);
-/*  780 */           if (this.fIsCheckedFully) {
-/*  781 */             XSConstraints.fullSchemaChecking(this.fGrammarBucket, this.fSubGroupHandler, this.fCMBuilder, this.fErrorReporter);
-/*      */           }
-/*      */         } 
-/*  784 */         this.fGrammarBucket.putGrammar(g);
-/*      */       }  return;
-/*      */     } 
-/*  787 */     if (componentType != Object.class && componentType != String.class && componentType != File.class && componentType != InputStream.class && componentType != InputSource.class)
-/*      */     {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  794 */       throw new XMLConfigurationException(Status.NOT_SUPPORTED, "\"http://java.sun.com/xml/jaxp/properties/schemaSource\" property cannot have an array of type {" + componentType
-/*      */           
-/*  796 */           .getName() + "}. Possible types of the array supported are Object, String, File, InputStream, InputSource.");
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  803 */     Object[] objArr = (Object[])this.fJAXPSource;
-/*      */     
-/*  805 */     Vector<String> jaxpSchemaSourceNamespaces = new Vector();
-/*  806 */     for (int i = 0; i < objArr.length; i++) {
-/*  807 */       if (objArr[i] instanceof InputStream || objArr[i] instanceof InputSource) {
-/*      */         
-/*  809 */         SchemaGrammar g = (SchemaGrammar)this.fJAXPCache.get(objArr[i]);
-/*  810 */         if (g != null) {
-/*  811 */           this.fGrammarBucket.putGrammar(g);
-/*      */           continue;
-/*      */         } 
-/*      */       } 
-/*  815 */       this.fXSDDescription.reset();
-/*  816 */       xis = xsdToXMLInputSource(objArr[i]);
-/*  817 */       sid = xis.getSystemId();
-/*  818 */       this.fXSDDescription.fContextType = 3;
-/*  819 */       if (sid != null) {
-/*  820 */         this.fXSDDescription.setBaseSystemId(xis.getBaseSystemId());
-/*  821 */         this.fXSDDescription.setLiteralSystemId(sid);
-/*  822 */         this.fXSDDescription.setExpandedSystemId(sid);
-/*  823 */         this.fXSDDescription.fLocationHints = new String[] { sid };
-/*      */       } 
-/*  825 */       String targetNamespace = null;
-/*      */       
-/*  827 */       SchemaGrammar grammar = this.fSchemaHandler.parseSchema(xis, this.fXSDDescription, locationPairs);
-/*      */       
-/*  829 */       if (this.fIsCheckedFully) {
-/*  830 */         XSConstraints.fullSchemaChecking(this.fGrammarBucket, this.fSubGroupHandler, this.fCMBuilder, this.fErrorReporter);
-/*      */       }
-/*  832 */       if (grammar != null) {
-/*  833 */         targetNamespace = grammar.getTargetNamespace();
-/*  834 */         if (jaxpSchemaSourceNamespaces.contains(targetNamespace))
-/*      */         {
-/*  836 */           throw new IllegalArgumentException(" When using array of Objects as the value of SCHEMA_SOURCE property , no two Schemas should share the same targetNamespace. ");
-/*      */         }
-/*      */ 
-/*      */ 
-/*      */         
-/*  841 */         jaxpSchemaSourceNamespaces.add(targetNamespace);
-/*      */         
-/*  843 */         if (objArr[i] instanceof InputStream || objArr[i] instanceof InputSource)
-/*      */         {
-/*  845 */           this.fJAXPCache.put(objArr[i], grammar);
-/*      */         }
-/*  847 */         this.fGrammarBucket.putGrammar(grammar);
-/*      */       } 
-/*      */       continue;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private XMLInputSource xsdToXMLInputSource(Object val) {
-/*  858 */     if (val instanceof String) {
-/*      */ 
-/*      */       
-/*  861 */       String loc = (String)val;
-/*  862 */       this.fXSDDescription.reset();
-/*  863 */       this.fXSDDescription.setValues(null, loc, null, null);
-/*  864 */       XMLInputSource xis = null;
-/*      */       try {
-/*  866 */         xis = this.fEntityManager.resolveEntity(this.fXSDDescription);
-/*  867 */       } catch (IOException ex) {
-/*  868 */         this.fErrorReporter.reportError("http://www.w3.org/TR/xml-schema-1", "schema_reference.4", new Object[] { loc }, (short)1);
-/*      */       } 
-/*      */ 
-/*      */       
-/*  872 */       if (xis == null)
-/*      */       {
-/*      */         
-/*  875 */         return new XMLInputSource(null, loc, null);
-/*      */       }
-/*  877 */       return xis;
-/*  878 */     }  if (val instanceof InputSource)
-/*  879 */       return saxToXMLInputSource((InputSource)val); 
-/*  880 */     if (val instanceof InputStream) {
-/*  881 */       return new XMLInputSource(null, null, null, (InputStream)val, null);
-/*      */     }
-/*  883 */     if (val instanceof File) {
-/*  884 */       File file = (File)val;
-/*  885 */       InputStream is = null;
-/*      */       try {
-/*  887 */         is = new BufferedInputStream(new FileInputStream(file));
-/*  888 */       } catch (FileNotFoundException ex) {
-/*  889 */         this.fErrorReporter.reportError("http://www.w3.org/TR/xml-schema-1", "schema_reference.4", new Object[] { file
-/*  890 */               .toString() }, (short)1);
-/*      */       } 
-/*      */       
-/*  893 */       return new XMLInputSource(null, null, null, is, null);
-/*      */     } 
-/*  895 */     throw new XMLConfigurationException(Status.NOT_SUPPORTED, "\"http://java.sun.com/xml/jaxp/properties/schemaSource\" property cannot have a value of type {" + val
-/*      */         
-/*  897 */         .getClass().getName() + "}. Possible types of the value supported are String, File, InputStream, InputSource OR an array of these types.");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static XMLInputSource saxToXMLInputSource(InputSource sis) {
-/*  906 */     String publicId = sis.getPublicId();
-/*  907 */     String systemId = sis.getSystemId();
-/*      */     
-/*  909 */     Reader charStream = sis.getCharacterStream();
-/*  910 */     if (charStream != null) {
-/*  911 */       return new XMLInputSource(publicId, systemId, null, charStream, null);
-/*      */     }
-/*      */ 
-/*      */     
-/*  915 */     InputStream byteStream = sis.getByteStream();
-/*  916 */     if (byteStream != null) {
-/*  917 */       return new XMLInputSource(publicId, systemId, null, byteStream, sis
-/*  918 */           .getEncoding());
-/*      */     }
-/*      */     
-/*  921 */     return new XMLInputSource(publicId, systemId, null);
-/*      */   }
-/*      */   
-/*      */   public static class LocationArray
-/*      */   {
-/*      */     int length;
-/*  927 */     String[] locations = new String[2];
-/*      */     
-/*      */     public void resize(int oldLength, int newLength) {
-/*  930 */       String[] temp = new String[newLength];
-/*  931 */       System.arraycopy(this.locations, 0, temp, 0, Math.min(oldLength, newLength));
-/*  932 */       this.locations = temp;
-/*  933 */       this.length = Math.min(oldLength, newLength);
-/*      */     }
-/*      */     
-/*      */     public void addLocation(String location) {
-/*  937 */       if (this.length >= this.locations.length) {
-/*  938 */         resize(this.length, Math.max(1, this.length * 2));
-/*      */       }
-/*  940 */       this.locations[this.length++] = location;
-/*      */     }
-/*      */     
-/*      */     public String[] getLocationArray() {
-/*  944 */       if (this.length < this.locations.length) {
-/*  945 */         resize(this.locations.length, this.length);
-/*      */       }
-/*  947 */       return this.locations;
-/*      */     }
-/*      */     
-/*      */     public String getFirstLocation() {
-/*  951 */       return (this.length > 0) ? this.locations[0] : null;
-/*      */     }
-/*      */     
-/*      */     public int getLength() {
-/*  955 */       return this.length;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Boolean getFeatureDefault(String featureId) {
-/*  964 */     if (featureId.equals("http://apache.org/xml/features/validation/schema/augment-psvi")) {
-/*  965 */       return Boolean.TRUE;
-/*      */     }
-/*  967 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object getPropertyDefault(String propertyId) {
-/*  975 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void reset(XMLComponentManager componentManager) throws XMLConfigurationException {
-/*  983 */     XMLSecurityPropertyManager spm = (XMLSecurityPropertyManager)componentManager.getProperty("http://www.oracle.com/xml/jaxp/properties/xmlSecurityPropertyManager");
-/*  984 */     if (spm == null) {
-/*  985 */       spm = new XMLSecurityPropertyManager();
-/*  986 */       setProperty("http://www.oracle.com/xml/jaxp/properties/xmlSecurityPropertyManager", spm);
-/*      */     } 
-/*      */     
-/*  989 */     XMLSecurityManager sm = (XMLSecurityManager)componentManager.getProperty("http://apache.org/xml/properties/security-manager");
-/*  990 */     if (sm == null) {
-/*  991 */       setProperty("http://apache.org/xml/properties/security-manager", new XMLSecurityManager(true));
-/*      */     }
-/*  993 */     this.faccessExternalSchema = spm.getValue(XMLSecurityPropertyManager.Property.ACCESS_EXTERNAL_SCHEMA);
-/*      */     
-/*  995 */     this.fGrammarBucket.reset();
-/*      */     
-/*  997 */     this.fSubGroupHandler.reset();
-/*      */     
-/*  999 */     boolean parser_settings = componentManager.getFeature("http://apache.org/xml/features/internal/parser-settings", true);
-/*      */     
-/* 1001 */     if (!parser_settings || !this.fSettingsChanged) {
-/*      */       
-/* 1003 */       this.fJAXPProcessed = false;
-/*      */       
-/* 1005 */       initGrammarBucket();
-/*      */       
-/*      */       return;
-/*      */     } 
-/*      */     
-/* 1010 */     this.fNodeFactory.reset(componentManager);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1015 */     this.fEntityManager = (XMLEntityManager)componentManager.getProperty("http://apache.org/xml/properties/internal/entity-manager");
-/*      */ 
-/*      */     
-/* 1018 */     this.fErrorReporter = (XMLErrorReporter)componentManager.getProperty("http://apache.org/xml/properties/internal/error-reporter");
-/*      */ 
-/*      */     
-/* 1021 */     SchemaDVFactory dvFactory = null;
-/* 1022 */     dvFactory = this.fSchemaHandler.getDVFactory();
-/* 1023 */     if (dvFactory == null) {
-/* 1024 */       dvFactory = SchemaDVFactory.getInstance();
-/* 1025 */       this.fSchemaHandler.setDVFactory(dvFactory);
-/*      */     } 
-/*      */     
-/* 1028 */     boolean psvi = componentManager.getFeature("http://apache.org/xml/features/validation/schema/augment-psvi", false);
-/*      */     
-/* 1030 */     if (!psvi) {
-/* 1031 */       if (this.fDeclPool != null) {
-/* 1032 */         this.fDeclPool.reset();
-/*      */       } else {
-/*      */         
-/* 1035 */         this.fDeclPool = new XSDeclarationPool();
-/*      */       } 
-/* 1037 */       this.fCMBuilder.setDeclPool(this.fDeclPool);
-/* 1038 */       this.fSchemaHandler.setDeclPool(this.fDeclPool);
-/* 1039 */       if (dvFactory instanceof SchemaDVFactoryImpl) {
-/* 1040 */         this.fDeclPool.setDVFactory((SchemaDVFactoryImpl)dvFactory);
-/* 1041 */         ((SchemaDVFactoryImpl)dvFactory).setDeclPool(this.fDeclPool);
-/*      */       } 
-/*      */     } else {
-/* 1044 */       this.fCMBuilder.setDeclPool(null);
-/* 1045 */       this.fSchemaHandler.setDeclPool(null);
-/*      */     } 
-/*      */ 
-/*      */     
-/*      */     try {
-/* 1050 */       this.fExternalSchemas = (String)componentManager.getProperty("http://apache.org/xml/properties/schema/external-schemaLocation");
-/* 1051 */       this.fExternalNoNSSchema = (String)componentManager.getProperty("http://apache.org/xml/properties/schema/external-noNamespaceSchemaLocation");
-/* 1052 */     } catch (XMLConfigurationException e) {
-/* 1053 */       this.fExternalSchemas = null;
-/* 1054 */       this.fExternalNoNSSchema = null;
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1058 */     this.fJAXPSource = componentManager.getProperty("http://java.sun.com/xml/jaxp/properties/schemaSource", null);
-/* 1059 */     this.fJAXPProcessed = false;
-/*      */ 
-/*      */     
-/* 1062 */     this.fGrammarPool = (XMLGrammarPool)componentManager.getProperty("http://apache.org/xml/properties/internal/grammar-pool", null);
-/* 1063 */     initGrammarBucket();
-/*      */     
-/*      */     try {
-/* 1066 */       boolean fatalError = componentManager.getFeature("http://apache.org/xml/features/continue-after-fatal-error", false);
-/* 1067 */       if (!fatalError) {
-/* 1068 */         this.fErrorReporter.setFeature("http://apache.org/xml/features/continue-after-fatal-error", fatalError);
-/*      */       }
-/* 1070 */     } catch (XMLConfigurationException xMLConfigurationException) {}
-/*      */ 
-/*      */     
-/* 1073 */     this.fIsCheckedFully = componentManager.getFeature("http://apache.org/xml/features/validation/schema-full-checking", false);
-/*      */ 
-/*      */     
-/* 1076 */     this.fSchemaHandler.setGenerateSyntheticAnnotations(componentManager.getFeature("http://apache.org/xml/features/generate-synthetic-annotations", false));
-/* 1077 */     this.fSchemaHandler.reset(componentManager);
-/*      */   }
-/*      */   
-/*      */   private void initGrammarBucket() {
-/* 1081 */     if (this.fGrammarPool != null) {
-/* 1082 */       Grammar[] initialGrammars = this.fGrammarPool.retrieveInitialGrammarSet("http://www.w3.org/2001/XMLSchema");
-/* 1083 */       for (int i = 0; i < initialGrammars.length; i++) {
-/*      */ 
-/*      */         
-/* 1086 */         if (!this.fGrammarBucket.putGrammar((SchemaGrammar)initialGrammars[i], true))
-/*      */         {
-/*      */           
-/* 1089 */           this.fErrorReporter.reportError("http://www.w3.org/TR/xml-schema-1", "GrammarConflict", null, (short)0);
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public DOMConfiguration getConfig() {
-/* 1102 */     return this;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public XSModel load(LSInput is) {
-/*      */     try {
-/* 1110 */       Grammar g = loadGrammar(dom2xmlInputSource(is));
-/* 1111 */       return ((XSGrammar)g).toXSModel();
-/* 1112 */     } catch (Exception e) {
-/* 1113 */       reportDOMFatalError(e);
-/* 1114 */       return null;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public XSModel loadInputList(LSInputList is) {
-/* 1122 */     int length = is.getLength();
-/* 1123 */     SchemaGrammar[] gs = new SchemaGrammar[length];
-/* 1124 */     for (int i = 0; i < length; i++) {
-/*      */       try {
-/* 1126 */         gs[i] = (SchemaGrammar)loadGrammar(dom2xmlInputSource(is.item(i)));
-/* 1127 */       } catch (Exception e) {
-/* 1128 */         reportDOMFatalError(e);
-/* 1129 */         return null;
-/*      */       } 
-/*      */     } 
-/* 1132 */     return new XSModelImpl(gs);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public XSModel loadURI(String uri) {
-/*      */     try {
-/* 1140 */       Grammar g = loadGrammar(new XMLInputSource(null, uri, null));
-/* 1141 */       return ((XSGrammar)g).toXSModel();
-/*      */     }
-/* 1143 */     catch (Exception e) {
-/* 1144 */       reportDOMFatalError(e);
-/* 1145 */       return null;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public XSModel loadURIList(StringList uriList) {
-/* 1153 */     int length = uriList.getLength();
-/* 1154 */     SchemaGrammar[] gs = new SchemaGrammar[length];
-/* 1155 */     for (int i = 0; i < length; i++) {
-/*      */       try {
-/* 1157 */         gs[i] = (SchemaGrammar)
-/* 1158 */           loadGrammar(new XMLInputSource(null, uriList.item(i), null));
-/* 1159 */       } catch (Exception e) {
-/* 1160 */         reportDOMFatalError(e);
-/* 1161 */         return null;
-/*      */       } 
-/*      */     } 
-/* 1164 */     return new XSModelImpl(gs);
-/*      */   }
-/*      */   
-/*      */   void reportDOMFatalError(Exception e) {
-/* 1168 */     if (this.fErrorHandler != null) {
-/* 1169 */       DOMErrorImpl error = new DOMErrorImpl();
-/* 1170 */       error.fException = e;
-/* 1171 */       error.fMessage = e.getMessage();
-/* 1172 */       error.fSeverity = 3;
-/* 1173 */       this.fErrorHandler.getErrorHandler().handleError(error);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean canSetParameter(String name, Object value) {
-/* 1181 */     if (value instanceof Boolean) {
-/* 1182 */       if (name.equals("validate") || name
-/* 1183 */         .equals("http://apache.org/xml/features/validation/schema-full-checking") || name
-/* 1184 */         .equals("http://apache.org/xml/features/validate-annotations") || name
-/* 1185 */         .equals("http://apache.org/xml/features/continue-after-fatal-error") || name
-/* 1186 */         .equals("http://apache.org/xml/features/allow-java-encodings") || name
-/* 1187 */         .equals("http://apache.org/xml/features/standard-uri-conformant") || name
-/* 1188 */         .equals("http://apache.org/xml/features/generate-synthetic-annotations") || name
-/* 1189 */         .equals("http://apache.org/xml/features/honour-all-schemaLocations") || name
-/* 1190 */         .equals("http://apache.org/xml/features/namespace-growth") || name
-/* 1191 */         .equals("http://apache.org/xml/features/internal/tolerate-duplicates") || name
-/* 1192 */         .equals("jdk.xml.overrideDefaultParser")) {
-/* 1193 */         return true;
-/*      */       }
-/*      */       
-/* 1196 */       return false;
-/*      */     } 
-/* 1198 */     if (name.equals("error-handler") || name
-/* 1199 */       .equals("resource-resolver") || name
-/* 1200 */       .equals("http://apache.org/xml/properties/internal/symbol-table") || name
-/* 1201 */       .equals("http://apache.org/xml/properties/internal/error-reporter") || name
-/* 1202 */       .equals("http://apache.org/xml/properties/internal/error-handler") || name
-/* 1203 */       .equals("http://apache.org/xml/properties/internal/entity-resolver") || name
-/* 1204 */       .equals("http://apache.org/xml/properties/internal/grammar-pool") || name
-/* 1205 */       .equals("http://apache.org/xml/properties/schema/external-schemaLocation") || name
-/* 1206 */       .equals("http://apache.org/xml/properties/schema/external-noNamespaceSchemaLocation") || name
-/* 1207 */       .equals("http://java.sun.com/xml/jaxp/properties/schemaSource") || name
-/* 1208 */       .equals("http://apache.org/xml/properties/internal/validation/schema/dv-factory")) {
-/* 1209 */       return true;
-/*      */     }
-/* 1211 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object getParameter(String name) throws DOMException {
-/* 1219 */     if (name.equals("error-handler")) {
-/* 1220 */       return (this.fErrorHandler != null) ? this.fErrorHandler.getErrorHandler() : null;
-/*      */     }
-/* 1222 */     if (name.equals("resource-resolver")) {
-/* 1223 */       return (this.fResourceResolver != null) ? this.fResourceResolver.getEntityResolver() : null;
-/*      */     }
-/*      */     
-/*      */     try {
-/* 1227 */       boolean feature = getFeature(name);
-/* 1228 */       return feature ? Boolean.TRUE : Boolean.FALSE;
-/* 1229 */     } catch (Exception e) {
-/*      */       
-/*      */       try {
-/* 1232 */         Object property = getProperty(name);
-/* 1233 */         return property;
-/* 1234 */       } catch (Exception ex) {
-/*      */         
-/* 1236 */         String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "FEATURE_NOT_SUPPORTED", new Object[] { name });
-/*      */ 
-/*      */ 
-/*      */         
-/* 1240 */         throw new DOMException((short)9, msg);
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public DOMStringList getParameterNames() {
-/* 1249 */     if (this.fRecognizedParameters == null) {
-/* 1250 */       Vector<String> v = new Vector();
-/* 1251 */       v.add("validate");
-/* 1252 */       v.add("error-handler");
-/* 1253 */       v.add("resource-resolver");
-/* 1254 */       v.add("http://apache.org/xml/properties/internal/symbol-table");
-/* 1255 */       v.add("http://apache.org/xml/properties/internal/error-reporter");
-/* 1256 */       v.add("http://apache.org/xml/properties/internal/error-handler");
-/* 1257 */       v.add("http://apache.org/xml/properties/internal/entity-resolver");
-/* 1258 */       v.add("http://apache.org/xml/properties/internal/grammar-pool");
-/* 1259 */       v.add("http://apache.org/xml/properties/schema/external-schemaLocation");
-/* 1260 */       v.add("http://apache.org/xml/properties/schema/external-noNamespaceSchemaLocation");
-/* 1261 */       v.add("http://java.sun.com/xml/jaxp/properties/schemaSource");
-/* 1262 */       v.add("http://apache.org/xml/features/validation/schema-full-checking");
-/* 1263 */       v.add("http://apache.org/xml/features/continue-after-fatal-error");
-/* 1264 */       v.add("http://apache.org/xml/features/allow-java-encodings");
-/* 1265 */       v.add("http://apache.org/xml/features/standard-uri-conformant");
-/* 1266 */       v.add("http://apache.org/xml/features/validate-annotations");
-/* 1267 */       v.add("http://apache.org/xml/features/generate-synthetic-annotations");
-/* 1268 */       v.add("http://apache.org/xml/features/honour-all-schemaLocations");
-/* 1269 */       v.add("http://apache.org/xml/features/namespace-growth");
-/* 1270 */       v.add("http://apache.org/xml/features/internal/tolerate-duplicates");
-/* 1271 */       v.add("jdk.xml.overrideDefaultParser");
-/* 1272 */       this.fRecognizedParameters = new DOMStringListImpl(v);
-/*      */     } 
-/* 1274 */     return this.fRecognizedParameters;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setParameter(String name, Object value) throws DOMException {
-/* 1281 */     if (value instanceof Boolean) {
-/* 1282 */       boolean state = ((Boolean)value).booleanValue();
-/* 1283 */       if (name.equals("validate") && state) {
-/*      */         return;
-/*      */       }
-/*      */       try {
-/* 1287 */         setFeature(name, state);
-/* 1288 */       } catch (Exception e) {
-/*      */         
-/* 1290 */         String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "FEATURE_NOT_SUPPORTED", new Object[] { name });
-/*      */ 
-/*      */ 
-/*      */         
-/* 1294 */         throw new DOMException((short)9, msg);
-/*      */       } 
-/*      */       return;
-/*      */     } 
-/* 1298 */     if (name.equals("error-handler")) {
-/* 1299 */       if (value instanceof DOMErrorHandler) {
-/*      */         try {
-/* 1301 */           this.fErrorHandler = new DOMErrorHandlerWrapper((DOMErrorHandler)value);
-/* 1302 */           setErrorHandler(this.fErrorHandler);
-/* 1303 */         } catch (XMLConfigurationException xMLConfigurationException) {}
-/*      */       
-/*      */       }
-/*      */       else {
-/*      */         
-/* 1308 */         String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "FEATURE_NOT_SUPPORTED", new Object[] { name });
-/*      */ 
-/*      */ 
-/*      */         
-/* 1312 */         throw new DOMException((short)9, msg);
-/*      */       } 
-/*      */       
-/*      */       return;
-/*      */     } 
-/* 1317 */     if (name.equals("resource-resolver")) {
-/* 1318 */       if (value instanceof LSResourceResolver) {
-/*      */         try {
-/* 1320 */           this.fResourceResolver = new DOMEntityResolverWrapper((LSResourceResolver)value);
-/* 1321 */           setEntityResolver(this.fResourceResolver);
-/*      */         }
-/* 1323 */         catch (XMLConfigurationException xMLConfigurationException) {}
-/*      */       }
-/*      */       else {
-/*      */         
-/* 1327 */         String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "FEATURE_NOT_SUPPORTED", new Object[] { name });
-/*      */ 
-/*      */ 
-/*      */         
-/* 1331 */         throw new DOMException((short)9, msg);
-/*      */       } 
-/*      */       
-/*      */       return;
-/*      */     } 
-/*      */     try {
-/* 1337 */       setProperty(name, value);
-/* 1338 */     } catch (Exception ex) {
-/*      */ 
-/*      */       
-/* 1341 */       String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "FEATURE_NOT_SUPPORTED", new Object[] { name });
-/*      */ 
-/*      */ 
-/*      */       
-/* 1345 */       throw new DOMException((short)9, msg);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   XMLInputSource dom2xmlInputSource(LSInput is) {
-/* 1353 */     XMLInputSource xis = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1364 */     if (is.getCharacterStream() != null) {
-/*      */       
-/* 1366 */       xis = new XMLInputSource(is.getPublicId(), is.getSystemId(), is.getBaseURI(), is.getCharacterStream(), "UTF-16");
-/*      */ 
-/*      */     
-/*      */     }
-/* 1370 */     else if (is.getByteStream() != null) {
-/*      */ 
-/*      */       
-/* 1373 */       xis = new XMLInputSource(is.getPublicId(), is.getSystemId(), is.getBaseURI(), is.getByteStream(), is.getEncoding());
-/*      */ 
-/*      */     
-/*      */     }
-/* 1377 */     else if (is.getStringData() != null && is.getStringData().length() != 0) {
-/*      */       
-/* 1379 */       xis = new XMLInputSource(is.getPublicId(), is.getSystemId(), is.getBaseURI(), new StringReader(is.getStringData()), "UTF-16");
-/*      */     
-/*      */     }
-/*      */     else {
-/*      */ 
-/*      */       
-/* 1385 */       xis = new XMLInputSource(is.getPublicId(), is.getSystemId(), is.getBaseURI());
-/*      */     } 
-/*      */     
-/* 1388 */     return xis;
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\impl\xs\XMLSchemaLoader.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.impl.xs;
+
+import com.sun.org.apache.xerces.internal.dom.DOMErrorImpl;
+import com.sun.org.apache.xerces.internal.dom.DOMMessageFormatter;
+import com.sun.org.apache.xerces.internal.dom.DOMStringListImpl;
+import com.sun.org.apache.xerces.internal.impl.Constants;
+import com.sun.org.apache.xerces.internal.impl.XMLEntityManager;
+import com.sun.org.apache.xerces.internal.impl.XMLErrorReporter;
+import com.sun.org.apache.xerces.internal.impl.dv.InvalidDatatypeValueException;
+import com.sun.org.apache.xerces.internal.impl.dv.SchemaDVFactory;
+import com.sun.org.apache.xerces.internal.impl.dv.xs.SchemaDVFactoryImpl;
+import com.sun.org.apache.xerces.internal.impl.xs.models.CMBuilder;
+import com.sun.org.apache.xerces.internal.impl.xs.models.CMNodeFactory;
+import com.sun.org.apache.xerces.internal.impl.xs.traversers.XSDHandler;
+import com.sun.org.apache.xerces.internal.util.DOMEntityResolverWrapper;
+import com.sun.org.apache.xerces.internal.util.DOMErrorHandlerWrapper;
+import com.sun.org.apache.xerces.internal.util.DefaultErrorHandler;
+import com.sun.org.apache.xerces.internal.util.ParserConfigurationSettings;
+import com.sun.org.apache.xerces.internal.util.Status;
+import com.sun.org.apache.xerces.internal.util.SymbolTable;
+import com.sun.org.apache.xerces.internal.util.XMLSymbols;
+import com.sun.org.apache.xerces.internal.utils.SecuritySupport;
+import com.sun.org.apache.xerces.internal.utils.XMLSecurityManager;
+import com.sun.org.apache.xerces.internal.utils.XMLSecurityPropertyManager;
+import com.sun.org.apache.xerces.internal.xni.XNIException;
+import com.sun.org.apache.xerces.internal.xni.grammars.Grammar;
+import com.sun.org.apache.xerces.internal.xni.grammars.XMLGrammarDescription;
+import com.sun.org.apache.xerces.internal.xni.grammars.XMLGrammarLoader;
+import com.sun.org.apache.xerces.internal.xni.grammars.XMLGrammarPool;
+import com.sun.org.apache.xerces.internal.xni.grammars.XSGrammar;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLComponent;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLComponentManager;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLConfigurationException;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLEntityResolver;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLErrorHandler;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLInputSource;
+import com.sun.org.apache.xerces.internal.xs.LSInputList;
+import com.sun.org.apache.xerces.internal.xs.StringList;
+import com.sun.org.apache.xerces.internal.xs.XSLoader;
+import com.sun.org.apache.xerces.internal.xs.XSModel;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
+import java.io.StringReader;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.StringTokenizer;
+import java.util.Vector;
+import javax.xml.XMLConstants;
+import jdk.xml.internal.JdkXmlUtils;
+import org.w3c.dom.DOMConfiguration;
+import org.w3c.dom.DOMError;
+import org.w3c.dom.DOMErrorHandler;
+import org.w3c.dom.DOMException;
+import org.w3c.dom.DOMStringList;
+import org.w3c.dom.ls.LSInput;
+import org.w3c.dom.ls.LSResourceResolver;
+import org.xml.sax.InputSource;
+
+/**
+ * This class implements xni.grammars.XMLGrammarLoader.
+ * It also serves as implementation of xs.XSLoader interface and DOMConfiguration interface.
+ *
+ * This class is designed to interact either with a proxy for a user application
+ * which wants to preparse schemas, or with our own Schema validator.
+ * It is hoped that none of these "external" classes will therefore need to communicate directly
+ * with XSDHandler in future.
+ * <p>This class only knows how to make XSDHandler do its thing.
+ * The caller must ensure that all its properties (schemaLocation, JAXPSchemaSource
+ * etc.) have been properly set.
+ *
+ * @xerces.internal
+ *
+ * @author Neil Graham, IBM
+ * @version $Id: XMLSchemaLoader.java,v 1.10 2010-11-01 04:39:55 joehw Exp $
+ */
+
+public class XMLSchemaLoader implements XMLGrammarLoader, XMLComponent,
+// XML Component API
+XSLoader, DOMConfiguration {
+
+    // Feature identifiers:
+
+    /** Feature identifier: schema full checking*/
+    protected static final String SCHEMA_FULL_CHECKING =
+        Constants.XERCES_FEATURE_PREFIX + Constants.SCHEMA_FULL_CHECKING;
+
+    /** Feature identifier: continue after fatal error. */
+    protected static final String CONTINUE_AFTER_FATAL_ERROR =
+        Constants.XERCES_FEATURE_PREFIX + Constants.CONTINUE_AFTER_FATAL_ERROR_FEATURE;
+
+    /** Feature identifier: allow java encodings to be recognized when parsing schema docs. */
+    protected static final String ALLOW_JAVA_ENCODINGS =
+        Constants.XERCES_FEATURE_PREFIX + Constants.ALLOW_JAVA_ENCODINGS_FEATURE;
+
+    /** Feature identifier: standard uri conformant feature. */
+    protected static final String STANDARD_URI_CONFORMANT_FEATURE =
+        Constants.XERCES_FEATURE_PREFIX + Constants.STANDARD_URI_CONFORMANT_FEATURE;
+
+    /** Feature identifier: validate annotations. */
+    protected static final String VALIDATE_ANNOTATIONS =
+        Constants.XERCES_FEATURE_PREFIX + Constants.VALIDATE_ANNOTATIONS_FEATURE;
+
+    /** Feature: disallow doctype*/
+    protected static final String DISALLOW_DOCTYPE =
+        Constants.XERCES_FEATURE_PREFIX + Constants.DISALLOW_DOCTYPE_DECL_FEATURE;
+
+    /** Feature: generate synthetic annotations */
+    protected static final String GENERATE_SYNTHETIC_ANNOTATIONS =
+        Constants.XERCES_FEATURE_PREFIX + Constants.GENERATE_SYNTHETIC_ANNOTATIONS_FEATURE;
+
+    /** Feature identifier: honour all schemaLocations */
+    protected static final String HONOUR_ALL_SCHEMALOCATIONS =
+        Constants.XERCES_FEATURE_PREFIX + Constants.HONOUR_ALL_SCHEMALOCATIONS_FEATURE;
+
+    protected static final String AUGMENT_PSVI =
+        Constants.XERCES_FEATURE_PREFIX + Constants.SCHEMA_AUGMENT_PSVI;
+
+    protected static final String PARSER_SETTINGS =
+        Constants.XERCES_FEATURE_PREFIX + Constants.PARSER_SETTINGS;
+
+    /** Feature identifier: namespace growth */
+    protected static final String NAMESPACE_GROWTH =
+        Constants.XERCES_FEATURE_PREFIX + Constants.NAMESPACE_GROWTH_FEATURE;
+
+    /** Feature identifier: tolerate duplicates */
+    protected static final String TOLERATE_DUPLICATES =
+        Constants.XERCES_FEATURE_PREFIX + Constants.TOLERATE_DUPLICATES_FEATURE;
+
+    /** Property identifier: Schema DV Factory */
+    protected static final String SCHEMA_DV_FACTORY =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.SCHEMA_DV_FACTORY_PROPERTY;
+
+    protected static final String OVERRIDE_PARSER = JdkXmlUtils.OVERRIDE_PARSER;
+
+    // recognized features:
+    private static final String[] RECOGNIZED_FEATURES = {
+        SCHEMA_FULL_CHECKING,
+        AUGMENT_PSVI,
+        CONTINUE_AFTER_FATAL_ERROR,
+        ALLOW_JAVA_ENCODINGS,
+        STANDARD_URI_CONFORMANT_FEATURE,
+        DISALLOW_DOCTYPE,
+        GENERATE_SYNTHETIC_ANNOTATIONS,
+        VALIDATE_ANNOTATIONS,
+        HONOUR_ALL_SCHEMALOCATIONS,
+        NAMESPACE_GROWTH,
+        TOLERATE_DUPLICATES,
+        OVERRIDE_PARSER
+    };
+
+    // property identifiers
+
+    /** Property identifier: symbol table. */
+    public static final String SYMBOL_TABLE =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.SYMBOL_TABLE_PROPERTY;
+
+    /** Property identifier: error reporter. */
+    public static final String ERROR_REPORTER =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.ERROR_REPORTER_PROPERTY;
+
+    /** Property identifier: error handler. */
+    protected static final String ERROR_HANDLER =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.ERROR_HANDLER_PROPERTY;
+
+    /** Property identifier: entity resolver. */
+    public static final String ENTITY_RESOLVER =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.ENTITY_RESOLVER_PROPERTY;
+
+    /** Property identifier: grammar pool. */
+    public static final String XMLGRAMMAR_POOL =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.XMLGRAMMAR_POOL_PROPERTY;
+
+    /** Property identifier: schema location. */
+    protected static final String SCHEMA_LOCATION =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.SCHEMA_LOCATION;
+
+    /** Property identifier: no namespace schema location. */
+    protected static final String SCHEMA_NONS_LOCATION =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.SCHEMA_NONS_LOCATION;
+
+    /** Property identifier: JAXP schema source. */
+    protected static final String JAXP_SCHEMA_SOURCE =
+        Constants.JAXP_PROPERTY_PREFIX + Constants.SCHEMA_SOURCE;
+
+    protected static final String SECURITY_MANAGER =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.SECURITY_MANAGER_PROPERTY;
+
+    /** Property identifier: locale. */
+    protected static final String LOCALE =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.LOCALE_PROPERTY;
+
+    protected static final String ENTITY_MANAGER =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.ENTITY_MANAGER_PROPERTY;
+
+    /** Property identifier: Security property manager. */
+    private static final String XML_SECURITY_PROPERTY_MANAGER =
+            Constants.XML_SECURITY_PROPERTY_MANAGER;
+
+    /** Property identifier: access to external dtd */
+    public static final String ACCESS_EXTERNAL_DTD = XMLConstants.ACCESS_EXTERNAL_DTD;
+
+    /** Property identifier: access to external schema */
+    public static final String ACCESS_EXTERNAL_SCHEMA = XMLConstants.ACCESS_EXTERNAL_SCHEMA;
+
+    // recognized properties
+    private static final String [] RECOGNIZED_PROPERTIES = {
+        ENTITY_MANAGER,
+        SYMBOL_TABLE,
+        ERROR_REPORTER,
+        ERROR_HANDLER,
+        ENTITY_RESOLVER,
+        XMLGRAMMAR_POOL,
+        SCHEMA_LOCATION,
+        SCHEMA_NONS_LOCATION,
+        JAXP_SCHEMA_SOURCE,
+        SECURITY_MANAGER,
+        LOCALE,
+        SCHEMA_DV_FACTORY,
+        XML_SECURITY_PROPERTY_MANAGER
+    };
+
+    // Data
+
+    // features and properties
+    private ParserConfigurationSettings fLoaderConfig = new ParserConfigurationSettings();
+    private SymbolTable fSymbolTable = null;
+    private XMLErrorReporter fErrorReporter = new XMLErrorReporter ();
+    private XMLEntityManager fEntityManager = null;
+    private XMLEntityResolver fUserEntityResolver = null;
+    private XMLGrammarPool fGrammarPool = null;
+    private String fExternalSchemas = null;
+    private String fExternalNoNSSchema = null;
+    // JAXP property: schema source
+    private Object fJAXPSource = null;
+    // is Schema Full Checking enabled
+    private boolean fIsCheckedFully = false;
+    // boolean that tells whether we've tested the JAXP property.
+    private boolean fJAXPProcessed = false;
+    // if features/properties has not been changed, the value of this attribute is "false"
+    private boolean fSettingsChanged = true;
+
+    // xml schema parsing
+    private XSDHandler fSchemaHandler;
+    private XSGrammarBucket fGrammarBucket;
+    private XSDeclarationPool fDeclPool = null;
+    private SubstitutionGroupHandler fSubGroupHandler;
+    private final CMNodeFactory fNodeFactory = new CMNodeFactory(); //component mgr will be set later
+    private CMBuilder fCMBuilder;
+    private XSDDescription fXSDDescription = new XSDDescription();
+    private String faccessExternalSchema = Constants.EXTERNAL_ACCESS_DEFAULT;
+
+    private Map fJAXPCache;
+    private Locale fLocale = Locale.getDefault();
+
+    // XSLoader attributes
+    private DOMStringList fRecognizedParameters = null;
+
+    /** DOM L3 error handler */
+    private DOMErrorHandlerWrapper fErrorHandler = null;
+
+    /** DOM L3 resource resolver */
+    private DOMEntityResolverWrapper fResourceResolver = null;
+
+    // default constructor.  Create objects we absolutely need:
+    public XMLSchemaLoader() {
+        this( new SymbolTable(), null, new XMLEntityManager(), null, null, null);
+    }
+
+    public XMLSchemaLoader(SymbolTable symbolTable) {
+        this( symbolTable, null, new XMLEntityManager(), null, null, null);
+    }
+
+    /**
+     * This constractor is used by the XMLSchemaValidator. Additional properties, i.e. XMLEntityManager,
+     * will be passed during reset(XMLComponentManager).
+     * @param errorReporter
+     * @param grammarBucket
+     * @param sHandler
+     * @param builder
+     */
+    XMLSchemaLoader(XMLErrorReporter errorReporter, XSGrammarBucket grammarBucket,
+            SubstitutionGroupHandler sHandler, CMBuilder builder) {
+        this(null, errorReporter, null, grammarBucket, sHandler, builder);
+    }
+
+    XMLSchemaLoader(SymbolTable symbolTable, XMLErrorReporter errorReporter,
+            XMLEntityManager entityResolver, XSGrammarBucket grammarBucket,
+            SubstitutionGroupHandler sHandler, CMBuilder builder) {
+
+        // store properties and features in configuration
+        fLoaderConfig.addRecognizedFeatures(RECOGNIZED_FEATURES);
+        fLoaderConfig.addRecognizedProperties(RECOGNIZED_PROPERTIES);
+        if (symbolTable != null){
+            fLoaderConfig.setProperty(SYMBOL_TABLE, symbolTable);
+        }
+
+        if(errorReporter == null) {
+            errorReporter = new XMLErrorReporter ();
+            errorReporter.setLocale(fLocale);
+            errorReporter.setProperty(ERROR_HANDLER, new DefaultErrorHandler());
+
+        }
+        fErrorReporter = errorReporter;
+        // make sure error reporter knows about schemas...
+        if(fErrorReporter.getMessageFormatter(XSMessageFormatter.SCHEMA_DOMAIN) == null) {
+            fErrorReporter.putMessageFormatter(XSMessageFormatter.SCHEMA_DOMAIN, new XSMessageFormatter());
+        }
+        fLoaderConfig.setProperty(ERROR_REPORTER, fErrorReporter);
+        fEntityManager = entityResolver;
+        // entity manager is null if XMLSchemaValidator creates the loader
+        if (fEntityManager != null){
+            fLoaderConfig.setProperty(ENTITY_MANAGER, fEntityManager);
+        }
+
+        // by default augment PSVI (i.e. don't use declaration pool)
+        fLoaderConfig.setFeature(AUGMENT_PSVI, true);
+
+        if(grammarBucket == null ) {
+            grammarBucket = new XSGrammarBucket();
+        }
+        fGrammarBucket = grammarBucket;
+        if(sHandler == null) {
+            sHandler = new SubstitutionGroupHandler(fGrammarBucket);
+        }
+        fSubGroupHandler = sHandler;
+
+        if(builder == null) {
+            builder = new CMBuilder(fNodeFactory);
+        }
+        fCMBuilder = builder;
+        fSchemaHandler = new XSDHandler(fGrammarBucket);
+        if (fDeclPool != null) {
+            fDeclPool.reset();
+        }
+        fJAXPCache = new HashMap();
+
+        fSettingsChanged = true;
+    }
+
+    /**
+     * Returns a list of feature identifiers that are recognized by
+     * this XMLGrammarLoader.  This method may return null if no features
+     * are recognized.
+     */
+    public String[] getRecognizedFeatures() {
+        return (String[])(RECOGNIZED_FEATURES.clone());
+    } // getRecognizedFeatures():  String[]
+
+    /**
+     * Returns the state of a feature.
+     *
+     * @param featureId The feature identifier.
+     *
+     * @throws XMLConfigurationException Thrown on configuration error.
+     */
+    public boolean getFeature(String featureId)
+    throws XMLConfigurationException {
+        return fLoaderConfig.getFeature(featureId);
+    } // getFeature (String):  boolean
+
+    /**
+     * Sets the state of a feature.
+     *
+     * @param featureId The feature identifier.
+     * @param state     The state of the feature.
+     *
+     * @throws XMLConfigurationException Thrown when a feature is not
+     *                  recognized or cannot be set.
+     */
+    public void setFeature(String featureId,
+            boolean state) throws XMLConfigurationException {
+        fSettingsChanged = true;
+        if(featureId.equals(CONTINUE_AFTER_FATAL_ERROR)) {
+            fErrorReporter.setFeature(CONTINUE_AFTER_FATAL_ERROR, state);
+        }
+        else if(featureId.equals(GENERATE_SYNTHETIC_ANNOTATIONS)) {
+            fSchemaHandler.setGenerateSyntheticAnnotations(state);
+        }
+        fLoaderConfig.setFeature(featureId, state);
+    } // setFeature(String, boolean)
+
+    /**
+     * Returns a list of property identifiers that are recognized by
+     * this XMLGrammarLoader.  This method may return null if no properties
+     * are recognized.
+     */
+    public String[] getRecognizedProperties() {
+        return (String[])(RECOGNIZED_PROPERTIES.clone());
+    } // getRecognizedProperties():  String[]
+
+    /**
+     * Returns the state of a property.
+     *
+     * @param propertyId The property identifier.
+     *
+     * @throws XMLConfigurationException Thrown on configuration error.
+     */
+    public Object getProperty(String propertyId)
+    throws XMLConfigurationException {
+        return fLoaderConfig.getProperty(propertyId);
+    } // getProperty(String):  Object
+
+    /**
+     * Sets the state of a property.
+     *
+     * @param propertyId The property identifier.
+     * @param state     The state of the property.
+     *
+     * @throws XMLConfigurationException Thrown when a property is not
+     *                  recognized or cannot be set.
+     */
+    public void setProperty(String propertyId,
+            Object state) throws XMLConfigurationException {
+        fSettingsChanged = true;
+        fLoaderConfig.setProperty(propertyId, state);
+        if (propertyId.equals(JAXP_SCHEMA_SOURCE)) {
+            fJAXPSource = state;
+            fJAXPProcessed = false;
+        }
+        else if (propertyId.equals(XMLGRAMMAR_POOL)) {
+            fGrammarPool = (XMLGrammarPool)state;
+        }
+        else if (propertyId.equals(SCHEMA_LOCATION)) {
+            fExternalSchemas = (String)state;
+        }
+        else if (propertyId.equals(SCHEMA_NONS_LOCATION)) {
+            fExternalNoNSSchema = (String) state;
+        }
+        else if (propertyId.equals(LOCALE)) {
+            setLocale((Locale) state);
+        }
+        else if (propertyId.equals(ENTITY_RESOLVER)) {
+            fEntityManager.setProperty(ENTITY_RESOLVER, state);
+        }
+        else if (propertyId.equals(ERROR_REPORTER)) {
+            fErrorReporter = (XMLErrorReporter)state;
+            if (fErrorReporter.getMessageFormatter(XSMessageFormatter.SCHEMA_DOMAIN) == null) {
+                fErrorReporter.putMessageFormatter(XSMessageFormatter.SCHEMA_DOMAIN, new XSMessageFormatter());
+            }
+        }
+        else if (propertyId.equals(XML_SECURITY_PROPERTY_MANAGER)) {
+            XMLSecurityPropertyManager spm = (XMLSecurityPropertyManager)state;
+            faccessExternalSchema = spm.getValue(XMLSecurityPropertyManager.Property.ACCESS_EXTERNAL_SCHEMA);
+        }
+    } // setProperty(String, Object)
+
+    /**
+     * Set the locale to use for messages.
+     *
+     * @param locale The locale object to use for localization of messages.
+     *
+     * @exception XNIException Thrown if the parser does not support the
+     *                         specified locale.
+     */
+    public void setLocale(Locale locale) {
+        fLocale = locale;
+        fErrorReporter.setLocale(locale);
+    } // setLocale(Locale)
+
+    /** Return the Locale the XMLGrammarLoader is using. */
+    public Locale getLocale() {
+        return fLocale;
+    } // getLocale():  Locale
+
+    /**
+     * Sets the error handler.
+     *
+     * @param errorHandler The error handler.
+     */
+    public void setErrorHandler(XMLErrorHandler errorHandler) {
+        fErrorReporter.setProperty(ERROR_HANDLER, errorHandler);
+    } // setErrorHandler(XMLErrorHandler)
+
+    /** Returns the registered error handler.  */
+    public XMLErrorHandler getErrorHandler() {
+        return fErrorReporter.getErrorHandler();
+    } // getErrorHandler():  XMLErrorHandler
+
+    /**
+     * Sets the entity resolver.
+     *
+     * @param entityResolver The new entity resolver.
+     */
+    public void setEntityResolver(XMLEntityResolver entityResolver) {
+        fUserEntityResolver = entityResolver;
+        fLoaderConfig.setProperty(ENTITY_RESOLVER, entityResolver);
+        fEntityManager.setProperty(ENTITY_RESOLVER, entityResolver);
+    } // setEntityResolver(XMLEntityResolver)
+
+    /** Returns the registered entity resolver.  */
+    public XMLEntityResolver getEntityResolver() {
+        return fUserEntityResolver;
+    } // getEntityResolver():  XMLEntityResolver
+
+    /**
+     * Returns a Grammar object by parsing the contents of the
+     * entities pointed to by sources.
+     *
+     * @param source[]  the locations of the entity which forms
+     *                      the staring point of the grammars to be constructed
+     * @throws IOException  when a problem is encounted reading the entity
+     * @throws XNIException when a condition arises (such as a FatalError) that requires parsing
+     *                          of the entity be terminated
+     */
+    public void loadGrammar(XMLInputSource source[])
+    throws IOException, XNIException {
+        int numSource = source.length;
+        for (int i = 0; i < numSource; ++i) {
+            loadGrammar(source[i]);
+        }
+    }
+
+    /**
+     * Returns a Grammar object by parsing the contents of the
+     * entity pointed to by source.
+     *
+     * @param source        the location of the entity which forms
+     *                          the starting point of the grammar to be constructed.
+     * @throws IOException      When a problem is encountered reading the entity
+     *          XNIException    When a condition arises (such as a FatalError) that requires parsing
+     *                              of the entity be terminated.
+     */
+    public Grammar loadGrammar(XMLInputSource source)
+    throws IOException, XNIException {
+
+        // REVISIT: this method should have a namespace parameter specified by
+        // user. In this case we can easily detect if a schema asked to be loaded
+        // is already in the local cache.
+
+        reset(fLoaderConfig);
+        fSettingsChanged = false;
+        XSDDescription desc = new XSDDescription();
+        desc.fContextType = XSDDescription.CONTEXT_PREPARSE;
+        desc.setBaseSystemId(source.getBaseSystemId());
+        desc.setLiteralSystemId( source.getSystemId());
+        // none of the other fields make sense for preparsing
+        Map locationPairs = new HashMap();
+        // Process external schema location properties.
+        // We don't call tokenizeSchemaLocationStr here, because we also want
+        // to check whether the values are valid URI.
+        processExternalHints(fExternalSchemas, fExternalNoNSSchema,
+                locationPairs, fErrorReporter);
+        SchemaGrammar grammar = loadSchema(desc, source, locationPairs);
+
+        if(grammar != null && fGrammarPool != null) {
+            fGrammarPool.cacheGrammars(XMLGrammarDescription.XML_SCHEMA, fGrammarBucket.getGrammars());
+            // NOTE: we only need to verify full checking in case the schema was not provided via JAXP
+            // since full checking already verified for all JAXP schemas
+            if(fIsCheckedFully && fJAXPCache.get(grammar) != grammar) {
+                XSConstraints.fullSchemaChecking(fGrammarBucket, fSubGroupHandler, fCMBuilder, fErrorReporter);
+            }
+        }
+        return grammar;
+    } // loadGrammar(XMLInputSource):  Grammar
+
+    /**
+     * This method is called either from XMLGrammarLoader.loadGrammar or from XMLSchemaValidator.
+     * Note: in either case, the EntityManager (or EntityResolvers) are not going to be invoked
+     * to resolve the location of the schema in XSDDescription
+     * @param desc
+     * @param source
+     * @param locationPairs
+     * @return An XML Schema grammar
+     * @throws IOException
+     * @throws XNIException
+     */
+    SchemaGrammar loadSchema(XSDDescription desc, XMLInputSource source,
+            Map<String, LocationArray> locationPairs) throws IOException, XNIException {
+
+        // this should only be done once per invocation of this object;
+        // unless application alters JAXPSource in the mean time.
+        if(!fJAXPProcessed) {
+            processJAXPSchemaSource(locationPairs);
+        }
+
+        if (desc.isExternal()) {
+            String accessError = SecuritySupport.checkAccess(desc.getExpandedSystemId(), faccessExternalSchema, Constants.ACCESS_EXTERNAL_ALL);
+            if (accessError != null) {
+                throw new XNIException(fErrorReporter.reportError(XSMessageFormatter.SCHEMA_DOMAIN,
+                        "schema_reference.access",
+                        new Object[] { SecuritySupport.sanitizePath(desc.getExpandedSystemId()), accessError }, XMLErrorReporter.SEVERITY_ERROR));
+            }
+        }
+        SchemaGrammar grammar = fSchemaHandler.parseSchema(source, desc, locationPairs);
+
+        return grammar;
+    } // loadSchema(XSDDescription, XMLInputSource):  SchemaGrammar
+
+    /** This method tries to resolve location of the given schema.
+     * The loader stores the namespace/location pairs in a map (use "" as the
+     * namespace of absent namespace). When resolving an entity, loader first tries
+     * to find in the map whether there is a value for that namespace,
+     * if so, pass that location value to the user-defined entity resolver.
+     *
+     * @param desc
+     * @param locationPairs
+     * @param entityResolver
+     * @return
+     * @throws IOException
+     */
+    public static XMLInputSource resolveDocument(XSDDescription desc,
+            Map<String, LocationArray> locationPairs,
+            XMLEntityResolver entityResolver) throws IOException {
+        String loc = null;
+        // we consider the schema location properties for import
+        if (desc.getContextType() == XSDDescription.CONTEXT_IMPORT ||
+                desc.fromInstance()) {
+            // use empty string as the key for absent namespace
+            String namespace = desc.getTargetNamespace();
+            String ns = namespace == null ? XMLSymbols.EMPTY_STRING : namespace;
+            // get the location hint for that namespace
+            LocationArray tempLA = locationPairs.get(ns);
+            if(tempLA != null)
+                loc = tempLA.getFirstLocation();
+        }
+
+        // if it's not import, or if the target namespace is not set
+        // in the schema location properties, use location hint
+        if (loc == null) {
+            String[] hints = desc.getLocationHints();
+            if (hints != null && hints.length > 0)
+                loc = hints[0];
+        }
+
+        String expandedLoc = XMLEntityManager.expandSystemId(loc, desc.getBaseSystemId(), false);
+        desc.setLiteralSystemId(loc);
+        desc.setExpandedSystemId(expandedLoc);
+        return entityResolver.resolveEntity(desc);
+    }
+
+    // add external schema locations to the location pairs
+    public static void processExternalHints(String sl, String nsl,
+            Map<String, XMLSchemaLoader.LocationArray> locations,
+            XMLErrorReporter er) {
+        if (sl != null) {
+            try {
+                // get the attribute decl for xsi:schemaLocation
+                // because external schema location property has the same syntax
+                // as xsi:schemaLocation
+                XSAttributeDecl attrDecl = SchemaGrammar.SG_XSI.getGlobalAttributeDecl(SchemaSymbols.XSI_SCHEMALOCATION);
+                // validation the string value to get the list of URI's
+                attrDecl.fType.validate(sl, null, null);
+                if (!tokenizeSchemaLocationStr(sl, locations)) {
+                    // report warning (odd number of items)
+                    er.reportError(XSMessageFormatter.SCHEMA_DOMAIN,
+                            "SchemaLocation",
+                            new Object[]{sl},
+                            XMLErrorReporter.SEVERITY_WARNING);
+                }
+            }
+            catch (InvalidDatatypeValueException ex) {
+                // report warning (not list of URI's)
+                er.reportError(XSMessageFormatter.SCHEMA_DOMAIN,
+                        ex.getKey(), ex.getArgs(),
+                        XMLErrorReporter.SEVERITY_WARNING);
+            }
+        }
+
+        if (nsl != null) {
+            try {
+                // similarly for no ns schema location property
+                XSAttributeDecl attrDecl = SchemaGrammar.SG_XSI.getGlobalAttributeDecl(SchemaSymbols.XSI_NONAMESPACESCHEMALOCATION);
+                attrDecl.fType.validate(nsl, null, null);
+                LocationArray la = ((LocationArray)locations.get(XMLSymbols.EMPTY_STRING));
+                if(la == null) {
+                    la = new LocationArray();
+                    locations.put(XMLSymbols.EMPTY_STRING, la);
+                }
+                la.addLocation(nsl);
+            }
+            catch (InvalidDatatypeValueException ex) {
+                // report warning (not a URI)
+                er.reportError(XSMessageFormatter.SCHEMA_DOMAIN,
+                        ex.getKey(), ex.getArgs(),
+                        XMLErrorReporter.SEVERITY_WARNING);
+            }
+        }
+    }
+    // this method takes a SchemaLocation string.
+    // If an error is encountered, false is returned;
+    // otherwise, true is returned.  In either case, locations
+    // is augmented to include as many tokens as possible.
+    // @param schemaStr     The schemaLocation string to tokenize
+    // @param locations     HashMap mapping namespaces to LocationArray objects holding lists of locaitons
+    // @return true if no problems; false if string could not be tokenized
+    public static boolean tokenizeSchemaLocationStr(String schemaStr,
+            Map<String, XMLSchemaLoader.LocationArray> locations) {
+        if (schemaStr!= null) {
+            StringTokenizer t = new StringTokenizer(schemaStr, " \n\t\r");
+            String namespace, location;
+            while (t.hasMoreTokens()) {
+                namespace = t.nextToken ();
+                if (!t.hasMoreTokens()) {
+                    return false; // error!
+                }
+                location = t.nextToken();
+                LocationArray la = locations.get(namespace);
+                if(la == null) {
+                    la = new LocationArray();
+                    locations.put(namespace, la);
+                }
+                la.addLocation(location);
+            }
+        }
+        return true;
+    } // tokenizeSchemaLocation(String, HashMap):  boolean
+
+    /**
+     * Translate the various JAXP SchemaSource property types to XNI
+     * XMLInputSource.  Valid types are: String, org.xml.sax.InputSource,
+     * InputStream, File, or Object[] of any of previous types.
+     * REVISIT:  the JAXP 1.2 spec is less than clear as to whether this property
+     * should be available to imported schemas.  I have assumed
+     * that it should.  - NG
+     * Note: all JAXP schema files will be checked for full-schema validity if the feature was set up
+     *
+     */
+    private void processJAXPSchemaSource(
+            Map<String, LocationArray> locationPairs) throws IOException {
+        fJAXPProcessed = true;
+        if (fJAXPSource == null) {
+            return;
+        }
+
+        Class componentType = fJAXPSource.getClass().getComponentType();
+        XMLInputSource xis = null;
+        String sid = null;
+        if (componentType == null) {
+            // Not an array
+            if(fJAXPSource instanceof InputStream ||
+                    fJAXPSource instanceof InputSource) {
+                SchemaGrammar g = (SchemaGrammar)fJAXPCache.get(fJAXPSource);
+                if(g != null) {
+                    fGrammarBucket.putGrammar(g);
+                    return;
+                }
+            }
+            fXSDDescription.reset();
+            xis = xsdToXMLInputSource(fJAXPSource);
+            sid = xis.getSystemId();
+            fXSDDescription.fContextType = XSDDescription.CONTEXT_PREPARSE;
+            if (sid != null) {
+                fXSDDescription.setBaseSystemId(xis.getBaseSystemId());
+                fXSDDescription.setLiteralSystemId(sid);
+                fXSDDescription.setExpandedSystemId(sid);
+                fXSDDescription.fLocationHints = new String[]{sid};
+            }
+            SchemaGrammar g = loadSchema(fXSDDescription, xis, locationPairs);
+            // it is possible that we won't be able to resolve JAXP schema-source location
+            if (g != null){
+                if(fJAXPSource instanceof InputStream ||
+                        fJAXPSource instanceof InputSource) {
+                    fJAXPCache.put(fJAXPSource, g);
+                    if(fIsCheckedFully) {
+                        XSConstraints.fullSchemaChecking(fGrammarBucket, fSubGroupHandler, fCMBuilder, fErrorReporter);
+                    }
+                }
+                fGrammarBucket.putGrammar(g);
+            }
+            return ;
+        } else if ( (componentType != Object.class) &&
+                (componentType != String.class) &&
+                (componentType != File.class) &&
+                (componentType != InputStream.class) &&
+                (componentType != InputSource.class)
+        ) {
+            // Not an Object[], String[], File[], InputStream[], InputSource[]
+            throw new XMLConfigurationException(
+                    Status.NOT_SUPPORTED, "\""+JAXP_SCHEMA_SOURCE+
+                    "\" property cannot have an array of type {"+componentType.getName()+
+                    "}. Possible types of the array supported are Object, String, File, "+
+            "InputStream, InputSource.");
+        }
+
+        // JAXP spec. allow []s of type String, File, InputStream,
+        // InputSource also, apart from [] of type Object.
+        Object[] objArr = (Object[]) fJAXPSource;
+        //make local vector for storing targetn namespaces of schemasources specified in object arrays.
+        Vector jaxpSchemaSourceNamespaces = new Vector() ;
+        for (int i = 0; i < objArr.length; i++) {
+            if(objArr[i] instanceof InputStream ||
+                    objArr[i] instanceof InputSource) {
+                SchemaGrammar g = (SchemaGrammar)fJAXPCache.get(objArr[i]);
+                if (g != null) {
+                    fGrammarBucket.putGrammar(g);
+                    continue;
+                }
+            }
+            fXSDDescription.reset();
+            xis = xsdToXMLInputSource(objArr[i]);
+            sid = xis.getSystemId();
+            fXSDDescription.fContextType = XSDDescription.CONTEXT_PREPARSE;
+            if (sid != null) {
+                fXSDDescription.setBaseSystemId(xis.getBaseSystemId());
+                fXSDDescription.setLiteralSystemId(sid);
+                fXSDDescription.setExpandedSystemId(sid);
+                fXSDDescription.fLocationHints = new String[]{sid};
+            }
+            String targetNamespace = null ;
+            // load schema
+            SchemaGrammar grammar = fSchemaHandler.parseSchema(xis,fXSDDescription, locationPairs);
+
+            if(fIsCheckedFully) {
+                XSConstraints.fullSchemaChecking(fGrammarBucket, fSubGroupHandler, fCMBuilder, fErrorReporter);
+            }
+            if(grammar != null){
+                targetNamespace = grammar.getTargetNamespace() ;
+                if(jaxpSchemaSourceNamespaces.contains(targetNamespace)){
+                    //when an array of objects is passed it is illegal to have two schemas that share same namespace.
+                    throw new java.lang.IllegalArgumentException(
+                            " When using array of Objects as the value of SCHEMA_SOURCE property , " +
+                    "no two Schemas should share the same targetNamespace. " );
+                }
+                else{
+                    jaxpSchemaSourceNamespaces.add(targetNamespace) ;
+                }
+                if(objArr[i] instanceof InputStream ||
+                        objArr[i] instanceof InputSource) {
+                    fJAXPCache.put(objArr[i], grammar);
+                }
+                fGrammarBucket.putGrammar(grammar);
+            }
+            else{
+                //REVISIT: What should be the acutal behavior if grammar can't be loaded as specified in schema source?
+            }
+        }
+    }//processJAXPSchemaSource
+
+    private XMLInputSource xsdToXMLInputSource(
+            Object val)
+    {
+        if (val instanceof String) {
+            // String value is treated as a URI that is passed through the
+            // EntityResolver
+            String loc = (String) val;
+            fXSDDescription.reset();
+            fXSDDescription.setValues(null, loc, null, null);
+            XMLInputSource xis = null;
+            try {
+                xis = fEntityManager.resolveEntity(fXSDDescription);
+            } catch (IOException ex) {
+                fErrorReporter.reportError(XSMessageFormatter.SCHEMA_DOMAIN,
+                        "schema_reference.4",
+                        new Object[] { loc }, XMLErrorReporter.SEVERITY_ERROR);
+            }
+            if (xis == null) {
+                // REVISIT: can this happen?
+                // Treat value as a URI and pass in as systemId
+                return new XMLInputSource(null, loc, null);
+            }
+            return xis;
+        } else if (val instanceof InputSource) {
+            return saxToXMLInputSource((InputSource) val);
+        } else if (val instanceof InputStream) {
+            return new XMLInputSource(null, null, null,
+                    (InputStream) val, null);
+        } else if (val instanceof File) {
+            File file = (File) val;
+            InputStream is = null;
+            try {
+                is = new BufferedInputStream(new FileInputStream(file));
+            } catch (FileNotFoundException ex) {
+                fErrorReporter.reportError(XSMessageFormatter.SCHEMA_DOMAIN,
+                        "schema_reference.4", new Object[] { file.toString() },
+                        XMLErrorReporter.SEVERITY_ERROR);
+            }
+            return new XMLInputSource(null, null, null, is, null);
+        }
+        throw new XMLConfigurationException(
+                Status.NOT_SUPPORTED, "\""+JAXP_SCHEMA_SOURCE+
+                "\" property cannot have a value of type {"+val.getClass().getName()+
+                "}. Possible types of the value supported are String, File, InputStream, "+
+        "InputSource OR an array of these types.");
+    }
+
+
+    //Convert a SAX InputSource to an equivalent XNI XMLInputSource
+
+    private static XMLInputSource saxToXMLInputSource(InputSource sis) {
+        String publicId = sis.getPublicId();
+        String systemId = sis.getSystemId();
+
+        Reader charStream = sis.getCharacterStream();
+        if (charStream != null) {
+            return new XMLInputSource(publicId, systemId, null, charStream,
+                    null);
+        }
+
+        InputStream byteStream = sis.getByteStream();
+        if (byteStream != null) {
+            return new XMLInputSource(publicId, systemId, null, byteStream,
+                    sis.getEncoding());
+        }
+
+        return new XMLInputSource(publicId, systemId, null);
+    }
+
+    public static class LocationArray{
+
+        int length ;
+        String [] locations = new String[2];
+
+        public void resize(int oldLength , int newLength){
+            String [] temp = new String[newLength] ;
+            System.arraycopy(locations, 0, temp, 0, Math.min(oldLength, newLength));
+            locations = temp ;
+            length = Math.min(oldLength, newLength);
+        }
+
+        public void addLocation(String location){
+            if(length >= locations.length ){
+                resize(length, Math.max(1, length*2));
+            }
+            locations[length++] = location;
+        }//setLocation()
+
+        public String [] getLocationArray(){
+            if(length < locations.length ){
+                resize(locations.length, length);
+            }
+            return locations;
+        }//getLocationArray()
+
+        public String getFirstLocation(){
+            return length > 0 ? locations[0] : null;
+        }
+
+        public int getLength(){
+            return length ;
+        }
+
+    } //locationArray
+
+    /* (non-Javadoc)
+     * @see com.sun.org.apache.xerces.internal.xni.parser.XMLComponent#getFeatureDefault(java.lang.String)
+     */
+    public Boolean getFeatureDefault(String featureId) {
+        if (featureId.equals(AUGMENT_PSVI)){
+            return Boolean.TRUE;
+        }
+        return null;
+    }
+
+    /* (non-Javadoc)
+     * @see com.sun.org.apache.xerces.internal.xni.parser.XMLComponent#getPropertyDefault(java.lang.String)
+     */
+    public Object getPropertyDefault(String propertyId) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    /* (non-Javadoc)
+     * @see com.sun.org.apache.xerces.internal.xni.parser.XMLComponent#reset(com.sun.org.apache.xerces.internal.xni.parser.XMLComponentManager)
+     */
+    public void reset(XMLComponentManager componentManager) throws XMLConfigurationException {
+
+        XMLSecurityPropertyManager spm = (XMLSecurityPropertyManager)componentManager.getProperty(XML_SECURITY_PROPERTY_MANAGER);
+        if (spm == null) {
+            spm = new XMLSecurityPropertyManager();
+            setProperty(XML_SECURITY_PROPERTY_MANAGER, spm);
+        }
+
+        XMLSecurityManager sm = (XMLSecurityManager)componentManager.getProperty(SECURITY_MANAGER);
+        if (sm == null)
+            setProperty(SECURITY_MANAGER,new XMLSecurityManager(true));
+
+        faccessExternalSchema = spm.getValue(XMLSecurityPropertyManager.Property.ACCESS_EXTERNAL_SCHEMA);
+
+        fGrammarBucket.reset();
+
+        fSubGroupHandler.reset();
+
+        boolean parser_settings = componentManager.getFeature(PARSER_SETTINGS, true);
+
+        if (!parser_settings || !fSettingsChanged){
+            // need to reprocess JAXP schema sources
+            fJAXPProcessed = false;
+            // reinitialize grammar bucket
+            initGrammarBucket();
+            return;
+        }
+
+        //pass the component manager to the factory..
+        fNodeFactory.reset(componentManager);
+
+        // get registered entity manager to be able to resolve JAXP schema-source property:
+        // Note: in case XMLSchemaValidator has created the loader,
+        // the entity manager property is null
+        fEntityManager = (XMLEntityManager)componentManager.getProperty(ENTITY_MANAGER);
+
+        // get the error reporter
+        fErrorReporter = (XMLErrorReporter)componentManager.getProperty(ERROR_REPORTER);
+
+        // Determine schema dv factory to use
+        SchemaDVFactory dvFactory = null;
+        dvFactory = fSchemaHandler.getDVFactory();
+        if (dvFactory == null) {
+            dvFactory = SchemaDVFactory.getInstance();
+            fSchemaHandler.setDVFactory(dvFactory);
+        }
+
+        boolean psvi = componentManager.getFeature(AUGMENT_PSVI, false);
+
+        if (!psvi) {
+            if (fDeclPool != null) {
+                fDeclPool.reset();
+            }
+            else {
+                fDeclPool = new XSDeclarationPool();
+            }
+            fCMBuilder.setDeclPool(fDeclPool);
+            fSchemaHandler.setDeclPool(fDeclPool);
+            if (dvFactory instanceof SchemaDVFactoryImpl) {
+                fDeclPool.setDVFactory((SchemaDVFactoryImpl)dvFactory);
+                ((SchemaDVFactoryImpl)dvFactory).setDeclPool(fDeclPool);
+            }
+        } else {
+            fCMBuilder.setDeclPool(null);
+            fSchemaHandler.setDeclPool(null);
+        }
+
+        // get schema location properties
+        try {
+            fExternalSchemas = (String) componentManager.getProperty(SCHEMA_LOCATION);
+            fExternalNoNSSchema = (String) componentManager.getProperty(SCHEMA_NONS_LOCATION);
+        } catch (XMLConfigurationException e) {
+            fExternalSchemas = null;
+            fExternalNoNSSchema = null;
+        }
+
+        // get JAXP sources if available
+        fJAXPSource = componentManager.getProperty(JAXP_SCHEMA_SOURCE, null);
+        fJAXPProcessed = false;
+
+        // clear grammars, and put the one for schema namespace there
+        fGrammarPool = (XMLGrammarPool) componentManager.getProperty(XMLGRAMMAR_POOL, null);
+        initGrammarBucket();
+        // get continue-after-fatal-error feature
+        try {
+            boolean fatalError = componentManager.getFeature(CONTINUE_AFTER_FATAL_ERROR, false);
+            if (!fatalError) {
+                fErrorReporter.setFeature(CONTINUE_AFTER_FATAL_ERROR, fatalError);
+            }
+        } catch (XMLConfigurationException e) {
+        }
+        // set full validation to false
+        fIsCheckedFully = componentManager.getFeature(SCHEMA_FULL_CHECKING, false);
+
+        // get generate-synthetic-annotations feature
+        fSchemaHandler.setGenerateSyntheticAnnotations(componentManager.getFeature(GENERATE_SYNTHETIC_ANNOTATIONS, false));
+        fSchemaHandler.reset(componentManager);
+    }
+
+    private void initGrammarBucket(){
+        if(fGrammarPool != null) {
+            Grammar [] initialGrammars = fGrammarPool.retrieveInitialGrammarSet(XMLGrammarDescription.XML_SCHEMA);
+            for (int i = 0; i < initialGrammars.length; i++) {
+                // put this grammar into the bucket, along with grammars
+                // imported by it (directly or indirectly)
+                if (!fGrammarBucket.putGrammar((SchemaGrammar)(initialGrammars[i]), true)) {
+                    // REVISIT: a conflict between new grammar(s) and grammars
+                    // in the bucket. What to do? A warning? An exception?
+                    fErrorReporter.reportError(XSMessageFormatter.SCHEMA_DOMAIN,
+                            "GrammarConflict", null,
+                            XMLErrorReporter.SEVERITY_WARNING);
+                }
+            }
+        }
+    }
+
+
+    /* (non-Javadoc)
+     * @see com.sun.org.apache.xerces.internal.xs.XSLoader#getConfig()
+     */
+    public DOMConfiguration getConfig() {
+        return this;
+    }
+
+    /* (non-Javadoc)
+     * @see com.sun.org.apache.xerces.internal.xs.XSLoader#load(org.w3c.dom.ls.LSInput)
+     */
+    public XSModel load(LSInput is) {
+        try {
+            Grammar g = loadGrammar(dom2xmlInputSource(is));
+            return ((XSGrammar) g).toXSModel();
+        } catch (Exception e) {
+            reportDOMFatalError(e);
+            return null;
+        }
+    }
+
+    /* (non-Javadoc)
+     * @see com.sun.org.apache.xerces.internal.xs.XSLoader#loadInputList(com.sun.org.apache.xerces.internal.xs.DOMInputList)
+     */
+    public XSModel loadInputList(LSInputList is) {
+        int length = is.getLength();
+        SchemaGrammar[] gs = new SchemaGrammar[length];
+        for (int i = 0; i < length; i++) {
+            try {
+                gs[i] = (SchemaGrammar) loadGrammar(dom2xmlInputSource(is.item(i)));
+            } catch (Exception e) {
+                reportDOMFatalError(e);
+                return null;
+            }
+        }
+        return new XSModelImpl(gs);
+    }
+
+    /* (non-Javadoc)
+     * @see com.sun.org.apache.xerces.internal.xs.XSLoader#loadURI(java.lang.String)
+     */
+    public XSModel loadURI(String uri) {
+        try {
+            Grammar g = loadGrammar(new XMLInputSource(null, uri, null));
+            return ((XSGrammar)g).toXSModel();
+        }
+        catch (Exception e){
+            reportDOMFatalError(e);
+            return null;
+        }
+    }
+
+    /* (non-Javadoc)
+     * @see com.sun.org.apache.xerces.internal.xs.XSLoader#loadURIList(com.sun.org.apache.xerces.internal.xs.StringList)
+     */
+    public XSModel loadURIList(StringList uriList) {
+        int length = uriList.getLength();
+        SchemaGrammar[] gs = new SchemaGrammar[length];
+        for (int i = 0; i < length; i++) {
+            try {
+                gs[i] =
+                    (SchemaGrammar) loadGrammar(new XMLInputSource(null, uriList.item(i), null));
+            } catch (Exception e) {
+                reportDOMFatalError(e);
+                return null;
+            }
+        }
+        return new XSModelImpl(gs);
+    }
+
+    void reportDOMFatalError(Exception e) {
+                if (fErrorHandler != null) {
+                    DOMErrorImpl error = new DOMErrorImpl();
+                    error.fException = e;
+                    error.fMessage = e.getMessage();
+                    error.fSeverity = DOMError.SEVERITY_FATAL_ERROR;
+                    fErrorHandler.getErrorHandler().handleError(error);
+                }
+            }
+
+    /* (non-Javadoc)
+     * @see DOMConfiguration#canSetParameter(String, Object)
+     */
+    public boolean canSetParameter(String name, Object value) {
+        if(value instanceof Boolean){
+            if (name.equals(Constants.DOM_VALIDATE) ||
+                name.equals(SCHEMA_FULL_CHECKING) ||
+                name.equals(VALIDATE_ANNOTATIONS) ||
+                name.equals(CONTINUE_AFTER_FATAL_ERROR) ||
+                name.equals(ALLOW_JAVA_ENCODINGS) ||
+                name.equals(STANDARD_URI_CONFORMANT_FEATURE) ||
+                name.equals(GENERATE_SYNTHETIC_ANNOTATIONS) ||
+                name.equals(HONOUR_ALL_SCHEMALOCATIONS) ||
+                name.equals(NAMESPACE_GROWTH) ||
+                name.equals(TOLERATE_DUPLICATES) ||
+                name.equals(OVERRIDE_PARSER)) {
+                return true;
+
+            }
+            return false;
+        }
+        if (name.equals(Constants.DOM_ERROR_HANDLER) ||
+            name.equals(Constants.DOM_RESOURCE_RESOLVER) ||
+            name.equals(SYMBOL_TABLE) ||
+            name.equals(ERROR_REPORTER) ||
+            name.equals(ERROR_HANDLER) ||
+            name.equals(ENTITY_RESOLVER) ||
+            name.equals(XMLGRAMMAR_POOL) ||
+            name.equals(SCHEMA_LOCATION) ||
+            name.equals(SCHEMA_NONS_LOCATION) ||
+            name.equals(JAXP_SCHEMA_SOURCE) ||
+            name.equals(SCHEMA_DV_FACTORY)) {
+            return true;
+        }
+        return false;
+    }
+
+    /* (non-Javadoc)
+     * @see DOMConfiguration#getParameter(String)
+     */
+    public Object getParameter(String name) throws DOMException {
+
+        if (name.equals(Constants.DOM_ERROR_HANDLER)){
+            return (fErrorHandler != null) ? fErrorHandler.getErrorHandler() : null;
+        }
+        else if (name.equals(Constants.DOM_RESOURCE_RESOLVER)) {
+            return (fResourceResolver != null) ? fResourceResolver.getEntityResolver() : null;
+        }
+
+        try {
+            boolean feature = getFeature(name);
+            return (feature) ? Boolean.TRUE : Boolean.FALSE;
+        } catch (Exception e) {
+            Object property;
+            try {
+                property = getProperty(name);
+                return property;
+            } catch (Exception ex) {
+                String msg =
+                    DOMMessageFormatter.formatMessage(
+                            DOMMessageFormatter.DOM_DOMAIN,
+                            "FEATURE_NOT_SUPPORTED",
+                            new Object[] { name });
+                throw new DOMException(DOMException.NOT_SUPPORTED_ERR, msg);
+            }
+        }
+    }
+
+    /* (non-Javadoc)
+     * @see DOMConfiguration#getParameterNames()
+     */
+    public DOMStringList getParameterNames() {
+        if (fRecognizedParameters == null){
+            Vector v = new Vector();
+            v.add(Constants.DOM_VALIDATE);
+            v.add(Constants.DOM_ERROR_HANDLER);
+            v.add(Constants.DOM_RESOURCE_RESOLVER);
+            v.add(SYMBOL_TABLE);
+            v.add(ERROR_REPORTER);
+            v.add(ERROR_HANDLER);
+            v.add(ENTITY_RESOLVER);
+            v.add(XMLGRAMMAR_POOL);
+            v.add(SCHEMA_LOCATION);
+            v.add(SCHEMA_NONS_LOCATION);
+            v.add(JAXP_SCHEMA_SOURCE);
+            v.add(SCHEMA_FULL_CHECKING);
+            v.add(CONTINUE_AFTER_FATAL_ERROR);
+            v.add(ALLOW_JAVA_ENCODINGS);
+            v.add(STANDARD_URI_CONFORMANT_FEATURE);
+            v.add(VALIDATE_ANNOTATIONS);
+            v.add(GENERATE_SYNTHETIC_ANNOTATIONS);
+            v.add(HONOUR_ALL_SCHEMALOCATIONS);
+            v.add(NAMESPACE_GROWTH);
+            v.add(TOLERATE_DUPLICATES);
+            v.add(OVERRIDE_PARSER);
+            fRecognizedParameters = new DOMStringListImpl(v);
+        }
+        return fRecognizedParameters;
+    }
+
+    /* (non-Javadoc)
+     * @see DOMConfiguration#setParameter(String, Object)
+     */
+    public void setParameter(String name, Object value) throws DOMException {
+        if (value instanceof Boolean) {
+            boolean state = ((Boolean) value).booleanValue();
+            if (name.equals("validate") && state) {
+                return;
+            }
+            try {
+                setFeature(name, state);
+            } catch (Exception e) {
+                String msg =
+                    DOMMessageFormatter.formatMessage(
+                            DOMMessageFormatter.DOM_DOMAIN,
+                            "FEATURE_NOT_SUPPORTED",
+                            new Object[] { name });
+                throw new DOMException(DOMException.NOT_SUPPORTED_ERR, msg);
+            }
+            return;
+        }
+        if (name.equals(Constants.DOM_ERROR_HANDLER)) {
+            if (value instanceof DOMErrorHandler) {
+                try {
+                    fErrorHandler = new DOMErrorHandlerWrapper((DOMErrorHandler) value);
+                    setErrorHandler(fErrorHandler);
+                } catch (XMLConfigurationException e) {
+                }
+            } else {
+                // REVISIT: type mismatch
+                String msg =
+                    DOMMessageFormatter.formatMessage(
+                            DOMMessageFormatter.DOM_DOMAIN,
+                            "FEATURE_NOT_SUPPORTED",
+                            new Object[] { name });
+                throw new DOMException(DOMException.NOT_SUPPORTED_ERR, msg);
+            }
+            return;
+
+        }
+        if (name.equals(Constants.DOM_RESOURCE_RESOLVER)) {
+            if (value instanceof LSResourceResolver) {
+                try {
+                    fResourceResolver = new DOMEntityResolverWrapper((LSResourceResolver) value);
+                    setEntityResolver(fResourceResolver);
+                }
+                catch (XMLConfigurationException e) {}
+            } else {
+                // REVISIT: type mismatch
+                String msg =
+                    DOMMessageFormatter.formatMessage(
+                            DOMMessageFormatter.DOM_DOMAIN,
+                            "FEATURE_NOT_SUPPORTED",
+                            new Object[] { name });
+                throw new DOMException(DOMException.NOT_SUPPORTED_ERR, msg);
+            }
+            return;
+        }
+
+        try {
+            setProperty(name, value);
+        } catch (Exception ex) {
+
+            String msg =
+                DOMMessageFormatter.formatMessage(
+                        DOMMessageFormatter.DOM_DOMAIN,
+                        "FEATURE_NOT_SUPPORTED",
+                        new Object[] { name });
+            throw new DOMException(DOMException.NOT_SUPPORTED_ERR, msg);
+
+        }
+
+    }
+
+        XMLInputSource dom2xmlInputSource(LSInput is) {
+        // need to wrap the LSInput with an XMLInputSource
+        XMLInputSource xis = null;
+
+        /**
+         * An LSParser looks at inputs specified in LSInput in
+         * the following order: characterStream, byteStream,
+         * stringData, systemId, publicId. For consistency
+         * have the same behaviour for XSLoader.
+         */
+
+        // check whether there is a Reader
+        // according to DOM, we need to treat such reader as "UTF-16".
+        if (is.getCharacterStream() != null) {
+            xis = new XMLInputSource(is.getPublicId(), is.getSystemId(),
+                    is.getBaseURI(), is.getCharacterStream(),
+            "UTF-16");
+        }
+        // check whether there is an InputStream
+        else if (is.getByteStream() != null) {
+            xis = new XMLInputSource(is.getPublicId(), is.getSystemId(),
+                    is.getBaseURI(), is.getByteStream(),
+                    is.getEncoding());
+        }
+        // if there is a string data, use a StringReader
+        // according to DOM, we need to treat such data as "UTF-16".
+        else if (is.getStringData() != null && is.getStringData().length() != 0) {
+            xis = new XMLInputSource(is.getPublicId(), is.getSystemId(),
+                    is.getBaseURI(), new StringReader(is.getStringData()),
+            "UTF-16");
+        }
+        // otherwise, just use the public/system/base Ids
+        else {
+            xis = new XMLInputSource(is.getPublicId(), is.getSystemId(),
+                    is.getBaseURI());
+        }
+
+        return xis;
+    }
+
+} // XMLGrammarLoader

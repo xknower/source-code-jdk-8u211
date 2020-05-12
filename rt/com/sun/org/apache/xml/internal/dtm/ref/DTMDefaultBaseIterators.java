@@ -1,2201 +1,2195 @@
-/*      */ package com.sun.org.apache.xml.internal.dtm.ref;
-/*      */ 
-/*      */ import com.sun.org.apache.xml.internal.dtm.Axis;
-/*      */ import com.sun.org.apache.xml.internal.dtm.DTMAxisIterator;
-/*      */ import com.sun.org.apache.xml.internal.dtm.DTMAxisTraverser;
-/*      */ import com.sun.org.apache.xml.internal.dtm.DTMException;
-/*      */ import com.sun.org.apache.xml.internal.dtm.DTMManager;
-/*      */ import com.sun.org.apache.xml.internal.dtm.DTMWSFilter;
-/*      */ import com.sun.org.apache.xml.internal.res.XMLMessages;
-/*      */ import com.sun.org.apache.xml.internal.utils.NodeVector;
-/*      */ import com.sun.org.apache.xml.internal.utils.XMLStringFactory;
-/*      */ import javax.xml.transform.Source;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public abstract class DTMDefaultBaseIterators
-/*      */   extends DTMDefaultBaseTraversers
-/*      */ {
-/*      */   public DTMDefaultBaseIterators(DTMManager mgr, Source source, int dtmIdentity, DTMWSFilter whiteSpaceFilter, XMLStringFactory xstringfactory, boolean doIndexing) {
-/*   59 */     super(mgr, source, dtmIdentity, whiteSpaceFilter, xstringfactory, doIndexing);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public DTMDefaultBaseIterators(DTMManager mgr, Source source, int dtmIdentity, DTMWSFilter whiteSpaceFilter, XMLStringFactory xstringfactory, boolean doIndexing, int blocksize, boolean usePrevsib, boolean newNameTable) {
-/*   87 */     super(mgr, source, dtmIdentity, whiteSpaceFilter, xstringfactory, doIndexing, blocksize, usePrevsib, newNameTable);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public DTMAxisIterator getTypedAxisIterator(int axis, int type) {
-/*  105 */     DTMAxisIterator iterator = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  121 */     switch (axis) {
-/*      */       
-/*      */       case 13:
-/*  124 */         iterator = new TypedSingletonIterator(type);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*  170 */         return iterator;case 3: iterator = new TypedChildrenIterator(type); return iterator;case 10: return (new ParentIterator()).setNodeType(type);case 0: return new TypedAncestorIterator(type);case 1: return (new TypedAncestorIterator(type)).includeSelf();case 2: return new TypedAttributeIterator(type);case 4: iterator = new TypedDescendantIterator(type); return iterator;case 5: iterator = (new TypedDescendantIterator(type)).includeSelf(); return iterator;case 6: iterator = new TypedFollowingIterator(type); return iterator;case 11: iterator = new TypedPrecedingIterator(type); return iterator;case 7: iterator = new TypedFollowingSiblingIterator(type); return iterator;case 12: iterator = new TypedPrecedingSiblingIterator(type); return iterator;case 9: iterator = new TypedNamespaceIterator(type); return iterator;case 19: iterator = new TypedRootIterator(type); return iterator;
-/*      */     } 
-/*      */     throw new DTMException(XMLMessages.createXMLMessage("ER_TYPED_ITERATOR_AXIS_NOT_IMPLEMENTED", new Object[] { Axis.getNames(axis) }));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public DTMAxisIterator getAxisIterator(int axis) {
-/*  186 */     DTMAxisIterator iterator = null;
-/*      */     
-/*  188 */     switch (axis) {
-/*      */       
-/*      */       case 13:
-/*  191 */         iterator = new SingletonIterator();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*  236 */         return iterator;case 3: iterator = new ChildrenIterator(); return iterator;case 10: return new ParentIterator();case 0: return new AncestorIterator();case 1: return (new AncestorIterator()).includeSelf();case 2: return new AttributeIterator();case 4: iterator = new DescendantIterator(); return iterator;case 5: iterator = (new DescendantIterator()).includeSelf(); return iterator;case 6: iterator = new FollowingIterator(); return iterator;case 11: iterator = new PrecedingIterator(); return iterator;case 7: iterator = new FollowingSiblingIterator(); return iterator;case 12: iterator = new PrecedingSiblingIterator(); return iterator;case 9: iterator = new NamespaceIterator(); return iterator;case 19: iterator = new RootIterator(); return iterator;
-/*      */     } 
-/*      */     throw new DTMException(XMLMessages.createXMLMessage("ER_ITERATOR_AXIS_NOT_IMPLEMENTED", new Object[] { Axis.getNames(axis) }));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public abstract class InternalAxisIteratorBase
-/*      */     extends DTMAxisIteratorBase
-/*      */   {
-/*      */     protected int _currentNode;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void setMark() {
-/*  272 */       this._markedNode = this._currentNode;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void gotoMark() {
-/*  282 */       this._currentNode = this._markedNode;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final class ChildrenIterator
-/*      */     extends InternalAxisIteratorBase
-/*      */   {
-/*      */     public DTMAxisIterator setStartNode(int node) {
-/*  308 */       if (node == 0)
-/*  309 */         node = DTMDefaultBaseIterators.this.getDocument(); 
-/*  310 */       if (this._isRestartable) {
-/*      */         
-/*  312 */         this._startNode = node;
-/*  313 */         this
-/*  314 */           ._currentNode = (node == -1) ? -1 : DTMDefaultBaseIterators.this._firstch(DTMDefaultBaseIterators.this.makeNodeIdentity(node));
-/*      */         
-/*  316 */         return resetPosition();
-/*      */       } 
-/*      */       
-/*  319 */       return this;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int next() {
-/*  330 */       if (this._currentNode != -1) {
-/*  331 */         int node = this._currentNode;
-/*  332 */         this._currentNode = DTMDefaultBaseIterators.this._nextsib(node);
-/*  333 */         return returnNode(DTMDefaultBaseIterators.this.makeNodeHandle(node));
-/*      */       } 
-/*      */       
-/*  336 */       return -1;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final class ParentIterator
-/*      */     extends InternalAxisIteratorBase
-/*      */   {
-/*      */     private int _nodeType;
-/*      */ 
-/*      */     
-/*      */     public ParentIterator() {
-/*  349 */       this._nodeType = -1;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public DTMAxisIterator setStartNode(int node) {
-/*  362 */       if (node == 0)
-/*  363 */         node = DTMDefaultBaseIterators.this.getDocument(); 
-/*  364 */       if (this._isRestartable) {
-/*      */         
-/*  366 */         this._startNode = node;
-/*  367 */         this._currentNode = DTMDefaultBaseIterators.this.getParent(node);
-/*      */         
-/*  369 */         return resetPosition();
-/*      */       } 
-/*      */       
-/*  372 */       return this;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public DTMAxisIterator setNodeType(int type) {
-/*  388 */       this._nodeType = type;
-/*      */       
-/*  390 */       return this;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int next() {
-/*  401 */       int result = this._currentNode;
-/*      */       
-/*  403 */       if (this._nodeType >= 14) {
-/*  404 */         if (this._nodeType != DTMDefaultBaseIterators.this.getExpandedTypeID(this._currentNode)) {
-/*  405 */           result = -1;
-/*      */         }
-/*  407 */       } else if (this._nodeType != -1 && 
-/*  408 */         this._nodeType != DTMDefaultBaseIterators.this.getNodeType(this._currentNode)) {
-/*  409 */         result = -1;
-/*      */       } 
-/*      */ 
-/*      */       
-/*  413 */       this._currentNode = -1;
-/*      */       
-/*  415 */       return returnNode(result);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final class TypedChildrenIterator
-/*      */     extends InternalAxisIteratorBase
-/*      */   {
-/*      */     private final int _nodeType;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public TypedChildrenIterator(int nodeType) {
-/*  439 */       this._nodeType = nodeType;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public DTMAxisIterator setStartNode(int node) {
-/*  453 */       if (node == 0)
-/*  454 */         node = DTMDefaultBaseIterators.this.getDocument(); 
-/*  455 */       if (this._isRestartable) {
-/*      */         
-/*  457 */         this._startNode = node;
-/*  458 */         this
-/*      */           
-/*  460 */           ._currentNode = (node == -1) ? -1 : DTMDefaultBaseIterators.this._firstch(DTMDefaultBaseIterators.this.makeNodeIdentity(this._startNode));
-/*      */         
-/*  462 */         return resetPosition();
-/*      */       } 
-/*      */       
-/*  465 */       return this;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int next() {
-/*  476 */       int node = this._currentNode;
-/*      */       
-/*  478 */       int nodeType = this._nodeType;
-/*      */       
-/*  480 */       if (nodeType >= 14) {
-/*  481 */         while (node != -1 && DTMDefaultBaseIterators.this._exptype(node) != nodeType) {
-/*  482 */           node = DTMDefaultBaseIterators.this._nextsib(node);
-/*      */         }
-/*      */       } else {
-/*  485 */         while (node != -1) {
-/*  486 */           int eType = DTMDefaultBaseIterators.this._exptype(node);
-/*  487 */           if ((eType < 14) ? (
-/*  488 */             eType == nodeType) : (
-/*      */ 
-/*      */             
-/*  491 */             DTMDefaultBaseIterators.this.m_expandedNameTable.getType(eType) == nodeType)) {
-/*      */             break;
-/*      */           }
-/*  494 */           node = DTMDefaultBaseIterators.this._nextsib(node);
-/*      */         } 
-/*      */       } 
-/*      */       
-/*  498 */       if (node == -1) {
-/*  499 */         this._currentNode = -1;
-/*  500 */         return -1;
-/*      */       } 
-/*  502 */       this._currentNode = DTMDefaultBaseIterators.this._nextsib(node);
-/*  503 */       return returnNode(DTMDefaultBaseIterators.this.makeNodeHandle(node));
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final class NamespaceChildrenIterator
-/*      */     extends InternalAxisIteratorBase
-/*      */   {
-/*      */     private final int _nsType;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public NamespaceChildrenIterator(int type) {
-/*  530 */       this._nsType = type;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public DTMAxisIterator setStartNode(int node) {
-/*  544 */       if (node == 0)
-/*  545 */         node = DTMDefaultBaseIterators.this.getDocument(); 
-/*  546 */       if (this._isRestartable) {
-/*      */         
-/*  548 */         this._startNode = node;
-/*  549 */         this._currentNode = (node == -1) ? -1 : -2;
-/*      */         
-/*  551 */         return resetPosition();
-/*      */       } 
-/*      */       
-/*  554 */       return this;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int next() {
-/*  564 */       if (this._currentNode != -1) {
-/*      */ 
-/*      */         
-/*  567 */         int node = (-2 == this._currentNode) ? DTMDefaultBaseIterators.this._firstch(DTMDefaultBaseIterators.this.makeNodeIdentity(this._startNode)) : DTMDefaultBaseIterators.this._nextsib(this._currentNode);
-/*  568 */         for (; node != -1; 
-/*  569 */           node = DTMDefaultBaseIterators.this._nextsib(node)) {
-/*  570 */           if (DTMDefaultBaseIterators.this.m_expandedNameTable.getNamespaceID(DTMDefaultBaseIterators.this._exptype(node)) == this._nsType) {
-/*  571 */             this._currentNode = node;
-/*      */             
-/*  573 */             return returnNode(node);
-/*      */           } 
-/*      */         } 
-/*      */       } 
-/*      */       
-/*  578 */       return -1;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public class NamespaceIterator
-/*      */     extends InternalAxisIteratorBase
-/*      */   {
-/*      */     public DTMAxisIterator setStartNode(int node) {
-/*  610 */       if (node == 0)
-/*  611 */         node = DTMDefaultBaseIterators.this.getDocument(); 
-/*  612 */       if (this._isRestartable) {
-/*      */         
-/*  614 */         this._startNode = node;
-/*  615 */         this._currentNode = DTMDefaultBaseIterators.this.getFirstNamespaceNode(node, true);
-/*      */         
-/*  617 */         return resetPosition();
-/*      */       } 
-/*      */       
-/*  620 */       return this;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int next() {
-/*  631 */       int node = this._currentNode;
-/*      */       
-/*  633 */       if (-1 != node) {
-/*  634 */         this._currentNode = DTMDefaultBaseIterators.this.getNextNamespaceNode(this._startNode, node, true);
-/*      */       }
-/*  636 */       return returnNode(node);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public class TypedNamespaceIterator
-/*      */     extends NamespaceIterator
-/*      */   {
-/*      */     private final int _nodeType;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public TypedNamespaceIterator(int nodeType) {
-/*  659 */       this._nodeType = nodeType;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int next() {
-/*  671 */       int node = this._currentNode;
-/*  672 */       for (; node != -1; 
-/*  673 */         node = DTMDefaultBaseIterators.this.getNextNamespaceNode(this._startNode, node, true)) {
-/*  674 */         if (DTMDefaultBaseIterators.this.getExpandedTypeID(node) == this._nodeType || DTMDefaultBaseIterators.this
-/*  675 */           .getNodeType(node) == this._nodeType || DTMDefaultBaseIterators.this
-/*  676 */           .getNamespaceType(node) == this._nodeType) {
-/*  677 */           this._currentNode = node;
-/*      */           
-/*  679 */           return returnNode(node);
-/*      */         } 
-/*      */       } 
-/*      */       
-/*  683 */       return this._currentNode = -1;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public class RootIterator
-/*      */     extends InternalAxisIteratorBase
-/*      */   {
-/*      */     public DTMAxisIterator setStartNode(int node) {
-/*  715 */       if (this._isRestartable) {
-/*      */         
-/*  717 */         this._startNode = DTMDefaultBaseIterators.this.getDocumentRoot(node);
-/*  718 */         this._currentNode = -1;
-/*      */         
-/*  720 */         return resetPosition();
-/*      */       } 
-/*      */       
-/*  723 */       return this;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int next() {
-/*  733 */       if (this._startNode == this._currentNode) {
-/*  734 */         return -1;
-/*      */       }
-/*  736 */       this._currentNode = this._startNode;
-/*      */       
-/*  738 */       return returnNode(this._startNode);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public class TypedRootIterator
-/*      */     extends RootIterator
-/*      */   {
-/*      */     private final int _nodeType;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public TypedRootIterator(int nodeType) {
-/*  760 */       this._nodeType = nodeType;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int next() {
-/*  770 */       if (this._startNode == this._currentNode) {
-/*  771 */         return -1;
-/*      */       }
-/*  773 */       int nodeType = this._nodeType;
-/*  774 */       int node = this._startNode;
-/*  775 */       int expType = DTMDefaultBaseIterators.this.getExpandedTypeID(node);
-/*      */       
-/*  777 */       this._currentNode = node;
-/*      */       
-/*  779 */       if (nodeType >= 14) {
-/*  780 */         if (nodeType == expType) {
-/*  781 */           return returnNode(node);
-/*      */         }
-/*      */       }
-/*  784 */       else if (expType < 14) {
-/*  785 */         if (expType == nodeType) {
-/*  786 */           return returnNode(node);
-/*      */         }
-/*      */       }
-/*  789 */       else if (DTMDefaultBaseIterators.this.m_expandedNameTable.getType(expType) == nodeType) {
-/*  790 */         return returnNode(node);
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */       
-/*  795 */       return -1;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final class NamespaceAttributeIterator
-/*      */     extends InternalAxisIteratorBase
-/*      */   {
-/*      */     private final int _nsType;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public NamespaceAttributeIterator(int nsType) {
-/*  820 */       this._nsType = nsType;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public DTMAxisIterator setStartNode(int node) {
-/*  834 */       if (node == 0)
-/*  835 */         node = DTMDefaultBaseIterators.this.getDocument(); 
-/*  836 */       if (this._isRestartable) {
-/*      */         
-/*  838 */         this._startNode = node;
-/*  839 */         this._currentNode = DTMDefaultBaseIterators.this.getFirstNamespaceNode(node, false);
-/*      */         
-/*  841 */         return resetPosition();
-/*      */       } 
-/*      */       
-/*  844 */       return this;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int next() {
-/*  855 */       int node = this._currentNode;
-/*      */       
-/*  857 */       if (-1 != node) {
-/*  858 */         this._currentNode = DTMDefaultBaseIterators.this.getNextNamespaceNode(this._startNode, node, false);
-/*      */       }
-/*  860 */       return returnNode(node);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public class FollowingSiblingIterator
-/*      */     extends InternalAxisIteratorBase
-/*      */   {
-/*      */     public DTMAxisIterator setStartNode(int node) {
-/*  881 */       if (node == 0)
-/*  882 */         node = DTMDefaultBaseIterators.this.getDocument(); 
-/*  883 */       if (this._isRestartable) {
-/*      */         
-/*  885 */         this._startNode = node;
-/*  886 */         this._currentNode = DTMDefaultBaseIterators.this.makeNodeIdentity(node);
-/*      */         
-/*  888 */         return resetPosition();
-/*      */       } 
-/*      */       
-/*  891 */       return this;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int next() {
-/*  901 */       this
-/*  902 */         ._currentNode = (this._currentNode == -1) ? -1 : DTMDefaultBaseIterators.this._nextsib(this._currentNode);
-/*  903 */       return returnNode(DTMDefaultBaseIterators.this.makeNodeHandle(this._currentNode));
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final class TypedFollowingSiblingIterator
-/*      */     extends FollowingSiblingIterator
-/*      */   {
-/*      */     private final int _nodeType;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public TypedFollowingSiblingIterator(int type) {
-/*  925 */       this._nodeType = type;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int next() {
-/*  935 */       if (this._currentNode == -1) {
-/*  936 */         return -1;
-/*      */       }
-/*      */       
-/*  939 */       int node = this._currentNode;
-/*      */       
-/*  941 */       int nodeType = this._nodeType;
-/*      */       
-/*  943 */       if (nodeType >= 14) {
-/*      */         do {
-/*  945 */           node = DTMDefaultBaseIterators.this._nextsib(node);
-/*  946 */         } while (node != -1 && DTMDefaultBaseIterators.this._exptype(node) != nodeType);
-/*      */       } else {
-/*  948 */         while ((node = DTMDefaultBaseIterators.this._nextsib(node)) != -1) {
-/*  949 */           int eType = DTMDefaultBaseIterators.this._exptype(node);
-/*  950 */           if ((eType < 14) ? (
-/*  951 */             eType == nodeType) : (
-/*      */ 
-/*      */             
-/*  954 */             DTMDefaultBaseIterators.this.m_expandedNameTable.getType(eType) == nodeType)) {
-/*      */             break;
-/*      */           }
-/*      */         } 
-/*      */       } 
-/*      */       
-/*  960 */       this._currentNode = node;
-/*      */       
-/*  962 */       return (this._currentNode == -1) ? -1 : 
-/*      */         
-/*  964 */         returnNode(DTMDefaultBaseIterators.this.makeNodeHandle(this._currentNode));
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final class AttributeIterator
-/*      */     extends InternalAxisIteratorBase
-/*      */   {
-/*      */     public DTMAxisIterator setStartNode(int node) {
-/*  987 */       if (node == 0)
-/*  988 */         node = DTMDefaultBaseIterators.this.getDocument(); 
-/*  989 */       if (this._isRestartable) {
-/*      */         
-/*  991 */         this._startNode = node;
-/*  992 */         this._currentNode = DTMDefaultBaseIterators.this.getFirstAttributeIdentity(DTMDefaultBaseIterators.this.makeNodeIdentity(node));
-/*      */         
-/*  994 */         return resetPosition();
-/*      */       } 
-/*      */       
-/*  997 */       return this;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int next() {
-/* 1008 */       int node = this._currentNode;
-/*      */       
-/* 1010 */       if (node != -1) {
-/* 1011 */         this._currentNode = DTMDefaultBaseIterators.this.getNextAttributeIdentity(node);
-/* 1012 */         return returnNode(DTMDefaultBaseIterators.this.makeNodeHandle(node));
-/*      */       } 
-/*      */       
-/* 1015 */       return -1;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final class TypedAttributeIterator
-/*      */     extends InternalAxisIteratorBase
-/*      */   {
-/*      */     private final int _nodeType;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public TypedAttributeIterator(int nodeType) {
-/* 1036 */       this._nodeType = nodeType;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public DTMAxisIterator setStartNode(int node) {
-/* 1051 */       if (this._isRestartable) {
-/*      */         
-/* 1053 */         this._startNode = node;
-/*      */         
-/* 1055 */         this._currentNode = DTMDefaultBaseIterators.this.getTypedAttribute(node, this._nodeType);
-/*      */         
-/* 1057 */         return resetPosition();
-/*      */       } 
-/*      */       
-/* 1060 */       return this;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int next() {
-/* 1071 */       int node = this._currentNode;
-/*      */ 
-/*      */ 
-/*      */       
-/* 1075 */       this._currentNode = -1;
-/*      */       
-/* 1077 */       return returnNode(node);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public class PrecedingSiblingIterator
-/*      */     extends InternalAxisIteratorBase
-/*      */   {
-/*      */     protected int _startNodeID;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public boolean isReverse() {
-/* 1099 */       return true;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public DTMAxisIterator setStartNode(int node) {
-/* 1113 */       if (node == 0)
-/* 1114 */         node = DTMDefaultBaseIterators.this.getDocument(); 
-/* 1115 */       if (this._isRestartable) {
-/*      */         
-/* 1117 */         this._startNode = node;
-/* 1118 */         node = this._startNodeID = DTMDefaultBaseIterators.this.makeNodeIdentity(node);
-/*      */         
-/* 1120 */         if (node == -1) {
-/*      */           
-/* 1122 */           this._currentNode = node;
-/* 1123 */           return resetPosition();
-/*      */         } 
-/*      */         
-/* 1126 */         int type = DTMDefaultBaseIterators.this.m_expandedNameTable.getType(DTMDefaultBaseIterators.this._exptype(node));
-/* 1127 */         if (2 == type || 13 == type) {
-/*      */ 
-/*      */           
-/* 1130 */           this._currentNode = node;
-/*      */         
-/*      */         }
-/*      */         else {
-/*      */           
-/* 1135 */           this._currentNode = DTMDefaultBaseIterators.this._parent(node);
-/* 1136 */           if (-1 != this._currentNode) {
-/* 1137 */             this._currentNode = DTMDefaultBaseIterators.this._firstch(this._currentNode);
-/*      */           } else {
-/* 1139 */             this._currentNode = node;
-/*      */           } 
-/*      */         } 
-/* 1142 */         return resetPosition();
-/*      */       } 
-/*      */       
-/* 1145 */       return this;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int next() {
-/* 1156 */       if (this._currentNode == this._startNodeID || this._currentNode == -1)
-/*      */       {
-/* 1158 */         return -1;
-/*      */       }
-/*      */ 
-/*      */       
-/* 1162 */       int node = this._currentNode;
-/* 1163 */       this._currentNode = DTMDefaultBaseIterators.this._nextsib(node);
-/*      */       
-/* 1165 */       return returnNode(DTMDefaultBaseIterators.this.makeNodeHandle(node));
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final class TypedPrecedingSiblingIterator
-/*      */     extends PrecedingSiblingIterator
-/*      */   {
-/*      */     private final int _nodeType;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public TypedPrecedingSiblingIterator(int type) {
-/* 1189 */       this._nodeType = type;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int next() {
-/* 1199 */       int node = this._currentNode;
-/*      */ 
-/*      */       
-/* 1202 */       int nodeType = this._nodeType;
-/* 1203 */       int startID = this._startNodeID;
-/*      */       
-/* 1205 */       if (nodeType >= 14) {
-/* 1206 */         while (node != -1 && node != startID && DTMDefaultBaseIterators.this._exptype(node) != nodeType) {
-/* 1207 */           node = DTMDefaultBaseIterators.this._nextsib(node);
-/*      */         }
-/*      */       } else {
-/* 1210 */         while (node != -1 && node != startID) {
-/* 1211 */           int expType = DTMDefaultBaseIterators.this._exptype(node);
-/* 1212 */           if ((expType < 14) ? (
-/* 1213 */             expType == nodeType) : (
-/*      */ 
-/*      */ 
-/*      */             
-/* 1217 */             DTMDefaultBaseIterators.this.m_expandedNameTable.getType(expType) == nodeType)) {
-/*      */             break;
-/*      */           }
-/*      */           
-/* 1221 */           node = DTMDefaultBaseIterators.this._nextsib(node);
-/*      */         } 
-/*      */       } 
-/*      */       
-/* 1225 */       if (node == -1 || node == this._startNodeID) {
-/* 1226 */         this._currentNode = -1;
-/* 1227 */         return -1;
-/*      */       } 
-/* 1229 */       this._currentNode = DTMDefaultBaseIterators.this._nextsib(node);
-/* 1230 */       return returnNode(DTMDefaultBaseIterators.this.makeNodeHandle(node));
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   public class PrecedingIterator extends InternalAxisIteratorBase {
-/*      */     private final int _maxAncestors = 8;
-/*      */     protected int[] _stack;
-/*      */     protected int _sp;
-/*      */     protected int _oldsp;
-/*      */     protected int _markedsp;
-/*      */     protected int _markedNode;
-/*      */     protected int _markedDescendant;
-/*      */     
-/*      */     public PrecedingIterator() {
-/* 1244 */       this._maxAncestors = 8;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1250 */       this._stack = new int[8];
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public boolean isReverse() {
-/* 1266 */       return true;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public DTMAxisIterator cloneIterator() {
-/* 1276 */       this._isRestartable = false;
-/*      */ 
-/*      */       
-/*      */       try {
-/* 1280 */         PrecedingIterator clone = (PrecedingIterator)clone();
-/* 1281 */         int[] stackCopy = new int[this._stack.length];
-/* 1282 */         System.arraycopy(this._stack, 0, stackCopy, 0, this._stack.length);
-/*      */         
-/* 1284 */         clone._stack = stackCopy;
-/*      */ 
-/*      */         
-/* 1287 */         return clone;
-/*      */       }
-/* 1289 */       catch (CloneNotSupportedException e) {
-/*      */         
-/* 1291 */         throw new DTMException(XMLMessages.createXMLMessage("ER_ITERATOR_CLONE_NOT_SUPPORTED", null));
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public DTMAxisIterator setStartNode(int node) {
-/* 1306 */       if (node == 0)
-/* 1307 */         node = DTMDefaultBaseIterators.this.getDocument(); 
-/* 1308 */       if (this._isRestartable) {
-/*      */         
-/* 1310 */         node = DTMDefaultBaseIterators.this.makeNodeIdentity(node);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1315 */         if (DTMDefaultBaseIterators.this._type(node) == 2) {
-/* 1316 */           node = DTMDefaultBaseIterators.this._parent(node);
-/*      */         }
-/* 1318 */         this._startNode = node; int index;
-/* 1319 */         this._stack[index = 0] = node;
-/*      */ 
-/*      */ 
-/*      */         
-/* 1323 */         int parent = node;
-/* 1324 */         while ((parent = DTMDefaultBaseIterators.this._parent(parent)) != -1) {
-/*      */           
-/* 1326 */           if (++index == this._stack.length) {
-/*      */             
-/* 1328 */             int[] stack = new int[index + 4];
-/* 1329 */             System.arraycopy(this._stack, 0, stack, 0, index);
-/* 1330 */             this._stack = stack;
-/*      */           } 
-/* 1332 */           this._stack[index] = parent;
-/*      */         } 
-/* 1334 */         if (index > 0) {
-/* 1335 */           index--;
-/*      */         }
-/* 1337 */         this._currentNode = this._stack[index];
-/*      */         
-/* 1339 */         this._oldsp = this._sp = index;
-/*      */         
-/* 1341 */         return resetPosition();
-/*      */       } 
-/*      */       
-/* 1344 */       return this;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int next() {
-/* 1357 */       this._currentNode++;
-/* 1358 */       for (; this._sp >= 0; 
-/* 1359 */         this._currentNode++) {
-/*      */         
-/* 1361 */         if (this._currentNode < this._stack[this._sp]) {
-/*      */           
-/* 1363 */           if (DTMDefaultBaseIterators.this._type(this._currentNode) != 2 && DTMDefaultBaseIterators.this
-/* 1364 */             ._type(this._currentNode) != 13) {
-/* 1365 */             return returnNode(DTMDefaultBaseIterators.this.makeNodeHandle(this._currentNode));
-/*      */           }
-/*      */         } else {
-/* 1368 */           this._sp--;
-/*      */         } 
-/* 1370 */       }  return -1;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public DTMAxisIterator reset() {
-/* 1384 */       this._sp = this._oldsp;
-/*      */       
-/* 1386 */       return resetPosition();
-/*      */     }
-/*      */     
-/*      */     public void setMark() {
-/* 1390 */       this._markedsp = this._sp;
-/* 1391 */       this._markedNode = this._currentNode;
-/* 1392 */       this._markedDescendant = this._stack[0];
-/*      */     }
-/*      */     
-/*      */     public void gotoMark() {
-/* 1396 */       this._sp = this._markedsp;
-/* 1397 */       this._currentNode = this._markedNode;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final class TypedPrecedingIterator
-/*      */     extends PrecedingIterator
-/*      */   {
-/*      */     private final int _nodeType;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public TypedPrecedingIterator(int type) {
-/* 1420 */       this._nodeType = type;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int next() {
-/* 1430 */       int node = this._currentNode;
-/* 1431 */       int nodeType = this._nodeType;
-/*      */       
-/* 1433 */       if (nodeType >= 14) {
-/*      */         while (true) {
-/* 1435 */           node++;
-/*      */           
-/* 1437 */           if (this._sp < 0) {
-/* 1438 */             node = -1; break;
-/*      */           } 
-/* 1440 */           if (node >= this._stack[this._sp]) {
-/* 1441 */             if (--this._sp < 0) {
-/* 1442 */               node = -1; break;
-/*      */             }  continue;
-/*      */           } 
-/* 1445 */           if (DTMDefaultBaseIterators.this._exptype(node) == nodeType) {
-/*      */             break;
-/*      */           }
-/*      */         } 
-/*      */       } else {
-/*      */         
-/*      */         while (true) {
-/*      */           
-/* 1453 */           node++;
-/*      */           
-/* 1455 */           if (this._sp < 0) {
-/* 1456 */             node = -1; break;
-/*      */           } 
-/* 1458 */           if (node >= this._stack[this._sp]) {
-/* 1459 */             if (--this._sp < 0) {
-/* 1460 */               node = -1; break;
-/*      */             } 
-/*      */             continue;
-/*      */           } 
-/* 1464 */           int expType = DTMDefaultBaseIterators.this._exptype(node);
-/* 1465 */           if ((expType < 14) ? (
-/* 1466 */             expType == nodeType) : (
-/*      */ 
-/*      */ 
-/*      */             
-/* 1470 */             DTMDefaultBaseIterators.this.m_expandedNameTable.getType(expType) == nodeType)) {
-/*      */             break;
-/*      */           }
-/*      */         } 
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1478 */       this._currentNode = node;
-/*      */       
-/* 1480 */       return (node == -1) ? -1 : returnNode(DTMDefaultBaseIterators.this.makeNodeHandle(node));
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public class FollowingIterator
-/*      */     extends InternalAxisIteratorBase
-/*      */   {
-/*      */     DTMAxisTraverser m_traverser;
-/*      */ 
-/*      */     
-/*      */     public FollowingIterator() {
-/* 1493 */       this.m_traverser = DTMDefaultBaseIterators.this.getAxisTraverser(6);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public DTMAxisIterator setStartNode(int node) {
-/* 1507 */       if (node == 0)
-/* 1508 */         node = DTMDefaultBaseIterators.this.getDocument(); 
-/* 1509 */       if (this._isRestartable) {
-/*      */         
-/* 1511 */         this._startNode = node;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1518 */         this._currentNode = this.m_traverser.first(node);
-/*      */ 
-/*      */         
-/* 1521 */         return resetPosition();
-/*      */       } 
-/*      */       
-/* 1524 */       return this;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int next() {
-/* 1535 */       int node = this._currentNode;
-/*      */       
-/* 1537 */       this._currentNode = this.m_traverser.next(this._startNode, this._currentNode);
-/*      */       
-/* 1539 */       return returnNode(node);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final class TypedFollowingIterator
-/*      */     extends FollowingIterator
-/*      */   {
-/*      */     private final int _nodeType;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public TypedFollowingIterator(int type) {
-/* 1560 */       this._nodeType = type;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int next() {
-/*      */       int node;
-/*      */       do {
-/* 1574 */         node = this._currentNode;
-/*      */         
-/* 1576 */         this._currentNode = this.m_traverser.next(this._startNode, this._currentNode);
-/*      */       
-/*      */       }
-/* 1579 */       while (node != -1 && DTMDefaultBaseIterators.this
-/* 1580 */         .getExpandedTypeID(node) != this._nodeType && DTMDefaultBaseIterators.this.getNodeType(node) != this._nodeType);
-/*      */       
-/* 1582 */       return (node == -1) ? -1 : returnNode(node);
-/*      */     } }
-/*      */   
-/*      */   public class AncestorIterator extends InternalAxisIteratorBase {
-/*      */     NodeVector m_ancestors;
-/*      */     int m_ancestorsPos;
-/*      */     int m_markedPos;
-/*      */     int m_realStartNode;
-/*      */     
-/*      */     public AncestorIterator() {
-/* 1592 */       this.m_ancestors = new NodeVector();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getStartNode() {
-/* 1610 */       return this.m_realStartNode;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public final boolean isReverse() {
-/* 1620 */       return true;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public DTMAxisIterator cloneIterator() {
-/* 1630 */       this._isRestartable = false;
-/*      */ 
-/*      */       
-/*      */       try {
-/* 1634 */         AncestorIterator clone = (AncestorIterator)clone();
-/*      */         
-/* 1636 */         clone._startNode = this._startNode;
-/*      */ 
-/*      */         
-/* 1639 */         return clone;
-/*      */       }
-/* 1641 */       catch (CloneNotSupportedException e) {
-/*      */         
-/* 1643 */         throw new DTMException(XMLMessages.createXMLMessage("ER_ITERATOR_CLONE_NOT_SUPPORTED", null));
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public DTMAxisIterator setStartNode(int node) {
-/* 1658 */       if (node == 0)
-/* 1659 */         node = DTMDefaultBaseIterators.this.getDocument(); 
-/* 1660 */       this.m_realStartNode = node;
-/*      */       
-/* 1662 */       if (this._isRestartable) {
-/*      */         
-/* 1664 */         int nodeID = DTMDefaultBaseIterators.this.makeNodeIdentity(node);
-/*      */         
-/* 1666 */         if (!this._includeSelf && node != -1) {
-/* 1667 */           nodeID = DTMDefaultBaseIterators.this._parent(nodeID);
-/* 1668 */           node = DTMDefaultBaseIterators.this.makeNodeHandle(nodeID);
-/*      */         } 
-/*      */         
-/* 1671 */         this._startNode = node;
-/*      */         
-/* 1673 */         while (nodeID != -1) {
-/* 1674 */           this.m_ancestors.addElement(node);
-/* 1675 */           nodeID = DTMDefaultBaseIterators.this._parent(nodeID);
-/* 1676 */           node = DTMDefaultBaseIterators.this.makeNodeHandle(nodeID);
-/*      */         } 
-/* 1678 */         this.m_ancestorsPos = this.m_ancestors.size() - 1;
-/*      */         
-/* 1680 */         this
-/* 1681 */           ._currentNode = (this.m_ancestorsPos >= 0) ? this.m_ancestors.elementAt(this.m_ancestorsPos) : -1;
-/*      */ 
-/*      */         
-/* 1684 */         return resetPosition();
-/*      */       } 
-/*      */       
-/* 1687 */       return this;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public DTMAxisIterator reset() {
-/* 1699 */       this.m_ancestorsPos = this.m_ancestors.size() - 1;
-/*      */       
-/* 1701 */       this._currentNode = (this.m_ancestorsPos >= 0) ? this.m_ancestors.elementAt(this.m_ancestorsPos) : -1;
-/*      */ 
-/*      */       
-/* 1704 */       return resetPosition();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int next() {
-/* 1715 */       int next = this._currentNode;
-/*      */       
-/* 1717 */       int pos = --this.m_ancestorsPos;
-/*      */       
-/* 1719 */       this._currentNode = (pos >= 0) ? this.m_ancestors.elementAt(this.m_ancestorsPos) : -1;
-/*      */ 
-/*      */       
-/* 1722 */       return returnNode(next);
-/*      */     }
-/*      */     
-/*      */     public void setMark() {
-/* 1726 */       this.m_markedPos = this.m_ancestorsPos;
-/*      */     }
-/*      */     
-/*      */     public void gotoMark() {
-/* 1730 */       this.m_ancestorsPos = this.m_markedPos;
-/* 1731 */       this._currentNode = (this.m_ancestorsPos >= 0) ? this.m_ancestors.elementAt(this.m_ancestorsPos) : -1;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final class TypedAncestorIterator
-/*      */     extends AncestorIterator
-/*      */   {
-/*      */     private final int _nodeType;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public TypedAncestorIterator(int type) {
-/* 1753 */       this._nodeType = type;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public DTMAxisIterator setStartNode(int node) {
-/* 1767 */       if (node == 0)
-/* 1768 */         node = DTMDefaultBaseIterators.this.getDocument(); 
-/* 1769 */       this.m_realStartNode = node;
-/*      */       
-/* 1771 */       if (this._isRestartable) {
-/*      */         
-/* 1773 */         int nodeID = DTMDefaultBaseIterators.this.makeNodeIdentity(node);
-/* 1774 */         int nodeType = this._nodeType;
-/*      */         
-/* 1776 */         if (!this._includeSelf && node != -1) {
-/* 1777 */           nodeID = DTMDefaultBaseIterators.this._parent(nodeID);
-/*      */         }
-/*      */         
-/* 1780 */         this._startNode = node;
-/*      */         
-/* 1782 */         if (nodeType >= 14) {
-/* 1783 */           while (nodeID != -1) {
-/* 1784 */             int eType = DTMDefaultBaseIterators.this._exptype(nodeID);
-/*      */             
-/* 1786 */             if (eType == nodeType) {
-/* 1787 */               this.m_ancestors.addElement(DTMDefaultBaseIterators.this.makeNodeHandle(nodeID));
-/*      */             }
-/* 1789 */             nodeID = DTMDefaultBaseIterators.this._parent(nodeID);
-/*      */           } 
-/*      */         } else {
-/* 1792 */           while (nodeID != -1) {
-/* 1793 */             int eType = DTMDefaultBaseIterators.this._exptype(nodeID);
-/*      */             
-/* 1795 */             if ((eType >= 14 && DTMDefaultBaseIterators.this.m_expandedNameTable
-/* 1796 */               .getType(eType) == nodeType) || (eType < 14 && eType == nodeType))
-/*      */             {
-/* 1798 */               this.m_ancestors.addElement(DTMDefaultBaseIterators.this.makeNodeHandle(nodeID));
-/*      */             }
-/* 1800 */             nodeID = DTMDefaultBaseIterators.this._parent(nodeID);
-/*      */           } 
-/*      */         } 
-/* 1803 */         this.m_ancestorsPos = this.m_ancestors.size() - 1;
-/*      */         
-/* 1805 */         this
-/* 1806 */           ._currentNode = (this.m_ancestorsPos >= 0) ? this.m_ancestors.elementAt(this.m_ancestorsPos) : -1;
-/*      */ 
-/*      */         
-/* 1809 */         return resetPosition();
-/*      */       } 
-/*      */       
-/* 1812 */       return this;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public class DescendantIterator
-/*      */     extends InternalAxisIteratorBase
-/*      */   {
-/*      */     public DTMAxisIterator setStartNode(int node) {
-/* 1833 */       if (node == 0)
-/* 1834 */         node = DTMDefaultBaseIterators.this.getDocument(); 
-/* 1835 */       if (this._isRestartable) {
-/*      */         
-/* 1837 */         node = DTMDefaultBaseIterators.this.makeNodeIdentity(node);
-/* 1838 */         this._startNode = node;
-/*      */         
-/* 1840 */         if (this._includeSelf) {
-/* 1841 */           node--;
-/*      */         }
-/* 1843 */         this._currentNode = node;
-/*      */         
-/* 1845 */         return resetPosition();
-/*      */       } 
-/*      */       
-/* 1848 */       return this;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected boolean isDescendant(int identity) {
-/* 1867 */       return (DTMDefaultBaseIterators.this._parent(identity) >= this._startNode || this._startNode == identity);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int next() {
-/*      */       int type;
-/* 1877 */       if (this._startNode == -1) {
-/* 1878 */         return -1;
-/*      */       }
-/*      */       
-/* 1881 */       if (this._includeSelf && this._currentNode + 1 == this._startNode) {
-/* 1882 */         return returnNode(DTMDefaultBaseIterators.this.makeNodeHandle(++this._currentNode));
-/*      */       }
-/* 1884 */       int node = this._currentNode;
-/*      */ 
-/*      */       
-/*      */       do {
-/* 1888 */         node++;
-/* 1889 */         type = DTMDefaultBaseIterators.this._type(node);
-/*      */         
-/* 1891 */         if (-1 == type || !isDescendant(node)) {
-/* 1892 */           this._currentNode = -1;
-/* 1893 */           return -1;
-/*      */         } 
-/* 1895 */       } while (2 == type || 3 == type || 13 == type);
-/*      */ 
-/*      */       
-/* 1898 */       this._currentNode = node;
-/* 1899 */       return returnNode(DTMDefaultBaseIterators.this.makeNodeHandle(node));
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public DTMAxisIterator reset() {
-/* 1909 */       boolean temp = this._isRestartable;
-/*      */       
-/* 1911 */       this._isRestartable = true;
-/*      */       
-/* 1913 */       setStartNode(DTMDefaultBaseIterators.this.makeNodeHandle(this._startNode));
-/*      */       
-/* 1915 */       this._isRestartable = temp;
-/*      */       
-/* 1917 */       return this;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final class TypedDescendantIterator
-/*      */     extends DescendantIterator
-/*      */   {
-/*      */     private final int _nodeType;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public TypedDescendantIterator(int nodeType) {
-/* 1939 */       this._nodeType = nodeType;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int next() {
-/*      */       int type;
-/* 1952 */       if (this._startNode == -1) {
-/* 1953 */         return -1;
-/*      */       }
-/*      */       
-/* 1956 */       int node = this._currentNode;
-/*      */ 
-/*      */       
-/*      */       do {
-/* 1960 */         node++;
-/* 1961 */         type = DTMDefaultBaseIterators.this._type(node);
-/*      */         
-/* 1963 */         if (-1 == type || !isDescendant(node)) {
-/* 1964 */           this._currentNode = -1;
-/* 1965 */           return -1;
-/*      */         }
-/*      */       
-/* 1968 */       } while (type != this._nodeType && DTMDefaultBaseIterators.this._exptype(node) != this._nodeType);
-/*      */       
-/* 1970 */       this._currentNode = node;
-/* 1971 */       return returnNode(DTMDefaultBaseIterators.this.makeNodeHandle(node));
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public class NthDescendantIterator
-/*      */     extends DescendantIterator
-/*      */   {
-/*      */     int _pos;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public NthDescendantIterator(int pos) {
-/* 1993 */       this._pos = pos;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int next() {
-/*      */       int node;
-/* 2007 */       while ((node = super.next()) != -1) {
-/*      */         
-/* 2009 */         node = DTMDefaultBaseIterators.this.makeNodeIdentity(node);
-/*      */         
-/* 2011 */         int parent = DTMDefaultBaseIterators.this._parent(node);
-/* 2012 */         int child = DTMDefaultBaseIterators.this._firstch(parent);
-/* 2013 */         int pos = 0;
-/*      */ 
-/*      */         
-/*      */         do {
-/* 2017 */           int type = DTMDefaultBaseIterators.this._type(child);
-/*      */           
-/* 2019 */           if (1 != type)
-/* 2020 */             continue;  pos++;
-/*      */         }
-/* 2022 */         while (pos < this._pos && (child = DTMDefaultBaseIterators.this._nextsib(child)) != -1);
-/*      */         
-/* 2024 */         if (node == child) {
-/* 2025 */           return node;
-/*      */         }
-/*      */       } 
-/* 2028 */       return -1;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public class SingletonIterator
-/*      */     extends InternalAxisIteratorBase
-/*      */   {
-/*      */     private boolean _isConstant;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public SingletonIterator() {
-/* 2047 */       this(-2147483648, false);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public SingletonIterator(int node) {
-/* 2058 */       this(node, false);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public SingletonIterator(int node, boolean constant) {
-/* 2070 */       this._currentNode = this._startNode = node;
-/* 2071 */       this._isConstant = constant;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public DTMAxisIterator setStartNode(int node) {
-/* 2085 */       if (node == 0)
-/* 2086 */         node = DTMDefaultBaseIterators.this.getDocument(); 
-/* 2087 */       if (this._isConstant) {
-/*      */         
-/* 2089 */         this._currentNode = this._startNode;
-/*      */         
-/* 2091 */         return resetPosition();
-/*      */       } 
-/* 2093 */       if (this._isRestartable) {
-/*      */         
-/* 2095 */         this._currentNode = this._startNode = node;
-/*      */         
-/* 2097 */         return resetPosition();
-/*      */       } 
-/*      */       
-/* 2100 */       return this;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public DTMAxisIterator reset() {
-/* 2112 */       if (this._isConstant) {
-/*      */         
-/* 2114 */         this._currentNode = this._startNode;
-/*      */         
-/* 2116 */         return resetPosition();
-/*      */       } 
-/*      */ 
-/*      */       
-/* 2120 */       boolean temp = this._isRestartable;
-/*      */       
-/* 2122 */       this._isRestartable = true;
-/*      */       
-/* 2124 */       setStartNode(this._startNode);
-/*      */       
-/* 2126 */       this._isRestartable = temp;
-/*      */ 
-/*      */       
-/* 2129 */       return this;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int next() {
-/* 2140 */       int result = this._currentNode;
-/*      */       
-/* 2142 */       this._currentNode = -1;
-/*      */       
-/* 2144 */       return returnNode(result);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final class TypedSingletonIterator
-/*      */     extends SingletonIterator
-/*      */   {
-/*      */     private final int _nodeType;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public TypedSingletonIterator(int nodeType) {
-/* 2165 */       this._nodeType = nodeType;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int next() {
-/* 2177 */       int result = this._currentNode;
-/* 2178 */       int nodeType = this._nodeType;
-/*      */       
-/* 2180 */       this._currentNode = -1;
-/*      */       
-/* 2182 */       if (nodeType >= 14) {
-/* 2183 */         if (DTMDefaultBaseIterators.this.getExpandedTypeID(result) == nodeType) {
-/* 2184 */           return returnNode(result);
-/*      */         }
-/*      */       }
-/* 2187 */       else if (DTMDefaultBaseIterators.this.getNodeType(result) == nodeType) {
-/* 2188 */         return returnNode(result);
-/*      */       } 
-/*      */ 
-/*      */       
-/* 2192 */       return -1;
-/*      */     }
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\internal\dtm\ref\DTMDefaultBaseIterators.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: DTMDefaultBaseIterators.java,v 1.2.4.1 2005/09/15 08:15:00 suresh_emailid Exp $
+ */
+package com.sun.org.apache.xml.internal.dtm.ref;
+
+import com.sun.org.apache.xml.internal.dtm.*;
+
+import javax.xml.transform.Source;
+
+import com.sun.org.apache.xml.internal.utils.XMLStringFactory;
+
+import com.sun.org.apache.xml.internal.res.XMLErrorResources;
+import com.sun.org.apache.xml.internal.res.XMLMessages;
+import com.sun.org.apache.xalan.internal.xsltc.dom.NodeCounter;
+
+/**
+ * This class implements the traversers for DTMDefaultBase.
+ */
+public abstract class DTMDefaultBaseIterators extends DTMDefaultBaseTraversers
+{
+
+  /**
+   * Construct a DTMDefaultBaseTraversers object from a DOM node.
+   *
+   * @param mgr The DTMManager who owns this DTM.
+   * @param source The object that is used to specify the construction source.
+   * @param dtmIdentity The DTM identity ID for this DTM.
+   * @param whiteSpaceFilter The white space filter for this DTM, which may
+   *                         be null.
+   * @param xstringfactory The factory to use for creating XMLStrings.
+   * @param doIndexing true if the caller considers it worth it to use
+   *                   indexing schemes.
+   */
+  public DTMDefaultBaseIterators(DTMManager mgr, Source source,
+                                 int dtmIdentity,
+                                 DTMWSFilter whiteSpaceFilter,
+                                 XMLStringFactory xstringfactory,
+                                 boolean doIndexing)
+  {
+    super(mgr, source, dtmIdentity, whiteSpaceFilter,
+          xstringfactory, doIndexing);
+  }
+
+  /**
+   * Construct a DTMDefaultBaseTraversers object from a DOM node.
+   *
+   * @param mgr The DTMManager who owns this DTM.
+   * @param source The object that is used to specify the construction source.
+   * @param dtmIdentity The DTM identity ID for this DTM.
+   * @param whiteSpaceFilter The white space filter for this DTM, which may
+   *                         be null.
+   * @param xstringfactory The factory to use for creating XMLStrings.
+   * @param doIndexing true if the caller considers it worth it to use
+   *                   indexing schemes.
+   * @param blocksize The block size of the DTM.
+   * @param usePrevsib true if we want to build the previous sibling node array.
+   * @param newNameTable true if we want to use a new ExpandedNameTable for this DTM.
+   */
+  public DTMDefaultBaseIterators(DTMManager mgr, Source source,
+                                 int dtmIdentity,
+                                 DTMWSFilter whiteSpaceFilter,
+                                 XMLStringFactory xstringfactory,
+                                 boolean doIndexing,
+                                 int blocksize,
+                                 boolean usePrevsib,
+                                 boolean newNameTable)
+  {
+    super(mgr, source, dtmIdentity, whiteSpaceFilter,
+          xstringfactory, doIndexing, blocksize, usePrevsib, newNameTable);
+  }
+
+  /**
+   * Get an iterator that can navigate over an XPath Axis, predicated by
+   * the extended type ID.
+   * Returns an iterator that must be initialized
+   * with a start node (using iterator.setStartNode()).
+   *
+   * @param axis One of Axes.ANCESTORORSELF, etc.
+   * @param type An extended type ID.
+   *
+   * @return A DTMAxisIterator, or null if the given axis isn't supported.
+   */
+  public DTMAxisIterator getTypedAxisIterator(int axis, int type)
+  {
+
+    DTMAxisIterator iterator = null;
+
+    /* This causes an error when using patterns for elements that
+       do not exist in the DOM (translet types which do not correspond
+       to a DOM type are mapped to the DOM.ELEMENT type).
+    */
+
+    //        if (type == NO_TYPE) {
+    //            return(EMPTYITERATOR);
+    //        }
+    //        else if (type == ELEMENT) {
+    //            iterator = new FilterIterator(getAxisIterator(axis),
+    //                                          getElementFilter());
+    //        }
+    //        else
+    {
+      switch (axis)
+      {
+      case Axis.SELF :
+        iterator = new TypedSingletonIterator(type);
+        break;
+      case Axis.CHILD :
+        iterator = new TypedChildrenIterator(type);
+        break;
+      case Axis.PARENT :
+        return (new ParentIterator().setNodeType(type));
+      case Axis.ANCESTOR :
+        return (new TypedAncestorIterator(type));
+      case Axis.ANCESTORORSELF :
+        return ((new TypedAncestorIterator(type)).includeSelf());
+      case Axis.ATTRIBUTE :
+        return (new TypedAttributeIterator(type));
+      case Axis.DESCENDANT :
+        iterator = new TypedDescendantIterator(type);
+        break;
+      case Axis.DESCENDANTORSELF :
+        iterator = (new TypedDescendantIterator(type)).includeSelf();
+        break;
+      case Axis.FOLLOWING :
+        iterator = new TypedFollowingIterator(type);
+        break;
+      case Axis.PRECEDING :
+        iterator = new TypedPrecedingIterator(type);
+        break;
+      case Axis.FOLLOWINGSIBLING :
+        iterator = new TypedFollowingSiblingIterator(type);
+        break;
+      case Axis.PRECEDINGSIBLING :
+        iterator = new TypedPrecedingSiblingIterator(type);
+        break;
+      case Axis.NAMESPACE :
+        iterator = new TypedNamespaceIterator(type);
+        break;
+      case Axis.ROOT :
+        iterator = new TypedRootIterator(type);
+        break;
+      default :
+        throw new DTMException(XMLMessages.createXMLMessage(
+            XMLErrorResources.ER_TYPED_ITERATOR_AXIS_NOT_IMPLEMENTED,
+            new Object[]{Axis.getNames(axis)}));
+            //"Error: typed iterator for axis "
+                               //+ Axis.names[axis] + "not implemented");
+      }
+    }
+
+    return (iterator);
+  }
+
+  /**
+   * This is a shortcut to the iterators that implement the
+   * XPath axes.
+   * Returns a bare-bones iterator that must be initialized
+   * with a start node (using iterator.setStartNode()).
+   *
+   * @param axis One of Axes.ANCESTORORSELF, etc.
+   *
+   * @return A DTMAxisIterator, or null if the given axis isn't supported.
+   */
+  public DTMAxisIterator getAxisIterator(final int axis)
+  {
+
+    DTMAxisIterator iterator = null;
+
+    switch (axis)
+    {
+    case Axis.SELF :
+      iterator = new SingletonIterator();
+      break;
+    case Axis.CHILD :
+      iterator = new ChildrenIterator();
+      break;
+    case Axis.PARENT :
+      return (new ParentIterator());
+    case Axis.ANCESTOR :
+      return (new AncestorIterator());
+    case Axis.ANCESTORORSELF :
+      return ((new AncestorIterator()).includeSelf());
+    case Axis.ATTRIBUTE :
+      return (new AttributeIterator());
+    case Axis.DESCENDANT :
+      iterator = new DescendantIterator();
+      break;
+    case Axis.DESCENDANTORSELF :
+      iterator = (new DescendantIterator()).includeSelf();
+      break;
+    case Axis.FOLLOWING :
+      iterator = new FollowingIterator();
+      break;
+    case Axis.PRECEDING :
+      iterator = new PrecedingIterator();
+      break;
+    case Axis.FOLLOWINGSIBLING :
+      iterator = new FollowingSiblingIterator();
+      break;
+    case Axis.PRECEDINGSIBLING :
+      iterator = new PrecedingSiblingIterator();
+      break;
+    case Axis.NAMESPACE :
+      iterator = new NamespaceIterator();
+      break;
+    case Axis.ROOT :
+      iterator = new RootIterator();
+      break;
+    default :
+      throw new DTMException(XMLMessages.createXMLMessage(
+        XMLErrorResources.ER_ITERATOR_AXIS_NOT_IMPLEMENTED,
+        new Object[]{Axis.getNames(axis)}));
+        //"Error: iterator for axis '" + Axis.names[axis]
+                             //+ "' not implemented");
+    }
+
+    return (iterator);
+  }
+
+  /**
+   * Abstract superclass defining behaviors shared by all DTMDefault's
+   * internal implementations of DTMAxisIterator. Subclass this (and
+   * override, if necessary) to implement the specifics of an
+   * individual axis iterator.
+   *
+   * Currently there isn't a lot here
+   */
+  public abstract class InternalAxisIteratorBase extends DTMAxisIteratorBase
+  {
+
+    // %REVIEW% We could opt to share _nodeType and setNodeType() as
+    // well, and simply ignore them in iterators which don't use them.
+    // But Scott's worried about the overhead involved in cloning
+    // these, and wants them to have as few fields as possible. Note
+    // that we can't create a TypedInternalAxisIteratorBase because
+    // those are often based on the untyped versions and Java doesn't
+    // support multiple inheritance. <sigh/>
+
+    /**
+     * Current iteration location. Usually this is the last location
+     * returned (starting point for the next() search); for single-node
+     * iterators it may instead be initialized to point to that single node.
+     */
+    protected int _currentNode;
+
+    /**
+     * Remembers the current node for the next call to gotoMark().
+     *
+     * %REVIEW% Should this save _position too?
+     */
+    public void setMark()
+    {
+      _markedNode = _currentNode;
+    }
+
+    /**
+     * Restores the current node remembered by setMark().
+     *
+     * %REVEIW% Should this restore _position too?
+     */
+    public void gotoMark()
+    {
+      _currentNode = _markedNode;
+    }
+
+  }  // end of InternalAxisIteratorBase
+
+  /**
+   * Iterator that returns all immediate children of a given node
+   */
+  public final class ChildrenIterator extends InternalAxisIteratorBase
+  {
+
+    /**
+     * Setting start to END should 'close' the iterator,
+     * i.e. subsequent call to next() should return END.
+     *
+     * If the iterator is not restartable, this has no effect.
+     * %REVIEW% Should it return/throw something in that case,
+     * or set current node to END, to indicate request-not-honored?
+     *
+     * @param node Sets the root of the iteration.
+     *
+     * @return A DTMAxisIterator set to the start of the iteration.
+     */
+    public DTMAxisIterator setStartNode(int node)
+    {
+//%HZ%: Added reference to DTMDefaultBase.ROOTNODE back in, temporarily
+      if (node == DTMDefaultBase.ROOTNODE)
+        node = getDocument();
+      if (_isRestartable)
+      {
+        _startNode = node;
+        _currentNode = (node == DTM.NULL) ? DTM.NULL
+                                          : _firstch(makeNodeIdentity(node));
+
+        return resetPosition();
+      }
+
+      return this;
+    }
+
+    /**
+     * Get the next node in the iteration.
+     *
+     * @return The next node handle in the iteration, or END if no more
+     * are available.
+     */
+    public int next()
+    {
+      if (_currentNode != NULL) {
+        int node = _currentNode;
+        _currentNode = _nextsib(node);
+        return returnNode(makeNodeHandle(node));
+      }
+
+      return END;
+    }
+  }  // end of ChildrenIterator
+
+  /**
+   * Iterator that returns the parent of a given node. Note that
+   * this delivers only a single node; if you want all the ancestors,
+   * see AncestorIterator.
+   */
+  public final class ParentIterator extends InternalAxisIteratorBase
+  {
+
+    /** The extended type ID that was requested. */
+    private int _nodeType = -1;
+
+    /**
+     * Set start to END should 'close' the iterator,
+     * i.e. subsequent call to next() should return END.
+     *
+     * @param node Sets the root of the iteration.
+     *
+     * @return A DTMAxisIterator set to the start of the iteration.
+     */
+    public DTMAxisIterator setStartNode(int node)
+    {
+//%HZ%: Added reference to DTMDefaultBase.ROOTNODE back in, temporarily
+      if (node == DTMDefaultBase.ROOTNODE)
+        node = getDocument();
+      if (_isRestartable)
+      {
+        _startNode = node;
+        _currentNode = getParent(node);
+
+        return resetPosition();
+      }
+
+      return this;
+    }
+
+    /**
+     * Set the node type of the parent that we're looking for.
+     * Note that this does _not_ mean "find the nearest ancestor of
+     * this type", but "yield the parent if it is of this type".
+     *
+     *
+     * @param type extended type ID.
+     *
+     * @return ParentIterator configured with the type filter set.
+     */
+    public DTMAxisIterator setNodeType(final int type)
+    {
+
+      _nodeType = type;
+
+      return this;
+    }
+
+    /**
+     * Get the next node in the iteration. In this case, we return
+     * only the immediate parent, _if_ it matches the requested nodeType.
+     *
+     * @return The next node handle in the iteration, or END.
+     */
+    public int next()
+    {
+      int result = _currentNode;
+
+      if (_nodeType >= DTM.NTYPES) {
+        if (_nodeType != getExpandedTypeID(_currentNode)) {
+          result = END;
+        }
+      } else if (_nodeType != NULL) {
+        if (_nodeType != getNodeType(_currentNode)) {
+          result = END;
+        }
+      }
+
+      _currentNode = END;
+
+      return returnNode(result);
+    }
+  }  // end of ParentIterator
+
+  /**
+   * Iterator that returns children of a given type for a given node.
+   * The functionality chould be achieved by putting a filter on top
+   * of a basic child iterator, but a specialised iterator is used
+   * for efficiency (both speed and size of translet).
+   */
+  public final class TypedChildrenIterator extends InternalAxisIteratorBase
+  {
+
+    /** The extended type ID that was requested. */
+    private final int _nodeType;
+
+    /**
+     * Constructor TypedChildrenIterator
+     *
+     *
+     * @param nodeType The extended type ID being requested.
+     */
+    public TypedChildrenIterator(int nodeType)
+    {
+      _nodeType = nodeType;
+    }
+
+    /**
+     * Set start to END should 'close' the iterator,
+     * i.e. subsequent call to next() should return END.
+     *
+     * @param node Sets the root of the iteration.
+     *
+     * @return A DTMAxisIterator set to the start of the iteration.
+     */
+    public DTMAxisIterator setStartNode(int node)
+    {
+//%HZ%: Added reference to DTMDefaultBase.ROOTNODE back in, temporarily
+      if (node == DTMDefaultBase.ROOTNODE)
+        node = getDocument();
+      if (_isRestartable)
+      {
+        _startNode = node;
+        _currentNode = (node == DTM.NULL)
+                                   ? DTM.NULL
+                                   : _firstch(makeNodeIdentity(_startNode));
+
+        return resetPosition();
+      }
+
+      return this;
+    }
+
+    /**
+     * Get the next node in the iteration.
+     *
+     * @return The next node handle in the iteration, or END.
+     */
+    public int next()
+    {
+      int eType;
+      int node = _currentNode;
+
+      int nodeType = _nodeType;
+
+      if (nodeType >= DTM.NTYPES) {
+        while (node != DTM.NULL && _exptype(node) != nodeType) {
+          node = _nextsib(node);
+        }
+      } else {
+        while (node != DTM.NULL) {
+          eType = _exptype(node);
+          if (eType < DTM.NTYPES) {
+            if (eType == nodeType) {
+              break;
+            }
+          } else if (m_expandedNameTable.getType(eType) == nodeType) {
+            break;
+          }
+          node = _nextsib(node);
+        }
+      }
+
+      if (node == DTM.NULL) {
+        _currentNode = DTM.NULL;
+        return DTM.NULL;
+      } else {
+        _currentNode = _nextsib(node);
+        return returnNode(makeNodeHandle(node));
+      }
+
+    }
+  }  // end of TypedChildrenIterator
+
+  /**
+   * Iterator that returns children within a given namespace for a
+   * given node. The functionality chould be achieved by putting a
+   * filter on top of a basic child iterator, but a specialised
+   * iterator is used for efficiency (both speed and size of translet).
+   */
+  public final class NamespaceChildrenIterator
+          extends InternalAxisIteratorBase
+  {
+
+    /** The extended type ID being requested. */
+    private final int _nsType;
+
+    /**
+     * Constructor NamespaceChildrenIterator
+     *
+     *
+     * @param type The extended type ID being requested.
+     */
+    public NamespaceChildrenIterator(final int type)
+    {
+      _nsType = type;
+    }
+
+    /**
+     * Set start to END should 'close' the iterator,
+     * i.e. subsequent call to next() should return END.
+     *
+     * @param node Sets the root of the iteration.
+     *
+     * @return A DTMAxisIterator set to the start of the iteration.
+     */
+    public DTMAxisIterator setStartNode(int node)
+    {
+//%HZ%: Added reference to DTMDefaultBase.ROOTNODE back in, temporarily
+      if (node == DTMDefaultBase.ROOTNODE)
+        node = getDocument();
+      if (_isRestartable)
+      {
+        _startNode = node;
+        _currentNode = (node == DTM.NULL) ? DTM.NULL : NOTPROCESSED;
+
+        return resetPosition();
+      }
+
+      return this;
+    }
+
+    /**
+     * Get the next node in the iteration.
+     *
+     * @return The next node handle in the iteration, or END.
+     */
+    public int next()
+    {
+      if (_currentNode != DTM.NULL) {
+        for (int node = (NOTPROCESSED == _currentNode)
+                                  ? _firstch(makeNodeIdentity(_startNode))
+                                  : _nextsib(_currentNode);
+             node != END;
+             node = _nextsib(node)) {
+          if (m_expandedNameTable.getNamespaceID(_exptype(node)) == _nsType) {
+            _currentNode = node;
+
+            return returnNode(node);
+          }
+        }
+      }
+
+      return END;
+    }
+  }  // end of NamespaceChildrenIterator
+
+  /**
+   * Iterator that returns the namespace nodes as defined by the XPath data model
+   * for a given node.
+   */
+  public class NamespaceIterator
+          extends InternalAxisIteratorBase
+  {
+
+    /**
+     * Constructor NamespaceAttributeIterator
+     */
+    public NamespaceIterator()
+    {
+
+      super();
+    }
+
+    /**
+     * Set start to END should 'close' the iterator,
+     * i.e. subsequent call to next() should return END.
+     *
+     * @param node Sets the root of the iteration.
+     *
+     * @return A DTMAxisIterator set to the start of the iteration.
+     */
+    public DTMAxisIterator setStartNode(int node)
+    {
+//%HZ%: Added reference to DTMDefaultBase.ROOTNODE back in, temporarily
+      if (node == DTMDefaultBase.ROOTNODE)
+        node = getDocument();
+      if (_isRestartable)
+      {
+        _startNode = node;
+        _currentNode = getFirstNamespaceNode(node, true);
+
+        return resetPosition();
+      }
+
+      return this;
+    }
+
+    /**
+     * Get the next node in the iteration.
+     *
+     * @return The next node handle in the iteration, or END.
+     */
+    public int next()
+    {
+
+      int node = _currentNode;
+
+      if (DTM.NULL != node)
+        _currentNode = getNextNamespaceNode(_startNode, node, true);
+
+      return returnNode(node);
+    }
+  }  // end of NamespaceIterator
+
+  /**
+   * Iterator that returns the namespace nodes as defined by the XPath data model
+   * for a given node, filtered by extended type ID.
+   */
+  public class TypedNamespaceIterator extends NamespaceIterator
+  {
+
+    /** The extended type ID that was requested. */
+    private final int _nodeType;
+
+    /**
+     * Constructor TypedNamespaceIterator
+     *
+     *
+     * @param nodeType The extended type ID being requested.
+     */
+    public TypedNamespaceIterator(int nodeType)
+    {
+      super();
+      _nodeType = nodeType;
+    }
+
+    /**
+     * Get the next node in the iteration.
+     *
+     * @return The next node handle in the iteration, or END.
+     */
+    public int next()
+    {
+        int node;
+
+      for (node = _currentNode;
+           node != END;
+           node = getNextNamespaceNode(_startNode, node, true)) {
+        if (getExpandedTypeID(node) == _nodeType
+            || getNodeType(node) == _nodeType
+            || getNamespaceType(node) == _nodeType) {
+          _currentNode = node;
+
+          return returnNode(node);
+        }
+      }
+
+      return (_currentNode =END);
+    }
+  }  // end of TypedNamespaceIterator
+
+  /**
+   * Iterator that returns the the root node as defined by the XPath data model
+   * for a given node.
+   */
+  public class RootIterator
+          extends InternalAxisIteratorBase
+  {
+
+    /**
+     * Constructor RootIterator
+     */
+    public RootIterator()
+    {
+
+      super();
+    }
+
+    /**
+     * Set start to END should 'close' the iterator,
+     * i.e. subsequent call to next() should return END.
+     *
+     * @param node Sets the root of the iteration.
+     *
+     * @return A DTMAxisIterator set to the start of the iteration.
+     */
+    public DTMAxisIterator setStartNode(int node)
+    {
+
+      if (_isRestartable)
+      {
+        _startNode = getDocumentRoot(node);
+        _currentNode = NULL;
+
+        return resetPosition();
+      }
+
+      return this;
+    }
+
+    /**
+     * Get the next node in the iteration.
+     *
+     * @return The next node handle in the iteration, or END.
+     */
+    public int next()
+    {
+      if(_startNode == _currentNode)
+        return NULL;
+
+      _currentNode = _startNode;
+
+      return returnNode(_startNode);
+    }
+  }  // end of RootIterator
+
+  /**
+   * Iterator that returns the namespace nodes as defined by the XPath data model
+   * for a given node, filtered by extended type ID.
+   */
+  public class TypedRootIterator extends RootIterator
+  {
+
+    /** The extended type ID that was requested. */
+    private final int _nodeType;
+
+    /**
+     * Constructor TypedRootIterator
+     *
+     * @param nodeType The extended type ID being requested.
+     */
+    public TypedRootIterator(int nodeType)
+    {
+      super();
+      _nodeType = nodeType;
+    }
+
+    /**
+     * Get the next node in the iteration.
+     *
+     * @return The next node handle in the iteration, or END.
+     */
+    public int next()
+    {
+        if(_startNode == _currentNode)
+        return NULL;
+
+      int nodeType = _nodeType;
+      int node = _startNode;
+      int expType = getExpandedTypeID(node);
+
+      _currentNode = node;
+
+      if (nodeType >= DTM.NTYPES) {
+        if (nodeType == expType) {
+          return returnNode(node);
+        }
+      } else {
+        if (expType < DTM.NTYPES) {
+          if (expType == nodeType) {
+            return returnNode(node);
+          }
+        } else {
+          if (m_expandedNameTable.getType(expType) == nodeType) {
+            return returnNode(node);
+          }
+        }
+      }
+
+      return END;
+    }
+  }  // end of TypedRootIterator
+
+  /**
+   * Iterator that returns attributes within a given namespace for a node.
+   */
+  public final class NamespaceAttributeIterator
+          extends InternalAxisIteratorBase
+  {
+
+    /** The extended type ID being requested. */
+    private final int _nsType;
+
+    /**
+     * Constructor NamespaceAttributeIterator
+     *
+     *
+     * @param nsType The extended type ID being requested.
+     */
+    public NamespaceAttributeIterator(int nsType)
+    {
+
+      super();
+
+      _nsType = nsType;
+    }
+
+    /**
+     * Set start to END should 'close' the iterator,
+     * i.e. subsequent call to next() should return END.
+     *
+     * @param node Sets the root of the iteration.
+     *
+     * @return A DTMAxisIterator set to the start of the iteration.
+     */
+    public DTMAxisIterator setStartNode(int node)
+    {
+//%HZ%: Added reference to DTMDefaultBase.ROOTNODE back in, temporarily
+      if (node == DTMDefaultBase.ROOTNODE)
+        node = getDocument();
+      if (_isRestartable)
+      {
+        _startNode = node;
+        _currentNode = getFirstNamespaceNode(node, false);
+
+        return resetPosition();
+      }
+
+      return this;
+    }
+
+    /**
+     * Get the next node in the iteration.
+     *
+     * @return The next node handle in the iteration, or END.
+     */
+    public int next()
+    {
+
+      int node = _currentNode;
+
+      if (DTM.NULL != node)
+        _currentNode = getNextNamespaceNode(_startNode, node, false);
+
+      return returnNode(node);
+    }
+  }  // end of NamespaceAttributeIterator
+
+  /**
+   * Iterator that returns all siblings of a given node.
+   */
+  public class FollowingSiblingIterator extends InternalAxisIteratorBase
+  {
+
+    /**
+     * Set start to END should 'close' the iterator,
+     * i.e. subsequent call to next() should return END.
+     *
+     * @param node Sets the root of the iteration.
+     *
+     * @return A DTMAxisIterator set to the start of the iteration.
+     */
+    public DTMAxisIterator setStartNode(int node)
+    {
+//%HZ%: Added reference to DTMDefaultBase.ROOTNODE back in, temporarily
+      if (node == DTMDefaultBase.ROOTNODE)
+        node = getDocument();
+      if (_isRestartable)
+      {
+        _startNode = node;
+        _currentNode = makeNodeIdentity(node);
+
+        return resetPosition();
+      }
+
+      return this;
+    }
+
+    /**
+     * Get the next node in the iteration.
+     *
+     * @return The next node handle in the iteration, or END.
+     */
+    public int next()
+    {
+      _currentNode = (_currentNode == DTM.NULL) ? DTM.NULL
+                                                : _nextsib(_currentNode);
+      return returnNode(makeNodeHandle(_currentNode));
+    }
+  }  // end of FollowingSiblingIterator
+
+  /**
+   * Iterator that returns all following siblings of a given node.
+   */
+  public final class TypedFollowingSiblingIterator
+          extends FollowingSiblingIterator
+  {
+
+    /** The extended type ID that was requested. */
+    private final int _nodeType;
+
+    /**
+     * Constructor TypedFollowingSiblingIterator
+     *
+     *
+     * @param type The extended type ID being requested.
+     */
+    public TypedFollowingSiblingIterator(int type)
+    {
+      _nodeType = type;
+    }
+
+    /**
+     * Get the next node in the iteration.
+     *
+     * @return The next node handle in the iteration, or END.
+     */
+    public int next()
+    {
+      if (_currentNode == DTM.NULL) {
+        return DTM.NULL;
+      }
+
+      int node = _currentNode;
+      int eType;
+      int nodeType = _nodeType;
+
+      if (nodeType >= DTM.NTYPES) {
+        do {
+          node = _nextsib(node);
+        } while (node != DTM.NULL && _exptype(node) != nodeType);
+      } else {
+        while ((node = _nextsib(node)) != DTM.NULL) {
+          eType = _exptype(node);
+          if (eType < DTM.NTYPES) {
+            if (eType == nodeType) {
+              break;
+            }
+          } else if (m_expandedNameTable.getType(eType) == nodeType) {
+            break;
+          }
+        }
+      }
+
+      _currentNode = node;
+
+      return (_currentNode == DTM.NULL)
+                      ? DTM.NULL
+                      : returnNode(makeNodeHandle(_currentNode));
+    }
+  }  // end of TypedFollowingSiblingIterator
+
+  /**
+   * Iterator that returns attribute nodes (of what nodes?)
+   */
+  public final class AttributeIterator extends InternalAxisIteratorBase
+  {
+
+    // assumes caller will pass element nodes
+
+    /**
+     * Set start to END should 'close' the iterator,
+     * i.e. subsequent call to next() should return END.
+     *
+     * @param node Sets the root of the iteration.
+     *
+     * @return A DTMAxisIterator set to the start of the iteration.
+     */
+    public DTMAxisIterator setStartNode(int node)
+    {
+//%HZ%: Added reference to DTMDefaultBase.ROOTNODE back in, temporarily
+      if (node == DTMDefaultBase.ROOTNODE)
+        node = getDocument();
+      if (_isRestartable)
+      {
+        _startNode = node;
+        _currentNode = getFirstAttributeIdentity(makeNodeIdentity(node));
+
+        return resetPosition();
+      }
+
+      return this;
+    }
+
+    /**
+     * Get the next node in the iteration.
+     *
+     * @return The next node handle in the iteration, or END.
+     */
+    public int next()
+    {
+
+      final int node = _currentNode;
+
+      if (node != NULL) {
+        _currentNode = getNextAttributeIdentity(node);
+        return returnNode(makeNodeHandle(node));
+      }
+
+      return NULL;
+    }
+  }  // end of AttributeIterator
+
+  /**
+   * Iterator that returns attribute nodes of a given type
+   */
+  public final class TypedAttributeIterator extends InternalAxisIteratorBase
+  {
+
+    /** The extended type ID that was requested. */
+    private final int _nodeType;
+
+    /**
+     * Constructor TypedAttributeIterator
+     *
+     *
+     * @param nodeType The extended type ID that is requested.
+     */
+    public TypedAttributeIterator(int nodeType)
+    {
+      _nodeType = nodeType;
+    }
+
+    // assumes caller will pass element nodes
+
+    /**
+     * Set start to END should 'close' the iterator,
+     * i.e. subsequent call to next() should return END.
+     *
+     * @param node Sets the root of the iteration.
+     *
+     * @return A DTMAxisIterator set to the start of the iteration.
+     */
+    public DTMAxisIterator setStartNode(int node)
+    {
+      if (_isRestartable)
+      {
+        _startNode = node;
+
+        _currentNode = getTypedAttribute(node, _nodeType);
+
+        return resetPosition();
+      }
+
+      return this;
+    }
+
+    /**
+     * Get the next node in the iteration.
+     *
+     * @return The next node handle in the iteration, or END.
+     */
+    public int next()
+    {
+
+      final int node = _currentNode;
+
+      // singleton iterator, since there can only be one attribute of
+      // a given type.
+      _currentNode = NULL;
+
+      return returnNode(node);
+    }
+  }  // end of TypedAttributeIterator
+
+  /**
+   * Iterator that returns preceding siblings of a given node
+   */
+  public class PrecedingSiblingIterator extends InternalAxisIteratorBase
+  {
+
+    /**
+     * The node identity of _startNode for this iterator
+     */
+    protected int _startNodeID;
+
+    /**
+     * True if this iterator has a reversed axis.
+     *
+     * @return true.
+     */
+    public boolean isReverse()
+    {
+      return true;
+    }
+
+    /**
+     * Set start to END should 'close' the iterator,
+     * i.e. subsequent call to next() should return END.
+     *
+     * @param node Sets the root of the iteration.
+     *
+     * @return A DTMAxisIterator set to the start of the iteration.
+     */
+    public DTMAxisIterator setStartNode(int node)
+    {
+//%HZ%: Added reference to DTMDefaultBase.ROOTNODE back in, temporarily
+      if (node == DTMDefaultBase.ROOTNODE)
+        node = getDocument();
+      if (_isRestartable)
+      {
+        _startNode = node;
+        node = _startNodeID = makeNodeIdentity(node);
+
+        if(node == NULL)
+        {
+          _currentNode = node;
+          return resetPosition();
+        }
+
+        int type = m_expandedNameTable.getType(_exptype(node));
+        if(ExpandedNameTable.ATTRIBUTE == type
+           || ExpandedNameTable.NAMESPACE == type )
+        {
+          _currentNode = node;
+        }
+        else
+        {
+          // Be careful to handle the Document node properly
+          _currentNode = _parent(node);
+          if(NULL!=_currentNode)
+            _currentNode = _firstch(_currentNode);
+          else
+            _currentNode = node;
+        }
+
+        return resetPosition();
+      }
+
+      return this;
+    }
+
+    /**
+     * Get the next node in the iteration.
+     *
+     * @return The next node handle in the iteration, or END.
+     */
+    public int next()
+    {
+
+      if (_currentNode == _startNodeID || _currentNode == DTM.NULL)
+      {
+        return NULL;
+      }
+      else
+      {
+        final int node = _currentNode;
+        _currentNode = _nextsib(node);
+
+        return returnNode(makeNodeHandle(node));
+      }
+    }
+  }  // end of PrecedingSiblingIterator
+
+  /**
+   * Iterator that returns preceding siblings of a given type for
+   * a given node
+   */
+  public final class TypedPrecedingSiblingIterator
+          extends PrecedingSiblingIterator
+  {
+
+    /** The extended type ID that was requested. */
+    private final int _nodeType;
+
+    /**
+     * Constructor TypedPrecedingSiblingIterator
+     *
+     *
+     * @param type The extended type ID being requested.
+     */
+    public TypedPrecedingSiblingIterator(int type)
+    {
+      _nodeType = type;
+    }
+
+    /**
+     * Get the next node in the iteration.
+     *
+     * @return The next node handle in the iteration, or END.
+     */
+    public int next()
+    {
+      int node = _currentNode;
+      int expType;
+
+      int nodeType = _nodeType;
+      int startID = _startNodeID;
+
+      if (nodeType >= DTM.NTYPES) {
+        while (node != NULL && node != startID && _exptype(node) != nodeType) {
+          node = _nextsib(node);
+        }
+      } else {
+        while (node != NULL && node != startID) {
+          expType = _exptype(node);
+          if (expType < DTM.NTYPES) {
+            if (expType == nodeType) {
+              break;
+            }
+          } else {
+            if (m_expandedNameTable.getType(expType) == nodeType) {
+              break;
+            }
+          }
+          node = _nextsib(node);
+        }
+      }
+
+      if (node == DTM.NULL || node == _startNodeID) {
+        _currentNode = NULL;
+        return NULL;
+      } else {
+        _currentNode = _nextsib(node);
+        return returnNode(makeNodeHandle(node));
+      }
+    }
+  }  // end of TypedPrecedingSiblingIterator
+
+  /**
+   * Iterator that returns preceding nodes of a given node.
+   * This includes the node set {root+1, start-1}, but excludes
+   * all ancestors, attributes, and namespace nodes.
+   */
+  public class PrecedingIterator extends InternalAxisIteratorBase
+  {
+
+    /** The max ancestors, but it can grow... */
+    private final int _maxAncestors = 8;
+
+    /**
+     * The stack of start node + ancestors up to the root of the tree,
+     *  which we must avoid.
+     */
+    protected int[] _stack = new int[_maxAncestors];
+
+    /** (not sure yet... -sb) */
+    protected int _sp, _oldsp;
+
+    protected int _markedsp, _markedNode, _markedDescendant;
+
+    /* _currentNode precedes candidates.  This is the identity, not the handle! */
+
+    /**
+     * True if this iterator has a reversed axis.
+     *
+     * @return true since this iterator is a reversed axis.
+     */
+    public boolean isReverse()
+    {
+      return true;
+    }
+
+    /**
+     * Returns a deep copy of this iterator.   The cloned iterator is not reset.
+     *
+     * @return a deep copy of this iterator.
+     */
+    public DTMAxisIterator cloneIterator()
+    {
+      _isRestartable = false;
+
+      try
+      {
+        final PrecedingIterator clone = (PrecedingIterator) super.clone();
+        final int[] stackCopy = new int[_stack.length];
+        System.arraycopy(_stack, 0, stackCopy, 0, _stack.length);
+
+        clone._stack = stackCopy;
+
+        // return clone.reset();
+        return clone;
+      }
+      catch (CloneNotSupportedException e)
+      {
+        throw new DTMException(XMLMessages.createXMLMessage(XMLErrorResources.ER_ITERATOR_CLONE_NOT_SUPPORTED, null)); //"Iterator clone not supported.");
+      }
+    }
+
+    /**
+     * Set start to END should 'close' the iterator,
+     * i.e. subsequent call to next() should return END.
+     *
+     * @param node Sets the root of the iteration.
+     *
+     * @return A DTMAxisIterator set to the start of the iteration.
+     */
+    public DTMAxisIterator setStartNode(int node)
+    {
+//%HZ%: Added reference to DTMDefaultBase.ROOTNODE back in, temporarily
+      if (node == DTMDefaultBase.ROOTNODE)
+        node = getDocument();
+      if (_isRestartable)
+      {
+        node = makeNodeIdentity(node);
+
+        // iterator is not a clone
+        int parent, index;
+
+       if (_type(node) == DTM.ATTRIBUTE_NODE)
+        node = _parent(node);
+
+        _startNode = node;
+        _stack[index = 0] = node;
+
+
+
+                parent=node;
+                while ((parent = _parent(parent)) != NULL)
+                {
+                        if (++index == _stack.length)
+                        {
+                                final int[] stack = new int[index + 4];
+                                System.arraycopy(_stack, 0, stack, 0, index);
+                                _stack = stack;
+                        }
+                        _stack[index] = parent;
+        }
+        if(index>0)
+                --index; // Pop actual root node (if not start) back off the stack
+
+        _currentNode=_stack[index]; // Last parent before root node
+
+        _oldsp = _sp = index;
+
+        return resetPosition();
+      }
+
+      return this;
+    }
+
+    /**
+     * Get the next node in the iteration.
+     *
+     * @return The next node handle in the iteration, or END.
+     */
+    public int next()
+    {
+        // Bugzilla 8324: We were forgetting to skip Attrs and NS nodes.
+        // Also recoded the loop controls for clarity and to flatten out
+        // the tail-recursion.
+                for(++_currentNode;
+                        _sp>=0;
+                        ++_currentNode)
+                {
+                        if(_currentNode < _stack[_sp])
+                        {
+                                if(_type(_currentNode) != ATTRIBUTE_NODE &&
+                                        _type(_currentNode) != NAMESPACE_NODE)
+                                        return returnNode(makeNodeHandle(_currentNode));
+                        }
+                        else
+                                --_sp;
+                }
+                return NULL;
+    }
+
+    // redefine DTMAxisIteratorBase's reset
+
+    /**
+     * Resets the iterator to the last start node.
+     *
+     * @return A DTMAxisIterator, which may or may not be the same as this
+     *         iterator.
+     */
+    public DTMAxisIterator reset()
+    {
+
+      _sp = _oldsp;
+
+      return resetPosition();
+    }
+
+    public void setMark() {
+        _markedsp = _sp;
+        _markedNode = _currentNode;
+        _markedDescendant = _stack[0];
+    }
+
+    public void gotoMark() {
+        _sp = _markedsp;
+        _currentNode = _markedNode;
+    }
+  }  // end of PrecedingIterator
+
+  /**
+   * Iterator that returns preceding nodes of agiven type for a
+   * given node. This includes the node set {root+1, start-1}, but
+   * excludes all ancestors.
+   */
+  public final class TypedPrecedingIterator extends PrecedingIterator
+  {
+
+    /** The extended type ID that was requested. */
+    private final int _nodeType;
+
+    /**
+     * Constructor TypedPrecedingIterator
+     *
+     *
+     * @param type The extended type ID being requested.
+     */
+    public TypedPrecedingIterator(int type)
+    {
+      _nodeType = type;
+    }
+
+    /**
+     * Get the next node in the iteration.
+     *
+     * @return The next node handle in the iteration, or END.
+     */
+    public int next()
+    {
+      int node = _currentNode;
+      int nodeType = _nodeType;
+
+      if (nodeType >= DTM.NTYPES) {
+        while (true) {
+          node = node + 1;
+
+          if (_sp < 0) {
+            node = NULL;
+            break;
+          } else if (node >= _stack[_sp]) {
+            if (--_sp < 0) {
+              node = NULL;
+              break;
+            }
+          } else if (_exptype(node) == nodeType) {
+            break;
+          }
+        }
+      } else {
+        int expType;
+
+        while (true) {
+          node = node + 1;
+
+          if (_sp < 0) {
+            node = NULL;
+            break;
+          } else if (node >= _stack[_sp]) {
+            if (--_sp < 0) {
+              node = NULL;
+              break;
+            }
+          } else {
+            expType = _exptype(node);
+            if (expType < DTM.NTYPES) {
+              if (expType == nodeType) {
+                break;
+              }
+            } else {
+              if (m_expandedNameTable.getType(expType) == nodeType) {
+                break;
+              }
+            }
+          }
+        }
+      }
+
+      _currentNode = node;
+
+      return (node == NULL) ? NULL : returnNode(makeNodeHandle(node));
+    }
+  }  // end of TypedPrecedingIterator
+
+  /**
+   * Iterator that returns following nodes of for a given node.
+   */
+  public class FollowingIterator extends InternalAxisIteratorBase
+  {
+    DTMAxisTraverser m_traverser; // easier for now
+
+    public FollowingIterator()
+    {
+      m_traverser = getAxisTraverser(Axis.FOLLOWING);
+    }
+
+    /**
+     * Set start to END should 'close' the iterator,
+     * i.e. subsequent call to next() should return END.
+     *
+     * @param node Sets the root of the iteration.
+     *
+     * @return A DTMAxisIterator set to the start of the iteration.
+     */
+    public DTMAxisIterator setStartNode(int node)
+    {
+//%HZ%: Added reference to DTMDefaultBase.ROOTNODE back in, temporarily
+      if (node == DTMDefaultBase.ROOTNODE)
+        node = getDocument();
+      if (_isRestartable)
+      {
+        _startNode = node;
+
+        // ?? -sb
+        // find rightmost descendant (or self)
+        // int current;
+        // while ((node = getLastChild(current = node)) != NULL){}
+        // _currentNode = current;
+        _currentNode = m_traverser.first(node);
+
+        // _currentNode precedes possible following(node) nodes
+        return resetPosition();
+      }
+
+      return this;
+    }
+
+    /**
+     * Get the next node in the iteration.
+     *
+     * @return The next node handle in the iteration, or END.
+     */
+    public int next()
+    {
+
+      int node = _currentNode;
+
+      _currentNode = m_traverser.next(_startNode, _currentNode);
+
+      return returnNode(node);
+    }
+  }  // end of FollowingIterator
+
+  /**
+   * Iterator that returns following nodes of a given type for a given node.
+   */
+  public final class TypedFollowingIterator extends FollowingIterator
+  {
+
+    /** The extended type ID that was requested. */
+    private final int _nodeType;
+
+    /**
+     * Constructor TypedFollowingIterator
+     *
+     *
+     * @param type The extended type ID being requested.
+     */
+    public TypedFollowingIterator(int type)
+    {
+      _nodeType = type;
+    }
+
+    /**
+     * Get the next node in the iteration.
+     *
+     * @return The next node handle in the iteration, or END.
+     */
+    public int next()
+    {
+
+      int node;
+
+      do{
+       node = _currentNode;
+
+      _currentNode = m_traverser.next(_startNode, _currentNode);
+
+      }
+      while (node != DTM.NULL
+             && (getExpandedTypeID(node) != _nodeType && getNodeType(node) != _nodeType));
+
+      return (node == DTM.NULL ? DTM.NULL :returnNode(node));
+    }
+  }  // end of TypedFollowingIterator
+
+  /**
+   * Iterator that returns the ancestors of a given node in document
+   * order.  (NOTE!  This was changed from the XSLTC code!)
+   */
+  public class AncestorIterator extends InternalAxisIteratorBase
+  {
+    com.sun.org.apache.xml.internal.utils.NodeVector m_ancestors =
+         new com.sun.org.apache.xml.internal.utils.NodeVector();
+
+    int m_ancestorsPos;
+
+    int m_markedPos;
+
+    /** The real start node for this axes, since _startNode will be adjusted. */
+    int m_realStartNode;
+
+    /**
+     * Get start to END should 'close' the iterator,
+     * i.e. subsequent call to next() should return END.
+     *
+     * @return The root node of the iteration.
+     */
+    public int getStartNode()
+    {
+      return m_realStartNode;
+    }
+
+    /**
+     * True if this iterator has a reversed axis.
+     *
+     * @return true since this iterator is a reversed axis.
+     */
+    public final boolean isReverse()
+    {
+      return true;
+    }
+
+    /**
+     * Returns a deep copy of this iterator.  The cloned iterator is not reset.
+     *
+     * @return a deep copy of this iterator.
+     */
+    public DTMAxisIterator cloneIterator()
+    {
+      _isRestartable = false;  // must set to false for any clone
+
+      try
+      {
+        final AncestorIterator clone = (AncestorIterator) super.clone();
+
+        clone._startNode = _startNode;
+
+        // return clone.reset();
+        return clone;
+      }
+      catch (CloneNotSupportedException e)
+      {
+        throw new DTMException(XMLMessages.createXMLMessage(XMLErrorResources.ER_ITERATOR_CLONE_NOT_SUPPORTED, null)); //"Iterator clone not supported.");
+      }
+    }
+
+    /**
+     * Set start to END should 'close' the iterator,
+     * i.e. subsequent call to next() should return END.
+     *
+     * @param node Sets the root of the iteration.
+     *
+     * @return A DTMAxisIterator set to the start of the iteration.
+     */
+    public DTMAxisIterator setStartNode(int node)
+    {
+//%HZ%: Added reference to DTMDefaultBase.ROOTNODE back in, temporarily
+      if (node == DTMDefaultBase.ROOTNODE)
+        node = getDocument();
+      m_realStartNode = node;
+
+      if (_isRestartable)
+      {
+        int nodeID = makeNodeIdentity(node);
+
+        if (!_includeSelf && node != DTM.NULL) {
+          nodeID = _parent(nodeID);
+          node = makeNodeHandle(nodeID);
+        }
+
+        _startNode = node;
+
+        while (nodeID != END) {
+          m_ancestors.addElement(node);
+          nodeID = _parent(nodeID);
+          node = makeNodeHandle(nodeID);
+        }
+        m_ancestorsPos = m_ancestors.size()-1;
+
+        _currentNode = (m_ancestorsPos>=0)
+                               ? m_ancestors.elementAt(m_ancestorsPos)
+                               : DTM.NULL;
+
+        return resetPosition();
+      }
+
+      return this;
+    }
+
+    /**
+     * Resets the iterator to the last start node.
+     *
+     * @return A DTMAxisIterator, which may or may not be the same as this
+     *         iterator.
+     */
+    public DTMAxisIterator reset()
+    {
+
+      m_ancestorsPos = m_ancestors.size()-1;
+
+      _currentNode = (m_ancestorsPos>=0) ? m_ancestors.elementAt(m_ancestorsPos)
+                                         : DTM.NULL;
+
+      return resetPosition();
+    }
+
+    /**
+     * Get the next node in the iteration.
+     *
+     * @return The next node handle in the iteration, or END.
+     */
+    public int next()
+    {
+
+      int next = _currentNode;
+
+      int pos = --m_ancestorsPos;
+
+      _currentNode = (pos >= 0) ? m_ancestors.elementAt(m_ancestorsPos)
+                                : DTM.NULL;
+
+      return returnNode(next);
+    }
+
+    public void setMark() {
+        m_markedPos = m_ancestorsPos;
+    }
+
+    public void gotoMark() {
+        m_ancestorsPos = m_markedPos;
+        _currentNode = m_ancestorsPos>=0 ? m_ancestors.elementAt(m_ancestorsPos)
+                                         : DTM.NULL;
+    }
+  }  // end of AncestorIterator
+
+  /**
+   * Typed iterator that returns the ancestors of a given node.
+   */
+  public final class TypedAncestorIterator extends AncestorIterator
+  {
+
+    /** The extended type ID that was requested. */
+    private final int _nodeType;
+
+    /**
+     * Constructor TypedAncestorIterator
+     *
+     *
+     * @param type The extended type ID being requested.
+     */
+    public TypedAncestorIterator(int type)
+    {
+      _nodeType = type;
+    }
+
+    /**
+     * Set start to END should 'close' the iterator,
+     * i.e. subsequent call to next() should return END.
+     *
+     * @param node Sets the root of the iteration.
+     *
+     * @return A DTMAxisIterator set to the start of the iteration.
+     */
+    public DTMAxisIterator setStartNode(int node)
+    {
+//%HZ%: Added reference to DTMDefaultBase.ROOTNODE back in, temporarily
+      if (node == DTMDefaultBase.ROOTNODE)
+        node = getDocument();
+      m_realStartNode = node;
+
+      if (_isRestartable)
+      {
+        int nodeID = makeNodeIdentity(node);
+        int nodeType = _nodeType;
+
+        if (!_includeSelf && node != DTM.NULL) {
+          nodeID = _parent(nodeID);
+        }
+
+        _startNode = node;
+
+        if (nodeType >= DTM.NTYPES) {
+          while (nodeID != END) {
+            int eType = _exptype(nodeID);
+
+            if (eType == nodeType) {
+              m_ancestors.addElement(makeNodeHandle(nodeID));
+            }
+            nodeID = _parent(nodeID);
+          }
+        } else {
+          while (nodeID != END) {
+            int eType = _exptype(nodeID);
+
+            if ((eType >= DTM.NTYPES
+                    && m_expandedNameTable.getType(eType) == nodeType)
+                || (eType < DTM.NTYPES && eType == nodeType)) {
+              m_ancestors.addElement(makeNodeHandle(nodeID));
+            }
+            nodeID = _parent(nodeID);
+          }
+        }
+        m_ancestorsPos = m_ancestors.size()-1;
+
+        _currentNode = (m_ancestorsPos>=0)
+                               ? m_ancestors.elementAt(m_ancestorsPos)
+                               : DTM.NULL;
+
+        return resetPosition();
+      }
+
+      return this;
+    }
+  }  // end of TypedAncestorIterator
+
+  /**
+   * Iterator that returns the descendants of a given node.
+   */
+  public class DescendantIterator extends InternalAxisIteratorBase
+  {
+
+    /**
+     * Set start to END should 'close' the iterator,
+     * i.e. subsequent call to next() should return END.
+     *
+     * @param node Sets the root of the iteration.
+     *
+     * @return A DTMAxisIterator set to the start of the iteration.
+     */
+    public DTMAxisIterator setStartNode(int node)
+    {
+//%HZ%: Added reference to DTMDefaultBase.ROOTNODE back in, temporarily
+      if (node == DTMDefaultBase.ROOTNODE)
+        node = getDocument();
+      if (_isRestartable)
+      {
+        node = makeNodeIdentity(node);
+        _startNode = node;
+
+        if (_includeSelf)
+          node--;
+
+        _currentNode = node;
+
+        return resetPosition();
+      }
+
+      return this;
+    }
+
+    /**
+     * Tell if this node identity is a descendant.  Assumes that
+     * the node info for the element has already been obtained.
+     *
+     * This one-sided test works only if the parent has been
+     * previously tested and is known to be a descendent. It fails if
+     * the parent is the _startNode's next sibling, or indeed any node
+     * that follows _startNode in document order.  That may suffice
+     * for this iterator, but it's not really an isDescendent() test.
+     * %REVIEW% rename?
+     *
+     * @param identity The index number of the node in question.
+     * @return true if the index is a descendant of _startNode.
+     */
+    protected boolean isDescendant(int identity)
+    {
+      return (_parent(identity) >= _startNode) || (_startNode == identity);
+    }
+
+    /**
+     * Get the next node in the iteration.
+     *
+     * @return The next node handle in the iteration, or END.
+     */
+    public int next()
+    {
+      if (_startNode == NULL) {
+        return NULL;
+      }
+
+      if (_includeSelf && (_currentNode + 1) == _startNode)
+          return returnNode(makeNodeHandle(++_currentNode)); // | m_dtmIdent);
+
+      int node = _currentNode;
+      int type;
+
+      do {
+        node++;
+        type = _type(node);
+
+        if (NULL == type ||!isDescendant(node)) {
+          _currentNode = NULL;
+          return END;
+        }
+      } while(ATTRIBUTE_NODE == type || TEXT_NODE == type
+                 || NAMESPACE_NODE == type);
+
+      _currentNode = node;
+      return returnNode(makeNodeHandle(node));  // make handle.
+    }
+
+    /**
+     * Reset.
+     *
+     */
+  public DTMAxisIterator reset()
+  {
+
+    final boolean temp = _isRestartable;
+
+    _isRestartable = true;
+
+    setStartNode(makeNodeHandle(_startNode));
+
+    _isRestartable = temp;
+
+    return this;
+  }
+
+  }  // end of DescendantIterator
+
+  /**
+   * Typed iterator that returns the descendants of a given node.
+   */
+  public final class TypedDescendantIterator extends DescendantIterator
+  {
+
+    /** The extended type ID that was requested. */
+    private final int _nodeType;
+
+    /**
+     * Constructor TypedDescendantIterator
+     *
+     *
+     * @param nodeType Extended type ID being requested.
+     */
+    public TypedDescendantIterator(int nodeType)
+    {
+      _nodeType = nodeType;
+    }
+
+    /**
+     * Get the next node in the iteration.
+     *
+     * @return The next node handle in the iteration, or END.
+     */
+    public int next()
+    {
+      int node;
+      int type;
+
+      if (_startNode == NULL) {
+        return NULL;
+      }
+
+      node = _currentNode;
+
+      do
+      {
+        node++;
+        type = _type(node);
+
+        if (NULL == type ||!isDescendant(node)) {
+          _currentNode = NULL;
+          return END;
+        }
+      }
+      while (type != _nodeType && _exptype(node) != _nodeType);
+
+      _currentNode = node;
+      return returnNode(makeNodeHandle(node));
+    }
+  }  // end of TypedDescendantIterator
+
+  /**
+   * Iterator that returns the descendants of a given node.
+   * I'm not exactly clear about this one... -sb
+   */
+  public class NthDescendantIterator extends DescendantIterator
+  {
+
+    /** The current nth position. */
+    int _pos;
+
+    /**
+     * Constructor NthDescendantIterator
+     *
+     *
+     * @param pos The nth position being requested.
+     */
+    public NthDescendantIterator(int pos)
+    {
+      _pos = pos;
+    }
+
+    /**
+     * Get the next node in the iteration.
+     *
+     * @return The next node handle in the iteration, or END.
+     */
+    public int next()
+    {
+
+      // I'm not exactly clear yet what this is doing... -sb
+      int node;
+
+      while ((node = super.next()) != END)
+      {
+        node = makeNodeIdentity(node);
+
+        int parent = _parent(node);
+        int child = _firstch(parent);
+        int pos = 0;
+
+        do
+        {
+          int type = _type(child);
+
+          if (ELEMENT_NODE == type)
+            pos++;
+        }
+        while ((pos < _pos) && (child = _nextsib(child)) != END);
+
+        if (node == child)
+          return node;
+      }
+
+      return (END);
+    }
+  }  // end of NthDescendantIterator
+
+  /**
+   * Class SingletonIterator.
+   */
+  public class SingletonIterator extends InternalAxisIteratorBase
+  {
+
+    /** (not sure yet what this is.  -sb)  (sc & sb remove final to compile in JDK 1.1.8) */
+    private boolean _isConstant;
+
+    /**
+     * Constructor SingletonIterator
+     *
+     */
+    public SingletonIterator()
+    {
+      this(Integer.MIN_VALUE, false);
+    }
+
+    /**
+     * Constructor SingletonIterator
+     *
+     *
+     * @param node The node handle to return.
+     */
+    public SingletonIterator(int node)
+    {
+      this(node, false);
+    }
+
+    /**
+     * Constructor SingletonIterator
+     *
+     *
+     * @param node the node handle to return.
+     * @param constant (Not sure what this is yet.  -sb)
+     */
+    public SingletonIterator(int node, boolean constant)
+    {
+      _currentNode = _startNode = node;
+      _isConstant = constant;
+    }
+
+    /**
+     * Set start to END should 'close' the iterator,
+     * i.e. subsequent call to next() should return END.
+     *
+     * @param node Sets the root of the iteration.
+     *
+     * @return A DTMAxisIterator set to the start of the iteration.
+     */
+    public DTMAxisIterator setStartNode(int node)
+    {
+//%HZ%: Added reference to DTMDefaultBase.ROOTNODE back in, temporarily
+      if (node == DTMDefaultBase.ROOTNODE)
+        node = getDocument();
+      if (_isConstant)
+      {
+        _currentNode = _startNode;
+
+        return resetPosition();
+      }
+      else if (_isRestartable)
+      {
+          _currentNode = _startNode = node;
+
+        return resetPosition();
+      }
+
+      return this;
+    }
+
+    /**
+     * Resets the iterator to the last start node.
+     *
+     * @return A DTMAxisIterator, which may or may not be the same as this
+     *         iterator.
+     */
+    public DTMAxisIterator reset()
+    {
+
+      if (_isConstant)
+      {
+        _currentNode = _startNode;
+
+        return resetPosition();
+      }
+      else
+      {
+        final boolean temp = _isRestartable;
+
+        _isRestartable = true;
+
+        setStartNode(_startNode);
+
+        _isRestartable = temp;
+      }
+
+      return this;
+    }
+
+    /**
+     * Get the next node in the iteration.
+     *
+     * @return The next node handle in the iteration, or END.
+     */
+    public int next()
+    {
+
+      final int result = _currentNode;
+
+      _currentNode = END;
+
+      return returnNode(result);
+    }
+  }  // end of SingletonIterator
+
+  /**
+   * Iterator that returns a given node only if it is of a given type.
+   */
+  public final class TypedSingletonIterator extends SingletonIterator
+  {
+
+    /** The extended type ID that was requested. */
+    private final int _nodeType;
+
+    /**
+     * Constructor TypedSingletonIterator
+     *
+     *
+     * @param nodeType The extended type ID being requested.
+     */
+    public TypedSingletonIterator(int nodeType)
+    {
+      _nodeType = nodeType;
+    }
+
+    /**
+     * Get the next node in the iteration.
+     *
+     * @return The next node handle in the iteration, or END.
+     */
+    public int next()
+    {
+
+      //final int result = super.next();
+      final int result = _currentNode;
+      int nodeType = _nodeType;
+
+      _currentNode = END;
+
+      if (nodeType >= DTM.NTYPES) {
+        if (getExpandedTypeID(result) == nodeType) {
+          return returnNode(result);
+        }
+      } else {
+        if (getNodeType(result) == nodeType) {
+          return returnNode(result);
+        }
+      }
+
+      return NULL;
+    }
+  }  // end of TypedSingletonIterator
+}

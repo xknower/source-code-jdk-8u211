@@ -1,284 +1,278 @@
-/*     */ package javax.swing.plaf.synth;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Insets;
-/*     */ import java.awt.event.FocusEvent;
-/*     */ import java.awt.event.FocusListener;
-/*     */ import java.beans.PropertyChangeEvent;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.plaf.ComponentUI;
-/*     */ import javax.swing.plaf.basic.BasicTextFieldUI;
-/*     */ import javax.swing.text.Caret;
-/*     */ import javax.swing.text.JTextComponent;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class SynthTextFieldUI
-/*     */   extends BasicTextFieldUI
-/*     */   implements SynthUI
-/*     */ {
-/*  54 */   private Handler handler = new Handler();
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private SynthStyle style;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static ComponentUI createUI(JComponent paramJComponent) {
-/*  64 */     return new SynthTextFieldUI();
-/*     */   }
-/*     */   
-/*     */   private void updateStyle(JTextComponent paramJTextComponent) {
-/*  68 */     SynthContext synthContext = getContext(paramJTextComponent, 1);
-/*  69 */     SynthStyle synthStyle = this.style;
-/*     */     
-/*  71 */     this.style = SynthLookAndFeel.updateStyle(synthContext, this);
-/*     */     
-/*  73 */     if (this.style != synthStyle) {
-/*  74 */       updateStyle(paramJTextComponent, synthContext, getPropertyPrefix());
-/*     */       
-/*  76 */       if (synthStyle != null) {
-/*  77 */         uninstallKeyboardActions();
-/*  78 */         installKeyboardActions();
-/*     */       } 
-/*     */     } 
-/*  81 */     synthContext.dispose();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   static void updateStyle(JTextComponent paramJTextComponent, SynthContext paramSynthContext, String paramString) {
-/*  86 */     SynthStyle synthStyle = paramSynthContext.getStyle();
-/*     */     
-/*  88 */     Color color1 = paramJTextComponent.getCaretColor();
-/*  89 */     if (color1 == null || color1 instanceof javax.swing.plaf.UIResource) {
-/*  90 */       paramJTextComponent.setCaretColor((Color)synthStyle
-/*  91 */           .get(paramSynthContext, paramString + ".caretForeground"));
-/*     */     }
-/*     */     
-/*  94 */     Color color2 = paramJTextComponent.getForeground();
-/*  95 */     if (color2 == null || color2 instanceof javax.swing.plaf.UIResource) {
-/*  96 */       color2 = synthStyle.getColorForState(paramSynthContext, ColorType.TEXT_FOREGROUND);
-/*  97 */       if (color2 != null) {
-/*  98 */         paramJTextComponent.setForeground(color2);
-/*     */       }
-/*     */     } 
-/*     */     
-/* 102 */     Object object = synthStyle.get(paramSynthContext, paramString + ".caretAspectRatio");
-/* 103 */     if (object instanceof Number) {
-/* 104 */       paramJTextComponent.putClientProperty("caretAspectRatio", object);
-/*     */     }
-/*     */     
-/* 107 */     paramSynthContext.setComponentState(768);
-/*     */     
-/* 109 */     Color color3 = paramJTextComponent.getSelectionColor();
-/* 110 */     if (color3 == null || color3 instanceof javax.swing.plaf.UIResource) {
-/* 111 */       paramJTextComponent.setSelectionColor(synthStyle
-/* 112 */           .getColor(paramSynthContext, ColorType.TEXT_BACKGROUND));
-/*     */     }
-/*     */     
-/* 115 */     Color color4 = paramJTextComponent.getSelectedTextColor();
-/* 116 */     if (color4 == null || color4 instanceof javax.swing.plaf.UIResource) {
-/* 117 */       paramJTextComponent.setSelectedTextColor(synthStyle
-/* 118 */           .getColor(paramSynthContext, ColorType.TEXT_FOREGROUND));
-/*     */     }
-/*     */     
-/* 121 */     paramSynthContext.setComponentState(8);
-/*     */     
-/* 123 */     Color color5 = paramJTextComponent.getDisabledTextColor();
-/* 124 */     if (color5 == null || color5 instanceof javax.swing.plaf.UIResource) {
-/* 125 */       paramJTextComponent.setDisabledTextColor(synthStyle
-/* 126 */           .getColor(paramSynthContext, ColorType.TEXT_FOREGROUND));
-/*     */     }
-/*     */     
-/* 129 */     Insets insets = paramJTextComponent.getMargin();
-/* 130 */     if (insets == null || insets instanceof javax.swing.plaf.UIResource) {
-/* 131 */       insets = (Insets)synthStyle.get(paramSynthContext, paramString + ".margin");
-/*     */       
-/* 133 */       if (insets == null)
-/*     */       {
-/* 135 */         insets = SynthLookAndFeel.EMPTY_UIRESOURCE_INSETS;
-/*     */       }
-/* 137 */       paramJTextComponent.setMargin(insets);
-/*     */     } 
-/*     */     
-/* 140 */     Caret caret = paramJTextComponent.getCaret();
-/* 141 */     if (caret instanceof javax.swing.plaf.UIResource) {
-/* 142 */       Object object1 = synthStyle.get(paramSynthContext, paramString + ".caretBlinkRate");
-/* 143 */       if (object1 != null && object1 instanceof Integer) {
-/* 144 */         Integer integer = (Integer)object1;
-/* 145 */         caret.setBlinkRate(integer.intValue());
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SynthContext getContext(JComponent paramJComponent) {
-/* 155 */     return getContext(paramJComponent, SynthLookAndFeel.getComponentState(paramJComponent));
-/*     */   }
-/*     */   
-/*     */   private SynthContext getContext(JComponent paramJComponent, int paramInt) {
-/* 159 */     return SynthContext.getContext(paramJComponent, this.style, paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void update(Graphics paramGraphics, JComponent paramJComponent) {
-/* 176 */     SynthContext synthContext = getContext(paramJComponent);
-/*     */     
-/* 178 */     SynthLookAndFeel.update(synthContext, paramGraphics);
-/* 179 */     paintBackground(synthContext, paramGraphics, paramJComponent);
-/* 180 */     paint(synthContext, paramGraphics);
-/* 181 */     synthContext.dispose();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void paint(SynthContext paramSynthContext, Graphics paramGraphics) {
-/* 197 */     paint(paramGraphics, getComponent());
-/*     */   }
-/*     */   
-/*     */   void paintBackground(SynthContext paramSynthContext, Graphics paramGraphics, JComponent paramJComponent) {
-/* 201 */     paramSynthContext.getPainter().paintTextFieldBackground(paramSynthContext, paramGraphics, 0, 0, paramJComponent
-/* 202 */         .getWidth(), paramJComponent.getHeight());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void paintBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/* 211 */     paramSynthContext.getPainter().paintTextFieldBorder(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void paintBackground(Graphics paramGraphics) {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void propertyChange(PropertyChangeEvent paramPropertyChangeEvent) {
-/* 236 */     if (SynthLookAndFeel.shouldUpdateStyle(paramPropertyChangeEvent)) {
-/* 237 */       updateStyle((JTextComponent)paramPropertyChangeEvent.getSource());
-/*     */     }
-/* 239 */     super.propertyChange(paramPropertyChangeEvent);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void installDefaults() {
-/* 248 */     super.installDefaults();
-/* 249 */     updateStyle(getComponent());
-/* 250 */     getComponent().addFocusListener(this.handler);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void uninstallDefaults() {
-/* 258 */     SynthContext synthContext = getContext(getComponent(), 1);
-/*     */     
-/* 260 */     getComponent().putClientProperty("caretAspectRatio", (Object)null);
-/* 261 */     getComponent().removeFocusListener(this.handler);
-/*     */     
-/* 263 */     this.style.uninstallDefaults(synthContext);
-/* 264 */     synthContext.dispose();
-/* 265 */     this.style = null;
-/* 266 */     super.uninstallDefaults();
-/*     */   }
-/*     */   
-/*     */   private final class Handler implements FocusListener {
-/*     */     public void focusGained(FocusEvent param1FocusEvent) {
-/* 271 */       SynthTextFieldUI.this.getComponent().repaint();
-/*     */     }
-/*     */     private Handler() {}
-/*     */     public void focusLost(FocusEvent param1FocusEvent) {
-/* 275 */       SynthTextFieldUI.this.getComponent().repaint();
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\synth\SynthTextFieldUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.plaf.synth;
+
+import javax.swing.*;
+import javax.swing.text.*;
+import javax.swing.plaf.*;
+import javax.swing.plaf.basic.BasicTextFieldUI;
+import java.awt.*;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.beans.PropertyChangeEvent;
+
+
+/**
+ * Provides the Synth L&amp;F UI delegate for {@link javax.swing.JTextField}.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @author  Shannon Hickey
+ * @since 1.7
+ */
+public class SynthTextFieldUI extends BasicTextFieldUI implements SynthUI {
+    private Handler handler = new Handler();
+    private SynthStyle style;
+
+    /**
+     * Creates a UI for a JTextField.
+     *
+     * @param c the text field
+     * @return the UI object
+     */
+    public static ComponentUI createUI(JComponent c) {
+        return new SynthTextFieldUI();
+    }
+
+    private void updateStyle(JTextComponent comp) {
+        SynthContext context = getContext(comp, ENABLED);
+        SynthStyle oldStyle = style;
+
+        style = SynthLookAndFeel.updateStyle(context, this);
+
+        if (style != oldStyle) {
+            SynthTextFieldUI.updateStyle(comp, context, getPropertyPrefix());
+
+            if (oldStyle != null) {
+                uninstallKeyboardActions();
+                installKeyboardActions();
+            }
+        }
+        context.dispose();
+    }
+
+    static void updateStyle(JTextComponent comp, SynthContext context,
+            String prefix) {
+        SynthStyle style = context.getStyle();
+
+        Color color = comp.getCaretColor();
+        if (color == null || color instanceof UIResource) {
+            comp.setCaretColor(
+                (Color)style.get(context, prefix + ".caretForeground"));
+        }
+
+        Color fg = comp.getForeground();
+        if (fg == null || fg instanceof UIResource) {
+            fg = style.getColorForState(context, ColorType.TEXT_FOREGROUND);
+            if (fg != null) {
+                comp.setForeground(fg);
+            }
+        }
+
+        Object ar = style.get(context, prefix + ".caretAspectRatio");
+        if (ar instanceof Number) {
+            comp.putClientProperty("caretAspectRatio", ar);
+        }
+
+        context.setComponentState(SELECTED | FOCUSED);
+
+        Color s = comp.getSelectionColor();
+        if (s == null || s instanceof UIResource) {
+            comp.setSelectionColor(
+                style.getColor(context, ColorType.TEXT_BACKGROUND));
+        }
+
+        Color sfg = comp.getSelectedTextColor();
+        if (sfg == null || sfg instanceof UIResource) {
+            comp.setSelectedTextColor(
+                style.getColor(context, ColorType.TEXT_FOREGROUND));
+        }
+
+        context.setComponentState(DISABLED);
+
+        Color dfg = comp.getDisabledTextColor();
+        if (dfg == null || dfg instanceof UIResource) {
+            comp.setDisabledTextColor(
+                style.getColor(context, ColorType.TEXT_FOREGROUND));
+        }
+
+        Insets margin = comp.getMargin();
+        if (margin == null || margin instanceof UIResource) {
+            margin = (Insets)style.get(context, prefix + ".margin");
+
+            if (margin == null) {
+                // Some places assume margins are non-null.
+                margin = SynthLookAndFeel.EMPTY_UIRESOURCE_INSETS;
+            }
+            comp.setMargin(margin);
+        }
+
+        Caret caret = comp.getCaret();
+        if (caret instanceof UIResource) {
+            Object o = style.get(context, prefix + ".caretBlinkRate");
+            if (o != null && o instanceof Integer) {
+                Integer rate = (Integer)o;
+                caret.setBlinkRate(rate.intValue());
+            }
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public SynthContext getContext(JComponent c) {
+        return getContext(c, SynthLookAndFeel.getComponentState(c));
+    }
+
+    private SynthContext getContext(JComponent c, int state) {
+        return SynthContext.getContext(c, style, state);
+    }
+
+    /**
+     * Notifies this UI delegate to repaint the specified component.
+     * This method paints the component background, then calls
+     * the {@link #paint(SynthContext,Graphics)} method.
+     *
+     * <p>In general, this method does not need to be overridden by subclasses.
+     * All Look and Feel rendering code should reside in the {@code paint} method.
+     *
+     * @param g the {@code Graphics} object used for painting
+     * @param c the component being painted
+     * @see #paint(SynthContext,Graphics)
+     */
+    @Override
+    public void update(Graphics g, JComponent c) {
+        SynthContext context = getContext(c);
+
+        SynthLookAndFeel.update(context, g);
+        paintBackground(context, g, c);
+        paint(context, g);
+        context.dispose();
+    }
+
+    /**
+     * Paints the specified component.
+     * <p>This is routed to the {@link #paintSafely} method under
+     * the guarantee that the model does not change from the view of this
+     * thread while it is rendering (if the associated model is
+     * derived from {@code AbstractDocument}).  This enables the
+     * model to potentially be updated asynchronously.
+     *
+     * @param context context for the component being painted
+     * @param g the {@code Graphics} object used for painting
+     * @see #update(Graphics,JComponent)
+     */
+    protected void paint(SynthContext context, Graphics g) {
+        super.paint(g, getComponent());
+    }
+
+    void paintBackground(SynthContext context, Graphics g, JComponent c) {
+        context.getPainter().paintTextFieldBackground(context, g, 0, 0,
+                                                c.getWidth(), c.getHeight());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void paintBorder(SynthContext context, Graphics g, int x,
+                            int y, int w, int h) {
+        context.getPainter().paintTextFieldBorder(context, g, x, y, w, h);
+    }
+
+    /**
+     * {@inheritDoc}
+     * Overridden to do nothing.
+     */
+    @Override
+    protected void paintBackground(Graphics g) {
+        // Overriden to do nothing, all our painting is done from update/paint.
+    }
+
+    /**
+     * This method gets called when a bound property is changed
+     * on the associated JTextComponent.  This is a hook
+     * which UI implementations may change to reflect how the
+     * UI displays bound properties of JTextComponent subclasses.
+     * This is implemented to do nothing (i.e. the response to
+     * properties in JTextComponent itself are handled prior
+     * to calling this method).
+     *
+     * @param evt the property change event
+     */
+    @Override
+    protected void propertyChange(PropertyChangeEvent evt) {
+        if (SynthLookAndFeel.shouldUpdateStyle(evt)) {
+            updateStyle((JTextComponent)evt.getSource());
+        }
+        super.propertyChange(evt);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void installDefaults() {
+        // Installs the text cursor on the component
+        super.installDefaults();
+        updateStyle(getComponent());
+        getComponent().addFocusListener(handler);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void uninstallDefaults() {
+        SynthContext context = getContext(getComponent(), ENABLED);
+
+        getComponent().putClientProperty("caretAspectRatio", null);
+        getComponent().removeFocusListener(handler);
+
+        style.uninstallDefaults(context);
+        context.dispose();
+        style = null;
+        super.uninstallDefaults();
+    }
+
+    private final class Handler implements FocusListener {
+        public void focusGained(FocusEvent e) {
+            getComponent().repaint();
+        }
+
+        public void focusLost(FocusEvent e) {
+            getComponent().repaint();
+        }
+    }
+}

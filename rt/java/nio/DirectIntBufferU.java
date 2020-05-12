@@ -1,472 +1,494 @@
-/*     */ package java.nio;
-/*     */ 
-/*     */ import sun.misc.Cleaner;
-/*     */ import sun.misc.Unsafe;
-/*     */ import sun.nio.ch.DirectBuffer;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class DirectIntBufferU
-/*     */   extends IntBuffer
-/*     */   implements DirectBuffer
-/*     */ {
-/*  49 */   protected static final Unsafe unsafe = Bits.unsafe();
-/*     */ 
-/*     */   
-/*  52 */   private static final long arrayBaseOffset = unsafe.arrayBaseOffset(int[].class);
-/*     */ 
-/*     */   
-/*  55 */   protected static final boolean unaligned = Bits.unaligned();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private final Object att;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object attachment() {
-/*  67 */     return this.att;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Cleaner cleaner() {
-/* 107 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   DirectIntBufferU(DirectBuffer paramDirectBuffer, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5) {
-/* 195 */     super(paramInt1, paramInt2, paramInt3, paramInt4);
-/* 196 */     this.address = paramDirectBuffer.address() + paramInt5;
-/*     */ 
-/*     */ 
-/*     */     
-/* 200 */     this.att = paramDirectBuffer;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public IntBuffer slice() {
-/* 207 */     int i = position();
-/* 208 */     int j = limit();
-/* 209 */     assert i <= j;
-/* 210 */     boolean bool = (i <= j) ? (j - i) : false;
-/* 211 */     int k = i << 2;
-/* 212 */     assert k >= 0;
-/* 213 */     return new DirectIntBufferU(this, -1, 0, bool, bool, k);
-/*     */   }
-/*     */   
-/*     */   public IntBuffer duplicate() {
-/* 217 */     return new DirectIntBufferU(this, 
-/* 218 */         markValue(), 
-/* 219 */         position(), 
-/* 220 */         limit(), 
-/* 221 */         capacity(), 0);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public IntBuffer asReadOnlyBuffer() {
-/* 227 */     return new DirectIntBufferRU(this, 
-/* 228 */         markValue(), 
-/* 229 */         position(), 
-/* 230 */         limit(), 
-/* 231 */         capacity(), 0);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public long address() {
-/* 241 */     return this.address;
-/*     */   }
-/*     */   
-/*     */   private long ix(int paramInt) {
-/* 245 */     return this.address + (paramInt << 2L);
-/*     */   }
-/*     */   
-/*     */   public int get() {
-/* 249 */     return unsafe.getInt(ix(nextGetIndex()));
-/*     */   }
-/*     */   
-/*     */   public int get(int paramInt) {
-/* 253 */     return unsafe.getInt(ix(checkIndex(paramInt)));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public IntBuffer get(int[] paramArrayOfint, int paramInt1, int paramInt2) {
-/* 264 */     if (paramInt2 << 2L > 6L) {
-/* 265 */       checkBounds(paramInt1, paramInt2, paramArrayOfint.length);
-/* 266 */       int i = position();
-/* 267 */       int j = limit();
-/* 268 */       assert i <= j;
-/* 269 */       byte b = (i <= j) ? (j - i) : 0;
-/* 270 */       if (paramInt2 > b) {
-/* 271 */         throw new BufferUnderflowException();
-/*     */       }
-/*     */       
-/* 274 */       if (order() != ByteOrder.nativeOrder()) {
-/* 275 */         Bits.copyToIntArray(ix(i), paramArrayOfint, paramInt1 << 2L, paramInt2 << 2L);
-/*     */       
-/*     */       }
-/*     */       else {
-/*     */         
-/* 280 */         Bits.copyToArray(ix(i), paramArrayOfint, arrayBaseOffset, paramInt1 << 2L, paramInt2 << 2L);
-/*     */       } 
-/*     */       
-/* 283 */       position(i + paramInt2);
-/*     */     } else {
-/* 285 */       super.get(paramArrayOfint, paramInt1, paramInt2);
-/*     */     } 
-/* 287 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public IntBuffer put(int paramInt) {
-/* 297 */     unsafe.putInt(ix(nextPutIndex()), paramInt);
-/* 298 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public IntBuffer put(int paramInt1, int paramInt2) {
-/* 306 */     unsafe.putInt(ix(checkIndex(paramInt1)), paramInt2);
-/* 307 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public IntBuffer put(IntBuffer paramIntBuffer) {
-/* 315 */     if (paramIntBuffer instanceof DirectIntBufferU) {
-/* 316 */       if (paramIntBuffer == this)
-/* 317 */         throw new IllegalArgumentException(); 
-/* 318 */       DirectIntBufferU directIntBufferU = (DirectIntBufferU)paramIntBuffer;
-/*     */       
-/* 320 */       int i = directIntBufferU.position();
-/* 321 */       int j = directIntBufferU.limit();
-/* 322 */       assert i <= j;
-/* 323 */       byte b1 = (i <= j) ? (j - i) : 0;
-/*     */       
-/* 325 */       int k = position();
-/* 326 */       int m = limit();
-/* 327 */       assert k <= m;
-/* 328 */       byte b2 = (k <= m) ? (m - k) : 0;
-/*     */       
-/* 330 */       if (b1 > b2)
-/* 331 */         throw new BufferOverflowException(); 
-/* 332 */       unsafe.copyMemory(directIntBufferU.ix(i), ix(k), b1 << 2L);
-/* 333 */       directIntBufferU.position(i + b1);
-/* 334 */       position(k + b1);
-/* 335 */     } else if (paramIntBuffer.hb != null) {
-/*     */       
-/* 337 */       int i = paramIntBuffer.position();
-/* 338 */       int j = paramIntBuffer.limit();
-/* 339 */       assert i <= j;
-/* 340 */       byte b = (i <= j) ? (j - i) : 0;
-/*     */       
-/* 342 */       put(paramIntBuffer.hb, paramIntBuffer.offset + i, b);
-/* 343 */       paramIntBuffer.position(i + b);
-/*     */     } else {
-/*     */       
-/* 346 */       super.put(paramIntBuffer);
-/*     */     } 
-/* 348 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public IntBuffer put(int[] paramArrayOfint, int paramInt1, int paramInt2) {
-/* 356 */     if (paramInt2 << 2L > 6L) {
-/* 357 */       checkBounds(paramInt1, paramInt2, paramArrayOfint.length);
-/* 358 */       int i = position();
-/* 359 */       int j = limit();
-/* 360 */       assert i <= j;
-/* 361 */       byte b = (i <= j) ? (j - i) : 0;
-/* 362 */       if (paramInt2 > b) {
-/* 363 */         throw new BufferOverflowException();
-/*     */       }
-/*     */       
-/* 366 */       if (order() != ByteOrder.nativeOrder()) {
-/* 367 */         Bits.copyFromIntArray(paramArrayOfint, paramInt1 << 2L, 
-/*     */             
-/* 369 */             ix(i), paramInt2 << 2L);
-/*     */       }
-/*     */       else {
-/*     */         
-/* 373 */         Bits.copyFromArray(paramArrayOfint, arrayBaseOffset, paramInt1 << 2L, 
-/*     */             
-/* 375 */             ix(i), paramInt2 << 2L);
-/*     */       } 
-/* 377 */       position(i + paramInt2);
-/*     */     } else {
-/* 379 */       super.put(paramArrayOfint, paramInt1, paramInt2);
-/*     */     } 
-/* 381 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public IntBuffer compact() {
-/* 389 */     int i = position();
-/* 390 */     int j = limit();
-/* 391 */     assert i <= j;
-/* 392 */     boolean bool = (i <= j) ? (j - i) : false;
-/*     */     
-/* 394 */     unsafe.copyMemory(ix(i), ix(0), bool << 2L);
-/* 395 */     position(bool);
-/* 396 */     limit(capacity());
-/* 397 */     discardMark();
-/* 398 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isDirect() {
-/* 405 */     return true;
-/*     */   }
-/*     */   
-/*     */   public boolean isReadOnly() {
-/* 409 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ByteOrder order() {
-/* 464 */     return (ByteOrder.nativeOrder() != ByteOrder.BIG_ENDIAN) ? ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\nio\DirectIntBufferU.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+// -- This file was mechanically generated: Do not edit! -- //
+
+package java.nio;
+
+import java.io.FileDescriptor;
+import sun.misc.Cleaner;
+import sun.misc.Unsafe;
+import sun.misc.VM;
+import sun.nio.ch.DirectBuffer;
+
+
+class DirectIntBufferU
+
+    extends IntBuffer
+
+
+
+    implements DirectBuffer
+{
+
+
+
+    // Cached unsafe-access object
+    protected static final Unsafe unsafe = Bits.unsafe();
+
+    // Cached array base offset
+    private static final long arrayBaseOffset = (long)unsafe.arrayBaseOffset(int[].class);
+
+    // Cached unaligned-access capability
+    protected static final boolean unaligned = Bits.unaligned();
+
+    // Base address, used in all indexing calculations
+    // NOTE: moved up to Buffer.java for speed in JNI GetDirectBufferAddress
+    //    protected long address;
+
+    // An object attached to this buffer. If this buffer is a view of another
+    // buffer then we use this field to keep a reference to that buffer to
+    // ensure that its memory isn't freed before we are done with it.
+    private final Object att;
+
+    public Object attachment() {
+        return att;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public Cleaner cleaner() { return null; }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // For duplicates and slices
+    //
+    DirectIntBufferU(DirectBuffer db,         // package-private
+                               int mark, int pos, int lim, int cap,
+                               int off)
+    {
+
+        super(mark, pos, lim, cap);
+        address = db.address() + off;
+
+
+
+        att = db;
+
+
+
+    }
+
+    public IntBuffer slice() {
+        int pos = this.position();
+        int lim = this.limit();
+        assert (pos <= lim);
+        int rem = (pos <= lim ? lim - pos : 0);
+        int off = (pos << 2);
+        assert (off >= 0);
+        return new DirectIntBufferU(this, -1, 0, rem, rem, off);
+    }
+
+    public IntBuffer duplicate() {
+        return new DirectIntBufferU(this,
+                                              this.markValue(),
+                                              this.position(),
+                                              this.limit(),
+                                              this.capacity(),
+                                              0);
+    }
+
+    public IntBuffer asReadOnlyBuffer() {
+
+        return new DirectIntBufferRU(this,
+                                           this.markValue(),
+                                           this.position(),
+                                           this.limit(),
+                                           this.capacity(),
+                                           0);
+
+
+
+    }
+
+
+
+    public long address() {
+        return address;
+    }
+
+    private long ix(int i) {
+        return address + ((long)i << 2);
+    }
+
+    public int get() {
+        return ((unsafe.getInt(ix(nextGetIndex()))));
+    }
+
+    public int get(int i) {
+        return ((unsafe.getInt(ix(checkIndex(i)))));
+    }
+
+
+
+
+
+
+
+    public IntBuffer get(int[] dst, int offset, int length) {
+
+        if (((long)length << 2) > Bits.JNI_COPY_TO_ARRAY_THRESHOLD) {
+            checkBounds(offset, length, dst.length);
+            int pos = position();
+            int lim = limit();
+            assert (pos <= lim);
+            int rem = (pos <= lim ? lim - pos : 0);
+            if (length > rem)
+                throw new BufferUnderflowException();
+
+
+            if (order() != ByteOrder.nativeOrder())
+                Bits.copyToIntArray(ix(pos), dst,
+                                          (long)offset << 2,
+                                          (long)length << 2);
+            else
+
+                Bits.copyToArray(ix(pos), dst, arrayBaseOffset,
+                                 (long)offset << 2,
+                                 (long)length << 2);
+            position(pos + length);
+        } else {
+            super.get(dst, offset, length);
+        }
+        return this;
+
+
+
+    }
+
+
+
+    public IntBuffer put(int x) {
+
+        unsafe.putInt(ix(nextPutIndex()), ((x)));
+        return this;
+
+
+
+    }
+
+    public IntBuffer put(int i, int x) {
+
+        unsafe.putInt(ix(checkIndex(i)), ((x)));
+        return this;
+
+
+
+    }
+
+    public IntBuffer put(IntBuffer src) {
+
+        if (src instanceof DirectIntBufferU) {
+            if (src == this)
+                throw new IllegalArgumentException();
+            DirectIntBufferU sb = (DirectIntBufferU)src;
+
+            int spos = sb.position();
+            int slim = sb.limit();
+            assert (spos <= slim);
+            int srem = (spos <= slim ? slim - spos : 0);
+
+            int pos = position();
+            int lim = limit();
+            assert (pos <= lim);
+            int rem = (pos <= lim ? lim - pos : 0);
+
+            if (srem > rem)
+                throw new BufferOverflowException();
+            unsafe.copyMemory(sb.ix(spos), ix(pos), (long)srem << 2);
+            sb.position(spos + srem);
+            position(pos + srem);
+        } else if (src.hb != null) {
+
+            int spos = src.position();
+            int slim = src.limit();
+            assert (spos <= slim);
+            int srem = (spos <= slim ? slim - spos : 0);
+
+            put(src.hb, src.offset + spos, srem);
+            src.position(spos + srem);
+
+        } else {
+            super.put(src);
+        }
+        return this;
+
+
+
+    }
+
+    public IntBuffer put(int[] src, int offset, int length) {
+
+        if (((long)length << 2) > Bits.JNI_COPY_FROM_ARRAY_THRESHOLD) {
+            checkBounds(offset, length, src.length);
+            int pos = position();
+            int lim = limit();
+            assert (pos <= lim);
+            int rem = (pos <= lim ? lim - pos : 0);
+            if (length > rem)
+                throw new BufferOverflowException();
+
+
+            if (order() != ByteOrder.nativeOrder())
+                Bits.copyFromIntArray(src,
+                                            (long)offset << 2,
+                                            ix(pos),
+                                            (long)length << 2);
+            else
+
+                Bits.copyFromArray(src, arrayBaseOffset,
+                                   (long)offset << 2,
+                                   ix(pos),
+                                   (long)length << 2);
+            position(pos + length);
+        } else {
+            super.put(src, offset, length);
+        }
+        return this;
+
+
+
+    }
+
+    public IntBuffer compact() {
+
+        int pos = position();
+        int lim = limit();
+        assert (pos <= lim);
+        int rem = (pos <= lim ? lim - pos : 0);
+
+        unsafe.copyMemory(ix(pos), ix(0), (long)rem << 2);
+        position(rem);
+        limit(capacity());
+        discardMark();
+        return this;
+
+
+
+    }
+
+    public boolean isDirect() {
+        return true;
+    }
+
+    public boolean isReadOnly() {
+        return false;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public ByteOrder order() {
+
+
+
+
+
+        return ((ByteOrder.nativeOrder() != ByteOrder.BIG_ENDIAN)
+                ? ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN);
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}

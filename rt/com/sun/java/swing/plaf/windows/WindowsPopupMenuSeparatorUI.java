@@ -1,100 +1,95 @@
-/*    */ package com.sun.java.swing.plaf.windows;
-/*    */ 
-/*    */ import java.awt.Container;
-/*    */ import java.awt.Dimension;
-/*    */ import java.awt.Font;
-/*    */ import java.awt.Graphics;
-/*    */ import javax.swing.JComponent;
-/*    */ import javax.swing.plaf.ComponentUI;
-/*    */ import javax.swing.plaf.basic.BasicPopupMenuSeparatorUI;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class WindowsPopupMenuSeparatorUI
-/*    */   extends BasicPopupMenuSeparatorUI
-/*    */ {
-/*    */   public static ComponentUI createUI(JComponent paramJComponent) {
-/* 48 */     return new WindowsPopupMenuSeparatorUI();
-/*    */   }
-/*    */   
-/*    */   public void paint(Graphics paramGraphics, JComponent paramJComponent) {
-/* 52 */     Dimension dimension = paramJComponent.getSize();
-/* 53 */     XPStyle xPStyle = XPStyle.getXP();
-/* 54 */     if (WindowsMenuItemUI.isVistaPainting(xPStyle)) {
-/* 55 */       int i = 1;
-/* 56 */       Container container = paramJComponent.getParent();
-/* 57 */       if (container instanceof JComponent) {
-/*    */         
-/* 59 */         Object object = ((JComponent)container).getClientProperty(WindowsPopupMenuUI.GUTTER_OFFSET_KEY);
-/*    */         
-/* 61 */         if (object instanceof Integer) {
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */           
-/* 67 */           i = ((Integer)object).intValue() - paramJComponent.getX();
-/* 68 */           i += WindowsPopupMenuUI.getGutterWidth();
-/*    */         } 
-/*    */       } 
-/* 71 */       XPStyle.Skin skin = xPStyle.getSkin(paramJComponent, TMSchema.Part.MP_POPUPSEPARATOR);
-/* 72 */       int j = skin.getHeight();
-/* 73 */       int k = (dimension.height - j) / 2;
-/* 74 */       skin.paintSkin(paramGraphics, i, k, dimension.width - i - 1, j, TMSchema.State.NORMAL);
-/*    */     } else {
-/* 76 */       int i = dimension.height / 2;
-/* 77 */       paramGraphics.setColor(paramJComponent.getForeground());
-/* 78 */       paramGraphics.drawLine(1, i - 1, dimension.width - 2, i - 1);
-/*    */       
-/* 80 */       paramGraphics.setColor(paramJComponent.getBackground());
-/* 81 */       paramGraphics.drawLine(1, i, dimension.width - 2, i);
-/*    */     } 
-/*    */   }
-/*    */   
-/*    */   public Dimension getPreferredSize(JComponent paramJComponent) {
-/* 86 */     int i = 0;
-/* 87 */     Font font = paramJComponent.getFont();
-/* 88 */     if (font != null) {
-/* 89 */       i = paramJComponent.getFontMetrics(font).getHeight();
-/*    */     }
-/*    */     
-/* 92 */     return new Dimension(0, i / 2 + 2);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\java\swing\plaf\windows\WindowsPopupMenuSeparatorUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2004, 2014, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.java.swing.plaf.windows;
+
+import java.awt.*;
+
+import javax.swing.*;
+import javax.swing.plaf.basic.BasicPopupMenuSeparatorUI;
+import javax.swing.plaf.ComponentUI;
+
+import com.sun.java.swing.plaf.windows.TMSchema.Part;
+import com.sun.java.swing.plaf.windows.TMSchema.State;
+import com.sun.java.swing.plaf.windows.XPStyle.Skin;
+
+/**
+ * Windows L&F implementation of PopupMenuSeparatorUI.
+ *
+ * @author Leif Samuelsson
+ * @author Igor Kushnirskiy
+ */
+
+public class WindowsPopupMenuSeparatorUI extends BasicPopupMenuSeparatorUI {
+
+    public static ComponentUI createUI(JComponent c) {
+        return new WindowsPopupMenuSeparatorUI();
+    }
+
+    public void paint(Graphics g, JComponent c) {
+        Dimension s = c.getSize();
+        XPStyle xp = XPStyle.getXP();
+        if (WindowsMenuItemUI.isVistaPainting(xp)) {
+            int x = 1;
+            Component parent = c.getParent();
+            if (parent instanceof JComponent) {
+                Object gutterOffsetObject =
+                    ((JComponent) parent).getClientProperty(
+                        WindowsPopupMenuUI.GUTTER_OFFSET_KEY);
+                if (gutterOffsetObject instanceof Integer) {
+                    /*
+                     * gutter offset is in parent's coordinates.
+                     * See comment in
+                     * WindowsPopupMenuUI.getTextOffset(JComponent)
+                     */
+                    x = ((Integer) gutterOffsetObject).intValue() - c.getX();
+                    x += WindowsPopupMenuUI.getGutterWidth();
+                }
+            }
+            Skin skin = xp.getSkin(c, Part.MP_POPUPSEPARATOR);
+            int skinHeight = skin.getHeight();
+            int y = (s.height - skinHeight) / 2;
+            skin.paintSkin(g, x, y, s.width - x - 1, skinHeight, State.NORMAL);
+        } else {
+            int y = s.height / 2;
+            g.setColor(c.getForeground());
+            g.drawLine(1, y - 1, s.width - 2, y - 1);
+
+            g.setColor(c.getBackground());
+            g.drawLine(1, y,     s.width - 2, y);
+        }
+    }
+
+    public Dimension getPreferredSize(JComponent c) {
+        int fontHeight = 0;
+        Font font = c.getFont();
+        if (font != null) {
+            fontHeight = c.getFontMetrics(font).getHeight();
+        }
+
+        return new Dimension(0, fontHeight/2 + 2);
+    }
+
+}

@@ -1,131 +1,125 @@
-/*     */ package com.sun.jmx.remote.security;
-/*     */ 
-/*     */ import java.security.AccessControlContext;
-/*     */ import java.security.AccessController;
-/*     */ import java.security.Permission;
-/*     */ import java.security.Principal;
-/*     */ import java.security.PrivilegedAction;
-/*     */ import java.util.ArrayList;
-/*     */ import java.util.Arrays;
-/*     */ import java.util.Collection;
-/*     */ import java.util.Collections;
-/*     */ import java.util.List;
-/*     */ import javax.management.remote.SubjectDelegationPermission;
-/*     */ import javax.security.auth.Subject;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class SubjectDelegator
-/*     */ {
-/*     */   public AccessControlContext delegatedContext(AccessControlContext paramAccessControlContext, Subject paramSubject, boolean paramBoolean) throws SecurityException {
-/*  50 */     if (System.getSecurityManager() != null && paramAccessControlContext == null) {
-/*  51 */       throw new SecurityException("Illegal AccessControlContext: null");
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*  58 */     Collection<Principal> collection = getSubjectPrincipals(paramSubject);
-/*  59 */     final ArrayList<SubjectDelegationPermission> permissions = new ArrayList(collection.size());
-/*  60 */     for (Principal principal : collection) {
-/*  61 */       String str = principal.getClass().getName() + "." + principal.getName();
-/*  62 */       arrayList.add(new SubjectDelegationPermission(str));
-/*     */     } 
-/*  64 */     PrivilegedAction<Void> privilegedAction = new PrivilegedAction<Void>()
-/*     */       {
-/*     */         public Void run() {
-/*  67 */           for (Permission permission : permissions) {
-/*  68 */             AccessController.checkPermission(permission);
-/*     */           }
-/*  70 */           return null;
-/*     */         }
-/*     */       };
-/*  73 */     AccessController.doPrivileged(privilegedAction, paramAccessControlContext);
-/*     */     
-/*  75 */     return getDelegatedAcc(paramSubject, paramBoolean);
-/*     */   }
-/*     */   
-/*     */   private AccessControlContext getDelegatedAcc(Subject paramSubject, boolean paramBoolean) {
-/*  79 */     if (paramBoolean) {
-/*  80 */       return JMXSubjectDomainCombiner.getDomainCombinerContext(paramSubject);
-/*     */     }
-/*  82 */     return JMXSubjectDomainCombiner.getContext(paramSubject);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static synchronized boolean checkRemoveCallerContext(Subject paramSubject) {
-/*     */     try {
-/*  98 */       for (Principal principal : getSubjectPrincipals(paramSubject)) {
-/*     */         
-/* 100 */         String str = principal.getClass().getName() + "." + principal.getName();
-/* 101 */         SubjectDelegationPermission subjectDelegationPermission = new SubjectDelegationPermission(str);
-/*     */         
-/* 103 */         AccessController.checkPermission(subjectDelegationPermission);
-/*     */       } 
-/* 105 */     } catch (SecurityException securityException) {
-/* 106 */       return false;
-/*     */     } 
-/* 108 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static Collection<Principal> getSubjectPrincipals(Subject paramSubject) {
-/* 118 */     if (paramSubject.isReadOnly()) {
-/* 119 */       return paramSubject.getPrincipals();
-/*     */     }
-/*     */     
-/* 122 */     List<?> list = Arrays.asList(paramSubject.getPrincipals().toArray((Object[])new Principal[0]));
-/* 123 */     return (Collection)Collections.unmodifiableList(list);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\jmx\remote\security\SubjectDelegator.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, 2014, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.jmx.remote.security;
+
+import java.security.AccessController;
+import java.security.AccessControlContext;
+import java.security.Permission;
+import java.security.Principal;
+import java.security.PrivilegedAction;
+import javax.security.auth.Subject;
+
+import javax.management.remote.SubjectDelegationPermission;
+
+import java.util.*;
+
+public class SubjectDelegator {
+    /* Return the AccessControlContext appropriate to execute an
+       operation on behalf of the delegatedSubject.  If the
+       authenticatedAccessControlContext does not have permission to
+       delegate to that subject, throw SecurityException.  */
+    public AccessControlContext
+        delegatedContext(AccessControlContext authenticatedACC,
+                         Subject delegatedSubject,
+                         boolean removeCallerContext)
+            throws SecurityException {
+
+        if (System.getSecurityManager() != null && authenticatedACC == null) {
+            throw new SecurityException("Illegal AccessControlContext: null");
+        }
+
+        // Check if the subject delegation permission allows the
+        // authenticated subject to assume the identity of each
+        // principal in the delegated subject
+        //
+        Collection<Principal> ps = getSubjectPrincipals(delegatedSubject);
+        final Collection<Permission> permissions = new ArrayList<>(ps.size());
+        for(Principal p : ps) {
+            final String pname = p.getClass().getName() + "." + p.getName();
+            permissions.add(new SubjectDelegationPermission(pname));
+        }
+        PrivilegedAction<Void> action =
+            new PrivilegedAction<Void>() {
+                public Void run() {
+                    for (Permission sdp : permissions) {
+                        AccessController.checkPermission(sdp);
+                    }
+                    return null;
+                }
+            };
+        AccessController.doPrivileged(action, authenticatedACC);
+
+        return getDelegatedAcc(delegatedSubject, removeCallerContext);
+    }
+
+    private AccessControlContext getDelegatedAcc(Subject delegatedSubject, boolean removeCallerContext) {
+        if (removeCallerContext) {
+            return JMXSubjectDomainCombiner.getDomainCombinerContext(delegatedSubject);
+        } else {
+            return JMXSubjectDomainCombiner.getContext(delegatedSubject);
+        }
+    }
+
+    /**
+     * Check if the connector server creator can assume the identity of each
+     * principal in the authenticated subject, i.e. check if the connector
+     * server creator codebase contains a subject delegation permission for
+     * each principal present in the authenticated subject.
+     *
+     * @return {@code true} if the connector server creator can delegate to all
+     * the authenticated principals in the subject. Otherwise, {@code false}.
+     */
+    public static synchronized boolean
+        checkRemoveCallerContext(Subject subject) {
+        try {
+            for (Principal p : getSubjectPrincipals(subject)) {
+                final String pname =
+                    p.getClass().getName() + "." + p.getName();
+                final Permission sdp =
+                    new SubjectDelegationPermission(pname);
+                AccessController.checkPermission(sdp);
+            }
+        } catch (SecurityException e) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Retrieves the {@linkplain Subject} principals
+     * @param subject The subject
+     * @return If the {@code Subject} is immutable it will return the principals directly.
+     *         If the {@code Subject} is mutable it will create an unmodifiable copy.
+     */
+    private static Collection<Principal> getSubjectPrincipals(Subject subject) {
+        if (subject.isReadOnly()) {
+            return subject.getPrincipals();
+        }
+
+        List<Principal> principals = Arrays.asList(subject.getPrincipals().toArray(new Principal[0]));
+        return Collections.unmodifiableList(principals);
+    }
+}

@@ -1,788 +1,783 @@
-/*     */ package java.util;
-/*     */ 
-/*     */ import java.io.BufferedInputStream;
-/*     */ import java.io.DataInputStream;
-/*     */ import java.io.File;
-/*     */ import java.io.FileInputStream;
-/*     */ import java.io.FileReader;
-/*     */ import java.io.IOException;
-/*     */ import java.io.Serializable;
-/*     */ import java.security.AccessController;
-/*     */ import java.security.PrivilegedAction;
-/*     */ import java.text.ParseException;
-/*     */ import java.text.SimpleDateFormat;
-/*     */ import java.util.concurrent.ConcurrentHashMap;
-/*     */ import java.util.concurrent.ConcurrentMap;
-/*     */ import java.util.regex.Matcher;
-/*     */ import java.util.regex.Pattern;
-/*     */ import java.util.spi.CurrencyNameProvider;
-/*     */ import java.util.spi.LocaleServiceProvider;
-/*     */ import sun.util.locale.provider.LocaleServiceProviderPool;
-/*     */ import sun.util.logging.PlatformLogger;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class Currency
-/*     */   implements Serializable
-/*     */ {
-/*     */   private static final long serialVersionUID = -158308464356906721L;
-/*     */   private final String currencyCode;
-/*     */   private final transient int defaultFractionDigits;
-/*     */   private final transient int numericCode;
-/* 123 */   private static ConcurrentMap<String, Currency> instances = new ConcurrentHashMap<>(7);
-/*     */ 
-/*     */   
-/*     */   private static HashSet<Currency> available;
-/*     */ 
-/*     */   
-/*     */   static int formatVersion;
-/*     */ 
-/*     */   
-/*     */   static int dataVersion;
-/*     */ 
-/*     */   
-/*     */   static int[] mainTable;
-/*     */ 
-/*     */   
-/*     */   static long[] scCutOverTimes;
-/*     */ 
-/*     */   
-/*     */   static String[] scOldCurrencies;
-/*     */ 
-/*     */   
-/*     */   static String[] scNewCurrencies;
-/*     */ 
-/*     */   
-/*     */   static int[] scOldCurrenciesDFD;
-/*     */ 
-/*     */   
-/*     */   static int[] scNewCurrenciesDFD;
-/*     */ 
-/*     */   
-/*     */   static int[] scOldCurrenciesNumericCode;
-/*     */ 
-/*     */   
-/*     */   static int[] scNewCurrenciesNumericCode;
-/*     */ 
-/*     */   
-/*     */   static String otherCurrencies;
-/*     */ 
-/*     */   
-/*     */   static int[] otherCurrenciesDFD;
-/*     */ 
-/*     */   
-/*     */   static int[] otherCurrenciesNumericCode;
-/*     */ 
-/*     */   
-/*     */   private static final int MAGIC_NUMBER = 1131770436;
-/*     */ 
-/*     */   
-/*     */   private static final int A_TO_Z = 26;
-/*     */ 
-/*     */   
-/*     */   private static final int INVALID_COUNTRY_ENTRY = 127;
-/*     */ 
-/*     */   
-/*     */   private static final int COUNTRY_WITHOUT_CURRENCY_ENTRY = 512;
-/*     */ 
-/*     */   
-/*     */   private static final int SIMPLE_CASE_COUNTRY_MASK = 0;
-/*     */ 
-/*     */   
-/*     */   private static final int SIMPLE_CASE_COUNTRY_FINAL_CHAR_MASK = 31;
-/*     */ 
-/*     */   
-/*     */   private static final int SIMPLE_CASE_COUNTRY_DEFAULT_DIGITS_MASK = 480;
-/*     */ 
-/*     */   
-/*     */   private static final int SIMPLE_CASE_COUNTRY_DEFAULT_DIGITS_SHIFT = 5;
-/*     */ 
-/*     */   
-/*     */   private static final int SIMPLE_CASE_COUNTRY_MAX_DEFAULT_DIGITS = 9;
-/*     */   
-/*     */   private static final int SPECIAL_CASE_COUNTRY_MASK = 512;
-/*     */   
-/*     */   private static final int SPECIAL_CASE_COUNTRY_INDEX_MASK = 31;
-/*     */   
-/*     */   private static final int SPECIAL_CASE_COUNTRY_INDEX_DELTA = 1;
-/*     */   
-/*     */   private static final int COUNTRY_TYPE_MASK = 512;
-/*     */   
-/*     */   private static final int NUMERIC_CODE_MASK = 1047552;
-/*     */   
-/*     */   private static final int NUMERIC_CODE_SHIFT = 10;
-/*     */   
-/*     */   private static final int VALID_FORMAT_VERSION = 2;
-/*     */   
-/*     */   private static final int SYMBOL = 0;
-/*     */   
-/*     */   private static final int DISPLAYNAME = 1;
-/*     */ 
-/*     */   
-/*     */   static {
-/* 214 */     AccessController.doPrivileged(new PrivilegedAction<Void>()
-/*     */         {
-/*     */           public Void run() {
-/* 217 */             String str1 = System.getProperty("java.home");
-/*     */             try {
-/* 219 */               String str = str1 + File.separator + "lib" + File.separator + "currency.data";
-/*     */               
-/* 221 */               try (DataInputStream null = new DataInputStream(new BufferedInputStream(new FileInputStream(str)))) {
-/*     */ 
-/*     */                 
-/* 224 */                 if (dataInputStream.readInt() != 1131770436) {
-/* 225 */                   throw new InternalError("Currency data is possibly corrupted");
-/*     */                 }
-/* 227 */                 Currency.formatVersion = dataInputStream.readInt();
-/* 228 */                 if (Currency.formatVersion != 2) {
-/* 229 */                   throw new InternalError("Currency data format is incorrect");
-/*     */                 }
-/* 231 */                 Currency.dataVersion = dataInputStream.readInt();
-/* 232 */                 Currency.mainTable = Currency.readIntArray(dataInputStream, 676);
-/* 233 */                 int i = dataInputStream.readInt();
-/* 234 */                 Currency.scCutOverTimes = Currency.readLongArray(dataInputStream, i);
-/* 235 */                 Currency.scOldCurrencies = Currency.readStringArray(dataInputStream, i);
-/* 236 */                 Currency.scNewCurrencies = Currency.readStringArray(dataInputStream, i);
-/* 237 */                 Currency.scOldCurrenciesDFD = Currency.readIntArray(dataInputStream, i);
-/* 238 */                 Currency.scNewCurrenciesDFD = Currency.readIntArray(dataInputStream, i);
-/* 239 */                 Currency.scOldCurrenciesNumericCode = Currency.readIntArray(dataInputStream, i);
-/* 240 */                 Currency.scNewCurrenciesNumericCode = Currency.readIntArray(dataInputStream, i);
-/* 241 */                 int j = dataInputStream.readInt();
-/* 242 */                 Currency.otherCurrencies = dataInputStream.readUTF();
-/* 243 */                 Currency.otherCurrenciesDFD = Currency.readIntArray(dataInputStream, j);
-/* 244 */                 Currency.otherCurrenciesNumericCode = Currency.readIntArray(dataInputStream, j);
-/*     */               } 
-/* 246 */             } catch (IOException iOException) {
-/* 247 */               throw new InternalError(iOException);
-/*     */             } 
-/*     */ 
-/*     */             
-/* 251 */             String str2 = System.getProperty("java.util.currency.data");
-/* 252 */             if (str2 == null) {
-/* 253 */               str2 = str1 + File.separator + "lib" + File.separator + "currency.properties";
-/*     */             }
-/*     */             
-/*     */             try {
-/* 257 */               File file = new File(str2);
-/* 258 */               if (file.exists()) {
-/* 259 */                 Properties properties = new Properties();
-/* 260 */                 try (FileReader null = new FileReader(file)) {
-/* 261 */                   properties.load(fileReader);
-/*     */                 } 
-/* 263 */                 Set<String> set = properties.stringPropertyNames();
-/*     */                 
-/* 265 */                 Pattern pattern = Pattern.compile("([A-Z]{3})\\s*,\\s*(\\d{3})\\s*,\\s*(\\d+)\\s*,?\\s*(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2})?");
-/*     */ 
-/*     */                 
-/* 268 */                 for (String str : set) {
-/* 269 */                   Currency.replaceCurrencyData(pattern, str
-/* 270 */                       .toUpperCase(Locale.ROOT), properties
-/* 271 */                       .getProperty(str).toUpperCase(Locale.ROOT));
-/*     */                 }
-/*     */               } 
-/* 274 */             } catch (IOException iOException) {
-/* 275 */               Currency.info("currency.properties is ignored because of an IOException", iOException);
-/*     */             } 
-/* 277 */             return null;
-/*     */           }
-/*     */         });
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private Currency(String paramString, int paramInt1, int paramInt2) {
-/* 295 */     this.currencyCode = paramString;
-/* 296 */     this.defaultFractionDigits = paramInt1;
-/* 297 */     this.numericCode = paramInt2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Currency getInstance(String paramString) {
-/* 310 */     return getInstance(paramString, -2147483648, 0);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static Currency getInstance(String paramString, int paramInt1, int paramInt2) {
-/* 318 */     Currency currency1 = instances.get(paramString);
-/* 319 */     if (currency1 != null) {
-/* 320 */       return currency1;
-/*     */     }
-/*     */     
-/* 323 */     if (paramInt1 == Integer.MIN_VALUE) {
-/*     */ 
-/*     */ 
-/*     */       
-/* 327 */       if (paramString.length() != 3) {
-/* 328 */         throw new IllegalArgumentException();
-/*     */       }
-/* 330 */       char c1 = paramString.charAt(0);
-/* 331 */       char c2 = paramString.charAt(1);
-/* 332 */       int i = getMainTableEntry(c1, c2);
-/* 333 */       if ((i & 0x200) == 0 && i != 127 && paramString
-/*     */         
-/* 335 */         .charAt(2) - 65 == (i & 0x1F)) {
-/* 336 */         paramInt1 = (i & 0x1E0) >> 5;
-/* 337 */         paramInt2 = (i & 0xFFC00) >> 10;
-/*     */       } else {
-/*     */         
-/* 340 */         if (paramString.charAt(2) == '-') {
-/* 341 */           throw new IllegalArgumentException();
-/*     */         }
-/* 343 */         int j = otherCurrencies.indexOf(paramString);
-/* 344 */         if (j == -1) {
-/* 345 */           throw new IllegalArgumentException();
-/*     */         }
-/* 347 */         paramInt1 = otherCurrenciesDFD[j / 4];
-/* 348 */         paramInt2 = otherCurrenciesNumericCode[j / 4];
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 352 */     Currency currency2 = new Currency(paramString, paramInt1, paramInt2);
-/*     */     
-/* 354 */     currency1 = instances.putIfAbsent(paramString, currency2);
-/* 355 */     return (currency1 != null) ? currency1 : currency2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Currency getInstance(Locale paramLocale) {
-/* 380 */     String str = paramLocale.getCountry();
-/* 381 */     if (str == null) {
-/* 382 */       throw new NullPointerException();
-/*     */     }
-/*     */     
-/* 385 */     if (str.length() != 2) {
-/* 386 */       throw new IllegalArgumentException();
-/*     */     }
-/*     */     
-/* 389 */     char c1 = str.charAt(0);
-/* 390 */     char c2 = str.charAt(1);
-/* 391 */     int i = getMainTableEntry(c1, c2);
-/* 392 */     if ((i & 0x200) == 0 && i != 127) {
-/*     */       
-/* 394 */       char c = (char)((i & 0x1F) + 65);
-/* 395 */       int k = (i & 0x1E0) >> 5;
-/* 396 */       int m = (i & 0xFFC00) >> 10;
-/* 397 */       StringBuilder stringBuilder = new StringBuilder(str);
-/* 398 */       stringBuilder.append(c);
-/* 399 */       return getInstance(stringBuilder.toString(), k, m);
-/*     */     } 
-/*     */     
-/* 402 */     if (i == 127) {
-/* 403 */       throw new IllegalArgumentException();
-/*     */     }
-/* 405 */     if (i == 512) {
-/* 406 */       return null;
-/*     */     }
-/* 408 */     int j = (i & 0x1F) - 1;
-/* 409 */     if (scCutOverTimes[j] == Long.MAX_VALUE || System.currentTimeMillis() < scCutOverTimes[j]) {
-/* 410 */       return getInstance(scOldCurrencies[j], scOldCurrenciesDFD[j], scOldCurrenciesNumericCode[j]);
-/*     */     }
-/*     */     
-/* 413 */     return getInstance(scNewCurrencies[j], scNewCurrenciesDFD[j], scNewCurrenciesNumericCode[j]);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Set<Currency> getAvailableCurrencies() {
-/* 431 */     synchronized (Currency.class) {
-/* 432 */       if (available == null) {
-/* 433 */         available = new HashSet<>(256);
-/*     */ 
-/*     */         
-/* 436 */         for (char c = 'A'; c <= 'Z'; c = (char)(c + 1)) {
-/* 437 */           for (char c1 = 'A'; c1 <= 'Z'; c1 = (char)(c1 + 1)) {
-/* 438 */             int i = getMainTableEntry(c, c1);
-/* 439 */             if ((i & 0x200) == 0 && i != 127) {
-/*     */               
-/* 441 */               char c2 = (char)((i & 0x1F) + 65);
-/* 442 */               int j = (i & 0x1E0) >> 5;
-/* 443 */               int k = (i & 0xFFC00) >> 10;
-/* 444 */               StringBuilder stringBuilder = new StringBuilder();
-/* 445 */               stringBuilder.append(c);
-/* 446 */               stringBuilder.append(c1);
-/* 447 */               stringBuilder.append(c2);
-/* 448 */               available.add(getInstance(stringBuilder.toString(), j, k));
-/*     */             } 
-/*     */           } 
-/*     */         } 
-/*     */ 
-/*     */         
-/* 454 */         StringTokenizer stringTokenizer = new StringTokenizer(otherCurrencies, "-");
-/* 455 */         while (stringTokenizer.hasMoreElements()) {
-/* 456 */           available.add(getInstance((String)stringTokenizer.nextElement()));
-/*     */         }
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */     
-/* 462 */     return (Set)available.clone();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getCurrencyCode() {
-/* 472 */     return this.currencyCode;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getSymbol() {
-/* 490 */     return getSymbol(Locale.getDefault(Locale.Category.DISPLAY));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getSymbol(Locale paramLocale) {
-/* 506 */     LocaleServiceProviderPool localeServiceProviderPool = LocaleServiceProviderPool.getPool((Class)CurrencyNameProvider.class);
-/* 507 */     String str = localeServiceProviderPool.<LocaleServiceProvider, String>getLocalizedObject(CurrencyNameGetter
-/* 508 */         .INSTANCE, paramLocale, this.currencyCode, new Object[] {
-/* 509 */           Integer.valueOf(0) });
-/* 510 */     if (str != null) {
-/* 511 */       return str;
-/*     */     }
-/*     */ 
-/*     */     
-/* 515 */     return this.currencyCode;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getDefaultFractionDigits() {
-/* 528 */     return this.defaultFractionDigits;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getNumericCode() {
-/* 538 */     return this.numericCode;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getDisplayName() {
-/* 556 */     return getDisplayName(Locale.getDefault(Locale.Category.DISPLAY));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getDisplayName(Locale paramLocale) {
-/* 572 */     LocaleServiceProviderPool localeServiceProviderPool = LocaleServiceProviderPool.getPool((Class)CurrencyNameProvider.class);
-/* 573 */     String str = localeServiceProviderPool.<LocaleServiceProvider, String>getLocalizedObject(CurrencyNameGetter
-/* 574 */         .INSTANCE, paramLocale, this.currencyCode, new Object[] {
-/* 575 */           Integer.valueOf(1) });
-/* 576 */     if (str != null) {
-/* 577 */       return str;
-/*     */     }
-/*     */ 
-/*     */     
-/* 581 */     return this.currencyCode;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 591 */     return this.currencyCode;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private Object readResolve() {
-/* 598 */     return getInstance(this.currencyCode);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static int getMainTableEntry(char paramChar1, char paramChar2) {
-/* 606 */     if (paramChar1 < 'A' || paramChar1 > 'Z' || paramChar2 < 'A' || paramChar2 > 'Z') {
-/* 607 */       throw new IllegalArgumentException();
-/*     */     }
-/* 609 */     return mainTable[(paramChar1 - 65) * 26 + paramChar2 - 65];
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static void setMainTableEntry(char paramChar1, char paramChar2, int paramInt) {
-/* 617 */     if (paramChar1 < 'A' || paramChar1 > 'Z' || paramChar2 < 'A' || paramChar2 > 'Z') {
-/* 618 */       throw new IllegalArgumentException();
-/*     */     }
-/* 620 */     mainTable[(paramChar1 - 65) * 26 + paramChar2 - 65] = paramInt;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static class CurrencyNameGetter
-/*     */     implements LocaleServiceProviderPool.LocalizedObjectGetter<CurrencyNameProvider, String>
-/*     */   {
-/* 630 */     private static final CurrencyNameGetter INSTANCE = new CurrencyNameGetter();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public String getObject(CurrencyNameProvider param1CurrencyNameProvider, Locale param1Locale, String param1String, Object... param1VarArgs) {
-/* 637 */       assert param1VarArgs.length == 1;
-/* 638 */       int i = ((Integer)param1VarArgs[0]).intValue();
-/*     */       
-/* 640 */       switch (i) {
-/*     */         case 0:
-/* 642 */           return param1CurrencyNameProvider.getSymbol(param1String, param1Locale);
-/*     */         case 1:
-/* 644 */           return param1CurrencyNameProvider.getDisplayName(param1String, param1Locale);
-/*     */       } 
-/*     */ 
-/*     */       
-/*     */       assert false;
-/* 649 */       return null;
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   private static int[] readIntArray(DataInputStream paramDataInputStream, int paramInt) throws IOException {
-/* 654 */     int[] arrayOfInt = new int[paramInt];
-/* 655 */     for (byte b = 0; b < paramInt; b++) {
-/* 656 */       arrayOfInt[b] = paramDataInputStream.readInt();
-/*     */     }
-/*     */     
-/* 659 */     return arrayOfInt;
-/*     */   }
-/*     */   
-/*     */   private static long[] readLongArray(DataInputStream paramDataInputStream, int paramInt) throws IOException {
-/* 663 */     long[] arrayOfLong = new long[paramInt];
-/* 664 */     for (byte b = 0; b < paramInt; b++) {
-/* 665 */       arrayOfLong[b] = paramDataInputStream.readLong();
-/*     */     }
-/*     */     
-/* 668 */     return arrayOfLong;
-/*     */   }
-/*     */   
-/*     */   private static String[] readStringArray(DataInputStream paramDataInputStream, int paramInt) throws IOException {
-/* 672 */     String[] arrayOfString = new String[paramInt];
-/* 673 */     for (byte b = 0; b < paramInt; b++) {
-/* 674 */       arrayOfString[b] = paramDataInputStream.readUTF();
-/*     */     }
-/*     */     
-/* 677 */     return arrayOfString;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static void replaceCurrencyData(Pattern paramPattern, String paramString1, String paramString2) {
-/* 696 */     if (paramString1.length() != 2) {
-/*     */       
-/* 698 */       info("currency.properties entry for " + paramString1 + " is ignored because of the invalid country code.", null);
-/*     */       
-/*     */       return;
-/*     */     } 
-/*     */     
-/* 703 */     Matcher matcher = paramPattern.matcher(paramString2);
-/* 704 */     if (!matcher.find() || (matcher.group(4) == null && countOccurrences(paramString2, ',') >= 3)) {
-/*     */ 
-/*     */       
-/* 707 */       info("currency.properties entry for " + paramString1 + " ignored because the value format is not recognized.", null);
-/*     */       
-/*     */       return;
-/*     */     } 
-/*     */     
-/*     */     try {
-/* 713 */       if (matcher.group(4) != null && !isPastCutoverDate(matcher.group(4))) {
-/* 714 */         info("currency.properties entry for " + paramString1 + " ignored since cutover date has not passed :" + paramString2, null);
-/*     */         
-/*     */         return;
-/*     */       } 
-/* 718 */     } catch (ParseException parseException) {
-/* 719 */       info("currency.properties entry for " + paramString1 + " ignored since exception encountered :" + parseException
-/* 720 */           .getMessage(), null);
-/*     */       
-/*     */       return;
-/*     */     } 
-/* 724 */     String str = matcher.group(1);
-/* 725 */     int i = Integer.parseInt(matcher.group(2));
-/* 726 */     int j = i << 10;
-/* 727 */     int k = Integer.parseInt(matcher.group(3));
-/* 728 */     if (k > 9) {
-/* 729 */       info("currency.properties entry for " + paramString1 + " ignored since the fraction is more than " + '\t' + ":" + paramString2, null);
-/*     */       
-/*     */       return;
-/*     */     } 
-/*     */     
-/*     */     byte b;
-/*     */     
-/* 736 */     for (b = 0; b < scOldCurrencies.length && 
-/* 737 */       !scOldCurrencies[b].equals(str); b++);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 742 */     if (b == scOldCurrencies.length) {
-/*     */       
-/* 744 */       j |= k << 5 | str
-/* 745 */         .charAt(2) - 65;
-/*     */     } else {
-/*     */       
-/* 748 */       j |= 0x200 | b + 1;
-/*     */     } 
-/*     */     
-/* 751 */     setMainTableEntry(paramString1.charAt(0), paramString1.charAt(1), j);
-/*     */   }
-/*     */   
-/*     */   private static boolean isPastCutoverDate(String paramString) throws ParseException {
-/* 755 */     SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.ROOT);
-/* 756 */     simpleDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-/* 757 */     simpleDateFormat.setLenient(false);
-/* 758 */     long l = simpleDateFormat.parse(paramString.trim()).getTime();
-/* 759 */     return (System.currentTimeMillis() > l);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private static int countOccurrences(String paramString, char paramChar) {
-/* 764 */     byte b = 0;
-/* 765 */     for (char c : paramString.toCharArray()) {
-/* 766 */       if (c == paramChar) {
-/* 767 */         b++;
-/*     */       }
-/*     */     } 
-/* 770 */     return b;
-/*     */   }
-/*     */   
-/*     */   private static void info(String paramString, Throwable paramThrowable) {
-/* 774 */     PlatformLogger platformLogger = PlatformLogger.getLogger("java.util.Currency");
-/* 775 */     if (platformLogger.isLoggable(PlatformLogger.Level.INFO))
-/* 776 */       if (paramThrowable != null) {
-/* 777 */         platformLogger.info(paramString, paramThrowable);
-/*     */       } else {
-/* 779 */         platformLogger.info(paramString);
-/*     */       }  
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\Currency.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2015, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.util;
+
+import java.io.BufferedInputStream;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.Serializable;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
+import java.util.spi.CurrencyNameProvider;
+import sun.util.locale.provider.LocaleServiceProviderPool;
+import sun.util.logging.PlatformLogger;
+
+
+/**
+ * Represents a currency. Currencies are identified by their ISO 4217 currency
+ * codes. Visit the <a href="http://www.iso.org/iso/home/standards/currency_codes.htm">
+ * ISO web site</a> for more information.
+ * <p>
+ * The class is designed so that there's never more than one
+ * <code>Currency</code> instance for any given currency. Therefore, there's
+ * no public constructor. You obtain a <code>Currency</code> instance using
+ * the <code>getInstance</code> methods.
+ * <p>
+ * Users can supersede the Java runtime currency data by means of the system
+ * property {@code java.util.currency.data}. If this system property is
+ * defined then its value is the location of a properties file, the contents of
+ * which are key/value pairs of the ISO 3166 country codes and the ISO 4217
+ * currency data respectively.  The value part consists of three ISO 4217 values
+ * of a currency, i.e., an alphabetic code, a numeric code, and a minor unit.
+ * Those three ISO 4217 values are separated by commas.
+ * The lines which start with '#'s are considered comment lines. An optional UTC
+ * timestamp may be specified per currency entry if users need to specify a
+ * cutover date indicating when the new data comes into effect. The timestamp is
+ * appended to the end of the currency properties and uses a comma as a separator.
+ * If a UTC datestamp is present and valid, the JRE will only use the new currency
+ * properties if the current UTC date is later than the date specified at class
+ * loading time. The format of the timestamp must be of ISO 8601 format :
+ * {@code 'yyyy-MM-dd'T'HH:mm:ss'}. For example,
+ * <p>
+ * <code>
+ * #Sample currency properties<br>
+ * JP=JPZ,999,0
+ * </code>
+ * <p>
+ * will supersede the currency data for Japan.
+ *
+ * <p>
+ * <code>
+ * #Sample currency properties with cutover date<br>
+ * JP=JPZ,999,0,2014-01-01T00:00:00
+ * </code>
+ * <p>
+ * will supersede the currency data for Japan if {@code Currency} class is loaded after
+ * 1st January 2014 00:00:00 GMT.
+ * <p>
+ * Where syntactically malformed entries are encountered, the entry is ignored
+ * and the remainder of entries in file are processed. For instances where duplicate
+ * country code entries exist, the behavior of the Currency information for that
+ * {@code Currency} is undefined and the remainder of entries in file are processed.
+ *
+ * @since 1.4
+ */
+public final class Currency implements Serializable {
+
+    private static final long serialVersionUID = -158308464356906721L;
+
+    /**
+     * ISO 4217 currency code for this currency.
+     *
+     * @serial
+     */
+    private final String currencyCode;
+
+    /**
+     * Default fraction digits for this currency.
+     * Set from currency data tables.
+     */
+    transient private final int defaultFractionDigits;
+
+    /**
+     * ISO 4217 numeric code for this currency.
+     * Set from currency data tables.
+     */
+    transient private final int numericCode;
+
+
+    // class data: instance map
+
+    private static ConcurrentMap<String, Currency> instances = new ConcurrentHashMap<>(7);
+    private static HashSet<Currency> available;
+
+    // Class data: currency data obtained from currency.data file.
+    // Purpose:
+    // - determine valid country codes
+    // - determine valid currency codes
+    // - map country codes to currency codes
+    // - obtain default fraction digits for currency codes
+    //
+    // sc = special case; dfd = default fraction digits
+    // Simple countries are those where the country code is a prefix of the
+    // currency code, and there are no known plans to change the currency.
+    //
+    // table formats:
+    // - mainTable:
+    //   - maps country code to 32-bit int
+    //   - 26*26 entries, corresponding to [A-Z]*[A-Z]
+    //   - \u007F -> not valid country
+    //   - bits 20-31: unused
+    //   - bits 10-19: numeric code (0 to 1023)
+    //   - bit 9: 1 - special case, bits 0-4 indicate which one
+    //            0 - simple country, bits 0-4 indicate final char of currency code
+    //   - bits 5-8: fraction digits for simple countries, 0 for special cases
+    //   - bits 0-4: final char for currency code for simple country, or ID of special case
+    // - special case IDs:
+    //   - 0: country has no currency
+    //   - other: index into sc* arrays + 1
+    // - scCutOverTimes: cut-over time in millis as returned by
+    //   System.currentTimeMillis for special case countries that are changing
+    //   currencies; Long.MAX_VALUE for countries that are not changing currencies
+    // - scOldCurrencies: old currencies for special case countries
+    // - scNewCurrencies: new currencies for special case countries that are
+    //   changing currencies; null for others
+    // - scOldCurrenciesDFD: default fraction digits for old currencies
+    // - scNewCurrenciesDFD: default fraction digits for new currencies, 0 for
+    //   countries that are not changing currencies
+    // - otherCurrencies: concatenation of all currency codes that are not the
+    //   main currency of a simple country, separated by "-"
+    // - otherCurrenciesDFD: decimal format digits for currencies in otherCurrencies, same order
+
+    static int formatVersion;
+    static int dataVersion;
+    static int[] mainTable;
+    static long[] scCutOverTimes;
+    static String[] scOldCurrencies;
+    static String[] scNewCurrencies;
+    static int[] scOldCurrenciesDFD;
+    static int[] scNewCurrenciesDFD;
+    static int[] scOldCurrenciesNumericCode;
+    static int[] scNewCurrenciesNumericCode;
+    static String otherCurrencies;
+    static int[] otherCurrenciesDFD;
+    static int[] otherCurrenciesNumericCode;
+
+    // handy constants - must match definitions in GenerateCurrencyData
+    // magic number
+    private static final int MAGIC_NUMBER = 0x43757244;
+    // number of characters from A to Z
+    private static final int A_TO_Z = ('Z' - 'A') + 1;
+    // entry for invalid country codes
+    private static final int INVALID_COUNTRY_ENTRY = 0x0000007F;
+    // entry for countries without currency
+    private static final int COUNTRY_WITHOUT_CURRENCY_ENTRY = 0x00000200;
+    // mask for simple case country entries
+    private static final int SIMPLE_CASE_COUNTRY_MASK = 0x00000000;
+    // mask for simple case country entry final character
+    private static final int SIMPLE_CASE_COUNTRY_FINAL_CHAR_MASK = 0x0000001F;
+    // mask for simple case country entry default currency digits
+    private static final int SIMPLE_CASE_COUNTRY_DEFAULT_DIGITS_MASK = 0x000001E0;
+    // shift count for simple case country entry default currency digits
+    private static final int SIMPLE_CASE_COUNTRY_DEFAULT_DIGITS_SHIFT = 5;
+    // maximum number for simple case country entry default currency digits
+    private static final int SIMPLE_CASE_COUNTRY_MAX_DEFAULT_DIGITS = 9;
+    // mask for special case country entries
+    private static final int SPECIAL_CASE_COUNTRY_MASK = 0x00000200;
+    // mask for special case country index
+    private static final int SPECIAL_CASE_COUNTRY_INDEX_MASK = 0x0000001F;
+    // delta from entry index component in main table to index into special case tables
+    private static final int SPECIAL_CASE_COUNTRY_INDEX_DELTA = 1;
+    // mask for distinguishing simple and special case countries
+    private static final int COUNTRY_TYPE_MASK = SIMPLE_CASE_COUNTRY_MASK | SPECIAL_CASE_COUNTRY_MASK;
+    // mask for the numeric code of the currency
+    private static final int NUMERIC_CODE_MASK = 0x000FFC00;
+    // shift count for the numeric code of the currency
+    private static final int NUMERIC_CODE_SHIFT = 10;
+
+    // Currency data format version
+    private static final int VALID_FORMAT_VERSION = 2;
+
+    static {
+        AccessController.doPrivileged(new PrivilegedAction<Void>() {
+            @Override
+            public Void run() {
+                String homeDir = System.getProperty("java.home");
+                try {
+                    String dataFile = homeDir + File.separator +
+                            "lib" + File.separator + "currency.data";
+                    try (DataInputStream dis = new DataInputStream(
+                             new BufferedInputStream(
+                             new FileInputStream(dataFile)))) {
+                        if (dis.readInt() != MAGIC_NUMBER) {
+                            throw new InternalError("Currency data is possibly corrupted");
+                        }
+                        formatVersion = dis.readInt();
+                        if (formatVersion != VALID_FORMAT_VERSION) {
+                            throw new InternalError("Currency data format is incorrect");
+                        }
+                        dataVersion = dis.readInt();
+                        mainTable = readIntArray(dis, A_TO_Z * A_TO_Z);
+                        int scCount = dis.readInt();
+                        scCutOverTimes = readLongArray(dis, scCount);
+                        scOldCurrencies = readStringArray(dis, scCount);
+                        scNewCurrencies = readStringArray(dis, scCount);
+                        scOldCurrenciesDFD = readIntArray(dis, scCount);
+                        scNewCurrenciesDFD = readIntArray(dis, scCount);
+                        scOldCurrenciesNumericCode = readIntArray(dis, scCount);
+                        scNewCurrenciesNumericCode = readIntArray(dis, scCount);
+                        int ocCount = dis.readInt();
+                        otherCurrencies = dis.readUTF();
+                        otherCurrenciesDFD = readIntArray(dis, ocCount);
+                        otherCurrenciesNumericCode = readIntArray(dis, ocCount);
+                    }
+                } catch (IOException e) {
+                    throw new InternalError(e);
+                }
+
+                // look for the properties file for overrides
+                String propsFile = System.getProperty("java.util.currency.data");
+                if (propsFile == null) {
+                    propsFile = homeDir + File.separator + "lib" +
+                        File.separator + "currency.properties";
+                }
+                try {
+                    File propFile = new File(propsFile);
+                    if (propFile.exists()) {
+                        Properties props = new Properties();
+                        try (FileReader fr = new FileReader(propFile)) {
+                            props.load(fr);
+                        }
+                        Set<String> keys = props.stringPropertyNames();
+                        Pattern propertiesPattern =
+                            Pattern.compile("([A-Z]{3})\\s*,\\s*(\\d{3})\\s*,\\s*" +
+                                "(\\d+)\\s*,?\\s*(\\d{4}-\\d{2}-\\d{2}T\\d{2}:" +
+                                "\\d{2}:\\d{2})?");
+                        for (String key : keys) {
+                           replaceCurrencyData(propertiesPattern,
+                               key.toUpperCase(Locale.ROOT),
+                               props.getProperty(key).toUpperCase(Locale.ROOT));
+                        }
+                    }
+                } catch (IOException e) {
+                    info("currency.properties is ignored because of an IOException", e);
+                }
+                return null;
+            }
+        });
+    }
+
+    /**
+     * Constants for retrieving localized names from the name providers.
+     */
+    private static final int SYMBOL = 0;
+    private static final int DISPLAYNAME = 1;
+
+
+    /**
+     * Constructs a <code>Currency</code> instance. The constructor is private
+     * so that we can insure that there's never more than one instance for a
+     * given currency.
+     */
+    private Currency(String currencyCode, int defaultFractionDigits, int numericCode) {
+        this.currencyCode = currencyCode;
+        this.defaultFractionDigits = defaultFractionDigits;
+        this.numericCode = numericCode;
+    }
+
+    /**
+     * Returns the <code>Currency</code> instance for the given currency code.
+     *
+     * @param currencyCode the ISO 4217 code of the currency
+     * @return the <code>Currency</code> instance for the given currency code
+     * @exception NullPointerException if <code>currencyCode</code> is null
+     * @exception IllegalArgumentException if <code>currencyCode</code> is not
+     * a supported ISO 4217 code.
+     */
+    public static Currency getInstance(String currencyCode) {
+        return getInstance(currencyCode, Integer.MIN_VALUE, 0);
+    }
+
+    private static Currency getInstance(String currencyCode, int defaultFractionDigits,
+        int numericCode) {
+        // Try to look up the currency code in the instances table.
+        // This does the null pointer check as a side effect.
+        // Also, if there already is an entry, the currencyCode must be valid.
+        Currency instance = instances.get(currencyCode);
+        if (instance != null) {
+            return instance;
+        }
+
+        if (defaultFractionDigits == Integer.MIN_VALUE) {
+            // Currency code not internally generated, need to verify first
+            // A currency code must have 3 characters and exist in the main table
+            // or in the list of other currencies.
+            if (currencyCode.length() != 3) {
+                throw new IllegalArgumentException();
+            }
+            char char1 = currencyCode.charAt(0);
+            char char2 = currencyCode.charAt(1);
+            int tableEntry = getMainTableEntry(char1, char2);
+            if ((tableEntry & COUNTRY_TYPE_MASK) == SIMPLE_CASE_COUNTRY_MASK
+                    && tableEntry != INVALID_COUNTRY_ENTRY
+                    && currencyCode.charAt(2) - 'A' == (tableEntry & SIMPLE_CASE_COUNTRY_FINAL_CHAR_MASK)) {
+                defaultFractionDigits = (tableEntry & SIMPLE_CASE_COUNTRY_DEFAULT_DIGITS_MASK) >> SIMPLE_CASE_COUNTRY_DEFAULT_DIGITS_SHIFT;
+                numericCode = (tableEntry & NUMERIC_CODE_MASK) >> NUMERIC_CODE_SHIFT;
+            } else {
+                // Check for '-' separately so we don't get false hits in the table.
+                if (currencyCode.charAt(2) == '-') {
+                    throw new IllegalArgumentException();
+                }
+                int index = otherCurrencies.indexOf(currencyCode);
+                if (index == -1) {
+                    throw new IllegalArgumentException();
+                }
+                defaultFractionDigits = otherCurrenciesDFD[index / 4];
+                numericCode = otherCurrenciesNumericCode[index / 4];
+            }
+        }
+
+        Currency currencyVal =
+            new Currency(currencyCode, defaultFractionDigits, numericCode);
+        instance = instances.putIfAbsent(currencyCode, currencyVal);
+        return (instance != null ? instance : currencyVal);
+    }
+
+    /**
+     * Returns the <code>Currency</code> instance for the country of the
+     * given locale. The language and variant components of the locale
+     * are ignored. The result may vary over time, as countries change their
+     * currencies. For example, for the original member countries of the
+     * European Monetary Union, the method returns the old national currencies
+     * until December 31, 2001, and the Euro from January 1, 2002, local time
+     * of the respective countries.
+     * <p>
+     * The method returns <code>null</code> for territories that don't
+     * have a currency, such as Antarctica.
+     *
+     * @param locale the locale for whose country a <code>Currency</code>
+     * instance is needed
+     * @return the <code>Currency</code> instance for the country of the given
+     * locale, or {@code null}
+     * @exception NullPointerException if <code>locale</code> or its country
+     * code is {@code null}
+     * @exception IllegalArgumentException if the country of the given {@code locale}
+     * is not a supported ISO 3166 country code.
+     */
+    public static Currency getInstance(Locale locale) {
+        String country = locale.getCountry();
+        if (country == null) {
+            throw new NullPointerException();
+        }
+
+        if (country.length() != 2) {
+            throw new IllegalArgumentException();
+        }
+
+        char char1 = country.charAt(0);
+        char char2 = country.charAt(1);
+        int tableEntry = getMainTableEntry(char1, char2);
+        if ((tableEntry & COUNTRY_TYPE_MASK) == SIMPLE_CASE_COUNTRY_MASK
+                    && tableEntry != INVALID_COUNTRY_ENTRY) {
+            char finalChar = (char) ((tableEntry & SIMPLE_CASE_COUNTRY_FINAL_CHAR_MASK) + 'A');
+            int defaultFractionDigits = (tableEntry & SIMPLE_CASE_COUNTRY_DEFAULT_DIGITS_MASK) >> SIMPLE_CASE_COUNTRY_DEFAULT_DIGITS_SHIFT;
+            int numericCode = (tableEntry & NUMERIC_CODE_MASK) >> NUMERIC_CODE_SHIFT;
+            StringBuilder sb = new StringBuilder(country);
+            sb.append(finalChar);
+            return getInstance(sb.toString(), defaultFractionDigits, numericCode);
+        } else {
+            // special cases
+            if (tableEntry == INVALID_COUNTRY_ENTRY) {
+                throw new IllegalArgumentException();
+            }
+            if (tableEntry == COUNTRY_WITHOUT_CURRENCY_ENTRY) {
+                return null;
+            } else {
+                int index = (tableEntry & SPECIAL_CASE_COUNTRY_INDEX_MASK) - SPECIAL_CASE_COUNTRY_INDEX_DELTA;
+                if (scCutOverTimes[index] == Long.MAX_VALUE || System.currentTimeMillis() < scCutOverTimes[index]) {
+                    return getInstance(scOldCurrencies[index], scOldCurrenciesDFD[index],
+                        scOldCurrenciesNumericCode[index]);
+                } else {
+                    return getInstance(scNewCurrencies[index], scNewCurrenciesDFD[index],
+                        scNewCurrenciesNumericCode[index]);
+                }
+            }
+        }
+    }
+
+    /**
+     * Gets the set of available currencies.  The returned set of currencies
+     * contains all of the available currencies, which may include currencies
+     * that represent obsolete ISO 4217 codes.  The set can be modified
+     * without affecting the available currencies in the runtime.
+     *
+     * @return the set of available currencies.  If there is no currency
+     *    available in the runtime, the returned set is empty.
+     * @since 1.7
+     */
+    public static Set<Currency> getAvailableCurrencies() {
+        synchronized(Currency.class) {
+            if (available == null) {
+                available = new HashSet<>(256);
+
+                // Add simple currencies first
+                for (char c1 = 'A'; c1 <= 'Z'; c1 ++) {
+                    for (char c2 = 'A'; c2 <= 'Z'; c2 ++) {
+                        int tableEntry = getMainTableEntry(c1, c2);
+                        if ((tableEntry & COUNTRY_TYPE_MASK) == SIMPLE_CASE_COUNTRY_MASK
+                             && tableEntry != INVALID_COUNTRY_ENTRY) {
+                            char finalChar = (char) ((tableEntry & SIMPLE_CASE_COUNTRY_FINAL_CHAR_MASK) + 'A');
+                            int defaultFractionDigits = (tableEntry & SIMPLE_CASE_COUNTRY_DEFAULT_DIGITS_MASK) >> SIMPLE_CASE_COUNTRY_DEFAULT_DIGITS_SHIFT;
+                            int numericCode = (tableEntry & NUMERIC_CODE_MASK) >> NUMERIC_CODE_SHIFT;
+                            StringBuilder sb = new StringBuilder();
+                            sb.append(c1);
+                            sb.append(c2);
+                            sb.append(finalChar);
+                            available.add(getInstance(sb.toString(), defaultFractionDigits, numericCode));
+                        }
+                    }
+                }
+
+                // Now add other currencies
+                StringTokenizer st = new StringTokenizer(otherCurrencies, "-");
+                while (st.hasMoreElements()) {
+                    available.add(getInstance((String)st.nextElement()));
+                }
+            }
+        }
+
+        @SuppressWarnings("unchecked")
+        Set<Currency> result = (Set<Currency>) available.clone();
+        return result;
+    }
+
+    /**
+     * Gets the ISO 4217 currency code of this currency.
+     *
+     * @return the ISO 4217 currency code of this currency.
+     */
+    public String getCurrencyCode() {
+        return currencyCode;
+    }
+
+    /**
+     * Gets the symbol of this currency for the default
+     * {@link Locale.Category#DISPLAY DISPLAY} locale.
+     * For example, for the US Dollar, the symbol is "$" if the default
+     * locale is the US, while for other locales it may be "US$". If no
+     * symbol can be determined, the ISO 4217 currency code is returned.
+     * <p>
+     * This is equivalent to calling
+     * {@link #getSymbol(Locale)
+     *     getSymbol(Locale.getDefault(Locale.Category.DISPLAY))}.
+     *
+     * @return the symbol of this currency for the default
+     *     {@link Locale.Category#DISPLAY DISPLAY} locale
+     */
+    public String getSymbol() {
+        return getSymbol(Locale.getDefault(Locale.Category.DISPLAY));
+    }
+
+    /**
+     * Gets the symbol of this currency for the specified locale.
+     * For example, for the US Dollar, the symbol is "$" if the specified
+     * locale is the US, while for other locales it may be "US$". If no
+     * symbol can be determined, the ISO 4217 currency code is returned.
+     *
+     * @param locale the locale for which a display name for this currency is
+     * needed
+     * @return the symbol of this currency for the specified locale
+     * @exception NullPointerException if <code>locale</code> is null
+     */
+    public String getSymbol(Locale locale) {
+        LocaleServiceProviderPool pool =
+            LocaleServiceProviderPool.getPool(CurrencyNameProvider.class);
+        String symbol = pool.getLocalizedObject(
+                                CurrencyNameGetter.INSTANCE,
+                                locale, currencyCode, SYMBOL);
+        if (symbol != null) {
+            return symbol;
+        }
+
+        // use currency code as symbol of last resort
+        return currencyCode;
+    }
+
+    /**
+     * Gets the default number of fraction digits used with this currency.
+     * For example, the default number of fraction digits for the Euro is 2,
+     * while for the Japanese Yen it's 0.
+     * In the case of pseudo-currencies, such as IMF Special Drawing Rights,
+     * -1 is returned.
+     *
+     * @return the default number of fraction digits used with this currency
+     */
+    public int getDefaultFractionDigits() {
+        return defaultFractionDigits;
+    }
+
+    /**
+     * Returns the ISO 4217 numeric code of this currency.
+     *
+     * @return the ISO 4217 numeric code of this currency
+     * @since 1.7
+     */
+    public int getNumericCode() {
+        return numericCode;
+    }
+
+    /**
+     * Gets the name that is suitable for displaying this currency for
+     * the default {@link Locale.Category#DISPLAY DISPLAY} locale.
+     * If there is no suitable display name found
+     * for the default locale, the ISO 4217 currency code is returned.
+     * <p>
+     * This is equivalent to calling
+     * {@link #getDisplayName(Locale)
+     *     getDisplayName(Locale.getDefault(Locale.Category.DISPLAY))}.
+     *
+     * @return the display name of this currency for the default
+     *     {@link Locale.Category#DISPLAY DISPLAY} locale
+     * @since 1.7
+     */
+    public String getDisplayName() {
+        return getDisplayName(Locale.getDefault(Locale.Category.DISPLAY));
+    }
+
+    /**
+     * Gets the name that is suitable for displaying this currency for
+     * the specified locale.  If there is no suitable display name found
+     * for the specified locale, the ISO 4217 currency code is returned.
+     *
+     * @param locale the locale for which a display name for this currency is
+     * needed
+     * @return the display name of this currency for the specified locale
+     * @exception NullPointerException if <code>locale</code> is null
+     * @since 1.7
+     */
+    public String getDisplayName(Locale locale) {
+        LocaleServiceProviderPool pool =
+            LocaleServiceProviderPool.getPool(CurrencyNameProvider.class);
+        String result = pool.getLocalizedObject(
+                                CurrencyNameGetter.INSTANCE,
+                                locale, currencyCode, DISPLAYNAME);
+        if (result != null) {
+            return result;
+        }
+
+        // use currency code as symbol of last resort
+        return currencyCode;
+    }
+
+    /**
+     * Returns the ISO 4217 currency code of this currency.
+     *
+     * @return the ISO 4217 currency code of this currency
+     */
+    @Override
+    public String toString() {
+        return currencyCode;
+    }
+
+    /**
+     * Resolves instances being deserialized to a single instance per currency.
+     */
+    private Object readResolve() {
+        return getInstance(currencyCode);
+    }
+
+    /**
+     * Gets the main table entry for the country whose country code consists
+     * of char1 and char2.
+     */
+    private static int getMainTableEntry(char char1, char char2) {
+        if (char1 < 'A' || char1 > 'Z' || char2 < 'A' || char2 > 'Z') {
+            throw new IllegalArgumentException();
+        }
+        return mainTable[(char1 - 'A') * A_TO_Z + (char2 - 'A')];
+    }
+
+    /**
+     * Sets the main table entry for the country whose country code consists
+     * of char1 and char2.
+     */
+    private static void setMainTableEntry(char char1, char char2, int entry) {
+        if (char1 < 'A' || char1 > 'Z' || char2 < 'A' || char2 > 'Z') {
+            throw new IllegalArgumentException();
+        }
+        mainTable[(char1 - 'A') * A_TO_Z + (char2 - 'A')] = entry;
+    }
+
+    /**
+     * Obtains a localized currency names from a CurrencyNameProvider
+     * implementation.
+     */
+    private static class CurrencyNameGetter
+        implements LocaleServiceProviderPool.LocalizedObjectGetter<CurrencyNameProvider,
+                                                                   String> {
+        private static final CurrencyNameGetter INSTANCE = new CurrencyNameGetter();
+
+        @Override
+        public String getObject(CurrencyNameProvider currencyNameProvider,
+                                Locale locale,
+                                String key,
+                                Object... params) {
+            assert params.length == 1;
+            int type = (Integer)params[0];
+
+            switch(type) {
+            case SYMBOL:
+                return currencyNameProvider.getSymbol(key, locale);
+            case DISPLAYNAME:
+                return currencyNameProvider.getDisplayName(key, locale);
+            default:
+                assert false; // shouldn't happen
+            }
+
+            return null;
+        }
+    }
+
+    private static int[] readIntArray(DataInputStream dis, int count) throws IOException {
+        int[] ret = new int[count];
+        for (int i = 0; i < count; i++) {
+            ret[i] = dis.readInt();
+        }
+
+        return ret;
+    }
+
+    private static long[] readLongArray(DataInputStream dis, int count) throws IOException {
+        long[] ret = new long[count];
+        for (int i = 0; i < count; i++) {
+            ret[i] = dis.readLong();
+        }
+
+        return ret;
+    }
+
+    private static String[] readStringArray(DataInputStream dis, int count) throws IOException {
+        String[] ret = new String[count];
+        for (int i = 0; i < count; i++) {
+            ret[i] = dis.readUTF();
+        }
+
+        return ret;
+    }
+
+    /**
+     * Replaces currency data found in the currencydata.properties file
+     *
+     * @param pattern regex pattern for the properties
+     * @param ctry country code
+     * @param curdata currency data.  This is a comma separated string that
+     *    consists of "three-letter alphabet code", "three-digit numeric code",
+     *    and "one-digit (0-9) default fraction digit".
+     *    For example, "JPZ,392,0".
+     *    An optional UTC date can be appended to the string (comma separated)
+     *    to allow a currency change take effect after date specified.
+     *    For example, "JP=JPZ,999,0,2014-01-01T00:00:00" has no effect unless
+     *    UTC time is past 1st January 2014 00:00:00 GMT.
+     */
+    private static void replaceCurrencyData(Pattern pattern, String ctry, String curdata) {
+
+        if (ctry.length() != 2) {
+            // ignore invalid country code
+            info("currency.properties entry for " + ctry +
+                    " is ignored because of the invalid country code.", null);
+            return;
+        }
+
+        Matcher m = pattern.matcher(curdata);
+        if (!m.find() || (m.group(4) == null && countOccurrences(curdata, ',') >= 3)) {
+            // format is not recognized.  ignore the data
+            // if group(4) date string is null and we've 4 values, bad date value
+            info("currency.properties entry for " + ctry +
+                    " ignored because the value format is not recognized.", null);
+            return;
+        }
+
+        try {
+            if (m.group(4) != null && !isPastCutoverDate(m.group(4))) {
+                info("currency.properties entry for " + ctry +
+                        " ignored since cutover date has not passed :" + curdata, null);
+                return;
+            }
+        } catch (ParseException ex) {
+            info("currency.properties entry for " + ctry +
+                        " ignored since exception encountered :" + ex.getMessage(), null);
+            return;
+        }
+
+        String code = m.group(1);
+        int numeric = Integer.parseInt(m.group(2));
+        int entry = numeric << NUMERIC_CODE_SHIFT;
+        int fraction = Integer.parseInt(m.group(3));
+        if (fraction > SIMPLE_CASE_COUNTRY_MAX_DEFAULT_DIGITS) {
+            info("currency.properties entry for " + ctry +
+                " ignored since the fraction is more than " +
+                SIMPLE_CASE_COUNTRY_MAX_DEFAULT_DIGITS + ":" + curdata, null);
+            return;
+        }
+
+        int index;
+        for (index = 0; index < scOldCurrencies.length; index++) {
+            if (scOldCurrencies[index].equals(code)) {
+                break;
+            }
+        }
+
+        if (index == scOldCurrencies.length) {
+            // simple case
+            entry |= (fraction << SIMPLE_CASE_COUNTRY_DEFAULT_DIGITS_SHIFT) |
+                     (code.charAt(2) - 'A');
+        } else {
+            // special case
+            entry |= SPECIAL_CASE_COUNTRY_MASK |
+                     (index + SPECIAL_CASE_COUNTRY_INDEX_DELTA);
+        }
+        setMainTableEntry(ctry.charAt(0), ctry.charAt(1), entry);
+    }
+
+    private static boolean isPastCutoverDate(String s) throws ParseException {
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.ROOT);
+        format.setTimeZone(TimeZone.getTimeZone("UTC"));
+        format.setLenient(false);
+        long time = format.parse(s.trim()).getTime();
+        return System.currentTimeMillis() > time;
+
+    }
+
+    private static int countOccurrences(String value, char match) {
+        int count = 0;
+        for (char c : value.toCharArray()) {
+            if (c == match) {
+               ++count;
+            }
+        }
+        return count;
+    }
+
+    private static void info(String message, Throwable t) {
+        PlatformLogger logger = PlatformLogger.getLogger("java.util.Currency");
+        if (logger.isLoggable(PlatformLogger.Level.INFO)) {
+            if (t != null) {
+                logger.info(message, t);
+            } else {
+                logger.info(message);
+            }
+        }
+    }
+}

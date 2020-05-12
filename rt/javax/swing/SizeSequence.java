@@ -1,412 +1,406 @@
-/*     */ package javax.swing;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class SizeSequence
-/*     */ {
-/* 125 */   private static int[] emptyArray = new int[0];
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 137 */   private int[] a = emptyArray;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SizeSequence() {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SizeSequence(int paramInt) {
-/* 150 */     this(paramInt, 0);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SizeSequence(int paramInt1, int paramInt2) {
-/* 162 */     this();
-/* 163 */     insertEntries(0, paramInt1, paramInt2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SizeSequence(int[] paramArrayOfint) {
-/* 174 */     this();
-/* 175 */     setSizes(paramArrayOfint);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void setSizes(int paramInt1, int paramInt2) {
-/* 183 */     if (this.a.length != paramInt1) {
-/* 184 */       this.a = new int[paramInt1];
-/*     */     }
-/* 186 */     setSizes(0, paramInt1, paramInt2);
-/*     */   }
-/*     */   
-/*     */   private int setSizes(int paramInt1, int paramInt2, int paramInt3) {
-/* 190 */     if (paramInt2 <= paramInt1) {
-/* 191 */       return 0;
-/*     */     }
-/* 193 */     int i = (paramInt1 + paramInt2) / 2;
-/* 194 */     this.a[i] = paramInt3 + setSizes(paramInt1, i, paramInt3);
-/* 195 */     return this.a[i] + setSizes(i + 1, paramInt2, paramInt3);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setSizes(int[] paramArrayOfint) {
-/* 210 */     if (this.a.length != paramArrayOfint.length) {
-/* 211 */       this.a = new int[paramArrayOfint.length];
-/*     */     }
-/* 213 */     setSizes(0, this.a.length, paramArrayOfint);
-/*     */   }
-/*     */   
-/*     */   private int setSizes(int paramInt1, int paramInt2, int[] paramArrayOfint) {
-/* 217 */     if (paramInt2 <= paramInt1) {
-/* 218 */       return 0;
-/*     */     }
-/* 220 */     int i = (paramInt1 + paramInt2) / 2;
-/* 221 */     this.a[i] = paramArrayOfint[i] + setSizes(paramInt1, i, paramArrayOfint);
-/* 222 */     return this.a[i] + setSizes(i + 1, paramInt2, paramArrayOfint);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int[] getSizes() {
-/* 231 */     int i = this.a.length;
-/* 232 */     int[] arrayOfInt = new int[i];
-/* 233 */     getSizes(0, i, arrayOfInt);
-/* 234 */     return arrayOfInt;
-/*     */   }
-/*     */   
-/*     */   private int getSizes(int paramInt1, int paramInt2, int[] paramArrayOfint) {
-/* 238 */     if (paramInt2 <= paramInt1) {
-/* 239 */       return 0;
-/*     */     }
-/* 241 */     int i = (paramInt1 + paramInt2) / 2;
-/* 242 */     paramArrayOfint[i] = this.a[i] - getSizes(paramInt1, i, paramArrayOfint);
-/* 243 */     return this.a[i] + getSizes(i + 1, paramInt2, paramArrayOfint);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getPosition(int paramInt) {
-/* 262 */     return getPosition(0, this.a.length, paramInt);
-/*     */   }
-/*     */   
-/*     */   private int getPosition(int paramInt1, int paramInt2, int paramInt3) {
-/* 266 */     if (paramInt2 <= paramInt1) {
-/* 267 */       return 0;
-/*     */     }
-/* 269 */     int i = (paramInt1 + paramInt2) / 2;
-/* 270 */     if (paramInt3 <= i) {
-/* 271 */       return getPosition(paramInt1, i, paramInt3);
-/*     */     }
-/*     */     
-/* 274 */     return this.a[i] + getPosition(i + 1, paramInt2, paramInt3);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getIndex(int paramInt) {
-/* 288 */     return getIndex(0, this.a.length, paramInt);
-/*     */   }
-/*     */   
-/*     */   private int getIndex(int paramInt1, int paramInt2, int paramInt3) {
-/* 292 */     if (paramInt2 <= paramInt1) {
-/* 293 */       return paramInt1;
-/*     */     }
-/* 295 */     int i = (paramInt1 + paramInt2) / 2;
-/* 296 */     int j = this.a[i];
-/* 297 */     if (paramInt3 < j) {
-/* 298 */       return getIndex(paramInt1, i, paramInt3);
-/*     */     }
-/*     */     
-/* 301 */     return getIndex(i + 1, paramInt2, paramInt3 - j);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getSize(int paramInt) {
-/* 315 */     return getPosition(paramInt + 1) - getPosition(paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setSize(int paramInt1, int paramInt2) {
-/* 329 */     changeSize(0, this.a.length, paramInt1, paramInt2 - getSize(paramInt1));
-/*     */   }
-/*     */   
-/*     */   private void changeSize(int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/* 333 */     if (paramInt2 <= paramInt1) {
-/*     */       return;
-/*     */     }
-/* 336 */     int i = (paramInt1 + paramInt2) / 2;
-/* 337 */     if (paramInt3 <= i) {
-/* 338 */       this.a[i] = this.a[i] + paramInt4;
-/* 339 */       changeSize(paramInt1, i, paramInt3, paramInt4);
-/*     */     } else {
-/*     */       
-/* 342 */       changeSize(i + 1, paramInt2, paramInt3, paramInt4);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void insertEntries(int paramInt1, int paramInt2, int paramInt3) {
-/* 364 */     int[] arrayOfInt = getSizes();
-/* 365 */     int i = paramInt1 + paramInt2;
-/* 366 */     int j = this.a.length + paramInt2;
-/* 367 */     this.a = new int[j]; int k;
-/* 368 */     for (k = 0; k < paramInt1; k++) {
-/* 369 */       this.a[k] = arrayOfInt[k];
-/*     */     }
-/* 371 */     for (k = paramInt1; k < i; k++) {
-/* 372 */       this.a[k] = paramInt3;
-/*     */     }
-/* 374 */     for (k = i; k < j; k++) {
-/* 375 */       this.a[k] = arrayOfInt[k - paramInt2];
-/*     */     }
-/* 377 */     setSizes(this.a);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void removeEntries(int paramInt1, int paramInt2) {
-/* 394 */     int[] arrayOfInt = getSizes();
-/* 395 */     int i = paramInt1 + paramInt2;
-/* 396 */     int j = this.a.length - paramInt2;
-/* 397 */     this.a = new int[j]; int k;
-/* 398 */     for (k = 0; k < paramInt1; k++) {
-/* 399 */       this.a[k] = arrayOfInt[k];
-/*     */     }
-/* 401 */     for (k = paramInt1; k < j; k++) {
-/* 402 */       this.a[k] = arrayOfInt[k + paramInt2];
-/*     */     }
-/* 404 */     setSizes(this.a);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\SizeSequence.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing;
+
+/**
+ * A <code>SizeSequence</code> object
+ * efficiently maintains an ordered list
+ * of sizes and corresponding positions.
+ * One situation for which <code>SizeSequence</code>
+ * might be appropriate is in a component
+ * that displays multiple rows of unequal size.
+ * In this case, a single <code>SizeSequence</code>
+ * object could be used to track the heights
+ * and Y positions of all rows.
+ * <p>
+ * Another example would be a multi-column component,
+ * such as a <code>JTable</code>,
+ * in which the column sizes are not all equal.
+ * The <code>JTable</code> might use a single
+ * <code>SizeSequence</code> object
+ * to store the widths and X positions of all the columns.
+ * The <code>JTable</code> could then use the
+ * <code>SizeSequence</code> object
+ * to find the column corresponding to a certain position.
+ * The <code>JTable</code> could update the
+ * <code>SizeSequence</code> object
+ * whenever one or more column sizes changed.
+ *
+ * <p>
+ * The following figure shows the relationship between size and position data
+ * for a multi-column component.
+ *
+ * <center>
+ * <img src="doc-files/SizeSequence-1.gif" width=384 height = 100
+ * alt="The first item begins at position 0, the second at the position equal
+ to the size of the previous item, and so on.">
+ * </center>
+ * <p>
+ * In the figure, the first index (0) corresponds to the first column,
+ * the second index (1) to the second column, and so on.
+ * The first column's position starts at 0,
+ * and the column occupies <em>size<sub>0</sub></em> pixels,
+ * where <em>size<sub>0</sub></em> is the value returned by
+ * <code>getSize(0)</code>.
+ * Thus, the first column ends at <em>size<sub>0</sub></em> - 1.
+ * The second column then begins at
+ * the position <em>size<sub>0</sub></em>
+ * and occupies <em>size<sub>1</sub></em> (<code>getSize(1)</code>) pixels.
+ * <p>
+ * Note that a <code>SizeSequence</code> object simply represents intervals
+ * along an axis.
+ * In our examples, the intervals represent height or width in pixels.
+ * However, any other unit of measure (for example, time in days)
+ * could be just as valid.
+ *
+ *
+ * <h3>Implementation Notes</h3>
+ *
+ * Normally when storing the size and position of entries,
+ * one would choose between
+ * storing the sizes or storing their positions
+ * instead. The two common operations that are needed during
+ * rendering are: <code>getIndex(position)</code>
+ * and <code>setSize(index, size)</code>.
+ * Whichever choice of internal format is made one of these
+ * operations is costly when the number of entries becomes large.
+ * If sizes are stored, finding the index of the entry
+ * that encloses a particular position is linear in the
+ * number of entries. If positions are stored instead, setting
+ * the size of an entry at a particular index requires updating
+ * the positions of the affected entries, which is also a linear
+ * calculation.
+ * <p>
+ * Like the above techniques this class holds an array of N integers
+ * internally but uses a hybrid encoding, which is halfway
+ * between the size-based and positional-based approaches.
+ * The result is a data structure that takes the same space to store
+ * the information but can perform most operations in Log(N) time
+ * instead of O(N), where N is the number of entries in the list.
+ * <p>
+ * Two operations that remain O(N) in the number of entries are
+ * the <code>insertEntries</code>
+ * and <code>removeEntries</code> methods, both
+ * of which are implemented by converting the internal array to
+ * a set of integer sizes, copying it into the new array, and then
+ * reforming the hybrid representation in place.
+ *
+ * @author Philip Milne
+ * @since 1.3
+ */
+
+/*
+ *   Each method is implemented by taking the minimum and
+ *   maximum of the range of integers that need to be operated
+ *   upon. All the algorithms work by dividing this range
+ *   into two smaller ranges and recursing. The recursion
+ *   is terminated when the upper and lower bounds are equal.
+ */
+
+public class SizeSequence {
+
+    private static int[] emptyArray = new int[0];
+    private int a[];
+
+    /**
+     * Creates a new <code>SizeSequence</code> object
+     * that contains no entries.  To add entries, you
+     * can use <code>insertEntries</code> or <code>setSizes</code>.
+     *
+     * @see #insertEntries
+     * @see #setSizes(int[])
+     */
+    public SizeSequence() {
+        a = emptyArray;
+    }
+
+    /**
+     * Creates a new <code>SizeSequence</code> object
+     * that contains the specified number of entries,
+     * all initialized to have size 0.
+     *
+     * @param numEntries  the number of sizes to track
+     * @exception NegativeArraySizeException if
+     *    <code>numEntries &lt; 0</code>
+     */
+    public SizeSequence(int numEntries) {
+        this(numEntries, 0);
+    }
+
+    /**
+     * Creates a new <code>SizeSequence</code> object
+     * that contains the specified number of entries,
+     * all initialized to have size <code>value</code>.
+     *
+     * @param numEntries  the number of sizes to track
+     * @param value       the initial value of each size
+     */
+    public SizeSequence(int numEntries, int value) {
+        this();
+        insertEntries(0, numEntries, value);
+    }
+
+    /**
+     * Creates a new <code>SizeSequence</code> object
+     * that contains the specified sizes.
+     *
+     * @param sizes  the array of sizes to be contained in
+     *               the <code>SizeSequence</code>
+     */
+    public SizeSequence(int[] sizes) {
+        this();
+        setSizes(sizes);
+    }
+
+    /**
+     * Resets the size sequence to contain <code>length</code> items
+     * all with a size of <code>size</code>.
+     */
+    void setSizes(int length, int size) {
+        if (a.length != length) {
+            a = new int[length];
+        }
+        setSizes(0, length, size);
+    }
+
+    private int setSizes(int from, int to, int size) {
+        if (to <= from) {
+            return 0;
+        }
+        int m = (from + to)/2;
+        a[m] = size + setSizes(from, m, size);
+        return a[m] + setSizes(m + 1, to, size);
+    }
+
+    /**
+     * Resets this <code>SizeSequence</code> object,
+     * using the data in the <code>sizes</code> argument.
+     * This method reinitializes this object so that it
+     * contains as many entries as the <code>sizes</code> array.
+     * Each entry's size is initialized to the value of the
+     * corresponding item in <code>sizes</code>.
+     *
+     * @param sizes  the array of sizes to be contained in
+     *               this <code>SizeSequence</code>
+     */
+    public void setSizes(int[] sizes) {
+        if (a.length != sizes.length) {
+            a = new int[sizes.length];
+        }
+        setSizes(0, a.length, sizes);
+    }
+
+    private int setSizes(int from, int to, int[] sizes) {
+        if (to <= from) {
+            return 0;
+        }
+        int m = (from + to)/2;
+        a[m] = sizes[m] + setSizes(from, m, sizes);
+        return a[m] + setSizes(m + 1, to, sizes);
+    }
+
+    /**
+     * Returns the size of all entries.
+     *
+     * @return  a new array containing the sizes in this object
+     */
+    public int[] getSizes() {
+        int n = a.length;
+        int[] sizes = new int[n];
+        getSizes(0, n, sizes);
+        return sizes;
+    }
+
+    private int getSizes(int from, int to, int[] sizes) {
+        if (to <= from) {
+            return 0;
+        }
+        int m = (from + to)/2;
+        sizes[m] = a[m] - getSizes(from, m, sizes);
+        return a[m] + getSizes(m + 1, to, sizes);
+    }
+
+    /**
+     * Returns the start position for the specified entry.
+     * For example, <code>getPosition(0)</code> returns 0,
+     * <code>getPosition(1)</code> is equal to
+     *   <code>getSize(0)</code>,
+     * <code>getPosition(2)</code> is equal to
+     *   <code>getSize(0)</code> + <code>getSize(1)</code>,
+     * and so on.
+     * <p>Note that if <code>index</code> is greater than
+     * <code>length</code> the value returned may
+     * be meaningless.
+     *
+     * @param index  the index of the entry whose position is desired
+     * @return       the starting position of the specified entry
+     */
+    public int getPosition(int index) {
+        return getPosition(0, a.length, index);
+    }
+
+    private int getPosition(int from, int to, int index) {
+        if (to <= from) {
+            return 0;
+        }
+        int m = (from + to)/2;
+        if (index <= m) {
+            return getPosition(from, m, index);
+        }
+        else {
+            return a[m] + getPosition(m + 1, to, index);
+        }
+    }
+
+    /**
+     * Returns the index of the entry
+     * that corresponds to the specified position.
+     * For example, <code>getIndex(0)</code> is 0,
+     * since the first entry always starts at position 0.
+     *
+     * @param position  the position of the entry
+     * @return  the index of the entry that occupies the specified position
+     */
+    public int getIndex(int position) {
+        return getIndex(0, a.length, position);
+    }
+
+    private int getIndex(int from, int to, int position) {
+        if (to <= from) {
+            return from;
+        }
+        int m = (from + to)/2;
+        int pivot = a[m];
+        if (position < pivot) {
+           return getIndex(from, m, position);
+        }
+        else {
+            return getIndex(m + 1, to, position - pivot);
+        }
+    }
+
+    /**
+     * Returns the size of the specified entry.
+     * If <code>index</code> is out of the range
+     * <code>(0 &lt;= index &lt; getSizes().length)</code>
+     * the behavior is unspecified.
+     *
+     * @param index  the index corresponding to the entry
+     * @return  the size of the entry
+     */
+    public int getSize(int index) {
+        return getPosition(index + 1) - getPosition(index);
+    }
+
+    /**
+     * Sets the size of the specified entry.
+     * Note that if the value of <code>index</code>
+     * does not fall in the range:
+     * <code>(0 &lt;= index &lt; getSizes().length)</code>
+     * the behavior is unspecified.
+     *
+     * @param index  the index corresponding to the entry
+     * @param size   the size of the entry
+     */
+    public void setSize(int index, int size) {
+        changeSize(0, a.length, index, size - getSize(index));
+    }
+
+    private void changeSize(int from, int to, int index, int delta) {
+        if (to <= from) {
+            return;
+        }
+        int m = (from + to)/2;
+        if (index <= m) {
+            a[m] += delta;
+            changeSize(from, m, index, delta);
+        }
+        else {
+            changeSize(m + 1, to, index, delta);
+        }
+    }
+
+    /**
+     * Adds a contiguous group of entries to this <code>SizeSequence</code>.
+     * Note that the values of <code>start</code> and
+     * <code>length</code> must satisfy the following
+     * conditions:  <code>(0 &lt;= start &lt; getSizes().length)
+     * AND (length &gt;= 0)</code>.  If these conditions are
+     * not met, the behavior is unspecified and an exception
+     * may be thrown.
+     *
+     * @param start   the index to be assigned to the first entry
+     *                in the group
+     * @param length  the number of entries in the group
+     * @param value   the size to be assigned to each new entry
+     * @exception ArrayIndexOutOfBoundsException if the parameters
+     *   are outside of the range:
+     *   (<code>0 &lt;= start &lt; (getSizes().length)) AND (length &gt;= 0)</code>
+     */
+    public void insertEntries(int start, int length, int value) {
+        int sizes[] = getSizes();
+        int end = start + length;
+        int n = a.length + length;
+        a = new int[n];
+        for (int i = 0; i < start; i++) {
+            a[i] = sizes[i] ;
+        }
+        for (int i = start; i < end; i++) {
+            a[i] = value ;
+        }
+        for (int i = end; i < n; i++) {
+            a[i] = sizes[i-length] ;
+        }
+        setSizes(a);
+    }
+
+    /**
+     * Removes a contiguous group of entries
+     * from this <code>SizeSequence</code>.
+     * Note that the values of <code>start</code> and
+     * <code>length</code> must satisfy the following
+     * conditions:  <code>(0 &lt;= start &lt; getSizes().length)
+     * AND (length &gt;= 0)</code>.  If these conditions are
+     * not met, the behavior is unspecified and an exception
+     * may be thrown.
+     *
+     * @param start   the index of the first entry to be removed
+     * @param length  the number of entries to be removed
+     */
+    public void removeEntries(int start, int length) {
+        int sizes[] = getSizes();
+        int end = start + length;
+        int n = a.length - length;
+        a = new int[n];
+        for (int i = 0; i < start; i++) {
+            a[i] = sizes[i] ;
+        }
+        for (int i = start; i < n; i++) {
+            a[i] = sizes[i+length] ;
+        }
+        setSizes(a);
+    }
+}

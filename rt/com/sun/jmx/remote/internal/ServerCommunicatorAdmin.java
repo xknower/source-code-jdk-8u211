@@ -1,238 +1,232 @@
-/*     */ package com.sun.jmx.remote.internal;
-/*     */ 
-/*     */ import com.sun.jmx.remote.util.ClassLogger;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public abstract class ServerCommunicatorAdmin
-/*     */ {
-/*     */   private long timestamp;
-/*     */   
-/*     */   public ServerCommunicatorAdmin(long paramLong) {
-/*  34 */     if (logger.traceOn()) {
-/*  35 */       logger.trace("Constructor", "Creates a new ServerCommunicatorAdmin object with the timeout " + paramLong);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/*  40 */     this.timeout = paramLong;
-/*     */     
-/*  42 */     this.timestamp = 0L;
-/*  43 */     if (paramLong < Long.MAX_VALUE) {
-/*  44 */       Timeout timeout = new Timeout();
-/*  45 */       Thread thread = new Thread(timeout);
-/*  46 */       thread.setName("JMX server connection timeout " + thread.getId());
-/*     */ 
-/*     */       
-/*  49 */       thread.setDaemon(true);
-/*  50 */       thread.start();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean reqIncoming() {
-/*  64 */     if (logger.traceOn()) {
-/*  65 */       logger.trace("reqIncoming", "Receive a new request.");
-/*     */     }
-/*     */     
-/*  68 */     synchronized (this.lock) {
-/*  69 */       if (this.terminated) {
-/*  70 */         logger.warning("reqIncoming", "The server has decided to close this client connection.");
-/*     */       }
-/*     */ 
-/*     */       
-/*  74 */       this.currentJobs++;
-/*     */       
-/*  76 */       return this.terminated;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean rspOutgoing() {
-/*  87 */     if (logger.traceOn()) {
-/*  88 */       logger.trace("reqIncoming", "Finish a request.");
-/*     */     }
-/*     */     
-/*  91 */     synchronized (this.lock) {
-/*  92 */       if (--this.currentJobs == 0) {
-/*  93 */         this.timestamp = System.currentTimeMillis();
-/*  94 */         logtime("Admin: Timestamp=", this.timestamp);
-/*     */         
-/*  96 */         this.lock.notify();
-/*     */       } 
-/*  98 */       return this.terminated;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void terminate() {
-/* 112 */     if (logger.traceOn()) {
-/* 113 */       logger.trace("terminate", "terminate the ServerCommunicatorAdmin object.");
-/*     */     }
-/*     */ 
-/*     */     
-/* 117 */     synchronized (this.lock) {
-/* 118 */       if (this.terminated) {
-/*     */         return;
-/*     */       }
-/*     */       
-/* 122 */       this.terminated = true;
-/*     */ 
-/*     */       
-/* 125 */       this.lock.notify();
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   private class Timeout
-/*     */     implements Runnable {
-/*     */     private Timeout() {}
-/*     */     
-/*     */     public void run() {
-/* 134 */       boolean bool = false;
-/*     */       
-/* 136 */       synchronized (ServerCommunicatorAdmin.this.lock) {
-/* 137 */         if (ServerCommunicatorAdmin.this.timestamp == 0L) ServerCommunicatorAdmin.this.timestamp = System.currentTimeMillis(); 
-/* 138 */         ServerCommunicatorAdmin.this.logtime("Admin: timeout=", ServerCommunicatorAdmin.this.timeout);
-/* 139 */         ServerCommunicatorAdmin.this.logtime("Admin: Timestamp=", ServerCommunicatorAdmin.this.timestamp);
-/*     */         
-/* 141 */         while (!ServerCommunicatorAdmin.this.terminated) {
-/*     */           
-/*     */           try {
-/* 144 */             while (!ServerCommunicatorAdmin.this.terminated && ServerCommunicatorAdmin.this.currentJobs != 0) {
-/* 145 */               if (ServerCommunicatorAdmin.logger.traceOn()) {
-/* 146 */                 ServerCommunicatorAdmin.logger.trace("Timeout-run", "Waiting without timeout.");
-/*     */               }
-/*     */ 
-/*     */               
-/* 150 */               ServerCommunicatorAdmin.this.lock.wait();
-/*     */             } 
-/*     */             
-/* 153 */             if (ServerCommunicatorAdmin.this.terminated) {
-/*     */               return;
-/*     */             }
-/* 156 */             long l1 = ServerCommunicatorAdmin.this.timeout - System.currentTimeMillis() - ServerCommunicatorAdmin.this.timestamp;
-/*     */             
-/* 158 */             ServerCommunicatorAdmin.this.logtime("Admin: remaining timeout=", l1);
-/*     */             
-/* 160 */             if (l1 > 0L) {
-/*     */               
-/* 162 */               if (ServerCommunicatorAdmin.logger.traceOn()) {
-/* 163 */                 ServerCommunicatorAdmin.logger.trace("Timeout-run", "Waiting with timeout: " + l1 + " ms remaining");
-/*     */               }
-/*     */ 
-/*     */ 
-/*     */               
-/* 168 */               ServerCommunicatorAdmin.this.lock.wait(l1);
-/*     */             } 
-/*     */             
-/* 171 */             if (ServerCommunicatorAdmin.this.currentJobs > 0) {
-/*     */               continue;
-/*     */             }
-/* 174 */             long l2 = System.currentTimeMillis() - ServerCommunicatorAdmin.this.timestamp;
-/* 175 */             ServerCommunicatorAdmin.this.logtime("Admin: elapsed=", l2);
-/*     */             
-/* 177 */             if (!ServerCommunicatorAdmin.this.terminated && l2 > ServerCommunicatorAdmin.this.timeout) {
-/* 178 */               if (ServerCommunicatorAdmin.logger.traceOn()) {
-/* 179 */                 ServerCommunicatorAdmin.logger.trace("Timeout-run", "timeout elapsed");
-/*     */               }
-/*     */               
-/* 182 */               ServerCommunicatorAdmin.this.logtime("Admin: timeout elapsed! " + l2 + ">", ServerCommunicatorAdmin.this
-/* 183 */                   .timeout);
-/*     */               
-/* 185 */               ServerCommunicatorAdmin.this.terminated = true;
-/*     */               
-/* 187 */               bool = true;
-/*     */               break;
-/*     */             } 
-/* 190 */           } catch (InterruptedException interruptedException) {
-/* 191 */             ServerCommunicatorAdmin.logger.warning("Timeout-run", "Unexpected Exception: " + interruptedException);
-/*     */             
-/* 193 */             ServerCommunicatorAdmin.logger.debug("Timeout-run", interruptedException);
-/*     */             
-/*     */             return;
-/*     */           } 
-/*     */         } 
-/*     */       } 
-/* 199 */       if (bool) {
-/* 200 */         if (ServerCommunicatorAdmin.logger.traceOn()) {
-/* 201 */           ServerCommunicatorAdmin.logger.trace("Timeout-run", "Call the doStop.");
-/*     */         }
-/*     */         
-/* 204 */         ServerCommunicatorAdmin.this.doStop();
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   private void logtime(String paramString, long paramLong) {
-/* 210 */     timelogger.trace("synchro", paramString + paramLong);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 218 */   private final int[] lock = new int[0];
-/* 219 */   private int currentJobs = 0;
-/*     */ 
-/*     */   
-/*     */   private long timeout;
-/*     */   
-/*     */   private boolean terminated = false;
-/*     */   
-/* 226 */   private static final ClassLogger logger = new ClassLogger("javax.management.remote.misc", "ServerCommunicatorAdmin");
-/*     */ 
-/*     */   
-/* 229 */   private static final ClassLogger timelogger = new ClassLogger("javax.management.remote.timeout", "ServerCommunicatorAdmin");
-/*     */   
-/*     */   protected abstract void doStop();
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\jmx\remote\internal\ServerCommunicatorAdmin.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.jmx.remote.internal;
+
+import java.io.IOException;
+
+import com.sun.jmx.remote.util.ClassLogger;
+
+public abstract class ServerCommunicatorAdmin {
+    public ServerCommunicatorAdmin(long timeout) {
+        if (logger.traceOn()) {
+            logger.trace("Constructor",
+                         "Creates a new ServerCommunicatorAdmin object "+
+                         "with the timeout "+timeout);
+        }
+
+        this.timeout = timeout;
+
+        timestamp = 0;
+        if (timeout < Long.MAX_VALUE) {
+            Runnable timeoutTask = new Timeout();
+            final Thread t = new Thread(timeoutTask);
+            t.setName("JMX server connection timeout " + t.getId());
+            // If you change this name you will need to change a unit test
+            // (NoServerTimeoutTest)
+            t.setDaemon(true);
+            t.start();
+        }
+    }
+
+    /**
+     * Tells that a new request message is received.
+     * A caller of this method should always call the method
+     * <code>rspOutgoing</code> to inform that a response is sent out
+     * for the received request.
+     * @return the value of the termination flag:
+     * <ul><code>true</code> if the connection is already being terminated,
+     * <br><code>false</code> otherwise.</ul>
+     */
+    public boolean reqIncoming() {
+        if (logger.traceOn()) {
+            logger.trace("reqIncoming", "Receive a new request.");
+        }
+
+        synchronized(lock) {
+            if (terminated) {
+                logger.warning("reqIncoming",
+                               "The server has decided to close " +
+                               "this client connection.");
+            }
+            ++currentJobs;
+
+            return terminated;
+        }
+    }
+
+    /**
+     * Tells that a response is sent out for a received request.
+     * @return the value of the termination flag:
+     * <ul><code>true</code> if the connection is already being terminated,
+     * <br><code>false</code> otherwise.</ul>
+     */
+    public boolean rspOutgoing() {
+        if (logger.traceOn()) {
+            logger.trace("reqIncoming", "Finish a request.");
+        }
+
+        synchronized(lock) {
+            if (--currentJobs == 0) {
+                timestamp = System.currentTimeMillis();
+                logtime("Admin: Timestamp=",timestamp);
+                // tells the adminor to restart waiting with timeout
+                lock.notify();
+            }
+            return terminated;
+        }
+    }
+
+    /**
+     * Called by this class to tell an implementation to do stop.
+     */
+    protected abstract void doStop();
+
+    /**
+     * Terminates this object.
+     * Called only by outside, so do not need to call doStop
+     */
+    public void terminate() {
+        if (logger.traceOn()) {
+            logger.trace("terminate",
+                         "terminate the ServerCommunicatorAdmin object.");
+        }
+
+        synchronized(lock) {
+            if (terminated) {
+                return;
+            }
+
+            terminated = true;
+
+            // tell Timeout to terminate
+            lock.notify();
+        }
+    }
+
+// --------------------------------------------------------------
+// private classes
+// --------------------------------------------------------------
+    private class Timeout implements Runnable {
+        public void run() {
+            boolean stopping = false;
+
+            synchronized(lock) {
+                if (timestamp == 0) timestamp = System.currentTimeMillis();
+                logtime("Admin: timeout=",timeout);
+                logtime("Admin: Timestamp=",timestamp);
+
+                while(!terminated) {
+                    try {
+                        // wait until there is no more job
+                        while(!terminated && currentJobs != 0) {
+                            if (logger.traceOn()) {
+                                logger.trace("Timeout-run",
+                                             "Waiting without timeout.");
+                            }
+
+                            lock.wait();
+                        }
+
+                        if (terminated) return;
+
+                        final long remaining =
+                            timeout - (System.currentTimeMillis() - timestamp);
+
+                        logtime("Admin: remaining timeout=",remaining);
+
+                        if (remaining > 0) {
+
+                            if (logger.traceOn()) {
+                                logger.trace("Timeout-run",
+                                             "Waiting with timeout: "+
+                                             remaining + " ms remaining");
+                            }
+
+                            lock.wait(remaining);
+                        }
+
+                        if (currentJobs > 0) continue;
+
+                        final long elapsed =
+                            System.currentTimeMillis() - timestamp;
+                        logtime("Admin: elapsed=",elapsed);
+
+                        if (!terminated && elapsed > timeout) {
+                            if (logger.traceOn()) {
+                                logger.trace("Timeout-run",
+                                             "timeout elapsed");
+                            }
+                            logtime("Admin: timeout elapsed! "+
+                                    elapsed+">",timeout);
+                                // stopping
+                            terminated = true;
+
+                            stopping = true;
+                            break;
+                        }
+                    } catch (InterruptedException ire) {
+                        logger.warning("Timeout-run","Unexpected Exception: "+
+                                       ire);
+                        logger.debug("Timeout-run",ire);
+                        return;
+                    }
+                }
+            }
+
+            if (stopping) {
+                if (logger.traceOn()) {
+                    logger.trace("Timeout-run", "Call the doStop.");
+                }
+
+                doStop();
+            }
+        }
+    }
+
+    private void logtime(String desc,long time) {
+        timelogger.trace("synchro",desc+time);
+    }
+
+// --------------------------------------------------------------
+// private variables
+// --------------------------------------------------------------
+    private long    timestamp;
+
+    private final int[] lock = new int[0];
+    private int currentJobs = 0;
+
+    private long timeout;
+
+    // state issue
+    private boolean terminated = false;
+
+    private static final ClassLogger logger =
+        new ClassLogger("javax.management.remote.misc",
+                        "ServerCommunicatorAdmin");
+    private static final ClassLogger timelogger =
+        new ClassLogger("javax.management.remote.timeout",
+                        "ServerCommunicatorAdmin");
+}

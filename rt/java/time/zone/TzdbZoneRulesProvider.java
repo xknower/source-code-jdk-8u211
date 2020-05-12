@@ -1,212 +1,206 @@
-/*     */ package java.time.zone;
-/*     */ 
-/*     */ import java.io.BufferedInputStream;
-/*     */ import java.io.ByteArrayInputStream;
-/*     */ import java.io.DataInputStream;
-/*     */ import java.io.File;
-/*     */ import java.io.FileInputStream;
-/*     */ import java.io.StreamCorruptedException;
-/*     */ import java.util.Arrays;
-/*     */ import java.util.HashSet;
-/*     */ import java.util.List;
-/*     */ import java.util.Map;
-/*     */ import java.util.NavigableMap;
-/*     */ import java.util.Set;
-/*     */ import java.util.TreeMap;
-/*     */ import java.util.concurrent.ConcurrentHashMap;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class TzdbZoneRulesProvider
-/*     */   extends ZoneRulesProvider
-/*     */ {
-/*     */   private List<String> regionIds;
-/*     */   private String versionId;
-/*  99 */   private final Map<String, Object> regionToRules = new ConcurrentHashMap<>();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public TzdbZoneRulesProvider() {
-/*     */     try {
-/* 109 */       String str = System.getProperty("java.home") + File.separator + "lib";
-/* 110 */       try (DataInputStream null = new DataInputStream(new BufferedInputStream(new FileInputStream(new File(str, "tzdb.dat"))))) {
-/*     */ 
-/*     */         
-/* 113 */         load(dataInputStream);
-/*     */       } 
-/* 115 */     } catch (Exception exception) {
-/* 116 */       throw new ZoneRulesException("Unable to load TZDB time-zone rules", exception);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected Set<String> provideZoneIds() {
-/* 122 */     return new HashSet<>(this.regionIds);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected ZoneRules provideRules(String paramString, boolean paramBoolean) {
-/* 128 */     Object object = this.regionToRules.get(paramString);
-/* 129 */     if (object == null) {
-/* 130 */       throw new ZoneRulesException("Unknown time-zone ID: " + paramString);
-/*     */     }
-/*     */     try {
-/* 133 */       if (object instanceof byte[]) {
-/* 134 */         byte[] arrayOfByte = (byte[])object;
-/* 135 */         DataInputStream dataInputStream = new DataInputStream(new ByteArrayInputStream(arrayOfByte));
-/* 136 */         object = Ser.read(dataInputStream);
-/* 137 */         this.regionToRules.put(paramString, object);
-/*     */       } 
-/* 139 */       return (ZoneRules)object;
-/* 140 */     } catch (Exception exception) {
-/* 141 */       throw new ZoneRulesException("Invalid binary time-zone data: TZDB:" + paramString + ", version: " + this.versionId, exception);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected NavigableMap<String, ZoneRules> provideVersions(String paramString) {
-/* 147 */     TreeMap<Object, Object> treeMap = new TreeMap<>();
-/* 148 */     ZoneRules zoneRules = getRules(paramString, false);
-/* 149 */     if (zoneRules != null) {
-/* 150 */       treeMap.put(this.versionId, zoneRules);
-/*     */     }
-/* 152 */     return (NavigableMap)treeMap;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void load(DataInputStream paramDataInputStream) throws Exception {
-/* 162 */     if (paramDataInputStream.readByte() != 1) {
-/* 163 */       throw new StreamCorruptedException("File format not recognised");
-/*     */     }
-/*     */     
-/* 166 */     String str = paramDataInputStream.readUTF();
-/* 167 */     if (!"TZDB".equals(str)) {
-/* 168 */       throw new StreamCorruptedException("File format not recognised");
-/*     */     }
-/*     */     
-/* 171 */     short s = paramDataInputStream.readShort(); short s1;
-/* 172 */     for (s1 = 0; s1 < s; s1++) {
-/* 173 */       this.versionId = paramDataInputStream.readUTF();
-/*     */     }
-/*     */     
-/* 176 */     s1 = paramDataInputStream.readShort();
-/* 177 */     String[] arrayOfString = new String[s1]; short s2;
-/* 178 */     for (s2 = 0; s2 < s1; s2++) {
-/* 179 */       arrayOfString[s2] = paramDataInputStream.readUTF();
-/*     */     }
-/* 181 */     this.regionIds = Arrays.asList(arrayOfString);
-/*     */     
-/* 183 */     s2 = paramDataInputStream.readShort();
-/* 184 */     Object[] arrayOfObject = new Object[s2]; byte b;
-/* 185 */     for (b = 0; b < s2; b++) {
-/* 186 */       byte[] arrayOfByte = new byte[paramDataInputStream.readShort()];
-/* 187 */       paramDataInputStream.readFully(arrayOfByte);
-/* 188 */       arrayOfObject[b] = arrayOfByte;
-/*     */     } 
-/*     */     
-/* 191 */     for (b = 0; b < s; b++) {
-/* 192 */       short s3 = paramDataInputStream.readShort();
-/* 193 */       this.regionToRules.clear();
-/* 194 */       for (byte b1 = 0; b1 < s3; b1++) {
-/* 195 */         String str1 = arrayOfString[paramDataInputStream.readShort()];
-/* 196 */         Object object = arrayOfObject[paramDataInputStream.readShort() & 0xFFFF];
-/* 197 */         this.regionToRules.put(str1, object);
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 204 */     return "TZDB[" + this.versionId + "]";
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\time\zone\TzdbZoneRulesProvider.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+/*
+ *
+ *
+ *
+ *
+ *
+ * Copyright (c) 2009-2012, Stephen Colebourne & Michael Nascimento Santos
+ *
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *  * Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ *
+ *  * Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ *  * Neither the name of JSR-310 nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+package java.time.zone;
+
+import java.io.ByteArrayInputStream;
+import java.io.BufferedInputStream;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.StreamCorruptedException;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
+
+/**
+ * Loads time-zone rules for 'TZDB'.
+ *
+ * @since 1.8
+ */
+final class TzdbZoneRulesProvider extends ZoneRulesProvider {
+
+    /**
+     * All the regions that are available.
+     */
+    private List<String> regionIds;
+    /**
+     * Version Id of this tzdb rules
+     */
+    private String versionId;
+    /**
+     * Region to rules mapping
+     */
+    private final Map<String, Object> regionToRules = new ConcurrentHashMap<>();
+
+    /**
+     * Creates an instance.
+     * Created by the {@code ServiceLoader}.
+     *
+     * @throws ZoneRulesException if unable to load
+     */
+    public TzdbZoneRulesProvider() {
+        try {
+            String libDir = System.getProperty("java.home") + File.separator + "lib";
+            try (DataInputStream dis = new DataInputStream(
+                     new BufferedInputStream(new FileInputStream(
+                         new File(libDir, "tzdb.dat"))))) {
+                load(dis);
+            }
+        } catch (Exception ex) {
+            throw new ZoneRulesException("Unable to load TZDB time-zone rules", ex);
+        }
+    }
+
+    @Override
+    protected Set<String> provideZoneIds() {
+        return new HashSet<>(regionIds);
+    }
+
+    @Override
+    protected ZoneRules provideRules(String zoneId, boolean forCaching) {
+        // forCaching flag is ignored because this is not a dynamic provider
+        Object obj = regionToRules.get(zoneId);
+        if (obj == null) {
+            throw new ZoneRulesException("Unknown time-zone ID: " + zoneId);
+        }
+        try {
+            if (obj instanceof byte[]) {
+                byte[] bytes = (byte[]) obj;
+                DataInputStream dis = new DataInputStream(new ByteArrayInputStream(bytes));
+                obj = Ser.read(dis);
+                regionToRules.put(zoneId, obj);
+            }
+            return (ZoneRules) obj;
+        } catch (Exception ex) {
+            throw new ZoneRulesException("Invalid binary time-zone data: TZDB:" + zoneId + ", version: " + versionId, ex);
+        }
+    }
+
+    @Override
+    protected NavigableMap<String, ZoneRules> provideVersions(String zoneId) {
+        TreeMap<String, ZoneRules> map = new TreeMap<>();
+        ZoneRules rules = getRules(zoneId, false);
+        if (rules != null) {
+            map.put(versionId, rules);
+        }
+        return map;
+    }
+
+    /**
+     * Loads the rules from a DateInputStream, often in a jar file.
+     *
+     * @param dis  the DateInputStream to load, not null
+     * @throws Exception if an error occurs
+     */
+    private void load(DataInputStream dis) throws Exception {
+        if (dis.readByte() != 1) {
+            throw new StreamCorruptedException("File format not recognised");
+        }
+        // group
+        String groupId = dis.readUTF();
+        if ("TZDB".equals(groupId) == false) {
+            throw new StreamCorruptedException("File format not recognised");
+        }
+        // versions
+        int versionCount = dis.readShort();
+        for (int i = 0; i < versionCount; i++) {
+            versionId = dis.readUTF();
+        }
+        // regions
+        int regionCount = dis.readShort();
+        String[] regionArray = new String[regionCount];
+        for (int i = 0; i < regionCount; i++) {
+            regionArray[i] = dis.readUTF();
+        }
+        regionIds = Arrays.asList(regionArray);
+        // rules
+        int ruleCount = dis.readShort();
+        Object[] ruleArray = new Object[ruleCount];
+        for (int i = 0; i < ruleCount; i++) {
+            byte[] bytes = new byte[dis.readShort()];
+            dis.readFully(bytes);
+            ruleArray[i] = bytes;
+        }
+        // link version-region-rules
+        for (int i = 0; i < versionCount; i++) {
+            int versionRegionCount = dis.readShort();
+            regionToRules.clear();
+            for (int j = 0; j < versionRegionCount; j++) {
+                String region = regionArray[dis.readShort()];
+                Object rule = ruleArray[dis.readShort() & 0xffff];
+                regionToRules.put(region, rule);
+            }
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "TZDB[" + versionId + "]";
+    }
+}

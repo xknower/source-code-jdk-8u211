@@ -1,52 +1,46 @@
-/*    */ package javax.swing;
-/*    */ 
-/*    */ import java.awt.Color;
-/*    */ import java.awt.image.RGBImageFilter;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ class DebugGraphicsFilter
-/*    */   extends RGBImageFilter
-/*    */ {
-/*    */   Color color;
-/*    */   
-/*    */   DebugGraphicsFilter(Color paramColor) {
-/* 39 */     this.canFilterIndexColorModel = true;
-/* 40 */     this.color = paramColor;
-/*    */   }
-/*    */   
-/*    */   public int filterRGB(int paramInt1, int paramInt2, int paramInt3) {
-/* 44 */     return this.color.getRGB() | paramInt3 & 0xFF000000;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\DebugGraphicsFilter.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 1998, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing;
+
+import java.awt.*;
+import java.awt.image.*;
+
+/** Color filter for DebugGraphics, used for images only.
+  *
+  * @author Dave Karlton
+  */
+class DebugGraphicsFilter extends RGBImageFilter {
+    Color color;
+
+    DebugGraphicsFilter(Color c) {
+        canFilterIndexColorModel = true;
+        color = c;
+    }
+
+    public int filterRGB(int x, int y, int rgb) {
+        return color.getRGB() | (rgb & 0xFF000000);
+    }
+}

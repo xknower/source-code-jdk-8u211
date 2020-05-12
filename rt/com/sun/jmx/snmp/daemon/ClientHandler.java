@@ -1,169 +1,133 @@
-/*     */ package com.sun.jmx.snmp.daemon;
-/*     */ 
-/*     */ import com.sun.jmx.defaults.JmxProperties;
-/*     */ import javax.management.MBeanServer;
-/*     */ import javax.management.ObjectName;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ abstract class ClientHandler
-/*     */   implements Runnable
-/*     */ {
-/*     */   protected CommunicatorServer adaptorServer;
-/*     */   protected int requestId;
-/*     */   protected MBeanServer mbs;
-/*     */   protected ObjectName objectName;
-/*     */   protected Thread thread;
-/*     */   protected boolean interruptCalled;
-/*     */   protected String dbgTag;
-/*     */   
-/*     */   public ClientHandler(CommunicatorServer paramCommunicatorServer, int paramInt, MBeanServer paramMBeanServer, ObjectName paramObjectName) {
-/* 122 */     this.adaptorServer = null;
-/* 123 */     this.requestId = -1;
-/* 124 */     this.mbs = null;
-/* 125 */     this.objectName = null;
-/* 126 */     this.thread = null;
-/* 127 */     this.interruptCalled = false;
-/* 128 */     this.dbgTag = null; this.adaptorServer = paramCommunicatorServer; this.requestId = paramInt; this.mbs = paramMBeanServer; this.objectName = paramObjectName;
-/*     */     this.interruptCalled = false;
-/*     */     this.dbgTag = makeDebugTag();
-/* 131 */     this.thread = createThread(this); } protected String makeDebugTag() { return "ClientHandler[" + this.adaptorServer.getProtocol() + ":" + this.adaptorServer.getPort() + "][" + this.requestId + "]"; }
-/*     */ 
-/*     */   
-/*     */   Thread createThread(Runnable paramRunnable) {
-/*     */     return new Thread(this);
-/*     */   }
-/*     */   
-/*     */   public void interrupt() {
-/*     */     JmxProperties.SNMP_ADAPTOR_LOGGER.entering(this.dbgTag, "interrupt");
-/*     */     this.interruptCalled = true;
-/*     */     if (this.thread != null)
-/*     */       this.thread.interrupt(); 
-/*     */     JmxProperties.SNMP_ADAPTOR_LOGGER.exiting(this.dbgTag, "interrupt");
-/*     */   }
-/*     */   
-/*     */   public void join() {
-/*     */     if (this.thread != null)
-/*     */       try {
-/*     */         this.thread.join();
-/*     */       } catch (InterruptedException interruptedException) {} 
-/*     */   }
-/*     */   
-/*     */   public void run() {
-/*     */     try {
-/*     */       this.adaptorServer.notifyClientHandlerCreated(this);
-/*     */       doRun();
-/*     */     } finally {
-/*     */       this.adaptorServer.notifyClientHandlerDeleted(this);
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public abstract void doRun();
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\jmx\snmp\daemon\ClientHandler.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2006, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+
+package com.sun.jmx.snmp.daemon;
+
+
+
+// java import
+//
+import java.io.*;
+import java.util.logging.Level;
+
+// jmx import
+//
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+
+// jmx RI import
+//
+import static com.sun.jmx.defaults.JmxProperties.SNMP_ADAPTOR_LOGGER;
+
+/**
+ * The <CODE>ClientHandler</CODE> class is the base class of each
+ * adaptor.<p>
+ */
+
+abstract class ClientHandler implements Runnable {
+
+    public ClientHandler(CommunicatorServer server, int id, MBeanServer f, ObjectName n) {
+        adaptorServer = server ;
+        requestId = id ;
+        mbs = f ;
+        objectName = n ;
+        interruptCalled = false ;
+        dbgTag = makeDebugTag() ;
+        //if (mbs == null ){
+        //thread = new Thread (this) ;
+        thread =  createThread(this);
+
+        //} else {
+        //thread = mbs.getThreadAllocatorSrvIf().obtainThread(objectName,this) ;
+        //}
+        // Note: the thread will be started by the subclass.
+    }
+
+    // thread service
+    Thread createThread(Runnable r) {
+        return new Thread(this);
+    }
+
+    public void interrupt() {
+        SNMP_ADAPTOR_LOGGER.entering(dbgTag, "interrupt");
+        interruptCalled = true ;
+        if (thread != null) {
+            thread.interrupt() ;
+        }
+        SNMP_ADAPTOR_LOGGER.exiting(dbgTag, "interrupt");
+    }
+
+
+    public void join() {
+        if (thread != null) {
+        try {
+            thread.join() ;
+        }
+        catch(InterruptedException x) {
+        }
+        }
+    }
+
+    public void run() {
+
+        try {
+            //
+            // Notify the server we are now active
+            //
+            adaptorServer.notifyClientHandlerCreated(this) ;
+
+            //
+            // Call protocol specific sequence
+            //
+            doRun() ;
+        }
+        finally {
+            //
+            // Now notify the adaptor server that the handler is terminating.
+            // This is important because the server may be blocked waiting for
+            // a handler to terminate.
+            //
+            adaptorServer.notifyClientHandlerDeleted(this) ;
+        }
+    }
+
+    //
+    // The protocol-dependent part of the request
+    //
+    public abstract void doRun() ;
+
+    protected CommunicatorServer adaptorServer = null ;
+    protected int requestId = -1 ;
+    protected MBeanServer mbs = null ;
+    protected ObjectName objectName = null ;
+    protected Thread thread = null ;
+    protected boolean interruptCalled = false ;
+    protected String dbgTag = null ;
+
+    protected String makeDebugTag() {
+        return "ClientHandler[" + adaptorServer.getProtocol() + ":" + adaptorServer.getPort() + "][" + requestId + "]";
+    }
+}

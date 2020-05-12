@@ -1,101 +1,95 @@
-/*    */ package com.sun.org.apache.xalan.internal.xsltc.compiler;
-/*    */ 
-/*    */ import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
-/*    */ import com.sun.org.apache.bcel.internal.generic.PUSH;
-/*    */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
-/*    */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
-/*    */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
-/*    */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
-/*    */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
-/*    */ import java.util.Vector;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ final class ElementAvailableCall
-/*    */   extends FunctionCall
-/*    */ {
-/*    */   public ElementAvailableCall(QName fname, Vector arguments) {
-/* 43 */     super(fname, arguments);
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public Type typeCheck(SymbolTable stable) throws TypeCheckError {
-/* 50 */     if (argument() instanceof LiteralExpr) {
-/* 51 */       return this._type = Type.Boolean;
-/*    */     }
-/* 53 */     ErrorMsg err = new ErrorMsg("NEED_LITERAL_ERR", "element-available", this);
-/*    */     
-/* 55 */     throw new TypeCheckError(err);
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public Object evaluateAtCompileTime() {
-/* 64 */     return getResult() ? Boolean.TRUE : Boolean.FALSE;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public boolean getResult() {
-/*    */     try {
-/* 72 */       LiteralExpr arg = (LiteralExpr)argument();
-/* 73 */       String qname = arg.getValue();
-/* 74 */       int index = qname.indexOf(':');
-/*    */       
-/* 76 */       String localName = (index > 0) ? qname.substring(index + 1) : qname;
-/* 77 */       return getParser().elementSupported(arg.getNamespace(), localName);
-/*    */     
-/*    */     }
-/* 80 */     catch (ClassCastException e) {
-/* 81 */       return false;
-/*    */     } 
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
-/* 91 */     ConstantPoolGen cpg = classGen.getConstantPool();
-/* 92 */     boolean result = getResult();
-/* 93 */     methodGen.getInstructionList().append(new PUSH(cpg, result));
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\compiler\ElementAvailableCall.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: ElementAvailableCall.java,v 1.2.4.1 2005/09/01 14:13:01 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.compiler;
+
+import java.util.Vector;
+
+import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
+import com.sun.org.apache.bcel.internal.generic.PUSH;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
+
+/**
+ * @author Jacek Ambroziak
+ * @author Santiago Pericas-Geertsen
+ */
+final class ElementAvailableCall extends FunctionCall {
+
+    public ElementAvailableCall(QName fname, Vector arguments) {
+        super(fname, arguments);
+    }
+
+    /**
+     * Force the argument to this function to be a literal string.
+     */
+    public Type typeCheck(SymbolTable stable) throws TypeCheckError {
+        if (argument() instanceof LiteralExpr) {
+            return _type = Type.Boolean;
+        }
+        ErrorMsg err = new ErrorMsg(ErrorMsg.NEED_LITERAL_ERR,
+                                    "element-available", this);
+        throw new TypeCheckError(err);
+    }
+
+    /**
+     * Returns an object representing the compile-time evaluation
+     * of an expression. We are only using this for function-available
+     * and element-available at this time.
+     */
+    public Object evaluateAtCompileTime() {
+        return getResult() ? Boolean.TRUE : Boolean.FALSE;
+    }
+
+    /**
+     * Returns the result that this function will return
+     */
+    public boolean getResult() {
+        try {
+            final LiteralExpr arg = (LiteralExpr) argument();
+            final String qname = arg.getValue();
+            final int index = qname.indexOf(':');
+            final String localName = (index > 0) ?
+                qname.substring(index + 1) : qname;
+            return getParser().elementSupported(arg.getNamespace(),
+                                                localName);
+        }
+        catch (ClassCastException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Calls to 'element-available' are resolved at compile time since
+     * the namespaces declared in the stylsheet are not available at run
+     * time. Consequently, arguments to this function must be literals.
+     */
+    public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
+        final ConstantPoolGen cpg = classGen.getConstantPool();
+        final boolean result = getResult();
+        methodGen.getInstructionList().append(new PUSH(cpg, result));
+    }
+}

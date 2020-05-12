@@ -1,71 +1,67 @@
-/*    */ package javax.security.sasl;
-/*    */ 
-/*    */ import javax.security.auth.callback.TextInputCallback;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class RealmCallback
-/*    */   extends TextInputCallback
-/*    */ {
-/*    */   private static final long serialVersionUID = -4342673378785456908L;
-/*    */   
-/*    */   public RealmCallback(String paramString) {
-/* 49 */     super(paramString);
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public RealmCallback(String paramString1, String paramString2) {
-/* 63 */     super(paramString1, paramString2);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\security\sasl\RealmCallback.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.security.sasl;
+
+import javax.security.auth.callback.TextInputCallback;
+
+/**
+  * This callback is used by {@code SaslClient} and {@code SaslServer}
+  * to retrieve realm information.
+  *
+  * @since 1.5
+  *
+  * @author Rosanna Lee
+  * @author Rob Weltman
+  */
+public class RealmCallback extends TextInputCallback {
+
+    /**
+     * Constructs a {@code RealmCallback} with a prompt.
+     *
+     * @param prompt The non-null prompt to use to request the realm information.
+     * @throws IllegalArgumentException If {@code prompt} is null or
+     * the empty string.
+     */
+    public RealmCallback(String prompt) {
+        super(prompt);
+    }
+
+    /**
+     * Constructs a {@code RealmCallback} with a prompt and default
+     * realm information.
+     *
+     * @param prompt The non-null prompt to use to request the realm information.
+     * @param defaultRealmInfo The non-null default realm information to use.
+     * @throws IllegalArgumentException If {@code prompt} is null or
+     * the empty string,
+     * or if {@code defaultRealm} is empty or null.
+     */
+    public RealmCallback(String prompt, String defaultRealmInfo) {
+        super(prompt, defaultRealmInfo);
+    }
+
+    private static final long serialVersionUID = -4342673378785456908L;
+}

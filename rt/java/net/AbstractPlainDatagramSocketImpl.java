@@ -1,409 +1,367 @@
-/*     */ package java.net;
-/*     */ 
-/*     */ import java.io.FileDescriptor;
-/*     */ import java.io.IOException;
-/*     */ import java.security.AccessController;
-/*     */ import java.security.PrivilegedAction;
-/*     */ import sun.net.ResourceManager;
-/*     */ import sun.security.action.GetPropertyAction;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ abstract class AbstractPlainDatagramSocketImpl
-/*     */   extends DatagramSocketImpl
-/*     */ {
-/*  45 */   int timeout = 0;
-/*     */   boolean connected = false;
-/*  47 */   private int trafficClass = 0;
-/*  48 */   protected InetAddress connectedAddress = null;
-/*  49 */   private int connectedPort = -1;
-/*     */   
-/*  51 */   private static final String os = AccessController.<String>doPrivileged(new GetPropertyAction("os.name"));
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  58 */   private static final boolean connectDisabled = os.contains("OS X");
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static {
-/*  64 */     AccessController.doPrivileged(new PrivilegedAction<Void>()
-/*     */         {
-/*     */           public Void run() {
-/*  67 */             System.loadLibrary("net");
-/*  68 */             return null;
-/*     */           }
-/*     */         });
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected synchronized void create() throws SocketException {
-/*  77 */     ResourceManager.beforeUdpCreate();
-/*  78 */     this.fd = new FileDescriptor();
-/*     */     try {
-/*  80 */       datagramSocketCreate();
-/*  81 */     } catch (SocketException socketException) {
-/*  82 */       ResourceManager.afterUdpClose();
-/*  83 */       this.fd = null;
-/*  84 */       throw socketException;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected synchronized void bind(int paramInt, InetAddress paramInetAddress) throws SocketException {
-/*  93 */     bind0(paramInt, paramInetAddress);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void connect(InetAddress paramInetAddress, int paramInt) throws SocketException {
-/* 114 */     connect0(paramInetAddress, paramInt);
-/* 115 */     this.connectedAddress = paramInetAddress;
-/* 116 */     this.connectedPort = paramInt;
-/* 117 */     this.connected = true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void disconnect() {
-/* 125 */     disconnect0(this.connectedAddress.holder().getFamily());
-/* 126 */     this.connected = false;
-/* 127 */     this.connectedAddress = null;
-/* 128 */     this.connectedPort = -1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected synchronized void receive(DatagramPacket paramDatagramPacket) throws IOException {
-/* 143 */     receive0(paramDatagramPacket);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void join(InetAddress paramInetAddress) throws IOException {
-/* 178 */     join(paramInetAddress, null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void leave(InetAddress paramInetAddress) throws IOException {
-/* 186 */     leave(paramInetAddress, null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void joinGroup(SocketAddress paramSocketAddress, NetworkInterface paramNetworkInterface) throws IOException {
-/* 200 */     if (paramSocketAddress == null || !(paramSocketAddress instanceof InetSocketAddress))
-/* 201 */       throw new IllegalArgumentException("Unsupported address type"); 
-/* 202 */     join(((InetSocketAddress)paramSocketAddress).getAddress(), paramNetworkInterface);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void leaveGroup(SocketAddress paramSocketAddress, NetworkInterface paramNetworkInterface) throws IOException {
-/* 218 */     if (paramSocketAddress == null || !(paramSocketAddress instanceof InetSocketAddress))
-/* 219 */       throw new IllegalArgumentException("Unsupported address type"); 
-/* 220 */     leave(((InetSocketAddress)paramSocketAddress).getAddress(), paramNetworkInterface);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void close() {
-/* 230 */     if (this.fd != null) {
-/* 231 */       datagramSocketClose();
-/* 232 */       ResourceManager.afterUdpClose();
-/* 233 */       this.fd = null;
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   protected boolean isClosed() {
-/* 238 */     return (this.fd == null);
-/*     */   }
-/*     */   
-/*     */   protected void finalize() {
-/* 242 */     close();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setOption(int paramInt, Object paramObject) throws SocketException {
-/*     */     int i;
-/* 251 */     if (isClosed()) {
-/* 252 */       throw new SocketException("Socket Closed");
-/*     */     }
-/* 254 */     switch (paramInt) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/*     */       case 4102:
-/* 260 */         if (paramObject == null || !(paramObject instanceof Integer)) {
-/* 261 */           throw new SocketException("bad argument for SO_TIMEOUT");
-/*     */         }
-/* 263 */         i = ((Integer)paramObject).intValue();
-/* 264 */         if (i < 0)
-/* 265 */           throw new IllegalArgumentException("timeout < 0"); 
-/* 266 */         this.timeout = i;
-/*     */         return;
-/*     */       case 3:
-/* 269 */         if (paramObject == null || !(paramObject instanceof Integer)) {
-/* 270 */           throw new SocketException("bad argument for IP_TOS");
-/*     */         }
-/* 272 */         this.trafficClass = ((Integer)paramObject).intValue();
-/*     */         break;
-/*     */       case 4:
-/* 275 */         if (paramObject == null || !(paramObject instanceof Boolean)) {
-/* 276 */           throw new SocketException("bad argument for SO_REUSEADDR");
-/*     */         }
-/*     */         break;
-/*     */       case 32:
-/* 280 */         if (paramObject == null || !(paramObject instanceof Boolean)) {
-/* 281 */           throw new SocketException("bad argument for SO_BROADCAST");
-/*     */         }
-/*     */         break;
-/*     */       case 15:
-/* 285 */         throw new SocketException("Cannot re-bind Socket");
-/*     */       case 4097:
-/*     */       case 4098:
-/* 288 */         if (paramObject == null || !(paramObject instanceof Integer) || ((Integer)paramObject)
-/* 289 */           .intValue() < 0) {
-/* 290 */           throw new SocketException("bad argument for SO_SNDBUF or SO_RCVBUF");
-/*     */         }
-/*     */         break;
-/*     */       
-/*     */       case 16:
-/* 295 */         if (paramObject == null || !(paramObject instanceof InetAddress))
-/* 296 */           throw new SocketException("bad argument for IP_MULTICAST_IF"); 
-/*     */         break;
-/*     */       case 31:
-/* 299 */         if (paramObject == null || !(paramObject instanceof NetworkInterface))
-/* 300 */           throw new SocketException("bad argument for IP_MULTICAST_IF2"); 
-/*     */         break;
-/*     */       case 18:
-/* 303 */         if (paramObject == null || !(paramObject instanceof Boolean))
-/* 304 */           throw new SocketException("bad argument for IP_MULTICAST_LOOP"); 
-/*     */         break;
-/*     */       default:
-/* 307 */         throw new SocketException("invalid option: " + paramInt);
-/*     */     } 
-/* 309 */     socketSetOption(paramInt, paramObject);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object getOption(int paramInt) throws SocketException {
-/*     */     Integer integer;
-/*     */     Object object;
-/* 317 */     if (isClosed()) {
-/* 318 */       throw new SocketException("Socket Closed");
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 323 */     switch (paramInt) {
-/*     */       case 4102:
-/* 325 */         return new Integer(this.timeout);
-/*     */ 
-/*     */       
-/*     */       case 3:
-/* 329 */         object = socketGetOption(paramInt);
-/* 330 */         if (((Integer)object).intValue() == -1) {
-/* 331 */           object = new Integer(this.trafficClass);
-/*     */         }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 350 */         return object;case 4: case 15: case 16: case 18: case 31: case 32: case 4097: case 4098: object = socketGetOption(paramInt); return object;
-/*     */     } 
-/*     */     throw new SocketException("invalid option: " + paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected boolean nativeConnectDisabled() {
-/* 363 */     return connectDisabled;
-/*     */   }
-/*     */   
-/*     */   protected abstract void bind0(int paramInt, InetAddress paramInetAddress) throws SocketException;
-/*     */   
-/*     */   protected abstract void send(DatagramPacket paramDatagramPacket) throws IOException;
-/*     */   
-/*     */   protected abstract int peek(InetAddress paramInetAddress) throws IOException;
-/*     */   
-/*     */   protected abstract int peekData(DatagramPacket paramDatagramPacket) throws IOException;
-/*     */   
-/*     */   protected abstract void receive0(DatagramPacket paramDatagramPacket) throws IOException;
-/*     */   
-/*     */   protected abstract void setTimeToLive(int paramInt) throws IOException;
-/*     */   
-/*     */   protected abstract int getTimeToLive() throws IOException;
-/*     */   
-/*     */   @Deprecated
-/*     */   protected abstract void setTTL(byte paramByte) throws IOException;
-/*     */   
-/*     */   @Deprecated
-/*     */   protected abstract byte getTTL() throws IOException;
-/*     */   
-/*     */   protected abstract void join(InetAddress paramInetAddress, NetworkInterface paramNetworkInterface) throws IOException;
-/*     */   
-/*     */   protected abstract void leave(InetAddress paramInetAddress, NetworkInterface paramNetworkInterface) throws IOException;
-/*     */   
-/*     */   protected abstract void datagramSocketCreate() throws SocketException;
-/*     */   
-/*     */   protected abstract void datagramSocketClose();
-/*     */   
-/*     */   protected abstract void socketSetOption(int paramInt, Object paramObject) throws SocketException;
-/*     */   
-/*     */   protected abstract Object socketGetOption(int paramInt) throws SocketException;
-/*     */   
-/*     */   protected abstract void connect0(InetAddress paramInetAddress, int paramInt) throws SocketException;
-/*     */   
-/*     */   protected abstract void disconnect0(int paramInt);
-/*     */   
-/*     */   abstract int dataAvailable();
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\net\AbstractPlainDatagramSocketImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1996, 2015, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package java.net;
+
+import java.io.FileDescriptor;
+import java.io.IOException;
+import java.security.AccessController;
+import sun.net.ResourceManager;
+
+/**
+ * Abstract datagram and multicast socket implementation base class.
+ * Note: This is not a public class, so that applets cannot call
+ * into the implementation directly and hence cannot bypass the
+ * security checks present in the DatagramSocket and MulticastSocket
+ * classes.
+ *
+ * @author Pavani Diwanji
+ */
+
+abstract class AbstractPlainDatagramSocketImpl extends DatagramSocketImpl
+{
+    /* timeout value for receive() */
+    int timeout = 0;
+    boolean connected = false;
+    private int trafficClass = 0;
+    protected InetAddress connectedAddress = null;
+    private int connectedPort = -1;
+
+    private static final String os = AccessController.doPrivileged(
+        new sun.security.action.GetPropertyAction("os.name")
+    );
+
+    /**
+     * flag set if the native connect() call not to be used
+     */
+    private final static boolean connectDisabled = os.contains("OS X");
+
+    /**
+     * Load net library into runtime.
+     */
+    static {
+        java.security.AccessController.doPrivileged(
+            new java.security.PrivilegedAction<Void>() {
+                public Void run() {
+                    System.loadLibrary("net");
+                    return null;
+                }
+            });
+    }
+
+    /**
+     * Creates a datagram socket
+     */
+    protected synchronized void create() throws SocketException {
+        ResourceManager.beforeUdpCreate();
+        fd = new FileDescriptor();
+        try {
+            datagramSocketCreate();
+        } catch (SocketException ioe) {
+            ResourceManager.afterUdpClose();
+            fd = null;
+            throw ioe;
+        }
+    }
+
+    /**
+     * Binds a datagram socket to a local port.
+     */
+    protected synchronized void bind(int lport, InetAddress laddr)
+        throws SocketException {
+        bind0(lport, laddr);
+    }
+
+    protected abstract void bind0(int lport, InetAddress laddr)
+        throws SocketException;
+
+    /**
+     * Sends a datagram packet. The packet contains the data and the
+     * destination address to send the packet to.
+     * @param p the packet to be sent.
+     */
+    protected abstract void send(DatagramPacket p) throws IOException;
+
+    /**
+     * Connects a datagram socket to a remote destination. This associates the remote
+     * address with the local socket so that datagrams may only be sent to this destination
+     * and received from this destination.
+     * @param address the remote InetAddress to connect to
+     * @param port the remote port number
+     */
+    protected void connect(InetAddress address, int port) throws SocketException {
+        connect0(address, port);
+        connectedAddress = address;
+        connectedPort = port;
+        connected = true;
+    }
+
+    /**
+     * Disconnects a previously connected socket. Does nothing if the socket was
+     * not connected already.
+     */
+    protected void disconnect() {
+        disconnect0(connectedAddress.holder().getFamily());
+        connected = false;
+        connectedAddress = null;
+        connectedPort = -1;
+    }
+
+    /**
+     * Peek at the packet to see who it is from.
+     * @param i the address to populate with the sender address
+     */
+    protected abstract int peek(InetAddress i) throws IOException;
+    protected abstract int peekData(DatagramPacket p) throws IOException;
+    /**
+     * Receive the datagram packet.
+     * @param p the packet to receive into
+     */
+    protected synchronized void receive(DatagramPacket p)
+        throws IOException {
+        receive0(p);
+    }
+
+    protected abstract void receive0(DatagramPacket p)
+        throws IOException;
+
+    /**
+     * Set the TTL (time-to-live) option.
+     * @param ttl TTL to be set.
+     */
+    protected abstract void setTimeToLive(int ttl) throws IOException;
+
+    /**
+     * Get the TTL (time-to-live) option.
+     */
+    protected abstract int getTimeToLive() throws IOException;
+
+    /**
+     * Set the TTL (time-to-live) option.
+     * @param ttl TTL to be set.
+     */
+    @Deprecated
+    protected abstract void setTTL(byte ttl) throws IOException;
+
+    /**
+     * Get the TTL (time-to-live) option.
+     */
+    @Deprecated
+    protected abstract byte getTTL() throws IOException;
+
+    /**
+     * Join the multicast group.
+     * @param inetaddr multicast address to join.
+     */
+    protected void join(InetAddress inetaddr) throws IOException {
+        join(inetaddr, null);
+    }
+
+    /**
+     * Leave the multicast group.
+     * @param inetaddr multicast address to leave.
+     */
+    protected void leave(InetAddress inetaddr) throws IOException {
+        leave(inetaddr, null);
+    }
+    /**
+     * Join the multicast group.
+     * @param mcastaddr multicast address to join.
+     * @param netIf specifies the local interface to receive multicast
+     *        datagram packets
+     * @throws  IllegalArgumentException if mcastaddr is null or is a
+     *          SocketAddress subclass not supported by this socket
+     * @since 1.4
+     */
+
+    protected void joinGroup(SocketAddress mcastaddr, NetworkInterface netIf)
+        throws IOException {
+        if (mcastaddr == null || !(mcastaddr instanceof InetSocketAddress))
+            throw new IllegalArgumentException("Unsupported address type");
+        join(((InetSocketAddress)mcastaddr).getAddress(), netIf);
+    }
+
+    protected abstract void join(InetAddress inetaddr, NetworkInterface netIf)
+        throws IOException;
+
+    /**
+     * Leave the multicast group.
+     * @param mcastaddr  multicast address to leave.
+     * @param netIf specified the local interface to leave the group at
+     * @throws  IllegalArgumentException if mcastaddr is null or is a
+     *          SocketAddress subclass not supported by this socket
+     * @since 1.4
+     */
+    protected void leaveGroup(SocketAddress mcastaddr, NetworkInterface netIf)
+        throws IOException {
+        if (mcastaddr == null || !(mcastaddr instanceof InetSocketAddress))
+            throw new IllegalArgumentException("Unsupported address type");
+        leave(((InetSocketAddress)mcastaddr).getAddress(), netIf);
+    }
+
+    protected abstract void leave(InetAddress inetaddr, NetworkInterface netIf)
+        throws IOException;
+
+    /**
+     * Close the socket.
+     */
+    protected void close() {
+        if (fd != null) {
+            datagramSocketClose();
+            ResourceManager.afterUdpClose();
+            fd = null;
+        }
+    }
+
+    protected boolean isClosed() {
+        return (fd == null) ? true : false;
+    }
+
+    protected void finalize() {
+        close();
+    }
+
+    /**
+     * set a value - since we only support (setting) binary options
+     * here, o must be a Boolean
+     */
+
+     public void setOption(int optID, Object o) throws SocketException {
+         if (isClosed()) {
+             throw new SocketException("Socket Closed");
+         }
+         switch (optID) {
+            /* check type safety b4 going native.  These should never
+             * fail, since only java.Socket* has access to
+             * PlainSocketImpl.setOption().
+             */
+         case SO_TIMEOUT:
+             if (o == null || !(o instanceof Integer)) {
+                 throw new SocketException("bad argument for SO_TIMEOUT");
+             }
+             int tmp = ((Integer) o).intValue();
+             if (tmp < 0)
+                 throw new IllegalArgumentException("timeout < 0");
+             timeout = tmp;
+             return;
+         case IP_TOS:
+             if (o == null || !(o instanceof Integer)) {
+                 throw new SocketException("bad argument for IP_TOS");
+             }
+             trafficClass = ((Integer)o).intValue();
+             break;
+         case SO_REUSEADDR:
+             if (o == null || !(o instanceof Boolean)) {
+                 throw new SocketException("bad argument for SO_REUSEADDR");
+             }
+             break;
+         case SO_BROADCAST:
+             if (o == null || !(o instanceof Boolean)) {
+                 throw new SocketException("bad argument for SO_BROADCAST");
+             }
+             break;
+         case SO_BINDADDR:
+             throw new SocketException("Cannot re-bind Socket");
+         case SO_RCVBUF:
+         case SO_SNDBUF:
+             if (o == null || !(o instanceof Integer) ||
+                 ((Integer)o).intValue() < 0) {
+                 throw new SocketException("bad argument for SO_SNDBUF or " +
+                                           "SO_RCVBUF");
+             }
+             break;
+         case IP_MULTICAST_IF:
+             if (o == null || !(o instanceof InetAddress))
+                 throw new SocketException("bad argument for IP_MULTICAST_IF");
+             break;
+         case IP_MULTICAST_IF2:
+             if (o == null || !(o instanceof NetworkInterface))
+                 throw new SocketException("bad argument for IP_MULTICAST_IF2");
+             break;
+         case IP_MULTICAST_LOOP:
+             if (o == null || !(o instanceof Boolean))
+                 throw new SocketException("bad argument for IP_MULTICAST_LOOP");
+             break;
+         default:
+             throw new SocketException("invalid option: " + optID);
+         }
+         socketSetOption(optID, o);
+     }
+
+    /*
+     * get option's state - set or not
+     */
+
+    public Object getOption(int optID) throws SocketException {
+        if (isClosed()) {
+            throw new SocketException("Socket Closed");
+        }
+
+        Object result;
+
+        switch (optID) {
+            case SO_TIMEOUT:
+                result = new Integer(timeout);
+                break;
+
+            case IP_TOS:
+                result = socketGetOption(optID);
+                if ( ((Integer)result).intValue() == -1) {
+                    result = new Integer(trafficClass);
+                }
+                break;
+
+            case SO_BINDADDR:
+            case IP_MULTICAST_IF:
+            case IP_MULTICAST_IF2:
+            case SO_RCVBUF:
+            case SO_SNDBUF:
+            case IP_MULTICAST_LOOP:
+            case SO_REUSEADDR:
+            case SO_BROADCAST:
+                result = socketGetOption(optID);
+                break;
+
+            default:
+                throw new SocketException("invalid option: " + optID);
+        }
+
+        return result;
+    }
+
+    protected abstract void datagramSocketCreate() throws SocketException;
+    protected abstract void datagramSocketClose();
+    protected abstract void socketSetOption(int opt, Object val)
+        throws SocketException;
+    protected abstract Object socketGetOption(int opt) throws SocketException;
+
+    protected abstract void connect0(InetAddress address, int port) throws SocketException;
+    protected abstract void disconnect0(int family);
+
+    protected boolean nativeConnectDisabled() {
+        return connectDisabled;
+    }
+
+    abstract int dataAvailable();
+}

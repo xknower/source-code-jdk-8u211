@@ -1,58 +1,52 @@
-/*    */ package org.omg.CORBA.DynAnyPackage;
-/*    */ 
-/*    */ import org.omg.CORBA.UserException;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public final class TypeMismatch
-/*    */   extends UserException
-/*    */ {
-/*    */   public TypeMismatch() {}
-/*    */   
-/*    */   public TypeMismatch(String paramString) {
-/* 50 */     super(paramString);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\org\omg\CORBA\DynAnyPackage\TypeMismatch.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 1999, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+
+package org.omg.CORBA.DynAnyPackage;
+
+/**
+ * TypeMismatch is thrown by dynamic any accessor methods when
+ * type of the actual contents do not match what is trying to be
+ * accessed.
+ */
+public final class TypeMismatch
+    extends org.omg.CORBA.UserException {
+
+    /**
+     * Constructs a <code>TypeMismatch</code> object.
+     */
+    public TypeMismatch() {
+        super();
+    }
+
+    /**
+     * Constructs a <code>TypeMismatch</code> object.
+     * @param reason  a <code>String</code> giving more information
+     * regarding the exception.
+     */
+    public TypeMismatch(String reason) {
+        super(reason);
+    }
+}

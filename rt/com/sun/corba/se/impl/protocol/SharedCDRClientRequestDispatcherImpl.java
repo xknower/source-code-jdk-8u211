@@ -1,241 +1,237 @@
-/*     */ package com.sun.corba.se.impl.protocol;
-/*     */ 
-/*     */ import com.sun.corba.se.impl.encoding.ByteBufferWithInfo;
-/*     */ import com.sun.corba.se.impl.encoding.CDRInputObject;
-/*     */ import com.sun.corba.se.impl.encoding.CDROutputObject;
-/*     */ import com.sun.corba.se.impl.orbutil.ORBUtility;
-/*     */ import com.sun.corba.se.impl.protocol.giopmsgheaders.Message;
-/*     */ import com.sun.corba.se.pept.encoding.InputObject;
-/*     */ import com.sun.corba.se.pept.encoding.OutputObject;
-/*     */ import com.sun.corba.se.spi.orb.ORB;
-/*     */ import com.sun.corba.se.spi.protocol.CorbaMessageMediator;
-/*     */ import java.io.IOException;
-/*     */ import java.nio.ByteBuffer;
-/*     */ import java.security.AccessController;
-/*     */ import java.security.PrivilegedAction;
-/*     */ import org.omg.CORBA.portable.ApplicationException;
-/*     */ import org.omg.CORBA.portable.RemarshalException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class SharedCDRClientRequestDispatcherImpl
-/*     */   extends CorbaClientRequestDispatcherImpl
-/*     */ {
-/*     */   public InputObject marshalingComplete(Object paramObject, OutputObject paramOutputObject) throws ApplicationException, RemarshalException {
-/* 141 */     ORB oRB = null;
-/* 142 */     CorbaMessageMediator corbaMessageMediator = null;
-/*     */     
-/*     */     try {
-/* 145 */       corbaMessageMediator = (CorbaMessageMediator)paramOutputObject.getMessageMediator();
-/*     */       
-/* 147 */       oRB = (ORB)corbaMessageMediator.getBroker();
-/*     */       
-/* 149 */       if (oRB.subcontractDebugFlag) {
-/* 150 */         dprint(".marshalingComplete->: " + opAndId(corbaMessageMediator));
-/*     */       }
-/*     */       
-/* 153 */       CDROutputObject cDROutputObject = (CDROutputObject)paramOutputObject;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 159 */       ByteBufferWithInfo byteBufferWithInfo = cDROutputObject.getByteBufferWithInfo();
-/* 160 */       cDROutputObject.getMessageHeader().setSize(byteBufferWithInfo.byteBuffer, byteBufferWithInfo.getSize());
-/* 161 */       final ORB inOrb = oRB;
-/* 162 */       final ByteBuffer inBuffer = byteBufferWithInfo.byteBuffer;
-/* 163 */       final Message inMsg = cDROutputObject.getMessageHeader();
-/*     */       
-/* 165 */       CDRInputObject cDRInputObject1 = AccessController.<CDRInputObject>doPrivileged(new PrivilegedAction<CDRInputObject>()
-/*     */           {
-/*     */             public CDRInputObject run() {
-/* 168 */               return new CDRInputObject(inOrb, null, inBuffer, inMsg);
-/*     */             }
-/*     */           });
-/*     */       
-/* 172 */       corbaMessageMediator.setInputObject(cDRInputObject1);
-/* 173 */       cDRInputObject1.setMessageMediator(corbaMessageMediator);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 180 */       ((CorbaMessageMediatorImpl)corbaMessageMediator).handleRequestRequest(corbaMessageMediator);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/*     */       try {
-/* 186 */         cDRInputObject1.close();
-/* 187 */       } catch (IOException iOException) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 192 */         if (oRB.transportDebugFlag) {
-/* 193 */           dprint(".marshalingComplete: ignoring IOException - " + iOException.toString());
-/*     */         }
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 201 */       cDROutputObject = (CDROutputObject)corbaMessageMediator.getOutputObject();
-/* 202 */       byteBufferWithInfo = cDROutputObject.getByteBufferWithInfo();
-/* 203 */       cDROutputObject.getMessageHeader().setSize(byteBufferWithInfo.byteBuffer, byteBufferWithInfo.getSize());
-/* 204 */       final ORB inOrb2 = oRB;
-/* 205 */       final ByteBuffer inBuffer2 = byteBufferWithInfo.byteBuffer;
-/* 206 */       final Message inMsg2 = cDROutputObject.getMessageHeader();
-/*     */       
-/* 208 */       cDRInputObject1 = AccessController.<CDRInputObject>doPrivileged(new PrivilegedAction<CDRInputObject>()
-/*     */           {
-/*     */             public CDRInputObject run() {
-/* 211 */               return new CDRInputObject(inOrb2, null, inBuffer2, inMsg2);
-/*     */             }
-/*     */           });
-/*     */       
-/* 215 */       corbaMessageMediator.setInputObject(cDRInputObject1);
-/* 216 */       cDRInputObject1.setMessageMediator(corbaMessageMediator);
-/*     */       
-/* 218 */       cDRInputObject1.unmarshalHeader();
-/*     */       
-/* 220 */       CDRInputObject cDRInputObject2 = cDRInputObject1;
-/*     */       
-/* 222 */       return processResponse(oRB, corbaMessageMediator, cDRInputObject2);
-/*     */     } finally {
-/*     */       
-/* 225 */       if (oRB.subcontractDebugFlag) {
-/* 226 */         dprint(".marshalingComplete<-: " + opAndId(corbaMessageMediator));
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected void dprint(String paramString) {
-/* 233 */     ORBUtility.dprint("SharedCDRClientRequestDispatcherImpl", paramString);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\protocol\SharedCDRClientRequestDispatcherImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+/*
+ * Licensed Materials - Property of IBM
+ * RMI-IIOP v1.0
+ * Copyright IBM Corp. 1998 1999  All Rights Reserved
+ *
+ */
+
+package com.sun.corba.se.impl.protocol;
+
+import java.io.IOException;
+import java.util.Iterator;
+import java.rmi.RemoteException;
+import java.nio.ByteBuffer;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import javax.rmi.CORBA.Util;
+import javax.rmi.CORBA.Tie;
+
+import org.omg.CORBA.COMM_FAILURE;
+import org.omg.CORBA.INTERNAL;
+import org.omg.CORBA.SystemException;
+import org.omg.CORBA.CompletionStatus;
+import org.omg.CORBA.WrongTransaction;
+import org.omg.CORBA.Request;
+import org.omg.CORBA.NamedValue;
+import org.omg.CORBA.NVList;
+import org.omg.CORBA.Context;
+import org.omg.CORBA.ContextList;
+import org.omg.CORBA.ExceptionList;
+import org.omg.CORBA.TypeCode;
+import org.omg.CORBA.DATA_CONVERSION;
+import org.omg.CORBA.UNKNOWN;
+import org.omg.CORBA.portable.RemarshalException;
+import org.omg.CORBA_2_3.portable.InputStream;
+import org.omg.CORBA_2_3.portable.OutputStream;
+import org.omg.CORBA.portable.Delegate;
+import org.omg.CORBA.portable.ServantObject;
+import org.omg.CORBA.portable.ApplicationException;
+import org.omg.CORBA.portable.UnknownException;
+import org.omg.IOP.TAG_CODE_SETS;
+
+import com.sun.org.omg.SendingContext.CodeBase;
+
+import com.sun.corba.se.pept.broker.Broker;
+import com.sun.corba.se.pept.encoding.InputObject;
+import com.sun.corba.se.pept.encoding.OutputObject;
+import com.sun.corba.se.pept.protocol.ClientRequestDispatcher;
+import com.sun.corba.se.pept.protocol.MessageMediator;
+import com.sun.corba.se.pept.transport.Connection;
+import com.sun.corba.se.pept.transport.ConnectionCache;
+import com.sun.corba.se.pept.transport.ContactInfo;
+
+import com.sun.corba.se.spi.ior.IOR;
+import com.sun.corba.se.spi.ior.iiop.GIOPVersion;
+import com.sun.corba.se.spi.ior.iiop.IIOPProfileTemplate;
+import com.sun.corba.se.spi.ior.iiop.CodeSetsComponent;
+import com.sun.corba.se.spi.oa.OAInvocationInfo;
+import com.sun.corba.se.spi.oa.ObjectAdapterFactory;
+import com.sun.corba.se.spi.orb.ORB;
+import com.sun.corba.se.spi.orb.ORBVersion;
+import com.sun.corba.se.spi.orb.ORBVersionFactory;
+import com.sun.corba.se.spi.protocol.CorbaMessageMediator;
+import com.sun.corba.se.spi.protocol.RequestDispatcherRegistry;
+import com.sun.corba.se.spi.transport.CorbaContactInfo ;
+import com.sun.corba.se.spi.transport.CorbaContactInfoList ;
+import com.sun.corba.se.spi.transport.CorbaContactInfoListIterator ;
+import com.sun.corba.se.spi.transport.CorbaConnection;
+
+import com.sun.corba.se.spi.servicecontext.ServiceContext;
+import com.sun.corba.se.spi.servicecontext.ServiceContexts;
+import com.sun.corba.se.spi.servicecontext.UEInfoServiceContext;
+import com.sun.corba.se.spi.servicecontext.CodeSetServiceContext;
+import com.sun.corba.se.spi.servicecontext.MaxStreamFormatVersionServiceContext;
+import com.sun.corba.se.spi.servicecontext.SendingContextServiceContext;
+import com.sun.corba.se.impl.encoding.ByteBufferWithInfo;
+import com.sun.corba.se.impl.encoding.CDRInputObject;
+import com.sun.corba.se.impl.encoding.CDROutputObject;
+import com.sun.corba.se.impl.encoding.CDROutputStream;
+import com.sun.corba.se.impl.encoding.CodeSetComponentInfo;
+import com.sun.corba.se.impl.encoding.CodeSetConversion;
+import com.sun.corba.se.impl.encoding.MarshalOutputStream;
+import com.sun.corba.se.impl.encoding.MarshalInputStream;
+import com.sun.corba.se.impl.orbutil.ORBUtility;
+import com.sun.corba.se.impl.orbutil.ORBConstants;
+import com.sun.corba.se.impl.protocol.giopmsgheaders.ReplyMessage;
+import com.sun.corba.se.impl.protocol.giopmsgheaders.KeyAddr;
+import com.sun.corba.se.impl.protocol.giopmsgheaders.ProfileAddr;
+import com.sun.corba.se.impl.protocol.giopmsgheaders.ReferenceAddr;
+import com.sun.corba.se.impl.transport.CorbaContactInfoListIteratorImpl;
+import com.sun.corba.se.impl.protocol.giopmsgheaders.Message;
+import com.sun.corba.se.impl.util.JDKBridge;
+
+/**
+ * ClientDelegate is the RMI client-side subcontract or representation
+ * It implements RMI delegate as well as our internal ClientRequestDispatcher
+ * interface.
+ */
+public class SharedCDRClientRequestDispatcherImpl
+    extends
+        CorbaClientRequestDispatcherImpl
+{
+    // REVISIT:
+    // Rather than have separate CDR subcontract,
+    // use same CorbaClientRequestDispatcherImpl but have
+    // different MessageMediator finishSendingRequest and waitForResponse
+    // handle what is done below.
+    // Benefit: then in ContactInfo no need to do a direct new
+    // of subcontract - does not complicate subcontract registry.
+
+    public InputObject marshalingComplete(java.lang.Object self,
+                                          OutputObject outputObject)
+        throws
+            ApplicationException,
+            org.omg.CORBA.portable.RemarshalException
+    {
+      ORB orb = null;
+      CorbaMessageMediator messageMediator = null;
+      try {
+        messageMediator = (CorbaMessageMediator)
+            outputObject.getMessageMediator();
+
+        orb = (ORB) messageMediator.getBroker();
+
+        if (orb.subcontractDebugFlag) {
+            dprint(".marshalingComplete->: " + opAndId(messageMediator));
+        }
+
+        CDROutputObject cdrOutputObject = (CDROutputObject) outputObject;
+
+        //
+        // Create server-side input object.
+        //
+
+        ByteBufferWithInfo bbwi = cdrOutputObject.getByteBufferWithInfo();
+        cdrOutputObject.getMessageHeader().setSize(bbwi.byteBuffer, bbwi.getSize());
+        final ORB inOrb = orb;
+        final ByteBuffer inBuffer = bbwi.byteBuffer;
+        final Message inMsg = cdrOutputObject.getMessageHeader();
+        CDRInputObject cdrInputObject = AccessController
+                .doPrivileged(new PrivilegedAction<CDRInputObject>() {
+                    @Override
+                    public CDRInputObject run() {
+                        return new CDRInputObject(inOrb, null, inBuffer,
+                                inMsg);
+                    }
+                });
+        messageMediator.setInputObject(cdrInputObject);
+        cdrInputObject.setMessageMediator(messageMediator);
+
+        //
+        // Dispatch
+        //
+
+        // REVISIT: Impl cast.
+        ((CorbaMessageMediatorImpl)messageMediator).handleRequestRequest(
+            messageMediator);
+
+        // InputStream must be closed on the InputObject so that its
+        // ByteBuffer can be released to the ByteBufferPool. We must do
+        // this before we re-assign the cdrInputObject reference below.
+        try { cdrInputObject.close(); }
+        catch (IOException ex) {
+            // No need to do anything since we're done with the input stream
+            // and cdrInputObject will be re-assigned a new client-side input
+            // object, (i.e. won't result in a corba error).
+
+            if (orb.transportDebugFlag) {
+               dprint(".marshalingComplete: ignoring IOException - " + ex.toString());
+            }
+        }
+
+        //
+        // Create client-side input object
+        //
+
+        cdrOutputObject = (CDROutputObject) messageMediator.getOutputObject();
+        bbwi = cdrOutputObject.getByteBufferWithInfo();
+        cdrOutputObject.getMessageHeader().setSize(bbwi.byteBuffer, bbwi.getSize());
+        final ORB inOrb2 = orb;
+        final ByteBuffer inBuffer2 = bbwi.byteBuffer;
+        final Message inMsg2 = cdrOutputObject.getMessageHeader();
+        cdrInputObject = AccessController
+                .doPrivileged(new PrivilegedAction<CDRInputObject>() {
+                    @Override
+                    public CDRInputObject run() {
+                        return new CDRInputObject(inOrb2, null, inBuffer2,
+                                inMsg2);
+                    }
+                });
+        messageMediator.setInputObject(cdrInputObject);
+        cdrInputObject.setMessageMediator(messageMediator);
+
+        cdrInputObject.unmarshalHeader();
+
+        InputObject inputObject = cdrInputObject;
+
+        return processResponse(orb, messageMediator, inputObject);
+
+      } finally {
+        if (orb.subcontractDebugFlag) {
+            dprint(".marshalingComplete<-: " + opAndId(messageMediator));
+        }
+      }
+    }
+
+    protected void dprint(String msg)
+    {
+        ORBUtility.dprint("SharedCDRClientRequestDispatcherImpl", msg);
+    }
+}
+
+// End of file.

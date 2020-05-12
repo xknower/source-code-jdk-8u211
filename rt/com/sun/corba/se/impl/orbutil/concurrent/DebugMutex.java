@@ -1,217 +1,212 @@
-/*     */ package com.sun.corba.se.impl.orbutil.concurrent;
-/*     */ 
-/*     */ import org.omg.CORBA.INTERNAL;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class DebugMutex
-/*     */   implements Sync
-/*     */ {
-/*     */   protected boolean inuse_ = false;
-/* 143 */   protected Thread holder_ = null;
-/*     */   
-/*     */   public void acquire() throws InterruptedException {
-/* 146 */     if (Thread.interrupted()) throw new InterruptedException(); 
-/* 147 */     synchronized (this) {
-/* 148 */       Thread thread = Thread.currentThread();
-/* 149 */       if (this.holder_ == thread) {
-/* 150 */         throw new INTERNAL("Attempt to acquire Mutex by thread holding the Mutex");
-/*     */       }
-/*     */       
-/*     */       try {
-/* 154 */         for (; this.inuse_; wait());
-/* 155 */         this.inuse_ = true;
-/* 156 */         this.holder_ = Thread.currentThread();
-/*     */       }
-/* 158 */       catch (InterruptedException interruptedException) {
-/* 159 */         notify();
-/* 160 */         throw interruptedException;
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public synchronized void release() {
-/* 166 */     Thread thread = Thread.currentThread();
-/* 167 */     if (thread != this.holder_) {
-/* 168 */       throw new INTERNAL("Attempt to release Mutex by thread not holding the Mutex");
-/*     */     }
-/* 170 */     this.holder_ = null;
-/* 171 */     this.inuse_ = false;
-/* 172 */     notify();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public boolean attempt(long paramLong) throws InterruptedException {
-/* 177 */     if (Thread.interrupted()) throw new InterruptedException(); 
-/* 178 */     synchronized (this) {
-/* 179 */       Thread thread = Thread.currentThread();
-/*     */       
-/* 181 */       if (!this.inuse_) {
-/* 182 */         this.inuse_ = true;
-/* 183 */         this.holder_ = thread;
-/* 184 */         return true;
-/* 185 */       }  if (paramLong <= 0L) {
-/* 186 */         return false;
-/*     */       }
-/* 188 */       long l1 = paramLong;
-/* 189 */       long l2 = System.currentTimeMillis();
-/*     */       try {
-/*     */         while (true) {
-/* 192 */           wait(l1);
-/* 193 */           if (!this.inuse_) {
-/* 194 */             this.inuse_ = true;
-/* 195 */             this.holder_ = thread;
-/* 196 */             return true;
-/*     */           } 
-/*     */           
-/* 199 */           l1 = paramLong - System.currentTimeMillis() - l2;
-/* 200 */           if (l1 <= 0L) {
-/* 201 */             return false;
-/*     */           }
-/*     */         }
-/*     */       
-/* 205 */       } catch (InterruptedException interruptedException) {
-/* 206 */         notify();
-/* 207 */         throw interruptedException;
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\orbutil\concurrent\DebugMutex.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2001, 2002, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+/*
+  File: Mutex.java
+
+  Originally written by Doug Lea and released into the public domain.
+  This may be used for any purposes whatsoever without acknowledgment.
+  Thanks for the assistance and support of Sun Microsystems Labs,
+  and everyone contributing, testing, and using this code.
+
+  History:
+  Date       Who                What
+  11Jun1998  dl               Create public version
+*/
+
+package com.sun.corba.se.impl.orbutil.concurrent;
+
+/**
+ * A simple non-reentrant mutual exclusion lock.
+ * The lock is free upon construction. Each acquire gets the
+ * lock, and each release frees it. Releasing a lock that
+ * is already free has no effect.
+ * <p>
+ * This implementation makes no attempt to provide any fairness
+ * or ordering guarantees. If you need them, consider using one of
+ * the Semaphore implementations as a locking mechanism.
+ * <p>
+ * <b>Sample usage</b><br>
+ * <p>
+ * Mutex can be useful in constructions that cannot be
+ * expressed using java synchronized blocks because the
+ * acquire/release pairs do not occur in the same method or
+ * code block. For example, you can use them for hand-over-hand
+ * locking across the nodes of a linked list. This allows
+ * extremely fine-grained locking,  and so increases
+ * potential concurrency, at the cost of additional complexity and
+ * overhead that would normally make this worthwhile only in cases of
+ * extreme contention.
+ * <pre>
+ * class Node {
+ *   Object item;
+ *   Node next;
+ *   Mutex lock = new Mutex(); // each node keeps its own lock
+ *
+ *   Node(Object x, Node n) { item = x; next = n; }
+ * }
+ *
+ * class List {
+ *    protected Node head; // pointer to first node of list
+ *
+ *    // Use plain java synchronization to protect head field.
+ *    //  (We could instead use a Mutex here too but there is no
+ *    //  reason to do so.)
+ *    protected synchronized Node getHead() { return head; }
+ *
+ *    boolean search(Object x) throws InterruptedException {
+ *      Node p = getHead();
+ *      if (p == null) return false;
+ *
+ *      //  (This could be made more compact, but for clarity of illustration,
+ *      //  all of the cases that can arise are handled separately.)
+ *
+ *      p.lock.acquire();              // Prime loop by acquiring first lock.
+ *                                     //    (If the acquire fails due to
+ *                                     //    interrupt, the method will throw
+ *                                     //    InterruptedException now,
+ *                                     //    so there is no need for any
+ *                                     //    further cleanup.)
+ *      for (;;) {
+ *        if (x.equals(p.item)) {
+ *          p.lock.release();          // release current before return
+ *          return true;
+ *        }
+ *        else {
+ *          Node nextp = p.next;
+ *          if (nextp == null) {
+ *            p.lock.release();       // release final lock that was held
+ *            return false;
+ *          }
+ *          else {
+ *            try {
+ *              nextp.lock.acquire(); // get next lock before releasing current
+ *            }
+ *            catch (InterruptedException ex) {
+ *              p.lock.release();    // also release current if acquire fails
+ *              throw ex;
+ *            }
+ *            p.lock.release();      // release old lock now that new one held
+ *            p = nextp;
+ *          }
+ *        }
+ *      }
+ *    }
+ *
+ *    synchronized void add(Object x) { // simple prepend
+ *      // The use of `synchronized'  here protects only head field.
+ *      // The method does not need to wait out other traversers
+ *      // who have already made it past head.
+ *
+ *      head = new Node(x, head);
+ *    }
+ *
+ *    // ...  other similar traversal and update methods ...
+ * }
+ * </pre>
+ * <p>
+ * <p>This version adds some debugging capability: it will detect an attempt by a thread
+ * that holds the lock to acquire it for a second time, and also an attempt by a thread that
+ * does not hold the mutex to release it.
+ * @see Semaphore
+ * <p>[<a href="http://gee.cs.oswego.edu/dl/classes/EDU/oswego/cs/dl/util/concurrent/intro.html"> Introduction to this package. </a>]
+**/
+
+import org.omg.CORBA.INTERNAL ;
+
+public class DebugMutex implements Sync  {
+
+  /** The lock status **/
+  protected boolean inuse_ = false;
+  protected Thread holder_ = null;
+
+  public void acquire() throws InterruptedException {
+    if (Thread.interrupted()) throw new InterruptedException();
+    synchronized(this) {
+      Thread thr = Thread.currentThread();
+      if (holder_ == thr)
+        throw new INTERNAL(
+            "Attempt to acquire Mutex by thread holding the Mutex" ) ;
+
+      try {
+        while (inuse_) wait();
+        inuse_ = true;
+        holder_ = Thread.currentThread();
+      }
+      catch (InterruptedException ex) {
+        notify();
+        throw ex;
+      }
+    }
+  }
+
+  public synchronized void release()  {
+    Thread thr = Thread.currentThread();
+    if (thr != holder_)
+        throw new INTERNAL(
+            "Attempt to release Mutex by thread not holding the Mutex" ) ;
+    holder_ = null;
+    inuse_ = false;
+    notify();
+  }
+
+
+  public boolean attempt(long msecs) throws InterruptedException {
+    if (Thread.interrupted()) throw new InterruptedException();
+    synchronized(this) {
+      Thread thr = Thread.currentThread() ;
+
+      if (!inuse_) {
+        inuse_ = true;
+        holder_ = thr;
+        return true;
+      } else if (msecs <= 0)
+        return false;
+      else {
+        long waitTime = msecs;
+        long start = System.currentTimeMillis();
+        try {
+          for (;;) {
+            wait(waitTime);
+            if (!inuse_) {
+              inuse_ = true;
+              holder_ = thr;
+              return true;
+            }
+            else {
+              waitTime = msecs - (System.currentTimeMillis() - start);
+              if (waitTime <= 0)
+                return false;
+            }
+          }
+        }
+        catch (InterruptedException ex) {
+          notify();
+          throw ex;
+        }
+      }
+    }
+  }
+}

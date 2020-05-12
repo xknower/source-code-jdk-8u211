@@ -1,487 +1,482 @@
-/*     */ package java.util.jar;
-/*     */ 
-/*     */ import java.io.DataOutputStream;
-/*     */ import java.io.FilterInputStream;
-/*     */ import java.io.IOException;
-/*     */ import java.io.InputStream;
-/*     */ import java.io.OutputStream;
-/*     */ import java.util.HashMap;
-/*     */ import java.util.Iterator;
-/*     */ import java.util.Map;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class Manifest
-/*     */   implements Cloneable
-/*     */ {
-/*  51 */   private final Attributes attr = new Attributes();
-/*     */ 
-/*     */   
-/*  54 */   private final Map<String, Attributes> entries = new HashMap<>();
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private final JarVerifier jv;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Manifest() {
-/*  63 */     this.jv = null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Manifest(InputStream paramInputStream) throws IOException {
-/*  73 */     this(null, paramInputStream);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   Manifest(JarVerifier paramJarVerifier, InputStream paramInputStream) throws IOException {
-/*  81 */     read(paramInputStream);
-/*  82 */     this.jv = paramJarVerifier;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Manifest(Manifest paramManifest) {
-/*  91 */     this.attr.putAll(paramManifest.getMainAttributes());
-/*  92 */     this.entries.putAll(paramManifest.getEntries());
-/*  93 */     this.jv = paramManifest.jv;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Attributes getMainAttributes() {
-/* 101 */     return this.attr;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Map<String, Attributes> getEntries() {
-/* 114 */     return this.entries;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Attributes getAttributes(String paramString) {
-/* 140 */     return getEntries().get(paramString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   Attributes getTrustedAttributes(String paramString) {
-/* 157 */     Attributes attributes = getAttributes(paramString);
-/* 158 */     if (attributes != null && this.jv != null && !this.jv.isTrustedManifestEntry(paramString)) {
-/* 159 */       throw new SecurityException("Untrusted manifest entry: " + paramString);
-/*     */     }
-/* 161 */     return attributes;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void clear() {
-/* 168 */     this.attr.clear();
-/* 169 */     this.entries.clear();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void write(OutputStream paramOutputStream) throws IOException {
-/* 182 */     DataOutputStream dataOutputStream = new DataOutputStream(paramOutputStream);
-/*     */     
-/* 184 */     this.attr.writeMain(dataOutputStream);
-/*     */     
-/* 186 */     Iterator<Map.Entry> iterator = this.entries.entrySet().iterator();
-/* 187 */     while (iterator.hasNext()) {
-/* 188 */       Map.Entry entry = iterator.next();
-/* 189 */       StringBuffer stringBuffer = new StringBuffer("Name: ");
-/* 190 */       String str = (String)entry.getKey();
-/* 191 */       if (str != null) {
-/* 192 */         byte[] arrayOfByte = str.getBytes("UTF8");
-/* 193 */         str = new String(arrayOfByte, 0, 0, arrayOfByte.length);
-/*     */       } 
-/* 195 */       stringBuffer.append(str);
-/* 196 */       stringBuffer.append("\r\n");
-/* 197 */       make72Safe(stringBuffer);
-/* 198 */       dataOutputStream.writeBytes(stringBuffer.toString());
-/* 199 */       ((Attributes)entry.getValue()).write(dataOutputStream);
-/*     */     } 
-/* 201 */     dataOutputStream.flush();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static void make72Safe(StringBuffer paramStringBuffer) {
-/* 208 */     int i = paramStringBuffer.length();
-/* 209 */     if (i > 72) {
-/* 210 */       byte b = 70;
-/* 211 */       while (b < i - 2) {
-/* 212 */         paramStringBuffer.insert(b, "\r\n ");
-/* 213 */         b += 72;
-/* 214 */         i += 3;
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void read(InputStream paramInputStream) throws IOException {
-/* 230 */     FastInputStream fastInputStream = new FastInputStream(paramInputStream);
-/*     */     
-/* 232 */     byte[] arrayOfByte1 = new byte[512];
-/*     */     
-/* 234 */     this.attr.read(fastInputStream, arrayOfByte1);
-/*     */     
-/* 236 */     byte b = 0; int i = 0;
-/*     */     
-/* 238 */     int j = 2;
-/*     */ 
-/*     */     
-/* 241 */     String str = null;
-/* 242 */     boolean bool = true;
-/* 243 */     byte[] arrayOfByte2 = null;
-/*     */     int k;
-/* 245 */     while ((k = fastInputStream.readLine(arrayOfByte1)) != -1) {
-/* 246 */       if (arrayOfByte1[--k] != 10) {
-/* 247 */         throw new IOException("manifest line too long");
-/*     */       }
-/* 249 */       if (k > 0 && arrayOfByte1[k - 1] == 13) {
-/* 250 */         k--;
-/*     */       }
-/* 252 */       if (k == 0 && bool) {
-/*     */         continue;
-/*     */       }
-/* 255 */       bool = false;
-/*     */       
-/* 257 */       if (str == null) {
-/* 258 */         str = parseName(arrayOfByte1, k);
-/* 259 */         if (str == null) {
-/* 260 */           throw new IOException("invalid manifest format");
-/*     */         }
-/* 262 */         if (fastInputStream.peek() == 32) {
-/*     */           
-/* 264 */           arrayOfByte2 = new byte[k - 6];
-/* 265 */           System.arraycopy(arrayOfByte1, 6, arrayOfByte2, 0, k - 6);
-/*     */           
-/*     */           continue;
-/*     */         } 
-/*     */       } else {
-/* 270 */         byte[] arrayOfByte = new byte[arrayOfByte2.length + k - 1];
-/* 271 */         System.arraycopy(arrayOfByte2, 0, arrayOfByte, 0, arrayOfByte2.length);
-/* 272 */         System.arraycopy(arrayOfByte1, 1, arrayOfByte, arrayOfByte2.length, k - 1);
-/* 273 */         if (fastInputStream.peek() == 32) {
-/*     */           
-/* 275 */           arrayOfByte2 = arrayOfByte;
-/*     */           continue;
-/*     */         } 
-/* 278 */         str = new String(arrayOfByte, 0, arrayOfByte.length, "UTF8");
-/* 279 */         arrayOfByte2 = null;
-/*     */       } 
-/* 281 */       Attributes attributes = getAttributes(str);
-/* 282 */       if (attributes == null) {
-/* 283 */         attributes = new Attributes(j);
-/* 284 */         this.entries.put(str, attributes);
-/*     */       } 
-/* 286 */       attributes.read(fastInputStream, arrayOfByte1);
-/* 287 */       b++;
-/* 288 */       i += attributes.size();
-/*     */ 
-/*     */ 
-/*     */       
-/* 292 */       j = Math.max(2, i / b);
-/*     */       
-/* 294 */       str = null;
-/* 295 */       bool = true;
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   private String parseName(byte[] paramArrayOfbyte, int paramInt) {
-/* 300 */     if (toLower(paramArrayOfbyte[0]) == 110 && toLower(paramArrayOfbyte[1]) == 97 && 
-/* 301 */       toLower(paramArrayOfbyte[2]) == 109 && toLower(paramArrayOfbyte[3]) == 101 && paramArrayOfbyte[4] == 58 && paramArrayOfbyte[5] == 32) {
-/*     */       
-/*     */       try {
-/* 304 */         return new String(paramArrayOfbyte, 6, paramInt - 6, "UTF8");
-/*     */       }
-/* 306 */       catch (Exception exception) {}
-/*     */     }
-/*     */     
-/* 309 */     return null;
-/*     */   }
-/*     */   
-/*     */   private int toLower(int paramInt) {
-/* 313 */     return (paramInt >= 65 && paramInt <= 90) ? (97 + paramInt - 65) : paramInt;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean equals(Object paramObject) {
-/* 325 */     if (paramObject instanceof Manifest) {
-/* 326 */       Manifest manifest = (Manifest)paramObject;
-/* 327 */       return (this.attr.equals(manifest.getMainAttributes()) && this.entries
-/* 328 */         .equals(manifest.getEntries()));
-/*     */     } 
-/* 330 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int hashCode() {
-/* 338 */     return this.attr.hashCode() + this.entries.hashCode();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object clone() {
-/* 350 */     return new Manifest(this);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   static class FastInputStream
-/*     */     extends FilterInputStream
-/*     */   {
-/*     */     private byte[] buf;
-/* 358 */     private int count = 0;
-/* 359 */     private int pos = 0;
-/*     */     
-/*     */     FastInputStream(InputStream param1InputStream) {
-/* 362 */       this(param1InputStream, 8192);
-/*     */     }
-/*     */     
-/*     */     FastInputStream(InputStream param1InputStream, int param1Int) {
-/* 366 */       super(param1InputStream);
-/* 367 */       this.buf = new byte[param1Int];
-/*     */     }
-/*     */     
-/*     */     public int read() throws IOException {
-/* 371 */       if (this.pos >= this.count) {
-/* 372 */         fill();
-/* 373 */         if (this.pos >= this.count) {
-/* 374 */           return -1;
-/*     */         }
-/*     */       } 
-/* 377 */       return Byte.toUnsignedInt(this.buf[this.pos++]);
-/*     */     }
-/*     */     
-/*     */     public int read(byte[] param1ArrayOfbyte, int param1Int1, int param1Int2) throws IOException {
-/* 381 */       int i = this.count - this.pos;
-/* 382 */       if (i <= 0) {
-/* 383 */         if (param1Int2 >= this.buf.length) {
-/* 384 */           return this.in.read(param1ArrayOfbyte, param1Int1, param1Int2);
-/*     */         }
-/* 386 */         fill();
-/* 387 */         i = this.count - this.pos;
-/* 388 */         if (i <= 0) {
-/* 389 */           return -1;
-/*     */         }
-/*     */       } 
-/* 392 */       if (param1Int2 > i) {
-/* 393 */         param1Int2 = i;
-/*     */       }
-/* 395 */       System.arraycopy(this.buf, this.pos, param1ArrayOfbyte, param1Int1, param1Int2);
-/* 396 */       this.pos += param1Int2;
-/* 397 */       return param1Int2;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public int readLine(byte[] param1ArrayOfbyte, int param1Int1, int param1Int2) throws IOException {
-/* 405 */       byte[] arrayOfByte = this.buf;
-/* 406 */       int i = 0;
-/* 407 */       while (i < param1Int2) {
-/* 408 */         int j = this.count - this.pos;
-/* 409 */         if (j <= 0) {
-/* 410 */           fill();
-/* 411 */           j = this.count - this.pos;
-/* 412 */           if (j <= 0) {
-/* 413 */             return -1;
-/*     */           }
-/*     */         } 
-/* 416 */         int k = param1Int2 - i;
-/* 417 */         if (k > j) {
-/* 418 */           k = j;
-/*     */         }
-/* 420 */         int m = this.pos;
-/* 421 */         int n = m + k;
-/* 422 */         while (m < n && arrayOfByte[m++] != 10);
-/* 423 */         k = m - this.pos;
-/* 424 */         System.arraycopy(arrayOfByte, this.pos, param1ArrayOfbyte, param1Int1, k);
-/* 425 */         param1Int1 += k;
-/* 426 */         i += k;
-/* 427 */         this.pos = m;
-/* 428 */         if (arrayOfByte[m - 1] == 10) {
-/*     */           break;
-/*     */         }
-/*     */       } 
-/* 432 */       return i;
-/*     */     }
-/*     */     
-/*     */     public byte peek() throws IOException {
-/* 436 */       if (this.pos == this.count)
-/* 437 */         fill(); 
-/* 438 */       if (this.pos == this.count)
-/* 439 */         return -1; 
-/* 440 */       return this.buf[this.pos];
-/*     */     }
-/*     */     
-/*     */     public int readLine(byte[] param1ArrayOfbyte) throws IOException {
-/* 444 */       return readLine(param1ArrayOfbyte, 0, param1ArrayOfbyte.length);
-/*     */     }
-/*     */     
-/*     */     public long skip(long param1Long) throws IOException {
-/* 448 */       if (param1Long <= 0L) {
-/* 449 */         return 0L;
-/*     */       }
-/* 451 */       long l = (this.count - this.pos);
-/* 452 */       if (l <= 0L) {
-/* 453 */         return this.in.skip(param1Long);
-/*     */       }
-/* 455 */       if (param1Long > l) {
-/* 456 */         param1Long = l;
-/*     */       }
-/* 458 */       this.pos = (int)(this.pos + param1Long);
-/* 459 */       return param1Long;
-/*     */     }
-/*     */     
-/*     */     public int available() throws IOException {
-/* 463 */       return this.count - this.pos + this.in.available();
-/*     */     }
-/*     */     
-/*     */     public void close() throws IOException {
-/* 467 */       if (this.in != null) {
-/* 468 */         this.in.close();
-/* 469 */         this.in = null;
-/* 470 */         this.buf = null;
-/*     */       } 
-/*     */     }
-/*     */     
-/*     */     private void fill() throws IOException {
-/* 475 */       this.count = this.pos = 0;
-/* 476 */       int i = this.in.read(this.buf, 0, this.buf.length);
-/* 477 */       if (i > 0)
-/* 478 */         this.count = i; 
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\jar\Manifest.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.util.jar;
+
+import java.io.FilterInputStream;
+import java.io.DataOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.IOException;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Iterator;
+
+/**
+ * The Manifest class is used to maintain Manifest entry names and their
+ * associated Attributes. There are main Manifest Attributes as well as
+ * per-entry Attributes. For information on the Manifest format, please
+ * see the
+ * <a href="../../../../technotes/guides/jar/jar.html">
+ * Manifest format specification</a>.
+ *
+ * @author  David Connelly
+ * @see     Attributes
+ * @since   1.2
+ */
+public class Manifest implements Cloneable {
+    // manifest main attributes
+    private final Attributes attr = new Attributes();
+
+    // manifest entries
+    private final Map<String, Attributes> entries = new HashMap<>();
+
+    // associated JarVerifier, not null when called by JarFile::getManifest.
+    private final JarVerifier jv;
+
+    /**
+     * Constructs a new, empty Manifest.
+     */
+    public Manifest() {
+        jv = null;
+    }
+
+    /**
+     * Constructs a new Manifest from the specified input stream.
+     *
+     * @param is the input stream containing manifest data
+     * @throws IOException if an I/O error has occurred
+     */
+    public Manifest(InputStream is) throws IOException {
+        this(null, is);
+    }
+
+    /**
+     * Constructs a new Manifest from the specified input stream
+     * and associates it with a JarVerifier.
+     */
+    Manifest(JarVerifier jv, InputStream is) throws IOException {
+        read(is);
+        this.jv = jv;
+    }
+
+    /**
+     * Constructs a new Manifest that is a copy of the specified Manifest.
+     *
+     * @param man the Manifest to copy
+     */
+    public Manifest(Manifest man) {
+        attr.putAll(man.getMainAttributes());
+        entries.putAll(man.getEntries());
+        jv = man.jv;
+    }
+
+    /**
+     * Returns the main Attributes for the Manifest.
+     * @return the main Attributes for the Manifest
+     */
+    public Attributes getMainAttributes() {
+        return attr;
+    }
+
+    /**
+     * Returns a Map of the entries contained in this Manifest. Each entry
+     * is represented by a String name (key) and associated Attributes (value).
+     * The Map permits the {@code null} key, but no entry with a null key is
+     * created by {@link #read}, nor is such an entry written by using {@link
+     * #write}.
+     *
+     * @return a Map of the entries contained in this Manifest
+     */
+    public Map<String,Attributes> getEntries() {
+        return entries;
+    }
+
+    /**
+     * Returns the Attributes for the specified entry name.
+     * This method is defined as:
+     * <pre>
+     *      return (Attributes)getEntries().get(name)
+     * </pre>
+     * Though {@code null} is a valid {@code name}, when
+     * {@code getAttributes(null)} is invoked on a {@code Manifest}
+     * obtained from a jar file, {@code null} will be returned.  While jar
+     * files themselves do not allow {@code null}-named attributes, it is
+     * possible to invoke {@link #getEntries} on a {@code Manifest}, and
+     * on that result, invoke {@code put} with a null key and an
+     * arbitrary value.  Subsequent invocations of
+     * {@code getAttributes(null)} will return the just-{@code put}
+     * value.
+     * <p>
+     * Note that this method does not return the manifest's main attributes;
+     * see {@link #getMainAttributes}.
+     *
+     * @param name entry name
+     * @return the Attributes for the specified entry name
+     */
+    public Attributes getAttributes(String name) {
+        return getEntries().get(name);
+    }
+
+    /**
+     * Returns the Attributes for the specified entry name, if trusted.
+     *
+     * @param name entry name
+     * @return returns the same result as {@link #getAttributes(String)}
+     * @throws SecurityException if the associated jar is signed but this entry
+     *      has been modified after signing (i.e. the section in the manifest
+     *      does not exist in SF files of all signers).
+     */
+    Attributes getTrustedAttributes(String name) {
+        // Note: Before the verification of MANIFEST.MF/.SF/.RSA files is done,
+        // jv.isTrustedManifestEntry() isn't able to detect MANIFEST.MF change.
+        // Users of this method should call SharedSecrets.javaUtilJarAccess()
+        // .ensureInitialization() first.
+        Attributes result = getAttributes(name);
+        if (result != null && jv != null && ! jv.isTrustedManifestEntry(name)) {
+            throw new SecurityException("Untrusted manifest entry: " + name);
+        }
+        return result;
+    }
+
+    /**
+     * Clears the main Attributes as well as the entries in this Manifest.
+     */
+    public void clear() {
+        attr.clear();
+        entries.clear();
+    }
+
+    /**
+     * Writes the Manifest to the specified OutputStream.
+     * Attributes.Name.MANIFEST_VERSION must be set in
+     * MainAttributes prior to invoking this method.
+     *
+     * @param out the output stream
+     * @exception IOException if an I/O error has occurred
+     * @see #getMainAttributes
+     */
+    public void write(OutputStream out) throws IOException {
+        DataOutputStream dos = new DataOutputStream(out);
+        // Write out the main attributes for the manifest
+        attr.writeMain(dos);
+        // Now write out the pre-entry attributes
+        Iterator<Map.Entry<String, Attributes>> it = entries.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<String, Attributes> e = it.next();
+            StringBuffer buffer = new StringBuffer("Name: ");
+            String value = e.getKey();
+            if (value != null) {
+                byte[] vb = value.getBytes("UTF8");
+                value = new String(vb, 0, 0, vb.length);
+            }
+            buffer.append(value);
+            buffer.append("\r\n");
+            make72Safe(buffer);
+            dos.writeBytes(buffer.toString());
+            e.getValue().write(dos);
+        }
+        dos.flush();
+    }
+
+    /**
+     * Adds line breaks to enforce a maximum 72 bytes per line.
+     */
+    static void make72Safe(StringBuffer line) {
+        int length = line.length();
+        if (length > 72) {
+            int index = 70;
+            while (index < length - 2) {
+                line.insert(index, "\r\n ");
+                index += 72;
+                length += 3;
+            }
+        }
+        return;
+    }
+
+    /**
+     * Reads the Manifest from the specified InputStream. The entry
+     * names and attributes read will be merged in with the current
+     * manifest entries.
+     *
+     * @param is the input stream
+     * @exception IOException if an I/O error has occurred
+     */
+    public void read(InputStream is) throws IOException {
+        // Buffered input stream for reading manifest data
+        FastInputStream fis = new FastInputStream(is);
+        // Line buffer
+        byte[] lbuf = new byte[512];
+        // Read the main attributes for the manifest
+        attr.read(fis, lbuf);
+        // Total number of entries, attributes read
+        int ecount = 0, acount = 0;
+        // Average size of entry attributes
+        int asize = 2;
+        // Now parse the manifest entries
+        int len;
+        String name = null;
+        boolean skipEmptyLines = true;
+        byte[] lastline = null;
+
+        while ((len = fis.readLine(lbuf)) != -1) {
+            if (lbuf[--len] != '\n') {
+                throw new IOException("manifest line too long");
+            }
+            if (len > 0 && lbuf[len-1] == '\r') {
+                --len;
+            }
+            if (len == 0 && skipEmptyLines) {
+                continue;
+            }
+            skipEmptyLines = false;
+
+            if (name == null) {
+                name = parseName(lbuf, len);
+                if (name == null) {
+                    throw new IOException("invalid manifest format");
+                }
+                if (fis.peek() == ' ') {
+                    // name is wrapped
+                    lastline = new byte[len - 6];
+                    System.arraycopy(lbuf, 6, lastline, 0, len - 6);
+                    continue;
+                }
+            } else {
+                // continuation line
+                byte[] buf = new byte[lastline.length + len - 1];
+                System.arraycopy(lastline, 0, buf, 0, lastline.length);
+                System.arraycopy(lbuf, 1, buf, lastline.length, len - 1);
+                if (fis.peek() == ' ') {
+                    // name is wrapped
+                    lastline = buf;
+                    continue;
+                }
+                name = new String(buf, 0, buf.length, "UTF8");
+                lastline = null;
+            }
+            Attributes attr = getAttributes(name);
+            if (attr == null) {
+                attr = new Attributes(asize);
+                entries.put(name, attr);
+            }
+            attr.read(fis, lbuf);
+            ecount++;
+            acount += attr.size();
+            //XXX: Fix for when the average is 0. When it is 0,
+            // you get an Attributes object with an initial
+            // capacity of 0, which tickles a bug in HashMap.
+            asize = Math.max(2, acount / ecount);
+
+            name = null;
+            skipEmptyLines = true;
+        }
+    }
+
+    private String parseName(byte[] lbuf, int len) {
+        if (toLower(lbuf[0]) == 'n' && toLower(lbuf[1]) == 'a' &&
+            toLower(lbuf[2]) == 'm' && toLower(lbuf[3]) == 'e' &&
+            lbuf[4] == ':' && lbuf[5] == ' ') {
+            try {
+                return new String(lbuf, 6, len - 6, "UTF8");
+            }
+            catch (Exception e) {
+            }
+        }
+        return null;
+    }
+
+    private int toLower(int c) {
+        return (c >= 'A' && c <= 'Z') ? 'a' + (c - 'A') : c;
+    }
+
+    /**
+     * Returns true if the specified Object is also a Manifest and has
+     * the same main Attributes and entries.
+     *
+     * @param o the object to be compared
+     * @return true if the specified Object is also a Manifest and has
+     * the same main Attributes and entries
+     */
+    public boolean equals(Object o) {
+        if (o instanceof Manifest) {
+            Manifest m = (Manifest)o;
+            return attr.equals(m.getMainAttributes()) &&
+                   entries.equals(m.getEntries());
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Returns the hash code for this Manifest.
+     */
+    public int hashCode() {
+        return attr.hashCode() + entries.hashCode();
+    }
+
+    /**
+     * Returns a shallow copy of this Manifest.  The shallow copy is
+     * implemented as follows:
+     * <pre>
+     *     public Object clone() { return new Manifest(this); }
+     * </pre>
+     * @return a shallow copy of this Manifest
+     */
+    public Object clone() {
+        return new Manifest(this);
+    }
+
+    /*
+     * A fast buffered input stream for parsing manifest files.
+     */
+    static class FastInputStream extends FilterInputStream {
+        private byte buf[];
+        private int count = 0;
+        private int pos = 0;
+
+        FastInputStream(InputStream in) {
+            this(in, 8192);
+        }
+
+        FastInputStream(InputStream in, int size) {
+            super(in);
+            buf = new byte[size];
+        }
+
+        public int read() throws IOException {
+            if (pos >= count) {
+                fill();
+                if (pos >= count) {
+                    return -1;
+                }
+            }
+            return Byte.toUnsignedInt(buf[pos++]);
+        }
+
+        public int read(byte[] b, int off, int len) throws IOException {
+            int avail = count - pos;
+            if (avail <= 0) {
+                if (len >= buf.length) {
+                    return in.read(b, off, len);
+                }
+                fill();
+                avail = count - pos;
+                if (avail <= 0) {
+                    return -1;
+                }
+            }
+            if (len > avail) {
+                len = avail;
+            }
+            System.arraycopy(buf, pos, b, off, len);
+            pos += len;
+            return len;
+        }
+
+        /*
+         * Reads 'len' bytes from the input stream, or until an end-of-line
+         * is reached. Returns the number of bytes read.
+         */
+        public int readLine(byte[] b, int off, int len) throws IOException {
+            byte[] tbuf = this.buf;
+            int total = 0;
+            while (total < len) {
+                int avail = count - pos;
+                if (avail <= 0) {
+                    fill();
+                    avail = count - pos;
+                    if (avail <= 0) {
+                        return -1;
+                    }
+                }
+                int n = len - total;
+                if (n > avail) {
+                    n = avail;
+                }
+                int tpos = pos;
+                int maxpos = tpos + n;
+                while (tpos < maxpos && tbuf[tpos++] != '\n') ;
+                n = tpos - pos;
+                System.arraycopy(tbuf, pos, b, off, n);
+                off += n;
+                total += n;
+                pos = tpos;
+                if (tbuf[tpos-1] == '\n') {
+                    break;
+                }
+            }
+            return total;
+        }
+
+        public byte peek() throws IOException {
+            if (pos == count)
+                fill();
+            if (pos == count)
+                return -1; // nothing left in buffer
+            return buf[pos];
+        }
+
+        public int readLine(byte[] b) throws IOException {
+            return readLine(b, 0, b.length);
+        }
+
+        public long skip(long n) throws IOException {
+            if (n <= 0) {
+                return 0;
+            }
+            long avail = count - pos;
+            if (avail <= 0) {
+                return in.skip(n);
+            }
+            if (n > avail) {
+                n = avail;
+            }
+            pos += n;
+            return n;
+        }
+
+        public int available() throws IOException {
+            return (count - pos) + in.available();
+        }
+
+        public void close() throws IOException {
+            if (in != null) {
+                in.close();
+                in = null;
+                buf = null;
+            }
+        }
+
+        private void fill() throws IOException {
+            count = pos = 0;
+            int n = in.read(buf, 0, buf.length);
+            if (n > 0) {
+                count = n;
+            }
+        }
+    }
+}

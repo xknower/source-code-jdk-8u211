@@ -1,143 +1,137 @@
-/*     */ package org.omg.CosNaming;
-/*     */ 
-/*     */ import java.io.IOException;
-/*     */ import java.io.ObjectInputStream;
-/*     */ import java.io.ObjectOutputStream;
-/*     */ import java.util.Properties;
-/*     */ import org.omg.CORBA.MARSHAL;
-/*     */ import org.omg.CORBA.ORB;
-/*     */ import org.omg.CORBA.Object;
-/*     */ import org.omg.CORBA.portable.ApplicationException;
-/*     */ import org.omg.CORBA.portable.Delegate;
-/*     */ import org.omg.CORBA.portable.InputStream;
-/*     */ import org.omg.CORBA.portable.ObjectImpl;
-/*     */ import org.omg.CORBA.portable.OutputStream;
-/*     */ import org.omg.CORBA.portable.RemarshalException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class _BindingIteratorStub
-/*     */   extends ObjectImpl
-/*     */   implements BindingIterator
-/*     */ {
-/*     */   public boolean next_one(BindingHolder paramBindingHolder) {
-/*  32 */     InputStream inputStream = null;
-/*     */     try {
-/*  34 */       OutputStream outputStream = _request("next_one", true);
-/*  35 */       inputStream = _invoke(outputStream);
-/*  36 */       boolean bool = inputStream.read_boolean();
-/*  37 */       paramBindingHolder.value = BindingHelper.read(inputStream);
-/*  38 */       return bool;
-/*  39 */     } catch (ApplicationException applicationException) {
-/*  40 */       inputStream = applicationException.getInputStream();
-/*  41 */       String str = applicationException.getId();
-/*  42 */       throw new MARSHAL(str);
-/*  43 */     } catch (RemarshalException remarshalException) {
-/*  44 */       return next_one(paramBindingHolder);
-/*     */     } finally {
-/*  46 */       _releaseReply(inputStream);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean next_n(int paramInt, BindingListHolder paramBindingListHolder) {
-/*  60 */     InputStream inputStream = null;
-/*     */     try {
-/*  62 */       OutputStream outputStream = _request("next_n", true);
-/*  63 */       outputStream.write_ulong(paramInt);
-/*  64 */       inputStream = _invoke(outputStream);
-/*  65 */       boolean bool = inputStream.read_boolean();
-/*  66 */       paramBindingListHolder.value = BindingListHelper.read(inputStream);
-/*  67 */       return bool;
-/*  68 */     } catch (ApplicationException applicationException) {
-/*  69 */       inputStream = applicationException.getInputStream();
-/*  70 */       String str = applicationException.getId();
-/*  71 */       throw new MARSHAL(str);
-/*  72 */     } catch (RemarshalException remarshalException) {
-/*  73 */       return next_n(paramInt, paramBindingListHolder);
-/*     */     } finally {
-/*  75 */       _releaseReply(inputStream);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void destroy() {
-/*  85 */     InputStream inputStream = null;
-/*     */     try {
-/*  87 */       OutputStream outputStream = _request("destroy", true);
-/*  88 */       inputStream = _invoke(outputStream);
-/*     */       return;
-/*  90 */     } catch (ApplicationException applicationException) {
-/*  91 */       inputStream = applicationException.getInputStream();
-/*  92 */       String str = applicationException.getId();
-/*  93 */       throw new MARSHAL(str);
-/*  94 */     } catch (RemarshalException remarshalException) {
-/*  95 */       destroy();
-/*     */     } finally {
-/*  97 */       _releaseReply(inputStream);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/* 102 */   private static String[] __ids = new String[] { "IDL:omg.org/CosNaming/BindingIterator:1.0" };
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String[] _ids() {
-/* 107 */     return (String[])__ids.clone();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void readObject(ObjectInputStream paramObjectInputStream) throws IOException {
-/* 112 */     String str = paramObjectInputStream.readUTF();
-/* 113 */     String[] arrayOfString = null;
-/* 114 */     Properties properties = null;
-/* 115 */     ORB oRB = ORB.init(arrayOfString, properties);
-/*     */     try {
-/* 117 */       Object object = oRB.string_to_object(str);
-/* 118 */       Delegate delegate = ((ObjectImpl)object)._get_delegate();
-/* 119 */       _set_delegate(delegate);
-/*     */     } finally {
-/* 121 */       oRB.destroy();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void writeObject(ObjectOutputStream paramObjectOutputStream) throws IOException {
-/* 127 */     String[] arrayOfString = null;
-/* 128 */     Properties properties = null;
-/* 129 */     ORB oRB = ORB.init(arrayOfString, properties);
-/*     */     try {
-/* 131 */       String str = oRB.object_to_string(this);
-/* 132 */       paramObjectOutputStream.writeUTF(str);
-/*     */     } finally {
-/* 134 */       oRB.destroy();
-/*     */     } 
-/*     */   }
-/*     */ }
+package org.omg.CosNaming;
 
 
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\org\omg\CosNaming\_BindingIteratorStub.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
- */
+/**
+* org/omg/CosNaming/_BindingIteratorStub.java .
+* Generated by the IDL-to-Java compiler (portable), version "3.2"
+* from c:/re/workspace/8-2-build-windows-amd64-cygwin/jdk8u211/12973/corba/src/share/classes/org/omg/CosNaming/nameservice.idl
+* Monday, April 1, 2019 8:55:57 PM PDT
+*/
+
+
+/**
+   * The BindingIterator interface allows a client to iterate through
+   * the bindings using the next_one or next_n operations.
+   * 
+   * The bindings iterator is obtained by using the <tt>list</tt>
+   * method on the <tt>NamingContext</tt>. 
+   * @see org.omg.CosNaming.NamingContext#list
+   */
+public class _BindingIteratorStub extends org.omg.CORBA.portable.ObjectImpl implements org.omg.CosNaming.BindingIterator
+{
+
+
+  /**
+     * This operation returns the next binding. If there are no more
+     * bindings, false is returned.
+     * 
+     * @param b the returned binding
+     */
+  public boolean next_one (org.omg.CosNaming.BindingHolder b)
+  {
+            org.omg.CORBA.portable.InputStream $in = null;
+            try {
+                org.omg.CORBA.portable.OutputStream $out = _request ("next_one", true);
+                $in = _invoke ($out);
+                boolean $result = $in.read_boolean ();
+                b.value = org.omg.CosNaming.BindingHelper.read ($in);
+                return $result;
+            } catch (org.omg.CORBA.portable.ApplicationException $ex) {
+                $in = $ex.getInputStream ();
+                String _id = $ex.getId ();
+                throw new org.omg.CORBA.MARSHAL (_id);
+            } catch (org.omg.CORBA.portable.RemarshalException $rm) {
+                return next_one (b        );
+            } finally {
+                _releaseReply ($in);
+            }
+  } // next_one
+
+
+  /**
+     * This operation returns at most the requested number of bindings.
+     * 
+     * @param how_many the maximum number of bindings tro return <p>
+     * 
+     * @param bl the returned bindings
+     */
+  public boolean next_n (int how_many, org.omg.CosNaming.BindingListHolder bl)
+  {
+            org.omg.CORBA.portable.InputStream $in = null;
+            try {
+                org.omg.CORBA.portable.OutputStream $out = _request ("next_n", true);
+                $out.write_ulong (how_many);
+                $in = _invoke ($out);
+                boolean $result = $in.read_boolean ();
+                bl.value = org.omg.CosNaming.BindingListHelper.read ($in);
+                return $result;
+            } catch (org.omg.CORBA.portable.ApplicationException $ex) {
+                $in = $ex.getInputStream ();
+                String _id = $ex.getId ();
+                throw new org.omg.CORBA.MARSHAL (_id);
+            } catch (org.omg.CORBA.portable.RemarshalException $rm) {
+                return next_n (how_many, bl        );
+            } finally {
+                _releaseReply ($in);
+            }
+  } // next_n
+
+
+  /**
+     * This operation destroys the iterator.
+     */
+  public void destroy ()
+  {
+            org.omg.CORBA.portable.InputStream $in = null;
+            try {
+                org.omg.CORBA.portable.OutputStream $out = _request ("destroy", true);
+                $in = _invoke ($out);
+                return;
+            } catch (org.omg.CORBA.portable.ApplicationException $ex) {
+                $in = $ex.getInputStream ();
+                String _id = $ex.getId ();
+                throw new org.omg.CORBA.MARSHAL (_id);
+            } catch (org.omg.CORBA.portable.RemarshalException $rm) {
+                destroy (        );
+            } finally {
+                _releaseReply ($in);
+            }
+  } // destroy
+
+  // Type-specific CORBA::Object operations
+  private static String[] __ids = {
+    "IDL:omg.org/CosNaming/BindingIterator:1.0"};
+
+  public String[] _ids ()
+  {
+    return (String[])__ids.clone ();
+  }
+
+  private void readObject (java.io.ObjectInputStream s) throws java.io.IOException
+  {
+     String str = s.readUTF ();
+     String[] args = null;
+     java.util.Properties props = null;
+     org.omg.CORBA.ORB orb = org.omg.CORBA.ORB.init (args, props);
+   try {
+     org.omg.CORBA.Object obj = orb.string_to_object (str);
+     org.omg.CORBA.portable.Delegate delegate = ((org.omg.CORBA.portable.ObjectImpl) obj)._get_delegate ();
+     _set_delegate (delegate);
+   } finally {
+     orb.destroy() ;
+   }
+  }
+
+  private void writeObject (java.io.ObjectOutputStream s) throws java.io.IOException
+  {
+     String[] args = null;
+     java.util.Properties props = null;
+     org.omg.CORBA.ORB orb = org.omg.CORBA.ORB.init (args, props);
+   try {
+     String str = orb.object_to_string (this);
+     s.writeUTF (str);
+   } finally {
+     orb.destroy() ;
+   }
+  }
+} // class _BindingIteratorStub

@@ -1,770 +1,764 @@
-/*     */ package java.awt.font;
-/*     */ 
-/*     */ import java.awt.Font;
-/*     */ import java.text.AttributedCharacterIterator;
-/*     */ import java.text.Bidi;
-/*     */ import java.text.BreakIterator;
-/*     */ import java.util.Hashtable;
-/*     */ import java.util.Map;
-/*     */ import sun.font.AttributeValues;
-/*     */ import sun.font.BidiUtils;
-/*     */ import sun.font.TextLabelFactory;
-/*     */ import sun.font.TextLineComponent;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class TextMeasurer
-/*     */   implements Cloneable
-/*     */ {
-/* 101 */   private static float EST_LINES = 2.1F;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private FontRenderContext fFrc;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int fStart;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private char[] fChars;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private Bidi fBidi;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private byte[] fLevels;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private TextLineComponent[] fComponents;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int fComponentStart;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int fComponentLimit;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean haveLayoutWindow;
-/*     */ 
-/*     */ 
-/*     */   
-/* 144 */   private BreakIterator fLineBreak = null;
-/* 145 */   private CharArrayIterator charIter = null;
-/* 146 */   int layoutCount = 0;
-/* 147 */   int layoutCharCount = 0;
-/*     */   
-/*     */   private StyledParagraph fParagraph;
-/*     */   
-/*     */   private boolean fIsDirectionLTR;
-/*     */   
-/*     */   private byte fBaseline;
-/*     */   
-/*     */   private float[] fBaselineOffsets;
-/* 156 */   private float fJustifyRatio = 1.0F;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int formattedChars;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected Object clone() {
-/*     */     TextMeasurer textMeasurer;
-/*     */     try {
-/* 174 */       textMeasurer = (TextMeasurer)super.clone();
-/*     */     }
-/* 176 */     catch (CloneNotSupportedException cloneNotSupportedException) {
-/* 177 */       throw new Error();
-/*     */     } 
-/* 179 */     if (this.fComponents != null) {
-/* 180 */       textMeasurer.fComponents = (TextLineComponent[])this.fComponents.clone();
-/*     */     }
-/* 182 */     return textMeasurer;
-/*     */   }
-/*     */   
-/*     */   private void invalidateComponents() {
-/* 186 */     this.fComponentStart = this.fComponentLimit = this.fChars.length;
-/* 187 */     this.fComponents = null;
-/* 188 */     this.haveLayoutWindow = false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void initAll(AttributedCharacterIterator paramAttributedCharacterIterator) {
-/* 197 */     this.fStart = paramAttributedCharacterIterator.getBeginIndex();
-/*     */ 
-/*     */     
-/* 200 */     this.fChars = new char[paramAttributedCharacterIterator.getEndIndex() - this.fStart];
-/*     */     
-/* 202 */     byte b = 0;
-/* 203 */     char c = paramAttributedCharacterIterator.first();
-/* 204 */     for (; c != Character.MAX_VALUE; 
-/* 205 */       c = paramAttributedCharacterIterator.next())
-/*     */     {
-/* 207 */       this.fChars[b++] = c;
-/*     */     }
-/*     */     
-/* 210 */     paramAttributedCharacterIterator.first();
-/*     */     
-/* 212 */     this.fBidi = new Bidi(paramAttributedCharacterIterator);
-/* 213 */     if (this.fBidi.isLeftToRight()) {
-/* 214 */       this.fBidi = null;
-/*     */     }
-/*     */     
-/* 217 */     paramAttributedCharacterIterator.first();
-/* 218 */     Map<AttributedCharacterIterator.Attribute, Object> map = paramAttributedCharacterIterator.getAttributes();
-/* 219 */     NumericShaper numericShaper = AttributeValues.getNumericShaping(map);
-/* 220 */     if (numericShaper != null) {
-/* 221 */       numericShaper.shape(this.fChars, 0, this.fChars.length);
-/*     */     }
-/*     */     
-/* 224 */     this.fParagraph = new StyledParagraph(paramAttributedCharacterIterator, this.fChars);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 232 */     this.fJustifyRatio = AttributeValues.getJustification(map);
-/*     */     
-/* 234 */     boolean bool = TextLine.advanceToFirstFont(paramAttributedCharacterIterator);
-/*     */     
-/* 236 */     if (bool) {
-/* 237 */       Font font = TextLine.getFontAtCurrentPos(paramAttributedCharacterIterator);
-/* 238 */       int i = paramAttributedCharacterIterator.getIndex() - paramAttributedCharacterIterator.getBeginIndex();
-/* 239 */       LineMetrics lineMetrics = font.getLineMetrics(this.fChars, i, i + 1, this.fFrc);
-/* 240 */       this.fBaseline = (byte)lineMetrics.getBaselineIndex();
-/* 241 */       this.fBaselineOffsets = lineMetrics.getBaselineOffsets();
-/*     */ 
-/*     */     
-/*     */     }
-/*     */     else {
-/*     */ 
-/*     */       
-/* 248 */       GraphicAttribute graphicAttribute = (GraphicAttribute)map.get(TextAttribute.CHAR_REPLACEMENT);
-/* 249 */       this.fBaseline = TextLayout.getBaselineFromGraphic(graphicAttribute);
-/* 250 */       Hashtable<Object, Object> hashtable = new Hashtable<>(5, 0.9F);
-/* 251 */       Font font = new Font((Map)hashtable);
-/* 252 */       LineMetrics lineMetrics = font.getLineMetrics(" ", 0, 1, this.fFrc);
-/* 253 */       this.fBaselineOffsets = lineMetrics.getBaselineOffsets();
-/*     */     } 
-/* 255 */     this.fBaselineOffsets = TextLine.getNormalizedOffsets(this.fBaselineOffsets, this.fBaseline);
-/*     */ 
-/*     */     
-/* 258 */     invalidateComponents();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void generateComponents(int paramInt1, int paramInt2) {
-/* 267 */     if (this.collectStats) {
-/* 268 */       this.formattedChars += paramInt2 - paramInt1;
-/*     */     }
-/* 270 */     boolean bool = false;
-/* 271 */     TextLabelFactory textLabelFactory = new TextLabelFactory(this.fFrc, this.fChars, this.fBidi, bool);
-/*     */     
-/* 273 */     int[] arrayOfInt = null;
-/*     */     
-/* 275 */     if (this.fBidi != null) {
-/* 276 */       this.fLevels = BidiUtils.getLevels(this.fBidi);
-/* 277 */       int[] arrayOfInt1 = BidiUtils.createVisualToLogicalMap(this.fLevels);
-/* 278 */       arrayOfInt = BidiUtils.createInverseMap(arrayOfInt1);
-/* 279 */       this.fIsDirectionLTR = this.fBidi.baseIsLeftToRight();
-/*     */     } else {
-/*     */       
-/* 282 */       this.fLevels = null;
-/* 283 */       this.fIsDirectionLTR = true;
-/*     */     } 
-/*     */     
-/*     */     try {
-/* 287 */       this.fComponents = TextLine.getComponents(this.fParagraph, this.fChars, paramInt1, paramInt2, arrayOfInt, this.fLevels, textLabelFactory);
-/*     */     
-/*     */     }
-/* 290 */     catch (IllegalArgumentException illegalArgumentException) {
-/* 291 */       System.out.println("startingAt=" + paramInt1 + "; endingAt=" + paramInt2);
-/* 292 */       System.out.println("fComponentLimit=" + this.fComponentLimit);
-/* 293 */       throw illegalArgumentException;
-/*     */     } 
-/*     */     
-/* 296 */     this.fComponentStart = paramInt1;
-/* 297 */     this.fComponentLimit = paramInt2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int calcLineBreak(int paramInt, float paramFloat) {
-/* 307 */     int i = paramInt;
-/* 308 */     float f = paramFloat;
-/*     */ 
-/*     */     
-/* 311 */     int j = this.fComponentStart;
-/*     */     byte b;
-/* 313 */     for (b = 0; b < this.fComponents.length; b++) {
-/* 314 */       int k = j + this.fComponents[b].getNumCharacters();
-/* 315 */       if (k > i) {
-/*     */         break;
-/*     */       }
-/*     */       
-/* 319 */       j = k;
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 325 */     for (; b < this.fComponents.length; b++) {
-/*     */       
-/* 327 */       TextLineComponent textLineComponent = this.fComponents[b];
-/* 328 */       int k = textLineComponent.getNumCharacters();
-/*     */       
-/* 330 */       int m = textLineComponent.getLineBreakIndex(i - j, f);
-/* 331 */       if (m == k && b < this.fComponents.length) {
-/* 332 */         f -= textLineComponent.getAdvanceBetween(i - j, m);
-/* 333 */         j += k;
-/* 334 */         i = j;
-/*     */       } else {
-/*     */         
-/* 337 */         return j + m;
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 341 */     if (this.fComponentLimit < this.fChars.length) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 347 */       generateComponents(paramInt, this.fChars.length);
-/* 348 */       return calcLineBreak(paramInt, paramFloat);
-/*     */     } 
-/*     */     
-/* 351 */     return this.fChars.length;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int trailingCdWhitespaceStart(int paramInt1, int paramInt2) {
-/* 365 */     if (this.fLevels != null) {
-/*     */       
-/* 367 */       byte b = (byte)(this.fIsDirectionLTR ? 0 : 1);
-/* 368 */       for (int i = paramInt2; --i >= paramInt1;) {
-/* 369 */         if (this.fLevels[i] % 2 == b || 
-/* 370 */           Character.getDirectionality(this.fChars[i]) != 12) {
-/* 371 */           return ++i;
-/*     */         }
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 376 */     return paramInt1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private TextLineComponent[] makeComponentsOnRange(int paramInt1, int paramInt2) {
-/*     */     byte b2;
-/* 386 */     int i = trailingCdWhitespaceStart(paramInt1, paramInt2);
-/*     */ 
-/*     */     
-/* 389 */     int j = this.fComponentStart;
-/*     */     byte b1;
-/* 391 */     for (b1 = 0; b1 < this.fComponents.length; b1++) {
-/* 392 */       int i2 = j + this.fComponents[b1].getNumCharacters();
-/* 393 */       if (i2 > paramInt1) {
-/*     */         break;
-/*     */       }
-/*     */       
-/* 397 */       j = i2;
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 405 */     boolean bool = false;
-/* 406 */     int m = j;
-/* 407 */     int n = b1; int i1;
-/* 408 */     for (i1 = 1; i1; n++) {
-/* 409 */       b2 = m + this.fComponents[n].getNumCharacters();
-/* 410 */       if (i > Math.max(m, paramInt1) && i < 
-/* 411 */         Math.min(b2, paramInt2)) {
-/* 412 */         bool = true;
-/*     */       }
-/* 414 */       if (b2 >= paramInt2) {
-/* 415 */         i1 = 0;
-/*     */       } else {
-/*     */         
-/* 418 */         m = b2;
-/*     */       } 
-/*     */     } 
-/* 421 */     int k = n - b1;
-/* 422 */     if (bool) {
-/* 423 */       k++;
-/*     */     }
-/*     */ 
-/*     */     
-/* 427 */     TextLineComponent[] arrayOfTextLineComponent = new TextLineComponent[k];
-/* 428 */     m = 0;
-/* 429 */     n = paramInt1;
-/*     */     
-/* 431 */     i1 = i;
-/*     */ 
-/*     */     
-/* 434 */     if (i1 == paramInt1) {
-/* 435 */       b2 = this.fIsDirectionLTR ? 0 : 1;
-/*     */       
-/* 437 */       i1 = paramInt2;
-/*     */     } else {
-/*     */       
-/* 440 */       b2 = 2;
-/*     */     } 
-/*     */     
-/* 443 */     while (n < paramInt2) {
-/*     */       
-/* 445 */       int i2 = this.fComponents[b1].getNumCharacters();
-/* 446 */       int i3 = j + i2;
-/*     */       
-/* 448 */       int i4 = Math.max(n, j);
-/* 449 */       int i5 = Math.min(i1, i3);
-/*     */       
-/* 451 */       arrayOfTextLineComponent[m++] = this.fComponents[b1].getSubset(i4 - j, i5 - j, b2);
-/*     */ 
-/*     */ 
-/*     */       
-/* 455 */       n += i5 - i4;
-/* 456 */       if (n == i1) {
-/* 457 */         i1 = paramInt2;
-/* 458 */         b2 = this.fIsDirectionLTR ? 0 : 1;
-/*     */       } 
-/*     */       
-/* 461 */       if (n == i3) {
-/* 462 */         b1++;
-/* 463 */         j = i3;
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 467 */     return arrayOfTextLineComponent;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private TextLine makeTextLineOnRange(int paramInt1, int paramInt2) {
-/* 472 */     int[] arrayOfInt = null;
-/* 473 */     byte[] arrayOfByte = null;
-/*     */     
-/* 475 */     if (this.fBidi != null) {
-/* 476 */       Bidi bidi = this.fBidi.createLineBidi(paramInt1, paramInt2);
-/* 477 */       arrayOfByte = BidiUtils.getLevels(bidi);
-/* 478 */       int[] arrayOfInt1 = BidiUtils.createVisualToLogicalMap(arrayOfByte);
-/* 479 */       arrayOfInt = BidiUtils.createInverseMap(arrayOfInt1);
-/*     */     } 
-/*     */     
-/* 482 */     TextLineComponent[] arrayOfTextLineComponent = makeComponentsOnRange(paramInt1, paramInt2);
-/*     */     
-/* 484 */     return new TextLine(this.fFrc, arrayOfTextLineComponent, this.fBaselineOffsets, this.fChars, paramInt1, paramInt2, arrayOfInt, arrayOfByte, this.fIsDirectionLTR);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void ensureComponents(int paramInt1, int paramInt2) {
-/* 498 */     if (paramInt1 < this.fComponentStart || paramInt2 > this.fComponentLimit) {
-/* 499 */       generateComponents(paramInt1, paramInt2);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void makeLayoutWindow(int paramInt) {
-/* 505 */     int i = paramInt;
-/* 506 */     int j = this.fChars.length;
-/*     */ 
-/*     */     
-/* 509 */     if (this.layoutCount > 0 && !this.haveLayoutWindow) {
-/* 510 */       float f = Math.max(this.layoutCharCount / this.layoutCount, 1);
-/* 511 */       j = Math.min(paramInt + (int)(f * EST_LINES), this.fChars.length);
-/*     */     } 
-/*     */     
-/* 514 */     if (paramInt > 0 || j < this.fChars.length) {
-/* 515 */       if (this.charIter == null) {
-/* 516 */         this.charIter = new CharArrayIterator(this.fChars);
-/*     */       } else {
-/*     */         
-/* 519 */         this.charIter.reset(this.fChars);
-/*     */       } 
-/* 521 */       if (this.fLineBreak == null) {
-/* 522 */         this.fLineBreak = BreakIterator.getLineInstance();
-/*     */       }
-/* 524 */       this.fLineBreak.setText(this.charIter);
-/* 525 */       if (paramInt > 0 && 
-/* 526 */         !this.fLineBreak.isBoundary(paramInt)) {
-/* 527 */         i = this.fLineBreak.preceding(paramInt);
-/*     */       }
-/*     */       
-/* 530 */       if (j < this.fChars.length && 
-/* 531 */         !this.fLineBreak.isBoundary(j)) {
-/* 532 */         j = this.fLineBreak.following(j);
-/*     */       }
-/*     */     } 
-/*     */ 
-/*     */     
-/* 537 */     ensureComponents(i, j);
-/* 538 */     this.haveLayoutWindow = true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getLineBreakIndex(int paramInt, float paramFloat) {
-/* 558 */     int i = paramInt - this.fStart;
-/*     */     
-/* 560 */     if (!this.haveLayoutWindow || i < this.fComponentStart || i >= this.fComponentLimit)
-/*     */     {
-/*     */       
-/* 563 */       makeLayoutWindow(i);
-/*     */     }
-/*     */     
-/* 566 */     return calcLineBreak(i, paramFloat) + this.fStart;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public float getAdvanceBetween(int paramInt1, int paramInt2) {
-/* 587 */     int i = paramInt1 - this.fStart;
-/* 588 */     int j = paramInt2 - this.fStart;
-/*     */     
-/* 590 */     ensureComponents(i, j);
-/* 591 */     TextLine textLine = makeTextLineOnRange(i, j);
-/* 592 */     return (textLine.getMetrics()).advance;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public TextLayout getLayout(int paramInt1, int paramInt2) {
-/* 612 */     int i = paramInt1 - this.fStart;
-/* 613 */     int j = paramInt2 - this.fStart;
-/*     */     
-/* 615 */     ensureComponents(i, j);
-/* 616 */     TextLine textLine = makeTextLineOnRange(i, j);
-/*     */     
-/* 618 */     if (j < this.fChars.length) {
-/* 619 */       this.layoutCharCount += paramInt2 - paramInt1;
-/* 620 */       this.layoutCount++;
-/*     */     } 
-/*     */     
-/* 623 */     return new TextLayout(textLine, this.fBaseline, this.fBaselineOffsets, this.fJustifyRatio);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public TextMeasurer(AttributedCharacterIterator paramAttributedCharacterIterator, FontRenderContext paramFontRenderContext)
-/*     */   {
-/* 629 */     this.formattedChars = 0;
-/*     */     
-/* 631 */     this.collectStats = false;
-/*     */     this.fFrc = paramFontRenderContext;
-/*     */     initAll(paramAttributedCharacterIterator); } private void printStats() {
-/* 634 */     System.out.println("formattedChars: " + this.formattedChars);
-/*     */     
-/* 636 */     this.collectStats = false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static boolean wantStats = false;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean collectStats;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void insertChar(AttributedCharacterIterator paramAttributedCharacterIterator, int paramInt) {
-/* 663 */     if (this.collectStats) {
-/* 664 */       printStats();
-/*     */     }
-/* 666 */     if (wantStats) {
-/* 667 */       this.collectStats = true;
-/*     */     }
-/*     */     
-/* 670 */     this.fStart = paramAttributedCharacterIterator.getBeginIndex();
-/* 671 */     int i = paramAttributedCharacterIterator.getEndIndex();
-/* 672 */     if (i - this.fStart != this.fChars.length + 1) {
-/* 673 */       initAll(paramAttributedCharacterIterator);
-/*     */     }
-/*     */     
-/* 676 */     char[] arrayOfChar = new char[i - this.fStart];
-/* 677 */     int j = paramInt - this.fStart;
-/* 678 */     System.arraycopy(this.fChars, 0, arrayOfChar, 0, j);
-/*     */     
-/* 680 */     char c = paramAttributedCharacterIterator.setIndex(paramInt);
-/* 681 */     arrayOfChar[j] = c;
-/* 682 */     System.arraycopy(this.fChars, j, arrayOfChar, j + 1, i - paramInt - 1);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 687 */     this.fChars = arrayOfChar;
-/*     */     
-/* 689 */     if (this.fBidi != null || Bidi.requiresBidi(arrayOfChar, j, j + 1) || paramAttributedCharacterIterator
-/* 690 */       .getAttribute(TextAttribute.BIDI_EMBEDDING) != null) {
-/*     */       
-/* 692 */       this.fBidi = new Bidi(paramAttributedCharacterIterator);
-/* 693 */       if (this.fBidi.isLeftToRight()) {
-/* 694 */         this.fBidi = null;
-/*     */       }
-/*     */     } 
-/*     */     
-/* 698 */     this.fParagraph = StyledParagraph.insertChar(paramAttributedCharacterIterator, this.fChars, paramInt, this.fParagraph);
-/*     */ 
-/*     */ 
-/*     */     
-/* 702 */     invalidateComponents();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void deleteChar(AttributedCharacterIterator paramAttributedCharacterIterator, int paramInt) {
-/* 729 */     this.fStart = paramAttributedCharacterIterator.getBeginIndex();
-/* 730 */     int i = paramAttributedCharacterIterator.getEndIndex();
-/* 731 */     if (i - this.fStart != this.fChars.length - 1) {
-/* 732 */       initAll(paramAttributedCharacterIterator);
-/*     */     }
-/*     */     
-/* 735 */     char[] arrayOfChar = new char[i - this.fStart];
-/* 736 */     int j = paramInt - this.fStart;
-/*     */     
-/* 738 */     System.arraycopy(this.fChars, 0, arrayOfChar, 0, paramInt - this.fStart);
-/* 739 */     System.arraycopy(this.fChars, j + 1, arrayOfChar, j, i - paramInt);
-/* 740 */     this.fChars = arrayOfChar;
-/*     */     
-/* 742 */     if (this.fBidi != null) {
-/* 743 */       this.fBidi = new Bidi(paramAttributedCharacterIterator);
-/* 744 */       if (this.fBidi.isLeftToRight()) {
-/* 745 */         this.fBidi = null;
-/*     */       }
-/*     */     } 
-/*     */     
-/* 749 */     this.fParagraph = StyledParagraph.deleteChar(paramAttributedCharacterIterator, this.fChars, paramInt, this.fParagraph);
-/*     */ 
-/*     */ 
-/*     */     
-/* 753 */     invalidateComponents();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   char[] getChars() {
-/* 762 */     return this.fChars;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\awt\font\TextMeasurer.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+/*
+ * (C) Copyright Taligent, Inc. 1996 - 1997, All Rights Reserved
+ * (C) Copyright IBM Corp. 1996 - 1998, All Rights Reserved
+ *
+ * The original version of this source code and documentation is
+ * copyrighted and owned by Taligent, Inc., a wholly-owned subsidiary
+ * of IBM. These materials are provided under terms of a License
+ * Agreement between Taligent and Sun. This technology is protected
+ * by multiple US and International patents.
+ *
+ * This notice and attribution to Taligent may not be removed.
+ * Taligent is a registered trademark of Taligent, Inc.
+ *
+ */
+
+package java.awt.font;
+
+import java.awt.Font;
+
+import java.text.AttributedCharacterIterator;
+import java.text.AttributedCharacterIterator.Attribute;
+import java.text.AttributedString;
+import java.text.Bidi;
+import java.text.BreakIterator;
+import java.text.CharacterIterator;
+
+import java.awt.font.FontRenderContext;
+
+import java.util.Hashtable;
+import java.util.Map;
+
+import sun.font.AttributeValues;
+import sun.font.BidiUtils;
+import sun.font.TextLineComponent;
+import sun.font.TextLabelFactory;
+import sun.font.FontResolver;
+
+/**
+ * The <code>TextMeasurer</code> class provides the primitive operations
+ * needed for line break: measuring up to a given advance, determining the
+ * advance of a range of characters, and generating a
+ * <code>TextLayout</code> for a range of characters. It also provides
+ * methods for incremental editing of paragraphs.
+ * <p>
+ * A <code>TextMeasurer</code> object is constructed with an
+ * {@link java.text.AttributedCharacterIterator AttributedCharacterIterator}
+ * representing a single paragraph of text.  The value returned by the
+ * {@link AttributedCharacterIterator#getBeginIndex() getBeginIndex}
+ * method of <code>AttributedCharacterIterator</code>
+ * defines the absolute index of the first character.  The value
+ * returned by the
+ * {@link AttributedCharacterIterator#getEndIndex() getEndIndex}
+ * method of <code>AttributedCharacterIterator</code> defines the index
+ * past the last character.  These values define the range of indexes to
+ * use in calls to the <code>TextMeasurer</code>.  For example, calls to
+ * get the advance of a range of text or the line break of a range of text
+ * must use indexes between the beginning and end index values.  Calls to
+ * {@link #insertChar(java.text.AttributedCharacterIterator, int) insertChar}
+ * and
+ * {@link #deleteChar(java.text.AttributedCharacterIterator, int) deleteChar}
+ * reset the <code>TextMeasurer</code> to use the beginning index and end
+ * index of the <code>AttributedCharacterIterator</code> passed in those calls.
+ * <p>
+ * Most clients will use the more convenient <code>LineBreakMeasurer</code>,
+ * which implements the standard line break policy (placing as many words
+ * as will fit on each line).
+ *
+ * @author John Raley
+ * @see LineBreakMeasurer
+ * @since 1.3
+ */
+
+public final class TextMeasurer implements Cloneable {
+
+    // Number of lines to format to.
+    private static float EST_LINES = (float) 2.1;
+
+    /*
+    static {
+        String s = System.getProperty("estLines");
+        if (s != null) {
+            try {
+                Float f = new Float(s);
+                EST_LINES = f.floatValue();
+            }
+            catch(NumberFormatException e) {
+            }
+        }
+        //System.out.println("EST_LINES="+EST_LINES);
+    }
+    */
+
+    private FontRenderContext fFrc;
+
+    private int fStart;
+
+    // characters in source text
+    private char[] fChars;
+
+    // Bidi for this paragraph
+    private Bidi fBidi;
+
+    // Levels array for chars in this paragraph - needed to reorder
+    // trailing counterdirectional whitespace
+    private byte[] fLevels;
+
+    // line components in logical order
+    private TextLineComponent[] fComponents;
+
+    // index where components begin
+    private int fComponentStart;
+
+    // index where components end
+    private int fComponentLimit;
+
+    private boolean haveLayoutWindow;
+
+    // used to find valid starting points for line components
+    private BreakIterator fLineBreak = null;
+    private CharArrayIterator charIter = null;
+    int layoutCount = 0;
+    int layoutCharCount = 0;
+
+    // paragraph, with resolved fonts and styles
+    private StyledParagraph fParagraph;
+
+    // paragraph data - same across all layouts
+    private boolean fIsDirectionLTR;
+    private byte fBaseline;
+    private float[] fBaselineOffsets;
+    private float fJustifyRatio = 1;
+
+    /**
+     * Constructs a <code>TextMeasurer</code> from the source text.
+     * The source text should be a single entire paragraph.
+     * @param text the source paragraph.  Cannot be null.
+     * @param frc the information about a graphics device which is needed
+     *       to measure the text correctly.  Cannot be null.
+     */
+    public TextMeasurer(AttributedCharacterIterator text, FontRenderContext frc) {
+
+        fFrc = frc;
+        initAll(text);
+    }
+
+    protected Object clone() {
+        TextMeasurer other;
+        try {
+            other = (TextMeasurer) super.clone();
+        }
+        catch(CloneNotSupportedException e) {
+            throw new Error();
+        }
+        if (fComponents != null) {
+            other.fComponents = fComponents.clone();
+        }
+        return other;
+    }
+
+    private void invalidateComponents() {
+        fComponentStart = fComponentLimit = fChars.length;
+        fComponents = null;
+        haveLayoutWindow = false;
+    }
+
+    /**
+     * Initialize state, including fChars array, direction, and
+     * fBidi.
+     */
+    private void initAll(AttributedCharacterIterator text) {
+
+        fStart = text.getBeginIndex();
+
+        // extract chars
+        fChars = new char[text.getEndIndex() - fStart];
+
+        int n = 0;
+        for (char c = text.first();
+             c != CharacterIterator.DONE;
+             c = text.next())
+        {
+            fChars[n++] = c;
+        }
+
+        text.first();
+
+        fBidi = new Bidi(text);
+        if (fBidi.isLeftToRight()) {
+            fBidi = null;
+        }
+
+        text.first();
+        Map<? extends Attribute, ?> paragraphAttrs = text.getAttributes();
+        NumericShaper shaper = AttributeValues.getNumericShaping(paragraphAttrs);
+        if (shaper != null) {
+            shaper.shape(fChars, 0, fChars.length);
+        }
+
+        fParagraph = new StyledParagraph(text, fChars);
+
+        // set paragraph attributes
+        {
+            // If there's an embedded graphic at the start of the
+            // paragraph, look for the first non-graphic character
+            // and use it and its font to initialize the paragraph.
+            // If not, use the first graphic to initialize.
+            fJustifyRatio = AttributeValues.getJustification(paragraphAttrs);
+
+            boolean haveFont = TextLine.advanceToFirstFont(text);
+
+            if (haveFont) {
+                Font defaultFont = TextLine.getFontAtCurrentPos(text);
+                int charsStart = text.getIndex() - text.getBeginIndex();
+                LineMetrics lm = defaultFont.getLineMetrics(fChars, charsStart, charsStart+1, fFrc);
+                fBaseline = (byte) lm.getBaselineIndex();
+                fBaselineOffsets = lm.getBaselineOffsets();
+            }
+            else {
+                // hmmm what to do here?  Just try to supply reasonable
+                // values I guess.
+
+                GraphicAttribute graphic = (GraphicAttribute)
+                                paragraphAttrs.get(TextAttribute.CHAR_REPLACEMENT);
+                fBaseline = TextLayout.getBaselineFromGraphic(graphic);
+                Hashtable<Attribute, ?> fmap = new Hashtable<>(5, (float)0.9);
+                Font dummyFont = new Font(fmap);
+                LineMetrics lm = dummyFont.getLineMetrics(" ", 0, 1, fFrc);
+                fBaselineOffsets = lm.getBaselineOffsets();
+            }
+            fBaselineOffsets = TextLine.getNormalizedOffsets(fBaselineOffsets, fBaseline);
+        }
+
+        invalidateComponents();
+    }
+
+    /**
+     * Generate components for the paragraph.  fChars, fBidi should have been
+     * initialized already.
+     */
+    private void generateComponents(int startingAt, int endingAt) {
+
+        if (collectStats) {
+            formattedChars += (endingAt-startingAt);
+        }
+        int layoutFlags = 0; // no extra info yet, bidi determines run and line direction
+        TextLabelFactory factory = new TextLabelFactory(fFrc, fChars, fBidi, layoutFlags);
+
+        int[] charsLtoV = null;
+
+        if (fBidi != null) {
+            fLevels = BidiUtils.getLevels(fBidi);
+            int[] charsVtoL = BidiUtils.createVisualToLogicalMap(fLevels);
+            charsLtoV = BidiUtils.createInverseMap(charsVtoL);
+            fIsDirectionLTR = fBidi.baseIsLeftToRight();
+        }
+        else {
+            fLevels = null;
+            fIsDirectionLTR = true;
+        }
+
+        try {
+            fComponents = TextLine.getComponents(
+                fParagraph, fChars, startingAt, endingAt, charsLtoV, fLevels, factory);
+        }
+        catch(IllegalArgumentException e) {
+            System.out.println("startingAt="+startingAt+"; endingAt="+endingAt);
+            System.out.println("fComponentLimit="+fComponentLimit);
+            throw e;
+        }
+
+        fComponentStart = startingAt;
+        fComponentLimit = endingAt;
+        //debugFormatCount += (endingAt-startingAt);
+    }
+
+    private int calcLineBreak(final int pos, final float maxAdvance) {
+
+        // either of these statements removes the bug:
+        //generateComponents(0, fChars.length);
+        //generateComponents(pos, fChars.length);
+
+        int startPos = pos;
+        float width = maxAdvance;
+
+        int tlcIndex;
+        int tlcStart = fComponentStart;
+
+        for (tlcIndex = 0; tlcIndex < fComponents.length; tlcIndex++) {
+            int gaLimit = tlcStart + fComponents[tlcIndex].getNumCharacters();
+            if (gaLimit > startPos) {
+                break;
+            }
+            else {
+                tlcStart = gaLimit;
+            }
+        }
+
+        // tlcStart is now the start of the tlc at tlcIndex
+
+        for (; tlcIndex < fComponents.length; tlcIndex++) {
+
+            TextLineComponent tlc = fComponents[tlcIndex];
+            int numCharsInGa = tlc.getNumCharacters();
+
+            int lineBreak = tlc.getLineBreakIndex(startPos - tlcStart, width);
+            if (lineBreak == numCharsInGa && tlcIndex < fComponents.length) {
+                width -= tlc.getAdvanceBetween(startPos - tlcStart, lineBreak);
+                tlcStart += numCharsInGa;
+                startPos = tlcStart;
+            }
+            else {
+                return tlcStart + lineBreak;
+            }
+        }
+
+        if (fComponentLimit < fChars.length) {
+            // format more text and try again
+            //if (haveLayoutWindow) {
+            //    outOfWindow++;
+            //}
+
+            generateComponents(pos, fChars.length);
+            return calcLineBreak(pos, maxAdvance);
+        }
+
+        return fChars.length;
+    }
+
+    /**
+     * According to the Unicode Bidirectional Behavior specification
+     * (Unicode Standard 2.0, section 3.11), whitespace at the ends
+     * of lines which would naturally flow against the base direction
+     * must be made to flow with the line direction, and moved to the
+     * end of the line.  This method returns the start of the sequence
+     * of trailing whitespace characters to move to the end of a
+     * line taken from the given range.
+     */
+    private int trailingCdWhitespaceStart(int startPos, int limitPos) {
+
+        if (fLevels != null) {
+            // Back up over counterdirectional whitespace
+            final byte baseLevel = (byte) (fIsDirectionLTR? 0 : 1);
+            for (int cdWsStart = limitPos; --cdWsStart >= startPos;) {
+                if ((fLevels[cdWsStart] % 2) == baseLevel ||
+                        Character.getDirectionality(fChars[cdWsStart]) != Character.DIRECTIONALITY_WHITESPACE) {
+                    return ++cdWsStart;
+                }
+            }
+        }
+
+        return startPos;
+    }
+
+    private TextLineComponent[] makeComponentsOnRange(int startPos,
+                                                      int limitPos) {
+
+        // sigh I really hate to do this here since it's part of the
+        // bidi algorithm.
+        // cdWsStart is the start of the trailing counterdirectional
+        // whitespace
+        final int cdWsStart = trailingCdWhitespaceStart(startPos, limitPos);
+
+        int tlcIndex;
+        int tlcStart = fComponentStart;
+
+        for (tlcIndex = 0; tlcIndex < fComponents.length; tlcIndex++) {
+            int gaLimit = tlcStart + fComponents[tlcIndex].getNumCharacters();
+            if (gaLimit > startPos) {
+                break;
+            }
+            else {
+                tlcStart = gaLimit;
+            }
+        }
+
+        // tlcStart is now the start of the tlc at tlcIndex
+
+        int componentCount;
+        {
+            boolean split = false;
+            int compStart = tlcStart;
+            int lim=tlcIndex;
+            for (boolean cont=true; cont; lim++) {
+                int gaLimit = compStart + fComponents[lim].getNumCharacters();
+                if (cdWsStart > Math.max(compStart, startPos)
+                            && cdWsStart < Math.min(gaLimit, limitPos)) {
+                    split = true;
+                }
+                if (gaLimit >= limitPos) {
+                    cont=false;
+                }
+                else {
+                    compStart = gaLimit;
+                }
+            }
+            componentCount = lim-tlcIndex;
+            if (split) {
+                componentCount++;
+            }
+        }
+
+        TextLineComponent[] components = new TextLineComponent[componentCount];
+        int newCompIndex = 0;
+        int linePos = startPos;
+
+        int breakPt = cdWsStart;
+
+        int subsetFlag;
+        if (breakPt == startPos) {
+            subsetFlag = fIsDirectionLTR? TextLineComponent.LEFT_TO_RIGHT :
+                                          TextLineComponent.RIGHT_TO_LEFT;
+            breakPt = limitPos;
+        }
+        else {
+            subsetFlag = TextLineComponent.UNCHANGED;
+        }
+
+        while (linePos < limitPos) {
+
+            int compLength = fComponents[tlcIndex].getNumCharacters();
+            int tlcLimit = tlcStart + compLength;
+
+            int start = Math.max(linePos, tlcStart);
+            int limit = Math.min(breakPt, tlcLimit);
+
+            components[newCompIndex++] = fComponents[tlcIndex].getSubset(
+                                                                start-tlcStart,
+                                                                limit-tlcStart,
+                                                                subsetFlag);
+            linePos += (limit-start);
+            if (linePos == breakPt) {
+                breakPt = limitPos;
+                subsetFlag = fIsDirectionLTR? TextLineComponent.LEFT_TO_RIGHT :
+                                              TextLineComponent.RIGHT_TO_LEFT;
+            }
+            if (linePos == tlcLimit) {
+                tlcIndex++;
+                tlcStart = tlcLimit;
+            }
+        }
+
+        return components;
+    }
+
+    private TextLine makeTextLineOnRange(int startPos, int limitPos) {
+
+        int[] charsLtoV = null;
+        byte[] charLevels = null;
+
+        if (fBidi != null) {
+            Bidi lineBidi = fBidi.createLineBidi(startPos, limitPos);
+            charLevels = BidiUtils.getLevels(lineBidi);
+            int[] charsVtoL = BidiUtils.createVisualToLogicalMap(charLevels);
+            charsLtoV = BidiUtils.createInverseMap(charsVtoL);
+        }
+
+        TextLineComponent[] components = makeComponentsOnRange(startPos, limitPos);
+
+        return new TextLine(fFrc,
+                            components,
+                            fBaselineOffsets,
+                            fChars,
+                            startPos,
+                            limitPos,
+                            charsLtoV,
+                            charLevels,
+                            fIsDirectionLTR);
+
+    }
+
+    private void ensureComponents(int start, int limit) {
+
+        if (start < fComponentStart || limit > fComponentLimit) {
+            generateComponents(start, limit);
+        }
+    }
+
+    private void makeLayoutWindow(int localStart) {
+
+        int compStart = localStart;
+        int compLimit = fChars.length;
+
+        // If we've already gone past the layout window, format to end of paragraph
+        if (layoutCount > 0 && !haveLayoutWindow) {
+            float avgLineLength = Math.max(layoutCharCount / layoutCount, 1);
+            compLimit = Math.min(localStart + (int)(avgLineLength*EST_LINES), fChars.length);
+        }
+
+        if (localStart > 0 || compLimit < fChars.length) {
+            if (charIter == null) {
+                charIter = new CharArrayIterator(fChars);
+            }
+            else {
+                charIter.reset(fChars);
+            }
+            if (fLineBreak == null) {
+                fLineBreak = BreakIterator.getLineInstance();
+            }
+            fLineBreak.setText(charIter);
+            if (localStart > 0) {
+                if (!fLineBreak.isBoundary(localStart)) {
+                    compStart = fLineBreak.preceding(localStart);
+                }
+            }
+            if (compLimit < fChars.length) {
+                if (!fLineBreak.isBoundary(compLimit)) {
+                    compLimit = fLineBreak.following(compLimit);
+                }
+            }
+        }
+
+        ensureComponents(compStart, compLimit);
+        haveLayoutWindow = true;
+    }
+
+    /**
+     * Returns the index of the first character which will not fit on
+     * on a line beginning at <code>start</code> and possible
+     * measuring up to <code>maxAdvance</code> in graphical width.
+     *
+     * @param start the character index at which to start measuring.
+     *  <code>start</code> is an absolute index, not relative to the
+     *  start of the paragraph
+     * @param maxAdvance the graphical width in which the line must fit
+     * @return the index after the last character that will fit
+     *  on a line beginning at <code>start</code>, which is not longer
+     *  than <code>maxAdvance</code> in graphical width
+     * @throws IllegalArgumentException if <code>start</code> is
+     *          less than the beginning of the paragraph.
+     */
+    public int getLineBreakIndex(int start, float maxAdvance) {
+
+        int localStart = start - fStart;
+
+        if (!haveLayoutWindow ||
+                localStart < fComponentStart ||
+                localStart >= fComponentLimit) {
+            makeLayoutWindow(localStart);
+        }
+
+        return calcLineBreak(localStart, maxAdvance) + fStart;
+    }
+
+    /**
+     * Returns the graphical width of a line beginning at <code>start</code>
+     * and including characters up to <code>limit</code>.
+     * <code>start</code> and <code>limit</code> are absolute indices,
+     * not relative to the start of the paragraph.
+     *
+     * @param start the character index at which to start measuring
+     * @param limit the character index at which to stop measuring
+     * @return the graphical width of a line beginning at <code>start</code>
+     *   and including characters up to <code>limit</code>
+     * @throws IndexOutOfBoundsException if <code>limit</code> is less
+     *         than <code>start</code>
+     * @throws IllegalArgumentException if <code>start</code> or
+     *          <code>limit</code> is not between the beginning of
+     *          the paragraph and the end of the paragraph.
+     */
+    public float getAdvanceBetween(int start, int limit) {
+
+        int localStart = start - fStart;
+        int localLimit = limit - fStart;
+
+        ensureComponents(localStart, localLimit);
+        TextLine line = makeTextLineOnRange(localStart, localLimit);
+        return line.getMetrics().advance;
+        // could cache line in case getLayout is called with same start, limit
+    }
+
+    /**
+     * Returns a <code>TextLayout</code> on the given character range.
+     *
+     * @param start the index of the first character
+     * @param limit the index after the last character.  Must be greater
+     *   than <code>start</code>
+     * @return a <code>TextLayout</code> for the characters beginning at
+     *  <code>start</code> up to (but not including) <code>limit</code>
+     * @throws IndexOutOfBoundsException if <code>limit</code> is less
+     *         than <code>start</code>
+     * @throws IllegalArgumentException if <code>start</code> or
+     *          <code>limit</code> is not between the beginning of
+     *          the paragraph and the end of the paragraph.
+     */
+    public TextLayout getLayout(int start, int limit) {
+
+        int localStart = start - fStart;
+        int localLimit = limit - fStart;
+
+        ensureComponents(localStart, localLimit);
+        TextLine textLine = makeTextLineOnRange(localStart, localLimit);
+
+        if (localLimit < fChars.length) {
+            layoutCharCount += limit-start;
+            layoutCount++;
+        }
+
+        return new TextLayout(textLine,
+                              fBaseline,
+                              fBaselineOffsets,
+                              fJustifyRatio);
+    }
+
+    private int formattedChars = 0;
+    private static boolean wantStats = false;/*"true".equals(System.getProperty("collectStats"));*/
+    private boolean collectStats = false;
+
+    private void printStats() {
+        System.out.println("formattedChars: " + formattedChars);
+        //formattedChars = 0;
+        collectStats = false;
+    }
+
+    /**
+     * Updates the <code>TextMeasurer</code> after a single character has
+     * been inserted
+     * into the paragraph currently represented by this
+     * <code>TextMeasurer</code>.  After this call, this
+     * <code>TextMeasurer</code> is equivalent to a new
+     * <code>TextMeasurer</code> created from the text;  however, it will
+     * usually be more efficient to update an existing
+     * <code>TextMeasurer</code> than to create a new one from scratch.
+     *
+     * @param newParagraph the text of the paragraph after performing
+     * the insertion.  Cannot be null.
+     * @param insertPos the position in the text where the character was
+     * inserted.  Must not be less than the start of
+     * <code>newParagraph</code>, and must be less than the end of
+     * <code>newParagraph</code>.
+     * @throws IndexOutOfBoundsException if <code>insertPos</code> is less
+     *         than the start of <code>newParagraph</code> or greater than
+     *         or equal to the end of <code>newParagraph</code>
+     * @throws NullPointerException if <code>newParagraph</code> is
+     *         <code>null</code>
+     */
+    public void insertChar(AttributedCharacterIterator newParagraph, int insertPos) {
+
+        if (collectStats) {
+            printStats();
+        }
+        if (wantStats) {
+            collectStats = true;
+        }
+
+        fStart = newParagraph.getBeginIndex();
+        int end = newParagraph.getEndIndex();
+        if (end - fStart != fChars.length+1) {
+            initAll(newParagraph);
+        }
+
+        char[] newChars = new char[end-fStart];
+        int newCharIndex = insertPos - fStart;
+        System.arraycopy(fChars, 0, newChars, 0, newCharIndex);
+
+        char newChar = newParagraph.setIndex(insertPos);
+        newChars[newCharIndex] = newChar;
+        System.arraycopy(fChars,
+                         newCharIndex,
+                         newChars,
+                         newCharIndex+1,
+                         end-insertPos-1);
+        fChars = newChars;
+
+        if (fBidi != null || Bidi.requiresBidi(newChars, newCharIndex, newCharIndex + 1) ||
+                newParagraph.getAttribute(TextAttribute.BIDI_EMBEDDING) != null) {
+
+            fBidi = new Bidi(newParagraph);
+            if (fBidi.isLeftToRight()) {
+                fBidi = null;
+            }
+        }
+
+        fParagraph = StyledParagraph.insertChar(newParagraph,
+                                                fChars,
+                                                insertPos,
+                                                fParagraph);
+        invalidateComponents();
+    }
+
+    /**
+     * Updates the <code>TextMeasurer</code> after a single character has
+     * been deleted
+     * from the paragraph currently represented by this
+     * <code>TextMeasurer</code>.  After this call, this
+     * <code>TextMeasurer</code> is equivalent to a new <code>TextMeasurer</code>
+     * created from the text;  however, it will usually be more efficient
+     * to update an existing <code>TextMeasurer</code> than to create a new one
+     * from scratch.
+     *
+     * @param newParagraph the text of the paragraph after performing
+     * the deletion.  Cannot be null.
+     * @param deletePos the position in the text where the character was removed.
+     * Must not be less than
+     * the start of <code>newParagraph</code>, and must not be greater than the
+     * end of <code>newParagraph</code>.
+     * @throws IndexOutOfBoundsException if <code>deletePos</code> is
+     *         less than the start of <code>newParagraph</code> or greater
+     *         than the end of <code>newParagraph</code>
+     * @throws NullPointerException if <code>newParagraph</code> is
+     *         <code>null</code>
+     */
+    public void deleteChar(AttributedCharacterIterator newParagraph, int deletePos) {
+
+        fStart = newParagraph.getBeginIndex();
+        int end = newParagraph.getEndIndex();
+        if (end - fStart != fChars.length-1) {
+            initAll(newParagraph);
+        }
+
+        char[] newChars = new char[end-fStart];
+        int changedIndex = deletePos-fStart;
+
+        System.arraycopy(fChars, 0, newChars, 0, deletePos-fStart);
+        System.arraycopy(fChars, changedIndex+1, newChars, changedIndex, end-deletePos);
+        fChars = newChars;
+
+        if (fBidi != null) {
+            fBidi = new Bidi(newParagraph);
+            if (fBidi.isLeftToRight()) {
+                fBidi = null;
+            }
+        }
+
+        fParagraph = StyledParagraph.deleteChar(newParagraph,
+                                                fChars,
+                                                deletePos,
+                                                fParagraph);
+        invalidateComponents();
+    }
+
+    /**
+     * NOTE:  This method is only for LineBreakMeasurer's use.  It is package-
+     * private because it returns internal data.
+     */
+    char[] getChars() {
+
+        return fChars;
+    }
+}

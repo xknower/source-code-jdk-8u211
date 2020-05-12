@@ -1,97 +1,90 @@
-/*    */ package javax.swing.event;
-/*    */ 
-/*    */ import java.util.EventObject;
-/*    */ import javax.swing.table.TableColumnModel;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class TableColumnModelEvent
-/*    */   extends EventObject
-/*    */ {
-/*    */   protected int fromIndex;
-/*    */   protected int toIndex;
-/*    */   
-/*    */   public TableColumnModelEvent(TableColumnModel paramTableColumnModel, int paramInt1, int paramInt2) {
-/* 76 */     super(paramTableColumnModel);
-/* 77 */     this.fromIndex = paramInt1;
-/* 78 */     this.toIndex = paramInt2;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public int getFromIndex() {
-/* 86 */     return this.fromIndex;
-/*    */   }
-/*    */   public int getToIndex() {
-/* 89 */     return this.toIndex;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\event\TableColumnModelEvent.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.event;
+
+import java.util.EventObject;
+import javax.swing.table.*;
+
+/**
+ * <B>TableColumnModelEvent</B> is used to notify listeners that a table
+ * column model has changed, such as a column was added, removed, or
+ * moved.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @author Alan Chung
+ * @see TableColumnModelListener
+ */
+public class TableColumnModelEvent extends java.util.EventObject
+{
+//
+//  Instance Variables
+//
+
+    /** The index of the column from where it was moved or removed */
+    protected int       fromIndex;
+
+    /** The index of the column to where it was moved or added */
+    protected int       toIndex;
+
+//
+// Constructors
+//
+
+    /**
+     * Constructs a {@code TableColumnModelEvent} object.
+     *
+     * @param source  the {@code TableColumnModel} that originated the event
+     * @param from    an int specifying the index from where the column was
+     *                moved or removed
+     * @param to      an int specifying the index to where the column was
+     *                moved or added
+     * @see #getFromIndex
+     * @see #getToIndex
+     */
+    public TableColumnModelEvent(TableColumnModel source, int from, int to) {
+        super(source);
+        fromIndex = from;
+        toIndex = to;
+    }
+
+//
+// Querying Methods
+//
+
+    /** Returns the fromIndex.  Valid for removed or moved events */
+    public int getFromIndex() { return fromIndex; };
+
+    /** Returns the toIndex.  Valid for add and moved events */
+    public int getToIndex() { return toIndex; };
+}

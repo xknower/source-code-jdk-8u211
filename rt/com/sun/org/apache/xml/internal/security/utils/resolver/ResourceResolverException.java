@@ -1,143 +1,138 @@
-/*     */ package com.sun.org.apache.xml.internal.security.utils.resolver;
-/*     */ 
-/*     */ import com.sun.org.apache.xml.internal.security.exceptions.XMLSecurityException;
-/*     */ import org.w3c.dom.Attr;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class ResourceResolverException
-/*     */   extends XMLSecurityException
-/*     */ {
-/*     */   private static final long serialVersionUID = 1L;
-/*  38 */   private Attr uri = null;
-/*     */   
-/*  40 */   private String baseURI = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ResourceResolverException(String paramString1, Attr paramAttr, String paramString2) {
-/*  50 */     super(paramString1);
-/*     */     
-/*  52 */     this.uri = paramAttr;
-/*  53 */     this.baseURI = paramString2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ResourceResolverException(String paramString1, Object[] paramArrayOfObject, Attr paramAttr, String paramString2) {
-/*  66 */     super(paramString1, paramArrayOfObject);
-/*     */     
-/*  68 */     this.uri = paramAttr;
-/*  69 */     this.baseURI = paramString2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ResourceResolverException(String paramString1, Exception paramException, Attr paramAttr, String paramString2) {
-/*  82 */     super(paramString1, paramException);
-/*     */     
-/*  84 */     this.uri = paramAttr;
-/*  85 */     this.baseURI = paramString2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ResourceResolverException(String paramString1, Object[] paramArrayOfObject, Exception paramException, Attr paramAttr, String paramString2) {
-/* 100 */     super(paramString1, paramArrayOfObject, paramException);
-/*     */     
-/* 102 */     this.uri = paramAttr;
-/* 103 */     this.baseURI = paramString2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setURI(Attr paramAttr) {
-/* 111 */     this.uri = paramAttr;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Attr getURI() {
-/* 119 */     return this.uri;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setbaseURI(String paramString) {
-/* 127 */     this.baseURI = paramString;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getbaseURI() {
-/* 135 */     return this.baseURI;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\internal\securit\\utils\resolver\ResourceResolverException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package com.sun.org.apache.xml.internal.security.utils.resolver;
+
+import com.sun.org.apache.xml.internal.security.exceptions.XMLSecurityException;
+import org.w3c.dom.Attr;
+
+/**
+ * This Exception is thrown if something related to the
+ * {@link com.sun.org.apache.xml.internal.security.utils.resolver.ResourceResolver} goes wrong.
+ *
+ * @author $Author: coheigea $
+ */
+public class ResourceResolverException extends XMLSecurityException {
+
+    private static final long serialVersionUID = 1L;
+
+    private Attr uri = null;
+
+    private String baseURI = null;
+
+    /**
+     * Constructor ResourceResolverException
+     *
+     * @param msgID
+     * @param uri
+     * @param baseURI
+     */
+    public ResourceResolverException(String msgID, Attr uri, String baseURI) {
+        super(msgID);
+
+        this.uri = uri;
+        this.baseURI = baseURI;
+    }
+
+    /**
+     * Constructor ResourceResolverException
+     *
+     * @param msgID
+     * @param exArgs
+     * @param uri
+     * @param baseURI
+     */
+    public ResourceResolverException(String msgID, Object exArgs[], Attr uri,
+                                     String baseURI) {
+        super(msgID, exArgs);
+
+        this.uri = uri;
+        this.baseURI = baseURI;
+    }
+
+    /**
+     * Constructor ResourceResolverException
+     *
+     * @param msgID
+     * @param originalException
+     * @param uri
+     * @param baseURI
+     */
+    public ResourceResolverException(String msgID, Exception originalException,
+                                     Attr uri, String baseURI) {
+        super(msgID, originalException);
+
+        this.uri = uri;
+        this.baseURI = baseURI;
+    }
+
+    /**
+     * Constructor ResourceResolverException
+     *
+     * @param msgID
+     * @param exArgs
+     * @param originalException
+     * @param uri
+     * @param baseURI
+     */
+    public ResourceResolverException(String msgID, Object exArgs[],
+                                     Exception originalException, Attr uri,
+                                     String baseURI) {
+        super(msgID, exArgs, originalException);
+
+        this.uri = uri;
+        this.baseURI = baseURI;
+    }
+
+    /**
+     *
+     * @param uri
+     */
+    public void setURI(Attr uri) {
+        this.uri = uri;
+    }
+
+    /**
+     *
+     * @return the uri
+     */
+    public Attr getURI() {
+        return this.uri;
+    }
+
+    /**
+     *
+     * @param baseURI
+     */
+    public void setbaseURI(String baseURI) {
+        this.baseURI = baseURI;
+    }
+
+    /**
+     *
+     * @return the baseURI
+     */
+    public String getbaseURI() {
+        return this.baseURI;
+    }
+
+}

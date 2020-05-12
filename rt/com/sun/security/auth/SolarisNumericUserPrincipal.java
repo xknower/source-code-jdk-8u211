@@ -1,189 +1,183 @@
-/*     */ package com.sun.security.auth;
-/*     */ 
-/*     */ import java.io.Serializable;
-/*     */ import java.security.AccessController;
-/*     */ import java.security.Principal;
-/*     */ import java.security.PrivilegedAction;
-/*     */ import java.util.ResourceBundle;
-/*     */ import jdk.Exported;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ @Exported(false)
-/*     */ @Deprecated
-/*     */ public class SolarisNumericUserPrincipal
-/*     */   implements Principal, Serializable
-/*     */ {
-/*     */   private static final long serialVersionUID = -3178578484679887104L;
-/*     */   
-/*  57 */   private static final ResourceBundle rb = AccessController.<ResourceBundle>doPrivileged(new PrivilegedAction<ResourceBundle>() {
-/*     */         public ResourceBundle run() {
-/*  59 */           return 
-/*  60 */             ResourceBundle.getBundle("sun.security.util.AuthResources");
-/*     */         }
-/*     */       });
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private String name;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SolarisNumericUserPrincipal(String paramString) {
-/*  83 */     if (paramString == null) {
-/*  84 */       throw new NullPointerException(rb.getString("provided.null.name"));
-/*     */     }
-/*  86 */     this.name = paramString;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SolarisNumericUserPrincipal(long paramLong) {
-/*  99 */     this.name = (new Long(paramLong)).toString();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getName() {
-/* 112 */     return this.name;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public long longValue() {
-/* 125 */     return (new Long(this.name)).longValue();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 138 */     return rb.getString("SolarisNumericUserPrincipal.") + this.name;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean equals(Object paramObject) {
-/* 158 */     if (paramObject == null) {
-/* 159 */       return false;
-/*     */     }
-/* 161 */     if (this == paramObject) {
-/* 162 */       return true;
-/*     */     }
-/* 164 */     if (!(paramObject instanceof SolarisNumericUserPrincipal))
-/* 165 */       return false; 
-/* 166 */     SolarisNumericUserPrincipal solarisNumericUserPrincipal = (SolarisNumericUserPrincipal)paramObject;
-/*     */     
-/* 168 */     if (getName().equals(solarisNumericUserPrincipal.getName()))
-/* 169 */       return true; 
-/* 170 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int hashCode() {
-/* 181 */     return this.name.hashCode();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\security\auth\SolarisNumericUserPrincipal.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.security.auth;
+
+import java.security.Principal;
+
+/**
+ * <p> This class implements the <code>Principal</code> interface
+ * and represents a user's Solaris identification number (UID).
+ *
+ * <p> Principals such as this <code>SolarisNumericUserPrincipal</code>
+ * may be associated with a particular <code>Subject</code>
+ * to augment that <code>Subject</code> with an additional
+ * identity.  Refer to the <code>Subject</code> class for more information
+ * on how to achieve this.  Authorization decisions can then be based upon
+ * the Principals associated with a <code>Subject</code>.
+ * @deprecated As of JDK&nbsp;1.4, replaced by
+ *             {@link UnixNumericUserPrincipal}.
+ *             This class is entirely deprecated.
+ *
+ * @see java.security.Principal
+ * @see javax.security.auth.Subject
+ */
+@jdk.Exported(false)
+@Deprecated
+public class SolarisNumericUserPrincipal implements
+                                        Principal,
+                                        java.io.Serializable {
+
+    private static final long serialVersionUID = -3178578484679887104L;
+
+    private static final java.util.ResourceBundle rb =
+          java.security.AccessController.doPrivileged
+          (new java.security.PrivilegedAction<java.util.ResourceBundle>() {
+              public java.util.ResourceBundle run() {
+                  return (java.util.ResourceBundle.getBundle
+                                ("sun.security.util.AuthResources"));
+              }
+           });
+
+
+    /**
+     * @serial
+     */
+    private String name;
+
+    /**
+     * Create a <code>SolarisNumericUserPrincipal</code> using a
+     * <code>String</code> representation of the
+     * user's identification number (UID).
+     *
+     * <p>
+     *
+     * @param name the user identification number (UID) for this user.
+     *
+     * @exception NullPointerException if the <code>name</code>
+     *                  is <code>null</code>.
+     */
+    public SolarisNumericUserPrincipal(String name) {
+        if (name == null)
+            throw new NullPointerException(rb.getString("provided.null.name"));
+
+        this.name = name;
+    }
+
+    /**
+     * Create a <code>SolarisNumericUserPrincipal</code> using a
+     * long representation of the user's identification number (UID).
+     *
+     * <p>
+     *
+     * @param name the user identification number (UID) for this user
+     *                  represented as a long.
+     */
+    public SolarisNumericUserPrincipal(long name) {
+        this.name = (new Long(name)).toString();
+    }
+
+    /**
+     * Return the user identification number (UID) for this
+     * <code>SolarisNumericUserPrincipal</code>.
+     *
+     * <p>
+     *
+     * @return the user identification number (UID) for this
+     *          <code>SolarisNumericUserPrincipal</code>
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * Return the user identification number (UID) for this
+     * <code>SolarisNumericUserPrincipal</code> as a long.
+     *
+     * <p>
+     *
+     * @return the user identification number (UID) for this
+     *          <code>SolarisNumericUserPrincipal</code> as a long.
+     */
+    public long longValue() {
+        return ((new Long(name)).longValue());
+    }
+
+    /**
+     * Return a string representation of this
+     * <code>SolarisNumericUserPrincipal</code>.
+     *
+     * <p>
+     *
+     * @return a string representation of this
+     *          <code>SolarisNumericUserPrincipal</code>.
+     */
+    public String toString() {
+        return(rb.getString("SolarisNumericUserPrincipal.") + name);
+    }
+
+    /**
+     * Compares the specified Object with this
+     * <code>SolarisNumericUserPrincipal</code>
+     * for equality.  Returns true if the given object is also a
+     * <code>SolarisNumericUserPrincipal</code> and the two
+     * SolarisNumericUserPrincipals
+     * have the same user identification number (UID).
+     *
+     * <p>
+     *
+     * @param o Object to be compared for equality with this
+     *          <code>SolarisNumericUserPrincipal</code>.
+     *
+     * @return true if the specified Object is equal equal to this
+     *          <code>SolarisNumericUserPrincipal</code>.
+     */
+    public boolean equals(Object o) {
+        if (o == null)
+            return false;
+
+        if (this == o)
+            return true;
+
+        if (!(o instanceof SolarisNumericUserPrincipal))
+            return false;
+        SolarisNumericUserPrincipal that = (SolarisNumericUserPrincipal)o;
+
+        if (this.getName().equals(that.getName()))
+            return true;
+        return false;
+    }
+
+    /**
+     * Return a hash code for this <code>SolarisNumericUserPrincipal</code>.
+     *
+     * <p>
+     *
+     * @return a hash code for this <code>SolarisNumericUserPrincipal</code>.
+     */
+    public int hashCode() {
+        return name.hashCode();
+    }
+}

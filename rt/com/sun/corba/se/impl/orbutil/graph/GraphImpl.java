@@ -1,197 +1,187 @@
-/*     */ package com.sun.corba.se.impl.orbutil.graph;
-/*     */ 
-/*     */ import java.util.AbstractSet;
-/*     */ import java.util.Collection;
-/*     */ import java.util.HashMap;
-/*     */ import java.util.HashSet;
-/*     */ import java.util.Iterator;
-/*     */ import java.util.Map;
-/*     */ import java.util.Set;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class GraphImpl
-/*     */   extends AbstractSet
-/*     */   implements Graph
-/*     */ {
-/*  42 */   private Map nodeToData = new HashMap<>();
-/*     */   
-/*     */   public GraphImpl() {}
-/*     */   
-/*     */   public GraphImpl(Collection<? extends E> paramCollection) {
-/*  47 */     this();
-/*  48 */     addAll(paramCollection);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean add(Object paramObject) {
-/*  58 */     if (!(paramObject instanceof Node)) {
-/*  59 */       throw new IllegalArgumentException("Graphs must contain only Node instances");
-/*     */     }
-/*  61 */     Node node = (Node)paramObject;
-/*  62 */     boolean bool = this.nodeToData.keySet().contains(paramObject);
-/*     */     
-/*  64 */     if (!bool) {
-/*  65 */       NodeData nodeData = new NodeData();
-/*  66 */       this.nodeToData.put(node, nodeData);
-/*     */     } 
-/*     */     
-/*  69 */     return !bool;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Iterator iterator() {
-/*  75 */     return this.nodeToData.keySet().iterator();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int size() {
-/*  81 */     return this.nodeToData.keySet().size();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public NodeData getNodeData(Node paramNode) {
-/*  88 */     return (NodeData)this.nodeToData.get(paramNode);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void clearNodeData() {
-/*  94 */     Iterator<Map.Entry> iterator = this.nodeToData.entrySet().iterator();
-/*  95 */     while (iterator.hasNext()) {
-/*  96 */       Map.Entry entry = iterator.next();
-/*  97 */       NodeData nodeData = (NodeData)entry.getValue();
-/*  98 */       nodeData.clear();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void visitAll(NodeVisitor paramNodeVisitor) {
-/* 112 */     boolean bool = false;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     do {
-/* 118 */       bool = true;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 123 */       Map.Entry[] arrayOfEntry = (Map.Entry[])this.nodeToData.entrySet().toArray((Object[])new Map.Entry[0]);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 128 */       for (byte b = 0; b < arrayOfEntry.length; b++) {
-/* 129 */         Map.Entry entry = arrayOfEntry[b];
-/* 130 */         Node node = (Node)entry.getKey();
-/* 131 */         NodeData nodeData = (NodeData)entry.getValue();
-/*     */         
-/* 133 */         if (!nodeData.isVisited()) {
-/* 134 */           nodeData.visited();
-/* 135 */           bool = false;
-/*     */           
-/* 137 */           paramNodeVisitor.visit(this, node, nodeData);
-/*     */         } 
-/*     */       } 
-/* 140 */     } while (!bool);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void markNonRoots() {
-/* 145 */     visitAll(new NodeVisitor()
-/*     */         {
-/*     */           public void visit(Graph param1Graph, Node param1Node, NodeData param1NodeData)
-/*     */           {
-/* 149 */             Iterator<Node> iterator = param1Node.getChildren().iterator();
-/* 150 */             while (iterator.hasNext()) {
-/* 151 */               Node node = iterator.next();
-/*     */ 
-/*     */ 
-/*     */               
-/* 155 */               param1Graph.add((E)node);
-/*     */ 
-/*     */               
-/* 158 */               NodeData nodeData = param1Graph.getNodeData(node);
-/* 159 */               nodeData.notRoot();
-/*     */             } 
-/*     */           }
-/*     */         });
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private Set collectRootSet() {
-/* 167 */     HashSet<Node> hashSet = new HashSet();
-/*     */     
-/* 169 */     Iterator<Map.Entry> iterator = this.nodeToData.entrySet().iterator();
-/* 170 */     while (iterator.hasNext()) {
-/* 171 */       Map.Entry entry = iterator.next();
-/* 172 */       Node node = (Node)entry.getKey();
-/* 173 */       NodeData nodeData = (NodeData)entry.getValue();
-/* 174 */       if (nodeData.isRoot()) {
-/* 175 */         hashSet.add(node);
-/*     */       }
-/*     */     } 
-/* 178 */     return hashSet;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public Set getRoots() {
-/* 183 */     clearNodeData();
-/* 184 */     markNonRoots();
-/* 185 */     return collectRootSet();
-/*     */   }
-/*     */   
-/*     */   static interface NodeVisitor {
-/*     */     void visit(Graph param1Graph, Node param1Node, NodeData param1NodeData);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\orbutil\graph\GraphImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.orbutil.graph ;
+
+import java.util.Collection ;
+import java.util.AbstractSet ;
+import java.util.Iterator ;
+import java.util.Map ;
+import java.util.HashMap ;
+import java.util.Set ;
+import java.util.HashSet ;
+
+public class GraphImpl extends AbstractSet implements Graph
+{
+    private Map /* Map<Node,NodeData> */ nodeToData ;
+
+    public GraphImpl()
+    {
+        nodeToData = new HashMap() ;
+    }
+
+    public GraphImpl( Collection coll )
+    {
+        this() ;
+        addAll( coll ) ;
+    }
+
+/***********************************************************************************/
+/************ AbstractSet implementation *******************************************/
+/***********************************************************************************/
+
+    // Required for AbstractSet
+    public boolean add( Object obj ) // obj must be a Node
+    {
+        if (!(obj instanceof Node))
+            throw new IllegalArgumentException( "Graphs must contain only Node instances" ) ;
+
+        Node node = (Node)obj ;
+        boolean found = nodeToData.keySet().contains( obj ) ;
+
+        if (!found) {
+            NodeData nd = new NodeData() ;
+            nodeToData.put( node, nd ) ;
+        }
+
+        return !found ;
+    }
+
+    // Required for AbstractSet
+    public Iterator iterator()
+    {
+        return nodeToData.keySet().iterator() ;
+    }
+
+    // Required for AbstractSet
+    public int size()
+    {
+        return nodeToData.keySet().size() ;
+    }
+
+/***********************************************************************************/
+
+    public NodeData getNodeData( Node node )
+    {
+        return (NodeData)nodeToData.get( node ) ;
+    }
+
+    private void clearNodeData()
+    {
+        // Clear every node
+        Iterator iter = nodeToData.entrySet().iterator() ;
+        while (iter.hasNext()) {
+            Map.Entry entry = (Map.Entry)iter.next() ;
+            NodeData nd = (NodeData)(entry.getValue()) ;
+            nd.clear( ) ;
+        }
+    }
+
+    interface NodeVisitor
+    {
+        void visit( Graph graph, Node node, NodeData nd ) ;
+    }
+
+    // This visits every node in the graph exactly once.  A
+    // visitor is allowed to modify the graph during the
+    // traversal.
+    void visitAll( NodeVisitor nv )
+    {
+        boolean done = false ;
+
+        // Repeat the traversal until every node has been visited.  Since
+        // it takes one pass to determine whether or not each node has
+        // already been visited, this loop always runs at least once.
+        do {
+            done = true ;
+
+            // Copy entries to array to avoid concurrent modification
+            // problem with iterator if the visitor is updating the graph.
+            Map.Entry[] entries =
+                (Map.Entry[])nodeToData.entrySet().toArray( new Map.Entry[0] ) ;
+
+            // Visit each node in the graph that has not already been visited.
+            // If any node is visited in this pass, we must run at least one more
+            // pass.
+            for (int ctr=0; ctr<entries.length; ctr++) {
+                Map.Entry current = entries[ctr] ;
+                Node node = (Node)current.getKey() ;
+                NodeData nd = (NodeData)current.getValue() ;
+
+                if (!nd.isVisited()) {
+                    nd.visited() ;
+                    done = false ;
+
+                    nv.visit( this, node, nd ) ;
+                }
+            }
+        } while (!done) ;
+    }
+
+    private void markNonRoots()
+    {
+        visitAll(
+            new NodeVisitor() {
+                public void visit( Graph graph, Node node, NodeData nd )
+                {
+                    Iterator iter = node.getChildren().iterator() ; // Iterator<Node>
+                    while (iter.hasNext()) {
+                        Node child = (Node)iter.next() ;
+
+                        // Make sure the child is in the graph so it can be
+                        // visited later if necessary.
+                        graph.add( child ) ;
+
+                        // Mark the child as a non-root, since a child is never a root.
+                        NodeData cnd = graph.getNodeData( child ) ;
+                        cnd.notRoot() ;
+                    }
+                }
+            } ) ;
+    }
+
+    private Set collectRootSet()
+    {
+        final Set result = new HashSet() ;
+
+        Iterator iter = nodeToData.entrySet().iterator() ;
+        while (iter.hasNext()) {
+            Map.Entry entry = (Map.Entry)iter.next() ;
+            Node node = (Node)entry.getKey() ;
+            NodeData nd = (NodeData)entry.getValue() ;
+            if (nd.isRoot())
+                result.add( node ) ;
+        }
+
+        return result ;
+    }
+
+    public Set /* Set<Node> */ getRoots()
+    {
+        clearNodeData() ;
+        markNonRoots() ;
+        return collectRootSet() ;
+    }
+}

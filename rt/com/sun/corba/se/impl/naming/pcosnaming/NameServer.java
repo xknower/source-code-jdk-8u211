@@ -1,108 +1,103 @@
-/*    */ package com.sun.corba.se.impl.naming.pcosnaming;
-/*    */ 
-/*    */ import com.sun.corba.se.impl.orbutil.CorbaResourceUtil;
-/*    */ import com.sun.corba.se.spi.activation.InitialNameService;
-/*    */ import com.sun.corba.se.spi.activation.InitialNameServiceHelper;
-/*    */ import com.sun.corba.se.spi.orb.ORB;
-/*    */ import java.io.File;
-/*    */ import java.util.Properties;
-/*    */ import org.omg.CORBA.ORB;
-/*    */ import org.omg.CosNaming.NamingContext;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class NameServer
-/*    */ {
-/*    */   private ORB orb;
-/*    */   private File dbDir;
-/*    */   private static final String dbName = "names.db";
-/*    */   
-/*    */   public static void main(String[] paramArrayOfString) {
-/* 57 */     NameServer nameServer = new NameServer(paramArrayOfString);
-/* 58 */     nameServer.run();
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   protected NameServer(String[] paramArrayOfString) {
-/* 64 */     Properties properties = System.getProperties();
-/* 65 */     properties.put("com.sun.CORBA.POA.ORBServerId", "1000");
-/* 66 */     properties.put("org.omg.CORBA.ORBClass", "com.sun.corba.se.impl.orb.ORBImpl");
-/*    */     
-/* 68 */     this.orb = (ORB)ORB.init(paramArrayOfString, properties);
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */     
-/* 73 */     String str = properties.getProperty("com.sun.CORBA.activation.DbDir") + properties.getProperty("file.separator") + "names.db" + properties.getProperty("file.separator");
-/*    */     
-/* 75 */     this.dbDir = new File(str);
-/* 76 */     if (!this.dbDir.exists()) this.dbDir.mkdir();
-/*    */   
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   protected void run() {
-/*    */     try {
-/* 84 */       NameService nameService = new NameService(this.orb, this.dbDir);
-/*    */ 
-/*    */       
-/* 87 */       NamingContext namingContext = nameService.initialNamingContext();
-/* 88 */       InitialNameService initialNameService = InitialNameServiceHelper.narrow(this.orb
-/* 89 */           .resolve_initial_references("InitialNameService"));
-/*    */       
-/* 91 */       initialNameService.bind("NameService", namingContext, true);
-/* 92 */       System.out.println(CorbaResourceUtil.getText("pnameserv.success"));
-/*    */ 
-/*    */       
-/* 95 */       this.orb.run();
-/*    */     }
-/* 97 */     catch (Exception exception) {
-/*    */       
-/* 99 */       exception.printStackTrace(System.err);
-/*    */     } 
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\naming\pcosnaming\NameServer.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.naming.pcosnaming;
+
+import java.io.File;
+import java.util.Properties;
+
+import com.sun.corba.se.impl.orbutil.ORBConstants;
+import com.sun.corba.se.impl.orbutil.CorbaResourceUtil;
+import com.sun.corba.se.spi.orb.ORB;
+import com.sun.corba.se.spi.activation.InitialNameService;
+import com.sun.corba.se.spi.activation.InitialNameServiceHelper;
+import org.omg.CosNaming.NamingContext;
+/**
+ * Class NameServer is a standalone application which
+ * implements a persistent and a transient name service.
+ * It uses the PersistentNameService and TransientNameService
+ * classes for the name service implementation.
+ *
+ * @author      Hemanth Puttaswamy
+ * @since       JDK1.2
+ */
+
+public class NameServer
+{
+    private ORB orb;
+
+    private File dbDir; // name server database directory
+
+    private final static String dbName = "names.db";
+
+    public static void main(String args[])
+    {
+        NameServer ns = new NameServer(args);
+        ns.run();
+    }
+
+    protected NameServer(String args[])
+    {
+        // create the ORB Object
+        java.util.Properties props = System.getProperties();
+        props.put( ORBConstants.SERVER_ID_PROPERTY, "1000" ) ;
+        props.put("org.omg.CORBA.ORBClass",
+                  "com.sun.corba.se.impl.orb.ORBImpl");
+        orb = (ORB) org.omg.CORBA.ORB.init(args,props);
+
+        // set up the database directory
+        String dbDirName = props.getProperty( ORBConstants.DB_DIR_PROPERTY ) +
+            props.getProperty("file.separator") + dbName +
+            props.getProperty("file.separator");
+
+        dbDir = new File(dbDirName);
+        if (!dbDir.exists()) dbDir.mkdir();
+    }
+
+    protected void run()
+    {
+        try {
+
+            // create the persistent name service
+            NameService ns = new NameService(orb, dbDir);
+
+            // add root naming context to initial naming
+            NamingContext rootContext = ns.initialNamingContext();
+            InitialNameService ins = InitialNameServiceHelper.narrow(
+                                     orb.resolve_initial_references(
+                                     ORBConstants.INITIAL_NAME_SERVICE_NAME ));
+            ins.bind( "NameService", rootContext, true);
+            System.out.println(CorbaResourceUtil.getText("pnameserv.success"));
+
+            // wait for invocations
+            orb.run();
+
+        } catch (Exception ex) {
+
+            ex.printStackTrace(System.err);
+        }
+    }
+
+}
