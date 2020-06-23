@@ -15,6 +15,22 @@
 // 7.x
 > https://jxbrowser-support.teamdev.com/docs/guides/architecture.html
 
+> <前端开发手册 - JxBrowser> https://www.kancloud.cn/neoman/ui/797484
+
+## 自动浏览器及爬虫实现
+
+> 1、浏览器的访问
+
+// BrowerVisiter
+
+> 2、事件捕获及数据获取
+
+// EventCapture DataVisiter
+
+> 3、数据分析
+
+// Data analysis
+
 ## 文献资料
 
 ### 01 简介
