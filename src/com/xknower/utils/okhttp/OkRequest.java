@@ -1,5 +1,6 @@
 package com.xknower.utils.okhttp;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -20,6 +21,11 @@ public class OkRequest {
      * 请求头设置
      */
     private Map<String, String> heads;
+
+    /**
+     * 传递参数
+     */
+    private Map<String, Object> params = new HashMap<>();
 
     //
 
@@ -47,6 +53,14 @@ public class OkRequest {
         this.heads = heads;
     }
 
+    public Map<String, Object> getParams() {
+        return params;
+    }
+
+    public void setParams(Map<String, Object> params) {
+        this.params = params;
+    }
+
     //
 
     public static OkRequest.OkRequestBuilder builder() {
@@ -58,6 +72,7 @@ public class OkRequest {
         private String url;
         private String body;
         private Map<String, String> heads;
+        private Map<String, Object> params;
 
         OkRequestBuilder() {
         }
@@ -77,17 +92,24 @@ public class OkRequest {
             return this;
         }
 
+
+        public OkRequest.OkRequestBuilder params(Map<String, Object> params) {
+            this.params = params;
+            return this;
+        }
+
         public OkRequest build() {
             OkRequest okRequest = new OkRequest();
             okRequest.setUrl(url);
             okRequest.setBody(body);
             okRequest.setHeads(heads);
+            okRequest.setParams(params);
             return okRequest;
         }
 
         @Override
         public String toString() {
-            return "OkRequest.OkRequestBuilder(url=" + this.url + ", body=" + this.body + ", heads=" + this.heads + ")";
+            return "OkRequest.OkRequestBuilder(url=" + this.url + ", body=" + this.body + ", heads=" + this.heads + ", params=" + this.params + ")";
         }
     }
 }

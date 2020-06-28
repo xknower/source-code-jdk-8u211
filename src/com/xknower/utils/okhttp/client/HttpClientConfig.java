@@ -36,14 +36,14 @@ public class HttpClientConfig {
     private OkHttpClient okHttpClient() {
         return new OkHttpClient.Builder()
                 //
-                .connectTimeout(10, TimeUnit.SECONDS)
+                .connectTimeout(10, TimeUnit.MINUTES)
                 //
                 .followRedirects(false)
                 //
-                .readTimeout(1, TimeUnit.MINUTES)
+                .readTimeout(10, TimeUnit.MINUTES)
                 //
                 .retryOnConnectionFailure(false)
-                .writeTimeout(1, TimeUnit.MINUTES)
+                .writeTimeout(10, TimeUnit.MINUTES)
                 //
                 .connectionPool(new ConnectionPool(httpMaxConnect, httpKeepAlice, TimeUnit.MINUTES))
                 .build();

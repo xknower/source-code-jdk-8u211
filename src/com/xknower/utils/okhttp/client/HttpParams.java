@@ -137,7 +137,7 @@ public class HttpParams {
         }
         // 上传文件
         else if (file) {
-            //
+            // [File 、InputStream、HttpMultiParam、String]
             MultipartBody.Builder builder = new MultipartBody.Builder().setType(MultipartBody.FORM);
             params.forEach((k, v) -> {
                 if (v == null) {

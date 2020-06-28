@@ -40,6 +40,14 @@ public class OkHttpExecuteHandler implements ResultExecute<OkResponse> {
         return httpClient.execute(params, this);
     }
 
+    public OkResponse callPostFile(OkRequest request) {
+        HttpParams params = HttpParams.postFile(request.getUrl(), request.getParams());
+        if (request.getHeads() != null && request.getHeads().size() > 0) {
+            params.setHeads(request.getHeads());
+        }
+        return httpClient.execute(params, this);
+    }
+
     /**
      * GET 执行HTTP请求
      *
