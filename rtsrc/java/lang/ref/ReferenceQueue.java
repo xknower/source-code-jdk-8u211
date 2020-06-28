@@ -28,8 +28,8 @@ package java.lang.ref;
 import java.util.function.Consumer;
 
 /**
- * Reference queues, to which registered reference objects are appended by the
- * garbage collector after the appropriate reachability changes are detected.
+ * Reference queues, to which registered reference objects are appended by the garbage collector after the appropriate reachability changes are detected.
+ * // 引用队列，在检测到适当的可达性更改后，垃圾收集器将注册的引用对象附加到该队列。
  *
  * @author   Mark Reinhold
  * @since    1.2

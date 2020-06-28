@@ -30,10 +30,10 @@ import sun.misc.JavaLangRefAccess;
 import sun.misc.SharedSecrets;
 
 /**
- * Abstract base class for reference objects.  This class defines the
- * operations common to all reference objects.  Because reference objects are
- * implemented in close cooperation with the garbage collector, this class may
- * not be subclassed directly.
+ * Abstract base class for reference objects. This class defines the operations common to all reference objects.
+ * // 引用对象的抽象基类。此类定义了所有引用对象通用的操作。
+ * Because reference objects are implemented in close cooperation with the garbage collector, this class may not be subclassed directly.
+ * // 由于引用对象是与垃圾收集器紧密协作实现的，因此此类不能直接子类化。
  *
  * @author   Mark Reinhold
  * @since    1.2

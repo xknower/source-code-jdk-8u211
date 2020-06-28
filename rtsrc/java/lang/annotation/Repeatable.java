@@ -26,11 +26,11 @@
 package java.lang.annotation;
 
 /**
- * The annotation type {@code java.lang.annotation.Repeatable} is
- * used to indicate that the annotation type whose declaration it
- * (meta-)annotates is <em>repeatable</em>. The value of
- * {@code @Repeatable} indicates the <em>containing annotation
- * type</em> for the repeatable annotation type.
+ * The annotation type {@code java.lang.annotation.Repeatable} is used to indicate
+ * that the annotation type whose declaration it (meta-)annotates is <em>repeatable</em>.
+ * // Repeatable 注解类型, 用于声明 其 declaration 是一个 repeatable。
+ * The value of {@code @Repeatable} indicates the <em>containing annotation type</em> for the repeatable annotation type.
+ * // 其值表示, 该注解类型的包含注解类型可重复的注解类型 。
  *
  * @since 1.8
  * @jls 9.6 Annotation Types

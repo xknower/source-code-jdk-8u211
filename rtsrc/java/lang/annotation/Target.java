@@ -26,18 +26,18 @@
 package java.lang.annotation;
 
 /**
- * Indicates the contexts in which an annotation type is applicable. The
- * declaration contexts and type contexts in which an annotation type may be
- * applicable are specified in JLS 9.6.4.1, and denoted in source code by enum
- * constants of {@link ElementType java.lang.annotation.ElementType}.
+ * Indicates the contexts in which an annotation type is applicable.
+ * // 指示批注类型适用的上下文。
+ * The declaration contexts and type contexts in which an annotation type may be applicable are specified in JLS 9.6.4.1,
+ * and denoted in source code by enum constants of {@link ElementType java.lang.annotation.ElementType}.
+ * // JLS 9.6.4.1中指定了可以应用注释类型的声明上下文和类型上下文，并在源代码中用 ElementType的枚举常量表示
  *
- * <p>If an {@code @Target} meta-annotation is not present on an annotation type
- * {@code T} , then an annotation of type {@code T} may be written as a
- * modifier for any declaration except a type parameter declaration.
+ * <p>If an {@code @Target} meta-annotation is not present on an annotation type {@code T} ,
+ * then an annotation of type {@code T} may be written as a modifier for any declaration except a type parameter declaration.
+ * // 如果 Target 元注解不在批注类型{@code T}上，然后 类型 T 的注释可以作为除类型参数声明之外的任何声明的修饰符编写。
  *
- * <p>If an {@code @Target} meta-annotation is present, the compiler will enforce
- * the usage restrictions indicated by {@code ElementType}
- * enum constants, in line with JLS 9.7.4.
+ * <p>If an {@code @Target} meta-annotation is present, the compiler will enforce the usage restrictions indicated by {@code ElementType} enum constants, in line with JLS 9.7.4.
+ * // 如果使用 Target， 则编译器将根据JLS 9.7.4执行 ElementType 枚举常量指示的使用限制
  *
  * <p>For example, this {@code @Target} meta-annotation indicates that the
  * declared type is itself a meta-annotation type.  It can only be used on
@@ -76,7 +76,7 @@ package java.lang.annotation;
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.ANNOTATION_TYPE)
-public @interface Target {
+public @interface Target { // 79 元注解, 表示描述的注解, 使用在什么地方
     /**
      * Returns an array of the kinds of elements an annotation type
      * can be applied to.
