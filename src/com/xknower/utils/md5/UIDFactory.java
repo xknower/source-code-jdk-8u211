@@ -5,11 +5,12 @@ import java.security.MessageDigest;
 import java.util.Random;
 
 /**
- * @author xknower
+ * <p>
+ * </p>
+ *
  * @version 1.0
  */
-abstract class UIDFactory {
-
+public abstract class UIDFactory {
     /**
      * Global Unified Identifier
      */
@@ -171,4 +172,5 @@ abstract class UIDFactory {
 
         return i;
     }
+
 }

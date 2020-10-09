@@ -1,11 +1,12 @@
 package com.xknower.utils.md5;
 
 /**
- * @author xknower
+ * <p>
+ * </p>
+ *
  * @version 1.0
  */
-class UUIDUtil {
-
+public class UUIDUtil {
     private static UIDFactory uuid = null;
 
     static {

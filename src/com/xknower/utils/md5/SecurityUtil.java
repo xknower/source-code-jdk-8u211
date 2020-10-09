@@ -1,14 +1,10 @@
 package com.xknower.utils.md5;
 
-import com.xknower.utils.HexUtils;
-
 import java.math.BigInteger;
 import java.util.Random;
 
 /**
  * 密码安全帮助类
- *
- * @author xknower
  */
 public final class SecurityUtil {
 
@@ -29,8 +25,8 @@ public final class SecurityUtil {
      * @return
      * @see
      */
-    public static String decryptPassword(String str) {
-        byte ptext[] = HexUtils.toByteArray(str);
+    public static String getDecryptLoginPassword(String str) {
+        byte ptext[] = HexUtil.toByteArray(str);
         BigInteger encryC = new BigInteger(ptext);
 
         BigInteger variable = encryC.modPow(PRIVATE_D, N);
@@ -45,6 +41,9 @@ public final class SecurityUtil {
 
     /**
      * 生成密码安全码
+     *
+     * @return
+     * @see
      */
     public static String getNewPsw() {
         String s1 = MD5Util.md5Hex(String.valueOf(System.currentTimeMillis()));
@@ -54,6 +53,12 @@ public final class SecurityUtil {
 
     /**
      * 生成加密后的密码
+     *
+     * @param usercode
+     * @param logpwd
+     * @param psw
+     * @return
+     * @see
      */
     public static String getStoreLogpwd(String usercode, String logpwd, String psw) {
         return MD5Util.md5Hex(usercode + MD5Util.md5Hex(logpwd) + psw);
@@ -65,6 +70,8 @@ public final class SecurityUtil {
 
     /**
      * 生成随机的MD5密文
+     *
+     * @return
      */
     public static String getNewToken() {
         return MD5Util.md5Hex(java.util.UUID.randomUUID().toString());
@@ -72,6 +79,9 @@ public final class SecurityUtil {
 
     /**
      * 生成随机正整数
+     *
+     * @param maxInt
+     * @return
      */
     public static int getRandomInt(int maxInt) {
         Random random = new Random();
@@ -79,7 +89,10 @@ public final class SecurityUtil {
     }
 
     /**
-     * 生成签名 [MD5 签名]
+     * 生成签名
+     *
+     * @param srcStr
+     * @return
      */
     public static String getDigest(String srcStr) {
         return MD5Util.md5Hex(MD5Util.md5Hex(srcStr) + (srcStr.hashCode() + srcStr.length()) + "19880322");
@@ -87,6 +100,9 @@ public final class SecurityUtil {
 
     /**
      * 生成指定长度的验证码
+     *
+     * @param len
+     * @return
      */
     public static String getVerifyCode(int len) {
         StringBuilder sb = new StringBuilder(len);
@@ -95,4 +111,6 @@ public final class SecurityUtil {
         }
         return sb.toString();
     }
+
+
 }

@@ -1,11 +1,12 @@
 package com.xknower.utils.md5;
 
 /**
- * @author xknower
+ * <p>
+ * </p>
+ *
  * @version 1.0
  */
 public class UUID extends UIDFactory {
-
     /**
      * Length bits
      */
@@ -34,12 +35,12 @@ public class UUID extends UIDFactory {
     /**
      * Upper limit Short
      */
-    protected static final long MAXINT = 32767;
+    protected static final long MAX_INT = 32767;
 
     /**
      * Upper limit Integer
      */
-    protected static final long MAXLONG = 2147483647;
+    protected static final long MAX_LONG = 2147483647;
 
     /** Epoch has millisecond */
     /**
@@ -137,7 +138,6 @@ public class UUID extends UIDFactory {
      * @param obj Object UUID
      * @return Ture if equal
      */
-    @Override
     public boolean equals(Object obj) {
         try {
             if (obj == null) {
@@ -167,7 +167,6 @@ public class UUID extends UIDFactory {
      *
      * @return java.lang.String
      */
-    @Override
     public String getNextUID() {
         next();
 
@@ -179,7 +178,6 @@ public class UUID extends UIDFactory {
      *
      * @return java.lang.String
      */
-    @Override
     public String getUID() {
         return muuid;
     }
@@ -190,7 +188,6 @@ public class UUID extends UIDFactory {
      * @param uidStr The new uID value
      * @throws Exception Bad string format
      */
-    @Override
     public void setUID(String uidStr) throws Exception {
         long loTag = 0L;
         long hiTag = 0L;
@@ -208,7 +205,7 @@ public class UUID extends UIDFactory {
 
             for (int j = 0; j < (len / 2); j++) {
                 String s = uidStr.substring(idx++, idx);
-                int val = Integer.parseInt(s, BYTELEN);
+                int val = Integer.parseInt(s, 16);
 
                 loTag <<= 4;
                 loTag |= val;
@@ -229,11 +226,10 @@ public class UUID extends UIDFactory {
      *
      * @return java.lang.String
      */
-    @Override
     public String toPrintableString() {
         byte[] bytes = toByteArray();
 
-        if (BYTELEN != bytes.length) {
+        if (16 != bytes.length) {
             return "** Bad UUID Format/Value **";
         }
 
@@ -259,7 +255,7 @@ public class UUID extends UIDFactory {
 
         buf.append('-');
 
-        for (; i < BYTELEN; i++) {
+        for (; i < 16; i++) {
             buf.append(Integer.toHexString(hiNibble(bytes[i])));
             buf.append(Integer.toHexString(loNibble(bytes[i])));
         }
@@ -272,7 +268,6 @@ public class UUID extends UIDFactory {
      *
      * @return UID String
      */
-    @Override
     public String toString() {
         return muuid;
     }
@@ -293,13 +288,13 @@ public class UUID extends UIDFactory {
      * @return UID String
      */
     protected static String toString(byte[] bytes) {
-        if (BYTELEN != bytes.length) {
+        if (16 != bytes.length) {
             return "** Bad UUID Format/Value **";
         }
 
         StringBuffer buf = new StringBuffer();
 
-        for (int i = 0; i < BYTELEN; i++) {
+        for (int i = 0; i < 16; i++) {
             buf.append(Integer.toHexString(hiNibble(bytes[i])));
             buf.append(Integer.toHexString(loNibble(bytes[i])));
         }
@@ -323,20 +318,20 @@ public class UUID extends UIDFactory {
      * @return Array bytes
      */
     protected byte[] toByteArray() {
-        byte[] bytes = new byte[BYTELEN];
-        int idx = LOMASK;
+        byte[] bytes = new byte[16];
+        int idx = 15;
         long val = mloTag;
 
-        for (int i = 0; i < BITS8; i++) {
-            bytes[idx--] = (byte) (int) (val & (long) LO8BITMASK);
-            val >>= BITS8;
+        for (int i = 0; i < 8; i++) {
+            bytes[idx--] = (byte) (int) (val & (long) 255);
+            val >>= 8;
         }
 
         val = mhiTag;
 
-        for (int i = 0; i < BITS8; i++) {
-            bytes[idx--] = (byte) (int) (val & (long) LO8BITMASK);
-            val >>= BITS8;
+        for (int i = 0; i < 8; i++) {
+            bytes[idx--] = (byte) (int) (val & (long) 255);
+            val >>= 8;
         }
 
         if (!this.isMD5()) {
