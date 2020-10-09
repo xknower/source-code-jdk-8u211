@@ -26,19 +26,19 @@
 package java.lang.annotation;
 
 /**
- * The common interface extended by all annotation types.  Note that an
- * interface that manually extends this one does <i>not</i> define
- * an annotation type.  Also note that this interface does not itself
- * define an annotation type.
+ * The common interface extended by all annotation types.
+ * // 所有注解的注解接口都继承自该Annotation接口
+ * Note that an interface that manually extends this one does <i>not</i> define an annotation type.
+ * // 自定义扩展的注解, 不会定义一个 annotation 类型
+ * Also note that this interface does not itself define an annotation type.
+ * // 还要注意，这个接口本身并不定义 annotation 类型。
+ * More information about annotation types can be found in section 9.6 of <cite>The Java&trade; Language Specification</cite>.
  *
- * More information about annotation types can be found in section 9.6 of
- * <cite>The Java&trade; Language Specification</cite>.
+ * The {@link java.lang.reflect.AnnotatedElement} interface discusses compatibility concerns
+ * when evolving an annotation type from being non-repeatable to being repeatable.
+ * // AnnotatedElement 接口描述在将注释类型从不可重复演变为可重复时的兼容性问题。
  *
- * The {@link java.lang.reflect.AnnotatedElement} interface discusses
- * compatibility concerns when evolving an annotation type from being
- * non-repeatable to being repeatable.
- *
- * @author  Josh Bloch
+ *  * @author  Josh Bloch
  * @since   1.5
  */
 public interface Annotation {

@@ -387,7 +387,7 @@ public abstract class AWTEvent extends EventObject {
     private native void nativeSetSource(ComponentPeer peer);
 
     /**
-     * Returns the event type.
+     * Returns the event type. 返回事件类型编号, 标识事件的类型。[鼠标移动 : 503 MouseEvent.MOUSE_WHEEL]
      */
     public int getID() {
         return id;

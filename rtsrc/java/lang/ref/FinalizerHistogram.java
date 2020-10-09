@@ -32,8 +32,8 @@ import java.util.Arrays;
 import java.util.Comparator;
 
 /**
- * This FinalizerHistogram class is for GC.finalizer_info diagnostic command support.
- * It is invoked by the VM.
+ * This FinalizerHistogram class is for GC.finalizer_info diagnostic command support. It is invoked by the VM.
+ * // 这个FinalizerHistogram类用于GC.finalizer_信息诊断命令支持。它由VM调用。
  */
 
 final class FinalizerHistogram {

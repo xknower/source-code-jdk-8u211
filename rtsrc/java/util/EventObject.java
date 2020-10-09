@@ -27,11 +27,11 @@ package java.util;
 
 /**
  * <p>
- * The root class from which all event state objects shall be derived.
+ * The root class from which all event state objects shall be derived. 从中派生所有事件状态对象的根类。
  * <p>
  * All Events are constructed with a reference to the object, the "source",
  * that is logically deemed to be the object upon which the Event in question
- * initially occurred upon.
+ * initially occurred upon. 所有事件都是通过引用对象“源”，其在逻辑上被认为是有关事件最初发生的对象。
  *
  * @since JDK1.1
  */
@@ -41,7 +41,7 @@ public class EventObject implements java.io.Serializable {
     private static final long serialVersionUID = 5516075349620653480L;
 
     /**
-     * The object on which the Event initially occurred.
+     * The object on which the Event initially occurred. 事件最初发生的对象。
      */
     protected transient Object  source;
 
@@ -59,7 +59,7 @@ public class EventObject implements java.io.Serializable {
     }
 
     /**
-     * The object on which the Event initially occurred.
+     * The object on which the Event initially occurred. 事件最初发生的对象。
      *
      * @return   The object on which the Event initially occurred.
      */
@@ -68,7 +68,7 @@ public class EventObject implements java.io.Serializable {
     }
 
     /**
-     * Returns a String representation of this EventObject.
+     * Returns a String representation of this EventObject. 返回此EventObject的字符串表示形式。
      *
      * @return  A a String representation of this EventObject.
      */

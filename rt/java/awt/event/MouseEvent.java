@@ -208,20 +208,20 @@ public class MouseEvent extends InputEvent {
     public static final int MOUSE_CLICKED = MOUSE_FIRST;
 
     /**
-     * The "mouse pressed" event. This <code>MouseEvent</code>
-     * occurs when a mouse button is pushed down.
+     * The "mouse pressed" event. This <code>MouseEvent</code> occurs when a mouse button is pushed down.
+     * 键按下 (Button = 1 左键、2 中键、3 右键)
      */
     public static final int MOUSE_PRESSED = 1 + MOUSE_FIRST; //Event.MOUSE_DOWN
 
     /**
-     * The "mouse released" event. This <code>MouseEvent</code>
-     * occurs when a mouse button is let up.
+     * The "mouse released" event. This <code>MouseEvent</code> occurs when a mouse button is let up.
+     * 键释放
      */
     public static final int MOUSE_RELEASED = 2 + MOUSE_FIRST; //Event.MOUSE_UP
 
     /**
-     * The "mouse moved" event. This <code>MouseEvent</code>
-     * occurs when the mouse position changes.
+     * The "mouse moved" event. This <code>MouseEvent occurs when the mouse position changes.
+     * 鼠标移动
      */
     public static final int MOUSE_MOVED = 3 + MOUSE_FIRST; //Event.MOUSE_MOVE
 
@@ -247,7 +247,7 @@ public class MouseEvent extends InputEvent {
 
     /**
      * The "mouse wheel" event.  This is the only <code>MouseWheelEvent</code>.
-     * It occurs when a mouse equipped with a wheel has its wheel rotated.
+     * It occurs when a mouse equipped with a wheel has its wheel rotated. 滚轮转动
      * @since 1.4
      */
     public static final int MOUSE_WHEEL = 7 + MOUSE_FIRST;

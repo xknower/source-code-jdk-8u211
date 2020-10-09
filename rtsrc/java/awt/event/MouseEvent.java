@@ -192,7 +192,7 @@ import sun.awt.SunToolkit;
 public class MouseEvent extends InputEvent {
 
     /**
-     * The first number in the range of ids used for mouse events.
+     * The first number in the range of ids used for mouse events. 用于鼠标事件的ID范围中的第一个数字。
      */
     public static final int MOUSE_FIRST         = 500;
 

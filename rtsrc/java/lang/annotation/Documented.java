@@ -26,12 +26,12 @@
 package java.lang.annotation;
 
 /**
- * Indicates that annotations with a type are to be documented by javadoc
- * and similar tools by default.  This type should be used to annotate the
- * declarations of types whose annotations affect the use of annotated
- * elements by their clients.  If a type declaration is annotated with
- * Documented, its annotations become part of the public API
- * of the annotated elements.
+ * Indicates that annotations with a type are to be documented by javadoc and similar tools by default.
+ * // 指示默认情况下，带有类型的注释将由javadoc和类似工具记录。
+ * This type should be used to annotate the declarations of types whose annotations affect the use of annotated elements by their clients.
+ * // 此类型应用于注释其注释影响其客户端使用带注释元素的类型的声明
+ * If a type declaration is annotated with Documented, its annotations become part of the public API of the annotated elements.
+ * // 如果类型声明是用文档形式注释的，则其注释将成为注释元素的公共API的一部分。
  *
  * @author  Joshua Bloch
  * @since 1.5
@@ -39,5 +39,5 @@ package java.lang.annotation;
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.ANNOTATION_TYPE)
-public @interface Documented {
+public @interface Documented { // 42 文档描述功能, 表示描述的注解是否将包含在JavaDoc中
 }
